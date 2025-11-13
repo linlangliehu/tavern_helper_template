@@ -96,7 +96,7 @@ function watch_it(compiler: webpack.Compiler) {
       });
     }
 
-    compiler.hooks.done.tapAsync('updater', () => {
+    compiler.hooks.done.tap('updater', () => {
       console.info('\n[Listener] 检测到完成编译, 推送更新事件...');
       io.emit('iframe_updated');
     });
