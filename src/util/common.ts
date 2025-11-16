@@ -1,4 +1,3 @@
-/// 一些工具函数
 import { compare } from 'compare-versions';
 
 export function assignInplace<T>(destination: T[], new_array: T[]): T[] {
