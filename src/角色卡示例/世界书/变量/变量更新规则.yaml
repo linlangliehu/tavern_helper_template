@@ -2,7 +2,7 @@
 变量更新规则:
   世界:
     当前时间:
-      format: YYYY年MM月DD日 星期X HH:MM
+      format: YYYY-MM-DD HH:MM
     近期事务:
       type: |-
         {
