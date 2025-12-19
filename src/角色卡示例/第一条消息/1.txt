@@ -86,7 +86,7 @@
 </small>
 </cross_channel>
 
-<update>
+<UpdateVariable>
 <initvar>
 ```yaml
 世界:
@@ -125,4 +125,4 @@
       数量: 1
 ```
 </initvar>
-</update>
+</UpdateVariable>
