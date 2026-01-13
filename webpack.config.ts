@@ -49,29 +49,28 @@ function common_path(lhs: string, rhs: string) {
 }
 
 function glob_script_files() {
-  const files: string[] = fs
-    .globSync(`{示例,src}/**/index.{ts,tsx,js,jsx}`)
+  const results: string[] = [];
+
+  fs.globSync(`{示例,src}/**/index.{ts,tsx,js,jsx}`)
     .filter(
       file => process.env.CI !== 'true' || !fs.readFileSync(path.join(import.meta.dirname, file)).includes('@no-ci'),
-    );
+    )
+    .forEach(file => {
+      const file_dirname = path.dirname(file);
+      for (const [index, result] of results.entries()) {
+        const result_dirname = path.dirname(result);
+        const common = common_path(result_dirname, file_dirname);
+        if (common === result_dirname) {
+          return;
+        }
+        if (common === file_dirname) {
+          results.splice(index, 1, file);
+          return;
+        }
+      }
+      results.push(file);
+    });
 
-  const results: string[] = [];
-  const handle = (file: string) => {
-    const file_dirname = path.dirname(file);
-    for (const [index, result] of results.entries()) {
-      const result_dirname = path.dirname(result);
-      const common = common_path(result_dirname, file_dirname);
-      if (common === result_dirname) {
-        return;
-      }
-      if (common === file_dirname) {
-        results.splice(index, 1, file);
-        return;
-      }
-    }
-    results.push(file);
-  };
-  files.forEach(handle);
   return results;
 }
 
