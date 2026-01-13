@@ -32,6 +32,10 @@
 git update-index --skip-worktree .vscode/launch.json
 ```
 
+#### 示例文件夹
+
+请不要删除`示例`文件夹, AI 需要参考其中的代码; 但你可以在 `webpack.config.ts` 中将 54 行左右的 `{示例,src}/` 改为 `src/` 来避免打包它们.
+
 #### 利用 jsdelivr 实现前端界面或脚本的自动更新
 
 由于你所制作的前端界面或脚本将被打包在 github 仓库中, 你将能用 jsdelivr 链接来访问它们, 而这个链接可以在前端界面或脚本中直接使用.
