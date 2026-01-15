@@ -6,7 +6,7 @@ alwaysApply: true
 
 ## chrome-devtools: 自行阅读和操控酒馆网页
 
-你应该用 chrome-devtools 打开酒馆网页 (其网址与 `.vscode/launch.json` 中配置的 `url` 一致), 从中读取或操纵它, 来了解当前的界面、脚本情况, 如获取当前的 DOM 情况、实际显示情况、Console 情况、点击界面……
+你应该用 chrome-devtools 连接我已经打开的浏览器, 从中读取或操纵连接到的酒馆网页 (其网址与 `.vscode/launch.json` 中配置的 `url` 一致), 来了解当前的界面、脚本情况, 如获取当前的 DOM 情况、实际显示情况、Console 情况、点击界面……
 
 ### 检查界面、脚本热重载
 
