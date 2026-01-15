@@ -3,8 +3,7 @@
     "chrome-devtools": {
       "command": "pnpx",
       "args": [
-        "chrome-devtools-mcp@latest",
-        "--autoConnect"
+        "chrome-devtools-mcp@latest"
       ]
     }
   }
