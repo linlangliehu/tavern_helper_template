@@ -198,7 +198,12 @@ export function mountStreamingMessages(
 
   return {
     unmount: () => {
-      $('.mes_text').removeClass('hidden!');
+      const $th_streaming = $('#chat').find('.TH-streaming');
+      if ($th_streaming.length > 0) {
+        $th_streaming.removeClass('hidden!');
+      } else {
+        $('chat').find('.mes_text').removeClass('hidden!');
+      }
       states.forEach(({ destroy }) => destroy());
       stop_list.forEach(stop => stop());
       has_stoped = true;
