@@ -57,7 +57,7 @@ const middle_html = computed(() => {
   return null;
 });
 
-watchImmediate(
+watch(
   () => context.during_streaming,
   () => {
     if (!context.during_streaming) {
