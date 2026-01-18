@@ -33,7 +33,7 @@ export function injectStreamingMessageContext(): Readonly<StreamingMessageContex
  *
  * @param creator 创建流式界面的组件, 函数内可以用 `.use` 安装依赖或执行其他逻辑
  * @param options 可选选项
- *   - `host`: 宿主, 默认为 `'iframe'`
+ *   - `host`: 宿主, 默认为 `'iframe'`, 因为 `'iframe'` 能隔离样式, 更方便做复杂界面
  *   - `filter`: 楼层过滤器. 如果设置, 则只有符合条件的楼层才会被挂载流式楼层界面
  *   - `prefix`: 组件的唯一标识符, 默认随机生成一个. 函数产生的流式楼层界面会共享这个 `prefix`, 并将 `host` DOM 的 id 设置成 `${prefix}-${message_id}`.
  * @returns 卸载流式楼层界面的函数
