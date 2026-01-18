@@ -45,6 +45,7 @@ export function mountStreamingMessages(
   const { host = 'iframe', filter, prefix = uuidv4() } = options;
 
   const states: Map<number, { app: App; data: Reactive<StreamingMessageContext>; destroy: () => void }> = new Map();
+  let has_stoped = false;
 
   const destroyIfInvalid = (message_id: number) => {
     const min_message_id = Number($('#chat > .mes').first().attr('mesid'));
@@ -55,6 +56,9 @@ export function mountStreamingMessages(
   };
 
   const renderOneMessage = async (message_id: number, stream_message?: string) => {
+    if (has_stoped) {
+      return;
+    }
     destroyIfInvalid(message_id);
 
     const message = stream_message ?? getChatMessages(message_id)[0].message ?? '';
@@ -135,6 +139,9 @@ export function mountStreamingMessages(
   };
 
   const renderAllMessage = async () => {
+    if (has_stoped) {
+      return;
+    }
     states.keys().forEach(message_id => destroyIfInvalid(message_id));
     await Promise.all(
       $('#chat')
@@ -177,6 +184,7 @@ export function mountStreamingMessages(
       $('.mes_text').removeClass('hidden!');
       states.forEach(({ destroy }) => destroy());
       stop_list.forEach(stop => stop());
+      has_stoped = true;
     },
   };
 }
