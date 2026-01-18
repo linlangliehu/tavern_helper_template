@@ -1,5 +1,4 @@
 import { mountStreamingMessages } from '@util/streaming';
-import { createApp } from 'vue';
 import App from './App.vue';
 
 $(() => {
