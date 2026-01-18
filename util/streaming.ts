@@ -69,10 +69,8 @@ export function mountStreamingMessages(
 
     const $message_element = $(`.mes[mesid='${message_id}']`);
 
-    const $mes_text = $message_element.find('.mes_text');
-    $mes_text.addClass('hidden!');
-    const $th_streaming = $message_element.find('.TH-streaming');
-    $th_streaming.addClass('hidden!');
+    const $mes_text = $message_element.find('.mes_text').addClass('hidden!');
+    $message_element.find('.TH-streaming').addClass('hidden!');
 
     let $mes_streaming = $message_element.find(`#${prefix}-${message_id}`);
     if ($mes_streaming.length > 0) {
@@ -91,7 +89,7 @@ export function mountStreamingMessages(
     $mes_streaming = (host === 'iframe' ? createScriptIdIframe() : createScriptIdDiv())
       .addClass(`mes_streaming w-full`)
       .attr('id', `${prefix}-${message_id}`)
-      .insertAfter($mes_text);
+      .insertBefore($message_element.find('.mes_media_wrapper'));
 
     const data = reactive<StreamingMessageContext>({
       prefix,
