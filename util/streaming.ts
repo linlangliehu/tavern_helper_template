@@ -78,7 +78,6 @@ export function mountStreamingMessages(
       if (state) {
         state.data.message = message;
         state.data.during_streaming = Boolean(stream_message);
-        $host.removeClass('hidden!');
         return;
       }
     }
@@ -121,13 +120,16 @@ export function mountStreamingMessages(
     }
 
     const observer = new MutationObserver(() => {
-      const $edit_textarea = $('#curEditTextarea');
+      const $edit_textarea = $('#chat').find('#curEditTextarea');
       if ($edit_textarea.parent().is($mes_text)) {
         $mes_text.removeClass('hidden!');
         $host.addClass('hidden!');
+      } else if ($edit_textarea.length === 0) {
+        $mes_text.addClass('hidden!');
+        $host.removeClass('hidden!');
       }
     });
-    observer.observe($mes_text[0] as HTMLElement, { childList: true, subtree: true, characterData: true });
+    observer.observe($mes_text[0] as HTMLElement, { childList: true });
 
     states.set(message_id, {
       app,
@@ -178,7 +180,6 @@ export function mountStreamingMessages(
     states.get(message_id)?.destroy();
     renderOneMessage(message_id);
   });
-  scopedEventOn(tavern_events.MESSAGE_UPDATED, message_id => renderOneMessage(message_id));
   scopedEventOn(tavern_events.MESSAGE_SWIPED, message_id => {
     states.get(message_id)?.destroy();
     renderOneMessage(message_id);
