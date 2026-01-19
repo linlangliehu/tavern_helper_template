@@ -57,6 +57,10 @@ export function mountStreamingMessages(
     return false;
   };
 
+  const destroyAllInvalid = () => {
+    states.keys().forEach(message_id => destroyIfInvalid(message_id));
+  };
+
   const renderOneMessage = async (message_id: number, stream_message?: string) => {
     if (has_stoped) {
       return;
@@ -161,7 +165,7 @@ export function mountStreamingMessages(
     if (has_stoped) {
       return;
     }
-    states.keys().forEach(message_id => destroyIfInvalid(message_id));
+    destroyAllInvalid();
     await Promise.all(
       $('#chat')
         .children(".mes[is_user='false'][is_system='false']")
@@ -179,15 +183,17 @@ export function mountStreamingMessages(
     stop_list.push(eventOn(event, errorCatched(listener)).stop);
   };
   scopedEventOn('chatLoaded', () => renderAllMessage());
-  scopedEventOn(tavern_events.CHARACTER_MESSAGE_RENDERED, message_id => renderOneMessage(message_id));
-  scopedEventOn(tavern_events.MESSAGE_EDITED, message_id => {
-    states.get(message_id)?.destroy();
+  scopedEventOn(tavern_events.CHARACTER_MESSAGE_RENDERED, message_id => {
+    destroyAllInvalid();
     renderOneMessage(message_id);
   });
-  scopedEventOn(tavern_events.MESSAGE_SWIPED, message_id => {
-    states.get(message_id)?.destroy();
-    renderOneMessage(message_id);
-  });
+  [tavern_events.MESSAGE_EDITED, tavern_events.MESSAGE_DELETED].forEach(event =>
+    scopedEventOn(event, message_id => {
+      destroyAllInvalid();
+      states.get(message_id)?.destroy();
+      renderOneMessage(message_id);
+    }),
+  );
   scopedEventOn(tavern_events.MESSAGE_DELETED, () => setTimeout(errorCatched(renderAllMessage), 1000));
   scopedEventOn(tavern_events.STREAM_TOKEN_RECEIVED, message => {
     const message_id = Number($('#chat').children('.mes.last_mes').attr('mesid') ?? 'NaN');
