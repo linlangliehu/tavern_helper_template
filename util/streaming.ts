@@ -166,9 +166,14 @@ export function mountStreamingMessages(
     }
     destroyAllInvalid();
     await Promise.all(
-      _.range(Number($('#chat > .mes').first().attr('mesid')), SillyTavern.chat.length).map(
-        async message_id => await renderOneMessage(message_id),
-      ),
+      $('#chat')
+        .children(".mes[is_user='false'][is_system='false']")
+        .map(async (_index, node) => {
+          const message_id = Number($(node).attr('mesid') ?? 'NaN');
+          if (!isNaN(message_id)) {
+            await renderOneMessage(message_id);
+          }
+        }),
     );
   };
 
