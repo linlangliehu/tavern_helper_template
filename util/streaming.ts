@@ -167,14 +167,9 @@ export function mountStreamingMessages(
     }
     destroyAllInvalid();
     await Promise.all(
-      $('#chat')
-        .children(".mes[is_user='false'][is_system='false']")
-        .map(async (_index, node) => {
-          const message_id = Number($(node).attr('mesid') ?? 'NaN');
-          if (!isNaN(message_id)) {
-            await renderOneMessage(message_id);
-          }
-        }),
+      _.range(Number($('#chat > .mes').first().attr('mesid')), getLastMessageId() + 1).map(
+        async message_id => await renderOneMessage(message_id),
+      ),
     );
   };
 
@@ -196,10 +191,7 @@ export function mountStreamingMessages(
   );
   scopedEventOn(tavern_events.MESSAGE_DELETED, () => setTimeout(errorCatched(renderAllMessage), 1000));
   scopedEventOn(tavern_events.STREAM_TOKEN_RECEIVED, message => {
-    const message_id = Number($('#chat').children('.mes.last_mes').attr('mesid') ?? 'NaN');
-    if (!isNaN(message_id)) {
-      renderOneMessage(message_id, message);
-    }
+    renderOneMessage(Number($('#chat').children('.mes.last_mes').attr('mesid')), message);
   });
 
   if (host === 'div') {
