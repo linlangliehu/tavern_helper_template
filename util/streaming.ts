@@ -49,8 +49,7 @@ export function mountStreamingMessages(
 
   const destroyIfInvalid = (message_id: number): boolean => {
     const min_message_id = Number($('#chat > .mes').first().attr('mesid'));
-    const max_message_id = getLastMessageId();
-    if (!_.inRange(message_id, min_message_id, max_message_id + 1)) {
+    if (!_.inRange(message_id, min_message_id, SillyTavern.chat.length)) {
       states.get(message_id)?.destroy();
       return true;
     }
@@ -167,7 +166,7 @@ export function mountStreamingMessages(
     }
     destroyAllInvalid();
     await Promise.all(
-      _.range(Number($('#chat > .mes').first().attr('mesid')), getLastMessageId() + 1).map(
+      _.range(Number($('#chat > .mes').first().attr('mesid')), SillyTavern.chat.length).map(
         async message_id => await renderOneMessage(message_id),
       ),
     );
