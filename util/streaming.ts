@@ -47,19 +47,23 @@ export function mountStreamingMessages(
   const states: Map<number, { app: App; data: Reactive<StreamingMessageContext>; destroy: () => void }> = new Map();
   let has_stoped = false;
 
-  const destroyIfInvalid = (message_id: number) => {
+  const destroyIfInvalid = (message_id: number): boolean => {
     const min_message_id = Number($('#chat > .mes').first().attr('mesid'));
     const max_message_id = getLastMessageId();
     if (!_.inRange(message_id, min_message_id, max_message_id + 1)) {
       states.get(message_id)?.destroy();
+      return true;
     }
+    return false;
   };
 
   const renderOneMessage = async (message_id: number, stream_message?: string) => {
     if (has_stoped) {
       return;
     }
-    destroyIfInvalid(message_id);
+    if (destroyIfInvalid(message_id)) {
+      return;
+    }
 
     const message = stream_message ?? getChatMessages(message_id)[0].message ?? '';
     if (filter && !filter(message_id, message)) {
