@@ -133,6 +133,7 @@ export function mountStreamingMessages(
         $host.addClass('hidden!');
       } else if ($edit_textarea.length === 0) {
         $mes_text.addClass('hidden!');
+        $message_element.find('.TH-streaming').addClass('hidden!');
         $host.removeClass('hidden!');
       }
     });
@@ -160,7 +161,7 @@ export function mountStreamingMessages(
     });
   };
 
-  const renderAllMessage = async () => {
+  const renderAllMessage = async (trigger_event?: true) => {
     if (has_stoped) {
       return;
     }
@@ -172,20 +173,29 @@ export function mountStreamingMessages(
           const message_id = Number($(node).attr('mesid') ?? 'NaN');
           if (!isNaN(message_id)) {
             await renderOneMessage(message_id);
+            if (trigger_event) {
+              eventEmit(tavern_events.CHARACTER_MESSAGE_RENDERED, message_id, 'rerender');
+            }
           }
         }),
     );
   };
 
   const stop_list: Array<() => void> = [];
-  const scopedEventOn = <T extends EventType>(event: T, listener: ListenerType[T]) => {
-    stop_list.push(eventOn(event, errorCatched(listener)).stop);
+  const scopedEventOn = <T extends EventType>(event: T, listener: ListenerType[T], first?: true) => {
+    stop_list.push(
+      first ? eventMakeFirst(event, errorCatched(listener)).stop : eventOn(event, errorCatched(listener)).stop,
+    );
   };
   scopedEventOn('chatLoaded', () => renderAllMessage());
-  scopedEventOn(tavern_events.CHARACTER_MESSAGE_RENDERED, message_id => {
-    destroyAllInvalid();
-    renderOneMessage(message_id);
-  });
+  scopedEventOn(
+    tavern_events.CHARACTER_MESSAGE_RENDERED,
+    message_id => {
+      destroyAllInvalid();
+      renderOneMessage(message_id);
+    },
+    true,
+  );
   [tavern_events.MESSAGE_EDITED, tavern_events.MESSAGE_DELETED].forEach(event =>
     scopedEventOn(event, message_id => {
       destroyAllInvalid();
@@ -201,7 +211,7 @@ export function mountStreamingMessages(
   if (host === 'div') {
     stop_list.push(teleportStyle().destroy);
   }
-  renderAllMessage();
+  renderAllMessage(true);
 
   return {
     unmount: () => {
