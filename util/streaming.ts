@@ -29,7 +29,7 @@ export function injectStreamingMessageContext(): Readonly<StreamingMessageContex
  *     - 将会继承酒馆样式
  *     - 禁止使用 mes_text 类名, 它会让酒馆的编辑楼层功能不可用
  *     - 组件内不能使用 tailwindcss, 因为会影响酒馆其他部分的样式
- *     - 你也许会用到 `@types/function/displayed_message.d.ts` 中的 `formatAsDisplayedMessage` 函数来格式化消息内容
+ *     - 你也许会用到 `@types/function/displayed_message.d.ts` 中的 `formatAsDisplayedMessage` 来格式化消息内容, 并用 `.replaceAll('mes_text', 'mes_streaming')` 来为格式化后内容适配样式
  *
  * @param creator 创建流式界面的组件, 函数内可以用 `.use` 安装依赖或执行其他逻辑
  * @param options 可选选项
