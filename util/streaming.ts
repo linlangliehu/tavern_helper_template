@@ -172,7 +172,7 @@ export function mountStreamingMessages(
   const scopedEventOn = <T extends EventType>(event: T, listener: ListenerType[T]) => {
     stop_list.push(eventOn(event, errorCatched(listener)).stop);
   };
-  scopedEventOn(tavern_events.CHAT_CHANGED, () => renderAllMessage());
+  scopedEventOn('chatLoaded', () => renderAllMessage());
   scopedEventOn(tavern_events.CHARACTER_MESSAGE_RENDERED, message_id => renderOneMessage(message_id));
   scopedEventOn(tavern_events.MESSAGE_EDITED, message_id => {
     states.get(message_id)?.destroy();
