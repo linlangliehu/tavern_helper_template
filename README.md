@@ -32,7 +32,7 @@
 
 ## 如果创建为新仓库
 
-在创建好仓库后, 你可以把仓库网址发给 AI, 问 AI 该怎么**怎么启用 `core.symlinks`** 并克隆到本地使用; 或者, 你可以游玩 [Learn Git Branching](https://learngitbranching.js.org/?locale=zh_CN) 来学习 git 分支和合并.
+在创建好仓库后, 你可以把仓库网址发给 AI, 问 AI 该**怎么启用 `core.symlinks`**, 然后克隆到本地使用; 或者, 你可以游玩 [Learn Git Branching](https://learngitbranching.js.org/?locale=zh_CN) 来学习 git 分支和合并.
 
 #### `.vscode/launch.json` 文件
 
