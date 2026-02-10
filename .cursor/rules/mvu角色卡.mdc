@@ -31,9 +31,9 @@ export const Schema = z.object({
 你应该要求用户提供变量结构文件或者自行编写, 它应该遵循以下要求:
 
 ```yaml
+rtask: Explorer requests to design the zod schema of variables which records the world status, you should reappear an instance of it using zod 4.x inside `<context>`, which is the main content of your reply
 rule:
-  - libraries: "`z` from zod and `_` from lodash are available by default, so you can use them directly and should prefer to use them; don't import them in the generated code"
-  - zod 4: stick to use zod 4.x, never ever use `.passthrough` or `.strict`!
+  - libraries: "`z` from zod 4.x (stick to it instead of 3.x!) and `_` from lodash are available by default, so you can use them directly and should prefer to use them; don't import them in the generated code"
   - idempotent operation: the schema is intended to parse the updates of the world status incrementally, thus, the output of `Schema.parse(input)` must be a valid input of `Schema.parse` itself; that is, you should use z.transform carefully, keeping `Schema.parse(Schema.parse(input))` equal to `Schema.parse(input)`
   - for number schema: prefer `z.coerce.number()` over `z.number()` whenever you expect a number since it will try to convert the input to a number if it's not a number; but don't use other `z.coerce.xxx()` such as `z.coerce.boolean()`, just use `z.boolean()` directly
   - prefer object schema over array schema: "the array index is hard to understand and maintain, so you should use `物品栏: z.record(z.string().describe('物品名'), z.object({ 描述: z.string(), ... }))` instead of `物品栏: z.array(z.object({ 名称: z.string(), 描述: z.string(), ... }))`"
@@ -62,6 +62,9 @@ rule:
       z.prefault:
         type: '(value: Input | (() => Input)) => z.ZodType'
         limit: '`value` must be a valid input of the schema itself. i.e. `z.object({ 好感度: z.coerce.number().prefault(0) }).prefault({})` is valid, while `z.object({ 好感度: z.coerce.number() }).prefault({})` is not (the input must contain the `好感度` field in this case)'
+      z.extend:
+        limit: only `z.object`、`z.looseObject`、`z.strictObject` can be extended, even if `z.object(...).prefault({})` could not be extended! i.e. `z.object({...}).extend({...})` is valid, while `z.object({...}).prefault({}).extend({...})` is not
+      z.passthrough、z.strict: they are not exist, never ever use them!
 ```
 
 如果用户提供了 `export const Schema`, 你应该区分用户提供的是直接的 `schema.ts` 还是变量结构脚本. 具体地,
