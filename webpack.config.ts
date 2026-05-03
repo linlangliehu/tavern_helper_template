@@ -451,7 +451,7 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
             { from: 'dedent', imports: [['default', 'dedent']] },
             { from: 'klona', imports: ['klona'] },
             { from: 'vue-final-modal', imports: ['useModal'] },
-            { from: 'zod', imports: ['z'] },
+            { from: 'zod', imports: [['*', 'z']] },
           ],
         }),
         unpluginVueComponents({
