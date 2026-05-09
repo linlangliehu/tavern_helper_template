@@ -1,4 +1,22 @@
-<head></head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;600;700&family=Noto+Serif+SC:wght@600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+</head>
 <body>
   <div id="app"></div>
+  <script>
+    (function() {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.socket.io/4.8.1/socket.io.min.js';
+      s.onload = function() {
+        var socket = io('http://localhost:6621', { transports: ['websocket'], reconnection: true, reconnectionAttempts: 20 });
+        socket.on('connect', function() { console.log('[tavern_helper] HMR connected'); });
+        socket.on('message_iframe_updated', function() { location.reload(); });
+      };
+      document.head.appendChild(s);
+    })();
+  </script>
 </body>

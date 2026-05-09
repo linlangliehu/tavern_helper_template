@@ -5,6 +5,7 @@ import _ from 'lodash';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { ChildProcess, exec, spawn } from 'node:child_process';
 import fs from 'node:fs';
+import http from 'node:http';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import RemarkHTML from 'remark-html';
@@ -82,10 +83,13 @@ const config: Config = {
 let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
+    const port = config.port ?? 6621;
+
     if (!io) {
-      const port = config.port ?? 6621;
-      io = new Server(port, { cors: { origin: '*' } });
-      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
+      const hmrServer = http.createServer();
+      io = new Server(hmrServer, { cors: { origin: '*' } });
+      hmrServer.listen(port);
+      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动 HMR 服务 (端口 ${port})`);
       io.on('connect', socket => {
         console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
