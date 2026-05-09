@@ -40,10 +40,21 @@ const store = useDataStore();
 
 .section-head {
   font-size: 0.95rem;
-  border-bottom: 3px solid var(--c-celadon);
+  font-family: var(--font-title);
+  border-bottom: 1px solid var(--c-gold-dim);
   display: inline-block;
   margin-bottom: 8px;
   font-weight: bold;
+  color: var(--c-gold);
+  letter-spacing: 1px;
+  padding-bottom: 2px;
+  text-shadow: 0 0 6px var(--c-gold-glow);
+
+  &::before {
+    content: '◆ ';
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
 }
 
 .title-grid {
@@ -54,30 +65,37 @@ const store = useDataStore();
 }
 
 .title-box {
-  border: 1.5px solid var(--c-granite);
+  border: 1px solid var(--c-gold-dark);
   padding: 7px;
-  background: #fff;
-  box-shadow: 2px 2px 0 var(--c-ash-grey);
+  background: var(--c-dark-surface);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: var(--c-gold-dim);
+  }
 }
 
 .title-name {
-  background: var(--c-granite);
-  color: var(--c-celadon);
+  background: linear-gradient(180deg, var(--c-gold-dark), var(--c-gold-dim));
+  color: var(--c-charcoal);
   display: inline-block;
-  padding: 2px 4px;
+  padding: 2px 6px;
   font-size: 0.72rem;
   font-weight: bold;
   margin-bottom: 3px;
+  letter-spacing: 0.5px;
 }
 
 .title-effect {
   font-size: 0.78rem;
   margin-bottom: 3px;
+  color: var(--c-white);
 }
 
 .title-quote {
   font-size: 0.7rem;
-  color: var(--c-grey-olive);
+  color: var(--c-ghost);
   font-style: italic;
 }
 
@@ -88,14 +106,15 @@ const store = useDataStore();
 }
 
 .attire-item {
-  border: 1px solid var(--c-grey-olive);
+  border: 1px solid var(--c-mid-border);
   padding: 6px;
   font-size: 0.82rem;
-  background: #fff;
+  background: var(--c-dark-surface);
+  color: var(--c-white);
 }
 
 .attire-slot {
-  color: var(--c-grey-olive);
+  color: var(--c-gold-dim);
   font-size: 0.72rem;
   display: block;
 }

@@ -5,9 +5,7 @@
       "label": "开始监听源代码并编译",
       "type": "shell",
       "command": "pnpm",
-      "args": [
-        "watch"
-      ],
+      "args": ["watch"],
       "problemMatcher": [
         {
           "pattern": [
@@ -41,16 +39,33 @@
       "isBackground": true
     },
     {
+      "label": "启动 Chrome (调试模式)",
+      "type": "shell",
+      "command": ".vscode\\start-chrome-debug.cmd",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "echo": false,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      }
+    },
+    {
       "label": "开始任务",
       "dependsOn": [
         "开始监听源代码并编译",
-      ]
+        "启动 Chrome (调试模式)"
+      ],
+      "dependsOrder": "sequence"
     },
     {
       "label": "结束任务",
       "command": "echo ${input:terminate}",
       "type": "shell"
-    },
+    }
   ],
   "inputs": [
     {

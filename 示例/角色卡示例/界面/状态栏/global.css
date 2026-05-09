@@ -5,13 +5,23 @@
 }
 
 :root {
-  /* 配色方案 - 档案机打字风格 */
-  --c-granite: #3c493f; /* 深色：文字、边框 */
-  --c-grey-olive: #7e8d85; /* 辅助：未选中项、次要文字 */
-  --c-ash-grey: #b3bfb8; /* 背景：网页底色、装饰块 */
-  --c-mint-cream: #f0f7f4; /* 卡片底色 */
-  --c-celadon: #a2e3c4; /* 高亮：进度条、重点装饰 */
+  --c-void: #080808;
+  --c-abyss: #0e0e0e;
+  --c-charcoal: #151515;
+  --c-dark-surface: #1c1c1c;
+  --c-mid-border: #2a2a2a;
 
-  /* 字体 */
-  --font-archive: 'Courier New', 'Microsoft YaHei', monospace;
+  --c-gold: #c9a84c;
+  --c-gold-bright: #e2c55a;
+  --c-gold-light: #d9c47a;
+  --c-gold-dim: #8a7033;
+  --c-gold-dark: #5a4820;
+  --c-gold-glow: rgba(201, 168, 76, 0.15);
+
+  --c-parchment: #c8b88a;
+  --c-ghost: #a09880;
+  --c-white: #e8e0c8;
+
+  --font-title: 'Georgia', 'Times New Roman', 'SimSun', serif;
+  --font-body: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
 }

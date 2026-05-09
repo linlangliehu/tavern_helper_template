@@ -43,22 +43,24 @@ function adjustDependency(delta: number) {
   justify-content: center;
   gap: 8px;
   padding: 6px 10px;
-  background: #fff;
-  border-bottom: 2px dashed var(--c-granite);
+  background: var(--c-dark-surface);
+  border-bottom: 1px dashed var(--c-gold-dark);
 }
 
 .dependency-label,
 .dependency-value {
   font-weight: bold;
   font-size: 0.9rem;
+  color: var(--c-gold-light);
+  text-shadow: 0 0 4px var(--c-gold-glow);
 }
 
 .dependency-track {
   flex: 1;
   max-width: 360px;
   height: 10px;
-  border: 1.5px solid var(--c-granite);
-  background: var(--c-mint-cream);
+  border: 1px solid var(--c-gold-dark);
+  background: var(--c-abyss);
   position: relative;
   overflow: hidden;
 }
@@ -68,9 +70,10 @@ function adjustDependency(delta: number) {
   left: 0;
   top: 0;
   bottom: 0;
-  background: var(--c-celadon);
-  border-right: 1.5px solid var(--c-granite);
+  background: linear-gradient(90deg, var(--c-gold-dark), var(--c-gold), var(--c-gold-bright));
+  border-right: 1px solid var(--c-gold-bright);
   transition: width 0.25s ease;
+  box-shadow: 0 0 6px var(--c-gold-glow);
 }
 
 .dependency-controls {
@@ -82,29 +85,36 @@ function adjustDependency(delta: number) {
   width: 24px;
   height: 22px;
   padding: 0;
-  border: 1.5px solid var(--c-granite);
-  background: var(--c-mint-cream);
-  color: var(--c-granite);
+  border: 1px solid var(--c-gold-dim);
+  background: linear-gradient(180deg, var(--c-dark-surface), var(--c-abyss));
+  color: var(--c-gold);
   font-family: inherit;
   font-weight: bold;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 2px 2px 0px rgba(60, 73, 63, 0.16);
+  box-shadow: inset 0 1px 0 rgba(201, 168, 76, 0.1);
+  transition: all 0.15s;
+}
+
+.dependency-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, var(--c-gold-dark), var(--c-abyss));
+  color: var(--c-gold-bright);
+  box-shadow: 0 0 4px var(--c-gold-glow);
 }
 
 .dependency-button:active:not(:disabled) {
   transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px rgba(60, 73, 63, 0.16);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .dependency-button:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
   box-shadow: none;
 }
 
 .dependency-button:focus-visible {
-  outline: 2px dashed var(--c-granite);
+  outline: 1px dashed var(--c-gold);
   outline-offset: 2px;
 }
 </style>

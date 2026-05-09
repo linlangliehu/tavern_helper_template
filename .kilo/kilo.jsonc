@@ -1,0 +1,10 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["pnpx", "chrome-devtools-mcp@latest", "--port=58813"],
+      "enabled": true
+    }
+  }
+}

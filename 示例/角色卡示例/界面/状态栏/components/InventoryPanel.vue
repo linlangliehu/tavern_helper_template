@@ -44,28 +44,30 @@ function getItemIcon(name: string): string {
 .item-row {
   display: flex;
   align-items: center;
-  border: 1.5px solid var(--c-granite);
+  border: 1px solid var(--c-gold-dark);
   padding: 8px;
-  background: #fff;
-  transition: transform 0.2s;
+  background: var(--c-dark-surface);
+  transition: all 0.2s;
 }
 
 .item-row:hover {
   transform: translateX(5px);
-  background: var(--c-mint-cream);
+  border-color: var(--c-gold-dim);
+  box-shadow: 0 0 8px var(--c-gold-glow);
 }
 
 .item-icon {
   width: 28px;
   height: 28px;
-  background: var(--c-celadon);
-  border: 1.5px solid var(--c-granite);
+  background: linear-gradient(135deg, var(--c-gold-dark), var(--c-gold-dim));
+  border: 1px solid var(--c-gold);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 10px;
   font-weight: bold;
   font-size: 0.7rem;
+  color: var(--c-charcoal);
 }
 
 .item-detail {
@@ -75,26 +77,47 @@ function getItemIcon(name: string): string {
 .item-name {
   font-weight: bold;
   display: block;
+  color: var(--c-white);
 }
 
 .item-desc {
   font-size: 0.76rem;
-  color: var(--c-grey-olive);
+  color: var(--c-ghost);
 }
 
 .item-count {
-  background: var(--c-granite);
-  color: #fff;
-  padding: 2px 5px;
+  background: linear-gradient(180deg, var(--c-gold-dark), var(--c-gold-dim));
+  color: var(--c-charcoal);
+  padding: 2px 6px;
   font-size: 0.72rem;
-  border-radius: 3px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
 }
 
 .empty-state {
   text-align: center;
-  color: var(--c-grey-olive);
+  color: var(--c-ghost);
   padding: 18px;
   font-style: italic;
   font-size: 0.85rem;
+}
+
+.section-head {
+  font-size: 0.95rem;
+  font-family: var(--font-title);
+  border-bottom: 1px solid var(--c-gold-dim);
+  display: inline-block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: var(--c-gold);
+  letter-spacing: 1px;
+  padding-bottom: 2px;
+  text-shadow: 0 0 6px var(--c-gold-glow);
+
+  &::before {
+    content: '◆ ';
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
 }
 </style>
