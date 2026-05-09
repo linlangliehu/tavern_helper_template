@@ -37,9 +37,9 @@ const formatted_time = computed(() => {
 
 <style lang="scss" scoped>
 .world-section {
-  border-bottom: 3px solid var(--c-granite);
+  border-bottom: 1px solid var(--c-gold-dim);
   padding: 10px;
-  background-color: var(--c-mint-cream);
+  background-color: var(--c-charcoal);
 }
 
 .meta-row {
@@ -48,10 +48,14 @@ const formatted_time = computed(() => {
   margin-bottom: 6px;
   font-weight: bold;
   font-size: 0.9rem;
-  border-bottom: 1.5px dashed var(--c-grey-olive);
+  font-family: var(--font-title);
+  color: var(--c-gold-light);
+  letter-spacing: 1px;
+  border-bottom: 1px dashed var(--c-gold-dark);
   padding-bottom: 6px;
   flex-wrap: wrap;
   gap: 6px;
+  text-shadow: 0 0 4px var(--c-gold-glow);
 }
 
 .event-list {
@@ -61,8 +65,8 @@ const formatted_time = computed(() => {
 }
 
 .event-badge {
-  background: #fff;
-  border: 1.5px solid var(--c-granite);
+  background: var(--c-dark-surface);
+  border: 1px solid var(--c-gold-dark);
   padding: 6px 8px;
   min-width: 130px;
   flex: 1;
@@ -75,22 +79,23 @@ const formatted_time = computed(() => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 4px;
-  background-color: var(--c-celadon);
+  width: 3px;
+  background: linear-gradient(180deg, var(--c-gold), var(--c-gold-dark));
 }
 
 .event-title {
   display: block;
   font-weight: bold;
   margin-bottom: 2px;
-  padding-left: 6px;
+  padding-left: 8px;
+  color: var(--c-white);
 }
 
 .event-desc {
   display: block;
   font-size: 0.75rem;
-  color: var(--c-grey-olive);
-  padding-left: 6px;
+  color: var(--c-ghost);
+  padding-left: 8px;
 }
 
 @media (max-width: 600px) {

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "姓名": {
+      "default": "未知",
+      "type": "string"
+    },
+    "状态": {
+      "default": "健康",
+      "type": "string"
+    },
+    "厉鬼复苏程度": {
+      "default": 0,
+      "type": "number"
+    },
+    "持有拼图": {
+      "default": "无",
+      "type": "string"
+    },
+    "灵异物品": {
+      "default": "无",
+      "type": "string"
+    },
+    "所在位置": {
+      "default": "未知",
+      "type": "string"
+    }
+  }
+}

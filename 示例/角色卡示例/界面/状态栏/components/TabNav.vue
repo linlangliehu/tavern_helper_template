@@ -28,8 +28,8 @@ function toggleTab(id: string) {
 <style lang="scss" scoped>
 .tabs {
   display: flex;
-  background-color: var(--c-grey-olive);
-  border-bottom: 3px solid var(--c-granite);
+  background-color: var(--c-abyss);
+  border-bottom: 1px solid var(--c-gold-dim);
 }
 
 .tab-button {
@@ -37,14 +37,16 @@ function toggleTab(id: string) {
   padding: 8px;
   border: none;
   background: transparent;
-  color: var(--c-mint-cream);
+  color: var(--c-gold-dim);
   font-size: 0.92rem;
   font-weight: bold;
-  font-family: var(--font-archive);
+  font-family: var(--font-body);
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
-  border-right: 1.5px solid var(--c-granite);
+  letter-spacing: 1px;
+  border-right: 1px solid var(--c-gold-dark);
+  text-shadow: none;
 }
 
 .tab-button:last-child {
@@ -52,15 +54,27 @@ function toggleTab(id: string) {
 }
 
 .tab-button:hover {
-  background-color: var(--c-ash-grey);
-  color: var(--c-granite);
+  background-color: var(--c-dark-surface);
+  color: var(--c-gold-light);
+  text-shadow: 0 0 6px var(--c-gold-glow);
 }
 
 .tab-button.active {
-  background-color: var(--c-mint-cream);
-  color: var(--c-granite);
+  background-color: var(--c-charcoal);
+  color: var(--c-gold);
   position: relative;
   top: 1px;
   padding-bottom: 10px;
+  text-shadow: 0 0 8px var(--c-gold-glow);
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--c-gold), transparent);
+  }
 }
 </style>

@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;600;700&family=Noto+Serif+SC:wght@600;800&display=swap');
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-panel: #0d0d0d;
+  --bg-header: #1a0a0a;
+  --border-steel: #3a3a3a;
+  --border-dark-red: #5c1a1a;
+  --text-silver: #a0a0a0;
+  --text-light: #c0c0c0;
+  --text-white: #e0e0e0;
+  --accent-gold: #c4a040;
+  --accent-gold-light: #e0c060;
+  --accent-dark-red: #8b1a1a;
+  --accent-dark-red-glow: rgba(139, 26, 26, 0.4);
+  --accent-gold-glow: rgba(196, 160, 64, 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-silver);
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.8;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.008) 2px,
+      rgba(255, 255, 255, 0.008) 4px
+    ),
+    radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+#app {
+  min-height: 100vh;
+  position: relative;
+}
