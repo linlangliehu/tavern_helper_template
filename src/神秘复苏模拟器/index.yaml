@@ -208,7 +208,7 @@
     id: b50d0bed-ff40-4a25-9ada-14feb4283324
     启用: true
     查找表达式: <StatusPlaceHolderImpl/>
-    替换为: |-
+    内容: |-
       ```
       <body>
       <script>
