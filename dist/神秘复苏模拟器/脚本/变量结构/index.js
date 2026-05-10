@@ -1,2 +1,78 @@
-import{registerMvuSchema as t}from'https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js';const r=z,e=r.z.object({姓名:r.z.string().default(''),性别:r.z.string().default('男'),开局地点:r.z.string().default(''),初始年龄:r.z.string().default('18岁'),角色背景:r.z.string().default(''),身份:r.z.string().default(''),驾驭厉鬼:r.z.preprocess(t=>Array.isArray(t)?t:'string'==typeof t&&t&&'无'!==t?[{厉鬼名称:t,杀人规律:'无'}]:[],r.z.array(r.z.object({厉鬼名称:r.z.string().default(''),杀人规律:r.z.string().default('无')})).default([])),特殊能力描述:r.z.string().default(''),消耗代价:r.z.string().default('无'),灵异物品:r.z.preprocess(t=>Array.isArray(t)?t:[],r.z.array(r.z.object({名称:r.z.string().default(''),效果:r.z.string().default(''),使用限制:r.z.string().default('无')})).default([])),状态:r.z.string().default('健康'),厉鬼复苏程度:r.z.number().default(0),持有拼图:r.z.string().default('无'),所在位置:r.z.string().default('未知')});$(()=>{t(e)});
-//# sourceMappingURL=index.js.map
+import * as __WEBPACK_EXTERNAL_MODULE_https_testingcf_jsdelivr_net_gh_StageDog_tavern_resource_dist_util_mvu_zod_js_8998c919__ from "https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js";
+
+var __webpack_modules__ = {
+  "./src/神秘复苏模拟器/schema.ts"(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+    eval("{__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   Schema: () => (/* binding */ Schema)\n/* harmony export */ });\n/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! zod */ \"zod\");\n/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(zod__WEBPACK_IMPORTED_MODULE_0__);\n\nconst Schema = zod__WEBPACK_IMPORTED_MODULE_0__.z.object({\n    姓名: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n    性别: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('男'),\n    开局地点: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n    初始年龄: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('18岁'),\n    角色背景: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n    身份: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n    驾驭厉鬼: zod__WEBPACK_IMPORTED_MODULE_0__.z.preprocess((val) => {\n        if (Array.isArray(val))\n            return val;\n        if (typeof val === 'string' && val && val !== '无')\n            return [{ 厉鬼名称: val, 杀人规律: '无' }];\n        return [];\n    }, zod__WEBPACK_IMPORTED_MODULE_0__.z.array(zod__WEBPACK_IMPORTED_MODULE_0__.z.object({\n        厉鬼名称: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n        杀人规律: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('无'),\n    })).default([])),\n    特殊能力描述: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n    消耗代价: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('无'),\n    灵异物品: zod__WEBPACK_IMPORTED_MODULE_0__.z.preprocess((val) => Array.isArray(val) ? val : [], zod__WEBPACK_IMPORTED_MODULE_0__.z.array(zod__WEBPACK_IMPORTED_MODULE_0__.z.object({\n        名称: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n        效果: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default(''),\n        使用限制: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('无'),\n    })).default([])),\n    状态: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('健康'),\n    厉鬼复苏程度: zod__WEBPACK_IMPORTED_MODULE_0__.z.number().default(0),\n    持有拼图: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('无'),\n    所在位置: zod__WEBPACK_IMPORTED_MODULE_0__.z.string().default('未知'),\n});\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi9zcmMv56We56eY5aSN6IuP5qih5ouf5ZmoL3NjaGVtYS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7O0FBQU8sQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQy9CLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUM5QixDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUMvQixDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLGtDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ2hDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDbkMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNoQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDOUIsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNoQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUM5QixDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ3RCLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ3pELENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQzdDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNqQixDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLGtDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ3hCLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNwQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNyQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDcEIsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDbEMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ2pDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLGtDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNoRixDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNsQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNsQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNyQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDcEIsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLGtDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUNoQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUM7QUFDakMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxrQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ2pDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsa0NBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQyxDQUFDO0FBQ2xDLENBQUMsQ0FBQyIsInNvdXJjZXMiOlsic3JjOi8vdGF2ZXJuX2hlbHBlcl90ZW1wbGF0ZS9zcmMv56We56eY5aSN6IuP5qih5ouf5ZmoL3NjaGVtYS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgY29uc3QgU2NoZW1hID0gei5vYmplY3Qoe1xuICAgIOWnk+WQjTogei5zdHJpbmcoKS5kZWZhdWx0KCcnKSxcbiAgICDmgKfliKs6IHouc3RyaW5nKCkuZGVmYXVsdCgn55S3JyksXG4gICAg5byA5bGA5Zyw54K5OiB6LnN0cmluZygpLmRlZmF1bHQoJycpLFxuICAgIOWIneWni+W5tOm+hDogei5zdHJpbmcoKS5kZWZhdWx0KCcxOOWygScpLFxuICAgIOinkuiJsuiDjOaZrzogei5zdHJpbmcoKS5kZWZhdWx0KCcnKSxcbiAgICDouqvku706IHouc3RyaW5nKCkuZGVmYXVsdCgnJyksXG4gICAg6am+6amt5Y6J6ay8OiB6LnByZXByb2Nlc3MoKHZhbCkgPT4ge1xuICAgICAgICBpZiAoQXJyYXkuaXNBcnJheSh2YWwpKVxuICAgICAgICAgICAgcmV0dXJuIHZhbDtcbiAgICAgICAgaWYgKHR5cGVvZiB2YWwgPT09ICdzdHJpbmcnICYmIHZhbCAmJiB2YWwgIT09ICfml6AnKVxuICAgICAgICAgICAgcmV0dXJuIFt7IOWOiemsvOWQjeensDogdmFsLCDmnYDkurrop4Tlvos6ICfml6AnIH1dO1xuICAgICAgICByZXR1cm4gW107XG4gICAgfSwgei5hcnJheSh6Lm9iamVjdCh7XG4gICAgICAgIOWOiemsvOWQjeensDogei5zdHJpbmcoKS5kZWZhdWx0KCcnKSxcbiAgICAgICAg5p2A5Lq66KeE5b6LOiB6LnN0cmluZygpLmRlZmF1bHQoJ+aXoCcpLFxuICAgIH0pKS5kZWZhdWx0KFtdKSksXG4gICAg54m55q6K6IO95Yqb5o+P6L+wOiB6LnN0cmluZygpLmRlZmF1bHQoJycpLFxuICAgIOa2iOiAl+S7o+S7tzogei5zdHJpbmcoKS5kZWZhdWx0KCfml6AnKSxcbiAgICDngbXlvILnianlk4E6IHoucHJlcHJvY2VzcygodmFsKSA9PiBBcnJheS5pc0FycmF5KHZhbCkgPyB2YWwgOiBbXSwgei5hcnJheSh6Lm9iamVjdCh7XG4gICAgICAgIOWQjeensDogei5zdHJpbmcoKS5kZWZhdWx0KCcnKSxcbiAgICAgICAg5pWI5p6cOiB6LnN0cmluZygpLmRlZmF1bHQoJycpLFxuICAgICAgICDkvb/nlKjpmZDliLY6IHouc3RyaW5nKCkuZGVmYXVsdCgn5pegJyksXG4gICAgfSkpLmRlZmF1bHQoW10pKSxcbiAgICDnirbmgIE6IHouc3RyaW5nKCkuZGVmYXVsdCgn5YGl5bq3JyksXG4gICAg5Y6J6ay85aSN6IuP56iL5bqmOiB6Lm51bWJlcigpLmRlZmF1bHQoMCksXG4gICAg5oyB5pyJ5ou85Zu+OiB6LnN0cmluZygpLmRlZmF1bHQoJ+aXoCcpLFxuICAgIOaJgOWcqOS9jee9rjogei5zdHJpbmcoKS5kZWZhdWx0KCfmnKrnn6UnKSxcbn0pO1xuIl0sIm5hbWVzIjpbXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///./src/神秘复苏模拟器/schema.ts\n\n}");
+  },
+  "./src/神秘复苏模拟器/脚本/变量结构/index.ts"(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+    eval('{__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var https_testingcf_jsdelivr_net_gh_StageDog_tavern_resource_dist_util_mvu_zod_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js */ "https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js");\n/* harmony import */ var _schema__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../schema */ "./src/神秘复苏模拟器/schema.ts");\n\n\n$(() => {\n    (0,https_testingcf_jsdelivr_net_gh_StageDog_tavern_resource_dist_util_mvu_zod_js__WEBPACK_IMPORTED_MODULE_0__.registerMvuSchema)(_schema__WEBPACK_IMPORTED_MODULE_1__.Schema);\n});\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi9zcmMv56We56eY5aSN6IuP5qih5ouf5ZmoL+iEmuacrC/lj5jph4/nu5PmnoQvaW5kZXgudHMiLCJtYXBwaW5ncyI6Ijs7O0FBQW9IO0FBQzlFO0FBRXRDLENBQUMsQ0FBQyxHQUFHLEVBQUU7SUFDTCxnSUFBaUIsQ0FBQywyQ0FBTSxDQUFDLENBQUM7QUFDNUIsQ0FBQyxDQUFDLENBQUMiLCJzb3VyY2VzIjpbInNyYzovL3RhdmVybl9oZWxwZXJfdGVtcGxhdGUvc3JjL+elnuenmOWkjeiLj+aooeaLn+WZqC/ohJrmnKwv5Y+Y6YeP57uT5p6EL2luZGV4LnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHJlZ2lzdGVyTXZ1U2NoZW1hIH0gZnJvbSAnaHR0cHM6Ly90ZXN0aW5nY2YuanNkZWxpdnIubmV0L2doL1N0YWdlRG9nL3RhdmVybl9yZXNvdXJjZS9kaXN0L3V0aWwvbXZ1X3pvZC5qcyc7XG5pbXBvcnQgeyBTY2hlbWEgfSBmcm9tICcuLi8uLi9zY2hlbWEnO1xuXG4kKCgpID0+IHtcbiAgcmVnaXN0ZXJNdnVTY2hlbWEoU2NoZW1hKTtcbn0pOyJdLCJuYW1lcyI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///./src/神秘复苏模拟器/脚本/变量结构/index.ts\n\n}');
+  },
+  "https://testingcf.jsdelivr.net/gh/StageDog/tavern_resource/dist/util/mvu_zod.js"(module) {
+    module.exports = __WEBPACK_EXTERNAL_MODULE_https_testingcf_jsdelivr_net_gh_StageDog_tavern_resource_dist_util_mvu_zod_js_8998c919__;
+  },
+  zod(module) {
+    module.exports = z;
+  }
+};
+
+var __webpack_module_cache__ = {};
+
+function __webpack_require__(moduleId) {
+  var cachedModule = __webpack_module_cache__[moduleId];
+  if (cachedModule !== undefined) {
+    return cachedModule.exports;
+  }
+  var module = __webpack_module_cache__[moduleId] = {
+    exports: {}
+  };
+  if (!(moduleId in __webpack_modules__)) {
+    delete __webpack_module_cache__[moduleId];
+    var e = new Error("Cannot find module '" + moduleId + "'");
+    e.code = "MODULE_NOT_FOUND";
+    throw e;
+  }
+  __webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+  return module.exports;
+}
+
+(() => {
+  __webpack_require__.n = module => {
+    var getter = module && module.__esModule ? () => module["default"] : () => module;
+    __webpack_require__.d(getter, {
+      a: getter
+    });
+    return getter;
+  };
+})();
+
+(() => {
+  __webpack_require__.d = (exports, definition) => {
+    for (var key in definition) {
+      if (__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+        Object.defineProperty(exports, key, {
+          enumerable: true,
+          get: definition[key]
+        });
+      }
+    }
+  };
+})();
+
+(() => {
+  __webpack_require__.o = (obj, prop) => Object.prototype.hasOwnProperty.call(obj, prop);
+})();
+
+(() => {
+  __webpack_require__.r = exports => {
+    if (typeof Symbol !== "undefined" && Symbol.toStringTag) {
+      Object.defineProperty(exports, Symbol.toStringTag, {
+        value: "Module"
+      });
+    }
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+  };
+})();
+
+var __webpack_exports__ = __webpack_require__("./src/神秘复苏模拟器/脚本/变量结构/index.ts");

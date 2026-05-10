@@ -195,8 +195,10 @@
 
     <footer class="card-footer">
       <div class="footer-actions">
-        <button class="btn btn-start" @click="handleStart">进入神秘复苏世界</button>
-        <button class="btn btn-reset" @click="handleReset">清空所有信息</button>
+        <button class="btn btn-start" :disabled="isStarting" @click="handleStart">
+          {{ isStarting ? '正在坠入世界…' : '进入神秘复苏世界' }}
+        </button>
+        <button class="btn btn-reset" :disabled="isStarting" @click="handleReset">清空所有信息</button>
       </div>
       <div class="footer-warning">⚠ 注意：模拟器中的一切选择，皆会影响你的生死。</div>
     </footer>
@@ -204,11 +206,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, toRaw } from 'vue'
 import { useDataStore } from './store'
 
 const store = useDataStore()
 const data = store.data
+const isStarting = ref(false)
 
 const defaults = { 姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁', 角色背景: '', 身份: '', 驾驭厉鬼: [], 特殊能力描述: '', 消耗代价: '无', 灵异物品: [], 状态: '健康', 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知' }
 
@@ -237,6 +240,91 @@ const 消耗代价 = bindField('消耗代价', '无')
 
 const ghosts = computed(() => d().驾驭厉鬼 ?? [])
 const items = computed(() => d().灵异物品 ?? [])
+
+function textOrFallback(value: unknown, fallback = '无') {
+  const text = String(value ?? '').trim()
+  return text || fallback
+}
+
+function clonePlainData<T>(value: T): T {
+  return JSON.parse(JSON.stringify(toRaw(value))) as T
+}
+
+function filledGhosts() {
+  return ghosts.value
+    .filter(ghost => {
+      const name = textOrFallback(ghost.厉鬼名称, '')
+      const rule = textOrFallback(ghost.杀人规律, '')
+      return name || (rule && rule !== '无')
+    })
+    .map(ghost => ({
+      厉鬼名称: textOrFallback(ghost.厉鬼名称, '未命名厉鬼'),
+      杀人规律: textOrFallback(ghost.杀人规律),
+    }))
+}
+
+function filledItems() {
+  return items.value
+    .filter(item => textOrFallback(item.名称, '') || textOrFallback(item.效果, ''))
+    .map(item => ({
+      名称: textOrFallback(item.名称, '未命名灵异物品'),
+      效果: textOrFallback(item.效果),
+      使用限制: textOrFallback(item.使用限制),
+    }))
+}
+
+function buildStartMessage() {
+  const current = d()
+  const ghostList = filledGhosts()
+  const itemList = filledItems()
+  const ghostText = ghostList.length
+    ? ghostList.map((ghost, index) => `${index + 1}. ${ghost.厉鬼名称}（杀人规律：${ghost.杀人规律}）`).join('\n')
+    : '无'
+  const itemText = itemList.length
+    ? itemList.map((item, index) => `${index + 1}. ${item.名称}（效果：${item.效果}；限制：${item.使用限制}）`).join('\n')
+    : '无'
+
+  return `【开局设定已确认】
+姓名：${textOrFallback(current.姓名, '未知')}
+性别：${textOrFallback(current.性别, '男')}
+初始年龄：${textOrFallback(current.初始年龄, '18岁')}
+开局地点：${textOrFallback(current.开局地点, '未知地点')}
+身份：${textOrFallback(current.身份, '普通人')}
+角色背景：${textOrFallback(current.角色背景, '没有额外背景，由模拟器自行补全合理细节。')}
+
+驾驭厉鬼：
+${ghostText}
+
+特殊能力：${textOrFallback(current.特殊能力描述)}
+能力代价：${textOrFallback(current.消耗代价)}
+
+灵异物品：
+${itemText}
+
+请根据以上设定正式启动“神秘复苏模拟器”的世界线推演：生成我抵达开局地点后的第一段剧情、灵异征兆、系统提示、状态面板和可行动选项。保持《神秘复苏》式冷峻、危险、因果严密的氛围，不要重新要求我填写设定。`
+}
+
+function commitStartData() {
+  if (!data.value) {
+    data.value = { ...defaults }
+  }
+
+  const ghostList = filledGhosts()
+  const itemList = filledItems()
+  Object.assign(data.value, {
+    驾驭厉鬼: ghostList,
+    所在位置: textOrFallback(data.value.开局地点, '未知'),
+    状态: textOrFallback(data.value.状态, '健康'),
+    厉鬼复苏程度: Number(data.value.厉鬼复苏程度 ?? 0),
+    持有拼图: ghostList.length ? ghostList.map(ghost => ghost.厉鬼名称).join('、') : '无',
+    灵异物品: itemList,
+  })
+  const statData = clonePlainData(data.value)
+  updateVariablesWith(variables => {
+    _.set(variables, 'stat_data', statData)
+    return variables
+  }, { type: 'message', message_id: getCurrentMessageId() })
+}
 
 function addGhost() {
   if (!data.value) {
@@ -268,8 +356,29 @@ function removeItem(idx: number) {
   data.value.灵异物品.splice(idx, 1)
 }
 
-function handleStart() {
-  console.log('[MFRS] 开始模拟', JSON.stringify(d(), null, 2))
+async function handleStart() {
+  if (isStarting.value) return
+
+  const current = d()
+  if (!textOrFallback(current.姓名, '') || !textOrFallback(current.开局地点, '')) {
+    toastr.warning('请至少填写姓名和开局地点。', '初始化未完成')
+    return
+  }
+
+  isStarting.value = true
+  try {
+    commitStartData()
+    const message = buildStartMessage()
+    console.info('[MFRS] 开始模拟', message)
+    await createChatMessages([{ role: 'user', message }])
+    await triggerSlash('/trigger')
+    toastr.success('世界线已经开始推演。', '神秘复苏模拟器')
+  } catch (error) {
+    console.error('[MFRS] 启动模拟失败', error)
+    toastr.error(String(error instanceof Error ? error.message : error), '启动模拟失败')
+  } finally {
+    isStarting.value = false
+  }
 }
 
 function handleReset() {
@@ -688,6 +797,11 @@ function handleReset() {
   transition: all 0.2s;
   outline: none;
   text-transform: uppercase;
+}
+
+.btn:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .btn-start {
