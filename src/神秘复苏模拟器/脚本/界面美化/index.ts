@@ -1,7 +1,16 @@
-import { teleportStyle } from '@util/script';
+function getHostDocument() {
+  try {
+    return window.parent?.document ?? document;
+  } catch {
+    return document;
+  }
+}
+
+type HostWindowWithThemeCleanup = Window & {
+  __mfrsHorrorThemeCleanup__?: () => void;
+};
 
 $(() => {
-  // 在 iframe 内创建 style 元素（iframe 的 document）
   const style = document.createElement('style');
   style.id = 'mfrs-horror-theme';
   style.textContent = `
@@ -446,15 +455,44 @@ body {
   letter-spacing: 0.8px !important;
 }
 `;
-  document.head.appendChild(style);
+  const hostDocument = getHostDocument();
+  const hostWindow = hostDocument.defaultView as HostWindowWithThemeCleanup | null;
+  hostWindow?.__mfrsHorrorThemeCleanup__?.();
 
-  // 将 iframe 中的 style 复制到酒馆页面的 <head> 中，使其对酒馆页面生效
-  const { destroy } = teleportStyle();
+  const hostStyle = hostDocument.createElement('style');
+  hostStyle.id = style.id;
+  hostStyle.textContent = style.textContent;
+
+  const ensureStyleMounted = () => {
+    const current = hostDocument.getElementById(style.id);
+    if (current && current !== hostStyle) {
+      current.remove();
+    }
+    if (!hostStyle.isConnected || hostStyle.parentElement !== hostDocument.head || hostStyle.nextSibling) {
+      hostDocument.head.appendChild(hostStyle);
+    }
+  };
+
+  ensureStyleMounted();
+
+  const HostMutationObserver = hostDocument.defaultView?.MutationObserver ?? MutationObserver;
+  const observer = new HostMutationObserver(ensureStyleMounted);
+  observer.observe(hostDocument.head, { childList: true });
+
+  const cleanup = () => {
+    observer.disconnect();
+    hostStyle.remove();
+    if (hostWindow?.__mfrsHorrorThemeCleanup__ === cleanup) {
+      delete hostWindow.__mfrsHorrorThemeCleanup__;
+    }
+  };
+
+  if (hostWindow) {
+    hostWindow.__mfrsHorrorThemeCleanup__ = cleanup;
+  }
 
   // 脚本卸载时清理样式
-  $(window).on('pagehide', () => {
-    destroy();
-  });
+  window.addEventListener('pagehide', cleanup, { once: true });
 
   console.info('[界面美化] 暗黑恐怖主题已注入');
 });
