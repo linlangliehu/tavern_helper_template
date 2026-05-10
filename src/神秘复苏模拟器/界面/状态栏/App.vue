@@ -193,6 +193,54 @@
       </div>
     </section>
 
+    <section class="card-module dossier-module">
+      <div class="module-header">
+        <span class="module-icon">▣</span>
+        <span class="module-title">灵异档案</span>
+        <div class="module-line"></div>
+      </div>
+      <div class="module-body dossier-grid">
+        <div class="dossier-item">
+          <span class="dossier-label">事件代号</span>
+          <strong>{{ eventFile.事件代号 }}</strong>
+        </div>
+        <div class="dossier-item">
+          <span class="dossier-label">危害等级</span>
+          <strong>{{ eventFile.危害等级 }}</strong>
+        </div>
+        <div class="dossier-item">
+          <span class="dossier-label">鬼域状态</span>
+          <strong>{{ eventFile.鬼域状态 }}</strong>
+        </div>
+        <div class="dossier-item">
+          <span class="dossier-label">处理状态</span>
+          <strong>{{ eventFile.处理状态 }}</strong>
+        </div>
+        <div class="dossier-item">
+          <span class="dossier-label">复苏风险</span>
+          <strong>{{ ghostState.总复苏风险 }}%</strong>
+        </div>
+        <div class="dossier-item">
+          <span class="dossier-label">总部备案</span>
+          <strong>{{ factionState.总部备案状态 }}</strong>
+        </div>
+      </div>
+      <div class="module-body dossier-notes">
+        <div class="note-line">
+          <span>已知规律</span>
+          <em>{{ listText(eventFile.已知杀人规律) }}</em>
+        </div>
+        <div class="note-line">
+          <span>猜测规律</span>
+          <em>{{ listText(eventFile.猜测杀人规律) }}</em>
+        </div>
+        <div class="note-line">
+          <span>灵异资源</span>
+          <em>{{ resourceSummary }}</em>
+        </div>
+      </div>
+    </section>
+
     <footer class="card-footer">
       <div class="footer-actions">
         <button class="btn btn-start" :disabled="isStarting" @click="handleStart">
@@ -213,7 +261,68 @@ const store = useDataStore()
 const data = store.data
 const isStarting = ref(false)
 
-const defaults = { 姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁', 角色背景: '', 身份: '', 驾驭厉鬼: [], 特殊能力描述: '', 消耗代价: '无', 灵异物品: [], 状态: '健康', 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知' }
+const defaultEventFile = {
+  事件代号: '未立案灵异事件',
+  危害等级: '未知',
+  发生地点: '未知',
+  鬼域状态: '未确认',
+  已知杀人规律: [],
+  猜测杀人规律: [],
+  错误推断: [],
+  已死亡人数: 0,
+  扩散趋势: '未观察',
+  处理状态: '未接触',
+}
+
+const defaultGhostState = {
+  总复苏风险: 0,
+  已驾驭厉鬼: [],
+}
+
+const defaultResources = {
+  鬼拼图: [],
+  灵异物品: [],
+  黄金储备: '未准备',
+}
+
+const defaultFactionState = {
+  总部备案状态: '未备案',
+  所属城市: '未知',
+  联系人: [],
+  敌对势力: [],
+  可调用资源: [],
+}
+
+const defaultHiddenFile = {
+  真实杀人规律: '未生成',
+  关键生路: '未生成',
+  误导线索: [],
+  鬼的真实位置: '未确认',
+}
+
+const defaults = {
+  姓名: '',
+  性别: '男',
+  开局地点: '',
+  初始年龄: '18岁',
+  角色背景: '',
+  身份: '',
+  驾驭厉鬼: [],
+  特殊能力描述: '',
+  消耗代价: '无',
+  灵异物品: [],
+  状态: '健康',
+  厉鬼复苏程度: 0,
+  持有拼图: '无',
+  所在位置: '未知',
+  当前灵异事件: defaultEventFile,
+  规律推理记录: [],
+  驭鬼者状态: defaultGhostState,
+  灵异资源: defaultResources,
+  势力关系: defaultFactionState,
+  世界线记录: [],
+  隐藏档案: defaultHiddenFile,
+}
 
 function d() {
   return data.value ?? defaults
@@ -240,6 +349,9 @@ const 消耗代价 = bindField('消耗代价', '无')
 
 const ghosts = computed(() => d().驾驭厉鬼 ?? [])
 const items = computed(() => d().灵异物品 ?? [])
+const eventFile = computed(() => d().当前灵异事件 ?? defaultEventFile)
+const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState)
+const factionState = computed(() => d().势力关系 ?? defaultFactionState)
 
 function textOrFallback(value: unknown, fallback = '无') {
   const text = String(value ?? '').trim()
@@ -273,15 +385,80 @@ function filledItems() {
     }))
 }
 
+function listText(values: unknown, fallback = '无') {
+  if (!Array.isArray(values) || values.length === 0) return fallback
+  return values.map(value => textOrFallback(value, '')).filter(Boolean).join('；') || fallback
+}
+
+function hazardLevelFor(identity: string, ghostCount: number) {
+  if (identity === '失控者') return 'B级起步，存在复苏外溢风险'
+  if (ghostCount > 1) return 'B级观察，疑似多拼图冲突'
+  if (ghostCount === 1 || identity === '驭鬼者' || identity === '民间异类') return 'C级观察，驭鬼者介入'
+  return '未知，待第一起死亡案例确认'
+}
+
+function filingStateFor(identity: string) {
+  if (identity === '总部调查员') return '总部内部记录'
+  if (identity === '驭鬼者' || identity === '民间异类') return '待总部备案'
+  if (identity === '失控者') return '高危观察'
+  return '未备案'
+}
+
+function controlledGhostsFrom(ghostList: ReturnType<typeof filledGhosts>) {
+  return ghostList.map(ghost => ({
+    代号: ghost.厉鬼名称,
+    恐怖等级: '未知',
+    拼图特征: ghost.厉鬼名称,
+    杀人规律: ghost.杀人规律,
+    使用能力: textOrFallback(d().特殊能力描述, '未确认'),
+    使用代价: textOrFallback(d().消耗代价),
+    复苏进度: Number(d().厉鬼复苏程度 ?? 0),
+    是否死机: textOrFallback(d().特殊能力描述, '').includes('死机'),
+    压制关系: ghostList.length > 1 ? '多只厉鬼存在潜在压制，也可能失衡' : '单拼图，复苏压力直接作用于宿主',
+  }))
+}
+
+function resourcesFrom(itemList: ReturnType<typeof filledItems>, ghostList: ReturnType<typeof filledGhosts>) {
+  return {
+    鬼拼图: ghostList.map(ghost => ghost.厉鬼名称),
+    灵异物品: itemList.map(item => ({
+      名称: item.名称,
+      类型: item.名称.includes('鬼烛') ? '鬼烛' : item.名称.includes('黄金') ? '黄金容器' : item.名称.includes('替死') ? '替死娃娃' : '其他',
+      剩余次数: '未知',
+      效果: item.效果,
+      副作用: item.使用限制,
+    })),
+    黄金储备: itemList.some(item => item.名称.includes('黄金') || item.效果.includes('黄金')) ? '已准备' : '未准备',
+  }
+}
+
+const resourceSummary = computed(() => {
+  const resource = d().灵异资源 ?? defaultResources
+  const ghostPieces = listText(resource.鬼拼图)
+  const itemNames = Array.isArray(resource.灵异物品)
+    ? resource.灵异物品.map(item => textOrFallback(item.名称, '')).filter(Boolean)
+    : []
+  return `拼图：${ghostPieces}；物品：${itemNames.length ? itemNames.join('、') : '无'}；黄金：${textOrFallback(resource.黄金储备, '未准备')}`
+})
+
 function buildStartMessage() {
   const current = d()
   const ghostList = filledGhosts()
   const itemList = filledItems()
+  const event = current.当前灵异事件 ?? defaultEventFile
+  const controlledGhosts = current.驭鬼者状态?.已驾驭厉鬼 ?? []
+  const resources = current.灵异资源 ?? defaultResources
   const ghostText = ghostList.length
     ? ghostList.map((ghost, index) => `${index + 1}. ${ghost.厉鬼名称}（杀人规律：${ghost.杀人规律}）`).join('\n')
     : '无'
+  const controlledGhostText = controlledGhosts.length
+    ? controlledGhosts.map((ghost, index) => `${index + 1}. ${ghost.代号}（复苏进度：${ghost.复苏进度}%；死机：${ghost.是否死机 ? '是' : '否'}；压制关系：${ghost.压制关系}）`).join('\n')
+    : '无'
   const itemText = itemList.length
     ? itemList.map((item, index) => `${index + 1}. ${item.名称}（效果：${item.效果}；限制：${item.使用限制}）`).join('\n')
+    : '无'
+  const resourceText = Array.isArray(resources.灵异物品) && resources.灵异物品.length
+    ? resources.灵异物品.map((item, index) => `${index + 1}. ${item.名称}（类型：${item.类型}；效果：${item.效果}；副作用：${item.副作用}）`).join('\n')
     : '无'
 
   return `【开局设定已确认】
@@ -292,8 +469,20 @@ function buildStartMessage() {
 身份：${textOrFallback(current.身份, '普通人')}
 角色背景：${textOrFallback(current.角色背景, '没有额外背景，由模拟器自行补全合理细节。')}
 
+【灵异事件初始档案】
+事件代号：${event.事件代号}
+危害等级：${event.危害等级}
+发生地点：${event.发生地点}
+鬼域状态：${event.鬼域状态}
+处理状态：${event.处理状态}
+扩散趋势：${event.扩散趋势}
+
 驾驭厉鬼：
 ${ghostText}
+
+驭鬼者复苏档案：
+总复苏风险：${current.驭鬼者状态?.总复苏风险 ?? 0}%
+${controlledGhostText}
 
 特殊能力：${textOrFallback(current.特殊能力描述)}
 能力代价：${textOrFallback(current.消耗代价)}
@@ -301,7 +490,11 @@ ${ghostText}
 灵异物品：
 ${itemText}
 
-请根据以上设定正式启动“神秘复苏模拟器”的世界线推演：生成我抵达开局地点后的第一段剧情、灵异征兆、系统提示、状态面板和可行动选项。保持《神秘复苏》式冷峻、危险、因果严密的氛围，不要重新要求我填写设定。`
+灵异资源档案：
+黄金储备：${resources.黄金储备}
+${resourceText}
+
+请根据以上设定正式启动“神秘复苏模拟器”的世界线推演：生成我抵达开局地点后的第一段剧情、灵异征兆、事件档案、初步规律线索、状态面板和可行动选项。保持《神秘复苏》式冷峻、危险、因果严密的氛围，不要重新要求我填写设定。`
 }
 
 function commitStartData() {
@@ -311,13 +504,56 @@ function commitStartData() {
 
   const ghostList = filledGhosts()
   const itemList = filledItems()
+  const identity = textOrFallback(data.value.身份, '普通人')
+  const location = textOrFallback(data.value.开局地点, '未知')
+  const controlledGhosts = controlledGhostsFrom(ghostList)
+  const resources = resourcesFrom(itemList, ghostList)
+  const eventFile = {
+    事件代号: `${location}异常接入事件`,
+    危害等级: hazardLevelFor(identity, ghostList.length),
+    发生地点: location,
+    鬼域状态: '未确认',
+    已知杀人规律: [],
+    猜测杀人规律: ghostList.map(ghost => ghost.杀人规律).filter(rule => rule && rule !== '无'),
+    错误推断: [],
+    已死亡人数: 0,
+    扩散趋势: '未观察',
+    处理状态: '初始化',
+  }
   Object.assign(data.value, {
     驾驭厉鬼: ghostList,
-    所在位置: textOrFallback(data.value.开局地点, '未知'),
+    所在位置: location,
     状态: textOrFallback(data.value.状态, '健康'),
     厉鬼复苏程度: Number(data.value.厉鬼复苏程度 ?? 0),
     持有拼图: ghostList.length ? ghostList.map(ghost => ghost.厉鬼名称).join('、') : '无',
     灵异物品: itemList,
+    当前灵异事件: eventFile,
+    规律推理记录: [],
+    驭鬼者状态: {
+      总复苏风险: Number(data.value.厉鬼复苏程度 ?? 0),
+      已驾驭厉鬼: controlledGhosts,
+    },
+    灵异资源: resources,
+    势力关系: {
+      总部备案状态: filingStateFor(identity),
+      所属城市: location.includes('市') ? location.replace(/(市).*/, '市') : '未知',
+      联系人: [],
+      敌对势力: [],
+      可调用资源: resources.黄金储备 === '已准备' ? ['黄金隔绝'] : [],
+    },
+    世界线记录: [
+      {
+        时间点: '开局',
+        事件: `${textOrFallback(data.value.姓名, '未知个体')}接入${location}`,
+        影响: '灵异事件档案建立，等待第一轮现实验证',
+      },
+    ],
+    隐藏档案: {
+      真实杀人规律: '由首轮灵异事件生成后确定',
+      关键生路: '由首轮灵异事件生成后确定',
+      误导线索: [],
+      鬼的真实位置: '未确认',
+    },
   })
   const statData = clonePlainData(data.value)
   updateVariablesWith(variables => {
@@ -390,6 +626,14 @@ function handleReset() {
     姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁',
     角色背景: '', 身份: '', 驾驭厉鬼: [],
     特殊能力描述: '', 消耗代价: '无', 灵异物品: [],
+    状态: '健康', 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知',
+    当前灵异事件: { ...defaultEventFile },
+    规律推理记录: [],
+    驭鬼者状态: { 总复苏风险: 0, 已驾驭厉鬼: [] },
+    灵异资源: { 鬼拼图: [], 灵异物品: [], 黄金储备: '未准备' },
+    势力关系: { ...defaultFactionState },
+    世界线记录: [],
+    隐藏档案: { ...defaultHiddenFile },
   })
 }
 </script>
@@ -764,6 +1008,72 @@ function handleReset() {
   font-size: 16px;
   opacity: 0.4;
   animation: eye-glow 3s ease-in-out infinite;
+}
+
+.dossier-module {
+  border-top: 1px solid rgba(70, 10, 10, 0.35);
+}
+
+.dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.dossier-item {
+  background: rgba(12, 5, 5, 0.72);
+  border: 1px solid #241010;
+  border-left: 2px solid #4a1010;
+  padding: 8px 10px;
+  min-width: 0;
+}
+
+.dossier-label {
+  display: block;
+  color: #583030;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  margin-bottom: 4px;
+}
+
+.dossier-item strong {
+  display: block;
+  color: #a06060;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dossier-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 0;
+}
+
+.note-line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+  color: #6a4040;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.note-line span {
+  color: #7a2525;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  letter-spacing: 1px;
+}
+
+.note-line em {
+  color: #8d7474;
+  font-style: normal;
+  overflow-wrap: anywhere;
 }
 
 @keyframes eye-glow {
