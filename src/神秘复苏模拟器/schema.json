@@ -87,6 +87,312 @@
     "所在位置": {
       "default": "未知",
       "type": "string"
+    },
+    "当前灵异事件": {
+      "default": {
+        "事件代号": "未立案灵异事件",
+        "危害等级": "未知",
+        "发生地点": "未知",
+        "鬼域状态": "未确认",
+        "已知杀人规律": [],
+        "猜测杀人规律": [],
+        "错误推断": [],
+        "已死亡人数": 0,
+        "扩散趋势": "未观察",
+        "处理状态": "未接触"
+      },
+      "type": "object",
+      "properties": {
+        "事件代号": {
+          "default": "未立案灵异事件",
+          "type": "string"
+        },
+        "危害等级": {
+          "default": "未知",
+          "type": "string"
+        },
+        "发生地点": {
+          "default": "未知",
+          "type": "string"
+        },
+        "鬼域状态": {
+          "default": "未确认",
+          "type": "string"
+        },
+        "已知杀人规律": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "猜测杀人规律": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "错误推断": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "已死亡人数": {
+          "default": 0,
+          "type": "number"
+        },
+        "扩散趋势": {
+          "default": "未观察",
+          "type": "string"
+        },
+        "处理状态": {
+          "default": "未接触",
+          "type": "string"
+        }
+      }
+    },
+    "规律推理记录": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "时间点": {
+            "default": "未知",
+            "type": "string"
+          },
+          "行为": {
+            "default": "",
+            "type": "string"
+          },
+          "观察结果": {
+            "default": "",
+            "type": "string"
+          },
+          "推断": {
+            "default": "",
+            "type": "string"
+          },
+          "是否触发规律": {
+            "default": false,
+            "type": "boolean"
+          },
+          "风险等级": {
+            "default": "未知",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "驭鬼者状态": {
+      "default": {
+        "总复苏风险": 0,
+        "已驾驭厉鬼": []
+      },
+      "type": "object",
+      "properties": {
+        "总复苏风险": {
+          "default": 0,
+          "type": "number"
+        },
+        "已驾驭厉鬼": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "代号": {
+                "default": "未命名厉鬼",
+                "type": "string"
+              },
+              "恐怖等级": {
+                "default": "未知",
+                "type": "string"
+              },
+              "拼图特征": {
+                "default": "未确认",
+                "type": "string"
+              },
+              "杀人规律": {
+                "default": "无",
+                "type": "string"
+              },
+              "使用能力": {
+                "default": "未确认",
+                "type": "string"
+              },
+              "使用代价": {
+                "default": "无",
+                "type": "string"
+              },
+              "复苏进度": {
+                "default": 0,
+                "type": "number"
+              },
+              "是否死机": {
+                "default": false,
+                "type": "boolean"
+              },
+              "压制关系": {
+                "default": "未形成压制",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "灵异资源": {
+      "default": {
+        "鬼拼图": [],
+        "灵异物品": [],
+        "黄金储备": "未准备"
+      },
+      "type": "object",
+      "properties": {
+        "鬼拼图": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "灵异物品": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "名称": {
+                "default": "",
+                "type": "string"
+              },
+              "类型": {
+                "default": "其他",
+                "type": "string"
+              },
+              "剩余次数": {
+                "default": "未知",
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "效果": {
+                "default": "",
+                "type": "string"
+              },
+              "副作用": {
+                "default": "无",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "黄金储备": {
+          "default": "未准备",
+          "type": "string"
+        }
+      }
+    },
+    "势力关系": {
+      "default": {
+        "总部备案状态": "未备案",
+        "所属城市": "未知",
+        "联系人": [],
+        "敌对势力": [],
+        "可调用资源": []
+      },
+      "type": "object",
+      "properties": {
+        "总部备案状态": {
+          "default": "未备案",
+          "type": "string"
+        },
+        "所属城市": {
+          "default": "未知",
+          "type": "string"
+        },
+        "联系人": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "敌对势力": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "可调用资源": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "世界线记录": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "时间点": {
+            "default": "开局前",
+            "type": "string"
+          },
+          "事件": {
+            "default": "等待初始化",
+            "type": "string"
+          },
+          "影响": {
+            "default": "未产生影响",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "隐藏档案": {
+      "default": {
+        "真实杀人规律": "未生成",
+        "关键生路": "未生成",
+        "误导线索": [],
+        "鬼的真实位置": "未确认"
+      },
+      "type": "object",
+      "properties": {
+        "真实杀人规律": {
+          "default": "未生成",
+          "type": "string"
+        },
+        "关键生路": {
+          "default": "未生成",
+          "type": "string"
+        },
+        "误导线索": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "鬼的真实位置": {
+          "default": "未确认",
+          "type": "string"
+        }
+      }
     }
   }
 }
