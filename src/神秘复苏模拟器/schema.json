@@ -3,8 +3,74 @@
   "type": "object",
   "properties": {
     "姓名": {
-      "default": "未知",
+      "default": "",
       "type": "string"
+    },
+    "性别": {
+      "default": "男",
+      "type": "string"
+    },
+    "开局地点": {
+      "default": "",
+      "type": "string"
+    },
+    "初始年龄": {
+      "default": "18岁",
+      "type": "string"
+    },
+    "角色背景": {
+      "default": "",
+      "type": "string"
+    },
+    "身份": {
+      "default": "",
+      "type": "string"
+    },
+    "驾驭厉鬼": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "厉鬼名称": {
+            "default": "",
+            "type": "string"
+          },
+          "杀人规律": {
+            "default": "无",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "特殊能力描述": {
+      "default": "",
+      "type": "string"
+    },
+    "消耗代价": {
+      "default": "无",
+      "type": "string"
+    },
+    "灵异物品": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "名称": {
+            "default": "",
+            "type": "string"
+          },
+          "效果": {
+            "default": "",
+            "type": "string"
+          },
+          "使用限制": {
+            "default": "无",
+            "type": "string"
+          }
+        }
+      }
     },
     "状态": {
       "default": "健康",
@@ -15,10 +81,6 @@
       "type": "number"
     },
     "持有拼图": {
-      "default": "无",
-      "type": "string"
-    },
-    "灵异物品": {
       "default": "无",
       "type": "string"
     },

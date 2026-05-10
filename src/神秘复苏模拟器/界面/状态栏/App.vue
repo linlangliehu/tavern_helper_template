@@ -1,480 +1,408 @@
 <template>
-  <div class="character-card">
-    <div class="card-rivet rivet-tl"></div>
-    <div class="card-rivet rivet-tr"></div>
-    <div class="card-rivet rivet-bl"></div>
-    <div class="card-rivet rivet-br"></div>
-    <div class="scan-line"></div>
+  <div class="horror-card">
+    <div class="blood-drip blood-drip-1"></div>
+    <div class="blood-drip blood-drip-2"></div>
+    <div class="blood-drip blood-drip-3"></div>
+    <div class="crack-overlay"></div>
 
-    <header class="card-title-area">
+    <header class="card-header">
+      <div class="header-quote quote-left">
+        <span class="quote-mark">"</span>我叫杨间，当你看到这句话的时候，我已经死了……<span class="quote-mark">"</span>
+      </div>
+      <h1 class="main-title">神秘复苏模拟器</h1>
       <div class="title-deco-line"></div>
-      <div class="title-stamp">CLASSIFIED // 档案编号 MFRS-<span class="stamp-blink">█</span>█-2026</div>
-      <h1 class="main-title">
-        <span class="title-symbol">⟐</span>
-        神 秘 复 苏 模 拟 器
-        <span class="title-symbol">⟐</span>
-      </h1>
-      <p class="title-sub">PARANORMAL REVIVAL SIMULATOR — 监控档案 #<span class="blink-cursor">_</span></p>
-      <div class="title-deco-line"></div>
+      <div class="header-quote quote-right">
+        <span class="quote-mark">"</span>这个世界上，有些东西注定无法被科学解释，它们只会在夜里，悄然归来。<span class="quote-mark">"</span>
+      </div>
     </header>
 
-    <section class="card-section section-world">
-      <div class="section-header">
-        <span class="section-icon">▸▸</span>
-        <span class="section-title">世界 / 阵营</span>
-        <span class="section-line"></span>
+    <section class="card-module">
+      <div class="module-header">
+        <span class="module-icon">☠</span>
+        <span class="module-title">基本信息</span>
+        <div class="module-line"></div>
       </div>
-      <div class="section-body world-grid">
+      <div class="module-body info-grid">
         <div class="form-field">
-          <label class="field-label">所在世界</label>
-          <select v-model="worldSelect" class="field-select">
-            <option value="">— 选择世界线 —</option>
-            <option value="original">原作世界线</option>
-            <option value="parallel">平行世界线</option>
-            <option value="custom">自定义世界线</option>
+          <label class="field-label">姓名</label>
+          <input type="text" class="field-input" v-model="姓名" placeholder="请输入你的名字" />
+        </div>
+        <div class="form-field">
+          <label class="field-label">性别</label>
+          <div class="radio-group">
+            <label class="radio-item" :class="{ active: 性别 === '男' }" @click="性别 = '男'">
+              <span class="radio-dot"></span>男
+            </label>
+            <label class="radio-item" :class="{ active: 性别 === '女' }" @click="性别 = '女'">
+              <span class="radio-dot"></span>女
+            </label>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="field-label">开局地点</label>
+          <select class="field-select" v-model="开局地点">
+            <option value="">请选择开局地点</option>
+            <option value="大昌市七中">大昌市七中</option>
+            <option value="大海市繁华街区">大海市繁华街区</option>
+            <option value="偏远荒村">偏远荒村</option>
+            <option value="诡异公交车">诡异公交车</option>
+            <option value="灵异公司大楼">灵异公司大楼</option>
+            <option value="自定义">自定义地点</option>
           </select>
         </div>
         <div class="form-field">
-          <label class="field-label">阵营归属</label>
-          <select v-model="factionSelect" class="field-select">
-            <option value="">— 选择阵营 —</option>
-            <option value="hq">总部驭鬼者</option>
-            <option value="civilian">民间异类</option>
-            <option value="rogue">失控者</option>
-            <option value="ghost">厉鬼阵营</option>
+          <label class="field-label">初始年龄</label>
+          <select class="field-select" v-model="初始年龄">
+            <option value="16岁">16岁</option>
+            <option value="17岁">17岁</option>
+            <option value="18岁">18岁</option>
+            <option value="19岁">19岁</option>
+            <option value="20岁">20岁</option>
+            <option value="21岁">21岁</option>
+            <option value="22岁">22岁</option>
+            <option value="25岁">25岁</option>
+            <option value="30岁">30岁</option>
           </select>
         </div>
       </div>
     </section>
 
-    <div class="card-divider"></div>
-
-    <section class="card-section section-profile">
-      <div class="section-header">
-        <span class="section-icon">▸▸</span>
-        <span class="section-title">基础档案</span>
-        <span class="section-line"></span>
+    <section class="card-module">
+      <div class="module-header">
+        <span class="module-icon">♰</span>
+        <span class="module-title">背景设定</span>
+        <div class="module-line"></div>
       </div>
-      <div class="section-body">
-        <div class="profile-grid">
-          <div class="form-field field-name">
-            <label class="field-label">姓名</label>
-            <div class="field-display" :class="{ 'value-warning': false }">{{ displayData['姓名'] || '未知' }}</div>
-          </div>
-          <div class="form-field field-status">
-            <label class="field-label">状态</label>
-            <div class="field-display status-display" :class="{ 'value-warning': isWarning('状态', displayData['状态'] || '') }">
-              <span class="status-indicator" :class="statusClass"></span>
-              {{ displayData['状态'] || '健康' }}
-            </div>
-          </div>
-          <div class="form-field field-location">
-            <label class="field-label">所在位置</label>
-            <div class="field-display">{{ displayData['所在位置'] || '未知' }}</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="card-divider"></div>
-
-    <section class="card-section section-attributes">
-      <div class="section-header">
-        <span class="section-icon">▸▸</span>
-        <span class="section-title">属性参数</span>
-        <span class="section-line"></span>
-      </div>
-      <div class="section-body">
-        <div class="attr-rows">
-          <div class="attr-row">
-            <span class="attr-label">▸ 厉鬼复苏程度</span>
-            <div class="attr-bar-wrap">
-              <div class="attr-bar" :class="{ 'bar-critical': resurgencePercent >= 90 }">
-                <div
-                  class="attr-bar-fill"
-                  :class="resurgenceClass"
-                  :style="{ width: resurgencePercent + '%' }"
-                >
-                  <div class="bar-segments"></div>
-                </div>
-              </div>
-              <span class="attr-value" :class="{ 'value-warning': resurgencePercent >= 70, 'value-critical': resurgencePercent >= 90 }">
-                {{ resurgencePercent }}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="attr-detail-grid">
-          <div class="attr-detail-item">
-            <span class="attr-detail-label">持有拼图</span>
-            <span class="attr-detail-sep">━━</span>
-            <span class="attr-detail-value">{{ displayData['持有拼图'] || '无' }}</span>
-          </div>
-          <div class="attr-detail-item">
-            <span class="attr-detail-label">灵异物品</span>
-            <span class="attr-detail-sep">━━</span>
-            <span class="attr-detail-value">{{ displayData['灵异物品'] || '无' }}</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="card-divider"></div>
-
-    <section class="card-section section-abilities">
-      <div class="section-header">
-        <span class="section-icon">▸▸</span>
-        <span class="section-title">能力系统</span>
-        <span class="section-line"></span>
-      </div>
-      <div class="section-body abilities-layout">
-        <div class="ability-edit">
-          <div class="ability-edit-header">
-            <span class="ability-edit-title">◆ 技能编辑</span>
-          </div>
-          <div class="ability-list">
-            <div class="ability-item" v-for="(ability, idx) in abilities" :key="idx">
-              <span class="ability-marker">◆</span>
-              <span class="ability-name">{{ ability.name }}</span>
-              <span class="ability-level">{{ ability.level }}</span>
-            </div>
-            <div class="ability-empty" v-if="abilities.length === 0">
-              <span class="ability-empty-icon">⊘</span>
-              <span class="ability-empty-text">暂无已录入技能</span>
-            </div>
-          </div>
-        </div>
-        <div class="ability-template">
-          <div class="ability-template-header">
-            <span class="ability-template-title">◇ 模板提取</span>
-          </div>
-          <div class="template-list">
-            <div class="template-item" v-for="(tpl, idx) in templates" :key="idx" @click="applyTemplate(tpl)">
-              <span class="template-marker">◇</span>
-              <span class="template-name">{{ tpl.name }}</span>
-              <span class="template-arrow">›</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="card-divider"></div>
-
-    <section class="card-section section-background">
-      <div class="section-header">
-        <span class="section-icon">▸▸</span>
-        <span class="section-title">背景设定</span>
-        <span class="section-line"></span>
-      </div>
-      <div class="section-body">
+      <div class="module-body">
         <div class="form-field">
-          <label class="field-label">角色背景</label>
-          <textarea
-            v-model="backgroundText"
-            class="field-textarea"
-            placeholder="输入角色背景设定、经历描述..."
-            rows="4"
-          ></textarea>
+          <label class="field-label field-label-long">你的过去，你的经历，你是如何卷入这个诡异的世界的…</label>
+          <textarea class="field-textarea" v-model="角色背景" maxlength="200" placeholder="描述你的角色背景..." rows="3"></textarea>
+          <div class="char-count">{{ (角色背景 || '').length }}/200</div>
+        </div>
+        <div class="form-field">
+          <label class="field-label">身份</label>
+          <select class="field-select" v-model="身份">
+            <option value="">请选择你的身份</option>
+            <option value="普通人">普通人</option>
+            <option value="驭鬼者">驭鬼者</option>
+            <option value="民间异类">民间异类</option>
+            <option value="总部调查员">总部调查员</option>
+            <option value="失控者">失控者</option>
+          </select>
         </div>
       </div>
     </section>
 
-    <div class="card-divider"></div>
+    <section class="card-module">
+      <div class="module-header">
+        <span class="module-icon">👁</span>
+        <span class="module-title">驾驭厉鬼</span>
+        <div class="module-line"></div>
+      </div>
+      <div class="module-body">
+        <div class="item-list" v-if="ghosts.length > 0">
+          <div class="item-card" v-for="(ghost, idx) in ghosts" :key="idx">
+            <div class="item-card-header">
+              <span class="item-number">厉鬼 #{{ idx + 1 }}</span>
+              <button class="item-remove" @click="removeGhost(idx)">✕</button>
+            </div>
+            <div class="form-field">
+              <label class="field-label">厉鬼名称</label>
+              <input type="text" class="field-input" v-model="ghost.厉鬼名称" placeholder="描述驾驭的厉鬼名称" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">杀人规律</label>
+              <textarea class="field-textarea" v-model="ghost.杀人规律" maxlength="150" placeholder="描述厉鬼的杀人规律..." rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="item-add-row">
+          <button class="btn-add" @click="addGhost" :disabled="ghosts.length >= 3">
+            + 添加驾驭厉鬼（最多3个）
+          </button>
+          <div class="item-empty" v-if="ghosts.length === 0">
+            <div class="eye-icon">👁</div>
+            <span>暂无驾驭厉鬼</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-module">
+      <div class="module-header">
+        <span class="module-icon">⚡</span>
+        <span class="module-title">特殊能力</span>
+        <div class="module-line"></div>
+      </div>
+      <div class="module-body">
+        <div class="form-field">
+          <label class="field-label">能力描述</label>
+          <textarea class="field-textarea" v-model="特殊能力描述" maxlength="200" placeholder="描述能力的具体效果、触发条件与限制..." rows="3"></textarea>
+          <div class="char-count">{{ (特殊能力描述 || '').length }}/200</div>
+        </div>
+        <div class="form-field">
+          <label class="field-label">消耗代价</label>
+          <select class="field-select" v-model="消耗代价">
+            <option value="无">无</option>
+            <option value="体力消耗">体力消耗</option>
+            <option value="精神损耗">精神损耗</option>
+            <option value="复苏加速">复苏加速</option>
+            <option value="生命力">生命力</option>
+            <option value="记忆丧失">记忆丧失</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-module">
+      <div class="module-header">
+        <span class="module-icon">⚰</span>
+        <span class="module-title">灵异物品</span>
+        <div class="module-line"></div>
+      </div>
+      <div class="module-body">
+        <div class="item-list" v-if="items.length > 0">
+          <div class="item-card" v-for="(item, idx) in items" :key="idx">
+            <div class="item-card-header">
+              <span class="item-number">物品 #{{ idx + 1 }}</span>
+              <button class="item-remove" @click="removeItem(idx)">✕</button>
+            </div>
+            <div class="form-field">
+              <label class="field-label">物品名称</label>
+              <input type="text" class="field-input" v-model="item.名称" placeholder="请输入物品名称" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">物品效果</label>
+              <textarea class="field-textarea" v-model="item.效果" maxlength="150" placeholder="描述物品的效果与用途..." rows="2"></textarea>
+            </div>
+            <div class="form-field">
+              <label class="field-label">使用限制</label>
+              <textarea class="field-textarea" v-model="item.使用限制" maxlength="150" placeholder="描述使用条件、代价或副作用..." rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="item-add-row">
+          <button class="btn-add" @click="addItem" :disabled="items.length >= 5">
+            + 添加灵异物品（最多5件）
+          </button>
+          <div class="item-empty" v-if="items.length === 0">
+            <div class="eye-icon">👁</div>
+            <span>暂无物品</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <footer class="card-footer">
       <div class="footer-actions">
-        <button class="btn btn-primary" @click="handleGenerate">
-          <span class="btn-icon">⟐</span>
-          生成文本
-        </button>
-        <button class="btn btn-secondary" @click="handleReset">
-          重置档案
-        </button>
-        <button class="btn btn-secondary" @click="handleExport">
-          导出数据
-        </button>
+        <button class="btn btn-start" @click="handleStart">进入神秘复苏世界</button>
+        <button class="btn btn-reset" @click="handleReset">清空所有信息</button>
       </div>
-      <div class="footer-info">
-        <span class="footer-text">◆ 灵异事件监控系统 ◆</span>
-        <span class="footer-status">
-          <span class="status-dot"></span>
-          监控中
-        </span>
-      </div>
+      <div class="footer-warning">⚠ 注意：模拟器中的一切选择，皆会影响你的生死。</div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useDataStore } from './store'
 
 const store = useDataStore()
+const data = store.data
 
-const worldSelect = ref('')
-const factionSelect = ref('')
-const backgroundText = ref('')
+const defaults = { 姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁', 角色背景: '', 身份: '', 驾驭厉鬼: [], 特殊能力描述: '', 消耗代价: '无', 灵异物品: [], 状态: '健康', 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知' }
 
-const labelMap: Record<string, string> = {
-  姓名: '姓名',
-  状态: '状态',
-  厉鬼复苏程度: '厉鬼复苏程度',
-  持有拼图: '持有拼图',
-  灵异物品: '灵异物品',
-  所在位置: '所在位置',
+function d() {
+  return data.value ?? defaults
 }
 
-const displayData = computed(() => {
-  const data = store.data as Record<string, any>
-  if (!data) return {} as Record<string, string>
-  const result: Record<string, string> = {}
-  for (const [key, label] of Object.entries(labelMap)) {
-    if (data[key] !== undefined) {
-      let val = String(data[key])
-      if (key === '厉鬼复苏程度' && typeof data[key] === 'number') {
-        val = data[key] + '%'
-      }
-      result[label] = val
-    }
-  }
-  return result
-})
-
-const resurgencePercent = computed(() => {
-  const data = store.data as Record<string, any>
-  if (!data) return 0
-  const val = data['厉鬼复苏程度']
-  if (typeof val === 'number') return Math.min(100, Math.max(0, val))
-  const num = parseInt(String(val))
-  return isNaN(num) ? 0 : Math.min(100, Math.max(0, num))
-})
-
-const resurgenceClass = computed(() => {
-  if (resurgencePercent.value >= 90) return 'fill-critical'
-  if (resurgencePercent.value >= 70) return 'fill-danger'
-  if (resurgencePercent.value >= 40) return 'fill-warning'
-  return 'fill-normal'
-})
-
-const statusClass = computed(() => {
-  const s = displayData.value['状态'] || '健康'
-  if (['重伤', '濒死', '异化中'].some(x => s.includes(x))) return 'status-danger'
-  if (['轻伤', '虚弱', '疲劳'].some(x => s.includes(x))) return 'status-warning'
-  return 'status-ok'
-})
-
-const abilities = computed(() => {
-  const data = store.data as Record<string, any>
-  if (!data || !data['abilities']) return []
-  try {
-    return typeof data['abilities'] === 'string' ? JSON.parse(data['abilities']) : data['abilities']
-  } catch {
-    return []
-  }
-})
-
-const templates = [
-  { name: '驭鬼者标准模板', skills: ['鬼域展开', '灵异感知'] },
-  { name: '民间异类模板', skills: ['直觉闪避', '灵异物品使用'] },
-  { name: '总部调查员模板', skills: ['情报分析', '灵异压制'] },
-]
-
-function isWarning(key: string, value: string) {
-  if (key === '厉鬼复苏程度') {
-    const num = parseInt(value)
-    return !isNaN(num) && num >= 70
-  }
-  if (key === '状态') {
-    return ['重伤', '濒死', '异化中'].some(s => value.includes(s))
-  }
-  return false
+function bindField(key: string, def: string | number = '') {
+  return computed({
+    get: () => d()[key] ?? def,
+    set: (val: string | number) => {
+      if (!data.value) data.value = { ...defaults }
+      data.value[key] = val
+    },
+  })
 }
 
-function applyTemplate(tpl: { name: string; skills: string[] }) {
-  console.log('Applied template:', tpl.name)
+const 姓名 = bindField('姓名')
+const 性别 = bindField('性别', '男')
+const 开局地点 = bindField('开局地点')
+const 初始年龄 = bindField('初始年龄', '18岁')
+const 角色背景 = bindField('角色背景')
+const 身份 = bindField('身份')
+const 特殊能力描述 = bindField('特殊能力描述')
+const 消耗代价 = bindField('消耗代价', '无')
+
+const ghosts = computed(() => d().驾驭厉鬼 ?? [])
+const items = computed(() => d().灵异物品 ?? [])
+
+function addGhost() {
+  if (!data.value) {
+    data.value = { ...defaults }
+  }
+  if (!data.value.驾驭厉鬼) data.value.驾驭厉鬼 = []
+  if (data.value.驾驭厉鬼.length >= 3) return
+  data.value.驾驭厉鬼.push({ 厉鬼名称: '', 杀人规律: '无' })
 }
 
-function handleGenerate() {
-  console.log('Generate triggered')
+function removeGhost(idx: number) {
+  if (!data.value) return
+  if (!data.value.驾驭厉鬼) return
+  data.value.驾驭厉鬼.splice(idx, 1)
+}
+
+function addItem() {
+  if (!data.value) {
+    data.value = { ...defaults }
+  }
+  if (!data.value.灵异物品) data.value.灵异物品 = []
+  if (data.value.灵异物品.length >= 5) return
+  data.value.灵异物品.push({ 名称: '', 效果: '', 使用限制: '无' })
+}
+
+function removeItem(idx: number) {
+  if (!data.value) return
+  if (!data.value.灵异物品) return
+  data.value.灵异物品.splice(idx, 1)
+}
+
+function handleStart() {
+  console.log('[MFRS] 开始模拟', JSON.stringify(d(), null, 2))
 }
 
 function handleReset() {
-  worldSelect.value = ''
-  factionSelect.value = ''
-  backgroundText.value = ''
-}
-
-function handleExport() {
-  const data = store.data as Record<string, any>
-  console.log('Export data:', JSON.stringify(data, null, 2))
+  if (!data.value) {
+    data.value = { ...defaults }
+    return
+  }
+  Object.assign(data.value, {
+    姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁',
+    角色背景: '', 身份: '', 驾驭厉鬼: [],
+    特殊能力描述: '', 消耗代价: '无', 灵异物品: [],
+  })
 }
 </script>
 
 <style scoped>
-.character-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-steel);
+.horror-card {
+  background: #050505;
+  border: 1px solid #2a0a0a;
   max-width: 560px;
   margin: 0 auto;
   position: relative;
-  box-shadow: var(--shadow-panel);
   overflow: hidden;
+  box-shadow: 0 0 40px rgba(80, 0, 0, 0.15), inset 0 0 80px rgba(0, 0, 0, 0.9);
 }
 
-.card-rivet {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #151515 60%, #0a0a0a 100%);
-  box-shadow: inset 0 1px 1px var(--rivet-highlight), 0 0 3px rgba(0, 0, 0, 0.9), 0 0 1px rgba(139, 26, 26, 0.2);
-  z-index: 2;
-}
-.rivet-tl { top: 8px; left: 10px; }
-.rivet-tr { top: 8px; right: 10px; }
-.rivet-bl { bottom: 8px; left: 10px; }
-.rivet-br { bottom: 8px; right: 10px; }
-
-.scan-line {
+.blood-drip {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(139, 26, 26, 0.08), transparent);
-  z-index: 3;
-  animation: scan-sweep 6s ease-in-out infinite;
+  width: 3px;
+  background: linear-gradient(180deg, #5a0a0a, #2a0000 40%, transparent);
+  z-index: 4;
   pointer-events: none;
+  border-radius: 0 0 2px 2px;
+}
+.blood-drip-1 { left: 15%; height: 60px; }
+.blood-drip-2 { left: 55%; height: 40px; }
+.blood-drip-3 { right: 20%; height: 50px; }
+
+.crack-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    linear-gradient(45deg, transparent 48%, rgba(30, 5, 5, 0.08) 49%, rgba(30, 5, 5, 0.08) 51%, transparent 52%),
+    linear-gradient(-30deg, transparent 48%, rgba(20, 0, 0, 0.05) 49%, rgba(20, 0, 0, 0.05) 51%, transparent 52%);
+  pointer-events: none;
+  z-index: 1;
 }
 
-@keyframes scan-sweep {
-  0%, 100% { top: 0; opacity: 0; }
-  5% { opacity: 1; }
-  95% { opacity: 1; }
-  50% { top: 100%; }
-}
-
-.card-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--border-dark-red) 15%, var(--border-steel) 50%, var(--border-dark-red) 85%, transparent 100%);
-  margin: 0 20px;
-  position: relative;
-}
-
-.card-title-area {
-  padding: 20px 24px 16px;
+.card-header {
+  padding: 24px 20px 18px;
   text-align: center;
-  background: linear-gradient(180deg, rgba(20, 6, 6, 0.6) 0%, transparent 100%);
-  border-bottom: 1px solid var(--border-dark-red);
+  background: linear-gradient(180deg, rgba(40, 0, 0, 0.5) 0%, transparent 100%);
+  border-bottom: 1px solid #3a0808;
+  position: relative;
+  z-index: 2;
+}
+
+.header-quote {
+  color: #5a3030;
+  font-family: "Noto Serif SC", "SimSun", serif;
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.7;
+  margin: 6px 0;
+  opacity: 0.8;
+}
+
+.quote-mark {
+  color: #6a1a1a;
+  font-size: 14px;
+}
+
+.main-title {
+  color: #8b1a1a;
+  font-family: "Noto Serif SC", "SimSun", serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  text-shadow: 0 0 10px rgba(139, 26, 26, 0.5), 0 0 30px rgba(80, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.8);
+  margin: 10px 0 8px;
+  position: relative;
 }
 
 .title-deco-line {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-dark-red), var(--accent-gold-dim), var(--accent-dark-red), transparent);
-  margin: 8px 0;
+  background: linear-gradient(90deg, transparent, #4a0a0a 20%, #6a1a1a 50%, #4a0a0a 80%, transparent);
+  margin: 8px auto;
+  max-width: 300px;
 }
 
-.title-stamp {
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 2px;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  opacity: 0.7;
+.card-module {
+  position: relative;
+  z-index: 2;
 }
 
-.stamp-blink {
-  animation: stamp-flicker 3s step-end infinite;
-}
-
-@keyframes stamp-flicker {
-  0%, 92% { opacity: 1; }
-  93% { opacity: 0; }
-  94% { opacity: 1; }
-  95% { opacity: 0; }
-  96%, 100% { opacity: 1; }
-}
-
-.main-title {
-  color: var(--accent-gold);
-  font-family: var(--font-serif);
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: 6px;
-  text-shadow: var(--shadow-text-gold), 0 0 24px rgba(184, 150, 58, 0.12);
-  margin: 8px 0;
-}
-
-.title-symbol {
-  color: var(--accent-dark-red);
-  font-size: 11px;
-  margin: 0 10px;
-  text-shadow: var(--shadow-text-red);
-}
-
-.title-sub {
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 2px;
-  margin-top: 4px;
-}
-
-.blink-cursor {
-  animation: cursor-blink 1s step-end infinite;
-}
-
-@keyframes cursor-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-.card-section {
-  padding: 0;
-}
-
-.section-header {
+.module-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px 8px;
+  padding: 14px 20px 8px;
 }
 
-.section-icon {
-  color: var(--accent-dark-red);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-shadow: var(--shadow-text-red);
+.module-icon {
+  color: #6a1a1a;
+  font-size: 13px;
+  text-shadow: 0 0 6px rgba(100, 20, 20, 0.4);
 }
 
-.section-title {
-  color: var(--accent-dark-red-bright);
-  font-family: var(--font-sans);
+.module-title {
+  color: #7a1a1a;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   white-space: nowrap;
-  text-shadow: var(--shadow-text-red);
+  text-shadow: 0 0 6px rgba(100, 20, 20, 0.3);
 }
 
-.section-line {
+.module-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, var(--border-dark-red), transparent);
+  background: linear-gradient(90deg, #3a0808, transparent);
 }
 
-.section-body {
+.module-body {
   padding: 4px 20px 14px;
 }
 
-.world-grid {
+.info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 .form-field {
@@ -484,534 +412,328 @@ function handleExport() {
 }
 
 .field-label {
-  color: var(--text-label);
-  font-family: var(--font-mono);
+  color: #6a4040;
+  font-family: "Share Tech Mono", "Courier New", monospace;
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
 
+.field-label-long {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  font-family: "Noto Serif SC", "SimSun", serif;
+  font-style: italic;
+  color: #5a3030;
+  line-height: 1.5;
+  margin-bottom: 2px;
+}
+
+.field-input {
+  background: #0a0505;
+  border: 1px solid #2a1010;
+  border-radius: 2px;
+  color: #c0a0a0;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field-input:focus {
+  border-color: #5a1a1a;
+  box-shadow: 0 0 8px rgba(80, 20, 20, 0.2), inset 0 0 4px rgba(40, 0, 0, 0.3);
+}
+
+.field-input::placeholder {
+  color: #3a2020;
+  font-size: 11px;
+}
+
 .field-select {
   appearance: none;
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-  border-radius: var(--radius-sm);
-  color: var(--text-input);
-  font-family: var(--font-sans);
+  background: #0a0505;
+  border: 1px solid #2a1010;
+  border-radius: 2px;
+  color: #c0a0a0;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
-  padding: 7px 30px 7px 10px;
+  padding: 8px 28px 8px 10px;
   outline: none;
   cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%237a1a1a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235a1a1a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
 }
 
 .field-select:focus {
-  border-color: var(--border-input-focus);
-  box-shadow: 0 0 8px rgba(92, 26, 26, 0.25);
+  border-color: #5a1a1a;
+  box-shadow: 0 0 8px rgba(80, 20, 20, 0.2);
 }
 
 .field-select option {
-  background: #0a0a0a;
-  color: var(--text-input);
+  background: #0a0505;
+  color: #c0a0a0;
 }
 
-.field-display {
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-  border-radius: var(--radius-sm);
-  color: var(--text-input);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  padding: 7px 10px;
-  min-height: 32px;
+.radio-group {
+  display: flex;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.radio-item {
   display: flex;
   align-items: center;
-}
-
-.field-display.value-warning {
-  color: #c43c3c;
-  text-shadow: 0 0 8px rgba(196, 60, 60, 0.6);
-  font-weight: 600;
-  border-color: rgba(196, 60, 60, 0.35);
-  box-shadow: inset 0 0 8px rgba(196, 60, 60, 0.08);
-}
-
-.status-display {
   gap: 6px;
+  color: #5a4040;
+  font-family: "Noto Sans SC", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 6px 14px;
+  border: 1px solid #1a0a0a;
+  border-radius: 2px;
+  background: #080505;
 }
 
-.status-indicator {
-  width: 6px;
-  height: 6px;
+.radio-item:hover {
+  border-color: #3a1515;
+  color: #8a6060;
+}
+
+.radio-item.active {
+  color: #aa3030;
+  border-color: #4a1515;
+  background: #0d0505;
+  text-shadow: 0 0 4px rgba(150, 30, 30, 0.3);
+}
+
+.radio-item.active .radio-dot {
+  background: #8b1a1a;
+  box-shadow: 0 0 5px rgba(139, 26, 26, 0.5);
+}
+
+.radio-dot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-ok {
-  background: #2a5a2a;
-  box-shadow: 0 0 4px rgba(42, 90, 42, 0.5);
-}
-
-.status-warning {
-  background: #6a5a1a;
-  box-shadow: 0 0 4px rgba(106, 90, 26, 0.5);
-  animation: pulse-warn 2s ease-in-out infinite;
-}
-
-.status-danger {
-  background: #8a1a1a;
-  box-shadow: 0 0 6px rgba(138, 26, 26, 0.6);
-  animation: pulse-danger 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse-warn {
-  0%, 100% { box-shadow: 0 0 4px rgba(106, 90, 26, 0.4); }
-  50% { box-shadow: 0 0 8px rgba(106, 90, 26, 0.7); }
-}
-
-@keyframes pulse-danger {
-  0%, 100% { box-shadow: 0 0 4px rgba(138, 26, 26, 0.4); }
-  50% { box-shadow: 0 0 10px rgba(138, 26, 26, 0.8); }
-}
-
-.profile-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.field-location {
-  grid-column: 1 / -1;
+  background: #1a0a0a;
+  border: 1px solid #3a1515;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .field-textarea {
-  background: var(--bg-input);
-  border: 1px solid var(--border-input);
-  border-radius: var(--radius-sm);
-  color: var(--text-input);
-  font-family: var(--font-sans);
+  background: #0a0505;
+  border: 1px solid #2a1010;
+  border-radius: 2px;
+  color: #c0a0a0;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   padding: 8px 10px;
   outline: none;
   resize: vertical;
-  min-height: 60px;
+  min-height: 50px;
   line-height: 1.7;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .field-textarea:focus {
-  border-color: var(--border-input-focus);
-  box-shadow: 0 0 8px rgba(92, 26, 26, 0.25);
+  border-color: #5a1a1a;
+  box-shadow: 0 0 8px rgba(80, 20, 20, 0.2), inset 0 0 4px rgba(40, 0, 0, 0.3);
 }
 
 .field-textarea::placeholder {
-  color: var(--text-placeholder);
+  color: #3a2020;
   font-size: 11px;
 }
 
-.attr-rows {
-  margin-bottom: 12px;
+.char-count {
+  text-align: right;
+  color: #3a2020;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 9px;
+  margin-top: 2px;
 }
 
-.attr-row {
+.item-list {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 0;
-}
-
-.attr-label {
-  color: var(--text-silver);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  white-space: nowrap;
-  min-width: 110px;
-}
-
-.attr-bar-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
+  margin-bottom: 10px;
 }
 
-.attr-bar {
-  flex: 1;
-  height: 10px;
-  background: var(--border-steel-dark);
-  border: 1px solid var(--border-steel);
-  border-radius: 1px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+.item-card {
+  background: rgba(20, 5, 5, 0.4);
+  border: 1px solid #2a0a0a;
+  border-left: 2px solid #4a1010;
+  padding: 10px 12px;
+  border-radius: 2px;
 }
 
-.attr-bar.bar-critical {
-  border-color: rgba(160, 32, 32, 0.4);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 6px rgba(160, 32, 32, 0.15);
-}
-
-.attr-bar-fill {
-  height: 100%;
-  transition: width 0.6s ease, background 0.3s ease;
-  position: relative;
-}
-
-.bar-segments {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 5px,
-    rgba(0, 0, 0, 0.25) 5px,
-    rgba(0, 0, 0, 0.25) 6px
-  );
-}
-
-.fill-normal {
-  background: linear-gradient(90deg, #1a3a1a, #2a5a2a);
-}
-.fill-warning {
-  background: linear-gradient(90deg, #3a3a12, #6a6a22);
-}
-.fill-danger {
-  background: linear-gradient(90deg, #4a2018, #7a3018);
-  box-shadow: 0 0 8px rgba(138, 58, 26, 0.25);
-}
-.fill-critical {
-  background: linear-gradient(90deg, #5a1212, #901818);
-  box-shadow: 0 0 12px rgba(160, 32, 32, 0.4);
-  animation: critical-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes critical-pulse {
-  0%, 100% { box-shadow: 0 0 6px rgba(160, 32, 32, 0.25); }
-  50% { box-shadow: 0 0 14px rgba(160, 32, 32, 0.55); }
-}
-
-.attr-value {
-  color: var(--text-white);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 400;
-  min-width: 40px;
-  text-align: right;
-}
-
-.attr-value.value-warning {
-  color: #c4883c;
-  text-shadow: 0 0 6px rgba(196, 136, 60, 0.5);
-  font-weight: 600;
-}
-
-.attr-value.value-critical {
-  color: #c43c3c;
-  text-shadow: 0 0 8px rgba(196, 60, 60, 0.6);
-  font-weight: 700;
-  animation: value-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes value-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.attr-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
-}
-
-.attr-detail-item {
+.item-card-header {
   display: flex;
-  align-items: baseline;
-  padding: 3px 0;
-  line-height: 2;
-}
-
-.attr-detail-label {
-  color: var(--text-silver);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.8px;
-  white-space: nowrap;
-}
-
-.attr-detail-sep {
-  flex: 1;
-  color: #141414;
-  font-size: 8px;
-  letter-spacing: -1px;
-  margin: 0 6px;
-  overflow: hidden;
-}
-
-.attr-detail-value {
-  color: var(--text-white);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 300;
-  text-align: right;
-}
-
-.abilities-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.ability-edit,
-.ability-template {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ability-edit-header,
-.ability-template-header {
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-steel-dark);
-}
-
-.ability-edit-title {
-  color: var(--text-label);
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-.ability-template-header {
-  border-bottom-style: dashed;
-  border-color: var(--border-dashed);
-}
-
-.ability-template-title {
-  color: var(--text-dim);
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-
-.ability-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ability-item {
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
-  background: rgba(255, 255, 255, 0.008);
-  border: 1px solid var(--border-steel-dark);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  margin-bottom: 8px;
 }
 
-.ability-item:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-dark-red);
-  box-shadow: 0 0 4px rgba(139, 26, 26, 0.1);
-}
-
-.ability-marker {
-  color: var(--accent-dark-red);
-  font-size: 7px;
-  text-shadow: var(--shadow-text-red);
-}
-
-.ability-name {
-  flex: 1;
-  color: var(--text-bright);
-  font-size: 12px;
-}
-
-.ability-level {
-  color: var(--accent-gold-dim);
-  font-family: var(--font-mono);
+.item-number {
+  color: #5a2020;
+  font-family: "Share Tech Mono", monospace;
   font-size: 10px;
-}
-
-.ability-empty {
-  padding: 16px 8px;
-  text-align: center;
-  border: 1px dashed var(--border-dashed);
-  border-radius: var(--radius-sm);
-}
-
-.ability-empty-icon {
-  display: block;
-  color: var(--text-dim);
-  font-size: 18px;
-  margin-bottom: 4px;
-}
-
-.ability-empty-text {
-  color: var(--text-placeholder);
-  font-size: 10px;
-  font-style: italic;
   letter-spacing: 1px;
 }
 
-.template-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.template-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border: 1px dashed var(--border-dashed);
-  border-radius: var(--radius-sm);
+.item-remove {
+  background: none;
+  border: 1px solid #2a0a0a;
+  color: #5a2020;
+  font-size: 11px;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+  padding: 2px 6px;
+  border-radius: 2px;
+  transition: all 0.2s;
 }
 
-.template-item:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-dark-red);
-  box-shadow: 0 0 4px rgba(139, 26, 26, 0.1);
+.item-remove:hover {
+  color: #aa3030;
+  border-color: #5a1515;
+  background: rgba(80, 10, 10, 0.2);
 }
 
-.template-marker {
-  color: var(--accent-gold-dim);
-  font-size: 8px;
+.item-add-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.template-name {
-  flex: 1;
-  color: var(--text-light);
-  font-size: 11px;
-}
-
-.template-arrow {
-  color: var(--text-dim);
+.btn-add {
+  background: none;
+  border: 1px dashed #4a1010;
+  color: #8b1a1a;
+  font-family: "Noto Sans SC", sans-serif;
   font-size: 12px;
-  transition: color var(--transition-fast), transform var(--transition-fast);
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+  letter-spacing: 1px;
 }
 
-.template-item:hover .template-arrow {
-  color: var(--accent-dark-red);
-  transform: translateX(2px);
+.btn-add:hover:not(:disabled) {
+  border-color: #6a1a1a;
+  color: #bb3030;
+  background: rgba(80, 10, 10, 0.1);
+  text-shadow: 0 0 6px rgba(150, 30, 30, 0.3);
+}
+
+.btn-add:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.item-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #3a2020;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.eye-icon {
+  font-size: 16px;
+  opacity: 0.4;
+  animation: eye-glow 3s ease-in-out infinite;
+}
+
+@keyframes eye-glow {
+  0%, 100% { opacity: 0.3; text-shadow: none; }
+  50% { opacity: 0.6; text-shadow: 0 0 6px rgba(139, 26, 26, 0.4); }
 }
 
 .card-footer {
-  padding: 14px 20px 16px;
-  background: linear-gradient(180deg, transparent, rgba(20, 6, 6, 0.35));
-  border-top: 1px solid var(--border-dark-red);
+  padding: 18px 20px 16px;
+  background: linear-gradient(180deg, transparent, rgba(30, 0, 0, 0.3));
+  border-top: 1px solid #2a0808;
+  position: relative;
+  z-index: 2;
 }
 
 .footer-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 
 .btn {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
+  flex: 1;
+  font-family: "Noto Sans SC", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  padding: 10px 16px;
+  border-radius: 2px;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
   outline: none;
-  position: relative;
   text-transform: uppercase;
 }
 
-.btn-primary {
-  background: var(--bg-button-primary);
-  border: 1px solid var(--border-dark-red-bright);
-  color: var(--text-white);
-  font-weight: 600;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 10px rgba(106, 42, 42, 0.2);
+.btn-start {
+  background: linear-gradient(180deg, #3a0a0a 0%, #200505 100%);
+  border: 1px solid #5a1515;
+  color: #cc4040;
+  box-shadow: 0 0 10px rgba(100, 20, 20, 0.15);
 }
 
-.btn-primary:hover {
-  border-color: var(--accent-dark-red-bright);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 0 16px rgba(160, 32, 32, 0.35);
-  background: linear-gradient(180deg, #240a0a 0%, #160505 100%);
-  text-shadow: 0 0 6px rgba(220, 220, 220, 0.2);
+.btn-start:hover {
+  background: linear-gradient(180deg, #4a0a0a 0%, #2a0505 100%);
+  border-color: #7a2020;
+  color: #ee5050;
+  box-shadow: 0 0 16px rgba(120, 20, 20, 0.25);
+  text-shadow: 0 0 8px rgba(200, 50, 50, 0.3);
 }
 
-.btn-primary:active {
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+.btn-start:active {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
   transform: translateY(1px);
 }
 
-.btn-icon {
-  color: var(--accent-dark-red);
-  margin-right: 4px;
-  font-size: 9px;
+.btn-reset {
+  background: #080808;
+  border: 1px solid #1a1a1a;
+  color: #5a5a5a;
 }
 
-.btn-secondary {
-  background: var(--bg-button-secondary);
-  border: 1px solid var(--border-steel);
-  color: var(--text-light);
-  font-weight: 400;
+.btn-reset:hover {
+  border-color: #2a2a2a;
+  color: #7a7a7a;
+  background: #0c0c0c;
 }
 
-.btn-secondary:hover {
-  border-color: var(--border-steel-light);
-  color: var(--text-bright);
-  background: linear-gradient(180deg, #242424 0%, #1a1a1a 100%);
-}
-
-.btn-secondary:active {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+.btn-reset:active {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
   transform: translateY(1px);
 }
 
-.footer-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.footer-text {
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 2px;
-}
-
-.footer-status {
-  color: var(--text-dim);
-  font-family: var(--font-mono);
-  font-size: 8px;
+.footer-warning {
+  color: #4a2020;
+  font-family: "Noto Serif SC", serif;
+  font-size: 10px;
+  font-style: italic;
+  text-align: center;
   letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #2a5a2a;
-  box-shadow: 0 0 5px rgba(42, 90, 42, 0.5);
-  animation: dot-pulse 2.5s ease-in-out infinite;
-}
-
-@keyframes dot-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(42, 90, 42, 0.5); }
-  50% { opacity: 0.4; box-shadow: 0 0 2px rgba(42, 90, 42, 0.3); }
+  line-height: 1.6;
 }
 </style>
