@@ -204,6 +204,20 @@
       仅格式显示: true
       仅格式提示词: false
 
+  - 正则名称: 关键词暗红高亮
+    id: a1b2c3d4-0004-4000-8000-000000000004
+    启用: true
+    查找表达式: "(厉鬼|杀人规律|灵异物品|灵魂烙印|拼图|鬼域|复苏|驭鬼者|鬼烛|替死娃娃)"
+    替换为: <span class="horror-keyword">$1</span>
+    来源:
+      用户输入: true
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
   - 正则名称: '[界面]状态栏'
     id: b50d0bed-ff40-4a25-9ada-14feb4283324
     启用: true
@@ -231,44 +245,55 @@
     查找表达式: "(?:\\*\\*)*?(【(?:推演选项|选项|警告|系统提示).*?】)(?:\\*\\*)*?\\s*\\n([\\s\\S]*?)(?=\\n+(?:\\*\\*)*?【状态面板|\\n+摘要|\\n*小猫之神|$)"
     替换为: |-
       <style>
-       .industrial-options {
-       background: #0a0a0a;
-       border: 1px solid #3a2020;
+       .horror-options {
+       background: #080505;
+       border: 1px solid #2a0a0a;
        border-left: 3px solid #5c1a1a;
+       border-right: 1px solid #2a0a0a;
        padding: 20px 24px;
        margin: 18px auto;
        max-width: 560px;
        position: relative;
-       box-shadow: 0 0 20px rgba(0,0,0,0.9), inset 0 0 40px rgba(0,0,0,0.5);
+       box-shadow: 0 0 30px rgba(0,0,0,0.95), inset 0 0 50px rgba(10,0,0,0.7), 0 0 6px rgba(80,10,10,0.15);
+       border-radius: 2px;
        }
-       .industrial-options::before {
+       .horror-options::before {
        content: '';
        position: absolute;
        top: 0; left: 0; right: 0; bottom: 0;
-       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.015) 2px, rgba(255,255,255,0.015) 4px);
+       background:
+       repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(60,0,0,0.02) 2px, rgba(60,0,0,0.02) 4px),
+       url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
        pointer-events: none;
        }
-       .industrial-options-title {
-       color: #c4a040;
+       .horror-options::after {
+       content: '';
+       position: absolute;
+       top: 0; right: 0; bottom: 0; width: 40px;
+       background: linear-gradient(90deg, transparent, rgba(60,0,0,0.06));
+       pointer-events: none;
+       }
+       .horror-options-title {
+       color: #a03030;
        font-family: "Noto Serif SC", "SimSun", serif;
        font-size: 17px;
        font-weight: 800;
        letter-spacing: 3px;
-       text-shadow: 0 0 6px rgba(196,160,64,0.4);
-       border-bottom: 1px solid #3a2020;
+       text-shadow: 0 0 8px rgba(140,20,20,0.5);
+       border-bottom: 1px solid #2a0a0a;
        padding-bottom: 10px;
        margin-bottom: 14px;
        }
-       .industrial-options-title::before {
+       .horror-options-title::before {
        content: '◆ ';
-       color: #8b1a1a;
+       color: #5c1a1a;
        }
-       .industrial-options-title::after {
+       .horror-options-title::after {
        content: ' ◆';
-       color: #8b1a1a;
+       color: #5c1a1a;
        }
-       .industrial-options-body {
-       color: #c0c0c0;
+       .horror-options-body {
+       color: #b0a8a8;
        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
        font-size: 14px;
        line-height: 1.9;
@@ -276,15 +301,15 @@
        font-weight: 300;
        letter-spacing: 0.5px;
        }
-       .industrial-options-body strong {
-       color: #d4a040;
+       .horror-options-body strong {
+       color: #c04040;
        font-weight: 600;
-       text-shadow: 0 0 4px rgba(212,160,64,0.3);
+       text-shadow: 0 0 4px rgba(160,30,30,0.4);
        }
       </style>
-      <div class="industrial-options">
-       <div class="industrial-options-title">$1</div>
-       <div class="industrial-options-body">$2</div>
+      <div class="horror-options">
+       <div class="horror-options-title">$1</div>
+       <div class="horror-options-body">$2</div>
       </div>
     来源:
       用户输入: true
@@ -301,141 +326,94 @@
     查找表达式: "(?:\\n|-)*?(?:\\*\\*)*?(【状态面板.*?】)(?:\\*\\*)*?\\s*\\n([\\s\\S]*?)(?=\\n+摘要|\\n*小猫之神|$)"
     替换为: |-
       <style>
-       .industrial-panel {
-       background: #0a0a0a;
-       border: 1px solid #3a3a3a;
+       .horror-panel {
+       background: #070404;
+       border: 1px solid #2a0a0a;
        padding: 0;
        margin: 18px auto;
        max-width: 480px;
        position: relative;
-       box-shadow: 0 0 25px rgba(0,0,0,0.95), inset 0 0 30px rgba(0,0,0,0.6);
+       box-shadow: 0 0 30px rgba(0,0,0,0.95), inset 0 0 40px rgba(10,0,0,0.6), 0 0 8px rgba(60,10,10,0.1);
+       border-radius: 2px;
+       overflow: hidden;
        }
-       .industrial-panel::before {
+       .horror-panel::before {
        content: '';
        position: absolute;
        top: 0; left: 0; right: 0; bottom: 0;
-       background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
+       background:
+       repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(60,0,0,0.015) 2px, rgba(60,0,0,0.015) 4px),
+       url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
        pointer-events: none;
        z-index: 1;
        }
-       .industrial-panel-header {
-       background: linear-gradient(90deg, #1a0a0a 0%, #0d0d0d 50%, #1a0a0a 100%);
-       border-bottom: 1px solid #5c1a1a;
+       .horror-panel-header {
+       background: linear-gradient(90deg, #1a0808 0%, #0d0505 50%, #1a0808 100%);
+       border-bottom: 1px solid #3a1010;
        padding: 12px 20px;
        position: relative;
        }
-       .industrial-panel-title {
-       color: #c4a040;
+       .horror-panel-header::after {
+       content: '';
+       position: absolute;
+       bottom: 0; left: 10%; right: 10%; height: 1px;
+       background: linear-gradient(90deg, transparent, rgba(120,20,20,0.4), transparent);
+       }
+       .horror-panel-title {
+       color: #a03030;
        font-family: "Noto Serif SC", "SimSun", serif;
        font-size: 16px;
        font-weight: 800;
        letter-spacing: 4px;
-       text-shadow: 0 0 8px rgba(196,160,64,0.5);
+       text-shadow: 0 0 10px rgba(140,20,20,0.6);
        text-align: center;
        }
-       .industrial-panel-title::before {
+       .horror-panel-title::before {
        content: '◇ ';
-       color: #8b1a1a;
+       color: #5c1a1a;
        font-size: 12px;
        }
-       .industrial-panel-title::after {
+       .horror-panel-title::after {
        content: ' ◇';
-       color: #8b1a1a;
+       color: #5c1a1a;
        font-size: 12px;
        }
-       .industrial-panel-rivet {
-       position: absolute;
-       width: 6px; height: 6px;
-       border-radius: 50%;
-       background: radial-gradient(circle, #555 0%, #222 100%);
-       box-shadow: inset 0 1px 1px rgba(255,255,255,0.2);
-       }
-       .industrial-panel-rivet.tl { top: 6px; left: 8px; }
-       .industrial-panel-rivet.tr { top: 6px; right: 8px; }
-       .industrial-panel-body {
+       .horror-panel-body {
        padding: 16px 20px;
        position: relative;
        z-index: 2;
        }
-       .industrial-panel-text {
-       color: #a0a0a0;
-       font-family: "Noto Sans SC", "Microsoft YaHei", monospace;
+       .horror-panel-body::before {
+       content: '';
+       position: absolute;
+       top: 8px; left: 6px;
+       width: 20px; height: 30px;
+       opacity: 0.06;
+       background: radial-gradient(ellipse at center, #5a1010 0%, transparent 70%);
+       pointer-events: none;
+       }
+       .horror-panel-text {
+       color: #a09898;
+       font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
        font-size: 13px;
        line-height: 2;
        white-space: pre-wrap;
        font-weight: 300;
        letter-spacing: 0.8px;
        }
-       .industrial-panel-text strong {
-       color: #e0c060;
+       .horror-panel-text strong {
+       color: #c04040;
        font-weight: 600;
-       text-shadow: 0 0 4px rgba(224,192,96,0.3);
+       text-shadow: 0 0 4px rgba(160,30,30,0.3);
        }
       </style>
-      <div class="industrial-panel">
-       <div class="industrial-panel-rivet tl"></div>
-       <div class="industrial-panel-rivet tr"></div>
-       <div class="industrial-panel-header">
-       <div class="industrial-panel-title">$1</div>
+      <div class="horror-panel">
+       <div class="horror-panel-header">
+       <div class="horror-panel-title">$1</div>
        </div>
-       <div class="industrial-panel-body">
-       <div class="industrial-panel-text">$2</div>
+       <div class="horror-panel-body">
+       <div class="horror-panel-text">$2</div>
        </div>
-      </div>
-    来源:
-      用户输入: true
-      AI输出: true
-      快捷命令: false
-      世界信息: false
-    作用于:
-      仅格式显示: true
-      仅格式提示词: false
-
-  - 正则名称: 全局剧情氛围美化
-    id: a1b2c3d4-0003-4000-8000-000000000003
-    启用: true
-    查找表达式: "^([\\s\\S]+)$"
-    替换为: |-
-      <style>
-       .industrial-atmosphere {
-       background: #0a0a0a;
-       color: #b0b0b0;
-       font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-       font-size: 15px;
-       line-height: 1.9;
-       padding: 22px 26px;
-       position: relative;
-       box-shadow: inset 0 0 60px rgba(0,0,0,0.85);
-       }
-       .industrial-atmosphere::before {
-       content: '';
-       position: absolute;
-       top: 0; left: 0; right: 0; bottom: 0;
-       background:
-       repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.008) 2px, rgba(255,255,255,0.008) 4px),
-       radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
-       pointer-events: none;
-       z-index: 0;
-       }
-       .industrial-atmosphere > * {
-       position: relative;
-       z-index: 1;
-       }
-       .industrial-atmosphere strong {
-       color: #c4a040;
-       text-shadow: 0 0 6px rgba(196,160,64,0.5);
-       font-weight: 700;
-       }
-       .industrial-atmosphere em {
-       color: #8b1a1a;
-       font-style: normal;
-       text-shadow: 0 0 4px rgba(139,26,26,0.4);
-       }
-      </style>
-      <div class="industrial-atmosphere">
-
-      $1
-
       </div>
     来源:
       用户输入: true
@@ -453,7 +431,7 @@
       启用: true
       类型: 脚本
       内容: |-
-        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js';
+        import 'https://testingcf.jsdelivr.net/gh/MagicalAsturogy/MagVarUpdate/artifact/bundle.js';
 
     - 名称: 变量结构
       id: f65ab164-4268-4366-8228-16af904c2251
@@ -461,3 +439,10 @@
       类型: 脚本
       内容: |-
         import 'http://localhost:5500/dist/神秘复苏模拟器/脚本/变量结构/index.js';
+
+    - 名称: 界面美化
+      id: a1b2c3d4-0006-4000-8000-000000000006
+      启用: true
+      类型: 脚本
+      内容: |-
+        import 'http://localhost:5500/dist/神秘复苏模拟器/脚本/界面美化/index.js';

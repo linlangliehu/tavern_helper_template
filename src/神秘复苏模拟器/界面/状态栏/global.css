@@ -1,47 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;600;700&family=Noto+Serif+SC:wght@600;800&family=Share+Tech+Mono&display=swap');
 
 :root {
-  --bg-primary: #030303;
-  --bg-panel: #080808;
-  --bg-header: #0b0707;
-  --bg-input: #060606;
-  --bg-input-focus: #0a0a0a;
-  --bg-button-primary: linear-gradient(180deg, #1c0808 0%, #0e0404 100%);
-  --bg-button-secondary: linear-gradient(180deg, #1c1c1c 0%, #121212 100%);
-  --bg-hover: rgba(139, 26, 26, 0.06);
-  --border-steel: #282828;
-  --border-steel-light: #383838;
-  --border-steel-dark: #181818;
-  --border-dark-red: #4a1a1a;
-  --border-dark-red-bright: #6a2a2a;
-  --border-accent: #5c1a1a;
-  --border-input: #262020;
-  --border-input-focus: #5c1a1a;
-  --border-dashed: #382828;
-  --text-dim: #3e3e3e;
-  --text-placeholder: #333;
-  --text-silver: #7a7a7a;
-  --text-label: #8a8a8a;
-  --text-light: #9a9a9a;
-  --text-bright: #b8b8b8;
-  --text-white: #d8d8d8;
-  --text-input: #e2e2e2;
-  --accent-gold: #b8963a;
-  --accent-gold-light: #d4b04a;
-  --accent-gold-dim: #7a6428;
-  --accent-dark-red: #7a1a1a;
-  --accent-dark-red-bright: #a02020;
-  --accent-dark-red-glow: rgba(139, 26, 26, 0.25);
-  --accent-gold-glow: rgba(184, 150, 58, 0.35);
-  --rivet-color: #2a2a2a;
-  --rivet-highlight: rgba(255, 255, 255, 0.12);
-  --scanline-opacity: 0.012;
-  --noise-opacity: 0.035;
-  --vignette-strength: 0.6;
-  --shadow-panel: 0 0 40px rgba(0, 0, 0, 0.98), inset 0 0 40px rgba(0, 0, 0, 0.7);
+  --bg-primary: #020202;
+  --bg-panel: #050505;
+  --bg-header: #080404;
+  --bg-input: #060303;
+  --bg-input-focus: #0a0505;
+  --bg-button-primary: linear-gradient(180deg, #2a0808 0%, #140404 100%);
+  --bg-button-secondary: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+  --bg-hover: rgba(100, 10, 10, 0.08);
+  --border-steel: #1a1010;
+  --border-steel-light: #2a1818;
+  --border-steel-dark: #0e0808;
+  --border-dark-red: #3a0808;
+  --border-dark-red-bright: #5a1515;
+  --border-accent: #4a0a0a;
+  --border-input: #1e0c0c;
+  --border-input-focus: #4a1212;
+  --border-dashed: #2a1212;
+  --text-dim: #2a1a1a;
+  --text-placeholder: #201010;
+  --text-silver: #6a5050;
+  --text-label: #5a3535;
+  --text-light: #7a5555;
+  --text-bright: #9a7070;
+  --text-white: #c0a0a0;
+  --text-input: #d0b0b0;
+  --accent-dark-red: #6a1a1a;
+  --accent-dark-red-bright: #8b2020;
+  --accent-dark-red-glow: rgba(120, 20, 20, 0.3);
+  --rivet-highlight: rgba(255, 255, 255, 0.08);
+  --scanline-opacity: 0.008;
+  --noise-opacity: 0.03;
+  --vignette-strength: 0.7;
+  --shadow-panel: 0 0 50px rgba(0, 0, 0, 0.98), inset 0 0 60px rgba(10, 0, 0, 0.8);
   --shadow-inset: inset 0 1px 4px rgba(0, 0, 0, 0.7);
-  --shadow-text-red: 0 0 10px rgba(139, 26, 26, 0.35);
-  --shadow-text-gold: 0 0 10px rgba(184, 150, 58, 0.45);
+  --shadow-text-red: 0 0 10px rgba(120, 20, 20, 0.4);
   --font-serif: "Noto Serif SC", "SimSun", serif;
   --font-sans: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --font-mono: "Share Tech Mono", "Courier New", monospace;
@@ -59,7 +53,7 @@
 
 html {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-steel) var(--bg-primary);
+  scrollbar-color: #1a0808 var(--bg-primary);
 }
 
 body {
@@ -84,8 +78,8 @@ body::before {
       0deg,
       transparent,
       transparent 1px,
-      rgba(255, 255, 255, var(--scanline-opacity)) 1px,
-      rgba(255, 255, 255, var(--scanline-opacity)) 2px
+      rgba(80, 0, 0, var(--scanline-opacity)) 1px,
+      rgba(80, 0, 0, var(--scanline-opacity)) 2px
     );
   pointer-events: none;
   z-index: 9999;
@@ -106,29 +100,29 @@ body::after {
   bottom: 0;
   background:
     radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, var(--vignette-strength)) 100%),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events: none;
   z-index: 9998;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 @keyframes flicker {
-  0%, 95%, 100% { opacity: 1; }
-  96% { opacity: 0.85; }
+  0%, 93%, 100% { opacity: 1; }
+  94% { opacity: 0.88; }
+  95% { opacity: 1; }
+  96% { opacity: 0.92; }
   97% { opacity: 1; }
-  98% { opacity: 0.9; }
 }
 
 #app {
-  min-height: 100vh;
   position: relative;
   padding: 16px 12px;
-  animation: flicker 12s ease-in-out infinite;
+  animation: flicker 8s ease-in-out infinite;
 }
 
 ::selection {
-  background: var(--accent-dark-red);
-  color: var(--text-white);
+  background: #4a0a0a;
+  color: #c0a0a0;
 }
 
 ::-webkit-scrollbar {
@@ -140,12 +134,12 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-steel);
+  background: #1a0808;
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--border-dark-red);
+  background: #2a0a0a;
 }
 
 input,
@@ -168,7 +162,7 @@ textarea:focus,
 select:focus {
   border-color: var(--border-input-focus);
   background: var(--bg-input-focus);
-  box-shadow: 0 0 8px rgba(92, 26, 26, 0.25), var(--shadow-inset);
+  box-shadow: 0 0 8px rgba(60, 10, 10, 0.2), var(--shadow-inset);
 }
 
 input::placeholder,
@@ -179,7 +173,7 @@ textarea::placeholder {
 
 select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%237a1a1a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%234a0a0a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding-right: 28px;
@@ -187,7 +181,7 @@ select {
 }
 
 select option {
-  background: #0a0a0a;
+  background: #050303;
   color: var(--text-input);
 }
 
