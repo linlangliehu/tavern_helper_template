@@ -1,1 +1,12 @@
-.cursor/mcp.json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": ["/c", "pnpx", "chrome-devtools-mcp@latest", "--autoConnect"],
+      "env": {
+        "SystemRoot": "C:\\Windows",
+        "PROGRAMFILES": "C:\\Program Files"
+      }
+    }
+  }
+}
