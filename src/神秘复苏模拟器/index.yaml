@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 神秘复苏模拟器.png
 版本: '1.0'
-作者: Nika Studio User
-备注: 琳琅
+作者: 琳琅
+备注: ''
 
 第一条消息:
 - 文件: 第一条消息/0
