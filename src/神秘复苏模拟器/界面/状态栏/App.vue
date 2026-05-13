@@ -16,6 +16,7 @@
       </div>
     </header>
 
+    <template v-if="isFirstFloor">
     <section class="card-module">
       <div class="module-header">
         <span class="module-icon">☠</span>
@@ -192,6 +193,7 @@
         </div>
       </div>
     </section>
+    </template>
 
     <section class="card-module dossier-module">
       <div class="module-header">
@@ -241,7 +243,27 @@
       </div>
     </section>
 
-    <footer class="card-footer">
+    <section v-if="options.length" class="card-module options-module">
+      <div class="module-header">
+        <span class="module-icon">▷</span>
+        <span class="module-title">推演选项</span>
+        <div class="module-line"></div>
+      </div>
+      <div class="module-body">
+        <button
+          v-for="opt in options"
+          :key="opt.key"
+          class="option-btn"
+          type="button"
+          @click="pickOption(opt)"
+        >
+          <span class="opt-key">{{ opt.key }}</span>
+          <span class="opt-text">{{ opt.text }}</span>
+        </button>
+      </div>
+    </section>
+
+    <footer v-if="isFirstFloor" class="card-footer">
       <div class="footer-actions">
         <button class="btn btn-start" :disabled="isStarting" @click="handleStart">
           {{ isStarting ? '正在坠入世界…' : '进入神秘复苏世界' }}
@@ -260,6 +282,49 @@ import { useDataStore } from './store'
 const store = useDataStore()
 const data = store.data
 const isStarting = ref(false)
+
+// 开局表单（基本信息 / 背景设定 / 驾驭厉鬼 / 特殊能力 / 灵异物品 / 底部按钮）
+// 只在开场白（楼 0）显示；楼 1+ 只渲染"灵异档案"动态状态面板。
+const isFirstFloor = getCurrentMessageId() === 0
+
+// 解析当前楼 AI 文本里的「推演选项」并渲染为按钮，点击后把选项文本填进酒馆输入框。
+type OptionItem = { key: string; text: string }
+
+function extractOptions(): OptionItem[] {
+  try {
+    const mes = getChatMessages(getCurrentMessageId())[0]?.message ?? ''
+    // 遍历所有含"选项"的方括号块（AI 有时在思考块里也提"推演选项"标签但不带 A/B/C/D），
+    // 找到第一个能解析出 A/B/C/D 行的块作为真选项。
+    const blockRe = /【[^】]*选项[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/g
+    let bm: RegExpExecArray | null
+    while ((bm = blockRe.exec(mes)) !== null) {
+      const out: OptionItem[] = []
+      for (const line of bm[1].split('\n')) {
+        const lm = line.match(/^\s*([A-Z])[.、:：]\s*\[?(.+?)\]?\s*$/)
+        if (lm) out.push({ key: lm[1], text: lm[2].trim() })
+      }
+      if (out.length > 0) return out
+    }
+    return []
+  } catch (e) {
+    console.warn('[MFRS Status] 解析推演选项失败', e)
+    return []
+  }
+}
+
+const options = ref<OptionItem[]>(extractOptions())
+
+function pickOption(opt: OptionItem) {
+  const ta = window.parent.document.querySelector('#send_textarea') as HTMLTextAreaElement | null
+  if (!ta) {
+    toastr.warning('找不到酒馆输入框 #send_textarea', '推演选项')
+    return
+  }
+  ta.value = opt.text
+  ta.dispatchEvent(new Event('input', { bubbles: true }))
+  ta.focus()
+  toastr.success(`已填入选项 ${opt.key}`, '推演选项')
+}
 
 const defaultEventFile = {
   事件代号: '未立案灵异事件',
@@ -1159,5 +1224,66 @@ function handleReset() {
   text-align: center;
   letter-spacing: 1px;
   line-height: 1.6;
+}
+
+.options-module .module-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(20, 5, 5, 0.5);
+  border: 1px solid #2a0a0a;
+  border-left: 2px solid #4a1010;
+  color: #b8a0a0;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+  transition: all 0.2s;
+  border-radius: 2px;
+  outline: none;
+}
+
+.option-btn:hover {
+  background: rgba(80, 10, 10, 0.18);
+  border-color: #6a1a1a;
+  border-left-color: #aa3030;
+  color: #d8b0b0;
+  text-shadow: 0 0 4px rgba(150, 30, 30, 0.2);
+  box-shadow: 0 0 10px rgba(80, 20, 20, 0.15);
+}
+
+.option-btn:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.opt-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #aa3030;
+  background: #0a0505;
+  border: 1px solid #4a1010;
+  border-radius: 50%;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0;
+}
+
+.opt-text {
+  flex: 1;
+  overflow-wrap: anywhere;
 }
 </style>
