@@ -13,3 +13,22 @@ auto-imports.d.ts
 components.d.ts
 
 .vscode/chrome-debug-profile/
+
+# 本地调试截图与 a11y 快照
+sillytavern_*.png
+snapshot_after_sync.txt
+
+# Claude Code 临时下载（会话产生）
+.claude_tmp_*
+
+# 误输入命令产生的文件
+et --hard
+
+# 本地 Claude 私有设置（按约定不应 tracked）
+.claude/settings.local.json
+
+# 本地 build 的示例产物（CI 会 rm 掉）
+/dist/前端界面示例/
+/dist/流式楼层界面示例/
+/dist/脚本示例/
+/dist/角色卡示例/
