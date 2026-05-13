@@ -1,0 +1,48 @@
+---
+变量输出格式:
+  rule:
+    - you must output the update analysis and the actual update commands at once in the end of the next reply
+    - the update commands work like the JSON Patch RFC 6902 standard, must be a valid JSON array containing operation objects, but supports the following operations instead
+    - supported operations are replace, delta, insert, remove, move
+    - replace updates an existing path
+    - delta updates an existing number path by a numeric delta
+    - insert adds a new object key or appends to an array when using "-" as array index
+    - remove deletes an object key or array item
+    - move moves a value from one path to another
+    - don't update field names that start with "_" because they are readonly
+    - keep hidden files consistent, but do not reveal hidden file contents in the normal narrative
+    - write patch paths against stat_data, for example /当前灵异事件/猜测杀人规律/-
+  format: |-
+    <UpdateVariable>
+    <Analysis>$(IN ENGLISH, no more than 80 words)
+    - ${time passed or scene transition: ...}
+    - ${main supernatural evidence observed this turn: ...}
+    - ${reasoning law update: known/suspected/wrong/no change}
+    - ${resurrection risk update and why: ...}
+    - ${resource/event/faction update and why: ...}
+    </Analysis>
+    <JSONPatch>
+    [
+      { "op": "replace", "path": "${/path/to/variable}", "value": "${new_value}" },
+      { "op": "delta", "path": "${/path/to/number/variable}", "value": "${positive_or_negative_delta}" },
+      { "op": "insert", "path": "${/path/to/object/new_key}", "value": "${new_value}" },
+      { "op": "insert", "path": "${/path/to/array/-}", "value": "${new_value}" },
+      { "op": "remove", "path": "${/path/to/object/key}" },
+      { "op": "remove", "path": "${/path/to/array/0}" },
+      { "op": "move", "from": "${/path/to/variable}", "to": "${/path/to/another/path}" }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+  examples:
+    - |-
+      <UpdateVariable>
+      <Analysis>Player used a ghost ability, increasing resurrection risk. The knocking pattern is observed but not fully confirmed, so it remains suspected. The red ghost candle was lit, reducing available resources.</Analysis>
+      <JSONPatch>
+      [
+        { "op": "delta", "path": "/厉鬼复苏程度", "value": 15 },
+        { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 15 },
+        { "op": "insert", "path": "/当前灵异事件/猜测杀人规律/-", "value": "听到连续敲门声后会被标记" },
+        { "op": "replace", "path": "/当前灵异事件/处理状态", "value": "被困" }
+      ]
+      </JSONPatch>
+      </UpdateVariable>
