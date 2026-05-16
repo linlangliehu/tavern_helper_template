@@ -204,23 +204,23 @@
       <div class="module-body dossier-grid">
         <div class="dossier-item">
           <span class="dossier-label">事件代号</span>
-          <strong>{{ eventFile.事件代号 }}</strong>
+          <strong>{{ displayEvent.事件代号 }}</strong>
         </div>
         <div class="dossier-item">
           <span class="dossier-label">危害等级</span>
-          <strong>{{ eventFile.危害等级 }}</strong>
+          <strong>{{ displayEvent.危害等级 }}</strong>
         </div>
         <div class="dossier-item">
           <span class="dossier-label">鬼域状态</span>
-          <strong>{{ eventFile.鬼域状态 }}</strong>
+          <strong>{{ displayEvent.鬼域状态 }}</strong>
         </div>
         <div class="dossier-item">
           <span class="dossier-label">处理状态</span>
-          <strong>{{ eventFile.处理状态 }}</strong>
+          <strong>{{ displayEvent.处理状态 }}</strong>
         </div>
         <div class="dossier-item">
           <span class="dossier-label">复苏风险</span>
-          <strong>{{ ghostState.总复苏风险 }}%</strong>
+          <strong>{{ displayResurrectionRisk }}</strong>
         </div>
         <div class="dossier-item">
           <span class="dossier-label">总部备案</span>
@@ -230,15 +230,15 @@
       <div class="module-body dossier-notes">
         <div class="note-line">
           <span>已知规律</span>
-          <em>{{ listText(eventFile.已知杀人规律) }}</em>
+          <em>{{ displayKnownLaws }}</em>
         </div>
         <div class="note-line">
           <span>猜测规律</span>
-          <em>{{ listText(eventFile.猜测杀人规律) }}</em>
+          <em>{{ displaySuspectedLaws }}</em>
         </div>
         <div class="note-line">
           <span>灵异资源</span>
-          <em>{{ resourceSummary }}</em>
+          <em>{{ displayResourceSummary }}</em>
         </div>
       </div>
     </section>
@@ -418,6 +418,35 @@ const eventFile = computed(() => d().当前灵异事件 ?? defaultEventFile)
 const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState)
 const factionState = computed(() => d().势力关系 ?? defaultFactionState)
 
+type StatusPanelData = Partial<Record<'当前灵异事件' | '鬼域状态' | '已知规律' | '猜测规律' | '复苏风险' | '持有拼图/灵异物品', string>>
+
+function currentMessageText() {
+  try {
+    return getChatMessages(getCurrentMessageId())[0]?.message ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function parseStatusPanel(): StatusPanelData {
+  const message = currentMessageText()
+  const match = message.match(/【状态面板】([\s\S]*?)(?:《\/状态面板[^》]*》|<UpdateVariable>|$)/)
+  if (!match) return {}
+
+  const panel: StatusPanelData = {}
+  for (const line of match[1].split('\n')) {
+    const lineMatch = line.match(/^\s*([^：:]+)[：:]\s*(.*?)\s*$/)
+    if (!lineMatch) continue
+    const key = lineMatch[1].trim() as keyof StatusPanelData
+    if (key in panel || ['当前灵异事件', '鬼域状态', '已知规律', '猜测规律', '复苏风险', '持有拼图/灵异物品'].includes(key)) {
+      panel[key] = lineMatch[2].trim()
+    }
+  }
+  return panel
+}
+
+const statusPanel = computed(parseStatusPanel)
+
 function textOrFallback(value: unknown, fallback = '无') {
   const text = String(value ?? '').trim()
   return text || fallback
@@ -505,6 +534,34 @@ const resourceSummary = computed(() => {
     : []
   return `拼图：${ghostPieces}；物品：${itemNames.length ? itemNames.join('、') : '无'}；黄金：${textOrFallback(resource.黄金储备, '未准备')}`
 })
+
+function panelValue(value: string | undefined) {
+  return value?.replace(/^([^：:]+)[：:]/, '').trim()
+}
+
+function splitEventLine(value: string) {
+  const parts = value.split(/[；;]/).map(part => panelValue(part.trim())).filter(Boolean)
+  return {
+    事件代号: parts[0],
+    危害等级: parts[1],
+    处理状态: parts[2],
+  }
+}
+
+const displayEvent = computed(() => {
+  const panelEvent = statusPanel.value.当前灵异事件 ? splitEventLine(statusPanel.value.当前灵异事件) : {}
+  return {
+    事件代号: textOrFallback(panelEvent.事件代号, eventFile.value.事件代号),
+    危害等级: textOrFallback(panelEvent.危害等级, eventFile.value.危害等级),
+    鬼域状态: textOrFallback(statusPanel.value.鬼域状态, eventFile.value.鬼域状态),
+    处理状态: textOrFallback(panelEvent.处理状态, eventFile.value.处理状态),
+  }
+})
+
+const displayKnownLaws = computed(() => textOrFallback(statusPanel.value.已知规律, listText(eventFile.value.已知杀人规律)))
+const displaySuspectedLaws = computed(() => textOrFallback(statusPanel.value.猜测规律, listText(eventFile.value.猜测杀人规律)))
+const displayResurrectionRisk = computed(() => textOrFallback(statusPanel.value.复苏风险, `${ghostState.value.总复苏风险}%`))
+const displayResourceSummary = computed(() => textOrFallback(statusPanel.value['持有拼图/灵异物品'], resourceSummary.value))
 
 function buildStartMessage() {
   const current = d()
