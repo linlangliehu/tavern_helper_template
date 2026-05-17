@@ -40,6 +40,34 @@ const SupernaturalItemSchema = z.object({
   副作用: z.string().default('无'),
 });
 
+const MainlineProgressSchema = z.object({
+  当前阶段: z.string().default('开局接入'),
+  阶段序号: z.number().default(0),
+  阶段状态: z.string().default('未启动'),
+  已完成节点: z.array(z.string()).default([]),
+  可触发节点: z.array(z.string()).default([]),
+  偏移等级: z.number().default(0),
+  正史锚点: z.object({
+    当前锚点: z.string().default('自定义开局'),
+    默认走向: z.string().default('等待玩家开局地点与身份确定'),
+    玩家偏移: z.array(z.string()).default([]),
+  }).default({
+    当前锚点: '自定义开局',
+    默认走向: '等待玩家开局地点与身份确定',
+    玩家偏移: [],
+  }),
+  世界压力: z.object({
+    灵异复苏强度: z.number().default(0),
+    总部关注度: z.number().default(0),
+    社会公开度: z.number().default(0),
+  }).default({
+    灵异复苏强度: 0,
+    总部关注度: 0,
+    社会公开度: 0,
+  }),
+  下一步推进提示: z.string().default('等待首个灵异征兆或开局事件立案'),
+});
+
 export const Schema = z.object({
   姓名: z.string().default(''),
   性别: z.string().default('男'),
@@ -119,6 +147,25 @@ export const Schema = z.object({
     事件: z.string().default('等待初始化'),
     影响: z.string().default('未产生影响'),
   })).default([]),
+  主线进度: MainlineProgressSchema.default({
+    当前阶段: '开局接入',
+    阶段序号: 0,
+    阶段状态: '未启动',
+    已完成节点: [],
+    可触发节点: [],
+    偏移等级: 0,
+    正史锚点: {
+      当前锚点: '自定义开局',
+      默认走向: '等待玩家开局地点与身份确定',
+      玩家偏移: [],
+    },
+    世界压力: {
+      灵异复苏强度: 0,
+      总部关注度: 0,
+      社会公开度: 0,
+    },
+    下一步推进提示: '等待首个灵异征兆或开局事件立案',
+  }),
   隐藏档案: z.object({
     真实杀人规律: z.string().default('未生成'),
     关键生路: z.string().default('未生成'),
