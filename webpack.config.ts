@@ -557,7 +557,6 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         vue: 'Vue',
         'vue-router': 'VueRouter',
         yaml: 'YAML',
-        zod: 'z',
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);

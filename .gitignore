@@ -32,3 +32,6 @@ et --hard
 /dist/流式楼层界面示例/
 /dist/脚本示例/
 /dist/角色卡示例/
+
+# 本地构建 sourcemap
+/dist/**/*.map
