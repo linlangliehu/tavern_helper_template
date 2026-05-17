@@ -1,5 +1,5 @@
 <template>
-  <div class="horror-card">
+  <div class="horror-card" :class="{ 'runtime-card': !isFirstFloor }">
     <div class="blood-drip blood-drip-1"></div>
     <div class="blood-drip blood-drip-2"></div>
     <div class="blood-drip blood-drip-3"></div>
@@ -226,6 +226,14 @@
           <span class="dossier-label">总部备案</span>
           <strong>{{ factionState.总部备案状态 }}</strong>
         </div>
+        <div class="dossier-item">
+          <span class="dossier-label">主线阶段</span>
+          <strong>{{ displayMainlineStage }}</strong>
+        </div>
+        <div class="dossier-item">
+          <span class="dossier-label">阶段状态</span>
+          <strong>{{ displayMainlineStatus }}</strong>
+        </div>
       </div>
       <div class="module-body dossier-notes">
         <div class="note-line">
@@ -365,6 +373,26 @@ const defaultHiddenFile = {
   鬼的真实位置: '未确认',
 }
 
+const defaultMainlineProgress = {
+  当前阶段: '开局接入',
+  阶段序号: 0,
+  阶段状态: '未启动',
+  已完成节点: [],
+  可触发节点: [],
+  偏移等级: 0,
+  正史锚点: {
+    当前锚点: '自定义开局',
+    默认走向: '等待玩家开局地点与身份确定',
+    玩家偏移: [],
+  },
+  世界压力: {
+    灵异复苏强度: 0,
+    总部关注度: 0,
+    社会公开度: 0,
+  },
+  下一步推进提示: '等待首个灵异征兆或开局事件立案',
+}
+
 const defaults = {
   姓名: '',
   性别: '男',
@@ -386,6 +414,7 @@ const defaults = {
   灵异资源: defaultResources,
   势力关系: defaultFactionState,
   世界线记录: [],
+  主线进度: defaultMainlineProgress,
   隐藏档案: defaultHiddenFile,
 }
 
@@ -417,6 +446,7 @@ const items = computed(() => d().灵异物品 ?? [])
 const eventFile = computed(() => d().当前灵异事件 ?? defaultEventFile)
 const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState)
 const factionState = computed(() => d().势力关系 ?? defaultFactionState)
+const mainlineProgress = computed(() => d().主线进度 ?? defaultMainlineProgress)
 
 type StatusPanelData = Partial<Record<'当前灵异事件' | '鬼域状态' | '已知规律' | '猜测规律' | '复苏风险' | '持有拼图/灵异物品', string>>
 
@@ -562,6 +592,8 @@ const displayKnownLaws = computed(() => textOrFallback(statusPanel.value.已知�
 const displaySuspectedLaws = computed(() => textOrFallback(statusPanel.value.猜测规律, listText(eventFile.value.猜测杀人规律)))
 const displayResurrectionRisk = computed(() => textOrFallback(statusPanel.value.复苏风险, `${ghostState.value.总复苏风险}%`))
 const displayResourceSummary = computed(() => textOrFallback(statusPanel.value['持有拼图/灵异物品'], resourceSummary.value))
+const displayMainlineStage = computed(() => `${textOrFallback(mainlineProgress.value.当前阶段, '开局接入')} #${mainlineProgress.value.阶段序号 ?? 0}`)
+const displayMainlineStatus = computed(() => textOrFallback(mainlineProgress.value.阶段状态, '未启动'))
 
 function buildStartMessage() {
   const current = d()
@@ -670,6 +702,13 @@ function commitStartData() {
         影响: '灵异事件档案建立，等待第一轮现实验证',
       },
     ],
+    主线进度: {
+      ...defaultMainlineProgress,
+      正史锚点: {
+        ...defaultMainlineProgress.正史锚点,
+        默认走向: `等待${location}首个灵异征兆或开局事件立案`,
+      },
+    },
     隐藏档案: {
       真实杀人规律: '由首轮灵异事件生成后确定',
       关键生路: '由首轮灵异事件生成后确定',
@@ -755,6 +794,7 @@ function handleReset() {
     灵异资源: { 鬼拼图: [], 灵异物品: [], 黄金储备: '未准备' },
     势力关系: { ...defaultFactionState },
     世界线记录: [],
+    主线进度: { ...defaultMainlineProgress },
     隐藏档案: { ...defaultHiddenFile },
   })
 }
@@ -762,13 +802,32 @@ function handleReset() {
 
 <style scoped>
 .horror-card {
-  background: #050505;
-  border: 1px solid #2a0a0a;
-  max-width: 560px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(90, 12, 12, 0.18), transparent 34%),
+    linear-gradient(180deg, #080707 0%, #030303 48%, #050202 100%);
+  border: 1px solid #321010;
+  width: min(92vw, 760px);
+  max-width: 760px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(80, 0, 0, 0.15), inset 0 0 80px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.9),
+    0 18px 45px rgba(0, 0, 0, 0.82),
+    inset 0 0 90px rgba(0, 0, 0, 0.94),
+    inset 0 0 32px rgba(70, 0, 0, 0.18);
+}
+
+.runtime-card {
+  min-height: 620px;
+}
+
+.runtime-card .dossier-module {
+  margin-top: 18px;
+}
+
+.runtime-card .options-module {
+  margin-bottom: 18px;
 }
 
 .blood-drip {
@@ -788,8 +847,11 @@ function handleReset() {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   background:
-    linear-gradient(45deg, transparent 48%, rgba(30, 5, 5, 0.08) 49%, rgba(30, 5, 5, 0.08) 51%, transparent 52%),
-    linear-gradient(-30deg, transparent 48%, rgba(20, 0, 0, 0.05) 49%, rgba(20, 0, 0, 0.05) 51%, transparent 52%);
+    linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 100%),
+    repeating-linear-gradient(180deg, transparent 0 7px, rgba(120, 0, 0, 0.025) 8px, transparent 9px),
+    linear-gradient(45deg, transparent 48%, rgba(30, 5, 5, 0.10) 49%, rgba(30, 5, 5, 0.10) 51%, transparent 52%),
+    radial-gradient(circle at 75% 18%, rgba(110, 15, 15, 0.08), transparent 22%);
+  background-size: 9px 100%, auto, auto, auto;
   pointer-events: none;
   z-index: 1;
 }
@@ -797,7 +859,9 @@ function handleReset() {
 .card-header {
   padding: 24px 20px 18px;
   text-align: center;
-  background: linear-gradient(180deg, rgba(40, 0, 0, 0.5) 0%, transparent 100%);
+  background:
+    linear-gradient(180deg, rgba(45, 4, 4, 0.72) 0%, rgba(5, 5, 5, 0.16) 100%),
+    repeating-linear-gradient(90deg, transparent 0 14px, rgba(120, 10, 10, 0.035) 15px, transparent 16px);
   border-bottom: 1px solid #3a0808;
   position: relative;
   z-index: 2;
@@ -819,12 +883,16 @@ function handleReset() {
 }
 
 .main-title {
-  color: #8b1a1a;
+  color: #9b2424;
   font-family: "Noto Serif SC", "SimSun", serif;
   font-size: 24px;
   font-weight: 800;
-  letter-spacing: 8px;
-  text-shadow: 0 0 10px rgba(139, 26, 26, 0.5), 0 0 30px rgba(80, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.8);
+  letter-spacing: 9px;
+  text-shadow:
+    0 0 1px #1a0000,
+    0 0 10px rgba(139, 26, 26, 0.56),
+    0 0 34px rgba(80, 0, 0, 0.36),
+    0 2px 4px rgba(0, 0, 0, 0.9);
   margin: 10px 0 8px;
   position: relative;
 }
@@ -839,13 +907,29 @@ function handleReset() {
 .card-module {
   position: relative;
   z-index: 2;
+  margin: 10px 12px;
+  background: linear-gradient(180deg, rgba(12, 8, 8, 0.68), rgba(4, 4, 4, 0.36));
+  border: 1px solid rgba(58, 14, 14, 0.55);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.72), 0 0 18px rgba(70, 0, 0, 0.08);
+}
+
+.card-module::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(110, 26, 26, 0.38), transparent);
+  pointer-events: none;
 }
 
 .module-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 20px 8px;
+  padding: 15px 18px 8px;
+  background: linear-gradient(90deg, rgba(50, 6, 6, 0.34), transparent 72%);
 }
 
 .module-icon {
@@ -855,13 +939,13 @@ function handleReset() {
 }
 
 .module-title {
-  color: #7a1a1a;
+  color: #8f2525;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 3px;
   white-space: nowrap;
-  text-shadow: 0 0 6px rgba(100, 20, 20, 0.3);
+  text-shadow: 0 0 8px rgba(100, 20, 20, 0.42);
 }
 
 .module-line {
@@ -876,7 +960,7 @@ function handleReset() {
 
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -906,7 +990,7 @@ function handleReset() {
 }
 
 .field-input {
-  background: #0a0505;
+  background: linear-gradient(180deg, #0c0707, #050303);
   border: 1px solid #2a1010;
   border-radius: 2px;
   color: #c0a0a0;
@@ -916,7 +1000,8 @@ function handleReset() {
   outline: none;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.68);
 }
 
 .field-input:focus {
@@ -931,7 +1016,7 @@ function handleReset() {
 
 .field-select {
   appearance: none;
-  background: #0a0505;
+  background: linear-gradient(180deg, #0c0707, #050303);
   border: 1px solid #2a1010;
   border-radius: 2px;
   color: #c0a0a0;
@@ -941,9 +1026,10 @@ function handleReset() {
   outline: none;
   cursor: pointer;
   transition: border-color 0.2s, box-shadow 0.2s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235a1a1a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235a1a1a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"), linear-gradient(180deg, #0c0707, #050303);
+  background-repeat: no-repeat, no-repeat;
+  background-position: right 8px center, 0 0;
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.68);
 }
 
 .field-select:focus {
@@ -1004,7 +1090,7 @@ function handleReset() {
 }
 
 .field-textarea {
-  background: #0a0505;
+  background: linear-gradient(180deg, #0c0707, #050303);
   border: 1px solid #2a1010;
   border-radius: 2px;
   color: #c0a0a0;
@@ -1018,6 +1104,7 @@ function handleReset() {
   width: 100%;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.68);
 }
 
 .field-textarea:focus {
@@ -1138,36 +1225,54 @@ function handleReset() {
 
 .dossier-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   padding-bottom: 8px;
 }
 
 .dossier-item {
-  background: rgba(12, 5, 5, 0.72);
-  border: 1px solid #241010;
-  border-left: 2px solid #4a1010;
-  padding: 8px 10px;
+  background:
+    linear-gradient(180deg, rgba(18, 10, 10, 0.86), rgba(6, 5, 5, 0.82)),
+    repeating-linear-gradient(90deg, rgba(120, 30, 30, 0.04) 0 1px, transparent 1px 12px);
+  border: 1px solid #2d1313;
+  border-left: 2px solid #5a1515;
+  padding: 9px 10px;
   min-width: 0;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.62);
+  position: relative;
+}
+
+.dossier-item::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(100, 22, 22, 0.44);
+  box-shadow: 0 0 7px rgba(120, 20, 20, 0.28);
 }
 
 .dossier-label {
   display: block;
-  color: #583030;
+  color: #6b3b3b;
   font-family: "Share Tech Mono", "Courier New", monospace;
   font-size: 9px;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.4px;
   margin-bottom: 4px;
+  text-shadow: 0 0 5px rgba(90, 20, 20, 0.26);
 }
 
 .dossier-item strong {
   display: block;
-  color: #a06060;
+  color: #b98a8a;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.45;
   overflow-wrap: anywhere;
+  text-shadow: 0 0 6px rgba(120, 20, 20, 0.18);
 }
 
 .dossier-notes {
@@ -1179,11 +1284,14 @@ function handleReset() {
 
 .note-line {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 84px minmax(0, 1fr);
   gap: 8px;
   color: #6a4040;
   font-size: 11px;
   line-height: 1.6;
+  padding: 7px 8px;
+  background: rgba(8, 5, 5, 0.54);
+  border: 1px solid rgba(42, 14, 14, 0.72);
 }
 
 .note-line span {
@@ -1205,10 +1313,12 @@ function handleReset() {
 
 .card-footer {
   padding: 18px 20px 16px;
-  background: linear-gradient(180deg, transparent, rgba(30, 0, 0, 0.3));
-  border-top: 1px solid #2a0808;
+  margin: 10px 12px 12px;
+  background: linear-gradient(180deg, rgba(12, 6, 6, 0.28), rgba(30, 0, 0, 0.38));
+  border: 1px solid rgba(42, 8, 8, 0.78);
   position: relative;
   z-index: 2;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.58);
 }
 
 .footer-actions {
@@ -1293,10 +1403,10 @@ function handleReset() {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 12px;
-  background: rgba(20, 5, 5, 0.5);
-  border: 1px solid #2a0a0a;
-  border-left: 2px solid #4a1010;
+  padding: 11px 12px;
+  background: linear-gradient(180deg, rgba(20, 8, 8, 0.72), rgba(8, 5, 5, 0.62));
+  border: 1px solid #2f1010;
+  border-left: 2px solid #5a1515;
   color: #b8a0a0;
   cursor: pointer;
   text-align: left;
@@ -1306,6 +1416,7 @@ function handleReset() {
   transition: all 0.2s;
   border-radius: 2px;
   outline: none;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.52);
 }
 
 .option-btn:hover {
@@ -1342,5 +1453,21 @@ function handleReset() {
 .opt-text {
   flex: 1;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  .horror-card {
+    width: 100%;
+    max-width: none;
+  }
+
+  .runtime-card {
+    min-height: 520px;
+  }
+
+  .info-grid,
+  .dossier-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>
