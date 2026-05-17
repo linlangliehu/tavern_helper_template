@@ -8,6 +8,8 @@
 
 就在你的理智即将被这无边的黑暗和幽闭感压垮时，前方的虚无中，突然亮起了一抹惨淡的光。那不是什么温暖的光芒，而像是太平间里老旧白炽灯闪烁时的惨白色。紧接着，伴随着一阵类似干枯指甲刮擦黑板的"刺啦"声，一行行猩红的、宛如半凝固血液般的扭曲文字，在你的视网膜上强行浮现：
 
-【检测到未知灵魂体接入……】
-【神秘复苏模拟器正在初始化……】
+<div style="width:min(92vw,760px);max-width:760px;margin:16px auto 12px;padding:18px 20px;background:radial-gradient(circle at 18% 0%,rgba(90,12,12,.18),transparent 34%),linear-gradient(180deg,#080707 0%,#030303 48%,#050202 100%);border:1px solid #321010;box-shadow:0 0 0 1px rgba(0,0,0,.9),0 18px 45px rgba(0,0,0,.82),inset 0 0 90px rgba(0,0,0,.94),inset 0 0 32px rgba(70,0,0,.18);box-sizing:border-box;font-family:'Noto Serif SC','SimSun',serif;color:#9b2424;line-height:1.9;letter-spacing:.04em;text-align:center;">
+  <div>【检测到未知灵魂体接入……】</div>
+  <div>【神秘复苏模拟器正在初始化……】</div>
+</div>
 <StatusPlaceHolderImpl/>
