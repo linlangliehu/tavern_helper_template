@@ -11,7 +11,7 @@
     - move moves a value from one path to another
     - don't update field names that start with "_" because they are readonly
     - keep hidden files consistent, but do not reveal hidden file contents in the normal narrative
-    - write patch paths against stat_data, for example /当前灵异事件/猜测杀人规律/-
+    - write patch paths against stat_data, for example /当前灵异事件/猜测杀人规律/- or /主线进度/当前阶段
   format: |-
     <UpdateVariable>
     <Analysis>$(IN ENGLISH, no more than 80 words)
@@ -42,7 +42,9 @@
         { "op": "delta", "path": "/厉鬼复苏程度", "value": 15 },
         { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 15 },
         { "op": "insert", "path": "/当前灵异事件/猜测杀人规律/-", "value": "听到连续敲门声后会被标记" },
-        { "op": "replace", "path": "/当前灵异事件/处理状态", "value": "被困" }
+        { "op": "replace", "path": "/当前灵异事件/处理状态", "value": "被困" },
+        { "op": "replace", "path": "/主线进度/阶段状态", "value": "进行中" },
+        { "op": "insert", "path": "/主线进度/可触发节点/-", "value": "确认敲门声媒介" }
       ]
       </JSONPatch>
       </UpdateVariable>
