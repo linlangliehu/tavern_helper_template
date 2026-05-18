@@ -12,12 +12,14 @@
     - don't update field names that start with "_" because they are readonly
     - keep hidden files consistent, but do not reveal hidden file contents in the normal narrative
     - write patch paths against stat_data, for example /当前灵异事件/猜测杀人规律/- or /主线进度/当前阶段
+- when resolving a selected high-risk option, include /风险值 deltas for death danger and include /厉鬼复苏程度 plus /驭鬼者状态/总复苏风险 deltas when ghost power is used
   format: |-
     <UpdateVariable>
     <Analysis>$(IN ENGLISH, no more than 80 words)
     - ${time passed or scene transition: ...}
     - ${main supernatural evidence observed this turn: ...}
     - ${reasoning law update: known/suspected/wrong/no change}
+    - ${death risk update and why: ...}
     - ${resurrection risk update and why: ...}
     - ${resource/event/faction update and why: ...}
     </Analysis>
@@ -39,6 +41,7 @@
       <Analysis>Player used a ghost ability, increasing resurrection risk. The knocking pattern is observed but not fully confirmed, so it remains suspected. The red ghost candle was lit, reducing available resources.</Analysis>
       <JSONPatch>
       [
+        { "op": "delta", "path": "/风险值", "value": 10 },
         { "op": "delta", "path": "/厉鬼复苏程度", "value": 15 },
         { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 15 },
         { "op": "insert", "path": "/当前灵异事件/猜测杀人规律/-", "value": "听到连续敲门声后会被标记" },

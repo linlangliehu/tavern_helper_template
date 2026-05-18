@@ -76,6 +76,10 @@
       "default": "健康",
       "type": "string"
     },
+    "风险值": {
+      "default": 0,
+      "type": "number"
+    },
     "厉鬼复苏程度": {
       "default": 0,
       "type": "number"
