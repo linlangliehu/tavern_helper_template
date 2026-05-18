@@ -201,11 +201,17 @@
         <span class="module-title">灵异档案</span>
         <div class="module-line"></div>
       </div>
+      <div v-if="isDeathRiskCritical" class="death-ended-banner">你已死亡，模拟结束</div>
       <div class="module-body survival-strip">
         <div class="survival-card survival-card-main">
           <span class="survival-icon">◇</span>
           <span class="survival-label">危害等级</span>
           <strong>{{ displayEvent.危害等级 }}</strong>
+        </div>
+        <div class="survival-card survival-card-death" :class="{ critical: isDeathRiskCritical }">
+          <span class="survival-icon">!</span>
+          <span class="survival-label">死亡风险</span>
+          <strong>{{ displayDeathRisk }}</strong>
         </div>
         <div class="survival-card">
           <span class="survival-icon">◎</span>
@@ -249,6 +255,7 @@
     <section v-if="options.length" class="card-module options-module">
       <div class="option-status-strip">
         <span>[推演节点：{{ displayMainlineStage }}]</span>
+        <span>[死亡风险：{{ displayDeathRisk }}]</span>
         <span>[复苏风险：{{ displayResurrectionRisk }}]</span>
       </div>
       <div class="option-warning-title">
@@ -256,8 +263,8 @@
         <span>推演选项</span>
         <span class="warning-cross">×</span>
       </div>
-      <div class="option-countdown-line"></div>
-      <div class="option-countdown-text">请选择下一步行动</div>
+      <div class="option-action-line"></div>
+      <div class="option-action-text">请选择下一步行动</div>
       <div class="module-body option-list">
         <button
           v-for="opt in options"
@@ -297,7 +304,61 @@ const isStarting = ref(false)
 const isFirstFloor = getCurrentMessageId() === 0
 
 // 解析当前楼 AI 文本里的「推演选项」并渲染为按钮，点击后把选项文本填进酒馆输入框。
-type OptionItem = { key: string; text: string }
+type OptionRisk = { death: number; revive: number; source: string; tagged: boolean }
+type OptionItem = { key: string; text: string; risk: OptionRisk }
+
+const optionRiskOpenTagPattern = /<risk\b[^>]*\/?>/i
+const optionRiskTagPattern = /<\/?risk\b[^>]*>/gi
+
+function clampRiskDelta(value: unknown) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(100, Math.round(n)))
+}
+
+function readRiskNumber(tag: string, name: string) {
+  const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
+  return clampRiskDelta(match?.[1])
+}
+
+function readRiskText(tag: string, name: string) {
+  const quoted = tag.match(new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, 'i'))
+  if (quoted) return quoted[2].trim()
+  const bare = tag.match(new RegExp(`\\b${name}\\s*=\\s*([^\\s>]+)`, 'i'))
+  return bare?.[1]?.trim() ?? ''
+}
+
+function optionDeathRiskDelta(text: string) {
+  const riskRules = [
+    { pattern: /自定义行动/, delta: 0 },
+    { pattern: /厉鬼能力|动用厉鬼|使用厉鬼|鬼域深处|强行压制|身体试探|试探规律|硬闯|硬抗|对抗厉鬼|正面/, delta: 15 },
+    { pattern: /靠近|接近|进入|开门|触碰|回应|回头|盯住|查看|调查|追上|跟踪|声音源头|敲门声源头|高危/, delta: 10 },
+    { pattern: /大喊|制造声音|暴露|冲出去|立刻站起来|奔跑|撞开|强行/, delta: 8 },
+    { pattern: /等待|躲|藏|屏住呼吸|保持安静|远离|撤离|后退|离开|绕开|黄金|鬼烛|替死|求援/, delta: 3 },
+  ]
+  const matched = riskRules.find(rule => rule.pattern.test(text))
+  return matched?.delta ?? 5
+}
+
+function parseOptionRisk(rawText: string) {
+  const tag = rawText.match(optionRiskOpenTagPattern)?.[0]
+  const text = rawText.replace(optionRiskTagPattern, '').replace(/\s+/g, ' ').trim()
+  if (!tag) {
+    return {
+      text,
+      risk: { death: optionDeathRiskDelta(text), revive: 0, source: '关键词兜底', tagged: false },
+    }
+  }
+  return {
+    text,
+    risk: {
+      death: readRiskNumber(tag, 'death'),
+      revive: readRiskNumber(tag, 'revive'),
+      source: readRiskText(tag, 'source'),
+      tagged: true,
+    },
+  }
+}
 
 function extractOptions(): OptionItem[] {
   try {
@@ -309,8 +370,11 @@ function extractOptions(): OptionItem[] {
     while ((bm = blockRe.exec(mes)) !== null) {
       const out: OptionItem[] = []
       for (const line of bm[1].split('\n')) {
-        const lm = line.match(/^\s*([A-Z])[.、:：]\s*\[?(.+?)\]?\s*$/)
-        if (lm) out.push({ key: lm[1], text: lm[2].trim() })
+        const lm = line.match(/^\s*([A-Z])[.、:：]\s*(.+?)\s*$/)
+        if (!lm) continue
+        const body = lm[2].trim().replace(/^\[(.*)\]$/, '$1').trim()
+        const parsed = parseOptionRisk(body)
+        if (parsed.text) out.push({ key: lm[1], text: parsed.text, risk: parsed.risk })
       }
       if (out.length > 0) return out
     }
@@ -323,16 +387,62 @@ function extractOptions(): OptionItem[] {
 
 const options = ref<OptionItem[]>(extractOptions())
 
+function applyOptionRisk(risk: OptionRisk) {
+  if (!data.value) data.value = { ...defaults }
+  if (!data.value.驭鬼者状态) data.value.驭鬼者状态 = { ...defaultGhostState }
+
+  const currentDeath = Math.max(0, Math.min(100, Math.max(Number(data.value.风险值 ?? 0), panelDeathRiskValue.value ?? 0)))
+  const currentRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.厉鬼复苏程度 ?? 0), panelResurrectionRiskValue.value ?? 0)))
+  const currentTotalRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.驭鬼者状态.总复苏风险 ?? currentRevive), currentRevive)))
+  const nextDeath = Math.min(100, currentDeath + risk.death)
+  const nextRevive = Math.min(100, currentRevive + risk.revive)
+  const nextTotalRevive = Math.min(100, currentTotalRevive + risk.revive)
+
+  data.value.风险值 = nextDeath
+  data.value.厉鬼复苏程度 = nextRevive
+  data.value.驭鬼者状态.总复苏风险 = nextTotalRevive
+
+  const statData = clonePlainData(data.value)
+  updateVariablesWith(variables => {
+    _.set(variables, 'stat_data', statData)
+    return variables
+  }, { type: 'message', message_id: getCurrentMessageId() })
+
+  return {
+    death: nextDeath - currentDeath,
+    revive: nextRevive - currentRevive,
+    totalRevive: nextTotalRevive - currentTotalRevive,
+  }
+}
+
+function findSendTextarea() {
+  const docs: Document[] = []
+  try {
+    if (window.parent?.document) docs.push(window.parent.document)
+  } catch {
+    // ignore cross-frame access errors
+  }
+  docs.push(document)
+
+  for (const doc of docs) {
+    const textarea = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null
+    if (textarea) return textarea
+  }
+  return null
+}
+
 function pickOption(opt: OptionItem) {
-  const ta = window.parent.document.querySelector('#send_textarea') as HTMLTextAreaElement | null
+  const ta = findSendTextarea()
   if (!ta) {
     toastr.warning('找不到酒馆输入框 #send_textarea', '推演选项')
     return
   }
-  ta.value = opt.text
+  const applied = applyOptionRisk(opt.risk)
+  ta.value = `我选择：${opt.text}`
   ta.dispatchEvent(new Event('input', { bubbles: true }))
+  ta.dispatchEvent(new Event('change', { bubbles: true }))
   ta.focus()
-  toastr.success(`已填入选项 ${opt.key}`, '推演选项')
+  toastr.success(`已填入选项 ${opt.key}，死亡风险 +${applied.death}，复苏风险 +${applied.revive}`, '推演选项')
 }
 
 const defaultEventFile = {
@@ -406,6 +516,7 @@ const defaults = {
   消耗代价: '无',
   灵异物品: [],
   状态: '健康',
+  风险值: 0,
   厉鬼复苏程度: 0,
   持有拼图: '无',
   所在位置: '未知',
@@ -449,7 +560,7 @@ const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState)
 const factionState = computed(() => d().势力关系 ?? defaultFactionState)
 const mainlineProgress = computed(() => d().主线进度 ?? defaultMainlineProgress)
 
-type StatusPanelData = Partial<Record<'当前灵异事件' | '鬼域状态' | '已知规律' | '猜测规律' | '复苏风险' | '持有拼图/灵异物品', string>>
+type StatusPanelData = Partial<Record<'当前灵异事件' | '鬼域状态' | '已知规律' | '猜测规律' | '风险值' | '死亡风险' | '复苏风险' | '持有拼图/灵异物品', string>>
 
 function currentMessageText() {
   try {
@@ -469,7 +580,7 @@ function parseStatusPanel(): StatusPanelData {
     const lineMatch = line.match(/^\s*([^：:]+)[：:]\s*(.*?)\s*$/)
     if (!lineMatch) continue
     const key = lineMatch[1].trim() as keyof StatusPanelData
-    if (key in panel || ['当前灵异事件', '鬼域状态', '已知规律', '猜测规律', '复苏风险', '持有拼图/灵异物品'].includes(key)) {
+    if (key in panel || ['当前灵异事件', '鬼域状态', '已知规律', '猜测规律', '风险值', '死亡风险', '复苏风险', '持有拼图/灵异物品'].includes(key)) {
       panel[key] = lineMatch[2].trim()
     }
   }
@@ -481,6 +592,12 @@ const statusPanel = computed(parseStatusPanel)
 function textOrFallback(value: unknown, fallback = '无') {
   const text = String(value ?? '').trim()
   return text || fallback
+}
+
+function riskNumberFromText(value: unknown) {
+  const match = String(value ?? '').match(/\d+(?:\.\d+)?/)
+  if (!match) return undefined
+  return Math.max(0, Math.min(100, Math.round(Number(match[0]))))
 }
 
 function clonePlainData<T>(value: T): T {
@@ -589,9 +706,15 @@ const displayEvent = computed(() => {
   }
 })
 
+const panelDeathRiskValue = computed(() => riskNumberFromText(statusPanel.value.死亡风险 ?? statusPanel.value.风险值))
+const panelResurrectionRiskValue = computed(() => riskNumberFromText(statusPanel.value.复苏风险))
+const deathRiskValue = computed(() => Math.max(0, Math.min(100, Math.max(Number(d().风险值 ?? 0), panelDeathRiskValue.value ?? 0))))
+const resurrectionRiskValue = computed(() => Math.max(0, Math.min(100, Math.max(Number(ghostState.value.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0))))
+const isDeathRiskCritical = computed(() => deathRiskValue.value >= 100)
+const displayDeathRisk = computed(() => `${deathRiskValue.value}/100`)
 const displayKnownLaws = computed(() => textOrFallback(statusPanel.value.已知规律, listText(eventFile.value.已知杀人规律)))
 const displaySuspectedLaws = computed(() => textOrFallback(statusPanel.value.猜测规律, listText(eventFile.value.猜测杀人规律)))
-const displayResurrectionRisk = computed(() => textOrFallback(statusPanel.value.复苏风险, `${ghostState.value.总复苏风险}%`))
+const displayResurrectionRisk = computed(() => `${resurrectionRiskValue.value}%`)
 const displayResourceSummary = computed(() => textOrFallback(statusPanel.value['持有拼图/灵异物品'], resourceSummary.value))
 const displayMainlineStage = computed(() => `${textOrFallback(mainlineProgress.value.当前阶段, '开局接入')} #${mainlineProgress.value.阶段序号 ?? 0}`)
 const displayMainlineStatus = computed(() => textOrFallback(mainlineProgress.value.阶段状态, '未启动'))
@@ -634,6 +757,7 @@ function buildStartMessage() {
 开局地点：${textOrFallback(current.开局地点, '未知地点')}
 身份：${textOrFallback(current.身份, '普通人')}
 角色背景：${textOrFallback(current.角色背景, '没有额外背景，由模拟器自行补全合理细节。')}
+风险值：${current.风险值 ?? 0}/100（达到100时角色死亡，本次模拟结束）
 
 【灵异事件初始档案】
 事件代号：${event.事件代号}
@@ -660,7 +784,9 @@ ${itemText}
 黄金储备：${resources.黄金储备}
 ${resourceText}
 
-请根据以上设定正式启动“神秘复苏模拟器”的世界线推演：生成我抵达开局地点后的第一段剧情、灵异征兆、事件档案、初步规律线索、状态面板和可行动选项。保持《神秘复苏》式冷峻、危险、因果严密的氛围，不要重新要求我填写设定。`
+请根据以上设定正式启动“神秘复苏模拟器”的世界线推演：生成我抵达开局地点后的第一段剧情、灵异征兆、事件档案、初步规律线索、状态面板和可行动选项。保持《神秘复苏》式冷峻、危险、因果严密的氛围，不要重新要求我填写设定。
+
+【推演选项】必须按 A/B/C/D 列出，每项末尾附加隐藏风险标签 <risk death="0" revive="0" source="简短原因">。death 是点击该选项时应预先结算的死亡风险增量；revive 是点击该选项时应预先结算的厉鬼复苏风险增量。状态栏会隐藏该标签，只显示选项正文。`
 }
 
 function commitStartData() {
@@ -690,6 +816,7 @@ function commitStartData() {
     驾驭厉鬼: ghostList,
     所在位置: location,
     状态: textOrFallback(data.value.状态, '健康'),
+    风险值: Number(data.value.风险值 ?? 0),
     厉鬼复苏程度: Number(data.value.厉鬼复苏程度 ?? 0),
     持有拼图: ghostList.length ? ghostList.map(ghost => ghost.厉鬼名称).join('、') : '无',
     灵异物品: itemList,
@@ -799,7 +926,7 @@ function handleReset() {
     姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁',
     角色背景: '', 身份: '', 驾驭厉鬼: [],
     特殊能力描述: '', 消耗代价: '无', 灵异物品: [],
-    状态: '健康', 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知',
+    状态: '健康', 风险值: 0, 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知',
     当前灵异事件: { ...defaultEventFile },
     规律推理记录: [],
     驭鬼者状态: { 总复苏风险: 0, 已驾驭厉鬼: [] },
@@ -1293,6 +1420,28 @@ function handleReset() {
     linear-gradient(180deg, rgba(20, 0, 0, 0.92), rgba(2, 0, 0, 0.96));
 }
 
+.death-ended-banner {
+  margin: 6px 20px 14px;
+  padding: 16px 18px;
+  color: #ff1010;
+  font-family: "Noto Serif SC", "SimSun", serif;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.22), transparent 58%),
+    linear-gradient(180deg, rgba(45, 0, 0, 0.94), rgba(4, 0, 0, 0.98));
+  border: 2px solid #ff1010;
+  text-shadow:
+    0 0 5px rgba(255, 0, 0, 0.98),
+    0 0 18px rgba(255, 0, 0, 0.82),
+    0 2px 0 rgba(0, 0, 0, 0.95);
+  box-shadow:
+    0 0 18px rgba(255, 0, 0, 0.58),
+    inset 0 0 34px rgba(120, 0, 0, 0.62);
+}
+
 .survival-strip {
   display: grid;
   grid-template-columns: 1.2fr repeat(2, 1fr);
@@ -1324,6 +1473,20 @@ function handleReset() {
   box-shadow:
     0 0 12px rgba(255, 0, 0, 0.42),
     inset 0 0 24px rgba(80, 0, 0, 0.42);
+}
+
+.survival-card-death {
+  border-color: rgba(255, 45, 45, 0.88);
+}
+
+.survival-card-death.critical {
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 0, 0, 0.28), transparent 42%),
+    linear-gradient(180deg, rgba(78, 0, 0, 0.92), rgba(8, 0, 0, 0.98));
+  border-color: #ff1010;
+  box-shadow:
+    0 0 16px rgba(255, 0, 0, 0.68),
+    inset 0 0 30px rgba(120, 0, 0, 0.58);
 }
 
 .survival-icon {
@@ -1669,7 +1832,7 @@ function handleReset() {
   filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.88));
 }
 
-.option-countdown-line {
+.option-action-line {
   height: 14px;
   margin: 0 auto 14px;
   max-width: 90%;
@@ -1680,7 +1843,7 @@ function handleReset() {
     0 0 8px rgba(120, 0, 0, 0.42);
 }
 
-.option-countdown-text {
+.option-action-text {
   margin-bottom: 18px;
   color: #ff1515;
   font-family: "Share Tech Mono", "Courier New", monospace;
@@ -1694,6 +1857,8 @@ function handleReset() {
 }
 
 .option-list {
+  position: relative;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1701,6 +1866,8 @@ function handleReset() {
 }
 
 .option-btn {
+  position: relative;
+  z-index: 4;
   display: flex;
   align-items: flex-start;
   gap: 12px;
