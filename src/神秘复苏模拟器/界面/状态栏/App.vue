@@ -19,7 +19,7 @@
     <template v-if="isFirstFloor">
     <section class="card-module">
       <div class="module-header">
-        <span class="module-icon">☠</span>
+        <span class="module-icon">◆</span>
         <span class="module-title">基本信息</span>
         <div class="module-line"></div>
       </div>
@@ -96,7 +96,7 @@
 
     <section class="card-module">
       <div class="module-header">
-        <span class="module-icon">👁</span>
+        <span class="module-icon">◇</span>
         <span class="module-title">驾驭厉鬼</span>
         <div class="module-line"></div>
       </div>
@@ -105,7 +105,7 @@
           <div class="item-card" v-for="(ghost, idx) in ghosts" :key="idx">
             <div class="item-card-header">
               <span class="item-number">厉鬼 #{{ idx + 1 }}</span>
-              <button class="item-remove" @click="removeGhost(idx)">✕</button>
+              <button class="item-remove" @click="removeGhost(idx)">×</button>
             </div>
             <div class="form-field">
               <label class="field-label">厉鬼名称</label>
@@ -122,7 +122,7 @@
             + 添加驾驭厉鬼（最多3个）
           </button>
           <div class="item-empty" v-if="ghosts.length === 0">
-            <div class="eye-icon">👁</div>
+            <div class="eye-icon">◎</div>
             <span>暂无驾驭厉鬼</span>
           </div>
         </div>
@@ -131,7 +131,7 @@
 
     <section class="card-module">
       <div class="module-header">
-        <span class="module-icon">⚡</span>
+        <span class="module-icon">※</span>
         <span class="module-title">特殊能力</span>
         <div class="module-line"></div>
       </div>
@@ -157,7 +157,7 @@
 
     <section class="card-module">
       <div class="module-header">
-        <span class="module-icon">⚰</span>
+        <span class="module-icon">▽</span>
         <span class="module-title">灵异物品</span>
         <div class="module-line"></div>
       </div>
@@ -166,7 +166,7 @@
           <div class="item-card" v-for="(item, idx) in items" :key="idx">
             <div class="item-card-header">
               <span class="item-number">物品 #{{ idx + 1 }}</span>
-              <button class="item-remove" @click="removeItem(idx)">✕</button>
+              <button class="item-remove" @click="removeItem(idx)">×</button>
             </div>
             <div class="form-field">
               <label class="field-label">物品名称</label>
@@ -187,7 +187,7 @@
             + 添加灵异物品（最多5件）
           </button>
           <div class="item-empty" v-if="items.length === 0">
-            <div class="eye-icon">👁</div>
+            <div class="eye-icon">◎</div>
             <span>暂无物品</span>
           </div>
         </div>
@@ -201,63 +201,64 @@
         <span class="module-title">灵异档案</span>
         <div class="module-line"></div>
       </div>
-      <div class="module-body dossier-grid">
-        <div class="dossier-item">
-          <span class="dossier-label">事件代号</span>
-          <strong>{{ displayEvent.事件代号 }}</strong>
-        </div>
-        <div class="dossier-item">
-          <span class="dossier-label">危害等级</span>
+      <div class="module-body survival-strip">
+        <div class="survival-card survival-card-main">
+          <span class="survival-icon">◇</span>
+          <span class="survival-label">危害等级</span>
           <strong>{{ displayEvent.危害等级 }}</strong>
         </div>
-        <div class="dossier-item">
-          <span class="dossier-label">鬼域状态</span>
-          <strong>{{ displayEvent.鬼域状态 }}</strong>
-        </div>
-        <div class="dossier-item">
-          <span class="dossier-label">处理状态</span>
-          <strong>{{ displayEvent.处理状态 }}</strong>
-        </div>
-        <div class="dossier-item">
-          <span class="dossier-label">复苏风险</span>
+        <div class="survival-card">
+          <span class="survival-icon">◎</span>
+          <span class="survival-label">复苏风险</span>
           <strong>{{ displayResurrectionRisk }}</strong>
         </div>
-        <div class="dossier-item">
-          <span class="dossier-label">总部备案</span>
-          <strong>{{ factionState.总部备案状态 }}</strong>
-        </div>
-        <div class="dossier-item">
-          <span class="dossier-label">主线阶段</span>
+        <div class="survival-card">
+          <span class="survival-icon">▥</span>
+          <span class="survival-label">主线阶段</span>
           <strong>{{ displayMainlineStage }}</strong>
         </div>
-        <div class="dossier-item">
-          <span class="dossier-label">阶段状态</span>
-          <strong>{{ displayMainlineStatus }}</strong>
+      </div>
+      <div class="module-body archive-layout">
+        <div class="event-dossier-card">
+          <div class="event-eye">◎</div>
+          <div class="event-file-no">FILE / {{ displayMainlineStatus }}</div>
+          <h2>{{ displayEvent.事件代号 }}</h2>
+          <div class="event-state-row">
+            <span>鬼域：{{ displayEvent.鬼域状态 }}</span>
+            <span>处理：{{ displayEvent.处理状态 }}</span>
+          </div>
+        </div>
+        <div class="archive-grid">
+          <div class="archive-card" v-for="item in archiveCards" :key="item.label">
+            <div class="archive-icon">{{ item.icon }}</div>
+            <div class="archive-copy">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="module-body dossier-notes">
-        <div class="note-line">
-          <span>已知规律</span>
-          <em>{{ displayKnownLaws }}</em>
-        </div>
-        <div class="note-line">
-          <span>猜测规律</span>
-          <em>{{ displaySuspectedLaws }}</em>
-        </div>
-        <div class="note-line">
-          <span>灵异资源</span>
-          <em>{{ displayResourceSummary }}</em>
+      <div class="module-body intel-list">
+        <div class="intel-card" v-for="note in intelligenceNotes" :key="note.label">
+          <span>{{ note.label }}</span>
+          <em>{{ note.value }}</em>
         </div>
       </div>
     </section>
 
     <section v-if="options.length" class="card-module options-module">
-      <div class="module-header">
-        <span class="module-icon">▷</span>
-        <span class="module-title">推演选项</span>
-        <div class="module-line"></div>
+      <div class="option-status-strip">
+        <span>[推演节点：{{ displayMainlineStage }}]</span>
+        <span>[复苏风险：{{ displayResurrectionRisk }}]</span>
       </div>
-      <div class="module-body">
+      <div class="option-warning-title">
+        <span class="warning-cross">×</span>
+        <span>推演选项</span>
+        <span class="warning-cross">×</span>
+      </div>
+      <div class="option-countdown-line"></div>
+      <div class="option-countdown-text">请选择下一步行动</div>
+      <div class="module-body option-list">
         <button
           v-for="opt in options"
           :key="opt.key"
@@ -265,7 +266,7 @@
           type="button"
           @click="pickOption(opt)"
         >
-          <span class="opt-key">{{ opt.key }}</span>
+          <span class="opt-key">{{ opt.key }}.</span>
           <span class="opt-text">{{ opt.text }}</span>
         </button>
       </div>
@@ -278,7 +279,7 @@
         </button>
         <button class="btn btn-reset" :disabled="isStarting" @click="handleReset">清空所有信息</button>
       </div>
-      <div class="footer-warning">⚠ 注意：模拟器中的一切选择，皆会影响你的生死。</div>
+      <div class="footer-warning">※ 注意：模拟器中的一切选择，皆会影响你的生死。</div>
     </footer>
   </div>
 </template>
@@ -594,6 +595,17 @@ const displayResurrectionRisk = computed(() => textOrFallback(statusPanel.value.
 const displayResourceSummary = computed(() => textOrFallback(statusPanel.value['持有拼图/灵异物品'], resourceSummary.value))
 const displayMainlineStage = computed(() => `${textOrFallback(mainlineProgress.value.当前阶段, '开局接入')} #${mainlineProgress.value.阶段序号 ?? 0}`)
 const displayMainlineStatus = computed(() => textOrFallback(mainlineProgress.value.阶段状态, '未启动'))
+const archiveCards = computed(() => [
+  { icon: '▦', label: '处理状态', value: displayEvent.value.处理状态 },
+  { icon: '♜', label: '总部备案', value: factionState.value.总部备案状态 },
+  { icon: '◈', label: '鬼域状态', value: displayEvent.value.鬼域状态 },
+  { icon: '▤', label: '灵异资源', value: displayResourceSummary.value },
+])
+const intelligenceNotes = computed(() => [
+  { label: '已知规律', value: displayKnownLaws.value },
+  { label: '猜测规律', value: displaySuspectedLaws.value },
+  { label: '资源档案', value: displayResourceSummary.value },
+])
 
 function buildStartMessage() {
   const current = d()
@@ -803,19 +815,21 @@ function handleReset() {
 <style scoped>
 .horror-card {
   background:
-    radial-gradient(circle at 18% 0%, rgba(90, 12, 12, 0.18), transparent 34%),
-    linear-gradient(180deg, #080707 0%, #030303 48%, #050202 100%);
-  border: 1px solid #321010;
+    radial-gradient(circle at 50% 0%, rgba(165, 0, 0, 0.24), transparent 34%),
+    radial-gradient(circle at 8% 18%, rgba(120, 0, 0, 0.16), transparent 24%),
+    linear-gradient(180deg, #130000 0%, #050000 45%, #020000 100%);
+  border: 2px solid #d00000;
   width: min(92vw, 760px);
   max-width: 760px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.9),
-    0 18px 45px rgba(0, 0, 0, 0.82),
-    inset 0 0 90px rgba(0, 0, 0, 0.94),
-    inset 0 0 32px rgba(70, 0, 0, 0.18);
+    0 0 10px rgba(255, 0, 0, 0.66),
+    0 0 34px rgba(155, 0, 0, 0.4),
+    0 18px 45px rgba(0, 0, 0, 0.88),
+    inset 0 0 64px rgba(120, 0, 0, 0.34),
+    inset 0 0 120px rgba(0, 0, 0, 0.94);
 }
 
 .runtime-card {
@@ -860,57 +874,69 @@ function handleReset() {
   padding: 24px 20px 18px;
   text-align: center;
   background:
-    linear-gradient(180deg, rgba(45, 4, 4, 0.72) 0%, rgba(5, 5, 5, 0.16) 100%),
-    repeating-linear-gradient(90deg, transparent 0 14px, rgba(120, 10, 10, 0.035) 15px, transparent 16px);
-  border-bottom: 1px solid #3a0808;
+    linear-gradient(180deg, rgba(100, 0, 0, 0.58) 0%, rgba(12, 0, 0, 0.72) 100%),
+    repeating-linear-gradient(90deg, transparent 0 14px, rgba(255, 0, 0, 0.045) 15px, transparent 16px);
+  border-bottom: 2px solid #d00000;
   position: relative;
   z-index: 2;
+  box-shadow:
+    0 0 16px rgba(255, 0, 0, 0.32),
+    inset 0 0 32px rgba(0, 0, 0, 0.68);
 }
 
 .header-quote {
-  color: #5a3030;
+  color: #8a5a5a;
   font-family: "Noto Serif SC", "SimSun", serif;
   font-size: 11px;
   font-style: italic;
   line-height: 1.7;
   margin: 6px 0;
-  opacity: 0.8;
+  opacity: 0.9;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.24);
 }
 
 .quote-mark {
-  color: #6a1a1a;
+  color: #ff1010;
   font-size: 14px;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.7);
 }
 
 .main-title {
-  color: #9b2424;
+  color: #ff1010;
   font-family: "Noto Serif SC", "SimSun", serif;
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 800;
   letter-spacing: 9px;
   text-shadow:
-    0 0 1px #1a0000,
-    0 0 10px rgba(139, 26, 26, 0.56),
-    0 0 34px rgba(80, 0, 0, 0.36),
-    0 2px 4px rgba(0, 0, 0, 0.9);
+    0 0 4px rgba(255, 0, 0, 0.98),
+    0 0 16px rgba(255, 0, 0, 0.76),
+    0 0 38px rgba(160, 0, 0, 0.62),
+    0 2px 4px rgba(0, 0, 0, 0.96);
   margin: 10px 0 8px;
   position: relative;
 }
 
 .title-deco-line {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #4a0a0a 20%, #6a1a1a 50%, #4a0a0a 80%, transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8a0000 18%, #ff1010 50%, #8a0000 82%, transparent);
   margin: 8px auto;
-  max-width: 300px;
+  max-width: 320px;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.58);
 }
 
 .card-module {
   position: relative;
   z-index: 2;
-  margin: 10px 12px;
-  background: linear-gradient(180deg, rgba(12, 8, 8, 0.68), rgba(4, 4, 4, 0.36));
-  border: 1px solid rgba(58, 14, 14, 0.55);
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.72), 0 0 18px rgba(70, 0, 0, 0.08);
+  margin: 12px 14px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(110, 0, 0, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(18, 0, 0, 0.9), rgba(3, 0, 0, 0.82));
+  border: 1px solid rgba(210, 0, 0, 0.74);
+  box-shadow:
+    0 0 8px rgba(255, 0, 0, 0.24),
+    0 0 22px rgba(120, 0, 0, 0.16),
+    inset 0 0 24px rgba(0, 0, 0, 0.78),
+    inset 0 0 42px rgba(70, 0, 0, 0.28);
 }
 
 .card-module::before {
@@ -920,38 +946,44 @@ function handleReset() {
   left: 6px;
   right: 6px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(110, 26, 26, 0.38), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.48), transparent);
   pointer-events: none;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.45);
 }
 
 .module-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 15px 18px 8px;
-  background: linear-gradient(90deg, rgba(50, 6, 6, 0.34), transparent 72%);
+  gap: 10px;
+  padding: 16px 18px 9px;
+  background: linear-gradient(90deg, rgba(100, 0, 0, 0.44), transparent 74%);
 }
 
 .module-icon {
-  color: #6a1a1a;
-  font-size: 13px;
-  text-shadow: 0 0 6px rgba(100, 20, 20, 0.4);
+  color: #ff1010;
+  font-size: 15px;
+  text-shadow:
+    0 0 5px rgba(255, 0, 0, 0.95),
+    0 0 14px rgba(180, 0, 0, 0.6);
 }
 
 .module-title {
-  color: #8f2525;
+  color: #ff2020;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 3px;
   white-space: nowrap;
-  text-shadow: 0 0 8px rgba(100, 20, 20, 0.42);
+  text-shadow:
+    0 0 5px rgba(255, 0, 0, 0.8),
+    0 0 14px rgba(160, 0, 0, 0.55);
 }
 
 .module-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, #3a0808, transparent);
+  background: linear-gradient(90deg, #ff1010, rgba(120, 0, 0, 0.45), transparent);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.48);
 }
 
 .module-body {
@@ -971,11 +1003,12 @@ function handleReset() {
 }
 
 .field-label {
-  color: #6a4040;
+  color: #9d7373;
   font-family: "Share Tech Mono", "Courier New", monospace;
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(255, 0, 0, 0.22);
 }
 
 .field-label-long {
@@ -984,16 +1017,17 @@ function handleReset() {
   text-transform: none;
   font-family: "Noto Serif SC", "SimSun", serif;
   font-style: italic;
-  color: #5a3030;
+  color: #9a5c5c;
   line-height: 1.5;
   margin-bottom: 2px;
+  text-shadow: 0 0 6px rgba(255, 0, 0, 0.2);
 }
 
 .field-input {
-  background: linear-gradient(180deg, #0c0707, #050303);
-  border: 1px solid #2a1010;
-  border-radius: 2px;
-  color: #c0a0a0;
+  background: linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
+  border: 1px solid rgba(180, 0, 0, 0.58);
+  border-radius: 0;
+  color: #d6b0b0;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 13px;
   padding: 8px 10px;
@@ -1001,45 +1035,53 @@ function handleReset() {
   width: 100%;
   box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.68);
+  box-shadow:
+    inset 0 0 14px rgba(0, 0, 0, 0.78),
+    0 0 5px rgba(255, 0, 0, 0.16);
 }
 
 .field-input:focus {
-  border-color: #5a1a1a;
-  box-shadow: 0 0 8px rgba(80, 20, 20, 0.2), inset 0 0 4px rgba(40, 0, 0, 0.3);
+  border-color: #ff1010;
+  background: linear-gradient(180deg, rgba(30, 0, 0, 0.96), rgba(6, 0, 0, 0.98));
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.46),
+    inset 0 0 10px rgba(80, 0, 0, 0.36);
 }
 
 .field-input::placeholder {
-  color: #3a2020;
+  color: #5a3030;
   font-size: 11px;
 }
 
 .field-select {
   appearance: none;
-  background: linear-gradient(180deg, #0c0707, #050303);
-  border: 1px solid #2a1010;
-  border-radius: 2px;
-  color: #c0a0a0;
+  border: 1px solid rgba(180, 0, 0, 0.58);
+  border-radius: 0;
+  color: #d6b0b0;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   padding: 8px 28px 8px 10px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%235a1a1a' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"), linear-gradient(180deg, #0c0707, #050303);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23ff1010' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"), linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
   background-repeat: no-repeat, no-repeat;
   background-position: right 8px center, 0 0;
-  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.68);
+  box-shadow:
+    inset 0 0 14px rgba(0, 0, 0, 0.78),
+    0 0 5px rgba(255, 0, 0, 0.16);
 }
 
 .field-select:focus {
-  border-color: #5a1a1a;
-  box-shadow: 0 0 8px rgba(80, 20, 20, 0.2);
+  border-color: #ff1010;
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.46),
+    inset 0 0 10px rgba(80, 0, 0, 0.36);
 }
 
 .field-select option {
-  background: #0a0505;
-  color: #c0a0a0;
+  background: #080000;
+  color: #d6b0b0;
 }
 
 .radio-group {
@@ -1052,48 +1094,55 @@ function handleReset() {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #5a4040;
+  color: #8a6a6a;
   font-family: "Noto Sans SC", sans-serif;
   font-size: 13px;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
   padding: 6px 14px;
-  border: 1px solid #1a0a0a;
-  border-radius: 2px;
-  background: #080505;
+  border: 1px solid rgba(120, 0, 0, 0.46);
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(14, 0, 0, 0.86), rgba(3, 0, 0, 0.92));
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.72);
 }
 
 .radio-item:hover {
-  border-color: #3a1515;
-  color: #8a6060;
+  border-color: #d00000;
+  color: #caa0a0;
+  box-shadow:
+    0 0 8px rgba(255, 0, 0, 0.28),
+    inset 0 0 16px rgba(80, 0, 0, 0.32);
 }
 
 .radio-item.active {
-  color: #aa3030;
-  border-color: #4a1515;
-  background: #0d0505;
-  text-shadow: 0 0 4px rgba(150, 30, 30, 0.3);
+  color: #ff3030;
+  border-color: #ff1010;
+  background: linear-gradient(180deg, rgba(50, 0, 0, 0.86), rgba(8, 0, 0, 0.94));
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.58);
+  box-shadow:
+    0 0 8px rgba(255, 0, 0, 0.42),
+    inset 0 0 18px rgba(100, 0, 0, 0.42);
 }
 
 .radio-item.active .radio-dot {
-  background: #8b1a1a;
-  box-shadow: 0 0 5px rgba(139, 26, 26, 0.5);
+  background: #ff1010;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.86);
 }
 
 .radio-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #1a0a0a;
-  border: 1px solid #3a1515;
+  background: #180000;
+  border: 1px solid #9a0000;
   transition: background 0.2s, box-shadow 0.2s;
 }
 
 .field-textarea {
-  background: linear-gradient(180deg, #0c0707, #050303);
-  border: 1px solid #2a1010;
-  border-radius: 2px;
-  color: #c0a0a0;
+  background: linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
+  border: 1px solid rgba(180, 0, 0, 0.58);
+  border-radius: 0;
+  color: #d6b0b0;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
   font-size: 12px;
   padding: 8px 10px;
@@ -1103,26 +1152,32 @@ function handleReset() {
   line-height: 1.7;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.68);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow:
+    inset 0 0 14px rgba(0, 0, 0, 0.78),
+    0 0 5px rgba(255, 0, 0, 0.16);
 }
 
 .field-textarea:focus {
-  border-color: #5a1a1a;
-  box-shadow: 0 0 8px rgba(80, 20, 20, 0.2), inset 0 0 4px rgba(40, 0, 0, 0.3);
+  border-color: #ff1010;
+  background: linear-gradient(180deg, rgba(30, 0, 0, 0.96), rgba(6, 0, 0, 0.98));
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.46),
+    inset 0 0 10px rgba(80, 0, 0, 0.36);
 }
 
 .field-textarea::placeholder {
-  color: #3a2020;
+  color: #5a3030;
   font-size: 11px;
 }
 
 .char-count {
   text-align: right;
-  color: #3a2020;
+  color: #7a4040;
   font-family: "Share Tech Mono", monospace;
   font-size: 9px;
   margin-top: 2px;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
 }
 
 .item-list {
@@ -1133,11 +1188,15 @@ function handleReset() {
 }
 
 .item-card {
-  background: rgba(20, 5, 5, 0.4);
-  border: 1px solid #2a0a0a;
-  border-left: 2px solid #4a1010;
+  background:
+    linear-gradient(180deg, rgba(18, 0, 0, 0.78), rgba(4, 0, 0, 0.9));
+  border: 1px solid rgba(200, 0, 0, 0.58);
+  border-left: 4px solid #d00000;
   padding: 10px 12px;
-  border-radius: 2px;
+  border-radius: 0;
+  box-shadow:
+    0 0 8px rgba(255, 0, 0, 0.2),
+    inset 0 0 18px rgba(0, 0, 0, 0.76);
 }
 
 .item-card-header {
@@ -1148,27 +1207,29 @@ function handleReset() {
 }
 
 .item-number {
-  color: #5a2020;
+  color: #ff3030;
   font-family: "Share Tech Mono", monospace;
   font-size: 10px;
   letter-spacing: 1px;
+  text-shadow: 0 0 7px rgba(255, 0, 0, 0.56);
 }
 
 .item-remove {
-  background: none;
-  border: 1px solid #2a0a0a;
-  color: #5a2020;
+  background: rgba(10, 0, 0, 0.7);
+  border: 1px solid rgba(180, 0, 0, 0.58);
+  color: #9a5555;
   font-size: 11px;
   cursor: pointer;
   padding: 2px 6px;
-  border-radius: 2px;
+  border-radius: 0;
   transition: all 0.2s;
 }
 
 .item-remove:hover {
-  color: #aa3030;
-  border-color: #5a1515;
-  background: rgba(80, 10, 10, 0.2);
+  color: #ff3030;
+  border-color: #ff1010;
+  background: rgba(80, 0, 0, 0.42);
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.35);
 }
 
 .item-add-row {
@@ -1179,24 +1240,29 @@ function handleReset() {
 }
 
 .btn-add {
-  background: none;
-  border: 1px dashed #4a1010;
-  color: #8b1a1a;
+  background: linear-gradient(180deg, rgba(28, 0, 0, 0.76), rgba(4, 0, 0, 0.9));
+  border: 1px dashed rgba(220, 0, 0, 0.72);
+  color: #ff3030;
   font-family: "Noto Sans SC", sans-serif;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   padding: 8px 16px;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: 0;
   transition: all 0.2s;
   letter-spacing: 1px;
+  text-shadow: 0 0 7px rgba(255, 0, 0, 0.45);
+  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.78);
 }
 
 .btn-add:hover:not(:disabled) {
-  border-color: #6a1a1a;
-  color: #bb3030;
-  background: rgba(80, 10, 10, 0.1);
-  text-shadow: 0 0 6px rgba(150, 30, 30, 0.3);
+  border-color: #ff1010;
+  color: #ff6666;
+  background: linear-gradient(180deg, rgba(70, 0, 0, 0.7), rgba(8, 0, 0, 0.95));
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.62);
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.38),
+    inset 0 0 16px rgba(80, 0, 0, 0.42);
 }
 
 .btn-add:disabled {
@@ -1208,9 +1274,10 @@ function handleReset() {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #3a2020;
+  color: #7a4a4a;
   font-size: 11px;
   font-style: italic;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.18);
 }
 
 .eye-icon {
@@ -1220,90 +1287,222 @@ function handleReset() {
 }
 
 .dossier-module {
-  border-top: 1px solid rgba(70, 10, 10, 0.35);
+  border-color: rgba(220, 0, 0, 0.82);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(180, 0, 0, 0.18), transparent 30%),
+    linear-gradient(180deg, rgba(20, 0, 0, 0.92), rgba(2, 0, 0, 0.96));
 }
 
-.dossier-grid {
+.survival-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: 1.2fr repeat(2, 1fr);
+  gap: 10px;
   padding-bottom: 8px;
 }
 
-.dossier-item {
-  background:
-    linear-gradient(180deg, rgba(18, 10, 10, 0.86), rgba(6, 5, 5, 0.82)),
-    repeating-linear-gradient(90deg, rgba(120, 30, 30, 0.04) 0 1px, transparent 1px 12px);
-  border: 1px solid #2d1313;
-  border-left: 2px solid #5a1515;
-  padding: 9px 10px;
+.survival-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon label"
+    "icon value";
+  column-gap: 10px;
+  align-items: center;
   min-width: 0;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.62);
-  position: relative;
+  padding: 10px 12px;
+  background:
+    radial-gradient(circle at 0 0, rgba(255, 0, 0, 0.16), transparent 36%),
+    linear-gradient(180deg, rgba(28, 0, 0, 0.88), rgba(5, 0, 0, 0.96));
+  border: 1px solid rgba(200, 0, 0, 0.66);
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.22),
+    inset 0 0 22px rgba(0, 0, 0, 0.76);
 }
 
-.dossier-item::after {
-  content: '';
-  position: absolute;
-  top: 4px;
-  right: 5px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(100, 22, 22, 0.44);
-  box-shadow: 0 0 7px rgba(120, 20, 20, 0.28);
+.survival-card-main {
+  border-color: #ff1010;
+  box-shadow:
+    0 0 12px rgba(255, 0, 0, 0.42),
+    inset 0 0 24px rgba(80, 0, 0, 0.42);
 }
 
-.dossier-label {
-  display: block;
-  color: #6b3b3b;
+.survival-icon {
+  grid-area: icon;
+  color: #ff2020;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 24px;
+  text-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
+}
+
+.survival-label {
+  grid-area: label;
+  color: #9b6666;
   font-family: "Share Tech Mono", "Courier New", monospace;
   font-size: 9px;
-  letter-spacing: 1.4px;
-  margin-bottom: 4px;
-  text-shadow: 0 0 5px rgba(90, 20, 20, 0.26);
+  letter-spacing: 1.6px;
 }
 
-.dossier-item strong {
-  display: block;
-  color: #b98a8a;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
+.survival-card strong {
+  grid-area: value;
+  min-width: 0;
+  color: #e8b8b8;
+  font-size: 13px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.26);
+}
+
+.archive-layout {
+  display: grid;
+  grid-template-columns: 1.04fr 1.45fr;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.event-dossier-card {
+  min-width: 0;
+  padding: 16px 14px;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 0, 0, 0.18), transparent 38%),
+    repeating-linear-gradient(180deg, transparent 0 9px, rgba(255, 0, 0, 0.035) 10px),
+    linear-gradient(180deg, rgba(16, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
+  border: 1px solid rgba(210, 0, 0, 0.72);
+  text-align: center;
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.24),
+    inset 0 0 34px rgba(0, 0, 0, 0.86);
+}
+
+.event-eye {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 8px;
+  color: #ff1515;
+  font-size: 33px;
+  line-height: 48px;
+  text-shadow:
+    0 0 8px rgba(255, 0, 0, 0.96),
+    0 0 24px rgba(160, 0, 0, 0.78);
+}
+
+.event-file-no {
+  color: #8b5c5c;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  margin-bottom: 6px;
+}
+
+.event-dossier-card h2 {
+  margin: 0 0 12px;
+  color: #ff2828;
+  font-family: "Noto Serif SC", "SimSun", serif;
+  font-size: 18px;
+  letter-spacing: 2px;
   line-height: 1.45;
   overflow-wrap: anywhere;
-  text-shadow: 0 0 6px rgba(120, 20, 20, 0.18);
+  text-shadow:
+    0 0 6px rgba(255, 0, 0, 0.72),
+    0 0 18px rgba(160, 0, 0, 0.55);
 }
 
-.dossier-notes {
+.event-state-row {
+  display: grid;
+  gap: 6px;
+  color: #b78a8a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.archive-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(14, 0, 0, 0.9), rgba(3, 0, 0, 0.96)),
+    repeating-linear-gradient(90deg, rgba(255, 0, 0, 0.05) 0 1px, transparent 1px 12px);
+  border: 1px solid rgba(170, 0, 0, 0.56);
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.78),
+    0 0 7px rgba(255, 0, 0, 0.16);
+}
+
+.archive-icon {
+  width: 32px;
+  height: 32px;
+  color: #ff2020;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 19px;
+  line-height: 32px;
+  text-align: center;
+  background: rgba(55, 0, 0, 0.42);
+  border: 1px solid rgba(210, 0, 0, 0.58);
+  box-shadow: 0 0 9px rgba(255, 0, 0, 0.25);
+}
+
+.archive-copy {
+  min-width: 0;
+}
+
+.archive-copy span {
+  display: block;
+  color: #9b6666;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 9px;
+  letter-spacing: 1.3px;
+  margin-bottom: 4px;
+}
+
+.archive-copy strong {
+  display: block;
+  color: #d8abab;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 7px rgba(255, 0, 0, 0.2);
+}
+
+.intel-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
   padding-top: 0;
 }
 
-.note-line {
+.intel-card {
   display: grid;
   grid-template-columns: 84px minmax(0, 1fr);
   gap: 8px;
-  color: #6a4040;
-  font-size: 11px;
-  line-height: 1.6;
-  padding: 7px 8px;
-  background: rgba(8, 5, 5, 0.54);
-  border: 1px solid rgba(42, 14, 14, 0.72);
+  padding: 8px 10px;
+  background: linear-gradient(180deg, rgba(12, 0, 0, 0.84), rgba(3, 0, 0, 0.92));
+  border: 1px solid rgba(155, 0, 0, 0.48);
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.68);
 }
 
-.note-line span {
-  color: #7a2525;
+.intel-card span {
+  color: #ff3030;
   font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 11px;
   letter-spacing: 1px;
+  text-shadow: 0 0 7px rgba(255, 0, 0, 0.4);
 }
 
-.note-line em {
-  color: #8d7474;
+.intel-card em {
+  color: #c8a0a0;
+  font-size: 11px;
   font-style: normal;
+  line-height: 1.6;
   overflow-wrap: anywhere;
+  text-shadow: 0 0 5px rgba(255, 0, 0, 0.16);
 }
 
 @keyframes eye-glow {
@@ -1313,12 +1512,16 @@ function handleReset() {
 
 .card-footer {
   padding: 18px 20px 16px;
-  margin: 10px 12px 12px;
-  background: linear-gradient(180deg, rgba(12, 6, 6, 0.28), rgba(30, 0, 0, 0.38));
-  border: 1px solid rgba(42, 8, 8, 0.78);
+  margin: 12px 14px 14px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(120, 0, 0, 0.16), transparent 40%),
+    linear-gradient(180deg, rgba(18, 0, 0, 0.86), rgba(4, 0, 0, 0.94));
+  border: 1px solid rgba(210, 0, 0, 0.72);
   position: relative;
   z-index: 2;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.58);
+  box-shadow:
+    0 0 8px rgba(255, 0, 0, 0.24),
+    inset 0 0 22px rgba(0, 0, 0, 0.72);
 }
 
 .footer-actions {
@@ -1331,10 +1534,10 @@ function handleReset() {
   flex: 1;
   font-family: "Noto Sans SC", sans-serif;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 2px;
   padding: 10px 16px;
-  border-radius: 2px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s;
   outline: none;
@@ -1347,18 +1550,24 @@ function handleReset() {
 }
 
 .btn-start {
-  background: linear-gradient(180deg, #3a0a0a 0%, #200505 100%);
-  border: 1px solid #5a1515;
-  color: #cc4040;
-  box-shadow: 0 0 10px rgba(100, 20, 20, 0.15);
+  background: linear-gradient(180deg, rgba(95, 0, 0, 0.92), rgba(16, 0, 0, 0.98));
+  border: 1px solid #ff1010;
+  color: #ff3030;
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.45),
+    inset 0 0 18px rgba(0, 0, 0, 0.72);
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.62);
 }
 
 .btn-start:hover {
-  background: linear-gradient(180deg, #4a0a0a 0%, #2a0505 100%);
-  border-color: #7a2020;
-  color: #ee5050;
-  box-shadow: 0 0 16px rgba(120, 20, 20, 0.25);
-  text-shadow: 0 0 8px rgba(200, 50, 50, 0.3);
+  background: linear-gradient(180deg, rgba(130, 0, 0, 0.96), rgba(24, 0, 0, 1));
+  border-color: #ff4a4a;
+  color: #ff7777;
+  box-shadow:
+    0 0 16px rgba(255, 0, 0, 0.62),
+    0 0 30px rgba(120, 0, 0, 0.35),
+    inset 0 0 18px rgba(120, 0, 0, 0.42);
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.86);
 }
 
 .btn-start:active {
@@ -1367,15 +1576,19 @@ function handleReset() {
 }
 
 .btn-reset {
-  background: #080808;
-  border: 1px solid #1a1a1a;
-  color: #5a5a5a;
+  background: linear-gradient(180deg, rgba(12, 0, 0, 0.82), rgba(2, 0, 0, 0.94));
+  border: 1px solid rgba(150, 0, 0, 0.5);
+  color: #8a6262;
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.72);
 }
 
 .btn-reset:hover {
-  border-color: #2a2a2a;
-  color: #7a7a7a;
-  background: #0c0c0c;
+  border-color: #d00000;
+  color: #c89a9a;
+  background: linear-gradient(180deg, rgba(35, 0, 0, 0.86), rgba(6, 0, 0, 0.96));
+  box-shadow:
+    0 0 9px rgba(255, 0, 0, 0.28),
+    inset 0 0 16px rgba(90, 0, 0, 0.34);
 }
 
 .btn-reset:active {
@@ -1384,70 +1597,158 @@ function handleReset() {
 }
 
 .footer-warning {
-  color: #4a2020;
+  color: #9a5d5d;
   font-family: "Noto Serif SC", serif;
   font-size: 10px;
   font-style: italic;
   text-align: center;
   letter-spacing: 1px;
   line-height: 1.6;
+  text-shadow: 0 0 7px rgba(255, 0, 0, 0.28);
 }
 
-.options-module .module-body {
+.options-module {
+  margin-top: 18px;
+  padding: 20px 16px 18px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(130, 0, 0, 0.18), transparent 32%),
+    linear-gradient(180deg, rgba(20, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
+  border: 2px solid #e00000;
+  box-shadow:
+    0 0 10px rgba(255, 0, 0, 0.74),
+    0 0 28px rgba(160, 0, 0, 0.38),
+    inset 0 0 42px rgba(90, 0, 0, 0.46),
+    inset 0 0 90px rgba(0, 0, 0, 0.86);
+}
+
+.options-module::before {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 0, 0, 0.032) 4px),
+    radial-gradient(circle at 12% 0%, rgba(255, 0, 0, 0.16), transparent 18%);
+}
+
+.option-status-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto 18px;
+  padding: 10px 12px;
+  max-width: 88%;
+  background: linear-gradient(90deg, rgba(95, 0, 0, 0.72), rgba(22, 0, 0, 0.66));
+  border-left: 7px solid #d80000;
+  color: #9d8c8c;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 6px rgba(255, 0, 0, 0.24);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7);
+}
+
+.option-warning-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 4px 0 16px;
+  color: #ff1010;
+  font-family: "Noto Serif SC", "SimSun", serif;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  text-align: center;
+  text-shadow:
+    0 0 4px rgba(255, 0, 0, 0.96),
+    0 0 15px rgba(255, 0, 0, 0.76),
+    0 0 34px rgba(150, 0, 0, 0.64);
+}
+
+.warning-cross {
+  color: #f20000;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 27px;
+  filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.88));
+}
+
+.option-countdown-line {
+  height: 14px;
+  margin: 0 auto 14px;
+  max-width: 90%;
+  background: linear-gradient(180deg, #111, #050505);
+  border: 1px solid #4d0000;
+  box-shadow:
+    inset 0 0 9px rgba(0, 0, 0, 0.95),
+    0 0 8px rgba(120, 0, 0, 0.42);
+}
+
+.option-countdown-text {
+  margin-bottom: 18px;
+  color: #ff1515;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-align: center;
+  text-shadow:
+    0 0 5px rgba(255, 0, 0, 0.94),
+    0 0 18px rgba(180, 0, 0, 0.7);
+}
+
+.option-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+  padding: 0 12px 4px;
 }
 
 .option-btn {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 11px 12px;
-  background: linear-gradient(180deg, rgba(20, 8, 8, 0.72), rgba(8, 5, 5, 0.62));
-  border: 1px solid #2f1010;
-  border-left: 2px solid #5a1515;
-  color: #b8a0a0;
+  gap: 12px;
+  min-height: 72px;
+  padding: 16px 18px;
+  background: linear-gradient(180deg, rgba(42, 0, 0, 0.88), rgba(7, 0, 0, 0.96));
+  border: 1px solid rgba(210, 0, 0, 0.76);
+  color: #d8abab;
   cursor: pointer;
   text-align: left;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  font-size: 12px;
-  line-height: 1.55;
-  transition: all 0.2s;
-  border-radius: 2px;
+  font-size: 14px;
+  line-height: 1.7;
+  transition: border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.12s ease;
   outline: none;
-  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.52);
+  text-shadow: 0 0 6px rgba(255, 0, 0, 0.2);
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.78),
+    0 0 8px rgba(180, 0, 0, 0.28),
+    0 0 0 1px rgba(0, 0, 0, 0.8);
 }
 
 .option-btn:hover {
-  background: rgba(80, 10, 10, 0.18);
-  border-color: #6a1a1a;
-  border-left-color: #aa3030;
-  color: #d8b0b0;
-  text-shadow: 0 0 4px rgba(150, 30, 30, 0.2);
-  box-shadow: 0 0 10px rgba(80, 20, 20, 0.15);
+  border-color: #ff2020;
+  color: #ffe0e0;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.38);
+  box-shadow:
+    inset 0 0 28px rgba(90, 0, 0, 0.5),
+    0 0 12px rgba(255, 0, 0, 0.58),
+    0 0 26px rgba(120, 0, 0, 0.34);
 }
 
 .option-btn:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  transform: translateY(1px) scale(0.995);
+  box-shadow:
+    inset 0 2px 10px rgba(0, 0, 0, 0.88),
+    0 0 8px rgba(180, 0, 0, 0.35);
 }
 
 .opt-key {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
   flex-shrink: 0;
-  color: #aa3030;
-  background: #0a0505;
-  border: 1px solid #4a1010;
-  border-radius: 50%;
+  min-width: 32px;
+  color: #ff3030;
   font-family: "Share Tech Mono", monospace;
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.58);
 }
 
 .opt-text {
@@ -1465,9 +1766,49 @@ function handleReset() {
     min-height: 520px;
   }
 
-  .info-grid,
-  .dossier-grid {
+  .info-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .survival-strip,
+  .archive-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .archive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-dossier-card h2 {
+    font-size: 16px;
+  }
+
+  .options-module {
+    padding: 16px 10px 14px;
+  }
+
+  .option-status-strip {
+    flex-direction: column;
+    gap: 4px;
+    max-width: 94%;
+    font-size: 10px;
+  }
+
+  .option-warning-title {
+    gap: 10px;
+    font-size: 20px;
+    letter-spacing: 3px;
+  }
+
+  .option-list {
+    padding: 0 4px 2px;
+  }
+
+  .option-btn {
+    min-height: 64px;
+    padding: 13px 12px;
+    font-size: 12px;
+  }
 }
+
 </style>
