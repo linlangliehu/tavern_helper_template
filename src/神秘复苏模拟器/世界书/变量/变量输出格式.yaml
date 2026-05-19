@@ -12,7 +12,9 @@
     - don't update field names that start with "_" because they are readonly
     - keep hidden files consistent, but do not reveal hidden file contents in the normal narrative
     - write patch paths against stat_data, for example /当前灵异事件/猜测杀人规律/- or /主线进度/当前阶段
-- when resolving a selected high-risk option, include /风险值 deltas for death danger and include /厉鬼复苏程度 plus /驭鬼者状态/总复苏风险 deltas when ghost power is used
+    - death danger must use /风险值; never write /死亡风险 because 死亡风险 is only a UI label
+    - ghost resurrection risk must primarily use /驭鬼者状态/总复苏风险; /厉鬼复苏程度 is only a legacy compatibility mirror, not the main path
+    - when resolving a selected high-risk option, include /风险值 deltas for death danger and include /驭鬼者状态/总复苏风险 deltas when ghost power is used
   format: |-
     <UpdateVariable>
     <Analysis>$(IN ENGLISH, no more than 80 words)
@@ -42,7 +44,6 @@
       <JSONPatch>
       [
         { "op": "delta", "path": "/风险值", "value": 10 },
-        { "op": "delta", "path": "/厉鬼复苏程度", "value": 15 },
         { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 15 },
         { "op": "insert", "path": "/当前灵异事件/猜测杀人规律/-", "value": "听到连续敲门声后会被标记" },
         { "op": "replace", "path": "/当前灵异事件/处理状态", "value": "被困" },
