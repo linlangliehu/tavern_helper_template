@@ -838,6 +838,7 @@ packages:
   '@ungap/structured-clone@1.3.1':
     resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-android-arm-eabi@1.12.1':
     resolution: {integrity: sha512-diBxYrhKMJWZiQMFDgKVRDV4zSRyRTR6PBg+0p6/7zAWP6fqUfl0Be0RKvjLhzfRT0Ye5TCAP04gg4rZHSTvnA==}
     cpu: [arm]
@@ -875,52 +876,127 @@ packages:
 
   '@unrs/resolver-binding-linux-arm64-gnu@1.12.1':
     resolution: {integrity: sha512-OY/REy8lJgrkZgUpiwhClBvSDLSJNxkvqV7il6I1iNBQFyIEZRpOm1ttV8iMjpcPN2Dl7kjGd7CoKoJUebn6Jw==}
+=======
+  '@unrs/resolver-binding-android-arm-eabi@1.12.0':
+    resolution: {integrity: sha512-FmIJ5Bq2UUrpj2TrJiOvtfvgh98QqB3PKVqWrHp0SrYqlNSlch4YXToiiNK+mSTNFes07DipzT/JpJIq8xsOrg==}
+    cpu: [arm]
+    os: [android]
+
+  '@unrs/resolver-binding-android-arm64@1.12.0':
+    resolution: {integrity: sha512-XqE7sTuM4wquiiSptDC18/7SRh5LOQhmjRgu7j65T+m7lP0FzJQl0fSL+Zd7aATVJciVpcNkk0ml4hMwASvfXQ==}
+    cpu: [arm64]
+    os: [android]
+
+  '@unrs/resolver-binding-darwin-arm64@1.12.0':
+    resolution: {integrity: sha512-7aOfLOGYIh3Whvzv6fi3bA9aj8tuf7XDYbzTtsMeXixdRGLT6luR1htBSbjvWXyCn4TbKgz5SDa5gURYdlM0GQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@unrs/resolver-binding-darwin-x64@1.12.0':
+    resolution: {integrity: sha512-2NiHBibXXDCBnjpzpwHoq4Fs6kvt9QYD6ravNA3D8KQaKr7r0qu6CyvqJfDLYssijCSs2UwEmkKcAmCxP/HOXA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@unrs/resolver-binding-freebsd-x64@1.12.0':
+    resolution: {integrity: sha512-x/k1Vy1QoDrOYLJzQg2/WsRGQPS0Saw4basKqjZDQlPdkSApsvDdB9h8oRQDUTJCCazSlqLm+Ry9NQFlJicacQ==}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@unrs/resolver-binding-linux-arm-gnueabihf@1.12.0':
+    resolution: {integrity: sha512-zuHruxqemJqM2lrVwIgw7o3/0rLrskWDqVRAc8974nNy3cZR2N9cfatIE5PzmSNeRSafh0rAaS3ev294yCyj7A==}
+    cpu: [arm]
+    os: [linux]
+
+  '@unrs/resolver-binding-linux-arm-musleabihf@1.12.0':
+    resolution: {integrity: sha512-s2WgKQXQXhV14OT3jNoS1jN4c+8Mvamxq6jG3L7Igl8teXaGZvjI3RfZksqoxL3UAEin9UkZSApXZ+shocI1ZQ==}
+    cpu: [arm]
+    os: [linux]
+
+  '@unrs/resolver-binding-linux-arm64-gnu@1.12.0':
+    resolution: {integrity: sha512-ghMWlxxa3aCW9sk5FpzrTXSo/NSanKs/RovDal5q+T2Q+dAKLFyGXWmQ6AAMsl6k/TgXHw+jj9Q9sELLx9mfJw==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-arm64-musl@1.12.1':
     resolution: {integrity: sha512-C0nRwuMNgiGU8M5ym7eFe1qOo4oJtZ4TH6g+qAMWIR0hXgMjMs0bsggIv7Sbeia1GI8ZQHzQwrhBEawFiHQIPQ==}
+=======
+  '@unrs/resolver-binding-linux-arm64-musl@1.12.0':
+    resolution: {integrity: sha512-ldOaKTzXNIHjGzRtzgfh+g6mqt30Q8hnR+EFdfeKYgeuMqnwsllk6IaN2kadvuRRQNBr1ycI45pmgGA5EUxzuA==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-ppc64-gnu@1.12.1':
     resolution: {integrity: sha512-1GrdTqRuLZMsLa9d6T1BM6WTPGMZxkDKLR4SSzWaUtWpBuOVb33DIShXadhDYrTRESEm7pRN8m7SOM2m8pPT8w==}
+=======
+  '@unrs/resolver-binding-linux-ppc64-gnu@1.12.0':
+    resolution: {integrity: sha512-PQRjWSz5v+7K9CHh8a11t6JHfmuG2o3ozHgj/9IsEtSMBc/S8p8eZoJO0+i7FUq0JEjnIfLRLUADXOF/2jx4SQ==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [ppc64]
     os: [linux]
     libc: [glibc]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-riscv64-gnu@1.12.1':
     resolution: {integrity: sha512-q9gc8/37+8jGc8RJahXtonvxgbUisjOHCaiDXrg4Nv8+pk9iKv97drJ61crkZJEms+bIr7lLc54SlZ08qVY9nA==}
+=======
+  '@unrs/resolver-binding-linux-riscv64-gnu@1.12.0':
+    resolution: {integrity: sha512-slpQUuAp3+I0jsFyHxBaqETZSe8+OaG019nDOCBD0ZqZSNv0z7lMXKDgpH9BsSD+1Z5BSvV1QUbWS/MbGxpI+A==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [riscv64]
     os: [linux]
     libc: [glibc]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-riscv64-musl@1.12.1':
     resolution: {integrity: sha512-kLFS/MfGFpeYUrnnsUnmZAxwXMPHZOIPHNp3d4zHnx7/etyX2SSQQ1Kj/Ycaxy4V5dN16YoXpnhrwANjywiJCg==}
+=======
+  '@unrs/resolver-binding-linux-riscv64-musl@1.12.0':
+    resolution: {integrity: sha512-v30e31aTFDfl1R+On53cNpd4sMQ+lzYTE4dxVia1B++Ds+27lEZSOlwjPfPN20mxb9ENis1mwUW+5SO6OzXJcA==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [riscv64]
     os: [linux]
     libc: [musl]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-s390x-gnu@1.12.1':
     resolution: {integrity: sha512-vKlW4XOJUrpvMBgbIg97t6UEBsFsxGZS5Khi47XkNzC5T1obPhEYWfaGGv9oAe6xXzXib9xaH64CQV8AXN9GiA==}
+=======
+  '@unrs/resolver-binding-linux-s390x-gnu@1.12.0':
+    resolution: {integrity: sha512-yn6cnDhoH1IOgYvLnTeu7iAf1iknc7SXjqyLPCr3umbaeuFD8Uy2x3c3F82x2SDVEX/JpEkAGNd18lUBw4w9aQ==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [s390x]
     os: [linux]
     libc: [glibc]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-x64-gnu@1.12.1':
     resolution: {integrity: sha512-e9gRaBDEraJLdeScpwBA+WqaJDXnmlHPC7aZTAp9N4BYiEs8BvDfjgeqSVygrc3NZbeMfiKygevINZ9QP271wA==}
+=======
+  '@unrs/resolver-binding-linux-x64-gnu@1.12.0':
+    resolution: {integrity: sha512-M0zUTXIoRbPdWmLOs8hG3CnLVKTMbcAkC1++GJzjLAlGfH5gvhbePa6+TFniTgqiizGr0/3fdXI7R8aNwy/N4g==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-linux-x64-musl@1.12.1':
     resolution: {integrity: sha512-Z7813xEacoT+WRBm1O0wgIkXRgVyTctaRPkKx7T+WgeAfGzMfgWCxhRjAAJh/2LMDPlSXOnapr3vwI1TgDEtTA==}
+=======
+  '@unrs/resolver-binding-linux-x64-musl@1.12.0':
+    resolution: {integrity: sha512-GJUwROe22qValEd7JRT7FG/u36Iv/IL9AedRw7pEdbc8KcfbODcygvQHAVigBFReylyLe8UkPYxJy7F5Sm+Ldw==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-openharmony-arm64@1.12.1':
     resolution: {integrity: sha512-GN5YjvnL5nGd5twW4KHWre6iOzLVsIgZwBin3jTT1Pef2Q3l0WgMYA5uo908wL+gsxSFzFXuxkO+AjpsLoOaYw==}
     cpu: [arm64]
@@ -943,6 +1019,30 @@ packages:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.12.1':
     resolution: {integrity: sha512-rXHMTryD4YT8wuGDhV8UevKiD02/wUrdKLyokgNQQf/AcO6BCUEkQu5WGQ9i41bA4tlSfKo02WmAcAgxuP6izA==}
+=======
+  '@unrs/resolver-binding-openharmony-arm64@1.12.0':
+    resolution: {integrity: sha512-UwIkgOapYxrSPf8KTOtXeZKJD69upM9hQQuty1W0wQAJwsZrJSXFEoxuJ6lcjmEp/iJvx5PUknMqqBXJlzPTyw==}
+    cpu: [arm64]
+    os: [openharmony]
+
+  '@unrs/resolver-binding-wasm32-wasi@1.12.0':
+    resolution: {integrity: sha512-hE7r1jGIYXTR+inEZxKpUUT+P44RS/J5fz6x5UVvLjVsmHlkpeHOetRs5eglgoPskXwfROZlChCWBq+UoS+6Qg==}
+    engines: {node: '>=14.0.0'}
+    cpu: [wasm32]
+
+  '@unrs/resolver-binding-win32-arm64-msvc@1.12.0':
+    resolution: {integrity: sha512-zkwy74gxj0z6G6KxCaVsQJQDlLs8g3sUYtNJYrmThB0GHsK7cmCFtRLLqaeFUvf+K2lWG8KXv1PpQr18NgNOWw==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@unrs/resolver-binding-win32-ia32-msvc@1.12.0':
+    resolution: {integrity: sha512-dDLr9aigi1kz+sjL9o/TSVe+5Xf5zjSrXlSJALCJE2hY/J2Ml1qKxmFZYJVEWvp72hRjIxnHH83o0cPXLkJqiA==}
+    cpu: [ia32]
+    os: [win32]
+
+  '@unrs/resolver-binding-win32-x64-msvc@1.12.0':
+    resolution: {integrity: sha512-xLJGnOAnh4eYwZLoPW27FsCAI1zwgXpeOsxUUYRNjbSmEip5j4B8fPazsoicTN+YcaAET64JyuMvazxZUe/Wzg==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     cpu: [x64]
     os: [win32]
 
@@ -3904,8 +4004,13 @@ packages:
   unquote@1.1.1:
     resolution: {integrity: sha512-vRCqFv6UhXpWxZPyGDh/F3ZpNv8/qo7w6iufLpQg9aKnQ71qM4B5KiI7Mia9COcjEhrO9LueHpMYjYzsWH3OIg==}
 
+<<<<<<< HEAD
   unrs-resolver@1.12.1:
     resolution: {integrity: sha512-LmOTmcBbFqxu1rzubnqHT6EZeqDYpenlGYwyFhHj7oc1HdyZE+0cLQ+s9SDSK+KKQQKuoJhUbzHQ89Ubwg2Oxg==}
+=======
+  unrs-resolver@1.12.0:
+    resolution: {integrity: sha512-hiJjN9x3O/SF2yGpNX7swfg24bi4t+uqEww16EeH9LT2I6mkGNf8uZvAS9PL1pvkA/fBagTaxbgHfYQPRfahuQ==}
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
 
   update-browserslist-db@1.2.3:
     resolution: {integrity: sha512-Js0m9cx+qOgDxo0eMiFGEueWztz+d4+M3rGlmKPT+T4IS/jP4ylw3Nwpu6cpTTP8R1MAC1kF4VbdLt3ARf209w==}
@@ -4720,6 +4825,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.1': {}
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-android-arm-eabi@1.12.1':
     optional: true
 
@@ -4769,12 +4875,64 @@ snapshots:
     optional: true
 
   '@unrs/resolver-binding-wasm32-wasi@1.12.1':
+=======
+  '@unrs/resolver-binding-android-arm-eabi@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-android-arm64@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-darwin-arm64@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-darwin-x64@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-freebsd-x64@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-arm-gnueabihf@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-arm-musleabihf@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-arm64-gnu@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-arm64-musl@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-ppc64-gnu@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-riscv64-gnu@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-riscv64-musl@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-s390x-gnu@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-x64-gnu@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-linux-x64-musl@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-openharmony-arm64@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-wasm32-wasi@1.12.0':
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     dependencies:
       '@emnapi/core': 1.10.0
       '@emnapi/runtime': 1.10.0
       '@napi-rs/wasm-runtime': 1.1.4(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
     optional: true
 
+<<<<<<< HEAD
   '@unrs/resolver-binding-win32-arm64-msvc@1.12.1':
     optional: true
 
@@ -4782,6 +4940,15 @@ snapshots:
     optional: true
 
   '@unrs/resolver-binding-win32-x64-msvc@1.12.1':
+=======
+  '@unrs/resolver-binding-win32-arm64-msvc@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-win32-ia32-msvc@1.12.0':
+    optional: true
+
+  '@unrs/resolver-binding-win32-x64-msvc@1.12.0':
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     optional: true
 
   '@vue/compiler-core@3.5.34':
@@ -5807,23 +5974,39 @@ snapshots:
     dependencies:
       eslint: 9.39.4(jiti@2.7.0)
 
+<<<<<<< HEAD
   eslint-import-context@0.1.9(unrs-resolver@1.12.1):
+=======
+  eslint-import-context@0.1.9(unrs-resolver@1.12.0):
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     dependencies:
       get-tsconfig: 4.14.0
       stable-hash-x: 0.2.0
     optionalDependencies:
+<<<<<<< HEAD
       unrs-resolver: 1.12.1
+=======
+      unrs-resolver: 1.12.0
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
 
   eslint-import-resolver-typescript@4.4.4(eslint-plugin-import-x@4.16.2(@typescript-eslint/utils@8.59.4(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.0-dev.20250807))(eslint@9.39.4(jiti@2.7.0)))(eslint@9.39.4(jiti@2.7.0)):
     dependencies:
       debug: 4.4.3
       eslint: 9.39.4(jiti@2.7.0)
+<<<<<<< HEAD
       eslint-import-context: 0.1.9(unrs-resolver@1.12.1)
+=======
+      eslint-import-context: 0.1.9(unrs-resolver@1.12.0)
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
       get-tsconfig: 4.14.0
       is-bun-module: 2.0.0
       stable-hash-x: 0.2.0
       tinyglobby: 0.2.16
+<<<<<<< HEAD
       unrs-resolver: 1.12.1
+=======
+      unrs-resolver: 1.12.0
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     optionalDependencies:
       eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.59.4(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.0-dev.20250807))(eslint@9.39.4(jiti@2.7.0))
     transitivePeerDependencies:
@@ -5851,12 +6034,20 @@ snapshots:
       comment-parser: 1.4.6
       debug: 4.4.3
       eslint: 9.39.4(jiti@2.7.0)
+<<<<<<< HEAD
       eslint-import-context: 0.1.9(unrs-resolver@1.12.1)
+=======
+      eslint-import-context: 0.1.9(unrs-resolver@1.12.0)
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
       is-glob: 4.0.3
       minimatch: 10.2.5
       semver: 7.8.0
       stable-hash-x: 0.2.0
+<<<<<<< HEAD
       unrs-resolver: 1.12.1
+=======
+      unrs-resolver: 1.12.0
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
     optionalDependencies:
       '@typescript-eslint/utils': 8.59.4(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.0-dev.20250807)
     transitivePeerDependencies:
@@ -8059,6 +8250,7 @@ snapshots:
 
   unquote@1.1.1: {}
 
+<<<<<<< HEAD
   unrs-resolver@1.12.1:
     dependencies:
       napi-postinstall: 0.3.4
@@ -8083,6 +8275,32 @@ snapshots:
       '@unrs/resolver-binding-win32-arm64-msvc': 1.12.1
       '@unrs/resolver-binding-win32-ia32-msvc': 1.12.1
       '@unrs/resolver-binding-win32-x64-msvc': 1.12.1
+=======
+  unrs-resolver@1.12.0:
+    dependencies:
+      napi-postinstall: 0.3.4
+    optionalDependencies:
+      '@unrs/resolver-binding-android-arm-eabi': 1.12.0
+      '@unrs/resolver-binding-android-arm64': 1.12.0
+      '@unrs/resolver-binding-darwin-arm64': 1.12.0
+      '@unrs/resolver-binding-darwin-x64': 1.12.0
+      '@unrs/resolver-binding-freebsd-x64': 1.12.0
+      '@unrs/resolver-binding-linux-arm-gnueabihf': 1.12.0
+      '@unrs/resolver-binding-linux-arm-musleabihf': 1.12.0
+      '@unrs/resolver-binding-linux-arm64-gnu': 1.12.0
+      '@unrs/resolver-binding-linux-arm64-musl': 1.12.0
+      '@unrs/resolver-binding-linux-ppc64-gnu': 1.12.0
+      '@unrs/resolver-binding-linux-riscv64-gnu': 1.12.0
+      '@unrs/resolver-binding-linux-riscv64-musl': 1.12.0
+      '@unrs/resolver-binding-linux-s390x-gnu': 1.12.0
+      '@unrs/resolver-binding-linux-x64-gnu': 1.12.0
+      '@unrs/resolver-binding-linux-x64-musl': 1.12.0
+      '@unrs/resolver-binding-openharmony-arm64': 1.12.0
+      '@unrs/resolver-binding-wasm32-wasi': 1.12.0
+      '@unrs/resolver-binding-win32-arm64-msvc': 1.12.0
+      '@unrs/resolver-binding-win32-ia32-msvc': 1.12.0
+      '@unrs/resolver-binding-win32-x64-msvc': 1.12.0
+>>>>>>> 0d9dfecb71b4f51c033c0121ff2cb25104a412fb
 
   update-browserslist-db@1.2.3(browserslist@4.28.2):
     dependencies:
