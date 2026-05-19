@@ -252,7 +252,7 @@
       </div>
     </section>
 
-    <section v-if="options.length" class="card-module options-module">
+    <section v-if="options.length && !isDeathRiskCritical" class="card-module options-module">
       <div class="option-status-strip">
         <span>[推演节点：{{ displayMainlineStage }}]</span>
         <span>[死亡风险：{{ displayDeathRisk }}]</span>
@@ -293,10 +293,11 @@
 
 <script setup lang="ts">
 import { computed, ref, toRaw } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useDataStore } from './store'
 
 const store = useDataStore()
-const data = store.data
+const { data } = storeToRefs(store)
 const isStarting = ref(false)
 
 // 开局表单（基本信息 / 背景设定 / 驾驭厉鬼 / 特殊能力 / 灵异物品 / 底部按钮）
@@ -392,15 +393,14 @@ function applyOptionRisk(risk: OptionRisk) {
   if (!data.value.驭鬼者状态) data.value.驭鬼者状态 = { ...defaultGhostState }
 
   const currentDeath = Math.max(0, Math.min(100, Math.max(Number(data.value.风险值 ?? 0), panelDeathRiskValue.value ?? 0)))
-  const currentRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.厉鬼复苏程度 ?? 0), panelResurrectionRiskValue.value ?? 0)))
-  const currentTotalRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.驭鬼者状态.总复苏风险 ?? currentRevive), currentRevive)))
+  const legacyRevive = Number(data.value.厉鬼复苏程度 ?? 0)
+  const currentTotalRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.驭鬼者状态.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0, legacyRevive)))
   const nextDeath = Math.min(100, currentDeath + risk.death)
-  const nextRevive = Math.min(100, currentRevive + risk.revive)
   const nextTotalRevive = Math.min(100, currentTotalRevive + risk.revive)
 
   data.value.风险值 = nextDeath
-  data.value.厉鬼复苏程度 = nextRevive
   data.value.驭鬼者状态.总复苏风险 = nextTotalRevive
+  data.value.厉鬼复苏程度 = nextTotalRevive
 
   const statData = clonePlainData(data.value)
   updateVariablesWith(variables => {
@@ -410,7 +410,7 @@ function applyOptionRisk(risk: OptionRisk) {
 
   return {
     death: nextDeath - currentDeath,
-    revive: nextRevive - currentRevive,
+    revive: nextTotalRevive - currentTotalRevive,
     totalRevive: nextTotalRevive - currentTotalRevive,
   }
 }
@@ -432,6 +432,11 @@ function findSendTextarea() {
 }
 
 function pickOption(opt: OptionItem) {
+  if (isDeathRiskCritical.value) {
+    toastr.warning('角色已经死亡，不能继续选择行动。', '模拟结束')
+    return
+  }
+
   const ta = findSendTextarea()
   if (!ta) {
     toastr.warning('找不到酒馆输入框 #send_textarea', '推演选项')
@@ -534,12 +539,12 @@ function d() {
   return data.value ?? defaults
 }
 
-function bindField(key: string, def: string | number = '') {
-  return computed({
-    get: () => d()[key] ?? def,
-    set: (val: string | number) => {
+function bindField(key: string, def = '') {
+  return computed<string>({
+    get: () => String((d() as Record<string, unknown>)[key] ?? def),
+    set: val => {
       if (!data.value) data.value = { ...defaults }
-      data.value[key] = val
+      ;(data.value as Record<string, unknown>)[key] = val
     },
   })
 }
@@ -687,7 +692,7 @@ function panelValue(value: string | undefined) {
   return value?.replace(/^([^：:]+)[：:]/, '').trim()
 }
 
-function splitEventLine(value: string) {
+function splitEventLine(value: string): Partial<Record<'事件代号' | '危害等级' | '处理状态', string>> {
   const parts = value.split(/[；;]/).map(part => panelValue(part.trim())).filter(Boolean)
   return {
     事件代号: parts[0],
@@ -800,6 +805,7 @@ function commitStartData() {
   const location = textOrFallback(data.value.开局地点, '未知')
   const controlledGhosts = controlledGhostsFrom(ghostList)
   const resources = resourcesFrom(itemList, ghostList)
+  const initialReviveRisk = Number(data.value.驭鬼者状态?.总复苏风险 ?? data.value.厉鬼复苏程度 ?? 0)
   const eventFile = {
     事件代号: `${location}异常接入事件`,
     危害等级: hazardLevelFor(identity, ghostList.length),
@@ -817,13 +823,13 @@ function commitStartData() {
     所在位置: location,
     状态: textOrFallback(data.value.状态, '健康'),
     风险值: Number(data.value.风险值 ?? 0),
-    厉鬼复苏程度: Number(data.value.厉鬼复苏程度 ?? 0),
+    厉鬼复苏程度: initialReviveRisk,
     持有拼图: ghostList.length ? ghostList.map(ghost => ghost.厉鬼名称).join('、') : '无',
     灵异物品: itemList,
     当前灵异事件: eventFile,
     规律推理记录: [],
     驭鬼者状态: {
-      总复苏风险: Number(data.value.厉鬼复苏程度 ?? 0),
+      总复苏风险: initialReviveRisk,
       已驾驭厉鬼: controlledGhosts,
     },
     灵异资源: resources,
