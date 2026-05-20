@@ -442,12 +442,12 @@ function pickOption(opt: OptionItem) {
     toastr.warning('找不到酒馆输入框 #send_textarea', '推演选项')
     return
   }
-  const applied = applyOptionRisk(opt.risk)
+  applyOptionRisk(opt.risk)
   ta.value = `我选择：${opt.text}`
   ta.dispatchEvent(new Event('input', { bubbles: true }))
   ta.dispatchEvent(new Event('change', { bubbles: true }))
   ta.focus()
-  toastr.success(`已填入选项 ${opt.key}，死亡风险 +${applied.death}，复苏风险 +${applied.revive}`, '推演选项')
+  toastr.success(`已填入选项 ${opt.key}`, '推演选项')
 }
 
 const defaultEventFile = {
@@ -513,6 +513,8 @@ const defaults = {
   姓名: '',
   性别: '男',
   开局地点: '',
+  原著阶段: '',
+  剧情锚点: '',
   初始年龄: '18岁',
   角色背景: '',
   身份: '',
@@ -527,6 +529,7 @@ const defaults = {
   所在位置: '未知',
   当前灵异事件: defaultEventFile,
   规律推理记录: [],
+  在场人物: [],
   驭鬼者状态: defaultGhostState,
   灵异资源: defaultResources,
   势力关系: defaultFactionState,
@@ -552,6 +555,8 @@ function bindField(key: string, def = '') {
 const 姓名 = bindField('姓名')
 const 性别 = bindField('性别', '男')
 const 开局地点 = bindField('开局地点')
+const 原著阶段 = bindField('原著阶段')
+const 剧情锚点 = bindField('剧情锚点')
 const 初始年龄 = bindField('初始年龄', '18岁')
 const 角色背景 = bindField('角色背景')
 const 身份 = bindField('身份')
@@ -635,6 +640,42 @@ function filledItems() {
 function listText(values: unknown, fallback = '无') {
   if (!Array.isArray(values) || values.length === 0) return fallback
   return values.map(value => textOrFallback(value, '')).filter(Boolean).join('；') || fallback
+}
+
+function resolveStartCanonBinding(locationValue: unknown, stageValue: unknown, anchorValue: unknown) {
+  const location = textOrFallback(locationValue, '')
+  const stage = textOrFallback(stageValue, '')
+  const anchor = textOrFallback(anchorValue, '')
+
+  if (stage || anchor) {
+    return { stage, anchor }
+  }
+  if (location === '大昌市七中') {
+    return { stage: '阶段0：开局与七中前后', anchor: '七中课堂' }
+  }
+  if (location.includes('诡异公交车')) {
+    return { stage: '阶段5：规则型地点与任务链', anchor: '灵异公交' }
+  }
+  if (location.includes('大海市')) {
+    return { stage: '阶段4：势力冲突与中期扩张', anchor: '大海市灵异论坛' }
+  }
+  if (location.includes('偏远荒村')) {
+    return { stage: '阶段2：总部与负责人体系', anchor: '黄岗村' }
+  }
+  if (location.includes('灵异公司大楼')) {
+    return { stage: '阶段4：势力冲突与中期扩张', anchor: '总部备案' }
+  }
+  return { stage, anchor }
+}
+
+function applyStartCanonBinding() {
+  if (!data.value) {
+    data.value = { ...defaults }
+  }
+  const binding = resolveStartCanonBinding(data.value.开局地点, data.value.原著阶段, data.value.剧情锚点)
+  if (binding.stage) data.value.原著阶段 = binding.stage
+  if (binding.anchor) data.value.剧情锚点 = binding.anchor
+  return binding
 }
 
 function hazardLevelFor(identity: string, ghostCount: number) {
@@ -739,6 +780,7 @@ function buildStartMessage() {
   const current = d()
   const ghostList = filledGhosts()
   const itemList = filledItems()
+  const { stage: canonStage, anchor: canonAnchor } = applyStartCanonBinding()
   const event = current.当前灵异事件 ?? defaultEventFile
   const controlledGhosts = current.驭鬼者状态?.已驾驭厉鬼 ?? []
   const resources = current.灵异资源 ?? defaultResources
@@ -791,6 +833,8 @@ ${resourceText}
 
 请根据以上设定正式启动“神秘复苏模拟器”的世界线推演：生成我抵达开局地点后的第一段剧情、灵异征兆、事件档案、初步规律线索、状态面板和可行动选项。保持《神秘复苏》式冷峻、危险、因果严密的氛围，不要重新要求我填写设定。
 
+系统将根据开局地点、身份、事件关键词和世界书触发情况自动匹配原著正史锚点；不要向玩家展示锚点字段本身，只根据匹配到的固定场景生成自然开局。不要直接剧透真实杀人规律、关键生路和后续结局。
+
 【推演选项】必须按 A/B/C/D 列出，每项末尾附加隐藏风险标签 <risk death="0" revive="0" source="简短原因">。death 是点击该选项时应预先结算的死亡风险增量；revive 是点击该选项时应预先结算的厉鬼复苏风险增量。状态栏会隐藏该标签，只显示选项正文。`
 }
 
@@ -803,6 +847,8 @@ function commitStartData() {
   const itemList = filledItems()
   const identity = textOrFallback(data.value.身份, '普通人')
   const location = textOrFallback(data.value.开局地点, '未知')
+  const { stage: canonStage, anchor: canonAnchor } = applyStartCanonBinding()
+  const selectedCanonAnchor = canonAnchor || canonStage
   const controlledGhosts = controlledGhostsFrom(ghostList)
   const resources = resourcesFrom(itemList, ghostList)
   const initialReviveRisk = Number(data.value.驭鬼者状态?.总复苏风险 ?? data.value.厉鬼复苏程度 ?? 0)
@@ -828,6 +874,7 @@ function commitStartData() {
     灵异物品: itemList,
     当前灵异事件: eventFile,
     规律推理记录: [],
+    在场人物: [],
     驭鬼者状态: {
       总复苏风险: initialReviveRisk,
       已驾驭厉鬼: controlledGhosts,
@@ -849,10 +896,18 @@ function commitStartData() {
     ],
     主线进度: {
       ...defaultMainlineProgress,
+      当前阶段: canonStage || defaultMainlineProgress.当前阶段,
+      阶段状态: selectedCanonAnchor ? '接入中' : '未启动',
       正史锚点: {
         ...defaultMainlineProgress.正史锚点,
-        默认走向: `等待${location}首个灵异征兆或开局事件立案`,
+        当前锚点: selectedCanonAnchor || defaultMainlineProgress.正史锚点.当前锚点,
+        默认走向: selectedCanonAnchor
+          ? `按${selectedCanonAnchor}附近的默认正史推进，等待玩家介入`
+          : `等待${location}首个灵异征兆或开局事件立案`,
       },
+      下一步推进提示: selectedCanonAnchor
+        ? `从${selectedCanonAnchor}生成首个可感知灵异征兆`
+        : defaultMainlineProgress.下一步推进提示,
     },
     隐藏档案: {
       真实杀人规律: '由首轮灵异事件生成后确定',
@@ -929,12 +984,13 @@ function handleReset() {
     return
   }
   Object.assign(data.value, {
-    姓名: '', 性别: '男', 开局地点: '', 初始年龄: '18岁',
+    姓名: '', 性别: '男', 开局地点: '', 原著阶段: '', 剧情锚点: '', 初始年龄: '18岁',
     角色背景: '', 身份: '', 驾驭厉鬼: [],
     特殊能力描述: '', 消耗代价: '无', 灵异物品: [],
     状态: '健康', 风险值: 0, 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知',
     当前灵异事件: { ...defaultEventFile },
     规律推理记录: [],
+    在场人物: [],
     驭鬼者状态: { 总复苏风险: 0, 已驾驭厉鬼: [] },
     灵异资源: { 鬼拼图: [], 灵异物品: [], 黄金储备: '未准备' },
     势力关系: { ...defaultFactionState },

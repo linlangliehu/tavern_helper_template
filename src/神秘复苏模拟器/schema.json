@@ -14,6 +14,14 @@
       "default": "",
       "type": "string"
     },
+    "原著阶段": {
+      "default": "",
+      "type": "string"
+    },
+    "剧情锚点": {
+      "default": "",
+      "type": "string"
+    },
     "初始年龄": {
       "default": "18岁",
       "type": "string"
@@ -189,6 +197,13 @@
             "type": "string"
           }
         }
+      }
+    },
+    "在场人物": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
     "驭鬼者状态": {

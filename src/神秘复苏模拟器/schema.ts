@@ -72,6 +72,8 @@ export const Schema = z.object({
   姓名: z.string().default(''),
   性别: z.string().default('男'),
   开局地点: z.string().default(''),
+  原著阶段: z.string().default(''),
+  剧情锚点: z.string().default(''),
   初始年龄: z.string().default('18岁'),
   角色背景: z.string().default(''),
   身份: z.string().default(''),
@@ -114,6 +116,7 @@ export const Schema = z.object({
     处理状态: '未接触',
   }),
   规律推理记录: z.array(ReasoningRecordSchema).default([]),
+  在场人物: z.array(z.string()).default([]),
   驭鬼者状态: z.object({
     总复苏风险: z.number().default(0),
     已驾驭厉鬼: z.array(ControlledGhostSchema).default([]),
