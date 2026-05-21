@@ -468,7 +468,7 @@ body {
     if (current && current !== hostStyle) {
       current.remove();
     }
-    if (!hostStyle.isConnected || hostStyle.parentElement !== hostDocument.head || hostStyle.nextSibling) {
+    if (!hostStyle.isConnected || hostStyle.parentElement !== hostDocument.head) {
       hostDocument.head.appendChild(hostStyle);
     }
   };

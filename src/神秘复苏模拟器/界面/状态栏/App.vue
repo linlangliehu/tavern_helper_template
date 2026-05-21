@@ -43,12 +43,9 @@
           <label class="field-label">开局地点</label>
           <select class="field-select" v-model="开局地点">
             <option value="">请选择开局地点</option>
-            <option value="大昌市七中">大昌市七中</option>
-            <option value="大海市繁华街区">大海市繁华街区</option>
-            <option value="偏远荒村">偏远荒村</option>
-            <option value="诡异公交车">诡异公交车</option>
-            <option value="灵异公司大楼">灵异公司大楼</option>
-            <option value="自定义">自定义地点</option>
+            <option v-for="option in startLocationOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
           </select>
         </div>
         <div class="form-field">
@@ -450,6 +447,19 @@ function pickOption(opt: OptionItem) {
   toastr.success(`已填入选项 ${opt.key}`, '推演选项')
 }
 
+const startLocationOptions = [
+  { value: '大昌市七中', label: '大昌市七中', stage: '阶段0：开局与七中前后', anchor: '七中课堂' },
+  { value: '富仁商场', label: '富仁商场', stage: '阶段1：大昌市早期事件', anchor: '阶段1 商场无头鬼影初次袭击后' },
+  { value: '大昌市封锁线', label: '大昌市封锁线', stage: '阶段3：大昌市城市级灾害', anchor: '阶段3 大昌市外环高速封锁线建立中' },
+  { value: '鬼邮局', label: '鬼邮局', stage: '阶段5：规则型地点与任务链', anchor: '阶段5 鬼邮局一楼首次送信前' },
+  { value: '太平古镇', label: '太平古镇', stage: '阶段6：队长计划与高危档案', anchor: '阶段6 太平古镇：祠堂夜巡旧规矩执行中' },
+  { value: '大海市繁华街区', label: '大海市繁华街区', stage: '阶段4：势力冲突与中期扩张', anchor: '大海市灵异论坛' },
+  { value: '偏远荒村', label: '偏远荒村', stage: '阶段2：总部与负责人体系', anchor: '黄岗村' },
+  { value: '诡异公交车', label: '诡异公交车', stage: '阶段5：规则型地点与任务链', anchor: '灵异公交' },
+  { value: '灵异公司大楼', label: '灵异公司大楼', stage: '阶段4：势力冲突与中期扩张', anchor: '总部备案' },
+  { value: '自定义', label: '自定义地点' },
+]
+
 const defaultEventFile = {
   事件代号: '未立案灵异事件',
   危害等级: '未知',
@@ -650,20 +660,9 @@ function resolveStartCanonBinding(locationValue: unknown, stageValue: unknown, a
   if (stage || anchor) {
     return { stage, anchor }
   }
-  if (location === '大昌市七中') {
-    return { stage: '阶段0：开局与七中前后', anchor: '七中课堂' }
-  }
-  if (location.includes('诡异公交车')) {
-    return { stage: '阶段5：规则型地点与任务链', anchor: '灵异公交' }
-  }
-  if (location.includes('大海市')) {
-    return { stage: '阶段4：势力冲突与中期扩张', anchor: '大海市灵异论坛' }
-  }
-  if (location.includes('偏远荒村')) {
-    return { stage: '阶段2：总部与负责人体系', anchor: '黄岗村' }
-  }
-  if (location.includes('灵异公司大楼')) {
-    return { stage: '阶段4：势力冲突与中期扩张', anchor: '总部备案' }
+  const matchedOption = startLocationOptions.find(option => option.stage && location.includes(option.value))
+  if (matchedOption) {
+    return { stage: matchedOption.stage ?? '', anchor: matchedOption.anchor ?? '' }
   }
   return { stage, anchor }
 }
