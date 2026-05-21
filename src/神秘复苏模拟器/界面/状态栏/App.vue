@@ -565,8 +565,6 @@ function bindField(key: string, def = '') {
 const 姓名 = bindField('姓名')
 const 性别 = bindField('性别', '男')
 const 开局地点 = bindField('开局地点')
-const 原著阶段 = bindField('原著阶段')
-const 剧情锚点 = bindField('剧情锚点')
 const 初始年龄 = bindField('初始年龄', '18岁')
 const 角色背景 = bindField('角色背景')
 const 身份 = bindField('身份')
@@ -652,14 +650,36 @@ function listText(values: unknown, fallback = '无') {
   return values.map(value => textOrFallback(value, '')).filter(Boolean).join('；') || fallback
 }
 
-function resolveStartCanonBinding(locationValue: unknown, stageValue: unknown, anchorValue: unknown) {
+function includesAny(text: string, keywords: string[]) {
+  return keywords.some(keyword => text.includes(keyword))
+}
+
+function resolveStartCanonBinding(locationValue: unknown, stageValue: unknown, anchorValue: unknown, identityValue?: unknown, contextValues: unknown[] = []) {
   const location = textOrFallback(locationValue, '')
   const stage = textOrFallback(stageValue, '')
   const anchor = textOrFallback(anchorValue, '')
+  const identity = textOrFallback(identityValue, '')
+  const context = [location, identity, ...contextValues.map(value => textOrFallback(value, ''))].join(' ')
 
   if (stage || anchor) {
     return { stage, anchor }
   }
+
+  const keywordBindings = [
+    { keywords: ['七中', '学校', '课堂', '学生', '老师', '教师', '保安', '敲门鬼', '鬼敲门', '敲门声', '鬼眼', '羊皮纸', '人皮纸'], stage: '阶段0：开局与七中前后', anchor: '七中课堂' },
+    { keywords: ['富仁商场', '商场', '无头鬼影', '假模特', '人头气球', '王珊珊', '小强俱乐部', '黄岗村', '鬼棺', '鬼镜'], stage: '阶段1：大昌市早期事件', anchor: '阶段1 大昌市早期线：七中后续至黄岗村/鬼棺鬼镜争夺前后' },
+    { keywords: ['总部', '调查员', '接线员', '负责人', '刑警', '备案', '王小明', '赵建国', '刘小雨'], stage: '阶段2：总部与负责人体系', anchor: '总部备案与负责人体系接入' },
+    { keywords: ['饿死鬼', '鬼婴', '大昌市封锁', '封锁线', '城市级灾害', '饥饿', '哭声'], stage: '阶段3：大昌市城市级灾害', anchor: '阶段3 大昌市城市级灾害征兆期' },
+    { keywords: ['朋友圈', '方世明', '大海市', '灵异论坛', '叶真', '灵异公司'], stage: '阶段4：势力冲突与中期扩张', anchor: '阶段4 势力冲突与中期扩张接入' },
+    { keywords: ['鬼邮局', '信使', '送信', '灵异公交', '公交车', '凯撒', '大酒店', '守夜', '送葬', '白水镇', '坟场', '老坟'], stage: '阶段5：规则型地点与任务链', anchor: '阶段5 规则型地点线' },
+    { keywords: ['队长计划', '鬼画', '鬼湖', '太平古镇', '招魂人', '秦老', '王家三代', '民国'], stage: '阶段6：队长计划与高危档案', anchor: '阶段6 队长计划与高危档案接入' },
+    { keywords: ['国王组织', '幽灵船', '岛国', '海外', '全球'], stage: '阶段7：国际冲突与世界失衡', anchor: '阶段7 国际冲突与世界失衡接入' },
+  ]
+  const keywordBinding = keywordBindings.find(binding => includesAny(context, binding.keywords))
+  if (keywordBinding) {
+    return { stage: keywordBinding.stage, anchor: keywordBinding.anchor }
+  }
+
   const matchedOption = startLocationOptions.find(option => option.stage && location.includes(option.value))
   if (matchedOption) {
     return { stage: matchedOption.stage ?? '', anchor: matchedOption.anchor ?? '' }
@@ -671,7 +691,18 @@ function applyStartCanonBinding() {
   if (!data.value) {
     data.value = { ...defaults }
   }
-  const binding = resolveStartCanonBinding(data.value.开局地点, data.value.原著阶段, data.value.剧情锚点)
+  const ghostKeywords = Array.isArray(data.value.驾驭厉鬼)
+    ? data.value.驾驭厉鬼.flatMap(ghost => [ghost.厉鬼名称, ghost.杀人规律])
+    : []
+  const itemKeywords = Array.isArray(data.value.灵异物品)
+    ? data.value.灵异物品.flatMap(item => [item.名称, item.效果, item.使用限制])
+    : []
+  const binding = resolveStartCanonBinding(data.value.开局地点, data.value.原著阶段, data.value.剧情锚点, data.value.身份, [
+    data.value.角色背景,
+    data.value.特殊能力描述,
+    ...ghostKeywords,
+    ...itemKeywords,
+  ])
   if (binding.stage) data.value.原著阶段 = binding.stage
   if (binding.anchor) data.value.剧情锚点 = binding.anchor
   return binding
