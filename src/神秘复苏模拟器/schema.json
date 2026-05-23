@@ -85,12 +85,10 @@
       "type": "string"
     },
     "风险值": {
-      "default": 0,
-      "type": "number"
+      "$ref": "#/$defs/__schema0"
     },
     "厉鬼复苏程度": {
-      "default": 0,
-      "type": "number"
+      "$ref": "#/$defs/__schema0"
     },
     "持有拼图": {
       "default": "无",
@@ -100,19 +98,35 @@
       "default": "未知",
       "type": "string"
     },
+    "剧情阶段": {
+      "default": "序章",
+      "type": "string",
+      "enum": [
+        "序章",
+        "调查",
+        "接触",
+        "对抗",
+        "终局"
+      ]
+    },
+    "is_supernatural_scene": {
+      "default": false,
+      "type": "boolean"
+    },
+    "has_entered_supernatural": {
+      "default": false,
+      "type": "boolean"
+    },
+    "revive_streak": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+    },
+    "is_dead": {
+      "default": false,
+      "type": "boolean"
+    },
     "当前灵异事件": {
-      "default": {
-        "事件代号": "未立案灵异事件",
-        "危害等级": "未知",
-        "发生地点": "未知",
-        "鬼域状态": "未确认",
-        "已知杀人规律": [],
-        "猜测杀人规律": [],
-        "错误推断": [],
-        "已死亡人数": 0,
-        "扩散趋势": "未观察",
-        "处理状态": "未接触"
-      },
       "type": "object",
       "properties": {
         "事件代号": {
@@ -153,8 +167,7 @@
           }
         },
         "已死亡人数": {
-          "default": 0,
-          "type": "number"
+          "$ref": "#/$defs/__schema1"
         },
         "扩散趋势": {
           "default": "未观察",
@@ -207,18 +220,12 @@
       }
     },
     "驭鬼者状态": {
-      "default": {
-        "总复苏风险": 0,
-        "已驾驭厉鬼": []
-      },
       "type": "object",
       "properties": {
         "总复苏风险": {
-          "default": 0,
-          "type": "number"
+          "$ref": "#/$defs/__schema0"
         },
         "已驾驭厉鬼": {
-          "default": [],
           "type": "array",
           "items": {
             "type": "object",
@@ -248,8 +255,7 @@
                 "type": "string"
               },
               "复苏进度": {
-                "default": 0,
-                "type": "number"
+                "$ref": "#/$defs/__schema0"
               },
               "是否死机": {
                 "default": false,
@@ -384,25 +390,6 @@
       }
     },
     "主线进度": {
-      "default": {
-        "当前阶段": "开局接入",
-        "阶段序号": 0,
-        "阶段状态": "未启动",
-        "已完成节点": [],
-        "可触发节点": [],
-        "偏移等级": 0,
-        "正史锚点": {
-          "当前锚点": "自定义开局",
-          "默认走向": "等待玩家开局地点与身份确定",
-          "玩家偏移": []
-        },
-        "世界压力": {
-          "灵异复苏强度": 0,
-          "总部关注度": 0,
-          "社会公开度": 0
-        },
-        "下一步推进提示": "等待首个灵异征兆或开局事件立案"
-      },
       "type": "object",
       "properties": {
         "当前阶段": {
@@ -410,8 +397,7 @@
           "type": "string"
         },
         "阶段序号": {
-          "default": 0,
-          "type": "number"
+          "$ref": "#/$defs/__schema1"
         },
         "阶段状态": {
           "default": "未启动",
@@ -432,8 +418,7 @@
           }
         },
         "偏移等级": {
-          "default": 0,
-          "type": "number"
+          "$ref": "#/$defs/__schema1"
         },
         "正史锚点": {
           "default": {
@@ -461,24 +446,16 @@
           }
         },
         "世界压力": {
-          "default": {
-            "灵异复苏强度": 0,
-            "总部关注度": 0,
-            "社会公开度": 0
-          },
           "type": "object",
           "properties": {
             "灵异复苏强度": {
-              "default": 0,
-              "type": "number"
+              "$ref": "#/$defs/__schema0"
             },
             "总部关注度": {
-              "default": 0,
-              "type": "number"
+              "$ref": "#/$defs/__schema0"
             },
             "社会公开度": {
-              "default": 0,
-              "type": "number"
+              "$ref": "#/$defs/__schema0"
             }
           }
         },
@@ -517,6 +494,14 @@
           "type": "string"
         }
       }
+    }
+  },
+  "$defs": {
+    "__schema0": {
+      "type": "number"
+    },
+    "__schema1": {
+      "type": "number"
     }
   }
 }

@@ -2,15 +2,15 @@
 以下是当前消息楼层保存的 MVU 变量档案。你必须把它当作本轮推演的事实记录，但不要向玩家直接暴露“隐藏档案”字段。
 
 <%_
-const stat_data = _.get(EjsTemplate.allVariables(), 'stat_data', {});
-const death_risk = Number(_.get(stat_data, '风险值', 0)) || 0;
-const resurrection_risk = Number(_.get(stat_data, '驭鬼者状态.总复苏风险', _.get(stat_data, '厉鬼复苏程度', 0))) || 0;
-const current_status = _.get(stat_data, '状态', '未知');
-const current_location = _.get(stat_data, '所在位置', '未知');
-const current_event = _.get(stat_data, '当前灵异事件.事件代号', '未立案灵异事件');
-const current_phase = _.get(stat_data, '主线进度.当前阶段', '开局接入');
-const canon_stage = _.get(stat_data, '原著阶段', '');
-const canon_anchor = _.get(stat_data, '剧情锚点', '');
+var stat_data = _.get(EjsTemplate.allVariables(), 'stat_data', {});
+var death_risk = Number(_.get(stat_data, '风险值', 0)) || 0;
+var resurrection_risk = Number(_.get(stat_data, '驭鬼者状态.总复苏风险', _.get(stat_data, '厉鬼复苏程度', 0))) || 0;
+var current_status = _.get(stat_data, '状态', '未知');
+var current_location = _.get(stat_data, '所在位置', '未知');
+var current_event = _.get(stat_data, '当前灵异事件.事件代号', '未立案灵异事件');
+var current_phase = _.get(stat_data, '主线进度.当前阶段', '开局接入');
+var canon_stage = _.get(stat_data, '原著阶段', '');
+var canon_anchor = _.get(stat_data, '剧情锚点', '');
 _%>
 <runtime_state_summary>
 死亡风险: <%= death_risk %>/100
@@ -34,7 +34,7 @@ _%>
 
 阅读变量时请按以下含义理解：
 - 人物档案：姓名、性别、身份、状态、所在位置、角色背景。
-- 原著接入：原著阶段、剧情锚点用于指定正史接入点；它们不是强制剧本，只决定默认正史附近的开局处境。
+- 原著接入：原著阶段、剧情锚点由系统根据开局地点、身份、事件关键词和世界书触发情况自动匹配；它们是后台正史索引，不是玩家手动填写入口，也不是强制剧情脚本。
 - 驭鬼者状态：已驾驭厉鬼、各拼图复苏进度、是否死机、压制关系、总复苏风险。
 - 当前灵异事件：事件代号、危害等级、发生地点、鬼域状态、死亡人数、扩散趋势、处理状态。
 - 在场人物：当前楼层实际在场、邻近或可通过合理行动接触的人物名单；只记录玩家当前可感知或档案已确认的部分。
