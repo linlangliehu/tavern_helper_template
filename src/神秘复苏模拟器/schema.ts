@@ -1,3 +1,6 @@
+const PercentSchema = z.coerce.number().transform(value => _.clamp(Math.round(Number.isFinite(value) ? value : 0), 0, 100));
+const NonNegativeNumberSchema = z.coerce.number().transform(value => Math.max(0, Math.round(Number.isFinite(value) ? value : 0)));
+
 const EventSchema = z.object({
   事件代号: z.string().default('未立案灵异事件'),
   危害等级: z.string().default('未知'),
@@ -6,7 +9,7 @@ const EventSchema = z.object({
   已知杀人规律: z.array(z.string()).default([]),
   猜测杀人规律: z.array(z.string()).default([]),
   错误推断: z.array(z.string()).default([]),
-  已死亡人数: z.number().default(0),
+  已死亡人数: NonNegativeNumberSchema.default(0),
   扩散趋势: z.string().default('未观察'),
   处理状态: z.string().default('未接触'),
 });
@@ -27,7 +30,7 @@ const ControlledGhostSchema = z.object({
   杀人规律: z.string().default('无'),
   使用能力: z.string().default('未确认'),
   使用代价: z.string().default('无'),
-  复苏进度: z.number().default(0),
+  复苏进度: PercentSchema.default(0),
   是否死机: z.boolean().default(false),
   压制关系: z.string().default('未形成压制'),
 });
@@ -42,11 +45,11 @@ const SupernaturalItemSchema = z.object({
 
 const MainlineProgressSchema = z.object({
   当前阶段: z.string().default('开局接入'),
-  阶段序号: z.number().default(0),
+  阶段序号: NonNegativeNumberSchema.default(0),
   阶段状态: z.string().default('未启动'),
   已完成节点: z.array(z.string()).default([]),
   可触发节点: z.array(z.string()).default([]),
-  偏移等级: z.number().default(0),
+  偏移等级: NonNegativeNumberSchema.default(0),
   正史锚点: z.object({
     当前锚点: z.string().default('自定义开局'),
     默认走向: z.string().default('等待玩家开局地点与身份确定'),
@@ -57,9 +60,9 @@ const MainlineProgressSchema = z.object({
     玩家偏移: [],
   }),
   世界压力: z.object({
-    灵异复苏强度: z.number().default(0),
-    总部关注度: z.number().default(0),
-    社会公开度: z.number().default(0),
+    灵异复苏强度: PercentSchema.default(0),
+    总部关注度: PercentSchema.default(0),
+    社会公开度: PercentSchema.default(0),
   }).default({
     灵异复苏强度: 0,
     总部关注度: 0,
@@ -99,10 +102,15 @@ export const Schema = z.object({
     })).default([]),
   ),
   状态: z.string().default('健康'),
-  风险值: z.number().default(0),
-  厉鬼复苏程度: z.number().default(0),
+  风险值: PercentSchema.default(0),
+  厉鬼复苏程度: PercentSchema.default(0),
   持有拼图: z.string().default('无'),
   所在位置: z.string().default('未知'),
+  剧情阶段: z.enum(['序章', '调查', '接触', '对抗', '终局']).default('序章'),
+  is_supernatural_scene: z.boolean().default(false),
+  has_entered_supernatural: z.boolean().default(false),
+  revive_streak: z.coerce.number().int().transform(value => Math.max(0, Math.round(value))).default(0),
+  is_dead: z.boolean().default(false),
   当前灵异事件: EventSchema.default({
     事件代号: '未立案灵异事件',
     危害等级: '未知',
@@ -118,7 +126,7 @@ export const Schema = z.object({
   规律推理记录: z.array(ReasoningRecordSchema).default([]),
   在场人物: z.array(z.string()).default([]),
   驭鬼者状态: z.object({
-    总复苏风险: z.number().default(0),
+    总复苏风险: PercentSchema.default(0),
     已驾驭厉鬼: z.array(ControlledGhostSchema).default([]),
   }).default({
     总复苏风险: 0,

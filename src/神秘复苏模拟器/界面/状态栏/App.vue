@@ -272,6 +272,7 @@
         >
           <span class="opt-key">{{ opt.key }}.</span>
           <span class="opt-text">{{ opt.text }}</span>
+          <span class="opt-risk" :class="optionRiskClass(opt.risk)">{{ optionRiskLabel(opt.risk) }}</span>
         </button>
       </div>
     </section>
@@ -292,6 +293,7 @@
 import { computed, ref, toRaw } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDataStore } from './store'
+import { Schema } from '../../schema'
 
 const store = useDataStore()
 const { data } = storeToRefs(store)
@@ -358,21 +360,107 @@ function parseOptionRisk(rawText: string) {
   }
 }
 
+function parseStructuredChoices(message: string): OptionItem[] {
+  const match = message.match(/<choices>\s*([\s\S]*?)\s*<\/choices>/i)
+  if (!match) return []
+
+  try {
+    const source = match[1]
+      .replace(/^\s*```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .replace(/[“”]/g, '"')
+      .replace(/[‘’]/g, "'")
+      .trim()
+    const parsed = JSON.parse(source)
+    if (!Array.isArray(parsed)) return []
+
+    const seen = new Set<string>()
+    const out: OptionItem[] = []
+    for (const item of parsed) {
+      if (!item || typeof item !== 'object') continue
+      const key = normalizeOptionKey(String(item.key ?? ''))
+      if (!key || seen.has(key)) continue
+
+      const text = String(item.text ?? '').replace(optionRiskTagPattern, '').replace(/\s+/g, ' ').trim()
+      if (!text) continue
+
+      const risk = item.risk && typeof item.risk === 'object' ? item.risk : {}
+      out.push({
+        key,
+        text,
+        risk: {
+          death: clampRiskDelta(risk.death),
+          revive: clampRiskDelta(risk.revive),
+          source: String(risk.source ?? '结构化选项').replace(/\s+/g, ' ').trim() || '结构化选项',
+          tagged: true,
+        },
+      })
+      seen.add(key)
+    }
+
+    if (!seen.has('D')) {
+      out.push({
+        key: 'D',
+        text: '自定义行动',
+        risk: { death: 0, revive: 0, source: '自定义行动', tagged: true },
+      })
+    }
+    return out
+  } catch (e) {
+    console.warn('[MFRS Status] 解析结构化推演选项失败', e)
+    return []
+  }
+}
+
+function optionRiskLabel(risk: OptionRisk) {
+  if (risk.revive >= 5) return '沾染'
+  if (risk.death >= 9) return '自杀式'
+  if (risk.death >= 6) return '接触异常'
+  if (risk.death >= 3) return '调查'
+  if (risk.death > 0) return '日常'
+  return '自定'
+}
+
+function optionRiskClass(risk: OptionRisk) {
+  if (risk.revive >= 5) return 'risk-revive'
+  if (risk.death >= 9) return 'risk-suicide'
+  if (risk.death >= 6) return 'risk-contact'
+  if (risk.death >= 3) return 'risk-investigate'
+  if (risk.death > 0) return 'risk-daily'
+  return 'risk-free'
+}
+
+function normalizeOptionKey(rawKey: string) {
+  const key = rawKey.trim().toUpperCase()
+  const map: Record<string, string> = {
+    '1': 'A', '①': 'A', '一': 'A', '壹': 'A',
+    '2': 'B', '②': 'B', '二': 'B', '贰': 'B',
+    '3': 'C', '③': 'C', '三': 'C', '叁': 'C',
+    '4': 'D', '④': 'D', '四': 'D', '肆': 'D',
+  }
+  if (/^[A-D]$/.test(key)) return key
+  return map[key] ?? ''
+}
+
 function extractOptions(): OptionItem[] {
   try {
     const mes = getChatMessages(getCurrentMessageId())[0]?.message ?? ''
-    // 遍历所有含"选项"的方括号块（AI 有时在思考块里也提"推演选项"标签但不带 A/B/C/D），
-    // 找到第一个能解析出 A/B/C/D 行的块作为真选项。
-    const blockRe = /【[^】]*选项[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/g
+    const structured = parseStructuredChoices(mes)
+    if (structured.length > 0) return structured
+
+    // 优先解析本卡格式；同时兼容常见预设的“行动/选择/Options/Choices”标题和数字序号。
+    const blockRe = /【[^】]*(?:选项|行动|选择|Options|Choices)[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/gi
     let bm: RegExpExecArray | null
     while ((bm = blockRe.exec(mes)) !== null) {
       const out: OptionItem[] = []
       for (const line of bm[1].split('\n')) {
-        const lm = line.match(/^\s*([A-Z])[.、:：]\s*(.+?)\s*$/)
+        const lm = line.match(/^\s*(?:选项\s*)?([A-Da-d1-4①②③④一二三四壹贰叁肆])[.、:：)）]\s*(.+?)\s*$/)
         if (!lm) continue
+        const key = normalizeOptionKey(lm[1])
+        if (!key) continue
         const body = lm[2].trim().replace(/^\[(.*)\]$/, '$1').trim()
         const parsed = parseOptionRisk(body)
-        if (parsed.text) out.push({ key: lm[1], text: parsed.text, risk: parsed.risk })
+        if (parsed.text) out.push({ key, text: parsed.text, risk: parsed.risk })
       }
       if (out.length > 0) return out
     }
@@ -392,14 +480,24 @@ function applyOptionRisk(risk: OptionRisk) {
   const currentDeath = Math.max(0, Math.min(100, Math.max(Number(data.value.风险值 ?? 0), panelDeathRiskValue.value ?? 0)))
   const legacyRevive = Number(data.value.厉鬼复苏程度 ?? 0)
   const currentTotalRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.驭鬼者状态.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0, legacyRevive)))
-  const nextDeath = Math.min(100, currentDeath + risk.death)
+
+  let deathIncrement = 0
+  if (risk.death >= 9) deathIncrement = 10
+  else if (risk.death >= 6) deathIncrement = 4
+  else if (risk.death >= 3) deathIncrement = 2
+  else deathIncrement = 0
+
+  const nextDeath = Math.min(100, currentDeath + deathIncrement)
   const nextTotalRevive = Math.min(100, currentTotalRevive + risk.revive)
 
   data.value.风险值 = nextDeath
   data.value.驭鬼者状态.总复苏风险 = nextTotalRevive
   data.value.厉鬼复苏程度 = nextTotalRevive
 
-  const statData = clonePlainData(data.value)
+  const currentStreak = Number(data.value.revive_streak ?? 0)
+  data.value.revive_streak = risk.revive >= 5 ? currentStreak + 1 : 0
+
+  const statData = normalizeStatData(data.value)
   updateVariablesWith(variables => {
     _.set(variables, 'stat_data', statData)
     return variables
@@ -607,6 +705,72 @@ function parseStatusPanel(): StatusPanelData {
 
 const statusPanel = computed(parseStatusPanel)
 
+function parseAIMarkers() {
+  const message = currentMessageText()
+  if (!data.value) return
+
+  if (message.includes('<death/>')) {
+    data.value.is_dead = true
+    const statData = normalizeStatData(data.value)
+    updateVariablesWith(variables => {
+      _.set(variables, 'stat_data', statData)
+      return variables
+    }, { type: 'message', message_id: getCurrentMessageId() })
+  }
+
+  if (message.includes('<awaken/>')) {
+    data.value.状态 = '驭鬼者觉醒'
+    const statData = normalizeStatData(data.value)
+    updateVariablesWith(variables => {
+      _.set(variables, 'stat_data', statData)
+      return variables
+    }, { type: 'message', message_id: getCurrentMessageId() })
+  }
+
+  const stageMatch = message.match(/<stage>(序章|调查|接触|对抗|终局)<\/stage>/)
+  if (stageMatch) {
+    const newStage = stageMatch[1] as '序章' | '调查' | '接触' | '对抗' | '终局'
+    const stages = ['序章', '调查', '接触', '对抗', '终局']
+    const currentIndex = stages.indexOf(data.value.剧情阶段 ?? '序章')
+    const newIndex = stages.indexOf(newStage)
+    if (newIndex > currentIndex) {
+      data.value.剧情阶段 = newStage
+      const statData = normalizeStatData(data.value)
+      updateVariablesWith(variables => {
+        _.set(variables, 'stat_data', statData)
+        return variables
+      }, { type: 'message', message_id: getCurrentMessageId() })
+    }
+  }
+
+  if (data.value.is_supernatural_scene && !data.value.has_entered_supernatural) {
+    data.value.has_entered_supernatural = true
+    const statData = normalizeStatData(data.value)
+    updateVariablesWith(variables => {
+      _.set(variables, 'stat_data', statData)
+      return variables
+    }, { type: 'message', message_id: getCurrentMessageId() })
+  }
+
+  if (!data.value.is_supernatural_scene && !data.value.is_dead) {
+    const currentRisk = Number(data.value.风险值 ?? 0)
+    if (currentRisk > 0) {
+      data.value.风险值 = Math.max(0, currentRisk - 2)
+      const statData = normalizeStatData(data.value)
+      updateVariablesWith(variables => {
+        _.set(variables, 'stat_data', statData)
+        return variables
+      }, { type: 'message', message_id: getCurrentMessageId() })
+    }
+  }
+}
+
+watchEffect(() => {
+  void statusPanel.value
+  options.value = extractOptions()
+  parseAIMarkers()
+})
+
 function textOrFallback(value: unknown, fallback = '无') {
   const text = String(value ?? '').trim()
   return text || fallback
@@ -620,6 +784,10 @@ function riskNumberFromText(value: unknown) {
 
 function clonePlainData<T>(value: T): T {
   return JSON.parse(JSON.stringify(toRaw(value))) as T
+}
+
+function normalizeStatData(value: unknown) {
+  return clonePlainData(Schema.parse(value))
 }
 
 function filledGhosts() {
@@ -786,7 +954,7 @@ const panelDeathRiskValue = computed(() => riskNumberFromText(statusPanel.value.
 const panelResurrectionRiskValue = computed(() => riskNumberFromText(statusPanel.value.复苏风险))
 const deathRiskValue = computed(() => Math.max(0, Math.min(100, Math.max(Number(d().风险值 ?? 0), panelDeathRiskValue.value ?? 0))))
 const resurrectionRiskValue = computed(() => Math.max(0, Math.min(100, Math.max(Number(ghostState.value.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0))))
-const isDeathRiskCritical = computed(() => deathRiskValue.value >= 100)
+const isDeathRiskCritical = computed(() => Boolean(d().is_dead))
 const displayDeathRisk = computed(() => `${deathRiskValue.value}/100`)
 const displayKnownLaws = computed(() => textOrFallback(statusPanel.value.已知规律, listText(eventFile.value.已知杀人规律)))
 const displaySuspectedLaws = computed(() => textOrFallback(statusPanel.value.猜测规律, listText(eventFile.value.猜测杀人规律)))
@@ -810,7 +978,7 @@ function buildStartMessage() {
   const current = d()
   const ghostList = filledGhosts()
   const itemList = filledItems()
-  const { stage: canonStage, anchor: canonAnchor } = applyStartCanonBinding()
+  applyStartCanonBinding()
   const event = current.当前灵异事件 ?? defaultEventFile
   const controlledGhosts = current.驭鬼者状态?.已驾驭厉鬼 ?? []
   const resources = current.灵异资源 ?? defaultResources
@@ -946,7 +1114,7 @@ function commitStartData() {
       鬼的真实位置: '未确认',
     },
   })
-  const statData = clonePlainData(data.value)
+  const statData = normalizeStatData(data.value)
   updateVariablesWith(variables => {
     _.set(variables, 'stat_data', statData)
     return variables
@@ -2013,6 +2181,55 @@ function handleReset() {
 .opt-text {
   flex: 1;
   overflow-wrap: anywhere;
+}
+
+.opt-risk {
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-width: 56px;
+  padding: 3px 8px;
+  border: 1px solid rgba(170, 48, 48, 0.68);
+  border-radius: 999px;
+  color: #d8b6a0;
+  background: rgba(20, 0, 0, 0.72);
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.58);
+}
+
+.opt-risk.risk-daily {
+  border-color: rgba(130, 130, 130, 0.62);
+  color: #b8b8b8;
+}
+
+.opt-risk.risk-investigate {
+  border-color: rgba(80, 140, 200, 0.72);
+  color: #8db9d7;
+}
+
+.opt-risk.risk-contact {
+  border-color: rgba(200, 120, 20, 0.76);
+  color: #ffb26f;
+}
+
+.opt-risk.risk-suicide {
+  border-color: rgba(255, 36, 36, 0.86);
+  color: #ff6b6b;
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
+}
+
+.opt-risk.risk-revive {
+  border-color: rgba(160, 64, 220, 0.82);
+  color: #d7a8ff;
+  text-shadow: 0 0 8px rgba(170, 60, 255, 0.46);
+}
+
+.opt-risk.risk-free {
+  border-color: rgba(100, 100, 100, 0.62);
+  color: #a9a9a9;
 }
 
 @media (max-width: 680px) {
