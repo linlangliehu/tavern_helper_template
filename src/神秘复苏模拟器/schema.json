@@ -389,6 +389,58 @@
         }
       }
     },
+    "可见档案": {
+      "default": {
+        "玩家已知": [],
+        "NPC已知": [],
+        "已验证线索": [],
+        "未验证猜测": []
+      },
+      "type": "object",
+      "properties": {
+        "玩家已知": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "NPC已知": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "人物": {
+                "default": "未知",
+                "type": "string"
+              },
+              "已知信息": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "已验证线索": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "未验证猜测": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "主线进度": {
       "type": "object",
       "properties": {
@@ -398,6 +450,24 @@
         },
         "阶段序号": {
           "$ref": "#/$defs/__schema1"
+        },
+        "权限层级": {
+          "default": "玩家可见层",
+          "type": "string"
+        },
+        "已开放主题": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "锁定主题": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "阶段状态": {
           "default": "未启动",

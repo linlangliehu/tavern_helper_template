@@ -46,6 +46,9 @@ const SupernaturalItemSchema = z.object({
 const MainlineProgressSchema = z.object({
   当前阶段: z.string().default('开局接入'),
   阶段序号: NonNegativeNumberSchema.default(0),
+  权限层级: z.string().default('玩家可见层'),
+  已开放主题: z.array(z.string()).default([]),
+  锁定主题: z.array(z.string()).default([]),
   阶段状态: z.string().default('未启动'),
   已完成节点: z.array(z.string()).default([]),
   可触发节点: z.array(z.string()).default([]),
@@ -159,9 +162,26 @@ export const Schema = z.object({
     事件: z.string().default('等待初始化'),
     影响: z.string().default('未产生影响'),
   })).default([]),
+  可见档案: z.object({
+    玩家已知: z.array(z.string()).default([]),
+    NPC已知: z.array(z.object({
+      人物: z.string().default('未知'),
+      已知信息: z.array(z.string()).default([]),
+    })).default([]),
+    已验证线索: z.array(z.string()).default([]),
+    未验证猜测: z.array(z.string()).default([]),
+  }).default({
+    玩家已知: [],
+    NPC已知: [],
+    已验证线索: [],
+    未验证猜测: [],
+  }),
   主线进度: MainlineProgressSchema.default({
     当前阶段: '开局接入',
     阶段序号: 0,
+    权限层级: '玩家可见层',
+    已开放主题: [],
+    锁定主题: [],
     阶段状态: '未启动',
     已完成节点: [],
     可触发节点: [],
