@@ -23,6 +23,24 @@ const ReasoningRecordSchema = z.object({
   风险等级: z.string().default('未知'),
 });
 
+const ActionJudgementSchema = z.object({
+  类型: z.string().default('未判定'),
+  行动: z.string().default(''),
+  依据: z.array(z.string()).default([]),
+  结果: z.string().default('未结算'),
+  代价: z.string().default('无'),
+  死亡风险变化: z.string().default('无变化'),
+  复苏风险变化: z.string().default('无变化'),
+  可见结论: z.string().default(''),
+});
+
+const ActionSuggestionSchema = z.object({
+  选项: z.string().default(''),
+  思路: z.string().default(''),
+  主要风险: z.string().default('未知'),
+  预期收益: z.string().default('未知'),
+});
+
 const ControlledGhostSchema = z.object({
   代号: z.string().default('未命名厉鬼'),
   恐怖等级: z.string().default('未知'),
@@ -127,6 +145,17 @@ export const Schema = z.object({
     处理状态: '未接触',
   }),
   规律推理记录: z.array(ReasoningRecordSchema).default([]),
+  最近行动判定: ActionJudgementSchema.default({
+    类型: '未判定',
+    行动: '',
+    依据: [],
+    结果: '未结算',
+    代价: '无',
+    死亡风险变化: '无变化',
+    复苏风险变化: '无变化',
+    可见结论: '',
+  }),
+  行动建议: z.array(ActionSuggestionSchema).default([]),
   在场人物: z.array(z.string()).default([]),
   驭鬼者状态: z.object({
     总复苏风险: PercentSchema.default(0),

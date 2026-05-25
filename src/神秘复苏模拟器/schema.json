@@ -212,6 +212,81 @@
         }
       }
     },
+    "最近行动判定": {
+      "default": {
+        "类型": "未判定",
+        "行动": "",
+        "依据": [],
+        "结果": "未结算",
+        "代价": "无",
+        "死亡风险变化": "无变化",
+        "复苏风险变化": "无变化",
+        "可见结论": ""
+      },
+      "type": "object",
+      "properties": {
+        "类型": {
+          "default": "未判定",
+          "type": "string"
+        },
+        "行动": {
+          "default": "",
+          "type": "string"
+        },
+        "依据": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "结果": {
+          "default": "未结算",
+          "type": "string"
+        },
+        "代价": {
+          "default": "无",
+          "type": "string"
+        },
+        "死亡风险变化": {
+          "default": "无变化",
+          "type": "string"
+        },
+        "复苏风险变化": {
+          "default": "无变化",
+          "type": "string"
+        },
+        "可见结论": {
+          "default": "",
+          "type": "string"
+        }
+      }
+    },
+    "行动建议": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "选项": {
+            "default": "",
+            "type": "string"
+          },
+          "思路": {
+            "default": "",
+            "type": "string"
+          },
+          "主要风险": {
+            "default": "未知",
+            "type": "string"
+          },
+          "预期收益": {
+            "default": "未知",
+            "type": "string"
+          }
+        }
+      }
+    },
     "在场人物": {
       "default": [],
       "type": "array",

@@ -3,27 +3,27 @@
 
 <%_
 var stat_data = _.get(EjsTemplate.allVariables(), 'stat_data', {});
-var death_risk = Number(_.get(stat_data, '风险值', 0)) || 0;
-var resurrection_risk = Number(_.get(stat_data, '驭鬼者状态.总复苏风险', _.get(stat_data, '厉鬼复苏程度', 0))) || 0;
-var current_status = _.get(stat_data, '状态', '未知');
-var current_location = _.get(stat_data, '所在位置', '未知');
-var current_event = _.get(stat_data, '当前灵异事件.事件代号', '未立案灵异事件');
+var deathRiskValue = Number(_.get(stat_data, '风险值', 0)) || 0;
+var reviveRiskValue = Number(_.get(stat_data, '驭鬼者状态.总复苏风险', _.get(stat_data, '厉鬼复苏程度', 0))) || 0;
+var currentStatusText = _.get(stat_data, '状态', '未知');
+var currentLocationText = _.get(stat_data, '所在位置', '未知');
+var currentEventName = _.get(stat_data, '当前灵异事件.事件代号', '未立案灵异事件');
 var current_phase = _.get(stat_data, '主线进度.当前阶段', '开局接入');
 var canon_stage = _.get(stat_data, '原著阶段', '');
 var canon_anchor = _.get(stat_data, '剧情锚点', '');
 _%>
 <runtime_state_summary>
-死亡风险: <%= death_risk %>/100
-复苏风险: <%= resurrection_risk %>%
-玩家状态: <%= current_status %>
-当前位置: <%= current_location %>
-当前事件: <%= current_event %>
+死亡风险: <%= deathRiskValue %>/100
+复苏风险: <%= reviveRiskValue %>%
+玩家状态: <%= currentStatusText %>
+当前位置: <%= currentLocationText %>
+当前事件: <%= currentEventName %>
 当前阶段: <%= current_phase %>
 <%_ if (canon_stage || canon_anchor) { _%>
 原著阶段: <%= canon_stage || '未指定' %>
 剧情锚点: <%= canon_anchor || '未指定' %>
 <%_ } _%>
-<%_ if (death_risk >= 100 || String(current_status).includes('死亡')) { _%>
+<%_ if (deathRiskValue >= 100 || String(currentStatusText).includes('死亡')) { _%>
 终止判定: 玩家已经死亡或风险值达到死亡线。下一次回复必须输出【模拟结局】，交代死亡触发原因、最终状态、灵异事件后续和世界线影响；不得输出【推演选项：】或 A/B/C/D 行动选项。
 <%_ } else { _%>
 续写判定: 玩家仍然存活。继续推演时必须继承以上数值，不得把死亡风险、复苏风险、状态、位置或事件档案重置为默认值。

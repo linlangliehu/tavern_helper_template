@@ -4760,7 +4760,7 @@
   - 正则名称: '[不发送]去除界面展示块'
     id: 7d6a8e3b-2f4c-4c5e-9a11-9f7b2d3e6c41
     启用: true
-    查找表达式: "/(?:<choices>[\\s\\S]*?<\\/choices>|(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)|<StatusPlaceHolderImpl\\/>)/g"
+    查找表达式: "/(?:<choices>[\\s\\S]*?<\\/choices>|<(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>[\\s\\S]*?<\\/(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>|(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)|<StatusPlaceHolderImpl\\/>)/g"
     替换为: ''
     来源:
       用户输入: false
