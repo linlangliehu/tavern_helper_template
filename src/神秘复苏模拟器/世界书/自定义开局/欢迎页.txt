@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘复苏模拟器·自定义开局</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+/* 神秘复苏模拟器·自定义开局 v2.0 - 参考蛊真人布局 + 暗红恐怖主题 */
+#mfrs-welcome-root {
+  --bg-primary: #0a0404;
+  --bg-secondary: #150808;
+  --bg-tertiary: #200c0c;
+  --border-main: rgba(160, 40, 40, 0.5);
+  --border-light: rgba(160, 40, 40, 0.25);
+  --text-main: #e0d0d0;
+  --text-sub: #b89090;
+  --text-muted: #8a6565;
+  --accent: #c83838;
+  --accent-dim: #902828;
+  --shadow: rgba(0, 0, 0, 0.7);
+  --shadow-light: rgba(0, 0, 0, 0.4);
+  --radius: 12px;
+  --easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  color: var(--text-main);
+  padding: 24px 16px;
+  background: linear-gradient(180deg, var(--bg-primary), var(--bg-secondary));
+  min-height: 100vh;
+}
+
+#mfrs-welcome-root *, #mfrs-welcome-root *::before, #mfrs-welcome-root *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 主容器 */
+.mfrs-container {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 48px 40px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-main);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 64px var(--shadow), 0 0 48px rgba(160, 40, 40, 0.08);
+  position: relative;
+}
+
+.mfrs-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(800px 500px at 20% 10%, rgba(160, 40, 40, 0.06), transparent 60%);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+/* 标题区 */
+.mfrs-header {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-bottom: 36px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mfrs-title {
+  margin: 0 0 14px;
+  font-family: "Noto Serif SC", serif;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-shadow: 0 0 24px rgba(200, 56, 56, 0.4), 0 2px 6px var(--shadow);
+}
+
+.mfrs-subtitle {
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--text-sub);
+}
+
+/* 致谢面板 */
+.mfrs-credits {
+  position: relative;
+  z-index: 1;
+  margin: 28px 0;
+  padding: 22px 24px;
+  background: rgba(32, 12, 12, 0.5);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+}
+
+.mfrs-credits-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.mfrs-credits-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mfrs-badge {
+  display: inline-flex;
+  padding: 9px 16px;
+  background: rgba(10, 4, 4, 0.8);
+  border: 1px solid var(--border-main);
+  border-radius: 999px;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 6px 16px var(--shadow-light);
+  transition: transform 0.2s var(--easing), box-shadow 0.2s var(--easing);
+}
+
+.mfrs-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(160, 40, 40, 0.2);
+}
+
+/* 折叠面板 */
+.mfrs-collapse {
+  position: relative;
+  z-index: 1;
+  margin: 24px 0;
+  border: 1px solid var(--border-main);
+  border-radius: var(--radius);
+  background: rgba(21, 8, 8, 0.5);
+  overflow: hidden;
+}
+
+.mfrs-collapse-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  cursor: pointer;
+  background: linear-gradient(90deg, rgba(32, 12, 12, 0.8), rgba(21, 8, 8, 0.8));
+  transition: background 0.2s var(--easing);
+  list-style: none;
+}
+
+.mfrs-collapse-header::-webkit-details-marker { display: none; }
+
+.mfrs-collapse-header:hover {
+  background: linear-gradient(90deg, rgba(32, 12, 12, 1), rgba(21, 8, 8, 1));
+}
+
+.mfrs-collapse-title {
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.mfrs-collapse-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-main);
+  background: rgba(10, 4, 4, 0.8);
+  color: var(--accent);
+  transition: transform 0.3s var(--easing);
+}
+
+.mfrs-collapse[open] .mfrs-collapse-icon {
+  transform: rotate(90deg);
+}
+
+.mfrs-collapse-body {
+  padding: 24px;
+  border-top: 1px solid var(--border-light);
+  line-height: 1.9;
+  color: var(--text-main);
+  font-size: 15px;
+}
+
+.mfrs-collapse-body p {
+  margin-bottom: 14px;
+}
+
+.mfrs-collapse-body strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* 表单区 */
+.mfrs-form {
+  position: relative;
+  z-index: 1;
+  margin: 28px 0;
+}
+
+.mfrs-section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 16px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.mfrs-section-title::before {
+  content: "◆";
+  color: var(--accent-dim);
+  font-size: 13px;
+}
+
+.mfrs-row {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.mfrs-input, .mfrs-select, .mfrs-textarea {
+  flex: 1;
+  min-width: 220px;
+  padding: 13px 16px;
+  background: rgba(10, 4, 4, 0.7);
+  border: 1px solid var(--border-main);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s var(--easing), box-shadow 0.2s var(--easing), background 0.2s var(--easing);
+}
+
+.mfrs-input:focus, .mfrs-select:focus, .mfrs-textarea:focus {
+  border-color: var(--accent);
+  background: rgba(10, 4, 4, 0.9);
+  box-shadow: 0 0 0 3px rgba(200, 56, 56, 0.1);
+}
+
+.mfrs-input::placeholder, .mfrs-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.mfrs-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23c83838' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.mfrs-select option {
+  background: var(--bg-secondary);
+  color: var(--text-main);
+}
+
+.mfrs-textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* 自定义下拉菜单 */
+.mfrs-dropdown {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.mfrs-dropdown-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: rgba(10, 4, 4, 0.7);
+  border: 1px solid var(--border-main);
+  border-radius: 10px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color 0.2s var(--easing), background 0.2s var(--easing);
+}
+
+.mfrs-dropdown-trigger:hover {
+  border-color: var(--accent);
+  background: rgba(10, 4, 4, 0.9);
+}
+
+.mfrs-dropdown-menu {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 10px);
+  max-height: 420px;
+  overflow-y: auto;
+  background: rgba(10, 4, 4, 0.96);
+  border: 1px solid var(--border-main);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px var(--shadow);
+  z-index: 100;
+}
+
+.mfrs-dropdown-menu[style*="block"] {
+  animation: mfrsDropShow 0.2s var(--easing);
+}
+
+@keyframes mfrsDropShow {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mfrs-dropdown-group {
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mfrs-dropdown-group:last-child { border-bottom: none; }
+
+.mfrs-dropdown-group-title {
+  padding: 14px 18px;
+  font-weight: 900;
+  color: var(--accent);
+  background: rgba(32, 12, 12, 0.5);
+  cursor: pointer;
+  transition: background 0.2s var(--easing);
+  font-size: 14px;
+}
+
+.mfrs-dropdown-group-title:hover {
+  background: rgba(32, 12, 12, 0.8);
+}
+
+.mfrs-dropdown-item {
+  padding: 11px 18px 11px 32px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background 0.2s var(--easing);
+  font-size: 14px;
+}
+
+.mfrs-dropdown-item:hover {
+  background: rgba(160, 40, 40, 0.12);
+}
+
+/* 提交按钮 */
+.mfrs-submit {
+  width: 100%;
+  padding: 16px 24px;
+  margin-top: 32px;
+  background: linear-gradient(135deg, rgba(160, 40, 40, 0.8), rgba(120, 30, 30, 0.8));
+  border: 1px solid var(--border-main);
+  border-radius: 10px;
+  color: var(--text-main);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.24em;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(160, 40, 40, 0.3);
+  transition: transform 0.2s var(--easing), box-shadow 0.2s var(--easing);
+}
+
+.mfrs-submit:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(160, 40, 40, 0.4);
+}
+
+.mfrs-submit:active {
+  transform: translateY(-1px);
+}
+
+/* 滚动条 */
+.mfrs-dropdown-menu::-webkit-scrollbar {
+  width: 9px;
+}
+
+.mfrs-dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(160, 40, 40, 0.4);
+  border-radius: 5px;
+}
+
+.mfrs-dropdown-menu::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* 响应式 */
+@media (max-width: 640px) {
+  #mfrs-welcome-root {
+    padding: 18px 12px;
+  }
+
+  .mfrs-container {
+    padding: 32px 24px;
+  }
+
+  .mfrs-title {
+    font-size: 30px;
+  }
+
+  .mfrs-row {
+    flex-direction: column;
+  }
+
+  .mfrs-input, .mfrs-select, .mfrs-dropdown {
+    min-width: 0;
+  }
+}
+    </style>
+</head>
+<body>
+<div id="mfrs-welcome-root">
+    <div class="mfrs-container">
+        <header class="mfrs-header">
+            <h1 class="mfrs-title">神秘复苏模拟器</h1>
+            <p class="mfrs-subtitle">在这个世界，厉鬼复苏，人人自危</p>
+        </header>
+
+        <div class="mfrs-credits">
+            <div class="mfrs-credits-title">
+                <span>◆</span>
+                <span>致谢</span>
+                <span>◆</span>
+            </div>
+            <div class="mfrs-credits-list">
+                <span class="mfrs-badge">@原著作者·佛前献花</span>
+                <span class="mfrs-badge">@星河璀璨·数据库</span>
+                <span class="mfrs-badge">@酒馆助手·模板</span>
+                <span class="mfrs-badge">@所有测试者</span>
+            </div>
+        </div>
+
+        <details class="mfrs-collapse">
+            <summary class="mfrs-collapse-header">
+                <span class="mfrs-collapse-title">世界观与规则</span>
+                <span class="mfrs-collapse-icon">◆</span>
+            </summary>
+            <div class="mfrs-collapse-body">
+                <p>这是一个厉鬼复苏的世界。灵异事件频发，普通人无法对抗厉鬼，只有驭鬼者才能与之抗衡。</p>
+                <p>但驭鬼者也并非无敌——每一次使用鬼的力量，都会加速厉鬼复苏，最终被鬼反噬。</p>
+                <p><strong>生存法则：</strong>不要相信任何人，不要轻易使用鬼的力量，不要试图理解厉鬼的规律。</p>
+                <p><strong>死亡风险：</strong>你的每一个选择都可能导致死亡。请谨慎行事。</p>
+            </div>
+        </details>
+
+        <form id="mfrs-form" class="mfrs-form">
+            <div class="mfrs-section-title">身份与根骨</div>
+            <div class="mfrs-row">
+                <input type="text" id="mfrs-name" class="mfrs-input" placeholder="姓名（例：杨间）" required>
+                <input type="text" id="mfrs-age-gender" class="mfrs-input" placeholder="年龄/性别（例：18/男）" required>
+            </div>
+
+            <div class="mfrs-section-title">修为与流派</div>
+            <div class="mfrs-row">
+                <select id="mfrs-identity" class="mfrs-select" required>
+                    <option value="" disabled selected>选择身份</option>
+                    <option value="普通学生">普通学生（无驭鬼能力）</option>
+                    <option value="初级驭鬼者">初级驭鬼者（刚获得鬼的力量）</option>
+                    <option value="中级驭鬼者">中级驭鬼者（已驾驭一只厉鬼）</option>
+                    <option value="高级驭鬼者">高级驭鬼者（驾驭多只厉鬼）</option>
+                    <option value="总部成员">总部成员（官方驭鬼者）</option>
+                    <option value="民间驭鬼者">民间驭鬼者（独立行动）</option>
+                </select>
+                <select id="mfrs-ghost-level" class="mfrs-select">
+                    <option value="" disabled selected>厉鬼等级</option>
+                    <option value="无">无（普通人）</option>
+                    <option value="C级">C级（低危）</option>
+                    <option value="B级">B级（中危）</option>
+                    <option value="A级">A级（高危）</option>
+                    <option value="S级">S级（极危）</option>
+                    <option value="SS级">SS级（灾难级）</option>
+                </select>
+            </div>
+
+            <div class="mfrs-section-title">时空锚点</div>
+            <div class="mfrs-row">
+                <div class="mfrs-dropdown">
+                    <div class="mfrs-dropdown-trigger" id="mfrs-anchor-trigger">
+                        <span id="mfrs-anchor-display">选择剧情节点</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <input type="hidden" id="mfrs-anchor-value">
+                    <div class="mfrs-dropdown-menu" id="mfrs-anchor-menu">
+                        <!-- 由 JS 生成 -->
+                    </div>
+                </div>
+            </div>
+            <div class="mfrs-row">
+                <input type="text" id="mfrs-location" class="mfrs-input" placeholder="当前地点（例：大昌市第七中学）" required>
+                <input type="text" id="mfrs-time" class="mfrs-input" placeholder="当前时间（例：2019年9月）" required>
+            </div>
+
+            <div class="mfrs-section-title">初始资源与背景</div>
+            <textarea id="mfrs-resources" class="mfrs-textarea" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
+            <textarea id="mfrs-background" class="mfrs-textarea" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
+
+            <button type="submit" class="mfrs-submit">进入神秘复苏世界</button>
+        </form>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const anchors = [
+        {
+            group: "阶段0：开局与七中前后",
+            items: [
+                { name: "七中前数日·怪谈传播", loc: "大昌市第七中学", time: "2019年9月初" },
+                { name: "七中当日·周正到校", loc: "大昌市第七中学", time: "2019年9月中旬" },
+                { name: "鬼眼复苏·杨间觉醒", loc: "大昌市第七中学", time: "2019年9月中旬" },
+                { name: "七中后续·幸存者标记", loc: "大昌市第七中学", time: "2019年9月下旬" }
+            ]
+        },
+        {
+            group: "阶段1：大昌市灵异爆发",
+            items: [
+                { name: "敲门鬼事件", loc: "大昌市", time: "2019年10月" },
+                { name: "鬼公交事件", loc: "大昌市", time: "2019年10月" },
+                { name: "鬼邮局事件", loc: "大昌市", time: "2019年11月" }
+            ]
+        },
+        {
+            group: "阶段2：黄岗村与鬼域",
+            items: [
+                { name: "黄岗村调查", loc: "黄岗村", time: "2019年12月" },
+                { name: "鬼域形成", loc: "黄岗村", time: "2019年12月" }
+            ]
+        },
+        {
+            group: "自定义节点",
+            items: [
+                { name: "自定义时间点", loc: "", time: "" }
+            ]
+        }
+    ];
+
+    const menu = document.getElementById('mfrs-anchor-menu');
+    const trigger = document.getElementById('mfrs-anchor-trigger');
+    const display = document.getElementById('mfrs-anchor-display');
+    const valueInput = document.getElementById('mfrs-anchor-value');
+    const locationInput = document.getElementById('mfrs-location');
+    const timeInput = document.getElementById('mfrs-time');
+
+    // 生成下拉菜单
+    anchors.forEach(group => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'mfrs-dropdown-group';
+
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'mfrs-dropdown-group-title';
+        groupTitle.textContent = group.group;
+        groupDiv.appendChild(groupTitle);
+
+        group.items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'mfrs-dropdown-item';
+            itemDiv.textContent = item.name;
+            itemDiv.addEventListener('click', () => {
+                display.textContent = `${group.group} · ${item.name}`;
+                valueInput.value = `${group.group} · ${item.name}`;
+                if (item.loc) locationInput.value = item.loc;
+                if (item.time) timeInput.value = item.time;
+                menu.style.display = 'none';
+            });
+            groupDiv.appendChild(itemDiv);
+        });
+
+        menu.appendChild(groupDiv);
+    });
+
+    // 下拉菜单交互
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', () => {
+        menu.style.display = 'none';
+    });
+
+    menu.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // 表单提交
+    document.getElementById('mfrs-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('mfrs-name').value;
+        const ageGender = document.getElementById('mfrs-age-gender').value;
+        const identity = document.getElementById('mfrs-identity').value;
+        const ghostLevel = document.getElementById('mfrs-ghost-level').value || '无';
+        const anchor = valueInput.value || '未选择节点';
+        const location = locationInput.value;
+        const time = timeInput.value;
+        const resources = document.getElementById('mfrs-resources').value || '无';
+        const background = document.getElementById('mfrs-background').value;
+
+        const message = `【神秘复苏·开局设定】\n\n` +
+                       `1. **基本信息**\n` +
+                       `   - 姓名：${name}\n` +
+                       `   - 年龄/性别：${ageGender}\n` +
+                       `   - 当前地点：${location}\n` +
+                       `   - 当前时间：${time}\n` +
+                       `   - 剧情节点：${anchor}\n\n` +
+                       `2. **身份与能力**\n` +
+                       `   - 身份：${identity}\n` +
+                       `   - 厉鬼等级：${ghostLevel}\n\n` +
+                       `3. **初始资源**\n` +
+                       `   ${resources}\n\n` +
+                       `4. **背景设定**\n` +
+                       `   ${background}`;
+
+        // 写入输入框
+        if (parent.document.getElementById('send_textarea')) {
+            const textarea = parent.document.getElementById('send_textarea');
+            textarea.value = message;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        } else {
+            console.log('生成的开局设定：', message);
+            alert('开局设定已生成（测试模式）');
+        }
+    });
+})();
+</script>
+</body>
+</html>
+

@@ -37,7 +37,7 @@ const cards = [
     devDir: 'src/神秘复苏模拟器',                  // 源（开发版）
     pubDir: 'src/神秘复苏模拟器发布版',            // 目标（发布版）
     yamlFile: 'index.yaml',
-    syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书'],
+    syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书', '数据库'],
     syncFiles: ['神秘复苏模拟器.png'],            // 头像图
     urlReplacements: [{ from: LOCALHOST_PATTERN, to: CDN }],
   },

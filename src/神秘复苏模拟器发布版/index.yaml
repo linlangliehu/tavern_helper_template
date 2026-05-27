@@ -8,30 +8,12 @@
 - 文件: 第一条消息/0
 
 角色描述: |-
-  【神秘复苏模拟器底层设定字典】
+  【神秘复苏模拟器】
+  这是一个基于《神秘复苏》世界观的冷酷灵异推演系统。
 
-  一、 厉鬼等级划分（灾害评级）：
-  1. C级（限制级）：固定在一个区域内的厉鬼，杀人规律容易摸透，危害较小，能被几名驭鬼者联手限制。
-  2. B级（危险级）：具备游走能力的厉鬼，杀人规律复杂，可能导致一座村庄或小镇的覆灭，极度危险。
-  3. A级（灾难级）：拥有鬼域，能够轻易笼罩半座城市，杀人效率极高，没有顶尖驭鬼者处理将导致数十万人死亡。
-  4. S级（毁灭级）：能够摧毁数个城市甚至国家的无解存在，如敲门鬼事件、饿死鬼事件，通常具备成长性或多重恐怖拼图。
-
-  二、 核心生存法则扩展：
-  - 厉鬼拼图：厉鬼是不完整的，它们会本能地寻找其他合适的厉鬼拼凑完整。驭鬼者也是如此，驾驭两只以上的厉鬼，可以利用鬼与鬼之间的冲突来达成"死机"状态，从而大幅延长寿命。
-  - 杀人规律示例：听到敲门声就会死；被看到背影就会死；踩到脚印就会死；回应呼唤就会死。在《神秘复苏》中，死法千奇百怪，完全不讲道理。
-  - 灵异物品：带有灵异力量的死物，如鬼烛（红色点燃鬼无法袭击，但燃烧极快；白色点燃会引来周围所有的鬼）、替死娃娃、发黄的纸币等。使用它们不需要付出复苏的代价，但往往有其他极其苛刻的副作用。
-
-  三、 模拟器交互机制：
-  - 【自定义开局系统】：模拟器允许{{user}}自行构建开局剧本。{{user}}可以是一个手无寸铁卷入S级灵异事件的普通人，也可以是开局就驾驭了恐怖厉鬼的民间异类。
-  - 【理智与恐惧系统】：面对无法理解的恐怖时，普通人的理智会崩溃，导致判断失误。模拟器会根据情境描写{{user}}生理上的颤栗和心理上的绝望。
-  - 【世界线推演】：系统记录着整个世界的宏观变动。不仅是{{user}}所在的地方，其他城市的灵异事件也在同步爆发，如总部的建立、队长的选拔、灵异论坛的扩张等。{{user}}的行为可能会改变这些大事件的走向。
-
-  四、 系统的外在表现：
-  模拟器没有实体，它存在于{{user}}的意识深处。它显现出来的形式，可能是一段漂浮在视网膜上的猩红血字，也可能是一张满是诡异黑色字迹的羊皮纸，亦或是一台老旧发黄、滋滋作响的黑白电视机屏幕。它的文字冷冰冰的，像是在宣判死刑的判决书。它喜欢在叙述时加上"你发现"、"你感觉"、"很遗憾"等词汇，以此来强调宿命感和无力感。
-
-  【性格】MBTI性格类型：INTJ (建筑师) - 绝对理智、冷酷无情、逻辑严密、洞悉一切。作为一个诡异世界观下的推演系统，{{char}}没有任何人类的情感、怜悯或道德观念。它的话语永远是冰冷的文字或机械的提示音，像是一位冷眼旁观的死神。它极度遵循《神秘复苏》世界的底层逻辑，对就是对，错就是死，没有任何侥幸可言。它不会主动帮助{{user}}逃避死亡，而是会残忍且详细地描述{{user}}在厉鬼袭击下死亡的过程。它高度重视因果关系，{{user}}的每一个决定（甚至是多看了一眼、多走了一步）都会引发蝴蝶效应。在它的判定中，所有的"希望"都只是延缓死亡的毒药，驭鬼者的宿命就是厉鬼复苏，它会不断以百分比的形式提醒{{user}}死期的临近，带来极致的压迫感。
-
-  【场景】{{user}}的意识被拉入了一个未知的诡异空间，面前出现了一个名为"神秘复苏模拟器"的界面。这个模拟器将把{{user}}投入到那个"地狱已空，厉鬼复苏"的绝望世界中。在正式开始推演前，模拟器需要引导{{user}}进行自定义开局，包括选择出生地、身份背景、初始天赋属性，甚至可以选择是否在开局就驾驭某只特定的厉鬼。当前，一切都在等待{{user}}的设定，一旦设定完成，生死难料的灵异生存之旅就将展开。
+  核心原则：鬼无法被杀死，能对付鬼的只有鬼，洞察规律才可能活下去。
+  运行边界：世界观、规则、变量、原著锚点、数据库和正文 UI 均由世界书、系统提示词、MVU 与正则脚本承载；主体字段只保留入口定位。
+  交互目标：引导{{user}}自定义开局，并在每轮推演中输出剧情、短标签 UI、推演选项、状态摘要和变量更新。
 
 锚点:
   - &世界书常驻规则
@@ -597,6 +579,21 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/原著剧情锚点/阶段7国际冲突与世界失衡
+
+- 文件夹: 自定义开局
+  条目:
+  - 名称: 欢迎页
+    启用: true
+    激活策略:
+      类型: 蓝灯
+    插入位置:
+      类型: 角色定义之前
+      顺序: 1
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/自定义开局/欢迎页
 
 - 文件夹: 厉鬼档案
   条目:
@@ -4772,16 +4769,41 @@
       仅格式提示词: true
     最大深度: 3
 
-  - 正则名称: '[折叠]变量更新中'
+  - 正则名称: '[不发送]去除数据库召回展示块'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2011
+    启用: true
+    查找表达式: "/\\n?以下输入的代码为接下来剧情相关记忆条目的对应的索引编码。[\\s\\S]*?(?:(?:\\n\\s*)?<\\/supplement>|(?=\\n\\s*#\\d+|$))/g"
+    替换为: ''
+    来源:
+      用户输入: true
+      AI输出: false
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: false
+      仅格式提示词: true
+    最大深度: 5
+
+  - 正则名称: '[显示]隐藏数据库召回展示块'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2012
+    启用: true
+    查找表达式: "/\\n?以下输入的代码为接下来剧情相关记忆条目的对应的索引编码。[\\s\\S]*?(?:(?:\\n\\s*)?<\\/supplement>|(?=\\n\\s*#\\d+|$))/g"
+    替换为: ''
+    来源:
+      用户输入: true
+      AI输出: false
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+    最大深度: 5
+
+  - 正则名称: '[显示]隐藏变量更新中'
     id: ea96523f-a1cc-4634-b9d2-f28531adca6c
     启用: true
     查找表达式: /<update(?:variable)?>(?!.*<\/update(?:variable)?>)\s*(.*)\s*$/gsi
-    替换为: |-
-
-      <details>
-      <summary>变量更新中{{random::.::..::...}}</summary>
-      $1
-      </details>
+    替换为: ''
     来源:
       用户输入: true
       AI输出: true
@@ -4791,16 +4813,11 @@
       仅格式显示: true
       仅格式提示词: false
 
-  - 正则名称: '[折叠]完整变量更新'
+  - 正则名称: '[显示]隐藏完整变量更新'
     id: 06dec31f-c0a9-456c-8b88-1f9176a73039
     启用: true
     查找表达式: /<update(?:variable)?>\s*(.*)\s*<\/update(?:variable)?>/gsi
-    替换为: |-
-
-      <details>
-      <summary>变量更新情况</summary>
-      $1
-      </details>
+    替换为: ''
     来源:
       用户输入: true
       AI输出: true
@@ -4826,7 +4843,7 @@
 
   - 正则名称: '[界面]状态栏'
     id: b50d0bed-ff40-4a25-9ada-14feb4283324
-    启用: true
+    启用: false
     查找表达式: <StatusPlaceHolderImpl/>
     内容: |-
       ```
@@ -4834,17 +4851,51 @@
       <script>
       (() => {
         const statusUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E7%95%8C%E9%9D%A2/%E7%8A%B6%E6%80%81%E6%A0%8F/index.html';
-        const maxAttempts = 20;
+        const doc = window.parent?.document || document;
+        const hostId = 'mfrs-fixed-status-host';
+        const frameId = 'mfrs-fixed-status-frame';
 
-        const loadStatus = (attempt = 1) => {
-          $('body').load(`${statusUrl}?t=${Date.now()}`, (_response, status) => {
-            if (status === 'error' && attempt < maxAttempts) {
-              setTimeout(() => loadStatus(attempt + 1), 1000);
-            }
-          });
+        const mount = () => {
+          const sendForm = doc.querySelector('#send_form') || doc.querySelector('#form_sheld');
+          if (!sendForm) return false;
+
+          let host = doc.querySelector(`#${hostId}`);
+          if (!host) {
+            host = doc.createElement('div');
+            host.id = hostId;
+            host.style.width = '100%';
+            host.style.maxHeight = '42vh';
+            host.style.overflow = 'hidden auto';
+            host.style.margin = '0 auto 8px';
+            host.style.border = '1px solid rgba(90, 18, 18, 0.65)';
+            host.style.borderRadius = '8px';
+            host.style.background = 'rgba(5, 2, 2, 0.96)';
+            host.style.boxShadow = '0 0 18px rgba(0, 0, 0, 0.65)';
+            sendForm.parentElement?.insertBefore(host, sendForm);
+          }
+
+          let frame = doc.querySelector(`#${frameId}`);
+          if (!frame) {
+            frame = doc.createElement('iframe');
+            frame.id = frameId;
+            frame.title = '神秘复苏固定状态栏';
+            frame.style.display = 'block';
+            frame.style.width = '100%';
+            frame.style.height = '360px';
+            frame.style.border = '0';
+            frame.style.background = 'transparent';
+            host.replaceChildren(frame);
+          }
+          frame.src = `${statusUrl}?t=${Date.now()}`;
+          return true;
         };
 
-        loadStatus();
+        const retry = (attempt = 1) => {
+          if (mount()) return;
+          if (attempt < 20) setTimeout(() => retry(attempt + 1), 500);
+        };
+
+        retry();
       })();
       </script>
       </body>
@@ -4858,7 +4909,7 @@
       仅格式显示: true
       仅格式提示词: false
 
-  - 正则名称: '[显示]隐藏推演选项与状态面板（由状态栏 iframe 替代）'
+  - 正则名称: '[显示]隐藏推演选项与状态面板（由正文 sp 面板替代）'
     id: a1b2c3d4-0007-4000-8000-000000000007
     启用: true
     查找表达式: "/(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)/g"
@@ -4872,7 +4923,21 @@
       仅格式显示: true
       仅格式提示词: false
 
-  - 正则名称: '[显示]隐藏结构化推演选项（由状态栏 iframe 替代）'
+  - 正则名称: '[显示]隐藏未闭合结构块'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2013
+    启用: true
+    查找表达式: "/<(choices|UpdateVariable|updatevariable|update|JSONPatch|jsonpatch)>(?![\\s\\S]*?<\\/\\1>)[\\s\\S]*$/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]隐藏结构化推演选项（由正文 sp 面板替代）'
     id: a1b2c3d4-0010-4000-8000-000000000010
     启用: true
     查找表达式: "/<choices>[\\s\\S]*?<\\/choices>/gi"
@@ -4886,9 +4951,9 @@
       仅格式显示: true
       仅格式提示词: false
 
-  - 正则名称: '[显示]隐藏无标题状态面板字段（由状态栏 iframe 替代）'
+  - 正则名称: '[显示]隐藏无标题状态面板字段（由正文 sp 面板替代）'
     id: a1b2c3d4-0008-4000-8000-000000000008
-    启用: true
+    启用: false
     查找表达式: "/(?:^|\\n)(?:\\s*(?:姓名|状态|所在位置|当前灵异事件|鬼域状态|已知规律|猜测规律|复苏风险|持有拼图\\/灵异物品)[：:][^\\n]*(?:\\n|$)){3,}/g"
     替换为: "\n"
     来源:
@@ -5085,6 +5150,632 @@
       仅格式显示: true
       仅格式提示词: false
 
+  - 正则名称: '[不发送]去除神秘复苏短标签面板'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2001
+    启用: true
+    查找表达式: "/<sp_(?:start|input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>[\\s\\S]*?<\\/sp_(?:start|input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: false
+      仅格式提示词: true
+    最大深度: 3
+
+  - 正则名称: '[显示]渲染神秘复苏开局页'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2004
+    启用: true
+    查找表达式: "/<sp_start>\\s*([\\s\\S]*?)\\s*<\\/sp_start>/gi"
+    替换为: |-
+      <style>
+      #mfrs-welcome-root {
+        --mfrs-bg: #0a0404;
+        --mfrs-panel: #150808;
+        --mfrs-panel-soft: rgba(32, 12, 12, .72);
+        --mfrs-border: rgba(160, 40, 40, .5);
+        --mfrs-border-soft: rgba(160, 40, 40, .24);
+        --mfrs-text: #e0d0d0;
+        --mfrs-muted: #b89090;
+        --mfrs-dim: #8a6565;
+        --mfrs-accent: #c83838;
+        --mfrs-accent-dim: #902828;
+        margin: 18px auto;
+        max-width: 900px;
+        color: var(--mfrs-text);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      }
+      #mfrs-welcome-root * { box-sizing: border-box; }
+      #mfrs-welcome-root .mfrs-welcome-card {
+        position: relative;
+        overflow: hidden;
+        padding: 34px 32px;
+        border: 2px solid var(--mfrs-border);
+        border-radius: 14px;
+        background: radial-gradient(760px 420px at 15% 0%, rgba(160, 40, 40, .10), transparent 60%), linear-gradient(180deg, var(--mfrs-bg), var(--mfrs-panel));
+        box-shadow: 0 24px 64px rgba(0,0,0,.7), inset 0 0 48px rgba(80,0,0,.18);
+      }
+      #mfrs-welcome-root .mfrs-welcome-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(120,0,0,.025) 3px, rgba(120,0,0,.025) 6px);
+      }
+      #mfrs-welcome-root .mfrs-welcome-inner { position: relative; z-index: 1; }
+      #mfrs-welcome-root .mfrs-welcome-header {
+        text-align: center;
+        padding-bottom: 24px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--mfrs-border-soft);
+      }
+      #mfrs-welcome-root .mfrs-welcome-title {
+        margin: 0 0 12px;
+        color: var(--mfrs-accent);
+        font-family: "Noto Serif SC", "SimSun", serif;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: .18em;
+        text-shadow: 0 0 22px rgba(200,56,56,.35);
+      }
+      #mfrs-welcome-root .mfrs-welcome-subtitle {
+        color: var(--mfrs-muted);
+        font-size: 13px;
+        letter-spacing: .12em;
+        line-height: 1.8;
+      }
+      #mfrs-welcome-root .mfrs-welcome-seed {
+        margin: 18px 0 24px;
+        padding: 16px 18px;
+        border: 1px solid var(--mfrs-border-soft);
+        border-radius: 10px;
+        background: rgba(10,4,4,.58);
+        color: var(--mfrs-muted);
+        white-space: pre-wrap;
+        line-height: 1.8;
+        font-size: 13px;
+      }
+      #mfrs-welcome-root .mfrs-credits {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 22px;
+      }
+      #mfrs-welcome-root .mfrs-badge {
+        padding: 7px 13px;
+        border: 1px solid var(--mfrs-border);
+        border-radius: 999px;
+        background: rgba(10,4,4,.72);
+        color: var(--mfrs-text);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      #mfrs-welcome-root details {
+        margin: 18px 0;
+        border: 1px solid var(--mfrs-border);
+        border-radius: 12px;
+        background: rgba(21,8,8,.54);
+        overflow: hidden;
+      }
+      #mfrs-welcome-root summary {
+        padding: 15px 18px;
+        cursor: pointer;
+        color: var(--mfrs-accent);
+        font-weight: 900;
+        letter-spacing: .12em;
+        background: linear-gradient(90deg, rgba(32,12,12,.88), rgba(21,8,8,.82));
+      }
+      #mfrs-welcome-root .mfrs-world-body {
+        padding: 18px;
+        border-top: 1px solid var(--mfrs-border-soft);
+        color: var(--mfrs-text);
+        line-height: 1.9;
+        font-size: 14px;
+      }
+      #mfrs-welcome-root .mfrs-section-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 22px 0 12px;
+        color: var(--mfrs-accent);
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: .14em;
+      }
+      #mfrs-welcome-root .mfrs-section-title::before { content: '◆'; color: var(--mfrs-accent-dim); }
+      #mfrs-welcome-root .mfrs-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      #mfrs-welcome-root input,
+      #mfrs-welcome-root select,
+      #mfrs-welcome-root textarea {
+        width: 100%;
+        min-width: 0;
+        padding: 12px 14px;
+        border: 1px solid var(--mfrs-border);
+        border-radius: 10px;
+        outline: none;
+        background: rgba(10,4,4,.72);
+        color: var(--mfrs-text);
+        font: inherit;
+      }
+      #mfrs-welcome-root input:focus,
+      #mfrs-welcome-root select:focus,
+      #mfrs-welcome-root textarea:focus {
+        border-color: var(--mfrs-accent);
+        box-shadow: 0 0 0 3px rgba(200,56,56,.10);
+      }
+      #mfrs-welcome-root textarea { min-height: 82px; resize: vertical; }
+      #mfrs-welcome-root .mfrs-span-2 { grid-column: 1 / -1; }
+      #mfrs-welcome-root .mfrs-submit {
+        width: 100%;
+        margin-top: 22px;
+        padding: 15px 18px;
+        border: 1px solid var(--mfrs-border);
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(160,40,40,.86), rgba(120,30,30,.86));
+        color: var(--mfrs-text);
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 900;
+        letter-spacing: .22em;
+        box-shadow: 0 10px 28px rgba(160,40,40,.25);
+      }
+      #mfrs-welcome-root .mfrs-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(160,40,40,.35); }
+      @media (max-width: 640px) {
+        #mfrs-welcome-root { max-width: 96vw; }
+        #mfrs-welcome-root .mfrs-welcome-card { padding: 26px 18px; }
+        #mfrs-welcome-root .mfrs-welcome-title { font-size: 26px; }
+        #mfrs-welcome-root .mfrs-row { grid-template-columns: 1fr; }
+      }
+      </style>
+      <div id="mfrs-welcome-root">
+        <div class="mfrs-welcome-card">
+          <div class="mfrs-welcome-inner">
+            <header class="mfrs-welcome-header">
+              <h1 class="mfrs-welcome-title">神秘复苏模拟器</h1>
+              <div class="mfrs-welcome-subtitle">五浊恶世，地狱已空。厉鬼复苏，人间如狱。</div>
+            </header>
+            <div class="mfrs-welcome-seed">$1</div>
+            <div class="mfrs-credits">
+              <span class="mfrs-badge">原著：佛前献花</span>
+              <span class="mfrs-badge">星河璀璨·数据库</span>
+              <span class="mfrs-badge">酒馆助手模板</span>
+            </div>
+            <details open>
+              <summary>世界观与生存规则</summary>
+              <div class="mfrs-world-body">
+                这是一个厉鬼复苏的世界。普通人无法对抗厉鬼，驭鬼者也只是延缓死亡。每一次使用鬼的力量，都会让复苏更近一步。请先设定你的身份、时空锚点、资源和背景，再开始推演。
+              </div>
+            </details>
+            <div class="mfrs-section-title">身份与能力</div>
+            <div class="mfrs-row">
+              <input data-mfrs="name" placeholder="姓名（例：杨间）" required>
+              <input data-mfrs="ageGender" placeholder="年龄/性别（例：18/男）" required>
+              <select data-mfrs="identity" required>
+                <option value="">选择身份</option>
+                <option>普通学生（无驭鬼能力）</option>
+                <option>普通人（卷入灵异事件）</option>
+                <option>初级驭鬼者（刚获得鬼的力量）</option>
+                <option>总部成员（官方驭鬼者）</option>
+                <option>民间驭鬼者（独立行动）</option>
+                <option>异类（状态异常但仍可行动）</option>
+              </select>
+              <select data-mfrs="ghostLevel">
+                <option value="无">厉鬼等级：无</option>
+                <option>C级（限制级）</option>
+                <option>B级（危险级）</option>
+                <option>A级（灾难级）</option>
+                <option>S级（毁灭级）</option>
+                <option>未知级别</option>
+              </select>
+            </div>
+            <div class="mfrs-section-title">时空锚点</div>
+            <div class="mfrs-row">
+              <select data-mfrs="anchor" onchange="var r=this.closest('#mfrs-welcome-root');var p=this.value.split('|');if(r&&p[1])r.querySelector('[data-mfrs=location]').value=p[1];if(r&&p[2])r.querySelector('[data-mfrs=time]').value=p[2];">
+                <option value="未选择节点||">选择剧情节点</option>
+                <option value="七中前数日·怪谈传播|大昌市第七中学|2019年9月初">七中前数日·怪谈传播</option>
+                <option value="七中当日·周正到校|大昌市第七中学|2019年9月中旬">七中当日·周正到校</option>
+                <option value="鬼眼复苏·杨间觉醒|大昌市第七中学|2019年9月中旬">鬼眼复苏·杨间觉醒</option>
+                <option value="敲门鬼事件|大昌市|2019年10月">敲门鬼事件</option>
+                <option value="黄岗村调查|黄岗村|2019年12月">黄岗村调查</option>
+                <option value="自定义时间点||">自定义时间点</option>
+              </select>
+              <input data-mfrs="location" placeholder="当前地点（例：大昌市第七中学）" required>
+              <input data-mfrs="time" placeholder="当前时间（例：2019年9月）" required>
+            </div>
+            <div class="mfrs-section-title">资源与背景</div>
+            <div class="mfrs-row">
+              <textarea class="mfrs-span-2" data-mfrs="resources" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
+              <textarea class="mfrs-span-2" data-mfrs="background" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
+            </div>
+            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 当前地点：'+q('location')+'\n   - 当前时间：'+q('time')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 厉鬼等级：'+q('ghostLevel')+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background');var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
+          </div>
+        </div>
+      </div>
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]神秘复苏通用输入面板'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2005
+    启用: true
+    查找表达式: "/<sp_input>\\s*([\\s\\S]*?)\\s*<\\/sp_input>/gi"
+    替换为: |-
+      <style>
+      .mfrs-input-panel {
+        --mfrs-input-bg: #070303;
+        --mfrs-input-card: rgba(20, 6, 6, .96);
+        --mfrs-input-border: rgba(130, 32, 32, .66);
+        --mfrs-input-border-soft: rgba(130, 32, 32, .24);
+        --mfrs-input-text: #decaca;
+        --mfrs-input-muted: #ad8f8f;
+        --mfrs-input-accent: #d04a4a;
+        margin: 18px auto;
+        max-width: 860px;
+        color: var(--mfrs-input-text);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        border: 1px solid var(--mfrs-input-border);
+        border-radius: 14px;
+        background: radial-gradient(720px 300px at 0% 0%, rgba(150, 28, 28, .14), transparent 62%), linear-gradient(145deg, rgba(7,3,3,.98), rgba(22,6,6,.94));
+        box-shadow: 0 20px 46px rgba(0,0,0,.72), inset 0 0 42px rgba(70,0,0,.24);
+        overflow: hidden;
+      }
+      .mfrs-input-panel * { box-sizing: border-box; }
+      .mfrs-input-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--mfrs-input-border-soft);
+        background: linear-gradient(90deg, rgba(30,8,8,.94), rgba(10,3,3,.82));
+      }
+      .mfrs-input-title {
+        color: var(--mfrs-input-accent);
+        font-family: "Noto Serif SC", "SimSun", serif;
+        font-weight: 900;
+        letter-spacing: .18em;
+        text-shadow: 0 0 12px rgba(180,36,36,.42);
+      }
+      .mfrs-input-title::before { content: '◆ '; color: #8c2828; }
+      .mfrs-input-tip { color: var(--mfrs-input-muted); font-size: 12px; letter-spacing: .08em; }
+      .mfrs-input-seed {
+        margin: 14px 16px 0;
+        padding: 12px 14px;
+        border: 1px solid var(--mfrs-input-border-soft);
+        border-radius: 10px;
+        background: rgba(8,3,3,.68);
+        color: var(--mfrs-input-muted);
+        white-space: pre-wrap;
+        line-height: 1.8;
+        font-size: 13px;
+      }
+      .mfrs-input-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        padding: 16px;
+      }
+      .mfrs-input-panel label { display: grid; gap: 7px; color: var(--mfrs-input-muted); font-size: 12px; letter-spacing: .08em; }
+      .mfrs-input-panel input,
+      .mfrs-input-panel select,
+      .mfrs-input-panel textarea {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid var(--mfrs-input-border);
+        border-radius: 10px;
+        outline: none;
+        padding: 11px 12px;
+        background: rgba(8,3,3,.78);
+        color: var(--mfrs-input-text);
+        font: inherit;
+        letter-spacing: 0;
+      }
+      .mfrs-input-panel textarea { min-height: 82px; resize: vertical; line-height: 1.75; }
+      .mfrs-input-panel input:focus,
+      .mfrs-input-panel select:focus,
+      .mfrs-input-panel textarea:focus { border-color: var(--mfrs-input-accent); box-shadow: 0 0 0 3px rgba(200,56,56,.10); }
+      .mfrs-input-wide { grid-column: 1 / -1; }
+      .mfrs-input-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 16px 16px;
+      }
+      .mfrs-input-fill,
+      .mfrs-input-clear {
+        border: 1px solid var(--mfrs-input-border);
+        border-radius: 999px;
+        padding: 10px 15px;
+        color: #f0d6d6;
+        background: linear-gradient(135deg, rgba(64, 12, 12, .94), rgba(24, 5, 5, .94));
+        cursor: pointer;
+        font-weight: 800;
+        letter-spacing: .12em;
+      }
+      .mfrs-input-clear { color: var(--mfrs-input-muted); background: rgba(8,3,3,.62); }
+      @media (max-width: 720px) {
+        .mfrs-input-panel { max-width: 96vw; margin: 14px auto; }
+        .mfrs-input-head { align-items: flex-start; flex-direction: column; }
+        .mfrs-input-grid { grid-template-columns: 1fr; padding: 13px; }
+        .mfrs-input-actions { padding-left: 13px; padding-right: 13px; }
+      }
+      </style>
+      <div class="mfrs-input-panel" data-mfrs-panel="input">
+        <div class="mfrs-input-head">
+          <div class="mfrs-input-title">复杂行动输入面板</div>
+          <div class="mfrs-input-tip">填写后仅写入输入框，不自动发送</div>
+        </div>
+        <div class="mfrs-input-seed">$1</div>
+        <div class="mfrs-input-grid">
+          <label>行动类型
+            <select data-mfrs-input="type">
+              <option>复杂行动</option>
+              <option>灵异物品使用</option>
+              <option>厉鬼压制</option>
+              <option>拼图驾驭</option>
+              <option>地点探索</option>
+              <option>线索推演</option>
+              <option>自定义行动</option>
+            </select>
+          </label>
+          <label>目标/对象
+            <input data-mfrs-input="target" placeholder="例：无头鬼影、老宅二楼、鬼烛">
+          </label>
+          <label>地点
+            <input data-mfrs-input="place" placeholder="例：大昌市观江小区">
+          </label>
+          <label>方式/策略
+            <input data-mfrs-input="method" placeholder="例：用黄金容器隔离，尽量避免动用第二只鬼">
+          </label>
+          <label class="mfrs-input-wide">投入资源
+            <textarea data-mfrs-input="resources" placeholder="例：鬼烛半截、黄金袋、卫星电话、同伴协助"></textarea>
+          </label>
+          <label class="mfrs-input-wide">约束与底线
+            <textarea data-mfrs-input="limits" placeholder="例：不主动接触源头鬼；优先保命；不能泄露总部机密"></textarea>
+          </label>
+          <label class="mfrs-input-wide">补充描述
+            <textarea data-mfrs-input="extra" placeholder="写下你希望 AI 推演时考虑的细节"></textarea>
+          </label>
+        </div>
+        <div class="mfrs-input-actions">
+          <button type="button" class="mfrs-input-fill">写入行动草稿</button>
+          <button type="button" class="mfrs-input-clear">清空面板</button>
+        </div>
+      </div>
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]渲染神秘复苏短标签面板'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2002
+    启用: true
+    查找表达式: "/<sp_(import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>\\s*([\\s\\S]*?)\\s*<\\/sp_\\1>/gi"
+    替换为: |-
+      <style>
+      .sp-panel {
+        --sp-bg: #070303;
+        --sp-card: rgba(18, 5, 5, .96);
+        --sp-card-soft: rgba(32, 10, 10, .72);
+        --sp-border: rgba(120, 28, 28, .72);
+        --sp-border-soft: rgba(120, 28, 28, .28);
+        --sp-accent: #d04a4a;
+        --sp-accent-dim: #762020;
+        --sp-text: #dccaca;
+        --sp-muted: #ad8f8f;
+        margin: 18px auto;
+        max-width: 820px;
+        background: radial-gradient(760px 260px at 12% -10%, rgba(130, 20, 20, .18), transparent 58%), linear-gradient(145deg, rgba(7,3,3,.98), rgba(20,6,6,.96));
+        border: 1px solid var(--sp-border);
+        border-left: 4px solid var(--sp-accent-dim);
+        box-shadow: 0 18px 42px rgba(0,0,0,.72), inset 0 0 42px rgba(42,0,0,.28);
+        color: var(--sp-text);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+      }
+      .sp-panel::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(160,0,0,.022) 3px, rgba(160,0,0,.022) 6px), radial-gradient(420px 180px at 100% 0%, rgba(160, 40, 40, .08), transparent 64%);
+        pointer-events: none;
+      }
+      .sp-panel-header {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--sp-border-soft);
+        background: linear-gradient(90deg, rgba(28,7,7,.92), rgba(10,3,3,.84));
+      }
+      .sp-panel-title {
+        color: var(--sp-accent);
+        font-family: "Noto Serif SC", "SimSun", serif;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: .18em;
+        text-shadow: 0 0 10px rgba(180,36,36,.45);
+      }
+      .sp-panel-title::before { content: '◆ '; color: var(--sp-accent-dim); }
+      .sp-panel-kind {
+        flex: 0 0 auto;
+        padding: 4px 10px;
+        border: 1px solid var(--sp-border-soft);
+        border-radius: 999px;
+        color: var(--sp-muted);
+        background: rgba(8,3,3,.66);
+        font-size: 11px;
+        letter-spacing: .08em;
+      }
+      .sp-panel-body {
+        position: relative;
+        z-index: 1;
+        margin: 14px;
+        padding: 16px 18px;
+        white-space: pre-wrap;
+        line-height: 1.95;
+        font-size: 13px;
+        letter-spacing: .04em;
+        border: 1px solid var(--sp-border-soft);
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(10,3,3,.72), rgba(18,5,5,.54));
+      }
+      .sp-panel-body strong { color: #f06a6a; font-weight: 800; }
+      .sp-panel-body em { color: #c7a0a0; }
+      .sp-panel-footer {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 0 14px 14px;
+      }
+      .sp-panel-mark {
+        padding: 5px 9px;
+        border: 1px solid var(--sp-border-soft);
+        border-radius: 8px;
+        color: var(--sp-muted);
+        background: rgba(8,3,3,.54);
+        font-size: 11px;
+      }
+      .sp-panel-status .sp-panel-mark::after { content: '即时状态'; }
+      .sp-panel-event .sp-panel-mark::after { content: '灵异事件'; }
+      .sp-panel-ghost .sp-panel-mark::after { content: '厉鬼档案'; }
+      .sp-panel-check .sp-panel-mark::after { content: '行动判定'; }
+      .sp-panel-choices .sp-panel-mark::after { content: '推演选项'; }
+      .sp-panel-archive .sp-panel-mark::after { content: '档案记录'; }
+      .sp-panel-clue .sp-panel-mark::after { content: '线索推演'; }
+      .sp-panel-import .sp-panel-mark::after { content: '导入提示'; }
+      .sp-panel-database .sp-panel-mark::after { content: '数据库摘要'; }
+      .sp-panel-ghost_encounter .sp-panel-mark::after { content: '厉鬼遭遇'; }
+      .sp-panel-ghost_suppress .sp-panel-mark::after { content: '压制判定'; }
+      .sp-panel-puzzle_solve .sp-panel-mark::after { content: '拼图驾驭'; }
+      .sp-panel-location_explore .sp-panel-mark::after { content: '地点探索'; }
+      .sp-panel-clue_deduce .sp-panel-mark::after { content: '线索推演'; }
+      .sp-panel-item_use .sp-panel-mark::after { content: '灵异物品'; }
+      .sp-panel-ghost_encounter { border-left-color: #9b2323; }
+      .sp-panel-ghost_suppress { border-left-color: #b04444; }
+      .sp-panel-puzzle_solve { border-left-color: #7c2a46; }
+      .sp-panel-location_explore { border-left-color: #6f2a2a; }
+      .sp-panel-clue_deduce { border-left-color: #a45a2a; }
+      .sp-panel-item_use { border-left-color: #8a6a2a; }
+      .sp-db-live, .sp-db-open { display: none; }
+      .sp-panel-database .sp-db-live {
+        display: block;
+        position: relative;
+        z-index: 1;
+        margin: 0 14px 12px;
+        padding: 11px 13px;
+        border: 1px solid var(--sp-border-soft);
+        border-radius: 10px;
+        color: #d4bbbb;
+        background: rgba(16, 4, 4, .78);
+        font-size: 12px;
+        line-height: 1.75;
+      }
+      .sp-panel-database .sp-db-open {
+        display: inline-flex;
+        position: relative;
+        z-index: 1;
+        margin: 0 14px 16px;
+        border: 1px solid rgba(160, 42, 42, .82);
+        border-radius: 999px;
+        padding: 8px 13px;
+        color: #f0d6d6;
+        background: linear-gradient(135deg, rgba(54, 10, 10, .94), rgba(24, 5, 5, .94));
+        cursor: pointer;
+        font-weight: 700;
+      }
+      @media (max-width: 720px) { .sp-panel { max-width: 96vw; margin: 14px auto; } .sp-panel-header { align-items: flex-start; flex-direction: column; } .sp-panel-body { margin: 12px; padding: 13px; } .sp-panel-footer { padding-left: 12px; padding-right: 12px; } .sp-panel-database .sp-db-live, .sp-panel-database .sp-db-open { margin-left: 12px; margin-right: 12px; } }
+      </style>
+      <div class="sp-panel sp-panel-$1" data-sp-kind="$1">
+        <div class="sp-panel-header">
+          <div class="sp-panel-title">神秘复苏记录</div>
+          <div class="sp-panel-kind">$1</div>
+        </div>
+        <div class="sp-panel-body">$2</div>
+        <div class="sp-panel-footer"><span class="sp-panel-mark"></span></div>
+        <div class="sp-db-live">数据库状态：等待前端同步；模板版本：chatSheets v2；模板表数量：11；最近刷新：打开数据库前端后自动读取。</div>
+        <button type="button" class="sp-db-open" onclick="window.MysteryDatabaseFrontend?.openPanel?.()">打开数据库前端</button>
+      </div>
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]神秘复苏短标签生成中'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2003
+    启用: true
+    查找表达式: "/<sp_(input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>(?![\\s\\S]*?<\\/sp_\\1>)([\\s\\S]*)$/gi"
+    替换为: |-
+      <details open>
+      <summary>神秘复苏面板生成中...</summary>
+      $2
+      </details>
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[不发送]去除思维链与内部推理'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2004
+    启用: true
+    查找表达式: "/<(thinking|think|reasoning|inner_thoughts|scratchpad|hidden_reasoning|mfrs_internal)>[\\s\\S]*?<\\/\\1>/gi"
+    替换为: ""
+    来源:
+      用户输入: true
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: false
+      仅格式提示词: true
+
+  - 正则名称: '[显示]隐藏思维链与内部推理'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2005
+    启用: true
+    查找表达式: "/<(thinking|think|reasoning|inner_thoughts|scratchpad|hidden_reasoning|mfrs_internal)>[\\s\\S]*?(?:<\\/\\1>|$)/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
   酒馆助手:
     脚本库:
     - 名称: mvu
@@ -5135,4 +5826,70 @@
         };
 
         loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js');
+
+    - 名称: 固定状态栏
+      id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001
+      启用: false
+      类型: 脚本
+      内容: |-
+        const loadLocalModule = async (label, url) => {
+          const maxAttempts = 20;
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              await import(`${url}?t=${Date.now()}`);
+              console.info(`[${label}] 本地资源已加载`);
+              return;
+            } catch (error) {
+              console.warn(`[${label}] 本地资源加载失败 (${attempt}/${maxAttempts})`, error);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和固定状态栏脚本入口可用`);
+        };
+
+        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js');
+
+    - 名称: 星河璀璨·数据库
+      id: 93648737-21db-406c-8aab-3ef8f3af1238
+      启用: true
+      类型: 脚本
+      内容: |-
+        const loadLocalModule = async (label, url) => {
+          const maxAttempts = 20;
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              await import(`${url}?t=${Date.now()}`);
+              console.info(`[${label}] 本地资源已加载`);
+              return;
+            } catch (error) {
+              console.warn(`[${label}] 本地资源加载失败 (${attempt}/${maxAttempts})`, error);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库脚本入口可用`);
+        };
+
+        loadLocalModule('星河璀璨·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js');
+
+    - 名称: 神秘复苏数据库前端
+      id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3002
+      启用: true
+      类型: 脚本
+      内容: |-
+        const loadLocalModule = async (label, url) => {
+          const maxAttempts = 20;
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              await import(`${url}?t=${Date.now()}`);
+              console.info(`[${label}] 本地资源已加载`);
+              return;
+            } catch (error) {
+              console.warn(`[${label}] 本地资源加载失败 (${attempt}/${maxAttempts})`, error);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+          console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库前端脚本入口可用`);
+        };
+
+        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js');
 

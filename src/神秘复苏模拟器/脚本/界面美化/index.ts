@@ -10,6 +10,28 @@ type HostWindowWithThemeCleanup = Window & {
   __mfrsHorrorThemeCleanup__?: () => void;
 };
 
+function getSendTextarea(hostDocument: Document) {
+  const candidates = Array.from(
+    hostDocument.querySelectorAll<HTMLTextAreaElement>('#send_textarea, textarea[name="text"]'),
+  );
+  return candidates.find(input => input.offsetParent !== null) ?? candidates[0] ?? null;
+}
+
+function setTextareaValue(input: HTMLTextAreaElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+  setter?.call(input, value);
+  input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.focus();
+}
+
+function getActionText(rawText: string) {
+  const text = rawText.replace(/^[ABCD][\.、：:]\s*/, '').trim();
+  return text === '自定义行动'
+    ? text
+    : text.replace(/。?\s*(?:死亡风险|风险|death|revive|<risk)[\s\S]*$/i, '').trim();
+}
+
 $(() => {
   const style = document.createElement('style');
   style.id = 'mfrs-horror-theme';
@@ -454,6 +476,85 @@ body {
   font-weight: 300 !important;
   letter-spacing: 0.8px !important;
 }
+
+.mfrs-choice-list {
+  display: grid !important;
+  gap: 10px !important;
+}
+
+.mfrs-choice-legend {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin-bottom: 6px !important;
+  font-size: 11px !important;
+  color: #a48b8b !important;
+  letter-spacing: 0.05em !important;
+}
+
+.mfrs-choice-legend-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 2px 8px !important;
+  border: 1px solid rgba(100,24,24,.4) !important;
+  border-radius: 999px !important;
+  background: rgba(10,4,4,.55) !important;
+}
+
+.mfrs-choice-legend-dot {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+}
+
+.mfrs-choice-button {
+  width: 100% !important;
+  text-align: left !important;
+  background: rgba(8,3,3,.86) !important;
+  border: 1px solid rgba(100,24,24,.75) !important;
+  border-left: 3px solid #7a2020 !important;
+  color: #c8bcbc !important;
+  padding: 10px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  line-height: 1.65 !important;
+  box-shadow: inset 0 0 18px rgba(0,0,0,.35) !important;
+  position: relative !important;
+}
+
+.mfrs-choice-button[data-risk="high"] { border-left-color: #d83030 !important; }
+.mfrs-choice-button[data-risk="mid"] { border-left-color: #c8742a !important; }
+.mfrs-choice-button[data-risk="low"] { border-left-color: #5a7a30 !important; }
+.mfrs-choice-button[data-risk="unknown"] { border-left-color: #6a4a6a !important; }
+
+.mfrs-choice-risk {
+  display: inline-block !important;
+  margin-left: 6px !important;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  font-size: 10px !important;
+  letter-spacing: 0.05em !important;
+  vertical-align: middle !important;
+}
+.mfrs-choice-button[data-risk="high"] .mfrs-choice-risk { background: rgba(216,48,48,.18) !important; color: #f08080 !important; }
+.mfrs-choice-button[data-risk="mid"] .mfrs-choice-risk { background: rgba(200,116,42,.18) !important; color: #e7b070 !important; }
+.mfrs-choice-button[data-risk="low"] .mfrs-choice-risk { background: rgba(90,122,48,.18) !important; color: #aac57a !important; }
+.mfrs-choice-button[data-risk="unknown"] .mfrs-choice-risk { background: rgba(106,74,106,.18) !important; color: #c0a0c0 !important; }
+
+.mfrs-choice-button:hover {
+  color: #f0d8d8 !important;
+  border-color: #b03838 !important;
+  box-shadow: 0 0 14px rgba(120,20,20,.25), inset 0 0 18px rgba(0,0,0,.35) !important;
+}
+
+.mfrs-choice-key {
+  color: #d05050 !important;
+  font-weight: 800 !important;
+  margin-right: 8px !important;
+}
 `;
   const hostDocument = getHostDocument();
   const hostWindow = hostDocument.defaultView as HostWindowWithThemeCleanup | null;
@@ -479,8 +580,185 @@ body {
   const observer = new HostMutationObserver(ensureStyleMounted);
   observer.observe(hostDocument.head, { childList: true });
 
+  const enhanceChoicePanels = () => {
+    const detectRisk = (text: string): 'high' | 'mid' | 'low' | 'unknown' => {
+      const lower = text;
+      if (/致命|高危|高风险|危险|险境|险峻|绝境|九死一生|送死|送命|引鬼|招鬼|招惹|强行|硬闯|挑衅|对抗|交战|交锋|搏命|拼命|不归路/.test(lower)) return 'high';
+      if (/中等|中风险|警惕|谨慎|试探|冒险|博弈|两难|不确定|存疑|风险较高|侧面|绕行|拖延/.test(lower)) return 'mid';
+      if (/安全|稳妥|低风险|保守|撤退|退避|回避|远离|脱离|求助|协作|休整|观察|静候|静观|按兵不动/.test(lower)) return 'low';
+      return 'unknown';
+    };
+    const riskLabel = (risk: string) => risk === 'high' ? '高危' : risk === 'mid' ? '中险' : risk === 'low' ? '稳妥' : '未明';
+
+    const renderChoices = (body: HTMLElement, actions: string[]) => {
+      body.textContent = '';
+      body.style.whiteSpace = 'normal';
+
+      const legend = hostDocument.createElement('div');
+      legend.className = 'mfrs-choice-legend';
+      const legendItems: Array<[string, string]> = [
+        ['high', '高危'],
+        ['mid', '中险'],
+        ['low', '稳妥'],
+        ['unknown', '未明'],
+      ];
+      legendItems.forEach(([risk, label]) => {
+        const item = hostDocument.createElement('span');
+        item.className = 'mfrs-choice-legend-item';
+        const dot = hostDocument.createElement('span');
+        dot.className = 'mfrs-choice-legend-dot';
+        dot.style.background = risk === 'high' ? '#d83030' : risk === 'mid' ? '#c8742a' : risk === 'low' ? '#5a7a30' : '#6a4a6a';
+        item.appendChild(dot);
+        item.appendChild(hostDocument.createTextNode(label));
+        legend.appendChild(item);
+      });
+      body.appendChild(legend);
+
+      const list = hostDocument.createElement('div');
+      list.className = 'mfrs-choice-list';
+
+      actions.forEach((line, index) => {
+        const key = /^[ABCD][\.、：:]/.test(line) ? line.slice(0, 1) : String.fromCharCode(65 + index);
+        const rawText = line.replace(/^[ABCD][\.、：:]\s*/, '').trim();
+        const actionText = getActionText(rawText);
+        const risk = detectRisk(rawText);
+        const button = hostDocument.createElement('button');
+        button.type = 'button';
+        button.className = 'mfrs-choice-button';
+        button.dataset.risk = risk;
+        const keySpan = hostDocument.createElement('span');
+        keySpan.className = 'mfrs-choice-key';
+        keySpan.textContent = key;
+        const riskTag = hostDocument.createElement('span');
+        riskTag.className = 'mfrs-choice-risk';
+        riskTag.textContent = riskLabel(risk);
+        button.append(keySpan, rawText, riskTag);
+        button.addEventListener('click', () => {
+          const input = getSendTextarea(hostDocument);
+          if (!input) return;
+          setTextareaValue(input, actionText);
+          hostWindow?.toastr?.info?.(`已填入选项 ${key}`);
+        });
+        list.appendChild(button);
+      });
+
+      body.appendChild(list);
+    };
+
+    const panels = hostDocument.querySelectorAll<HTMLElement>('.custom-sp-panel-choices:not([data-mfrs-choice-ready])');
+    for (const panel of panels) {
+      panel.dataset.mfrsChoiceReady = 'true';
+      const body = panel.querySelector<HTMLElement>('.custom-sp-panel-body');
+      if (!body) continue;
+
+      const lines = (body.textContent ?? '')
+        .split(/\n+/)
+        .map(line => line.trim())
+        .filter(Boolean);
+      const actions = lines.filter(line => /^[ABCD][\.、：:]/.test(line));
+      if (!actions.length) continue;
+
+      renderChoices(body, actions);
+    }
+
+    const optionParagraphs = hostDocument.querySelectorAll<HTMLElement>('.mes_text p:not([data-mfrs-choice-ready])');
+    for (const paragraph of optionParagraphs) {
+      const fonts = Array.from(paragraph.querySelectorAll('font'));
+      if (fonts.length < 4) continue;
+      const actions = fonts.map(font => font.textContent?.trim() ?? '').filter(Boolean);
+      if (actions.length < 4) continue;
+      paragraph.dataset.mfrsChoiceReady = 'true';
+      renderChoices(paragraph, actions.slice(0, 4));
+    }
+  };
+
+  const fillWelcomeStart = (root: HTMLElement) => {
+    const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs="${key}"]`)?.value.trim() ?? '';
+    const anchor = getValue('anchor').split('|')[0] || '未选择节点';
+    const message = `【神秘复苏·开局设定】\n\n` +
+      `1. 基本信息\n` +
+      `   - 姓名：${getValue('name')}\n` +
+      `   - 年龄/性别：${getValue('ageGender')}\n` +
+      `   - 当前地点：${getValue('location')}\n` +
+      `   - 当前时间：${getValue('time')}\n` +
+      `   - 剧情节点：${anchor}\n\n` +
+      `2. 身份与能力\n` +
+      `   - 身份：${getValue('identity')}\n` +
+      `   - 厉鬼等级：${getValue('ghostLevel') || '无'}\n\n` +
+      `3. 初始资源\n` +
+      `   ${getValue('resources') || '无'}\n\n` +
+      `4. 背景设定\n` +
+      `   ${getValue('background')}`;
+    const input = getSendTextarea(hostDocument);
+    if (!input) return;
+    setTextareaValue(input, message);
+    hostWindow?.toastr?.info?.('已填入神秘复苏开局设定');
+  };
+
+  const fillInputPanel = (root: HTMLElement) => {
+    const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs-input="${key}"]`)?.value.trim() ?? '';
+    const lines = [
+      '【神秘复苏·复杂行动】',
+      '',
+      `行动类型：${getValue('type') || '复杂行动'}`,
+      `目标/对象：${getValue('target') || '未指定'}`,
+      `地点：${getValue('place') || '当前位置'}`,
+      `方式/策略：${getValue('method') || '谨慎行动，优先确认风险'}`,
+      `投入资源：${getValue('resources') || '无'}`,
+      `约束与底线：${getValue('limits') || '优先保命，不主动扩大灵异影响'}`,
+      `补充描述：${getValue('extra') || '请基于玩家可见事实推演结果、风险和下一步可选行动。'}`,
+    ];
+    const input = getSendTextarea(hostDocument);
+    if (!input) return;
+    setTextareaValue(input, lines.join('\n'));
+    hostWindow?.toastr?.info?.('已填入复杂行动草稿');
+  };
+
+  const clearInputPanel = (root: HTMLElement) => {
+    root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[data-mfrs-input], textarea[data-mfrs-input]').forEach(input => {
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  };
+
+  const handleInputPanelClick = (event: Event) => {
+    const target = event.target as HTMLElement | null;
+    const button = target?.closest('.mfrs-input-fill, .custom-mfrs-input-fill, .mfrs-input-clear, .custom-mfrs-input-clear');
+    if (!button) return;
+    const root = button.closest<HTMLElement>('.mfrs-input-panel, .custom-mfrs-input-panel');
+    if (!root) return;
+    event.preventDefault();
+    if (button.matches('.mfrs-input-clear, .custom-mfrs-input-clear')) {
+      clearInputPanel(root);
+      return;
+    }
+    fillInputPanel(root);
+  };
+
+  const handleWelcomeClick = (event: Event) => {
+    const target = event.target as HTMLElement | null;
+    const button = target?.closest('.mfrs-submit, .custom-mfrs-submit');
+    if (!button) return;
+    const root = button.closest<HTMLElement>('#mfrs-welcome-root');
+    if (!root) return;
+    event.preventDefault();
+    fillWelcomeStart(root);
+  };
+
+  const timeoutIds = [0, 250, 1000, 2500].map(delay => hostWindow?.setTimeout(enhanceChoicePanels, delay));
+  const bodyObserver = new HostMutationObserver(enhanceChoicePanels);
+  bodyObserver.observe(hostDocument.body, { childList: true, subtree: true });
+  hostDocument.addEventListener('click', handleWelcomeClick, true);
+  hostDocument.addEventListener('click', handleInputPanelClick, true);
+
   const cleanup = () => {
     observer.disconnect();
+    bodyObserver.disconnect();
+    hostDocument.removeEventListener('click', handleWelcomeClick, true);
+    hostDocument.removeEventListener('click', handleInputPanelClick, true);
+    timeoutIds.forEach(id => {
+      if (id !== undefined) hostWindow?.clearTimeout(id);
+    });
     hostStyle.remove();
     if (hostWindow?.__mfrsHorrorThemeCleanup__ === cleanup) {
       delete hostWindow.__mfrsHorrorThemeCleanup__;

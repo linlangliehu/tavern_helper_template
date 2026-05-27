@@ -1,0 +1,2 @@
+const o='星河璀璨·数据库';!async function(){console.info(`[${o}] 正在加载数据库本体`);try{await import('https://gcore.jsdelivr.net/gh/AlbusKen/shujuku@xingv2.6/index.js'),console.info(`[${o}] 数据库本体已加载`)}catch(n){throw console.error(`[${o}] 数据库本体加载失败，请检查网络、酒馆助手和数据库本体版本`,n),n}}();
+//# sourceMappingURL=index.js.map
