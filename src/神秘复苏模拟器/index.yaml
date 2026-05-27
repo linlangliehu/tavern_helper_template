@@ -5375,10 +5375,12 @@
                 <option>S级（毁灭级）</option>
                 <option>未知级别</option>
               </select>
+              <input data-mfrs="ghostName" placeholder="自定义厉鬼（例：鬼眼、鬼影、敲门鬼）">
+              <textarea class="mfrs-span-2" data-mfrs="ghostLaw" placeholder="厉鬼杀人规律（例：听到敲门声后会被标记）"></textarea>
             </div>
             <div class="mfrs-section-title">时空锚点</div>
             <div class="mfrs-row">
-              <select data-mfrs="anchor" onchange="var r=this.closest('#mfrs-welcome-root');var p=this.value.split('|');if(r&&p[1])r.querySelector('[data-mfrs=location]').value=p[1];if(r&&p[2])r.querySelector('[data-mfrs=time]').value=p[2];">
+              <select data-mfrs="anchor" onchange="var r=this.closest('#mfrs-welcome-root');var p=this.value.split('|');if(r&&p[1])r.querySelector('[data-mfrs=location]').value=p[1];">
                 <option value="未选择节点||">选择剧情节点</option>
                 <option value="七中前数日·怪谈传播|大昌市第七中学|2019年9月初">七中前数日·怪谈传播</option>
                 <option value="七中当日·周正到校|大昌市第七中学|2019年9月中旬">七中当日·周正到校</option>
@@ -5388,14 +5390,13 @@
                 <option value="自定义时间点||">自定义时间点</option>
               </select>
               <input data-mfrs="location" placeholder="当前地点（例：大昌市第七中学）" required>
-              <input data-mfrs="time" placeholder="当前时间（例：2019年9月）" required>
             </div>
             <div class="mfrs-section-title">资源与背景</div>
             <div class="mfrs-row">
               <textarea class="mfrs-span-2" data-mfrs="resources" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
               <textarea class="mfrs-span-2" data-mfrs="background" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
             </div>
-            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 当前地点：'+q('location')+'\n   - 当前时间：'+q('time')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 厉鬼等级：'+q('ghostLevel')+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background');var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
+            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 当前地点：'+q('location')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 厉鬼等级：'+q('ghostLevel')+'\n   - 自定义厉鬼：'+(q('ghostName')||'无')+'\n   - 杀人规律：'+(q('ghostLaw')||'无')+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background');var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
           </div>
         </div>
       </div>
@@ -5892,4 +5893,3 @@
         };
 
         loadLocalModule('神秘复苏数据库前端', 'http://localhost:5500/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js');
-

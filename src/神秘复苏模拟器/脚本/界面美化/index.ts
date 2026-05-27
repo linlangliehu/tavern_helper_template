@@ -8,6 +8,9 @@ function getHostDocument() {
 
 type HostWindowWithThemeCleanup = Window & {
   __mfrsHorrorThemeCleanup__?: () => void;
+  MysteryDatabaseFrontend?: {
+    openDashboard?: (options?: { welcome?: boolean }) => void;
+  };
 };
 
 function getSendTextarea(hostDocument: Document) {
@@ -680,11 +683,12 @@ body {
       `   - 姓名：${getValue('name')}\n` +
       `   - 年龄/性别：${getValue('ageGender')}\n` +
       `   - 当前地点：${getValue('location')}\n` +
-      `   - 当前时间：${getValue('time')}\n` +
       `   - 剧情节点：${anchor}\n\n` +
       `2. 身份与能力\n` +
       `   - 身份：${getValue('identity')}\n` +
-      `   - 厉鬼等级：${getValue('ghostLevel') || '无'}\n\n` +
+      `   - 厉鬼等级：${getValue('ghostLevel') || '无'}\n` +
+      `   - 自定义厉鬼：${getValue('ghostName') || '无'}\n` +
+      `   - 杀人规律：${getValue('ghostLaw') || '无'}\n\n` +
       `3. 初始资源\n` +
       `   ${getValue('resources') || '无'}\n\n` +
       `4. 背景设定\n` +
@@ -739,14 +743,34 @@ body {
     const target = event.target as HTMLElement | null;
     const button = target?.closest('.mfrs-submit, .custom-mfrs-submit');
     if (!button) return;
-    const root = button.closest<HTMLElement>('#mfrs-welcome-root');
+    const root = button.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
     if (!root) return;
     event.preventDefault();
     fillWelcomeStart(root);
   };
 
+  let welcomeDashboardAutoOpenDone = false;
+
+  const openDashboardForWelcome = () => {
+    if (welcomeDashboardAutoOpenDone) return;
+    const welcomeRoot = hostDocument.querySelector<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+    if (!welcomeRoot) return;
+    welcomeDashboardAutoOpenDone = true;
+    const delays = [0, 500, 1500, 3000];
+    delays.forEach(delay => {
+      const timerId = hostWindow?.setTimeout(() => {
+        hostWindow?.MysteryDatabaseFrontend?.openDashboard?.({ welcome: true });
+      }, delay);
+      if (timerId !== undefined) timeoutIds.push(timerId);
+    });
+  };
+
   const timeoutIds = [0, 250, 1000, 2500].map(delay => hostWindow?.setTimeout(enhanceChoicePanels, delay));
-  const bodyObserver = new HostMutationObserver(enhanceChoicePanels);
+  timeoutIds.push(...[0, 500, 1500, 3000].map(delay => hostWindow?.setTimeout(openDashboardForWelcome, delay)));
+  const bodyObserver = new HostMutationObserver(() => {
+    enhanceChoicePanels();
+    openDashboardForWelcome();
+  });
   bodyObserver.observe(hostDocument.body, { childList: true, subtree: true });
   hostDocument.addEventListener('click', handleWelcomeClick, true);
   hostDocument.addEventListener('click', handleInputPanelClick, true);

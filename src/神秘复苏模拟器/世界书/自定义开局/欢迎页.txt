@@ -484,7 +484,9 @@
                     <option value="S级">S级（极危）</option>
                     <option value="SS级">SS级（灾难级）</option>
                 </select>
+                <input type="text" id="mfrs-ghost-name" class="mfrs-input" placeholder="自定义厉鬼（例：鬼眼、鬼影、敲门鬼）">
             </div>
+            <textarea id="mfrs-ghost-law" class="mfrs-textarea" placeholder="厉鬼杀人规律（例：听到敲门声后会被标记）"></textarea>
 
             <div class="mfrs-section-title">时空锚点</div>
             <div class="mfrs-row">
@@ -501,7 +503,6 @@
             </div>
             <div class="mfrs-row">
                 <input type="text" id="mfrs-location" class="mfrs-input" placeholder="当前地点（例：大昌市第七中学）" required>
-                <input type="text" id="mfrs-time" class="mfrs-input" placeholder="当前时间（例：2019年9月）" required>
             </div>
 
             <div class="mfrs-section-title">初始资源与背景</div>
@@ -555,7 +556,6 @@
     const display = document.getElementById('mfrs-anchor-display');
     const valueInput = document.getElementById('mfrs-anchor-value');
     const locationInput = document.getElementById('mfrs-location');
-    const timeInput = document.getElementById('mfrs-time');
 
     // 生成下拉菜单
     anchors.forEach(group => {
@@ -575,7 +575,6 @@
                 display.textContent = `${group.group} · ${item.name}`;
                 valueInput.value = `${group.group} · ${item.name}`;
                 if (item.loc) locationInput.value = item.loc;
-                if (item.time) timeInput.value = item.time;
                 menu.style.display = 'none';
             });
             groupDiv.appendChild(itemDiv);
@@ -606,9 +605,10 @@
         const ageGender = document.getElementById('mfrs-age-gender').value;
         const identity = document.getElementById('mfrs-identity').value;
         const ghostLevel = document.getElementById('mfrs-ghost-level').value || '无';
+        const ghostName = document.getElementById('mfrs-ghost-name').value || '无';
+        const ghostLaw = document.getElementById('mfrs-ghost-law').value || '无';
         const anchor = valueInput.value || '未选择节点';
         const location = locationInput.value;
-        const time = timeInput.value;
         const resources = document.getElementById('mfrs-resources').value || '无';
         const background = document.getElementById('mfrs-background').value;
 
@@ -617,11 +617,12 @@
                        `   - 姓名：${name}\n` +
                        `   - 年龄/性别：${ageGender}\n` +
                        `   - 当前地点：${location}\n` +
-                       `   - 当前时间：${time}\n` +
                        `   - 剧情节点：${anchor}\n\n` +
                        `2. **身份与能力**\n` +
                        `   - 身份：${identity}\n` +
-                       `   - 厉鬼等级：${ghostLevel}\n\n` +
+                       `   - 厉鬼等级：${ghostLevel}\n` +
+                       `   - 自定义厉鬼：${ghostName}\n` +
+                       `   - 杀人规律：${ghostLaw}\n\n` +
                        `3. **初始资源**\n` +
                        `   ${resources}\n\n` +
                        `4. **背景设定**\n` +
@@ -641,4 +642,3 @@
 </script>
 </body>
 </html>
-
