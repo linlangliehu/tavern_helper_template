@@ -677,13 +677,23 @@ body {
 
   const fillWelcomeStart = (root: HTMLElement) => {
     const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs="${key}"]`)?.value.trim() ?? '';
-    const anchor = getValue('anchor').split('|')[0] || '未选择节点';
+    const anchorParts = getValue('anchor').split('|');
+    const anchor = anchorParts[0] || '未选择节点';
+    const storyLocation = anchorParts[1] || '由当前剧情节点决定';
+    const storyPhase = anchorParts[2] || '未定阶段';
+    const eventPressure = anchorParts[3] || '请根据身份与地点判断接入边界';
+    const visibleIntel = anchorParts[4] || '仅依据当前选择与背景设定';
+    const spoilerBoundary = anchorParts[5] || '不得直接揭露隐藏规律、关键生路和幕后真相';
     const message = `【神秘复苏·开局设定】\n\n` +
       `1. 基本信息\n` +
       `   - 姓名：${getValue('name')}\n` +
       `   - 年龄/性别：${getValue('ageGender')}\n` +
-      `   - 当前地点：${getValue('location')}\n` +
-      `   - 剧情节点：${anchor}\n\n` +
+      `   - 剧情节点：${anchor}\n` +
+      `   - 当前地点：${storyLocation}\n` +
+      `   - 原著阶段：${storyPhase}\n` +
+      `   - 事件压力：${eventPressure}\n` +
+      `   - 玩家可见情报：${visibleIntel}\n` +
+      `   - 禁止泄露边界：${spoilerBoundary}\n\n` +
       `2. 身份与能力\n` +
       `   - 身份：${getValue('identity')}\n` +
       `   - 厉鬼等级：${getValue('ghostLevel') || '无'}\n` +

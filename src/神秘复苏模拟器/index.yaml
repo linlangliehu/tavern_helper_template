@@ -180,6 +180,10 @@
     <<: *世界书常驻规则
     文件: 世界书/原著剧情锚点/原著剧情接入规则
 
+  - 名称: 开局时空锚点联动规则
+    <<: *世界书常驻规则
+    文件: 世界书/原著剧情锚点/开局时空锚点联动规则
+
   - 名称: 主线阶段推进规则
     <<: *世界书常驻规则
     文件: 世界书/规则/主线阶段推进规则
@@ -237,6 +241,20 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/原著剧情锚点/原著章节索引
+
+  - 名称: 全书剧情簇锚点清单
+    启用: true
+    激活策略: { 类型: 绿灯, 关键字: [剧情簇锚点, 全书剧情簇, 剧情簇清单, 时空锚点清单, 原著剧情簇, 章节剧情簇, plot-anchor, plot-cluster] }
+    插入位置:
+      类型: 指定深度
+      角色: 系统
+      深度: 4
+      顺序: 14705
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/原著剧情锚点/全书剧情簇锚点清单
 
   - 名称: 正史阶段划分-依据原著
     <<: *世界书常驻规则
@@ -5380,23 +5398,39 @@
             </div>
             <div class="mfrs-section-title">时空锚点</div>
             <div class="mfrs-row">
-              <select data-mfrs="anchor" onchange="var r=this.closest('#mfrs-welcome-root');var p=this.value.split('|');if(r&&p[1])r.querySelector('[data-mfrs=location]').value=p[1];">
-                <option value="未选择节点||">选择剧情节点</option>
-                <option value="七中前数日·怪谈传播|大昌市第七中学|2019年9月初">七中前数日·怪谈传播</option>
-                <option value="七中当日·周正到校|大昌市第七中学|2019年9月中旬">七中当日·周正到校</option>
-                <option value="鬼眼复苏·杨间觉醒|大昌市第七中学|2019年9月中旬">鬼眼复苏·杨间觉醒</option>
-                <option value="敲门鬼事件|大昌市|2019年10月">敲门鬼事件</option>
-                <option value="黄岗村调查|黄岗村|2019年12月">黄岗村调查</option>
-                <option value="自定义时间点||">自定义时间点</option>
+              <select data-mfrs="anchor">
+                <option value="未选择节点||未定阶段||请根据身份与地点判断接入边界|不得直接揭露隐藏规律">选择剧情节点</option>
+                <option value="论坛鬼故事·雷电法王发帖|大昌市|阶段0：七中前后|敲门鬼照片和音频仍被当作网络怪谈传播|网络传闻、老人照片、敲门录音|不得直接公布敲门鬼完整规律和后续死亡名单">阶段0｜论坛鬼故事·雷电法王发帖</option>
+                <option value="七中前数日·怪谈传播|大昌市第七中学|阶段0：七中前后|学生间流传敲门鬼视频，校园尚未公开爆发死亡|怪谈、视频、照片、同学讨论|不得提前安排校内大规模死亡">阶段0｜七中前数日·怪谈传播</option>
+                <option value="七中当日·周正讲课|大昌市第七中学|阶段0：七中前后|周正临时到校讲安全课，灵异即将失控|周正异常状态、鬼字讲解、课堂恐慌|不得让周正提前说破七中必然爆发敲门鬼">阶段0｜七中当日·周正讲课</option>
+                <option value="鬼域初现·校园迷路|大昌市第七中学|阶段0：七中前后|校园空间异常，普通逃生路线开始失效|迷路、楼道异常、厕所异动、身后脚步|不得直接给出鬼域完整破解方式">阶段0｜鬼域初现·校园迷路</option>
+                <option value="鬼眼复苏·杨间觉醒|大昌市第七中学|阶段0：七中前后|鬼眼拼图介入，玩家可能见证或替代早期转折|鬼眼、羊皮纸、人皮纸、幸存者恐慌|不得泄露关键人物长期命运">阶段0｜鬼眼复苏·杨间觉醒</option>
+                <option value="敲门鬼事件|大昌市|阶段1：大昌市早期|敲门鬼诅咒开始在城市内扩散|敲门声、音频、电话、封锁传闻|不得直接公布完整杀人规律和源头处理方式">阶段1｜敲门鬼事件</option>
+                <option value="商场无头鬼影|大昌市商场|阶段1：大昌市早期|商场失踪与无头鬼影线索浮出水面|失踪人员、监控室、腐烂人头、严力线索|不得提前揭露源头鬼身份和完整关押流程">阶段1｜商场无头鬼影</option>
+                <option value="严力合作·鬼血线|大昌市|阶段1：大昌市早期|民间驭鬼者与灵异资源交易开始进入玩家视野|严力、鬼血、黄金容器、合作风险|不得把鬼血后续全部代价直接明说">阶段1｜严力合作·鬼血线</option>
+                <option value="小强俱乐部冲突|大昌市|阶段2：总部与势力|民间驭鬼者组织和总部体系开始压迫玩家选择立场|小强俱乐部、负责人、资源交易、阵营压力|不得强制玩家按原著加入任一阵营">阶段2｜小强俱乐部冲突</option>
+                <option value="黄岗村调查|黄岗村|阶段2：总部与势力|黄岗村任务展开，鬼棺与病鬼风险逐步显现|黄岗村、咳嗽、鬼棺、遗像、失踪驭鬼者|不得提前公布鬼棺全部真相和离村办法">阶段2｜黄岗村调查</option>
+                <option value="鬼棺开启·病鬼失控|黄岗村|阶段2：总部与势力|鬼棺平衡被破坏，多只鬼与驭鬼者互相牵制|鬼棺、病鬼、遗像、回棺、交易|不得直接给出关键生路和最终交易答案">阶段2｜鬼棺开启·病鬼失控</option>
+                <option value="鬼镜交易·第二只鬼|大昌市|阶段2：总部与势力|鬼镜和第二只鬼相关风险进入可接触阶段|鬼镜、复活、鬼影、交易、代价|不得无条件提供完美驾驭方案">阶段2｜鬼镜交易·第二只鬼</option>
+                <option value="饿死鬼灾害前夕|大昌市|阶段3：城市级灾害|鬼婴扩散和城市封锁预兆出现|鬼婴、封锁、总部支援、城市恐慌|不得提前泄露完整灾害处理路径">阶段3｜饿死鬼灾害前夕</option>
+                <option value="朋友圈冲突·总部与民间势力|大海市/总部势力圈|阶段4：势力冲突与中期扩张|民间势力施压、总部评估、资源博弈升级|朋友圈、灵异论坛、总部负责人、资源争夺|不得泄露方世明底牌、势力结局和关键战斗转折">阶段4｜朋友圈冲突·总部与民间势力</option>
+                <option value="鬼画扩散·高危封锁|总部/封锁楼层|阶段4：势力冲突与中期扩张|画中异常外溢，封锁楼层与人员失踪风险上升|鬼画档案、封锁区域、失踪线索、总部调度|不得泄露鬼画核心规律、画中边界和关键处理方案">阶段4｜鬼画扩散·高危封锁</option>
+                <option value="鬼橱交易·愿望代价|大昌市安全屋/凯撒大酒店线索|阶段5：规则型地点|交易代价不明，情报诱导和灵异债务开始累积|异常橱柜、愿望交换、代价提示、照片线索|不得泄露鬼橱真实目的、关键照片后果和后续索取方式">阶段5｜鬼橱交易·愿望代价</option>
+                <option value="鬼邮局·规则任务|鬼邮局|阶段5：规则型地点|玩家被卷入规则型灵异任务链|信件、楼层、送信任务、规则限制|不得解释全部邮局机制和后续楼层真相">阶段5｜鬼邮局·规则任务</option>
+                <option value="灵异公交·未知路线|灵异公交|阶段5：规则型地点|玩家接触移动型灵异地点与乘客规则|公交、站点、乘客、下车风险|不得直接给出所有站点和乘客真相">阶段5｜灵异公交·未知路线</option>
+                <option value="古宅守夜·旧规矩压迫|老宅/古宅|阶段5：规则型地点|夜晚守灵、送葬队伍和旧规矩形成高压现场|守夜、送葬、老宅规矩、破禁死亡|不得泄露守夜完整禁忌、送葬关键生路和老宅深层身份">阶段5｜古宅守夜·旧规矩压迫</option>
+                <option value="鬼湖失控·水域外溢|鬼湖周边/江边城市|阶段6：队长计划与高危档案|水域异常扩张，队长级处理压力和城市波及风险同步上升|鬼湖档案、涉水异常、封锁线、队长调度|不得泄露鬼湖源头、压制路径和队长行动细节">阶段6｜鬼湖失控·水域外溢</option>
+                <option value="国王组织与幽灵船|沿海港口/海外线|阶段7：国际冲突与世界失衡|海外势力压境，幽灵船登陆风险和总部动员升级|国王组织、幽灵船、沿海戒备、国际冲突|不得泄露国王名单底牌、幽灵船载物真相和最终拦截方案">阶段7｜国王组织与幽灵船</option>
+                <option value="终幕失衡·多地红色警报|多地红色警报/总部高权限会议|阶段7：国际冲突与世界失衡|全球灵异外溢，现实秩序和正史保护接近极限|多地警报、总部会议、队长异常、秩序崩塌|不得泄露终局关键选择、核心人物归宿和完整时代结局">阶段7｜终幕失衡·多地红色警报</option>
+                <option value="自定义时间点||自定义阶段|由玩家背景决定事件压力|玩家自定义情报|按背景和已知线索限制剧透">自定义时间点</option>
               </select>
-              <input data-mfrs="location" placeholder="当前地点（例：大昌市第七中学）" required>
             </div>
             <div class="mfrs-section-title">资源与背景</div>
             <div class="mfrs-row">
               <textarea class="mfrs-span-2" data-mfrs="resources" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
               <textarea class="mfrs-span-2" data-mfrs="background" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
             </div>
-            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 当前地点：'+q('location')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 厉鬼等级：'+q('ghostLevel')+'\n   - 自定义厉鬼：'+(q('ghostName')||'无')+'\n   - 杀人规律：'+(q('ghostLaw')||'无')+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background');var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
+            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n   - 当前地点：'+(ap[1]||'由当前剧情节点决定')+'\n   - 原著阶段：'+(ap[2]||'未定阶段')+'\n   - 事件压力：'+(ap[3]||'请根据身份与剧情节点判断接入边界')+'\n   - 玩家可见情报：'+(ap[4]||'仅依据当前选择与背景设定')+'\n   - 禁止泄露边界：'+(ap[5]||'不得直接揭露隐藏规律、关键生路和幕后真相')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 厉鬼等级：'+q('ghostLevel')+'\n   - 自定义厉鬼：'+(q('ghostName')||'无')+'\n   - 杀人规律：'+(q('ghostLaw')||'无')+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background');var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
           </div>
         </div>
       </div>

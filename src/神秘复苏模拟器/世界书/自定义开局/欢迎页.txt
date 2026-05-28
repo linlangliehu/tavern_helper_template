@@ -501,9 +501,6 @@
                     </div>
                 </div>
             </div>
-            <div class="mfrs-row">
-                <input type="text" id="mfrs-location" class="mfrs-input" placeholder="当前地点（例：大昌市第七中学）" required>
-            </div>
 
             <div class="mfrs-section-title">初始资源与背景</div>
             <textarea id="mfrs-resources" class="mfrs-textarea" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
@@ -522,31 +519,49 @@
         {
             group: "阶段0：开局与七中前后",
             items: [
-                { name: "七中前数日·怪谈传播", loc: "大昌市第七中学", time: "2019年9月初" },
-                { name: "七中当日·周正到校", loc: "大昌市第七中学", time: "2019年9月中旬" },
-                { name: "鬼眼复苏·杨间觉醒", loc: "大昌市第七中学", time: "2019年9月中旬" },
-                { name: "七中后续·幸存者标记", loc: "大昌市第七中学", time: "2019年9月下旬" }
+                { name: "论坛鬼故事·雷电法王发帖", loc: "大昌市", phase: "阶段0：七中前后", pressure: "敲门鬼照片和音频仍被当作网络怪谈传播", intel: "网络传闻、老人照片、敲门录音", boundary: "不得直接公布敲门鬼完整规律和后续死亡名单" },
+                { name: "七中前数日·怪谈传播", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "学生间流传敲门鬼视频，校园尚未公开爆发死亡", intel: "怪谈、视频、照片、同学讨论", boundary: "不得提前安排校内大规模死亡" },
+                { name: "七中当日·周正讲课", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "周正临时到校讲安全课，灵异即将失控", intel: "周正异常状态、鬼字讲解、课堂恐慌", boundary: "不得让周正提前说破七中必然爆发敲门鬼" },
+                { name: "鬼域初现·校园迷路", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "校园空间异常，普通逃生路线开始失效", intel: "迷路、楼道异常、厕所异动、身后脚步", boundary: "不得直接给出鬼域完整破解方式" },
+                { name: "鬼眼复苏·杨间觉醒", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "鬼眼拼图介入，玩家可能见证或替代早期转折", intel: "鬼眼、羊皮纸、人皮纸、幸存者恐慌", boundary: "不得泄露关键人物长期命运" }
             ]
         },
         {
-            group: "阶段1：大昌市灵异爆发",
+            group: "阶段1：大昌市早期事件",
             items: [
-                { name: "敲门鬼事件", loc: "大昌市", time: "2019年10月" },
-                { name: "鬼公交事件", loc: "大昌市", time: "2019年10月" },
-                { name: "鬼邮局事件", loc: "大昌市", time: "2019年11月" }
+                { name: "敲门鬼事件", loc: "大昌市", phase: "阶段1：大昌市早期", pressure: "敲门鬼诅咒开始在城市内扩散", intel: "敲门声、音频、电话、封锁传闻", boundary: "不得直接公布完整杀人规律和源头处理方式" },
+                { name: "商场无头鬼影", loc: "大昌市商场", phase: "阶段1：大昌市早期", pressure: "商场失踪与无头鬼影线索浮出水面", intel: "失踪人员、监控室、腐烂人头、严力线索", boundary: "不得提前揭露源头鬼身份和完整关押流程" },
+                { name: "严力合作·鬼血线", loc: "大昌市", phase: "阶段1：大昌市早期", pressure: "民间驭鬼者与灵异资源交易开始进入玩家视野", intel: "严力、鬼血、黄金容器、合作风险", boundary: "不得把鬼血后续全部代价直接明说" }
             ]
         },
         {
-            group: "阶段2：黄岗村与鬼域",
+            group: "阶段2：总部与负责人体系",
             items: [
-                { name: "黄岗村调查", loc: "黄岗村", time: "2019年12月" },
-                { name: "鬼域形成", loc: "黄岗村", time: "2019年12月" }
+                { name: "小强俱乐部冲突", loc: "大昌市", phase: "阶段2：总部与势力", pressure: "民间驭鬼者组织和总部体系开始压迫玩家选择立场", intel: "小强俱乐部、负责人、资源交易、阵营压力", boundary: "不得强制玩家按原著加入任一阵营" },
+                { name: "黄岗村调查", loc: "黄岗村", phase: "阶段2：总部与势力", pressure: "黄岗村任务展开，鬼棺与病鬼风险逐步显现", intel: "黄岗村、咳嗽、鬼棺、遗像、失踪驭鬼者", boundary: "不得提前公布鬼棺全部真相和离村办法" },
+                { name: "鬼棺开启·病鬼失控", loc: "黄岗村", phase: "阶段2：总部与势力", pressure: "鬼棺平衡被破坏，多只鬼与驭鬼者互相牵制", intel: "鬼棺、病鬼、遗像、回棺、交易", boundary: "不得直接给出关键生路和最终交易答案" },
+                { name: "鬼镜交易·第二只鬼", loc: "大昌市", phase: "阶段2：总部与势力", pressure: "鬼镜和第二只鬼相关风险进入可接触阶段", intel: "鬼镜、复活、鬼影、交易、代价", boundary: "不得无条件提供完美驾驭方案" }
+            ]
+        },
+        {
+            group: "阶段3/5：高危事件与规则地点",
+            items: [
+                { name: "饿死鬼灾害前夕", loc: "大昌市", phase: "阶段3：城市级灾害", pressure: "鬼婴扩散和城市封锁预兆出现", intel: "鬼婴、封锁、总部支援、城市恐慌", boundary: "不得提前泄露完整灾害处理路径" },
+                { name: "朋友圈冲突·总部与民间势力", loc: "大海市/总部势力圈", phase: "阶段4：势力冲突与中期扩张", pressure: "民间势力施压、总部评估、资源博弈升级", intel: "朋友圈、灵异论坛、总部负责人、资源争夺", boundary: "不得泄露方世明底牌、势力结局和关键战斗转折" },
+                { name: "鬼画扩散·高危封锁", loc: "总部/封锁楼层", phase: "阶段4：势力冲突与中期扩张", pressure: "画中异常外溢，封锁楼层与人员失踪风险上升", intel: "鬼画档案、封锁区域、失踪线索、总部调度", boundary: "不得泄露鬼画核心规律、画中边界和关键处理方案" },
+                { name: "鬼橱交易·愿望代价", loc: "大昌市安全屋/凯撒大酒店线索", phase: "阶段5：规则型地点", pressure: "交易代价不明，情报诱导和灵异债务开始累积", intel: "异常橱柜、愿望交换、代价提示、照片线索", boundary: "不得泄露鬼橱真实目的、关键照片后果和后续索取方式" },
+                { name: "鬼邮局·规则任务", loc: "鬼邮局", phase: "阶段5：规则型地点", pressure: "玩家被卷入规则型灵异任务链", intel: "信件、楼层、送信任务、规则限制", boundary: "不得解释全部邮局机制和后续楼层真相" },
+                { name: "灵异公交·未知路线", loc: "灵异公交", phase: "阶段5：规则型地点", pressure: "玩家接触移动型灵异地点与乘客规则", intel: "公交、站点、乘客、下车风险", boundary: "不得直接给出所有站点和乘客真相" },
+                { name: "古宅守夜·旧规矩压迫", loc: "老宅/古宅", phase: "阶段5：规则型地点", pressure: "夜晚守灵、送葬队伍和旧规矩形成高压现场", intel: "守夜、送葬、老宅规矩、破禁死亡", boundary: "不得泄露守夜完整禁忌、送葬关键生路和老宅深层身份" },
+                { name: "鬼湖失控·水域外溢", loc: "鬼湖周边/江边城市", phase: "阶段6：队长计划与高危档案", pressure: "水域异常扩张，队长级处理压力和城市波及风险同步上升", intel: "鬼湖档案、涉水异常、封锁线、队长调度", boundary: "不得泄露鬼湖源头、压制路径和队长行动细节" },
+                { name: "国王组织与幽灵船", loc: "沿海港口/海外线", phase: "阶段7：国际冲突与世界失衡", pressure: "海外势力压境，幽灵船登陆风险和总部动员升级", intel: "国王组织、幽灵船、沿海戒备、国际冲突", boundary: "不得泄露国王名单底牌、幽灵船载物真相和最终拦截方案" },
+                { name: "终幕失衡·多地红色警报", loc: "多地红色警报/总部高权限会议", phase: "阶段7：国际冲突与世界失衡", pressure: "全球灵异外溢，现实秩序和正史保护接近极限", intel: "多地警报、总部会议、队长异常、秩序崩塌", boundary: "不得泄露终局关键选择、核心人物归宿和完整时代结局" }
             ]
         },
         {
             group: "自定义节点",
             items: [
-                { name: "自定义时间点", loc: "", time: "" }
+                { name: "自定义时间点", loc: "", phase: "自定义阶段", pressure: "由玩家背景决定事件压力", intel: "玩家自定义情报", boundary: "按背景和已知线索限制剧透" }
             ]
         }
     ];
@@ -555,7 +570,6 @@
     const trigger = document.getElementById('mfrs-anchor-trigger');
     const display = document.getElementById('mfrs-anchor-display');
     const valueInput = document.getElementById('mfrs-anchor-value');
-    const locationInput = document.getElementById('mfrs-location');
 
     // 生成下拉菜单
     anchors.forEach(group => {
@@ -573,8 +587,7 @@
             itemDiv.textContent = item.name;
             itemDiv.addEventListener('click', () => {
                 display.textContent = `${group.group} · ${item.name}`;
-                valueInput.value = `${group.group} · ${item.name}`;
-                if (item.loc) locationInput.value = item.loc;
+                valueInput.value = [item.name, item.loc, item.phase, item.pressure, item.intel, item.boundary].join('|');
                 menu.style.display = 'none';
             });
             groupDiv.appendChild(itemDiv);
@@ -608,16 +621,20 @@
         const ghostName = document.getElementById('mfrs-ghost-name').value || '无';
         const ghostLaw = document.getElementById('mfrs-ghost-law').value || '无';
         const anchor = valueInput.value || '未选择节点';
-        const location = locationInput.value;
         const resources = document.getElementById('mfrs-resources').value || '无';
         const background = document.getElementById('mfrs-background').value;
 
+        const anchorParts = anchor.split('|');
         const message = `【神秘复苏·开局设定】\n\n` +
                        `1. **基本信息**\n` +
                        `   - 姓名：${name}\n` +
                        `   - 年龄/性别：${ageGender}\n` +
-                       `   - 当前地点：${location}\n` +
-                       `   - 剧情节点：${anchor}\n\n` +
+                       `   - 剧情节点：${anchorParts[0] || '未选择节点'}\n` +
+                       `   - 当前地点：${anchorParts[1] || '由当前剧情节点决定'}\n` +
+                       `   - 原著阶段：${anchorParts[2] || '未定阶段'}\n` +
+                       `   - 事件压力：${anchorParts[3] || '请根据身份与剧情节点判断接入边界'}\n` +
+                       `   - 玩家可见情报：${anchorParts[4] || '仅依据当前选择与背景设定'}\n` +
+                       `   - 禁止泄露边界：${anchorParts[5] || '不得直接揭露隐藏规律、关键生路和幕后真相'}\n\n` +
                        `2. **身份与能力**\n` +
                        `   - 身份：${identity}\n` +
                        `   - 厉鬼等级：${ghostLevel}\n` +

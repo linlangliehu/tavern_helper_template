@@ -3651,6 +3651,11 @@
              const { $ } = getCore();
              if (getCore().getDB()?.exportTableAsJson && $) {
                   renderInterface();
+                 const host = getHost();
+                 host.MysteryAcuVisualizer = {
+                     ...(host.MysteryAcuVisualizer || {}),
+                     renderInterface,
+                 };
                  const api = getCore().getDB();
                  if (api.registerTableUpdateCallback) {
                      api.registerTableUpdateCallback(UpdateController.handleUpdate);

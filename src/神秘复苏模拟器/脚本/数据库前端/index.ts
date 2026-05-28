@@ -37,6 +37,9 @@ type HostWindow = Window & {
     getPanelState: () => Promise<FrontendState>;
     refreshPanel: () => Promise<void>;
   };
+  MysteryAcuVisualizer?: {
+    renderInterface?: () => void;
+  };
   __mfrsDatabaseFrontendCleanup__?: () => void;
   toastr?: {
     info?: (message: string) => void;
@@ -165,6 +168,8 @@ async function openAcuFrontend(hostWindow: HostWindow) {
 
   for (const delay of [0, 250, 750, 1500, 3000]) {
     if (delay > 0) await wait(delay);
+    hostWindow.MysteryAcuVisualizer?.renderInterface?.();
+    await wait(50);
     const collapsedNav = hostDocument.querySelector<HTMLElement>('.acu-nav-container.collapsed');
     if (collapsedNav) {
       collapsedNav.click();
