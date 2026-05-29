@@ -132,6 +132,10 @@ function keepAcuConfigEmbedded(hostWindow: HostWindow) {
     const current = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
     const next = {
       ...current,
+      theme: 'aurora',
+      highlightColor: 'red',
+      titleColor: 'red',
+      customTitleColor: false,
       showDashboard: true,
       dashboardPosition: 'embedded',
       frontendPosition: 'bottom',
