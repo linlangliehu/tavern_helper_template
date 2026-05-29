@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}/`;
+const CDN_CACHE_VERSION = '292cd53';
 
 // 把任意 http(s)://localhost(:port)/ 或 http(s)://127.0.0.1(:port)/ 替换为 CDN
 const LOCALHOST_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//g;
@@ -104,6 +105,10 @@ function syncYaml(srcYaml, dstYaml, replacements) {
       return to;
     });
   }
+  next = next.replace(
+    new RegExp(`(${CDN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}dist/[^'"\\s]+?/index\\.(?:js|html))(?![?\\w=&-])`, 'g'),
+    `$1?v=${CDN_CACHE_VERSION}`,
+  );
   if (!DRY_RUN) writeFileSync(dstYaml, next, 'utf8');
   return { totalReplaced: count, bytes: Buffer.byteLength(next, 'utf8') };
 }
