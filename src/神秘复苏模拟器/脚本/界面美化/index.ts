@@ -675,8 +675,48 @@ body {
     }
   };
 
+  const enhanceShortTagPanels = () => {
+    const panels = hostDocument.querySelectorAll<HTMLElement>('.sp-panel-body:not([data-mfrs-sp-enhanced])');
+    for (const panel of panels) {
+      panel.dataset.mfrsSpEnhanced = 'true';
+      const raw = panel.textContent ?? '';
+      if (!raw.trim()) continue;
+      const html = raw
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .split('\n')
+        .map(line => {
+          const fieldMatch = line.match(/^([^：:]{2,16})[：:](.*)$/);
+          const riskClass = /死亡风险|复苏风险|高危|濒死|失控|命中规律|被标记/.test(line)
+            ? ' sp-risk-high'
+            : /疑似|中等|接触|鬼域|试探/.test(line)
+              ? ' sp-risk-mid'
+              : /低|暂避|隔绝|撤离|无/.test(line)
+                ? ' sp-risk-low'
+                : '';
+          if (!fieldMatch) return `<span class="${riskClass.trim()}">${line}</span>`;
+          return `<span class="sp-field-line${riskClass}"><span class="sp-field-key">${fieldMatch[1]}：</span>${fieldMatch[2]}</span>`;
+        })
+        .join('\n');
+      panel.innerHTML = html;
+    }
+  };
+
   const fillWelcomeStart = (root: HTMLElement) => {
     const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs="${key}"]`)?.value.trim() ?? '';
+    const getCustomGhosts = () => {
+      const ghosts: string[] = [];
+      for (let index = 1; index <= 2; index += 1) {
+        const name = getValue(`ghostName${index}`) || (index === 1 ? getValue('ghostName') : '');
+        const law = getValue(`ghostLaw${index}`) || (index === 1 ? getValue('ghostLaw') : '');
+        const range = getValue(`ghostRange${index}`) || getValue('ghostLevel') || '未填写';
+        const terror = getValue(`ghostTerror${index}`) || '未填写';
+        if (!name && !law && !getValue(`ghostRange${index}`) && !getValue(`ghostTerror${index}`)) continue;
+        ghosts.push(`第${index}只：${name || '未命名'}；可见杀人规律：${law || '未填写'}；影响范围等级：${range}；恐怖程度校准建议：${terror}`);
+      }
+      return ghosts.length ? ghosts.join('\n     ') : '无';
+    };
     const anchorParts = getValue('anchor').split('|');
     const anchor = anchorParts[0] || '未选择节点';
     const storyLocation = anchorParts[1] || '由当前剧情节点决定';
@@ -696,17 +736,43 @@ body {
       `   - 禁止泄露边界：${spoilerBoundary}\n\n` +
       `2. 身份与能力\n` +
       `   - 身份：${getValue('identity')}\n` +
-      `   - 厉鬼等级：${getValue('ghostLevel') || '无'}\n` +
-      `   - 自定义厉鬼：${getValue('ghostName') || '无'}\n` +
-      `   - 杀人规律：${getValue('ghostLaw') || '无'}\n\n` +
+      `   - 默认影响范围等级：${getValue('ghostLevel') || '无'}\n` +
+      `   - 自定义厉鬼（最多2只）：\n` +
+      `     ${getCustomGhosts()}\n\n` +
       `3. 初始资源\n` +
       `   ${getValue('resources') || '无'}\n\n` +
       `4. 背景设定\n` +
-      `   ${getValue('background')}`;
+      `   ${getValue('background')}\n\n` +
+      `5. 推演边界与初始化建议\n` +
+      `   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n` +
+      `   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
+      `   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n` +
+      `   - 自定义厉鬼校准：玩家填写的厉鬼名称、可见杀人规律、影响范围等级和恐怖程度校准建议只作为可见设定与偏好；影响范围等级不等于对抗强度，真实规律、代价、限制和可关押条件必须按神秘复苏铁律校准；最多读取两只自定义厉鬼，超出部分无效。\n` +
+      `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。`;
     const input = getSendTextarea(hostDocument);
     if (!input) return;
     setTextareaValue(input, message);
     hostWindow?.toastr?.info?.('已填入神秘复苏开局设定');
+  };
+
+  const setSecondGhostSlotVisible = (root: HTMLElement, visible: boolean) => {
+    const secondSlot = root.querySelector<HTMLElement>('[data-mfrs-ghost-slot="2"], [data-ghost-slot="2"]');
+    const addButton = root.querySelector<HTMLElement>('.mfrs-ghost-add, .custom-mfrs-ghost-add, #mfrs-add-ghost');
+    if (!secondSlot) return;
+
+    if (visible) {
+      secondSlot.hidden = false;
+      if (addButton) addButton.hidden = true;
+      secondSlot.querySelector<HTMLElement>('input, textarea')?.focus();
+      return;
+    }
+
+    secondSlot.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select').forEach(input => {
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    secondSlot.hidden = true;
+    if (addButton) addButton.hidden = false;
   };
 
   const fillInputPanel = (root: HTMLElement) => {
@@ -751,6 +817,16 @@ body {
 
   const handleWelcomeClick = (event: Event) => {
     const target = event.target as HTMLElement | null;
+    const ghostButton = target?.closest('.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost');
+    if (ghostButton) {
+      const root = ghostButton.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+      if (!root) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setSecondGhostSlotVisible(root, ghostButton.matches('.mfrs-ghost-add, .custom-mfrs-ghost-add, #mfrs-add-ghost'));
+      return;
+    }
+
     const button = target?.closest('.mfrs-submit, .custom-mfrs-submit');
     if (!button) return;
     const root = button.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
@@ -775,10 +851,15 @@ body {
     });
   };
 
-  const timeoutIds = [0, 250, 1000, 2500].map(delay => hostWindow?.setTimeout(enhanceChoicePanels, delay));
+  const enhancePanels = () => {
+    enhanceChoicePanels();
+    enhanceShortTagPanels();
+  };
+
+  const timeoutIds = [0, 250, 1000, 2500].map(delay => hostWindow?.setTimeout(enhancePanels, delay));
   timeoutIds.push(...[0, 500, 1500, 3000].map(delay => hostWindow?.setTimeout(openDashboardForWelcome, delay)));
   const bodyObserver = new HostMutationObserver(() => {
-    enhanceChoicePanels();
+    enhancePanels();
     openDashboardForWelcome();
   });
   bodyObserver.observe(hostDocument.body, { childList: true, subtree: true });
