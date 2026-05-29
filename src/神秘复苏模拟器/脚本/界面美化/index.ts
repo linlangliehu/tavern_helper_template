@@ -710,10 +710,8 @@ body {
       for (let index = 1; index <= 2; index += 1) {
         const name = getValue(`ghostName${index}`) || (index === 1 ? getValue('ghostName') : '');
         const law = getValue(`ghostLaw${index}`) || (index === 1 ? getValue('ghostLaw') : '');
-        const range = getValue(`ghostRange${index}`) || getValue('ghostLevel') || '未填写';
-        const terror = getValue(`ghostTerror${index}`) || '未填写';
-        if (!name && !law && !getValue(`ghostRange${index}`) && !getValue(`ghostTerror${index}`)) continue;
-        ghosts.push(`第${index}只：${name || '未命名'}；可见杀人规律：${law || '未填写'}；影响范围等级：${range}；恐怖程度校准建议：${terror}`);
+        if (!name && !law) continue;
+        ghosts.push(`第${index}只：${name || '未命名'}；可见杀人规律：${law || '未填写'}`);
       }
       return ghosts.length ? ghosts.join('\n     ') : '无';
     };
@@ -736,7 +734,6 @@ body {
       `   - 禁止泄露边界：${spoilerBoundary}\n\n` +
       `2. 身份与能力\n` +
       `   - 身份：${getValue('identity')}\n` +
-      `   - 默认影响范围等级：${getValue('ghostLevel') || '无'}\n` +
       `   - 自定义厉鬼（最多2只）：\n` +
       `     ${getCustomGhosts()}\n\n` +
       `3. 初始资源\n` +
@@ -747,7 +744,7 @@ body {
       `   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n` +
       `   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
       `   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n` +
-      `   - 自定义厉鬼校准：玩家填写的厉鬼名称、可见杀人规律、影响范围等级和恐怖程度校准建议只作为可见设定与偏好；影响范围等级不等于对抗强度，真实规律、代价、限制和可关押条件必须按神秘复苏铁律校准；最多读取两只自定义厉鬼，超出部分无效。\n` +
+      `   - 自定义厉鬼判定：玩家只提供厉鬼名称和可见杀人规律；影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断；最多读取两只自定义厉鬼，超出部分无效。\n` +
       `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。`;
     const input = getSendTextarea(hostDocument);
     if (!input) return;

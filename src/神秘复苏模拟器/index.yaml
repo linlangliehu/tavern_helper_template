@@ -5417,14 +5417,6 @@
                 <option>民间驭鬼者（独立行动）</option>
                 <option>异类（状态异常但仍可行动）</option>
               </select>
-              <select data-mfrs="ghostLevel">
-                <option value="无">默认影响范围：无</option>
-                <option>C级影响范围（限制级）</option>
-                <option>B级影响范围（危险级）</option>
-                <option>A级影响范围（灾难级）</option>
-                <option>S级影响范围（毁灭级）</option>
-                <option>未知影响范围</option>
-              </select>
               <div class="mfrs-span-2 mfrs-ghost-list" data-mfrs-ghost-list>
                 <div class="mfrs-ghost-slot" data-mfrs-ghost-slot="1">
                   <div class="mfrs-ghost-header">
@@ -5432,16 +5424,7 @@
                     <button type="button" class="mfrs-ghost-icon-button mfrs-ghost-add" aria-label="添加第二只厉鬼" title="添加第二只厉鬼" onclick="var r=this.closest('#mfrs-welcome-root');var s=r&&r.querySelector('[data-mfrs-ghost-slot=&quot;2&quot;]');if(s){s.hidden=false;var i=s.querySelector('input, textarea');if(i)i.focus();this.hidden=true;}">+</button>
                   </div>
                   <input data-mfrs="ghostName1" placeholder="厉鬼名称（例：鬼眼、鬼影、敲门鬼）">
-                  <select data-mfrs="ghostRange1">
-                    <option value="">影响范围等级：沿用默认</option>
-                    <option>C级影响范围</option>
-                    <option>B级影响范围</option>
-                    <option>A级影响范围</option>
-                    <option>S级影响范围</option>
-                    <option>未知影响范围</option>
-                  </select>
                   <textarea data-mfrs="ghostLaw1" placeholder="杀人规律（例：听到敲门声后会被标记）"></textarea>
-                  <textarea data-mfrs="ghostTerror1" placeholder="恐怖程度校准建议（例：影响范围小，但触发即死；疑似高恐怖）"></textarea>
                 </div>
                 <div class="mfrs-ghost-slot" data-mfrs-ghost-slot="2" hidden>
                   <div class="mfrs-ghost-header">
@@ -5449,16 +5432,7 @@
                     <button type="button" class="mfrs-ghost-icon-button mfrs-ghost-remove" aria-label="删除第二只厉鬼" title="删除第二只厉鬼" onclick="var r=this.closest('#mfrs-welcome-root');var s=r&&r.querySelector('[data-mfrs-ghost-slot=&quot;2&quot;]');if(s){s.querySelectorAll('input,textarea').forEach(function(e){e.value='';e.dispatchEvent(new Event('input',{bubbles:true}));});s.hidden=true;}var a=r&&r.querySelector('.mfrs-ghost-add');if(a)a.hidden=false;">×</button>
                   </div>
                   <input data-mfrs="ghostName2" placeholder="第二只厉鬼名称（可选）">
-                  <select data-mfrs="ghostRange2">
-                    <option value="">影响范围等级：沿用默认</option>
-                    <option>C级影响范围</option>
-                    <option>B级影响范围</option>
-                    <option>A级影响范围</option>
-                    <option>S级影响范围</option>
-                    <option>未知影响范围</option>
-                  </select>
                   <textarea data-mfrs="ghostLaw2" placeholder="第二只厉鬼杀人规律（可选）"></textarea>
-                  <textarea data-mfrs="ghostTerror2" placeholder="第二只厉鬼恐怖程度校准建议（可选）"></textarea>
                 </div>
               </div>
             </div>
@@ -5496,7 +5470,7 @@
               <textarea class="mfrs-span-2" data-mfrs="resources" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
               <textarea class="mfrs-span-2" data-mfrs="background" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
             </div>
-            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var gh=function(){var a=[];for(var i=1;i<=2;i++){var n=q('ghostName'+i),l=q('ghostLaw'+i),g=q('ghostRange'+i)||q('ghostLevel')||'未填写',t=q('ghostTerror'+i)||'未填写';if(n||l||q('ghostRange'+i)||q('ghostTerror'+i))a.push('第'+i+'只：'+(n||'未命名')+'；可见杀人规律：'+(l||'未填写')+'；影响范围等级：'+g+'；恐怖程度校准建议：'+t);}return a.length?a.join('\n     '):'无'};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n   - 当前地点：'+(ap[1]||'由当前剧情节点决定')+'\n   - 原著阶段：'+(ap[2]||'未定阶段')+'\n   - 事件压力：'+(ap[3]||'请根据身份与剧情节点判断接入边界')+'\n   - 玩家可见情报：'+(ap[4]||'仅依据当前选择与背景设定')+'\n   - 禁止泄露边界：'+(ap[5]||'不得直接揭露隐藏规律、关键生路和幕后真相')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 默认影响范围等级：'+(q('ghostLevel')||'无')+'\n   - 自定义厉鬼（最多2只）：\n     '+gh()+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background')+'\n\n5. 推演边界与初始化建议\n   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n   - 自定义厉鬼校准：玩家填写的厉鬼名称、可见杀人规律、影响范围等级和恐怖程度校准建议只作为可见设定与偏好；影响范围等级不等于对抗强度，真实规律、代价、限制和可关押条件必须按神秘复苏铁律校准；最多读取两只自定义厉鬼，超出部分无效。\n   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。';var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
+            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var gh=function(){var a=[];for(var i=1;i<=2;i++){var n=q('ghostName'+i),l=q('ghostLaw'+i);if(n||l)a.push('第'+i+'只：'+(n||'未命名')+'；可见杀人规律：'+(l||'未填写'));}return a.length?a.join('\n     '):'无'};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n   - 当前地点：'+(ap[1]||'由当前剧情节点决定')+'\n   - 原著阶段：'+(ap[2]||'未定阶段')+'\n   - 事件压力：'+(ap[3]||'请根据身份与剧情节点判断接入边界')+'\n   - 玩家可见情报：'+(ap[4]||'仅依据当前选择与背景设定')+'\n   - 禁止泄露边界：'+(ap[5]||'不得直接揭露隐藏规律、关键生路和幕后真相')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 自定义厉鬼（最多2只）：\n     '+gh()+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background')+'\n\n5. 推演边界与初始化建议\n   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n   - 自定义厉鬼判定：玩家只提供厉鬼名称和可见杀人规律；影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断；最多读取两只自定义厉鬼，超出部分无效。\n   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。';var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
           </div>
         </div>
       </div>
