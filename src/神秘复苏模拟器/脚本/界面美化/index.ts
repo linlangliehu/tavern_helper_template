@@ -835,6 +835,23 @@ body {
     fillWelcomeStart(root);
   };
 
+  const bindWelcomeGhostButtons = () => {
+    hostDocument.querySelectorAll<HTMLElement>(
+      '.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost',
+    ).forEach(button => {
+      if (button.dataset.mfrsGhostBound === 'true') return;
+      button.dataset.mfrsGhostBound = 'true';
+      button.addEventListener('click', event => {
+        const root = button.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+        if (!root) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        setSecondGhostSlotVisible(root, button.matches('.mfrs-ghost-add, .custom-mfrs-ghost-add, #mfrs-add-ghost'));
+      }, true);
+    });
+  };
+
   let welcomeDashboardAutoOpenDone = false;
 
   const openDashboardForWelcome = () => {
@@ -852,6 +869,7 @@ body {
   };
 
   const enhancePanels = () => {
+    bindWelcomeGhostButtons();
     enhanceChoicePanels();
     enhanceShortTagPanels();
   };
