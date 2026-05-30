@@ -778,6 +778,10 @@ body {
     if (addButton) addButton.hidden = false;
   };
 
+  const welcomeRootSelector = '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root';
+  const ghostPresetSelector = '[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1';
+  const specialAbilityPresetSelector = '[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset';
+
   const syncPresetGhost1 = (root: HTMLElement) => {
     const preset = root.querySelector<HTMLSelectElement>('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1');
     const nameInput = root.querySelector<HTMLInputElement>('[data-mfrs="ghostName1"], #mfrs-ghost-name-1');
@@ -861,11 +865,32 @@ body {
 
   const handleWelcomeChange = (event: Event) => {
     const target = event.target as HTMLElement | null;
-    if (!target?.matches('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1, [data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset')) return;
-    const root = target.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+    if (!target?.matches(`${ghostPresetSelector}, ${specialAbilityPresetSelector}`)) return;
+    const root = target.closest<HTMLElement>(welcomeRootSelector);
     if (!root) return;
-    if (target.matches('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1')) syncPresetGhost1(root);
-    if (target.matches('[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset')) syncSpecialAbilityPreset(root);
+    if (target.matches(ghostPresetSelector)) syncPresetGhost1(root);
+    if (target.matches(specialAbilityPresetSelector)) syncSpecialAbilityPreset(root);
+  };
+
+  const bindWelcomePresetControls = () => {
+    hostDocument.querySelectorAll<HTMLSelectElement>(`${ghostPresetSelector}, ${specialAbilityPresetSelector}`).forEach(select => {
+      if (select.dataset.mfrsPresetBound === 'true') return;
+      const root = select.closest<HTMLElement>(welcomeRootSelector);
+      if (!root) return;
+      select.dataset.mfrsPresetBound = 'true';
+      const sync = () => {
+        const currentRoot = select.closest<HTMLElement>(welcomeRootSelector);
+        if (!currentRoot) return;
+        if (select.matches(ghostPresetSelector)) syncPresetGhost1(currentRoot);
+        if (select.matches(specialAbilityPresetSelector)) syncSpecialAbilityPreset(currentRoot);
+      };
+      select.addEventListener('change', sync, true);
+      select.addEventListener('input', sync, true);
+      select.addEventListener('click', () => hostWindow?.setTimeout(sync, 0), true);
+      select.addEventListener('keyup', event => {
+        if (event.key === 'Enter' || event.key === ' ') hostWindow?.setTimeout(sync, 0);
+      }, true);
+    });
   };
 
   const bindWelcomeGhostButtons = () => {
@@ -889,7 +914,7 @@ body {
 
   const openDashboardForWelcome = () => {
     if (welcomeDashboardAutoOpenDone) return;
-    const welcomeRoot = hostDocument.querySelector<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+    const welcomeRoot = hostDocument.querySelector<HTMLElement>(welcomeRootSelector);
     if (!welcomeRoot) return;
     welcomeDashboardAutoOpenDone = true;
     const delays = [0, 500, 1500, 3000];
@@ -902,6 +927,7 @@ body {
   };
 
   const enhancePanels = () => {
+    bindWelcomePresetControls();
     bindWelcomeGhostButtons();
     enhanceChoicePanels();
     enhanceShortTagPanels();
