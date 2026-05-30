@@ -1,4 +1,4 @@
-﻿# yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
+# yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 神秘复苏模拟器.png
 版本: '1.0'
 作者: 琳琅
@@ -5666,7 +5666,7 @@
   - 正则名称: '[显示]渲染神秘复苏短标签面板'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2002
     启用: true
-    查找表达式: "/<sp_(import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>\\s*([\\s\\S]*?)\\s*<\\/sp_\\1>/gi"
+    查找表达式: "/<(?:sp_|mfrs_)(import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use|medium|domain|ghost_slave|use_ghost|suppress|deduce|item|custom_ghost)>\\s*([\\s\\S]*?)\\s*<\\/(?:sp_|mfrs_)\\1>/gi"
     替换为: |-
       <style>
       .sp-panel {
@@ -5799,6 +5799,14 @@
       .sp-panel-location_explore .sp-panel-mark::after { content: '地点探索'; }
       .sp-panel-clue_deduce .sp-panel-mark::after { content: '线索推演'; }
       .sp-panel-item_use .sp-panel-mark::after { content: '灵异物品'; }
+      .sp-panel-medium .sp-panel-mark::after { content: '媒介接触'; }
+      .sp-panel-domain .sp-panel-mark::after { content: '鬼域判定'; }
+      .sp-panel-ghost_slave .sp-panel-mark::after { content: '鬼奴衍生'; }
+      .sp-panel-use_ghost .sp-panel-mark::after { content: '主动用鬼'; }
+      .sp-panel-suppress .sp-panel-mark::after { content: '压制关押'; }
+      .sp-panel-deduce .sp-panel-mark::after { content: '规律判定'; }
+      .sp-panel-item .sp-panel-mark::after { content: '灵异物品'; }
+      .sp-panel-custom_ghost .sp-panel-mark::after { content: '开局厉鬼'; }
       .sp-panel-ghost_encounter { border-left-color: #9b2323; }
       .sp-panel-ghost_suppress { border-left-color: #b04444; }
       .sp-panel-puzzle_solve { border-left-color: #7c2a46; }
@@ -5841,7 +5849,7 @@
         </div>
         <div class="sp-panel-body">$2</div>
         <div class="sp-panel-footer"><span class="sp-panel-mark"></span></div>
-        <div class="sp-db-live">数据库状态：等待前端同步；模板版本：chatSheets v2；模板表数量：11；最近刷新：打开数据库前端后自动读取。</div>
+        <div class="sp-db-live">数据库状态：等待前端同步；模板版本：chatSheets v2；模板表数量：14；最近刷新：打开数据库前端后自动读取。</div>
         <button type="button" class="sp-db-open" onclick="window.MysteryDatabaseFrontend?.openPanel?.()">打开数据库前端</button>
       </div>
     来源:
@@ -5856,7 +5864,7 @@
   - 正则名称: '[显示]神秘复苏短标签生成中'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2003
     启用: true
-    查找表达式: "/<sp_(input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>(?![\\s\\S]*?<\\/sp_\\1>)([\\s\\S]*)$/gi"
+    查找表达式: "/<(?:sp_|mfrs_)(input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use|medium|domain|ghost_slave|use_ghost|suppress|deduce|item|custom_ghost)>(?![\\s\\S]*?<\\/(?:sp_|mfrs_)\\1>)([\\s\\S]*)$/gi"
     替换为: |-
       <details open>
       <summary>神秘复苏面板生成中...</summary>

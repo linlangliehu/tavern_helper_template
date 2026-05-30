@@ -1,4 +1,4 @@
-﻿# yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
+# yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 神秘复苏模拟器.png
 版本: '1.0'
 作者: 琳琅
@@ -162,6 +162,14 @@
   - 名称: 厉鬼恐怖程度与灾害等级规则
     <<: *世界书常驻规则
     文件: 世界书/规则/厉鬼恐怖程度与灾害等级规则
+
+  - 名称: 鬼域规则
+    <<: *世界书常驻规则
+    文件: 世界书/规则/鬼域规则
+
+  - 名称: 鬼奴与衍生物规则
+    <<: *世界书常驻规则
+    文件: 世界书/规则/鬼奴与衍生物规则
 
   - 名称: 灵异判定路由与输入锁规则
     <<: *世界书常驻规则
@@ -5420,9 +5428,15 @@
               <div class="mfrs-span-2 mfrs-ghost-list" data-mfrs-ghost-list>
                 <div class="mfrs-ghost-slot" data-mfrs-ghost-slot="1">
                   <div class="mfrs-ghost-header">
-                    <div class="mfrs-ghost-label">自定义厉鬼 1</div>
+                    <div class="mfrs-ghost-label">自定义厉鬼 1（可选）</div>
                     <button type="button" class="mfrs-ghost-icon-button mfrs-ghost-add" aria-label="添加第二只厉鬼" title="添加第二只厉鬼" onclick="var r=this.closest('#mfrs-welcome-root');var s=r&&r.querySelector('[data-mfrs-ghost-slot=&quot;2&quot;]');if(s){s.hidden=false;var i=s.querySelector('input, textarea');if(i)i.focus();this.hidden=true;}">+</button>
                   </div>
+                  <select data-mfrs="ghostPreset1" onchange="var r=this.closest('#mfrs-welcome-root');var n=r&&r.querySelector('[data-mfrs=&quot;ghostName1&quot;]');var l=r&&r.querySelector('[data-mfrs=&quot;ghostLaw1&quot;]');var v=this.value||'';var g=v.split('；')[0]||'';var m=v.match(/可见杀人规律：([^；]+)/);if(n){n.value=v?g:'';n.dispatchEvent(new Event('input',{bubbles:true}));}if(l){l.value=v&&m?m[1]:'';l.dispatchEvent(new Event('input',{bubbles:true}));}">
+                    <option value="">自定义厉鬼 1：手动填写或无</option>
+                    <option value="鬼手印；可见杀人规律：直接接触厉鬼、鬼奴、灵异媒介或驭鬼者体内灵异时，疑似会窃取目标一部分灵异力量并留下冰冷手印；可见档案：被留下手印的目标可能短暂规律残缺、鬼域破损、媒介失效或复苏失衡，鬼手印会获得残缺灵异拼图；成长主题：接触窃取、灵异残片、拼图拼接、印域叠加；驾驭方向：死机、与被窃拼图平衡、异类化为灵异空壳、手印诅咒。">预设｜鬼手印｜规律：接触留下手印并窃取灵异</option>
+                    <option value="鬼档案；可见杀人规律：填写、确认、签收厉鬼档案或按档案编号调用、寻找目标者，疑似会被记录并逐渐变成已归档对象；可见档案：完整验证厉鬼杀人规律、媒介、触发条件、规避/压制窗口、鬼域表现和关押条件后，可生成厉鬼档案拼图；成长主题：收录厉鬼档案、调用档案规律、档案鬼域叠加、代价转嫁；驾驭方向：档案厉鬼承受代价、多档案互相平衡、鬼档案本体近似死机、活档案异类化。">预设｜鬼档案｜规律：完整档案可收录厉鬼</option>
+                    <option value="鬼拓本；可见杀人规律：接触厉鬼规律、受害痕迹、灵异媒介或鬼域残留后，疑似会在纸面、皮肤、墙面或影像中留下拓印纹路，并复刻目标的一部分杀人规律；可见档案：同类型拓印规律会互相覆盖、融合并进阶，不同类型拓印规律会被撕碎、剥离或分解成灵异墨迹，用来提高鬼拓本恐怖程度；成长主题：规律复刻、同类融合、异类分解、拓本拼页、复写污染；驾驭方向：死机、复刻规律平衡、异类化为活拓本、拓印诅咒。">预设｜鬼拓本｜规律：复刻并重组其它厉鬼规律</option>
+                  </select>
                   <input data-mfrs="ghostName1" placeholder="厉鬼名称（例：鬼眼、鬼影、敲门鬼）">
                   <textarea data-mfrs="ghostLaw1" placeholder="杀人规律（例：听到敲门声后会被标记）"></textarea>
                 </div>
@@ -5435,6 +5449,16 @@
                   <textarea data-mfrs="ghostLaw2" placeholder="第二只厉鬼杀人规律（可选）"></textarea>
                 </div>
               </div>
+            </div>
+            <div class="mfrs-section-title">特殊能力</div>
+            <div class="mfrs-row">
+              <select class="mfrs-span-2" data-mfrs="specialAbilityPreset" onchange="var r=this.closest('#mfrs-welcome-root');var a=r&&r.querySelector('[data-mfrs=&quot;specialAbility&quot;]');if(a){a.value=this.value||'';a.dispatchEvent(new Event('input',{bubbles:true}));}">
+                <option value="">特殊能力：自定义或无</option>
+                <option value="永久死机驾驭：玩家已经成功驾驭的所有厉鬼本体都会永久处于死机状态，包括开局厉鬼和后续驾驭的新厉鬼；调用已驾驭厉鬼的本体能力、基础鬼域或本体杀人规律时不增加自身复苏代价，也不会被这些本体厉鬼反噬。新厉鬼必须先按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程；若已驾驭厉鬼通过拼图、档案、残片、鬼奴、媒介或交易调用外来灵异，外来灵异仍需单独判定污染、冲突、反噬和失控风险。选择鬼手印时，该能力会稳定鬼手印本体与冰冷手印媒介，降低接触窃取、残片调用和印域叠加对玩家自身的复苏压力，但被窃残片本身仍可能复苏、污染、互相冲突或反向锁定。">预设｜永久死机驾驭｜已驾驭厉鬼全部死机</option>
+                <option value="灵异档案视野：玩家接触灵异现象后，可获得鬼档案收录辅助提示，包括档案完整度、已验证字段、缺失字段、疑似媒介、疑似触发条件、鬼域迹象、可收录风险和档案拼图稳定度；该视野只提示收录方向，不直接公开完整隐藏规律、源头位置、最终生路或无条件关押方案。">预设｜灵异档案视野｜辅助鬼档案收录档案</option>
+                <option value="规律目录视野：玩家接触灵异现象、厉鬼规律、受害痕迹、灵异媒介或鬼域残留后，可获得面向鬼拓本的目录提示，包括规律类型、拓印完整度、兼容方向、可融合/可分解倾向、疑似媒介、污染风险、反噬风险和推荐处理；该视野只整理玩家已接触证据，不直接公开完整隐藏规律、源头位置、最终生路或无条件关押方案。">预设｜规律目录视野｜辅助鬼拓本整理拓印</option>
+              </select>
+              <textarea class="mfrs-span-2" data-mfrs="specialAbility" placeholder="自定义特殊能力（可选；特殊能力上限为1个，选择预设时此处会自动填入）"></textarea>
             </div>
             <div class="mfrs-section-title">时空锚点</div>
             <div class="mfrs-row">
@@ -5470,7 +5494,7 @@
               <textarea class="mfrs-span-2" data-mfrs="resources" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
               <textarea class="mfrs-span-2" data-mfrs="background" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
             </div>
-            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var gh=function(){var a=[];for(var i=1;i<=2;i++){var n=q('ghostName'+i),l=q('ghostLaw'+i);if(n||l)a.push('第'+i+'只：'+(n||'未命名')+'；可见杀人规律：'+(l||'未填写'));}return a.length?a.join('\n     '):'无'};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n   - 当前地点：'+(ap[1]||'由当前剧情节点决定')+'\n   - 原著阶段：'+(ap[2]||'未定阶段')+'\n   - 事件压力：'+(ap[3]||'请根据身份与剧情节点判断接入边界')+'\n   - 玩家可见情报：'+(ap[4]||'仅依据当前选择与背景设定')+'\n   - 禁止泄露边界：'+(ap[5]||'不得直接揭露隐藏规律、关键生路和幕后真相')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 自定义厉鬼（最多2只）：\n     '+gh()+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background')+'\n\n5. 推演边界与初始化建议\n   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n   - 自定义厉鬼判定：玩家只提供厉鬼名称和可见杀人规律；影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断；最多读取两只自定义厉鬼，超出部分无效。\n   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。';var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
+            <button type="button" class="mfrs-submit" onclick="var r=this.closest('#mfrs-welcome-root');var q=function(k){var e=r.querySelector('[data-mfrs='+k+']');return e?e.value.trim():''};var gh=function(){var a=[],p=q('ghostPreset1');if(p)a.push('第1只：预设厉鬼：'+p);for(var i=1;i<=2;i++){if(i===1&&p)continue;var n=q('ghostName'+i),l=q('ghostLaw'+i);if(n||l)a.push('第'+i+'只：'+(n||'未命名')+'；可见杀人规律：'+(l||'未填写'));}return a.length?a.join('\n     '):'无'};var ap=q('anchor').split('|');var msg='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+q('name')+'\n   - 年龄/性别：'+q('ageGender')+'\n   - 剧情节点：'+(ap[0]||'未选择节点')+'\n   - 当前地点：'+(ap[1]||'由当前剧情节点决定')+'\n   - 原著阶段：'+(ap[2]||'未定阶段')+'\n   - 事件压力：'+(ap[3]||'请根据身份与剧情节点判断接入边界')+'\n   - 玩家可见情报：'+(ap[4]||'仅依据当前选择与背景设定')+'\n   - 禁止泄露边界：'+(ap[5]||'不得直接揭露隐藏规律、关键生路和幕后真相')+'\n\n2. 身份与能力\n   - 身份：'+q('identity')+'\n   - 开局厉鬼选择（第1只可选预设或自定义，第2只可自定义）：\n     '+gh()+'\n   - 特殊能力（上限1个）：'+(q('specialAbility')||'无')+'\n\n3. 初始资源\n   '+(q('resources')||'无')+'\n\n4. 背景设定\n   '+q('background')+'\n\n5. 推演边界与初始化建议\n   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n   - 开局厉鬼判定：若玩家在第1只厉鬼选择预设，只能把预设资料当作开局可见档案和成长方向，不得直接明牌隐藏规律、关键生路或完整拼图；若玩家自定义厉鬼，只提供厉鬼名称和可见杀人规律，影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断。第1只厉鬼只能读取预设或自定义之一，第2只仅读取自定义，超出部分无效。\n   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“永久死机驾驭”，玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。';var d=window.parent&&window.parent.document?window.parent.document:document;var t=d.querySelector('#send_textarea, textarea[name=send_textarea], textarea');if(t){t.value=msg;t.dispatchEvent(new Event('input',{bubbles:true}));t.focus();}else{alert(msg);}">进入神秘复苏世界</button>
           </div>
         </div>
       </div>
@@ -5642,7 +5666,7 @@
   - 正则名称: '[显示]渲染神秘复苏短标签面板'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2002
     启用: true
-    查找表达式: "/<sp_(import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>\\s*([\\s\\S]*?)\\s*<\\/sp_\\1>/gi"
+    查找表达式: "/<(?:sp_|mfrs_)(import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use|medium|domain|ghost_slave|use_ghost|suppress|deduce|item|custom_ghost)>\\s*([\\s\\S]*?)\\s*<\\/(?:sp_|mfrs_)\\1>/gi"
     替换为: |-
       <style>
       .sp-panel {
@@ -5775,6 +5799,14 @@
       .sp-panel-location_explore .sp-panel-mark::after { content: '地点探索'; }
       .sp-panel-clue_deduce .sp-panel-mark::after { content: '线索推演'; }
       .sp-panel-item_use .sp-panel-mark::after { content: '灵异物品'; }
+      .sp-panel-medium .sp-panel-mark::after { content: '媒介接触'; }
+      .sp-panel-domain .sp-panel-mark::after { content: '鬼域判定'; }
+      .sp-panel-ghost_slave .sp-panel-mark::after { content: '鬼奴衍生'; }
+      .sp-panel-use_ghost .sp-panel-mark::after { content: '主动用鬼'; }
+      .sp-panel-suppress .sp-panel-mark::after { content: '压制关押'; }
+      .sp-panel-deduce .sp-panel-mark::after { content: '规律判定'; }
+      .sp-panel-item .sp-panel-mark::after { content: '灵异物品'; }
+      .sp-panel-custom_ghost .sp-panel-mark::after { content: '开局厉鬼'; }
       .sp-panel-ghost_encounter { border-left-color: #9b2323; }
       .sp-panel-ghost_suppress { border-left-color: #b04444; }
       .sp-panel-puzzle_solve { border-left-color: #7c2a46; }
@@ -5817,7 +5849,7 @@
         </div>
         <div class="sp-panel-body">$2</div>
         <div class="sp-panel-footer"><span class="sp-panel-mark"></span></div>
-        <div class="sp-db-live">数据库状态：等待前端同步；模板版本：chatSheets v2；模板表数量：11；最近刷新：打开数据库前端后自动读取。</div>
+        <div class="sp-db-live">数据库状态：等待前端同步；模板版本：chatSheets v2；模板表数量：14；最近刷新：打开数据库前端后自动读取。</div>
         <button type="button" class="sp-db-open" onclick="window.MysteryDatabaseFrontend?.openPanel?.()">打开数据库前端</button>
       </div>
     来源:
@@ -5832,7 +5864,7 @@
   - 正则名称: '[显示]神秘复苏短标签生成中'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2003
     启用: true
-    查找表达式: "/<sp_(input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use)>(?![\\s\\S]*?<\\/sp_\\1>)([\\s\\S]*)$/gi"
+    查找表达式: "/<(?:sp_|mfrs_)(input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use|medium|domain|ghost_slave|use_ghost|suppress|deduce|item|custom_ghost)>(?![\\s\\S]*?<\\/(?:sp_|mfrs_)\\1>)([\\s\\S]*)$/gi"
     替换为: |-
       <details open>
       <summary>神秘复苏面板生成中...</summary>

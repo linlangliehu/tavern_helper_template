@@ -53,6 +53,29 @@ const ControlledGhostSchema = z.object({
   压制关系: z.string().default('未形成压制'),
 });
 
+const ArchivedGhostSchema = z.object({
+  档案厉鬼名称: z.string().default('未命名档案厉鬼'),
+  收录状态: z.string().default('未收录'),
+  厉鬼信息: z.string().default('未确认'),
+  已知规律: z.string().default('未确认'),
+  猜测规律: z.string().default('未确认'),
+  鬼域: z.string().default('未确认'),
+  收录进度: PercentSchema.default(0),
+  档案完整度: z.string().default('0%'),
+  可调用范围: z.string().default('未确认'),
+});
+
+const CollectedRuleSchema = z.object({
+  来源厉鬼: z.string().default('未确认'),
+  获取方式: z.string().default('未确认'),
+  规律类型: z.string().default('未分类'),
+  规律内容: z.string().default('未确认'),
+  规律进阶: z.string().default('未形成'),
+  规律分解: z.string().default('未分解'),
+  完整度: z.string().default('未知'),
+  风险备注: z.string().default('无'),
+});
+
 const SupernaturalItemSchema = z.object({
   名称: z.string().default(''),
   类型: z.string().default('其他'),
@@ -164,6 +187,8 @@ export const Schema = z.object({
     总复苏风险: 0,
     已驾驭厉鬼: [],
   }),
+  收录档案: z.array(ArchivedGhostSchema).default([]),
+  收录规律: z.array(CollectedRuleSchema).default([]),
   灵异资源: z.object({
     鬼拼图: z.array(z.string()).default([]),
     灵异物品: z.array(SupernaturalItemSchema).default([]),

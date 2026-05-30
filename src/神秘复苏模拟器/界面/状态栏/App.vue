@@ -247,6 +247,64 @@
           <em>{{ note.value }}</em>
         </div>
       </div>
+      <div class="module-body runtime-detail-grid">
+        <section class="runtime-detail-block">
+          <div class="runtime-detail-title">驾驭厉鬼</div>
+          <div v-if="controlledGhostPanelItems.length" class="runtime-detail-list">
+            <article class="runtime-detail-item" v-for="ghost in controlledGhostPanelItems" :key="ghost.title + ghost.meta">
+              <div class="runtime-detail-head">
+                <strong>{{ ghost.title }}</strong>
+                <span>{{ ghost.meta }}</span>
+              </div>
+              <dl>
+                <template v-for="row in ghost.rows" :key="row.label">
+                  <dt>{{ row.label }}</dt>
+                  <dd>{{ row.value }}</dd>
+                </template>
+              </dl>
+            </article>
+          </div>
+          <div v-else class="runtime-detail-empty">暂无驾驭厉鬼</div>
+        </section>
+
+        <section class="runtime-detail-block">
+          <div class="runtime-detail-title">收录档案</div>
+          <div v-if="archivedGhostPanelItems.length" class="runtime-detail-list">
+            <article class="runtime-detail-item" v-for="archive in archivedGhostPanelItems" :key="archive.title + archive.meta">
+              <div class="runtime-detail-head">
+                <strong>{{ archive.title }}</strong>
+                <span>{{ archive.meta }}</span>
+              </div>
+              <dl>
+                <template v-for="row in archive.rows" :key="row.label">
+                  <dt>{{ row.label }}</dt>
+                  <dd>{{ row.value }}</dd>
+                </template>
+              </dl>
+            </article>
+          </div>
+          <div v-else class="runtime-detail-empty">暂无收录档案</div>
+        </section>
+
+        <section class="runtime-detail-block">
+          <div class="runtime-detail-title">收录规律</div>
+          <div v-if="collectedRulePanelItems.length" class="runtime-detail-list">
+            <article class="runtime-detail-item" v-for="rule in collectedRulePanelItems" :key="rule.title + rule.meta">
+              <div class="runtime-detail-head">
+                <strong>{{ rule.title }}</strong>
+                <span>{{ rule.meta }}</span>
+              </div>
+              <dl>
+                <template v-for="row in rule.rows" :key="row.label">
+                  <dt>{{ row.label }}</dt>
+                  <dd>{{ row.value }}</dd>
+                </template>
+              </dl>
+            </article>
+          </div>
+          <div v-else class="runtime-detail-empty">暂无收录规律</div>
+        </section>
+      </div>
     </section>
 
     <section v-if="options.length && !isDeathRiskCritical" class="card-module options-module">
@@ -576,6 +634,9 @@ const defaultGhostState = {
   已驾驭厉鬼: [],
 }
 
+const defaultCollectedArchives: unknown[] = []
+const defaultCollectedRules: unknown[] = []
+
 const defaultResources = {
   鬼拼图: [],
   灵异物品: [],
@@ -639,6 +700,8 @@ const defaults = {
   规律推理记录: [],
   在场人物: [],
   驭鬼者状态: defaultGhostState,
+  收录档案: defaultCollectedArchives,
+  收录规律: defaultCollectedRules,
   灵异资源: defaultResources,
   势力关系: defaultFactionState,
   世界线记录: [],
@@ -673,6 +736,8 @@ const ghosts = computed(() => d().驾驭厉鬼 ?? [])
 const items = computed(() => d().灵异物品 ?? [])
 const eventFile = computed(() => d().当前灵异事件 ?? defaultEventFile)
 const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState)
+const collectedArchives = computed(() => Array.isArray(d().收录档案) ? d().收录档案 : defaultCollectedArchives)
+const collectedRules = computed(() => Array.isArray(d().收录规律) ? d().收录规律 : defaultCollectedRules)
 const factionState = computed(() => d().势力关系 ?? defaultFactionState)
 const mainlineProgress = computed(() => d().主线进度 ?? defaultMainlineProgress)
 
@@ -816,6 +881,15 @@ function filledItems() {
 function listText(values: unknown, fallback = '无') {
   if (!Array.isArray(values) || values.length === 0) return fallback
   return values.map(value => textOrFallback(value, '')).filter(Boolean).join('；') || fallback
+}
+
+function objectText(value: unknown, key: string, fallback = '无') {
+  if (!value || typeof value !== 'object') return fallback
+  return textOrFallback((value as Record<string, unknown>)[key], fallback)
+}
+
+function arrayToPanelItems<T>(values: T[], limit = 3) {
+  return values.slice(0, limit)
 }
 
 function includesAny(text: string, keywords: string[]) {
@@ -974,6 +1048,57 @@ const intelligenceNotes = computed(() => [
   { label: '资源档案', value: displayResourceSummary.value },
 ])
 
+const controlledGhostPanelItems = computed(() => {
+  const runtimeGhosts = Array.isArray(ghostState.value.已驾驭厉鬼) ? ghostState.value.已驾驭厉鬼 : []
+  const source = runtimeGhosts.length ? runtimeGhosts : ghosts.value.map(ghost => ({
+    代号: ghost.厉鬼名称,
+    恐怖等级: '未知',
+    拼图特征: ghost.厉鬼名称,
+    杀人规律: ghost.杀人规律,
+    使用能力: '未确认',
+    使用代价: '未确认',
+    复苏进度: d().厉鬼复苏程度 ?? 0,
+    是否死机: false,
+    压制关系: '开局设定，等待首轮验证',
+  }))
+  return arrayToPanelItems(source).map(ghost => ({
+    title: objectText(ghost, '代号', '未命名厉鬼'),
+    meta: `复苏 ${objectText(ghost, '复苏进度', '0')}% / ${Boolean((ghost as Record<string, unknown>).是否死机) ? '死机' : '未死机'}`,
+    rows: [
+      { label: '规律', value: objectText(ghost, '杀人规律') },
+      { label: '拼图', value: objectText(ghost, '拼图特征', '未确认') },
+      { label: '能力', value: objectText(ghost, '使用能力', '未确认') },
+      { label: '代价', value: objectText(ghost, '使用代价', '未确认') },
+      { label: '压制', value: objectText(ghost, '压制关系', '未形成压制') },
+    ],
+  }))
+})
+
+const archivedGhostPanelItems = computed(() => arrayToPanelItems(collectedArchives.value).map(archive => ({
+  title: objectText(archive, '档案厉鬼名称', '未命名档案厉鬼'),
+  meta: `${objectText(archive, '收录状态', '未收录')} / 进度 ${objectText(archive, '收录进度', '0')}%`,
+  rows: [
+    { label: '信息', value: objectText(archive, '厉鬼信息', '未确认') },
+    { label: '已知', value: objectText(archive, '已知规律', '未确认') },
+    { label: '猜测', value: objectText(archive, '猜测规律', '未确认') },
+    { label: '鬼域', value: objectText(archive, '鬼域', '未确认') },
+    { label: '完整度', value: objectText(archive, '档案完整度', '0%') },
+    { label: '调用', value: objectText(archive, '可调用范围', '未确认') },
+  ],
+})))
+
+const collectedRulePanelItems = computed(() => arrayToPanelItems(collectedRules.value).map(rule => ({
+  title: objectText(rule, '规律内容', '未确认规律'),
+  meta: `${objectText(rule, '获取方式', '未确认')} / ${objectText(rule, '规律类型', '未分类')}`,
+  rows: [
+    { label: '来源', value: objectText(rule, '来源厉鬼', '未确认') },
+    { label: '进阶', value: objectText(rule, '规律进阶', '未形成') },
+    { label: '分解', value: objectText(rule, '规律分解', '未分解') },
+    { label: '完整', value: objectText(rule, '完整度', '未知') },
+    { label: '风险', value: objectText(rule, '风险备注', '无') },
+  ],
+})))
+
 function buildStartMessage() {
   const current = d()
   const ghostList = filledGhosts()
@@ -1077,6 +1202,8 @@ function commitStartData() {
       总复苏风险: initialReviveRisk,
       已驾驭厉鬼: controlledGhosts,
     },
+    收录档案: [],
+    收录规律: [],
     灵异资源: resources,
     势力关系: {
       总部备案状态: filingStateFor(identity),
@@ -1190,6 +1317,7 @@ function handleReset() {
     规律推理记录: [],
     在场人物: [],
     驭鬼者状态: { 总复苏风险: 0, 已驾驭厉鬼: [] },
+    收录档案: [], 收录规律: [],
     灵异资源: { 鬼拼图: [], 灵异物品: [], 黄金储备: '未准备' },
     势力关系: { ...defaultFactionState },
     世界线记录: [],
@@ -1928,6 +2056,101 @@ function handleReset() {
   text-shadow: 0 0 5px rgba(255, 0, 0, 0.16);
 }
 
+.runtime-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.runtime-detail-block {
+  min-width: 0;
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(14, 0, 0, 0.88), rgba(3, 0, 0, 0.95)),
+    repeating-linear-gradient(180deg, rgba(255, 0, 0, 0.04) 0 1px, transparent 1px 10px);
+  border: 1px solid rgba(170, 0, 0, 0.52);
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.76),
+    0 0 8px rgba(255, 0, 0, 0.15);
+}
+
+.runtime-detail-title {
+  margin-bottom: 8px;
+  color: #ff3030;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-shadow: 0 0 7px rgba(255, 0, 0, 0.38);
+}
+
+.runtime-detail-list {
+  display: grid;
+  gap: 8px;
+}
+
+.runtime-detail-item {
+  min-width: 0;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(20, 0, 0, 0.72), rgba(5, 0, 0, 0.84));
+  border-left: 3px solid rgba(220, 0, 0, 0.72);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.68);
+}
+
+.runtime-detail-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  margin-bottom: 7px;
+}
+
+.runtime-detail-head strong {
+  color: #e6b2b2;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.runtime-detail-head span {
+  color: #9b6666;
+  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-size: 9px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.runtime-detail-item dl {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 4px 7px;
+  margin: 0;
+}
+
+.runtime-detail-item dt {
+  color: #ff3030;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.runtime-detail-item dd {
+  margin: 0;
+  color: #c8a0a0;
+  font-size: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.runtime-detail-empty {
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  color: #7c4a4a;
+  font-size: 11px;
+  border: 1px dashed rgba(150, 0, 0, 0.42);
+  background: rgba(4, 0, 0, 0.5);
+}
+
 @keyframes eye-glow {
   0%, 100% { opacity: 0.3; text-shadow: none; }
   50% { opacity: 0.6; text-shadow: 0 0 6px rgba(139, 26, 26, 0.4); }
@@ -2247,7 +2470,8 @@ function handleReset() {
   }
 
   .survival-strip,
-  .archive-layout {
+  .archive-layout,
+  .runtime-detail-grid {
     grid-template-columns: 1fr;
   }
 

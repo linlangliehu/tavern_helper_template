@@ -207,7 +207,7 @@ function installCompatibilityApi() {
       const api = requireApi(hostWindow);
       if (!api.importTemplateFromData) throw new Error('模板导入接口不可用。');
       await api.importTemplateFromData(templateData);
-      hostWindow.toastr?.success?.('神秘复苏 11 表模板已导入。');
+      hostWindow.toastr?.success?.('神秘复苏 14 表模板已导入。');
       return true;
     },
     async openVisualizer() {

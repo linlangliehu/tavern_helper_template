@@ -31,7 +31,7 @@ function checkDatabaseAPI(): boolean {
 }
 
 /**
- * 检查当前是否已加载神秘复苏 11 表模板
+ * 检查当前是否已加载神秘复苏 14 表模板
  */
 async function checkTemplateStatus(): Promise<void> {
   if (!checkDatabaseAPI()) {
@@ -51,7 +51,7 @@ async function checkTemplateStatus(): Promise<void> {
 
     // 检查是否包含神秘复苏专用表
     const sheetNames = Object.keys(template.sheets);
-    const mysteryTables = ['全局状态', '玩家状态', '灵异事件', '厉鬼档案', '线索'];
+    const mysteryTables = ['全局状态', '玩家状态', '灵异事件', '厉鬼档案', '线索', '驾驭厉鬼', '收录档案', '收录规律'];
     const hasMysteryTables = mysteryTables.every(name => sheetNames.includes(name));
 
     panelState.templateLoaded = hasMysteryTables;
@@ -64,7 +64,7 @@ async function checkTemplateStatus(): Promise<void> {
 }
 
 /**
- * 导入神秘复苏 11 表模板
+ * 导入神秘复苏 14 表模板
  */
 async function importMysteryTemplate(): Promise<boolean> {
   if (!checkDatabaseAPI()) {
@@ -77,7 +77,7 @@ async function importMysteryTemplate(): Promise<boolean> {
     const api = (window as any).AutoCardUpdaterAPI;
     await api.importTemplateFromData(templateData);
 
-    console.log('[神秘复苏数据库前端] 神秘复苏 11 表模板导入成功');
+    console.log('[神秘复苏数据库前端] 神秘复苏 14 表模板导入成功');
     await checkTemplateStatus();
     return true;
   } catch (err) {

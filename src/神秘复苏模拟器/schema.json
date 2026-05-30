@@ -345,6 +345,90 @@
         }
       }
     },
+    "收录档案": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "档案厉鬼名称": {
+            "default": "未命名档案厉鬼",
+            "type": "string"
+          },
+          "收录状态": {
+            "default": "未收录",
+            "type": "string"
+          },
+          "厉鬼信息": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "已知规律": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "猜测规律": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "鬼域": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "收录进度": {
+            "$ref": "#/$defs/__schema0"
+          },
+          "档案完整度": {
+            "default": "0%",
+            "type": "string"
+          },
+          "可调用范围": {
+            "default": "未确认",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "收录规律": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "来源厉鬼": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "获取方式": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "规律类型": {
+            "default": "未分类",
+            "type": "string"
+          },
+          "规律内容": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "规律进阶": {
+            "default": "未形成",
+            "type": "string"
+          },
+          "规律分解": {
+            "default": "未分解",
+            "type": "string"
+          },
+          "完整度": {
+            "default": "未知",
+            "type": "string"
+          },
+          "风险备注": {
+            "default": "无",
+            "type": "string"
+          }
+        }
+      }
+    },
     "灵异资源": {
       "default": {
         "鬼拼图": [],

@@ -32,6 +32,30 @@ function riskText(value: unknown, suffix = '') {
   return text.includes('/') || text.includes('%') ? text : `${text}${suffix}`;
 }
 
+function arrayItems(value: unknown): Record<string, any>[] {
+  return Array.isArray(value) ? value.filter(item => item && typeof item === 'object') : [];
+}
+
+function joinLimited(values: unknown[], fallback = '无', limit = 2) {
+  const items = values.map(value => String(value ?? '').trim()).filter(Boolean).slice(0, limit);
+  return items.length ? items.join('、') : fallback;
+}
+
+function controlledGhostSummary(data: StatusData) {
+  const runtimeGhosts = arrayItems(data.驭鬼者状态?.已驾驭厉鬼);
+  const openingGhosts = arrayItems(data.驾驭厉鬼);
+  const source = runtimeGhosts.length ? runtimeGhosts : openingGhosts;
+  return joinLimited(source.map(ghost => ghost.代号 ?? ghost.厉鬼名称), '无');
+}
+
+function archivedGhostSummary(data: StatusData) {
+  return joinLimited(arrayItems(data.收录档案).map(archive => archive.档案厉鬼名称), '无');
+}
+
+function collectedRuleSummary(data: StatusData) {
+  return joinLimited(arrayItems(data.收录规律).map(rule => rule.规律内容 ?? rule.规律类型), '无');
+}
+
 function buildSummaryText(data: StatusData) {
   const event = data.当前灵异事件 ?? {};
   const ghostState = data.驭鬼者状态 ?? {};
@@ -41,6 +65,9 @@ function buildSummaryText(data: StatusData) {
     death: riskText(data.风险值, '/100'),
     revive: riskText(ghostState.总复苏风险 ?? data.厉鬼复苏程度, '%'),
     state: valueText(data.状态, '健康'),
+    ghosts: controlledGhostSummary(data),
+    archives: archivedGhostSummary(data),
+    rules: collectedRuleSummary(data),
   };
 }
 
@@ -65,6 +92,9 @@ function renderSummary(host: HTMLDivElement) {
   summaryEl.querySelector<HTMLElement>('[data-field="death"]')!.textContent = summary.death;
   summaryEl.querySelector<HTMLElement>('[data-field="revive"]')!.textContent = summary.revive;
   summaryEl.querySelector<HTMLElement>('[data-field="state"]')!.textContent = summary.state;
+  summaryEl.querySelector<HTMLElement>('[data-field="ghosts"]')!.textContent = summary.ghosts;
+  summaryEl.querySelector<HTMLElement>('[data-field="archives"]')!.textContent = summary.archives;
+  summaryEl.querySelector<HTMLElement>('[data-field="rules"]')!.textContent = summary.rules;
 }
 
 function ensureFixedStatusBar() {
@@ -106,6 +136,9 @@ function ensureFixedStatusBar() {
       <span title="死亡风险">死亡：<strong data-field="death"></strong></span>
       <span title="复苏风险">复苏：<strong data-field="revive"></strong></span>
       <span title="状态">状态：<strong data-field="state"></strong></span>
+      <span title="当前驾驭厉鬼">驾驭：<strong data-field="ghosts"></strong></span>
+      <span title="鬼档案收录">档案：<strong data-field="archives"></strong></span>
+      <span title="拓印或窃取的规律">规律：<strong data-field="rules"></strong></span>
       <button type="button" data-action="open-status" title="打开 v10.2 前端里的完整状态">完整状态</button>
     `;
     summaryEl.querySelectorAll('strong').forEach(el => {

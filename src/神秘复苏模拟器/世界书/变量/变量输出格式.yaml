@@ -26,8 +26,13 @@
     - REQUIRED whenever you output or refresh A/B/C/D action options: include one replace operation for /行动建议 as an array of 0 to 4 objects containing 选项、思路、主要风险、预期收益
     - /最近行动判定 and /行动建议 must only summarize player-visible reasoning and must not reveal hidden truth
     - /最近行动判定 values must include 类型、行动、依据、触发项、结果、代价、死亡风险变化、复苏风险变化、资源代价、后续建议、可见结论
+    - when a <mfrs_...> adjudication panel is used, its visible route/evidence/trigger/risk/cost/conclusion must match /最近行动判定 and must not reveal hidden truth
     - /规律推理记录 values must be objects with 时间点、行为、观察结果、推断、确认等级、是否触发规律、风险等级; never insert a plain string into /规律推理记录
     - 确认等级 must be one of 猜测、疑似、部分确认、已验证、可执行应对
+    - when the starting ghost is 鬼档案 and a ghost enters the archive process, write visible information to /收录档案/- even if it is not collected yet; values must include 档案厉鬼名称、收录状态、厉鬼信息、已知规律、猜测规律、鬼域、收录进度、档案完整度、可调用范围
+    - /收录档案[].收录状态 should distinguish 未收录、收录中、已收录、污染档案、错误档案; /收录档案[].收录进度 must be 0-100, and only when 收录进度 reaches 100 may 收录状态 become 已收录/收录成功
+    - when 鬼拓本拓印规律 or 鬼手印窃取灵异规律, write the acquired visible rule fragment to /收录规律/-; values must include 来源厉鬼、获取方式、规律类型、规律内容、规律进阶、规律分解、完整度、风险备注
+    - /收录档案 and /收录规律 are player-visible panel fields; never put hidden truth, true source position, key survival route, or unverified complete killing law into them
     - never use obsolete or English pseudo paths such as /known_rules, /current_event, /in_scene_characters, /death_risk, /resurrection_risk, /status, /location; use the Chinese schema paths shown in stat_data instead
   format: |-
     <UpdateVariable>
