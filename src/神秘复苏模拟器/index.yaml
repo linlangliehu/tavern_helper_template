@@ -5928,7 +5928,7 @@
 
     - 名称: 固定状态栏
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001
-      启用: false
+      启用: true
       类型: 脚本
       内容: |-
         const loadLocalModule = async (label, url) => {

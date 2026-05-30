@@ -1,7 +1,5 @@
 const statusContainerId = 'mfrs-fixed-status-host';
-const statusFrameId = 'mfrs-fixed-status-frame';
 const statusSummaryId = 'mfrs-fixed-status-summary';
-const statusUrl = 'http://localhost:5500/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E7%95%8C%E9%9D%A2/%E7%8A%B6%E6%80%81%E6%A0%8F/index.html';
 
 type StatusData = Record<string, any>;
 type HostWindow = Window & {
@@ -109,7 +107,6 @@ function ensureFixedStatusBar() {
       <span title="复苏风险">复苏：<strong data-field="revive"></strong></span>
       <span title="状态">状态：<strong data-field="state"></strong></span>
       <button type="button" data-action="open-status" title="打开 v10.2 前端里的完整状态">完整状态</button>
-      <button type="button" data-action="toggle-legacy" title="展开旧状态栏回退视图">旧栏</button>
     `;
     summaryEl.querySelectorAll('strong').forEach(el => {
       (el as HTMLElement).style.color = '#b23a32';
@@ -133,27 +130,7 @@ function ensureFixedStatusBar() {
       button.style.fontSize = '12px';
     });
     summaryEl.querySelector('[data-action="open-status"]')?.addEventListener('click', openFullStatus);
-    summaryEl.querySelector('[data-action="toggle-legacy"]')?.addEventListener('click', () => {
-      const frame = host.querySelector(`#${statusFrameId}`) as HTMLIFrameElement | null;
-      const expanded = host.dataset.expanded === 'true';
-      host.dataset.expanded = expanded ? 'false' : 'true';
-      if (frame) frame.style.display = expanded ? 'none' : 'block';
-    });
     host.append(summaryEl);
-  }
-
-  let frame = document.querySelector(`#${statusFrameId}`) as HTMLIFrameElement | null;
-  if (!frame) {
-    frame = document.createElement('iframe');
-    frame.id = statusFrameId;
-    frame.title = '神秘复苏固定状态栏';
-    frame.src = `${statusUrl}?t=${Date.now()}`;
-    frame.style.display = 'none';
-    frame.style.width = '100%';
-    frame.style.height = '360px';
-    frame.style.border = '0';
-    frame.style.background = 'transparent';
-    host.append(frame);
   }
 
   renderSummary(host);
@@ -163,8 +140,6 @@ function ensureFixedStatusBar() {
 function refreshFixedStatusBar() {
   const host = document.querySelector(`#${statusContainerId}`) as HTMLDivElement | null;
   if (host) renderSummary(host);
-  const frame = document.querySelector(`#${statusFrameId}`) as HTMLIFrameElement | null;
-  if (frame && frame.style.display !== 'none') frame.src = `${statusUrl}?t=${Date.now()}`;
   else ensureFixedStatusBar();
 }
 
