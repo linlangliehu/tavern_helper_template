@@ -705,9 +705,13 @@ body {
 
   const fillWelcomeStart = (root: HTMLElement) => {
     const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs="${key}"]`)?.value.trim() ?? '';
+    const getPresetGhost = () => getValue('ghostPreset1');
     const getCustomGhosts = () => {
       const ghosts: string[] = [];
+      const presetGhost = getPresetGhost();
+      if (presetGhost) ghosts.push(`第1只：预设厉鬼：${presetGhost}`);
       for (let index = 1; index <= 2; index += 1) {
+        if (index === 1 && presetGhost) continue;
         const name = getValue(`ghostName${index}`) || (index === 1 ? getValue('ghostName') : '');
         const law = getValue(`ghostLaw${index}`) || (index === 1 ? getValue('ghostLaw') : '');
         if (!name && !law) continue;
@@ -734,8 +738,9 @@ body {
       `   - 禁止泄露边界：${spoilerBoundary}\n\n` +
       `2. 身份与能力\n` +
       `   - 身份：${getValue('identity')}\n` +
-      `   - 自定义厉鬼（最多2只）：\n` +
-      `     ${getCustomGhosts()}\n\n` +
+      `   - 开局厉鬼选择（第1只可选预设或自定义，第2只可自定义）：\n` +
+      `     ${getCustomGhosts()}\n` +
+      `   - 特殊能力（上限1个）：${getValue('specialAbility') || '无'}\n\n` +
       `3. 初始资源\n` +
       `   ${getValue('resources') || '无'}\n\n` +
       `4. 背景设定\n` +
@@ -744,7 +749,8 @@ body {
       `   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n` +
       `   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
       `   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n` +
-      `   - 自定义厉鬼判定：玩家只提供厉鬼名称和可见杀人规律；影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断；最多读取两只自定义厉鬼，超出部分无效。\n` +
+      `   - 开局厉鬼判定：若玩家在第1只厉鬼选择预设，只能把预设资料当作开局可见档案和成长方向，不得直接明牌隐藏规律、关键生路或完整拼图；若玩家自定义厉鬼，只提供厉鬼名称和可见杀人规律，影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断。第1只厉鬼只能读取预设或自定义之一，第2只仅读取自定义，超出部分无效。\n` +
+      `   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“永久死机驾驭”，玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n` +
       `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。`;
     const input = getSendTextarea(hostDocument);
     if (!input) return;
@@ -770,6 +776,27 @@ body {
     });
     secondSlot.hidden = true;
     if (addButton) addButton.hidden = false;
+  };
+
+  const syncPresetGhost1 = (root: HTMLElement) => {
+    const preset = root.querySelector<HTMLSelectElement>('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1');
+    const nameInput = root.querySelector<HTMLInputElement>('[data-mfrs="ghostName1"], #mfrs-ghost-name-1');
+    const lawInput = root.querySelector<HTMLTextAreaElement>('[data-mfrs="ghostLaw1"], #mfrs-ghost-law-1');
+    if (!preset || !nameInput || !lawInput) return;
+    const value = preset.value.trim();
+    const lawMatch = value.match(/可见杀人规律：([^；]+)/);
+    nameInput.value = value ? value.split('；')[0] : '';
+    lawInput.value = value && lawMatch ? lawMatch[1] : '';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    lawInput.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  const syncSpecialAbilityPreset = (root: HTMLElement) => {
+    const preset = root.querySelector<HTMLSelectElement>('[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset');
+    const abilityInput = root.querySelector<HTMLTextAreaElement>('[data-mfrs="specialAbility"], #mfrs-special-ability');
+    if (!preset || !abilityInput) return;
+    abilityInput.value = preset.value.trim();
+    abilityInput.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
   const fillInputPanel = (root: HTMLElement) => {
@@ -832,6 +859,15 @@ body {
     fillWelcomeStart(root);
   };
 
+  const handleWelcomeChange = (event: Event) => {
+    const target = event.target as HTMLElement | null;
+    if (!target?.matches('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1, [data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset')) return;
+    const root = target.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+    if (!root) return;
+    if (target.matches('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1')) syncPresetGhost1(root);
+    if (target.matches('[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset')) syncSpecialAbilityPreset(root);
+  };
+
   const bindWelcomeGhostButtons = () => {
     hostDocument.querySelectorAll<HTMLElement>(
       '.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost',
@@ -879,12 +915,14 @@ body {
   });
   bodyObserver.observe(hostDocument.body, { childList: true, subtree: true });
   hostDocument.addEventListener('click', handleWelcomeClick, true);
+  hostDocument.addEventListener('change', handleWelcomeChange, true);
   hostDocument.addEventListener('click', handleInputPanelClick, true);
 
   const cleanup = () => {
     observer.disconnect();
     bodyObserver.disconnect();
     hostDocument.removeEventListener('click', handleWelcomeClick, true);
+    hostDocument.removeEventListener('change', handleWelcomeChange, true);
     hostDocument.removeEventListener('click', handleInputPanelClick, true);
     timeoutIds.forEach(id => {
       if (id !== undefined) hostWindow?.clearTimeout(id);
