@@ -65,6 +65,8 @@ const templateTableNames = Object.values(templateData as Record<string, unknown>
   .filter((value): value is { name: string } => Boolean(value && typeof value === 'object' && 'name' in value))
   .map(sheet => sheet.name);
 
+let templateAutofixPromise: Promise<void> | null = null;
+
 function getHostWindow() {
   try {
     return (window.parent ?? window) as HostWindow;
@@ -160,8 +162,70 @@ function wait(ms: number) {
   return new Promise(resolve => window.setTimeout(resolve, ms));
 }
 
+async function waitForApi(hostWindow: HostWindow, attempts = 24, interval = 500) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const api = hostWindow.AutoCardUpdaterAPI ?? (window as HostWindow).AutoCardUpdaterAPI;
+    if (api?.getTableTemplate) return api;
+    await wait(interval);
+  }
+  return null;
+}
+
+function rerenderAcu(hostWindow: HostWindow) {
+  hostWindow.MysteryAcuVisualizer?.renderInterface?.();
+  window.setTimeout(() => hostWindow.MysteryAcuVisualizer?.renderInterface?.(), 500);
+}
+
+async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
+  const api = await waitForApi(hostWindow);
+  if (!api) {
+    console.warn('[神秘复苏数据库前端] 数据库 API 超时未就绪，跳过自动模板校正。');
+    templateAutofixPromise = null;
+    return;
+  }
+
+  const status = await readTemplateStatus(api);
+  if (status.templateLoaded) {
+    rerenderAcu(hostWindow);
+    return;
+  }
+
+  if (!api.importTemplateFromData) {
+    console.warn('[神秘复苏数据库前端] 当前数据库 API 不支持模板导入，无法自动切换神秘复苏模板。', status);
+    templateAutofixPromise = null;
+    return;
+  }
+
+  try {
+    console.warn('[神秘复苏数据库前端] 检测到当前数据库模板不是神秘复苏 14 表，正在自动导入内置模板。', {
+      currentTables: status.tableNames,
+      missingTables: status.missingNames,
+    });
+    await api.importTemplateFromData(templateData);
+    await wait(250);
+    const nextStatus = await readTemplateStatus(api);
+    if (nextStatus.templateLoaded) {
+      hostWindow.toastr?.success?.('神秘复苏 14 表模板已自动导入。');
+    } else {
+      hostWindow.toastr?.warning?.('神秘复苏模板已尝试导入，但当前数据库表仍不完整。');
+      console.warn('[神秘复苏数据库前端] 自动导入后模板仍不完整。', nextStatus);
+    }
+    rerenderAcu(hostWindow);
+  } catch (error) {
+    console.error('[神秘复苏数据库前端] 自动导入神秘复苏模板失败。', error);
+    hostWindow.toastr?.error?.('神秘复苏数据库模板自动导入失败，请稍后重试。');
+    templateAutofixPromise = null;
+  }
+}
+
+function ensureMysteryTemplate(hostWindow: HostWindow) {
+  templateAutofixPromise ??= runMysteryTemplateAutofix(hostWindow);
+  return templateAutofixPromise;
+}
+
 async function openAcuFrontend(hostWindow: HostWindow) {
   const hostDocument = getHostDocument(hostWindow);
+  await ensureMysteryTemplate(hostWindow);
   keepAcuConfigEmbedded(hostWindow);
 
   try {
@@ -208,6 +272,7 @@ function installCompatibilityApi() {
       if (!api.importTemplateFromData) throw new Error('模板导入接口不可用。');
       await api.importTemplateFromData(templateData);
       hostWindow.toastr?.success?.('神秘复苏 14 表模板已导入。');
+      rerenderAcu(hostWindow);
       return true;
     },
     async openVisualizer() {
@@ -246,6 +311,7 @@ function installCompatibilityApi() {
   };
 
   console.info('[神秘复苏数据库前端] 已切换为 v10.2 原始可视化前端，并保留 MysteryDatabaseFrontend 兼容 API。');
+  void ensureMysteryTemplate(hostWindow);
 }
 
 installCompatibilityApi();
