@@ -400,7 +400,11 @@ function optionDeathRiskDelta(text: string) {
 
 function parseOptionRisk(rawText: string) {
   const tag = rawText.match(optionRiskOpenTagPattern)?.[0]
-  const text = rawText.replace(optionRiskTagPattern, '').replace(/\s+/g, ' ').trim()
+  const text = rawText
+    .replace(optionRiskTagPattern, '')
+    .replace(/[。；;]?\s*(?:死亡风险|复苏风险|风险来源|风险)[\s\S]*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim()
   if (!tag) {
     return {
       text,
@@ -500,6 +504,28 @@ function normalizeOptionKey(rawKey: string) {
   return map[key] ?? ''
 }
 
+function splitOptionLines(rawBlock: string) {
+  const text = rawBlock.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').trim()
+  const marker = /(?:^|\n|\s)([A-Da-d1-4①②③④一二三四壹贰叁肆])\s*[.、:：)）]\s*/g
+  const matches = Array.from(text.matchAll(marker))
+  if (!matches.length) return text.split('\n')
+
+  return matches
+    .map((match, index) => {
+      const markerText = match[0]
+      const keyOffset = markerText.search(/[A-Da-d1-4①②③④一二三四壹贰叁肆]/)
+      const bodyStart = (match.index ?? 0) + markerText.length
+      const next = matches[index + 1]
+      const nextMarkerText = next?.[0] ?? ''
+      const nextKeyOffset = nextMarkerText.search(/[A-Da-d1-4①②③④一二三四壹贰叁肆]/)
+      const bodyEnd = next ? (next.index ?? text.length) + Math.max(0, nextKeyOffset) : text.length
+      const key = match[1]
+      const body = text.slice(bodyStart, bodyEnd).trim()
+      return body ? `${key}. ${body}` : ''
+    })
+    .filter(Boolean)
+}
+
 function extractOptions(): OptionItem[] {
   try {
     const mes = getChatMessages(getCurrentMessageId())[0]?.message ?? ''
@@ -511,7 +537,7 @@ function extractOptions(): OptionItem[] {
     let bm: RegExpExecArray | null
     while ((bm = blockRe.exec(mes)) !== null) {
       const out: OptionItem[] = []
-      for (const line of bm[1].split('\n')) {
+      for (const line of splitOptionLines(bm[1])) {
         const lm = line.match(/^\s*(?:选项\s*)?([A-Da-d1-4①②③④一二三四壹贰叁肆])[.、:：)）]\s*(.+?)\s*$/)
         if (!lm) continue
         const key = normalizeOptionKey(lm[1])

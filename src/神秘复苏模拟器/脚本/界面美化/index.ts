@@ -32,7 +32,7 @@ function getActionText(rawText: string) {
   const text = rawText.replace(/^[ABCD][\.、：:]\s*/, '').trim();
   return text === '自定义行动'
     ? text
-    : text.replace(/。?\s*(?:死亡风险|风险|death|revive|<risk)[\s\S]*$/i, '').trim();
+    : text.replace(/[。；;]?\s*(?:死亡风险|复苏风险|风险来源|风险|death|revive|<risk)[\s\S]*$/i, '').trim();
 }
 
 $(() => {
@@ -596,6 +596,7 @@ body {
     const renderChoices = (body: HTMLElement, actions: string[]) => {
       body.textContent = '';
       body.style.whiteSpace = 'normal';
+      body.dataset.mfrsSpEnhanced = 'true';
 
       const legend = hostDocument.createElement('div');
       legend.className = 'mfrs-choice-legend';
@@ -624,6 +625,7 @@ body {
         const key = /^[ABCD][\.、：:]/.test(line) ? line.slice(0, 1) : String.fromCharCode(65 + index);
         const rawText = line.replace(/^[ABCD][\.、：:]\s*/, '').trim();
         const actionText = getActionText(rawText);
+        const visibleText = actionText || rawText;
         const risk = detectRisk(rawText);
         const button = hostDocument.createElement('button');
         button.type = 'button';
@@ -635,7 +637,7 @@ body {
         const riskTag = hostDocument.createElement('span');
         riskTag.className = 'mfrs-choice-risk';
         riskTag.textContent = riskLabel(risk);
-        button.append(keySpan, rawText, riskTag);
+        button.append(keySpan, visibleText, riskTag);
         button.addEventListener('click', () => {
           const input = getSendTextarea(hostDocument);
           if (!input) return;
@@ -648,17 +650,52 @@ body {
       body.appendChild(list);
     };
 
-    const panels = hostDocument.querySelectorAll<HTMLElement>('.custom-sp-panel-choices:not([data-mfrs-choice-ready])');
+    const splitChoiceActions = (raw: string) => {
+      const text = raw.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').trim();
+      const marker = /(?:^|\n|\s)([ABCD])\s*[\.、：:]\s*/g;
+      const matches = Array.from(text.matchAll(marker));
+      if (!matches.length) return [];
+
+      return matches
+        .map((match, index) => {
+          const markerText = match[0];
+          const keyOffset = markerText.search(/[ABCD]/);
+          const bodyStart = (match.index ?? 0) + markerText.length;
+          const next = matches[index + 1];
+          const nextMarkerText = next?.[0] ?? '';
+          const nextKeyOffset = nextMarkerText.search(/[ABCD]/);
+          const bodyEnd = next
+            ? (next.index ?? text.length) + Math.max(0, nextKeyOffset)
+            : text.length;
+          const key = match[1];
+          const body = text.slice(bodyStart, bodyEnd).trim();
+          if (!body || /^标题[：:]/.test(body) || /^说明[：:]/.test(body)) return '';
+          return `${key}. ${body}`;
+        })
+        .filter(Boolean)
+        .slice(0, 4);
+    };
+
+    const panels = hostDocument.querySelectorAll<HTMLElement>(
+      '.custom-sp-panel-choices:not([data-mfrs-choice-ready]), .sp-panel-choices:not([data-mfrs-choice-ready])',
+    );
     for (const panel of panels) {
       panel.dataset.mfrsChoiceReady = 'true';
-      const body = panel.querySelector<HTMLElement>('.custom-sp-panel-body');
+      const body = panel.querySelector<HTMLElement>('.custom-sp-panel-body, .sp-panel-body');
       if (!body) continue;
 
-      const lines = (body.textContent ?? '')
+      const raw = body.textContent ?? '';
+      const lines = raw
         .split(/\n+/)
         .map(line => line.trim())
         .filter(Boolean);
       const actions = lines.filter(line => /^[ABCD][\.、：:]/.test(line));
+      if (actions.length < 4) {
+        const splitActions = splitChoiceActions(raw);
+        if (splitActions.length > actions.length) {
+          actions.splice(0, actions.length, ...splitActions);
+        }
+      }
       if (!actions.length) continue;
 
       renderChoices(body, actions);
