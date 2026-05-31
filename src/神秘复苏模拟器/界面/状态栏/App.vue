@@ -506,7 +506,7 @@ function normalizeOptionKey(rawKey: string) {
 
 function splitOptionLines(rawBlock: string) {
   const text = rawBlock.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').trim()
-  const marker = /(?:^|\n|\s)([A-Da-d1-4①②③④一二三四壹贰叁肆])\s*[.、:：)）]\s*/g
+  const marker = /(?:^|[\n\r\s。；;！？!?，,、])([A-Da-d1-4①②③④一二三四壹贰叁肆])\s*[.、:：)）]\s*/g
   const matches = Array.from(text.matchAll(marker))
   if (!matches.length) return text.split('\n')
 
@@ -521,7 +521,8 @@ function splitOptionLines(rawBlock: string) {
       const bodyEnd = next ? (next.index ?? text.length) + Math.max(0, nextKeyOffset) : text.length
       const key = match[1]
       const body = text.slice(bodyStart, bodyEnd).trim()
-      return body ? `${key}. ${body}` : ''
+      const normalizedKey = normalizeOptionKey(key)
+      return body && normalizedKey ? `${normalizedKey}. ${body}` : ''
     })
     .filter(Boolean)
 }

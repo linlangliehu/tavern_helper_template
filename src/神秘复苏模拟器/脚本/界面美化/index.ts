@@ -622,8 +622,8 @@ body {
       list.className = 'mfrs-choice-list';
 
       actions.forEach((line, index) => {
-        const key = /^[ABCD][\.、：:]/.test(line) ? line.slice(0, 1) : String.fromCharCode(65 + index);
-        const rawText = line.replace(/^[ABCD][\.、：:]\s*/, '').trim();
+        const key = /^[A-Da-d][\.、：:]/.test(line) ? line.slice(0, 1).toUpperCase() : String.fromCharCode(65 + index);
+        const rawText = line.replace(/^[A-Da-d][\.、：:]\s*/, '').trim();
         const actionText = getActionText(rawText);
         const visibleText = actionText || rawText;
         const risk = detectRisk(rawText);
@@ -652,22 +652,22 @@ body {
 
     const splitChoiceActions = (raw: string) => {
       const text = raw.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').trim();
-      const marker = /(?:^|\n|\s)([ABCD])\s*[\.、：:]\s*/g;
+      const marker = /(?:^|[\n\r\s。；;！？!?，,、])([A-Da-d])\s*[\.、：:]\s*/g;
       const matches = Array.from(text.matchAll(marker));
       if (!matches.length) return [];
 
       return matches
         .map((match, index) => {
           const markerText = match[0];
-          const keyOffset = markerText.search(/[ABCD]/);
+          const keyOffset = markerText.search(/[A-Da-d]/);
           const bodyStart = (match.index ?? 0) + markerText.length;
           const next = matches[index + 1];
           const nextMarkerText = next?.[0] ?? '';
-          const nextKeyOffset = nextMarkerText.search(/[ABCD]/);
+          const nextKeyOffset = nextMarkerText.search(/[A-Da-d]/);
           const bodyEnd = next
             ? (next.index ?? text.length) + Math.max(0, nextKeyOffset)
             : text.length;
-          const key = match[1];
+          const key = match[1].toUpperCase();
           const body = text.slice(bodyStart, bodyEnd).trim();
           if (!body || /^标题[：:]/.test(body) || /^说明[：:]/.test(body)) return '';
           return `${key}. ${body}`;
@@ -689,7 +689,7 @@ body {
         .split(/\n+/)
         .map(line => line.trim())
         .filter(Boolean);
-      const actions = lines.filter(line => /^[ABCD][\.、：:]/.test(line));
+      const actions = lines.filter(line => /^[A-Da-d][\.、：:]/.test(line));
       if (actions.length < 4) {
         const splitActions = splitChoiceActions(raw);
         if (splitActions.length > actions.length) {
