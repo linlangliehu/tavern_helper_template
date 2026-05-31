@@ -7,8 +7,12 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "dump": "node dump_schema.ts",
+<<<<<<< HEAD
     "sync": "node tavern_sync.mjs",
     "publish-card": "node scripts/publish-card.mjs"
+=======
+    "sync": "node tavern_sync.mjs"
+>>>>>>> 1b593ab69d89d2d5d22e9730e0163f19dd209fac
   },
   "browserslist": [
     "defaults and partially supports es6-module"
