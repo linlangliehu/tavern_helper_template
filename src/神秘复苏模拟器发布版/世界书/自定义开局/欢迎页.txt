@@ -117,7 +117,7 @@
 .mfrs-badge {
   display: inline-flex;
   padding: 9px 16px;
-  background: rgba(10, 4, 4, 0.8);
+  background: rgba(34, 22, 22, 0.78);
   border: 1px solid var(--border-main);
   border-radius: 999px;
   color: var(--text-main);
@@ -175,7 +175,7 @@
   justify-content: center;
   border-radius: 50%;
   border: 1px solid var(--border-main);
-  background: rgba(10, 4, 4, 0.8);
+  background: rgba(34, 22, 22, 0.78);
   color: var(--accent);
   transition: transform 0.3s var(--easing);
 }
@@ -236,7 +236,7 @@
   flex: 1;
   min-width: 220px;
   padding: 13px 16px;
-  background: rgba(10, 4, 4, 0.7);
+  background: rgba(34, 23, 23, 0.82);
   border: 1px solid var(--border-main);
   border-radius: 10px;
   color: var(--text-main);
@@ -247,7 +247,7 @@
 
 .mfrs-input:focus, .mfrs-select:focus, .mfrs-textarea:focus {
   border-color: var(--accent);
-  background: rgba(10, 4, 4, 0.9);
+  background: rgba(42, 28, 28, 0.9);
   box-shadow: 0 0 0 3px rgba(200, 56, 56, 0.1);
 }
 
@@ -288,7 +288,7 @@
   padding: 12px;
   border: 1px solid rgba(130, 32, 32, 0.32);
   border-radius: 10px;
-  background: rgba(8, 3, 3, 0.42);
+  background: rgba(34, 22, 22, 0.5);
 }
 
 .mfrs-ghost-slot[hidden] {
@@ -315,7 +315,7 @@
   place-items: center;
   border: 1px solid var(--border-main);
   border-radius: 999px;
-  background: rgba(18, 6, 6, 0.82);
+  background: rgba(42, 26, 26, 0.86);
   color: var(--text-main);
   cursor: pointer;
   font: inherit;
@@ -346,7 +346,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 13px 16px;
-  background: rgba(10, 4, 4, 0.7);
+  background: rgba(34, 23, 23, 0.82);
   border: 1px solid var(--border-main);
   border-radius: 10px;
   color: var(--text-main);
@@ -356,7 +356,7 @@
 
 .mfrs-dropdown-trigger:hover {
   border-color: var(--accent);
-  background: rgba(10, 4, 4, 0.9);
+  background: rgba(42, 28, 28, 0.9);
 }
 
 .mfrs-dropdown-menu {
@@ -367,7 +367,7 @@
   top: calc(100% + 10px);
   max-height: 420px;
   overflow-y: auto;
-  background: rgba(10, 4, 4, 0.96);
+  background: rgba(34, 23, 23, 0.96);
   border: 1px solid var(--border-main);
   border-radius: 10px;
   box-shadow: 0 16px 48px var(--shadow);

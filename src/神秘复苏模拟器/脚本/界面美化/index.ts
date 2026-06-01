@@ -42,41 +42,41 @@ $(() => {
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;600;700&family=Noto+Serif+SC:wght@600;800&display=swap');
 
 body {
-  background: #0a0505 !important;
-  color: #9a8888 !important;
+  background: #151111 !important;
+  color: #c8baba !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
 }
 
 #chat {
-  background: #0a0505 !important;
+  background: #151111 !important;
 }
 
 #top-bar {
-  background: linear-gradient(180deg, #0c0606 0%, #0a0505 100%) !important;
-  border-bottom: 1px solid #1a0808 !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.6) !important;
+  background: linear-gradient(180deg, #1c1414 0%, #151111 100%) !important;
+  border-bottom: 1px solid #3a2020 !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
 }
 
 #send_form {
-  background: linear-gradient(180deg, #0a0505 0%, #0c0606 100%) !important;
-  border-top: 1px solid #1a0808 !important;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.5) !important;
+  background: linear-gradient(180deg, #151111 0%, #1c1414 100%) !important;
+  border-top: 1px solid #3a2020 !important;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.3) !important;
 }
 
 #left-nav-panel {
-  background: #0a0505 !important;
-  border-right: 1px solid #1a0808 !important;
+  background: #151111 !important;
+  border-right: 1px solid #3a2020 !important;
 }
 
 #right-nav-panel {
-  background: #0a0505 !important;
-  border-left: 1px solid #1a0808 !important;
+  background: #151111 !important;
+  border-left: 1px solid #3a2020 !important;
 }
 
 #send_textarea {
-  background: rgba(8,3,3,0.9) !important;
-  color: #d8c8c8 !important;
-  border: 1px solid #2a0a0a !important;
+  background: rgba(28,18,18,0.92) !important;
+  color: #f0e4e4 !important;
+  border: 1px solid #5a2a2a !important;
   border-radius: 4px !important;
   caret-color: #8b2020 !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
@@ -84,30 +84,30 @@ body {
   line-height: 1.8 !important;
   padding: 12px 16px !important;
   box-shadow:
-    inset 0 0 30px rgba(0,0,0,0.6),
-    inset 0 0 4px rgba(60,10,10,0.08),
-    0 0 6px rgba(0,0,0,0.4) !important;
+    inset 0 0 18px rgba(0,0,0,0.28),
+    inset 0 0 4px rgba(100,30,30,0.12),
+    0 0 6px rgba(0,0,0,0.22) !important;
   transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
 }
 
 #send_textarea::placeholder {
-  color: #3a2020 !important;
+  color: #8a6c6c !important;
   font-style: italic !important;
 }
 
 #send_textarea:focus {
-  border-color: #4a1212 !important;
+  border-color: #8a3434 !important;
   box-shadow:
-    inset 0 0 30px rgba(0,0,0,0.6),
-    inset 0 0 6px rgba(80,15,15,0.12),
-    0 0 10px rgba(80,15,15,0.15) !important;
+    inset 0 0 18px rgba(0,0,0,0.28),
+    inset 0 0 6px rgba(130,35,35,0.16),
+    0 0 10px rgba(130,35,35,0.2) !important;
   outline: none !important;
 }
 
 #send_but,
 #mes_continue,
 #mes_impersonate {
-  color: #4a2828 !important;
+  color: #9b7777 !important;
   background: transparent !important;
   border: none !important;
   transition: color 0.25s ease, text-shadow 0.25s ease !important;
@@ -116,39 +116,39 @@ body {
 #send_but:hover,
 #mes_continue:hover,
 #mes_impersonate:hover {
-  color: #8b2020 !important;
-  text-shadow: 0 0 10px rgba(120,20,20,0.5) !important;
+  color: #d05858 !important;
+  text-shadow: 0 0 10px rgba(170,45,45,0.35) !important;
 }
 
 .mes {
-  border-bottom: 1px solid #120606 !important;
+  border-bottom: 1px solid #2e1a1a !important;
   padding: 10px 10px 0 !important;
   position: relative !important;
 }
 
 .mes[is_user="true"] {
-  background: linear-gradient(180deg, rgba(12,5,5,0.4) 0%, rgba(10,4,4,0.2) 100%) !important;
+  background: linear-gradient(180deg, rgba(30,20,20,0.45) 0%, rgba(22,16,16,0.22) 100%) !important;
 }
 
 .mes[is_user="false"] {
-  background: linear-gradient(180deg, rgba(6,2,2,0.6) 0%, rgba(4,1,1,0.3) 100%) !important;
+  background: linear-gradient(180deg, rgba(24,17,17,0.6) 0%, rgba(18,13,13,0.34) 100%) !important;
 }
 
 .mes[is_user="true"] .mes_text {
   background:
-    linear-gradient(135deg, rgba(12,5,5,0.6) 0%, rgba(8,3,3,0.5) 100%) !important;
-  border: 1px solid #1a0808 !important;
-  border-left: 2px solid #2a0a0a !important;
+    linear-gradient(135deg, rgba(34,23,23,0.72) 0%, rgba(28,19,19,0.62) 100%) !important;
+  border: 1px solid #3a2020 !important;
+  border-left: 2px solid #6a3030 !important;
   border-radius: 3px !important;
   padding: 14px 18px !important;
-  color: #c8baba !important;
+  color: #eadede !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
   font-size: 14px !important;
   line-height: 1.9 !important;
   position: relative !important;
   box-shadow:
-    inset 0 0 20px rgba(0,0,0,0.3),
-    0 0 4px rgba(0,0,0,0.2) !important;
+    inset 0 0 14px rgba(0,0,0,0.18),
+    0 0 4px rgba(0,0,0,0.16) !important;
 }
 
 .mes[is_user="true"] .mes_text::before {
@@ -164,19 +164,19 @@ body {
 
 .mes[is_user="false"] .mes_text {
   background:
-    linear-gradient(135deg, rgba(5,2,2,0.8) 0%, rgba(3,1,1,0.7) 100%) !important;
-  border: 1px solid #120606 !important;
-  border-left: 2px solid #2a0808 !important;
+    linear-gradient(135deg, rgba(30,21,21,0.84) 0%, rgba(23,17,17,0.76) 100%) !important;
+  border: 1px solid #322020 !important;
+  border-left: 2px solid #663030 !important;
   border-radius: 2px !important;
   padding: 16px 20px !important;
-  color: #b0a0a0 !important;
+  color: #ded2d2 !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
   font-size: 15px !important;
   line-height: 2 !important;
   position: relative !important;
   box-shadow:
-    inset 0 0 30px rgba(0,0,0,0.5),
-    0 0 6px rgba(0,0,0,0.3) !important;
+    inset 0 0 18px rgba(0,0,0,0.22),
+    0 0 6px rgba(0,0,0,0.2) !important;
 }
 
 .mes[is_user="false"] .mes_text::before {
@@ -203,15 +203,15 @@ body {
 
 .mes .ch_name .name_text {
   font-family: "Noto Serif SC", "SimSun", serif !important;
-  color: #8a3030 !important;
-  text-shadow: 0 0 8px rgba(120,20,20,0.35) !important;
+  color: #c85c5c !important;
+  text-shadow: 0 0 8px rgba(160,45,45,0.28) !important;
   letter-spacing: 1.5px !important;
   font-weight: 800 !important;
 }
 
 .mes[is_user="true"] .ch_name .name_text {
-  color: #6a4040 !important;
-  text-shadow: 0 0 6px rgba(100,40,40,0.25) !important;
+  color: #b98a8a !important;
+  text-shadow: 0 0 6px rgba(120,60,60,0.2) !important;
 }
 
 .mes .mes_text p {
@@ -224,56 +224,56 @@ body {
 
 .mes .mes_text hr {
   border: none !important;
-  border-top: 1px solid #1a0808 !important;
+  border-top: 1px solid #3a2020 !important;
   margin: 14px 0 !important;
 }
 
 .mes .mes_text blockquote {
-  border-left: 2px solid #2a0808 !important;
-  background: rgba(10,0,0,0.35) !important;
+  border-left: 2px solid #6a3030 !important;
+  background: rgba(48,28,28,0.45) !important;
   padding: 8px 14px !important;
   margin: 8px 0 !important;
-  color: #8a7878 !important;
+  color: #d0c0c0 !important;
 }
 
 .mes .mes_text code {
-  background: rgba(20,5,5,0.6) !important;
-  border: 1px solid #1a0808 !important;
-  color: #a06060 !important;
+  background: rgba(52,30,30,0.65) !important;
+  border: 1px solid #4a2828 !important;
+  color: #e08a8a !important;
   padding: 1px 5px !important;
   border-radius: 2px !important;
   font-size: 0.9em !important;
 }
 
 .mes .mes_text pre {
-  background: rgba(10,3,3,0.85) !important;
-  border: 1px solid #1a0808 !important;
+  background: rgba(35,24,24,0.88) !important;
+  border: 1px solid #4a2828 !important;
   padding: 12px !important;
   border-radius: 2px !important;
 }
 
 .mes .mes_text details {
-  background: rgba(10,3,3,0.45) !important;
-  border: 1px solid #1a0808 !important;
+  background: rgba(40,26,26,0.55) !important;
+  border: 1px solid #4a2828 !important;
   border-radius: 2px !important;
   padding: 8px 12px !important;
 }
 
 .mes .mes_text summary {
-  color: #6a3030 !important;
+  color: #c46a6a !important;
   cursor: pointer !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
   font-size: 13px !important;
 }
 
 .mes .mes_text a {
-  color: #8b3030 !important;
+  color: #d45c5c !important;
   text-decoration: none !important;
   border-bottom: 1px solid rgba(120,30,30,0.3) !important;
 }
 
 .mes .mes_text a:hover {
-  color: #b04040 !important;
+  color: #ee7a7a !important;
 }
 
 .mes .mes_text .horror-keyword {
@@ -291,51 +291,51 @@ body {
 }
 
 .mes .mes_text em {
-  color: #8b3030 !important;
+  color: #d46c6c !important;
   font-style: normal !important;
   text-shadow: 0 0 4px rgba(120,30,30,0.35) !important;
 }
 
 .mes .avatar {
   border-radius: 50% !important;
-  box-shadow: 0 0 8px rgba(0,0,0,0.5), 0 0 2px rgba(60,10,10,0.15) !important;
+  box-shadow: 0 0 8px rgba(0,0,0,0.32), 0 0 2px rgba(100,30,30,0.18) !important;
 }
 
 .mes .swipe_left,
 .mes .swipe_right {
-  color: #3a1a1a !important;
+  color: #8a6868 !important;
   transition: color 0.2s ease, text-shadow 0.2s ease !important;
 }
 
 .mes .swipe_left:hover,
 .mes .swipe_right:hover {
-  color: #6a1a1a !important;
+  color: #c85c5c !important;
   text-shadow: 0 0 6px rgba(100,20,20,0.3) !important;
 }
 
 .mes .mes_button {
-  color: #3a2020 !important;
+  color: #9a7777 !important;
   transition: color 0.2s ease, text-shadow 0.2s ease !important;
 }
 
 .mes .mes_button:hover {
-  color: #7a2020 !important;
+  color: #d05858 !important;
   text-shadow: 0 0 6px rgba(120,20,20,0.35) !important;
 }
 
 .mes .mes_reasoning_details {
-  background: rgba(8,3,3,0.5) !important;
-  border: 1px solid #150808 !important;
+  background: rgba(38,26,26,0.55) !important;
+  border: 1px solid #3a2424 !important;
   border-radius: 2px !important;
 }
 
 .mes .mes_reasoning_details summary {
-  color: #5a2828 !important;
+  color: #b86c6c !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
 }
 
 .mes .mes_reasoning_details .reasoning_content {
-  color: #7a6868 !important;
+  color: #c2b2b2 !important;
   font-size: 13px !important;
   line-height: 1.8 !important;
 }
@@ -344,7 +344,7 @@ body {
 #extensionsMenuButton,
 .menu_button,
 .nav_button {
-  color: #4a2828 !important;
+  color: #9b7777 !important;
   transition: color 0.2s ease, text-shadow 0.2s ease !important;
 }
 
@@ -352,20 +352,20 @@ body {
 #extensionsMenuButton:hover,
 .menu_button:hover,
 .nav_button:hover {
-  color: #8b2020 !important;
-  text-shadow: 0 0 8px rgba(120,20,20,0.4) !important;
+  color: #d05858 !important;
+  text-shadow: 0 0 8px rgba(170,45,45,0.28) !important;
 }
 
 .popup,
 .dialogue_popup {
-  background: #0c0606 !important;
-  border: 1px solid #1a0808 !important;
-  box-shadow: 0 0 40px rgba(0,0,0,0.8), 0 0 8px rgba(60,10,10,0.1) !important;
+  background: #1c1414 !important;
+  border: 1px solid #3a2020 !important;
+  box-shadow: 0 0 30px rgba(0,0,0,0.45), 0 0 8px rgba(100,30,30,0.12) !important;
 }
 
 .drawer-content,
 #sheld {
-  background: #0c0606 !important;
+  background: #1c1414 !important;
 }
 
 ::-webkit-scrollbar {
@@ -373,16 +373,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0505 !important;
+  background: #151111 !important;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a0808 !important;
+  background: #4a2828 !important;
   border-radius: 2px !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a0a0a !important;
+  background: #6a3030 !important;
 }
 
 ::selection {
@@ -391,20 +391,20 @@ body {
 }
 
 .timestamp {
-  color: #3a2020 !important;
+  color: #8a6868 !important;
   font-size: 11px !important;
 }
 
 .horror-options {
-  background: #080505 !important;
-  border: 1px solid #2a0a0a !important;
-  border-left: 3px solid #5c1a1a !important;
-  border-right: 1px solid #2a0a0a !important;
+  background: #1b1414 !important;
+  border: 1px solid #5a2a2a !important;
+  border-left: 3px solid #9a3a3a !important;
+  border-right: 1px solid #5a2a2a !important;
   padding: 20px 24px !important;
   margin: 18px auto !important;
   max-width: 560px !important;
   position: relative !important;
-  box-shadow: 0 0 30px rgba(0,0,0,0.95), inset 0 0 50px rgba(10,0,0,0.7), 0 0 6px rgba(80,10,10,0.15) !important;
+  box-shadow: 0 0 22px rgba(0,0,0,0.45), inset 0 0 24px rgba(40,10,10,0.32), 0 0 6px rgba(120,30,30,0.18) !important;
   border-radius: 2px !important;
 }
 
@@ -427,19 +427,19 @@ body {
 }
 
 .horror-options-title {
-  color: #a03030 !important;
+  color: #d85858 !important;
   font-family: "Noto Serif SC", "SimSun", serif !important;
   font-size: 17px !important;
   font-weight: 800 !important;
   letter-spacing: 3px !important;
   text-shadow: 0 0 8px rgba(140,20,20,0.5) !important;
-  border-bottom: 1px solid #2a0a0a !important;
+  border-bottom: 1px solid #5a2a2a !important;
   padding-bottom: 10px !important;
   margin-bottom: 14px !important;
 }
 
 .horror-options-body {
-  color: #b0a8a8 !important;
+  color: #e0d6d6 !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
   font-size: 14px !important;
   line-height: 1.9 !important;
@@ -449,19 +449,19 @@ body {
 }
 
 .horror-panel {
-  background: #070404 !important;
-  border: 1px solid #2a0a0a !important;
+  background: #1b1414 !important;
+  border: 1px solid #5a2a2a !important;
   padding: 0 !important;
   margin: 18px auto !important;
   max-width: 480px !important;
   position: relative !important;
-  box-shadow: 0 0 30px rgba(0,0,0,0.95), inset 0 0 40px rgba(10,0,0,0.6), 0 0 8px rgba(60,10,10,0.1) !important;
+  box-shadow: 0 0 22px rgba(0,0,0,0.45), inset 0 0 22px rgba(40,10,10,0.28), 0 0 8px rgba(100,30,30,0.14) !important;
   border-radius: 2px !important;
   overflow: hidden !important;
 }
 
 .horror-panel-title {
-  color: #a03030 !important;
+  color: #d85858 !important;
   font-family: "Noto Serif SC", "SimSun", serif !important;
   font-size: 16px !important;
   font-weight: 800 !important;
@@ -471,7 +471,7 @@ body {
 }
 
 .horror-panel-text {
-  color: #a09898 !important;
+  color: #d8cccc !important;
   font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif !important;
   font-size: 13px !important;
   line-height: 2 !important;
@@ -491,7 +491,7 @@ body {
   gap: 8px !important;
   margin-bottom: 6px !important;
   font-size: 11px !important;
-  color: #a48b8b !important;
+  color: #cdbaba !important;
   letter-spacing: 0.05em !important;
 }
 
@@ -500,9 +500,9 @@ body {
   align-items: center !important;
   gap: 5px !important;
   padding: 2px 8px !important;
-  border: 1px solid rgba(100,24,24,.4) !important;
+  border: 1px solid rgba(150,58,58,.5) !important;
   border-radius: 999px !important;
-  background: rgba(10,4,4,.55) !important;
+  background: rgba(38,24,24,.65) !important;
 }
 
 .mfrs-choice-legend-dot {
@@ -515,16 +515,16 @@ body {
 .mfrs-choice-button {
   width: 100% !important;
   text-align: left !important;
-  background: rgba(8,3,3,.86) !important;
-  border: 1px solid rgba(100,24,24,.75) !important;
-  border-left: 3px solid #7a2020 !important;
-  color: #c8bcbc !important;
+  background: rgba(34,23,23,.9) !important;
+  border: 1px solid rgba(150,58,58,.72) !important;
+  border-left: 3px solid #a44242 !important;
+  color: #eadede !important;
   padding: 10px 12px !important;
   border-radius: 6px !important;
   cursor: pointer !important;
   font: inherit !important;
   line-height: 1.65 !important;
-  box-shadow: inset 0 0 18px rgba(0,0,0,.35) !important;
+  box-shadow: inset 0 0 14px rgba(0,0,0,.2) !important;
   position: relative !important;
 }
 
@@ -550,7 +550,7 @@ body {
 .mfrs-choice-button:hover {
   color: #f0d8d8 !important;
   border-color: #b03838 !important;
-  box-shadow: 0 0 14px rgba(120,20,20,.25), inset 0 0 18px rgba(0,0,0,.35) !important;
+  box-shadow: 0 0 14px rgba(150,45,45,.22), inset 0 0 14px rgba(0,0,0,.18) !important;
 }
 
 .mfrs-choice-key {
