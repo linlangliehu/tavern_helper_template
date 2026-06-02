@@ -11,6 +11,9 @@ type HostWindowWithThemeCleanup = Window & {
   MysteryDatabaseFrontend?: {
     openDashboard?: (options?: { welcome?: boolean }) => void;
   };
+  toastr?: {
+    info?: (message: string) => void;
+  };
 };
 
 function getSendTextarea(hostDocument: Document) {
@@ -480,6 +483,178 @@ body {
   letter-spacing: 0.8px !important;
 }
 
+#mfrs-welcome-root .mfrs-dropdown,
+.custom-mfrs-welcome-root .mfrs-dropdown {
+  position: relative !important;
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-trigger,
+.custom-mfrs-welcome-root .mfrs-dropdown-trigger {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
+  border: 1px solid rgba(160, 40, 40, .5) !important;
+  border-radius: 10px !important;
+  background: rgba(34,23,23,.82) !important;
+  color: #e0d0d0 !important;
+  cursor: pointer !important;
+  font: inherit !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-trigger:hover,
+.custom-mfrs-welcome-root .mfrs-dropdown-trigger:hover {
+  border-color: #c83838 !important;
+  background: rgba(42,28,28,.90) !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-display,
+.custom-mfrs-welcome-root .mfrs-dropdown-display {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-arrow,
+.custom-mfrs-welcome-root .mfrs-dropdown-arrow {
+  flex: 0 0 auto !important;
+  color: #902828 !important;
+  font-size: 12px !important;
+  transition: transform .2s ease !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown.is-open .mfrs-dropdown-arrow,
+.custom-mfrs-welcome-root .mfrs-dropdown.is-open .mfrs-dropdown-arrow {
+  transform: rotate(180deg) !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-menu,
+.custom-mfrs-welcome-root .mfrs-dropdown-menu {
+  display: none !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: calc(100% + 8px) !important;
+  max-height: min(420px, 62vh) !important;
+  overflow-y: auto !important;
+  border: 1px solid rgba(160, 40, 40, .5) !important;
+  border-radius: 10px !important;
+  background: rgba(34,23,23,.97) !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.68) !important;
+  z-index: 1000 !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown.is-open .mfrs-dropdown-menu,
+.custom-mfrs-welcome-root .mfrs-dropdown.is-open .mfrs-dropdown-menu {
+  display: block !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group,
+.custom-mfrs-welcome-root .mfrs-dropdown-group {
+  border-bottom: 1px solid rgba(160, 40, 40, .22) !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group-title,
+.custom-mfrs-welcome-root .mfrs-dropdown-group-title,
+#mfrs-welcome-root .mfrs-dropdown-chapter-title,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter-title {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+  transition: background .2s ease, color .2s ease !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group-title,
+.custom-mfrs-welcome-root .mfrs-dropdown-group-title {
+  padding: 13px 16px !important;
+  color: #c83838 !important;
+  background: rgba(32,12,12,.55) !important;
+  font-weight: 900 !important;
+  font-size: 14px !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-chapter-title,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter-title {
+  padding: 11px 16px 11px 26px !important;
+  color: #b89090 !important;
+  background: rgba(20,12,12,.50) !important;
+  border-top: 1px solid rgba(160,40,40,.15) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group-title::after,
+.custom-mfrs-welcome-root .mfrs-dropdown-group-title::after,
+#mfrs-welcome-root .mfrs-dropdown-chapter-title::after,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter-title::after {
+  content: '▾' !important;
+  color: #902828 !important;
+  font-size: 12px !important;
+  transition: transform .2s ease !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group.is-open > .mfrs-dropdown-group-title::after,
+.custom-mfrs-welcome-root .mfrs-dropdown-group.is-open > .mfrs-dropdown-group-title::after,
+#mfrs-welcome-root .mfrs-dropdown-chapter.is-open > .mfrs-dropdown-chapter-title::after,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter.is-open > .mfrs-dropdown-chapter-title::after {
+  transform: rotate(180deg) !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group-body,
+.custom-mfrs-welcome-root .mfrs-dropdown-group-body,
+#mfrs-welcome-root .mfrs-dropdown-chapter-body,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter-body {
+  display: none !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-group.is-open > .mfrs-dropdown-group-body,
+.custom-mfrs-welcome-root .mfrs-dropdown-group.is-open > .mfrs-dropdown-group-body,
+#mfrs-welcome-root .mfrs-dropdown-chapter.is-open > .mfrs-dropdown-chapter-body,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter.is-open > .mfrs-dropdown-chapter-body {
+  display: block !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-item,
+.custom-mfrs-welcome-root .mfrs-dropdown-item {
+  padding: 10px 16px 10px 40px !important;
+  color: #e0d0d0 !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-item:hover,
+.custom-mfrs-welcome-root .mfrs-dropdown-item:hover {
+  background: rgba(160,40,40,.14) !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-item-name,
+.custom-mfrs-welcome-root .mfrs-dropdown-item-name,
+#mfrs-welcome-root .mfrs-dropdown-item-meta,
+.custom-mfrs-welcome-root .mfrs-dropdown-item-meta {
+  display: block !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-item-name,
+.custom-mfrs-welcome-root .mfrs-dropdown-item-name {
+  font-weight: 700 !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-item-meta,
+.custom-mfrs-welcome-root .mfrs-dropdown-item-meta {
+  margin-top: 3px !important;
+  color: #8a6565 !important;
+  font-size: 12px !important;
+}
+
 .mfrs-choice-list {
   display: grid !important;
   gap: 10px !important;
@@ -659,7 +834,6 @@ body {
       return matches
         .map((match, index) => {
           const markerText = match[0];
-          const keyOffset = markerText.search(/[A-Da-d]/);
           const bodyStart = (match.index ?? 0) + markerText.length;
           const next = matches[index + 1];
           const nextMarkerText = next?.[0] ?? '';
@@ -690,6 +864,8 @@ body {
         .map(line => line.trim())
         .filter(Boolean);
       const actions = lines.filter(line => /^[A-Da-d][\.、：:]/.test(line));
+
+
       if (actions.length < 4) {
         const splitActions = splitChoiceActions(raw);
         if (splitActions.length > actions.length) {
@@ -741,7 +917,24 @@ body {
   };
 
   const fillWelcomeStart = (root: HTMLElement) => {
-    const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs="${key}"]`)?.value.trim() ?? '';
+    const fallbackSelectors: Record<string, string> = {
+      name: '#mfrs-name',
+      ageGender: '#mfrs-age-gender',
+      identity: '#mfrs-identity',
+      anchor: '#mfrs-anchor-value',
+      ghostPreset1: '#mfrs-ghost-preset-1',
+      ghostName1: '#mfrs-ghost-name-1',
+      ghostLaw1: '#mfrs-ghost-law-1',
+      ghostName2: '#mfrs-ghost-name-2',
+      ghostLaw2: '#mfrs-ghost-law-2',
+      specialAbility: '#mfrs-special-ability',
+      resources: '#mfrs-resources',
+      background: '#mfrs-background',
+    };
+    const getValue = (key: string) => {
+      const selectors = [`[data-mfrs="${key}"]`, fallbackSelectors[key]].filter(Boolean).join(', ');
+      return root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selectors)?.value.trim() ?? '';
+    };
     const getPresetGhost = () => getValue('ghostPreset1');
     const getCustomGhosts = () => {
       const ghosts: string[] = [];
@@ -757,17 +950,20 @@ body {
       return ghosts.length ? ghosts.join('\n     ') : '无';
     };
     const anchorParts = getValue('anchor').split('|');
+    const hasTimeField = anchorParts.length >= 7;
     const anchor = anchorParts[0] || '未选择节点';
-    const storyLocation = anchorParts[1] || '由当前剧情节点决定';
-    const storyPhase = anchorParts[2] || '未定阶段';
-    const eventPressure = anchorParts[3] || '请根据身份与地点判断接入边界';
-    const visibleIntel = anchorParts[4] || '仅依据当前选择与背景设定';
-    const spoilerBoundary = anchorParts[5] || '不得直接揭露隐藏规律、关键生路和幕后真相';
+    const storyTime = hasTimeField ? anchorParts[1] : '由当前剧情节点决定';
+    const storyLocation = (hasTimeField ? anchorParts[2] : anchorParts[1]) || '由当前剧情节点决定';
+    const storyPhase = (hasTimeField ? anchorParts[3] : anchorParts[2]) || '未定阶段';
+    const eventPressure = (hasTimeField ? anchorParts[4] : anchorParts[3]) || '请根据身份与剧情节点判断接入边界';
+    const visibleIntel = (hasTimeField ? anchorParts[5] : anchorParts[4]) || '仅依据当前选择与背景设定';
+    const spoilerBoundary = (hasTimeField ? anchorParts[6] : anchorParts[5]) || '不得直接揭露隐藏规律、关键生路和幕后真相';
     const message = `【神秘复苏·开局设定】\n\n` +
       `1. 基本信息\n` +
       `   - 姓名：${getValue('name')}\n` +
       `   - 年龄/性别：${getValue('ageGender')}\n` +
       `   - 剧情节点：${anchor}\n` +
+      `   - 当前时间：${storyTime}\n` +
       `   - 当前地点：${storyLocation}\n` +
       `   - 原著阶段：${storyPhase}\n` +
       `   - 事件压力：${eventPressure}\n` +
@@ -784,10 +980,10 @@ body {
       `   ${getValue('background')}\n\n` +
       `5. 推演边界与初始化建议\n` +
       `   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n` +
-      `   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
+      `   - 初始变量建议：将姓名、身份、当前时间、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
       `   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n` +
       `   - 开局厉鬼判定：若玩家在第1只厉鬼选择预设，只能把预设资料当作开局可见档案和成长方向，不得直接明牌隐藏规律、关键生路或完整拼图；若玩家自定义厉鬼，只提供厉鬼名称和可见杀人规律，影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断。第1只厉鬼只能读取预设或自定义之一，第2只仅读取自定义，超出部分无效。\n` +
-      `   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“永久死机驾驭”，玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n` +
+      `   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“强外挂模式（非默认）·永久死机驾驭”，视为主动开启高强度辅助模式：玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n` +
       `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。`;
     const input = getSendTextarea(hostDocument);
     if (!input) return;
@@ -816,8 +1012,18 @@ body {
   };
 
   const welcomeRootSelector = '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root';
+  const inWelcomeRoots = (childSelector: string) => welcomeRootSelector
+    .split(',')
+    .map(selector => `${selector.trim()} ${childSelector}`)
+    .join(', ');
   const ghostPresetSelector = '[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1';
   const specialAbilityPresetSelector = '[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset';
+
+  const isHostSelectElement = (element: Element | null): element is HTMLSelectElement => {
+    if (!element || element.tagName !== 'SELECT') return false;
+    const HostHTMLSelectElement = hostWindow?.HTMLSelectElement;
+    return !HostHTMLSelectElement || element instanceof HostHTMLSelectElement || 'options' in element;
+  };
 
   const syncPresetGhost1 = (root: HTMLElement) => {
     const preset = root.querySelector<HTMLSelectElement>('[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1');
@@ -838,6 +1044,185 @@ body {
     if (!preset || !abilityInput) return;
     abilityInput.value = preset.value.trim();
     abilityInput.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  const closeSiblingAccordions = (node: HTMLElement, selector: string) => {
+    Array.from(node.parentElement?.children ?? []).forEach(sibling => {
+      if (sibling !== node && sibling.matches(selector)) sibling.classList.remove('is-open');
+    });
+  };
+
+  type WelcomeAnchorOption = {
+    group: string;
+    chapter: string;
+    name: string;
+    time: string;
+    loc: string;
+    value: string;
+  };
+
+  const enhanceWelcomeAnchors = () => {
+    hostDocument.querySelectorAll<Element>(inWelcomeRoots('select[data-mfrs="anchor"]')).forEach(element => {
+      if (!isHostSelectElement(element)) return;
+      const select = element;
+      if (select.dataset.mfrsAnchorEnhanced === 'true') return;
+      const root = select.closest<HTMLElement>(welcomeRootSelector);
+      if (!root) return;
+      const optionElements = Array.from(select.querySelectorAll<HTMLOptionElement>('option'));
+      const options = optionElements
+        .filter(option => option.value.trim())
+        .map(option => {
+          const parts = option.value.split('|');
+          return {
+            group: option.dataset.group || '剧情节点',
+            chapter: option.dataset.chapter || '默认入口',
+            name: option.dataset.name || parts[0] || option.textContent?.trim() || '未命名节点',
+            time: option.dataset.time || parts[1] || '由当前剧情节点决定',
+            loc: option.dataset.loc || parts[2] || '由当前剧情节点决定',
+            value: option.value,
+          };
+        });
+      if (!options.length) return;
+
+      select.dataset.mfrsAnchorEnhanced = 'true';
+      select.style.display = 'none';
+
+      const dropdown = hostDocument.createElement('div');
+      dropdown.className = 'mfrs-dropdown';
+      dropdown.dataset.mfrsAnchorDropdown = 'true';
+
+      const trigger = hostDocument.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'mfrs-dropdown-trigger';
+      trigger.setAttribute('aria-haspopup', 'listbox');
+      trigger.setAttribute('aria-expanded', 'false');
+
+      const display = hostDocument.createElement('span');
+      display.className = 'mfrs-dropdown-display';
+      const selectedOption = optionElements.find(option => option.selected && option.value.trim());
+      display.textContent = selectedOption ? selectedOption.textContent?.trim() || '选择剧情节点' : '选择剧情节点';
+      trigger.appendChild(display);
+
+      const arrow = hostDocument.createElement('span');
+      arrow.className = 'mfrs-dropdown-arrow';
+      arrow.textContent = '▾';
+      trigger.appendChild(arrow);
+      dropdown.appendChild(trigger);
+
+      const menu = hostDocument.createElement('div');
+      menu.className = 'mfrs-dropdown-menu';
+      menu.setAttribute('role', 'listbox');
+
+      const grouped = new Map<string, Map<string, WelcomeAnchorOption[]>>();
+      options.forEach(option => {
+        if (!grouped.has(option.group)) grouped.set(option.group, new Map());
+        const chapters = grouped.get(option.group)!;
+        if (!chapters.has(option.chapter)) chapters.set(option.chapter, []);
+        chapters.get(option.chapter)!.push(option);
+      });
+
+      let groupIndex = 0;
+      grouped.forEach((chapters, groupName) => {
+        const groupDiv = hostDocument.createElement('div');
+        groupDiv.className = 'mfrs-dropdown-group';
+        if (groupIndex === 0) groupDiv.classList.add('is-open');
+
+        const groupTitle = hostDocument.createElement('div');
+        groupTitle.className = 'mfrs-dropdown-group-title';
+        groupTitle.textContent = groupName;
+        groupTitle.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeSiblingAccordions(groupDiv, '.mfrs-dropdown-group');
+          groupDiv.classList.toggle('is-open');
+        });
+        groupDiv.appendChild(groupTitle);
+
+        const groupBody = hostDocument.createElement('div');
+        groupBody.className = 'mfrs-dropdown-group-body';
+
+        let chapterIndex = 0;
+        chapters.forEach((items, chapterName) => {
+          const chapterDiv = hostDocument.createElement('div');
+          chapterDiv.className = 'mfrs-dropdown-chapter';
+          if (groupIndex === 0 && chapterIndex === 0) chapterDiv.classList.add('is-open');
+
+          const chapterTitle = hostDocument.createElement('div');
+          chapterTitle.className = 'mfrs-dropdown-chapter-title';
+          chapterTitle.textContent = chapterName;
+          chapterTitle.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            closeSiblingAccordions(chapterDiv, '.mfrs-dropdown-chapter');
+            chapterDiv.classList.toggle('is-open');
+          });
+          chapterDiv.appendChild(chapterTitle);
+
+          const chapterBody = hostDocument.createElement('div');
+          chapterBody.className = 'mfrs-dropdown-chapter-body';
+
+          items.forEach(item => {
+            const itemDiv = hostDocument.createElement('div');
+            itemDiv.className = 'mfrs-dropdown-item';
+            itemDiv.setAttribute('role', 'option');
+            itemDiv.tabIndex = 0;
+
+            const nameSpan = hostDocument.createElement('span');
+            nameSpan.className = 'mfrs-dropdown-item-name';
+            nameSpan.textContent = item.name;
+            itemDiv.appendChild(nameSpan);
+
+            const metaSpan = hostDocument.createElement('span');
+            metaSpan.className = 'mfrs-dropdown-item-meta';
+            metaSpan.textContent = `${item.time} · ${item.loc || '自定义地点'}`;
+            itemDiv.appendChild(metaSpan);
+
+            const choose = () => {
+              select.value = item.value;
+              display.textContent = `${item.group} · ${item.chapter} · ${item.name}`;
+              dropdown.classList.remove('is-open');
+              trigger.setAttribute('aria-expanded', 'false');
+              select.dispatchEvent(new Event('input', { bubbles: true }));
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+            };
+            itemDiv.addEventListener('click', event => {
+              event.preventDefault();
+              event.stopPropagation();
+              choose();
+            });
+            itemDiv.addEventListener('keydown', event => {
+              if (event.key !== 'Enter' && event.key !== ' ') return;
+              event.preventDefault();
+              choose();
+            });
+            chapterBody.appendChild(itemDiv);
+          });
+
+          chapterDiv.appendChild(chapterBody);
+          groupBody.appendChild(chapterDiv);
+          chapterIndex += 1;
+        });
+
+        groupDiv.appendChild(groupBody);
+        menu.appendChild(groupDiv);
+        groupIndex += 1;
+      });
+
+      dropdown.appendChild(menu);
+      select.insertAdjacentElement('afterend', dropdown);
+
+      trigger.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const willOpen = !dropdown.classList.contains('is-open');
+        root.querySelectorAll<HTMLElement>('.mfrs-dropdown.is-open, .custom-mfrs-dropdown.is-open').forEach(openDropdown => {
+          if (openDropdown !== dropdown) openDropdown.classList.remove('is-open');
+        });
+        dropdown.classList.toggle('is-open', willOpen);
+        trigger.setAttribute('aria-expanded', String(willOpen));
+      });
+      menu.addEventListener('click', event => event.stopPropagation());
+    });
   };
 
   const fillInputPanel = (root: HTMLElement) => {
@@ -882,6 +1267,13 @@ body {
 
   const handleWelcomeClick = (event: Event) => {
     const target = event.target as HTMLElement | null;
+    if (!target?.closest('.mfrs-dropdown, .custom-mfrs-dropdown')) {
+      hostDocument.querySelectorAll<HTMLElement>('.mfrs-dropdown.is-open, .custom-mfrs-dropdown.is-open').forEach(dropdown => {
+        dropdown.classList.remove('is-open');
+        dropdown.querySelector<HTMLElement>('.mfrs-dropdown-trigger, .custom-mfrs-dropdown-trigger')?.setAttribute('aria-expanded', 'false');
+      });
+    }
+
     const ghostButton = target?.closest('.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost');
     if (ghostButton) {
       const root = ghostButton.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
@@ -897,6 +1289,8 @@ body {
     const root = button.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
     if (!root) return;
     event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     fillWelcomeStart(root);
   };
 
@@ -964,6 +1358,7 @@ body {
   };
 
   const enhancePanels = () => {
+    enhanceWelcomeAnchors();
     bindWelcomePresetControls();
     bindWelcomeGhostButtons();
     enhanceChoicePanels();

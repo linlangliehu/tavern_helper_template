@@ -340,6 +340,13 @@
   min-width: 220px;
 }
 
+#mfrs-anchor-display {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mfrs-dropdown-trigger {
   width: 100%;
   display: flex;
@@ -390,6 +397,10 @@
 .mfrs-dropdown-group:last-child { border-bottom: none; }
 
 .mfrs-dropdown-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding: 14px 18px;
   font-weight: 900;
   color: var(--accent);
@@ -399,12 +410,59 @@
   font-size: 14px;
 }
 
+.mfrs-dropdown-group-title::after,
+.mfrs-dropdown-chapter-title::after {
+  content: "▾";
+  flex: 0 0 auto;
+  color: var(--accent-dim);
+  font-size: 12px;
+  transition: transform 0.2s var(--easing);
+}
+
+.mfrs-dropdown-group.is-open > .mfrs-dropdown-group-title::after,
+.mfrs-dropdown-chapter.is-open > .mfrs-dropdown-chapter-title::after {
+  transform: rotate(180deg);
+}
+
 .mfrs-dropdown-group-title:hover {
   background: rgba(32, 12, 12, 0.8);
 }
 
+.mfrs-dropdown-group-body,
+.mfrs-dropdown-chapter-body {
+  display: none;
+}
+
+.mfrs-dropdown-group.is-open > .mfrs-dropdown-group-body,
+.mfrs-dropdown-chapter.is-open > .mfrs-dropdown-chapter-body {
+  display: block;
+}
+
+.mfrs-dropdown-chapter {
+  border-top: 1px solid rgba(155, 39, 39, 0.16);
+}
+
+.mfrs-dropdown-chapter-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px 12px 26px;
+  color: var(--text-muted);
+  background: rgba(20, 12, 12, 0.48);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  transition: background 0.2s var(--easing), color 0.2s var(--easing);
+}
+
+.mfrs-dropdown-chapter-title:hover {
+  color: var(--text-main);
+  background: rgba(42, 22, 22, 0.7);
+}
+
 .mfrs-dropdown-item {
-  padding: 11px 18px 11px 32px;
+  padding: 10px 18px 10px 40px;
   color: var(--text-main);
   cursor: pointer;
   transition: background 0.2s var(--easing);
@@ -413,6 +471,19 @@
 
 .mfrs-dropdown-item:hover {
   background: rgba(160, 40, 40, 0.12);
+}
+
+.mfrs-dropdown-item-name {
+  display: block;
+  font-weight: 700;
+}
+
+.mfrs-dropdown-item-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 /* 提交按钮 */
@@ -515,13 +586,13 @@
         </details>
 
         <form id="mfrs-form" class="mfrs-form">
-            <div class="mfrs-section-title">身份与根骨</div>
+            <div class="mfrs-section-title">身份与处境</div>
             <div class="mfrs-row">
                 <input type="text" id="mfrs-name" class="mfrs-input" placeholder="姓名（例：杨间）" required>
                 <input type="text" id="mfrs-age-gender" class="mfrs-input" placeholder="年龄/性别（例：18/男）" required>
             </div>
 
-            <div class="mfrs-section-title">修为与流派</div>
+            <div class="mfrs-section-title">驭鬼状态</div>
             <div class="mfrs-row">
                 <select id="mfrs-identity" class="mfrs-select" required>
                     <option value="" disabled selected>选择身份</option>
@@ -542,7 +613,7 @@
                     <select id="mfrs-ghost-preset-1" class="mfrs-select">
                         <option value="">自定义厉鬼 1：手动填写或无</option>
                         <option value="鬼手印；可见杀人规律：直接接触厉鬼、鬼奴、灵异媒介或驭鬼者体内灵异时，疑似会窃取目标一部分灵异力量并留下冰冷手印；可见档案：被留下手印的目标可能短暂规律残缺、鬼域破损、媒介失效或复苏失衡，鬼手印会获得残缺灵异拼图；成长主题：接触窃取、灵异残片、拼图拼接、印域叠加；驾驭方向：死机、与被窃拼图平衡、异类化为灵异空壳、手印诅咒。">预设｜鬼手印｜规律：接触留下手印并窃取灵异</option>
-                        <option value="鬼档案；可见杀人规律：填写、确认、签收厉鬼档案或按档案编号调用、寻找目标者，疑似会被记录并逐渐变成已归档对象；可见档案：完整验证厉鬼杀人规律、媒介、触发条件、规避/压制窗口、鬼域表现和关押条件后，可生成厉鬼档案拼图；成长主题：收录厉鬼档案、调用档案规律、档案鬼域叠加、代价转嫁；驾驭方向：档案厉鬼承受代价、多档案互相平衡、鬼档案本体近似死机、活档案异类化。">预设｜鬼档案｜规律：完整档案可收录厉鬼</option>
+                        <option value="鬼档案；可见杀人规律：填写、确认、签收厉鬼档案或按档案编号调用、寻找目标者，疑似会被记录并逐渐变成已归档对象；可见档案：完整验证厉鬼杀人规律、媒介、触发条件、规避/压制窗口、鬼域表现和关押条件后，可生成厉鬼档案拼图；成长主题：收录厉鬼档案、调用档案规律、档案鬼域叠加、代价承接；驾驭方向：档案厉鬼承受代价、多档案互相平衡、鬼档案本体近似死机、活档案异类化。">预设｜鬼档案｜规律：完整档案可收录厉鬼</option>
                         <option value="鬼拓本；可见杀人规律：接触厉鬼规律、受害痕迹、灵异媒介或鬼域残留后，疑似会在纸面、皮肤、墙面或影像中留下拓印纹路，并复刻目标的一部分杀人规律；可见档案：同类型拓印规律会互相覆盖、融合并进阶，不同类型拓印规律会被撕碎、剥离或分解成灵异墨迹，用来提高鬼拓本恐怖程度；成长主题：规律复刻、同类融合、异类分解、拓本拼页、复写污染；驾驭方向：死机、复刻规律平衡、异类化为活拓本、拓印诅咒。">预设｜鬼拓本｜规律：复刻并重组其它厉鬼规律</option>
                     </select>
                     <input type="text" id="mfrs-ghost-name-1" class="mfrs-input" placeholder="厉鬼名称（例：鬼眼、鬼影、敲门鬼）">
@@ -575,15 +646,15 @@
             <div class="mfrs-section-title">特殊能力</div>
             <select id="mfrs-special-ability-preset" class="mfrs-select">
                 <option value="">特殊能力：自定义或无</option>
-                <option value="永久死机驾驭：玩家已经成功驾驭的所有厉鬼本体都会永久处于死机状态，包括开局厉鬼和后续驾驭的新厉鬼；调用已驾驭厉鬼的本体能力、基础鬼域或本体杀人规律时不增加自身复苏代价，也不会被这些本体厉鬼反噬。新厉鬼必须先按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程；若已驾驭厉鬼通过拼图、档案、残片、鬼奴、媒介或交易调用外来灵异，外来灵异仍需单独判定污染、冲突、反噬和失控风险。选择鬼手印时，该能力会稳定鬼手印本体与冰冷手印媒介，降低接触窃取、残片调用和印域叠加对玩家自身的复苏压力，但被窃残片本身仍可能复苏、污染、互相冲突或反向锁定。">预设｜永久死机驾驭｜已驾驭厉鬼全部死机</option>
+                <option value="强外挂模式（非默认）·永久死机驾驭：玩家已经成功驾驭的所有厉鬼本体都会永久处于死机状态，包括开局厉鬼和后续驾驭的新厉鬼；调用已驾驭厉鬼的本体能力、基础鬼域或本体杀人规律时不增加自身复苏代价，也不会被这些本体厉鬼反噬。新厉鬼必须先按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程；若已驾驭厉鬼通过拼图、档案、残片、鬼奴、媒介或交易调用外来灵异，外来灵异仍需单独判定污染、冲突、反噬和失控风险。选择鬼手印时，该能力会稳定鬼手印本体与冰冷手印媒介，降低接触窃取、残片调用和印域叠加对玩家自身的复苏压力，但被窃残片本身仍可能复苏、污染、互相冲突或反向锁定。">强外挂｜永久死机驾驭｜已驾驭厉鬼全部死机（非默认）</option>
                 <option value="灵异档案视野：玩家接触灵异现象后，可获得鬼档案收录辅助提示，包括档案完整度、已验证字段、缺失字段、疑似媒介、疑似触发条件、鬼域迹象、可收录风险和档案拼图稳定度；该视野只提示收录方向，不直接公开完整隐藏规律、源头位置、最终生路或无条件关押方案。">预设｜灵异档案视野｜辅助鬼档案收录档案</option>
                 <option value="规律目录视野：玩家接触灵异现象、厉鬼规律、受害痕迹、灵异媒介或鬼域残留后，可获得面向鬼拓本的目录提示，包括规律类型、拓印完整度、兼容方向、可融合/可分解倾向、疑似媒介、污染风险、反噬风险和推荐处理；该视野只整理玩家已接触证据，不直接公开完整隐藏规律、源头位置、最终生路或无条件关押方案。">预设｜规律目录视野｜辅助鬼拓本整理拓印</option>
             </select>
             <textarea id="mfrs-special-ability" class="mfrs-textarea" placeholder="自定义特殊能力（可选；特殊能力上限为1个，选择预设时此处会自动填入）"></textarea>
 
-            <div class="mfrs-section-title">初始资源与背景</div>
+            <div class="mfrs-section-title">初始资源、背景与情报权限</div>
             <textarea id="mfrs-resources" class="mfrs-textarea" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
-            <textarea id="mfrs-background" class="mfrs-textarea" placeholder="背景设定（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
+            <textarea id="mfrs-background" class="mfrs-textarea" placeholder="背景与情报权限（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
 
             <button type="submit" class="mfrs-submit">进入神秘复苏世界</button>
         </form>
@@ -594,84 +665,324 @@
 (function() {
     'use strict';
 
-    const anchors = [
+    const phaseMeta = {
+        stage0: {
+            phase: "阶段0｜开局与七中前后",
+            pressure: "局部致命；普通人以逃生、观察、求助为主。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括传闻、敲门声、课堂警告、失踪、鬼域错位和早期求生线索。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage1: {
+            phase: "阶段1｜大昌市早期事件",
+            pressure: "城市局部高危；民间驭鬼者、异常地点和早期档案交错。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括商场、村庄、俱乐部、民间驭鬼者与大昌市早期案情表层。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage2: {
+            phase: "阶段2｜总部与负责人体系",
+            pressure: "总部级高危；档案权限、资源调度和负责人责任开始压上来。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括总部接触、档案编号、资源申请、负责人职责和高危任务通知。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage3: {
+            phase: "阶段3｜大昌市城市级灾害",
+            pressure: "城市级灾害；封锁、避难、救援和核心区处理同时发生。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括封锁线、避难点、鬼婴扩散、救援失联和城市级恐慌。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage4: {
+            phase: "阶段4｜势力冲突与中期扩张",
+            pressure: "势力级冲突；公开事件背后存在民间组织、总部和论坛博弈。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括势力试探、论坛/朋友圈传闻、总部会议口风和局部冲突后果。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage5: {
+            phase: "阶段5｜规则型地点与任务链",
+            pressure: "规则型高危；进入条件、任务规则和离开方式比战斗更重要。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括车站、邮局、酒店、古宅、送信/守夜等规则提示与局部死亡案例。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage6: {
+            phase: "阶段6｜队长计划与高危档案",
+            pressure: "队长级/档案级高危；错误情报会导致连锁死亡和灵异失控。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括队长档案、鬼湖/太平古镇传闻、民国遗留影子和高权限封存记录。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        stage7: {
+            phase: "阶段7｜国际冲突与世界失衡",
+            pressure: "国际/终局级高危；局部行动可能牵动全球灵异格局。",
+            intel: "玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括海外档案、幽灵船传闻、国王组织行动、终局警报和时代更替迹象。",
+            boundary: "不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。"
+        },
+        extra: {
+            phase: "阶段7｜国际冲突与世界失衡",
+            pressure: "终局后低频高危；更多体现时代余波、人物后续和局部灵异遗留。",
+            intel: "玩家只能通过传闻、档案、特定人物接触或后续事件得知番外线索。",
+            boundary: "不直接把番外人物命运、招魂结果和终局后真相写入普通开局。"
+        },
+        custom: {
+            phase: "自定义阶段",
+            pressure: "由玩家背景决定事件压力。",
+            intel: "玩家自定义情报；AI 只依据玩家已写明背景、身份权限和现场证据推进。",
+            boundary: "按背景和已知线索限制剧透，不直接公开隐藏规律、关键生路和幕后真相。"
+        }
+    };
+
+    const rawAnchors = [
         {
-            group: "阶段0：开局与七中前后",
-            items: [
-                { name: "论坛鬼故事·雷电法王发帖", loc: "大昌市", phase: "阶段0：七中前后", pressure: "敲门鬼照片和音频仍被当作网络怪谈传播", intel: "网络传闻、老人照片、敲门录音", boundary: "不得直接公布敲门鬼完整规律和后续死亡名单" },
-                { name: "七中前数日·怪谈传播", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "学生间流传敲门鬼视频，校园尚未公开爆发死亡", intel: "怪谈、视频、照片、同学讨论", boundary: "不得提前安排校内大规模死亡" },
-                { name: "七中当日·周正讲课", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "周正临时到校讲安全课，灵异即将失控", intel: "周正异常状态、鬼字讲解、课堂恐慌", boundary: "不得让周正提前说破七中必然爆发敲门鬼" },
-                { name: "鬼域初现·校园迷路", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "校园空间异常，普通逃生路线开始失效", intel: "迷路、楼道异常、厕所异动、身后脚步", boundary: "不得直接给出鬼域完整破解方式" },
-                { name: "鬼眼复苏·杨间觉醒", loc: "大昌市第七中学", phase: "阶段0：七中前后", pressure: "鬼眼拼图介入，玩家可能见证或替代早期转折", intel: "鬼眼、羊皮纸、人皮纸、幸存者恐慌", boundary: "不得泄露关键人物长期命运" }
+            group: "普通人视角",
+            groups: [
+                {
+                    title: "七中与早期怪谈",
+                    items: [
+                        { name: "论坛鬼故事·雷电法王发帖", time: "灵异复苏初期", loc: "大昌市网络论坛", meta: "stage0" },
+                        { name: "七中前数日·怪谈传播", time: "灵异复苏初期", loc: "大昌市第七中学", meta: "stage0" },
+                        { name: "七中当日·周正讲课", time: "灵异复苏初期", loc: "大昌市第七中学", meta: "stage0" },
+                        { name: "鬼域初现·校园迷路", time: "灵异复苏初期", loc: "大昌市第七中学", meta: "stage0" },
+                        { name: "鬼眼复苏·幸存余波", time: "灵异复苏初期", loc: "大昌市第七中学", meta: "stage0" }
+                    ]
+                },
+                {
+                    title: "大昌市街头",
+                    items: [
+                        { name: "商场购物·无头鬼影传闻", time: "大昌市早期", loc: "大昌市商场", meta: "stage1" },
+                        { name: "公寓邻里·敲门声扩散", time: "大昌市早期", loc: "大昌市居民楼", meta: "stage1" },
+                        { name: "出租屋夜归·跟随脚步", time: "大昌市早期", loc: "大昌市出租屋", meta: "stage1" }
+                    ]
+                },
+                {
+                    title: "灾害封锁区",
+                    items: [
+                        { name: "封锁区居民·避难所求生", time: "大昌市灾害期", loc: "大昌市封锁区", meta: "stage3" },
+                        { name: "积水街区·夜间撤离", time: "大昌市灾害期", loc: "大昌市积水街区", meta: "stage3" },
+                        { name: "避难医院·物资短缺", time: "大昌市灾害期", loc: "大昌市临时医院", meta: "stage3" }
+                    ]
+                },
+                {
+                    title: "规则地点误入",
+                    items: [
+                        { name: "末班灵异公交·误上车", time: "中期·规则地点活跃期", loc: "灵异公交", meta: "stage5" },
+                        { name: "深夜邮局·误投信件", time: "中期·规则地点活跃期", loc: "鬼邮局", meta: "stage5" },
+                        { name: "老宅借宿·撞上守夜", time: "中期·规则地点活跃期", loc: "老宅/古宅", meta: "stage5" }
+                    ]
+                }
             ]
         },
         {
-            group: "阶段1：大昌市早期事件",
-            items: [
-                { name: "敲门鬼事件", loc: "大昌市", phase: "阶段1：大昌市早期", pressure: "敲门鬼诅咒开始在城市内扩散", intel: "敲门声、音频、电话、封锁传闻", boundary: "不得直接公布完整杀人规律和源头处理方式" },
-                { name: "商场无头鬼影", loc: "大昌市商场", phase: "阶段1：大昌市早期", pressure: "商场失踪与无头鬼影线索浮出水面", intel: "失踪人员、监控室、腐烂人头、严力线索", boundary: "不得提前揭露源头鬼身份和完整关押流程" },
-                { name: "严力合作·鬼血线", loc: "大昌市", phase: "阶段1：大昌市早期", pressure: "民间驭鬼者与灵异资源交易开始进入玩家视野", intel: "严力、鬼血、黄金容器、合作风险", boundary: "不得把鬼血后续全部代价直接明说" }
+            group: "总部体系视角",
+            groups: [
+                {
+                    title: "接线与备案",
+                    items: [
+                        { name: "总部接线员·首日值班", time: "总部体系建立期", loc: "总部接线中心", meta: "stage2" },
+                        { name: "新人负责人·首次立案", time: "总部体系建立期", loc: "大昌市负责人办公室", meta: "stage2" },
+                        { name: "备案档案员·编号整理", time: "总部体系建立期", loc: "总部档案室", meta: "stage2" }
+                    ]
+                },
+                {
+                    title: "灾害支援",
+                    items: [
+                        { name: "封锁线人员·城市灾害支援", time: "大昌市灾害期", loc: "大昌市封锁线", meta: "stage3" },
+                        { name: "实验室协助·样本看护", time: "大昌市灾害期", loc: "总部临时实验室", meta: "stage3" }
+                    ]
+                },
+                {
+                    title: "高危档案",
+                    items: [
+                        { name: "队长计划外围·档案整理", time: "后期·队长计划期", loc: "总部高危档案室", meta: "stage6" },
+                        { name: "鬼湖封锁线·外围警戒", time: "后期·队长计划期", loc: "鬼湖外围封锁线", meta: "stage6" }
+                    ]
+                }
             ]
         },
         {
-            group: "阶段2：总部与负责人体系",
-            items: [
-                { name: "小强俱乐部冲突", loc: "大昌市", phase: "阶段2：总部与势力", pressure: "民间驭鬼者组织和总部体系开始压迫玩家选择立场", intel: "小强俱乐部、负责人、资源交易、阵营压力", boundary: "不得强制玩家按原著加入任一阵营" },
-                { name: "黄岗村调查", loc: "黄岗村", phase: "阶段2：总部与势力", pressure: "黄岗村任务展开，鬼棺与病鬼风险逐步显现", intel: "黄岗村、咳嗽、鬼棺、遗像、失踪驭鬼者", boundary: "不得提前公布鬼棺全部真相和离村办法" },
-                { name: "鬼棺开启·病鬼失控", loc: "黄岗村", phase: "阶段2：总部与势力", pressure: "鬼棺平衡被破坏，多只鬼与驭鬼者互相牵制", intel: "鬼棺、病鬼、遗像、回棺、交易", boundary: "不得直接给出关键生路和最终交易答案" },
-                { name: "鬼镜交易·第二只鬼", loc: "大昌市", phase: "阶段2：总部与势力", pressure: "鬼镜和第二只鬼相关风险进入可接触阶段", intel: "鬼镜、复活、鬼影、交易、代价", boundary: "不得无条件提供完美驾驭方案" }
+            group: "民间驭鬼者视角",
+            groups: [
+                {
+                    title: "早期民间势力",
+                    items: [
+                        { name: "小强俱乐部·新人考核", time: "大昌市早期", loc: "小强俱乐部", meta: "stage1" },
+                        { name: "严力线·鬼血交易", time: "大昌市早期", loc: "大昌市民间交易点", meta: "stage1" },
+                        { name: "黄岗村·受雇调查", time: "大昌市早期", loc: "黄岗村", meta: "stage1" },
+                        { name: "鬼棺村·守夜异变", time: "大昌市早期", loc: "黄岗村鬼棺现场", meta: "stage1" }
+                    ]
+                },
+                {
+                    title: "鬼镜与灵异物品",
+                    items: [
+                        { name: "鬼镜交易·第二只鬼", time: "大昌市早期", loc: "大昌市安全屋", meta: "stage1" },
+                        { name: "人皮纸·遗像疑云", time: "大昌市早期", loc: "大昌市临时据点", meta: "stage1" }
+                    ]
+                },
+                {
+                    title: "论坛与朋友圈",
+                    items: [
+                        { name: "灵异论坛·围观叶真", time: "总部体系建立期", loc: "灵异论坛/大海市", meta: "stage2" },
+                        { name: "朋友圈外围·招揽试探", time: "中期·势力博弈期", loc: "朋友圈势力圈", meta: "stage4" },
+                        { name: "鬼橱交易者·愿望代价", time: "中期·规则地点活跃期", loc: "鬼橱所在安全屋", meta: "stage5" },
+                        { name: "中山市·跨城接触", time: "总部体系建立期", loc: "中山市", meta: "stage2" }
+                    ]
+                }
             ]
         },
         {
-            group: "阶段3/5：高危事件与规则地点",
-            items: [
-                { name: "饿死鬼灾害前夕", loc: "大昌市", phase: "阶段3：城市级灾害", pressure: "鬼婴扩散和城市封锁预兆出现", intel: "鬼婴、封锁、总部支援、城市恐慌", boundary: "不得提前泄露完整灾害处理路径" },
-                { name: "朋友圈冲突·总部与民间势力", loc: "大海市/总部势力圈", phase: "阶段4：势力冲突与中期扩张", pressure: "民间势力施压、总部评估、资源博弈升级", intel: "朋友圈、灵异论坛、总部负责人、资源争夺", boundary: "不得泄露方世明底牌、势力结局和关键战斗转折" },
-                { name: "鬼画扩散·高危封锁", loc: "总部/封锁楼层", phase: "阶段4：势力冲突与中期扩张", pressure: "画中异常外溢，封锁楼层与人员失踪风险上升", intel: "鬼画档案、封锁区域、失踪线索、总部调度", boundary: "不得泄露鬼画核心规律、画中边界和关键处理方案" },
-                { name: "鬼橱交易·愿望代价", loc: "大昌市安全屋/凯撒大酒店线索", phase: "阶段5：规则型地点", pressure: "交易代价不明，情报诱导和灵异债务开始累积", intel: "异常橱柜、愿望交换、代价提示、照片线索", boundary: "不得泄露鬼橱真实目的、关键照片后果和后续索取方式" },
-                { name: "鬼邮局·规则任务", loc: "鬼邮局", phase: "阶段5：规则型地点", pressure: "玩家被卷入规则型灵异任务链", intel: "信件、楼层、送信任务、规则限制", boundary: "不得解释全部邮局机制和后续楼层真相" },
-                { name: "灵异公交·未知路线", loc: "灵异公交", phase: "阶段5：规则型地点", pressure: "玩家接触移动型灵异地点与乘客规则", intel: "公交、站点、乘客、下车风险", boundary: "不得直接给出所有站点和乘客真相" },
-                { name: "古宅守夜·旧规矩压迫", loc: "老宅/古宅", phase: "阶段5：规则型地点", pressure: "夜晚守灵、送葬队伍和旧规矩形成高压现场", intel: "守夜、送葬、老宅规矩、破禁死亡", boundary: "不得泄露守夜完整禁忌、送葬关键生路和老宅深层身份" },
-                { name: "鬼湖失控·水域外溢", loc: "鬼湖周边/江边城市", phase: "阶段6：队长计划与高危档案", pressure: "水域异常扩张，队长级处理压力和城市波及风险同步上升", intel: "鬼湖档案、涉水异常、封锁线、队长调度", boundary: "不得泄露鬼湖源头、压制路径和队长行动细节" },
-                { name: "国王组织与幽灵船", loc: "沿海港口/海外线", phase: "阶段7：国际冲突与世界失衡", pressure: "海外势力压境，幽灵船登陆风险和总部动员升级", intel: "国王组织、幽灵船、沿海戒备、国际冲突", boundary: "不得泄露国王名单底牌、幽灵船载物真相和最终拦截方案" },
-                { name: "终幕失衡·多地红色警报", loc: "多地红色警报/总部高权限会议", phase: "阶段7：国际冲突与世界失衡", pressure: "全球灵异外溢，现实秩序和正史保护接近极限", intel: "多地警报、总部会议、队长异常、秩序崩塌", boundary: "不得泄露终局关键选择、核心人物归宿和完整时代结局" }
+            group: "规则型地点任务链",
+            groups: [
+                {
+                    title: "城市规则地点",
+                    items: [
+                        { name: "凯撒大酒店·入住规则", time: "中期·规则地点活跃期", loc: "凯撒大酒店", meta: "stage5" },
+                        { name: "鬼邮局·送信任务", time: "中期·规则地点活跃期", loc: "鬼邮局", meta: "stage5" },
+                        { name: "灵异公交·乘车规则", time: "中期·规则地点活跃期", loc: "灵异公交", meta: "stage5" },
+                        { name: "坟场送信·墓园路线", time: "中期·规则地点活跃期", loc: "坟场/墓园送信路线", meta: "stage5" }
+                    ]
+                },
+                {
+                    title: "古宅与县城",
+                    items: [
+                        { name: "古宅守夜·送葬旧规", time: "中期·规则地点活跃期", loc: "太平古宅", meta: "stage5" },
+                        { name: "王家摆钟古宅·身份错位", time: "后期·队长计划期", loc: "王家摆钟古宅", meta: "stage6" },
+                        { name: "太平古镇·招魂人", time: "后期·队长计划期", loc: "太平古镇", meta: "stage6" },
+                        { name: "八音盒诅咒·续命疑云", time: "中期·势力博弈期", loc: "平安大厦/朋友圈线", meta: "stage4" }
+                    ]
+                },
+                {
+                    title: "高危水域与画境",
+                    items: [
+                        { name: "鬼湖边缘·涉水禁忌", time: "后期·队长计划期", loc: "鬼湖边缘", meta: "stage6" },
+                        { name: "鬼画桃源·画中异常", time: "后期·队长计划期", loc: "鬼画桃源", meta: "stage6" },
+                        { name: "梦魇世界·入梦风险", time: "后期·队长计划期", loc: "梦魇世界", meta: "stage6" }
+                    ]
+                }
             ]
         },
         {
-            group: "自定义节点",
-            items: [
-                { name: "自定义时间点", loc: "", phase: "自定义阶段", pressure: "由玩家背景决定事件压力", intel: "玩家自定义情报", boundary: "按背景和已知线索限制剧透" }
+            group: "后期与番外",
+            groups: [
+                {
+                    title: "国际终局",
+                    items: [
+                        { name: "幽灵船登陆前·沿海戒备", time: "后期·国际冲突阶段", loc: "沿海港口", meta: "stage7" },
+                        { name: "国王组织·跨境冲突", time: "后期·国际冲突阶段", loc: "海外线/国王组织行动区", meta: "stage7" },
+                        { name: "白水镇·诡异连线", time: "后期·国际冲突阶段", loc: "白水镇", meta: "stage7" },
+                        { name: "秦老落幕·终局前夜", time: "终局前夕", loc: "总部高权限档案区", meta: "stage7" },
+                        { name: "终幕失衡·多地红色警报", time: "终局前夕", loc: "多地红色警报区域", meta: "stage7" }
+                    ]
+                },
+                {
+                    title: "葬礼后日谈",
+                    items: [
+                        { name: "葬礼后·档案复核", time: "终局后·后日谈", loc: "总部后日谈档案室", meta: "extra" },
+                        { name: "失踪者回访·余波调查", time: "终局后·后日谈", loc: "多地旧案回访现场", meta: "extra" },
+                        { name: "灵异退潮·旧址清理", time: "终局后·后日谈", loc: "旧灵异事件遗址", meta: "extra" },
+                        { name: "第四代与阴阳路·旧时代回声", time: "终局后·后日谈", loc: "阴阳路/旧时代遗留现场", meta: "extra" }
+                    ]
+                },
+                {
+                    title: "番外线",
+                    items: [
+                        { name: "叶真番外·福利院源头", time: "番外·时间错位", loc: "叶真番外福利院", meta: "extra" },
+                        { name: "纸人番外·后日谈", time: "番外·时间错位", loc: "纸人番外事件现场", meta: "extra" },
+                        { name: "招魂番外·终局回声", time: "番外·时间错位", loc: "招魂番外现场", meta: "extra" }
+                    ]
+                }
+            ]
+        },
+        {
+            group: "自定义",
+            groups: [
+                {
+                    title: "兜底入口",
+                    items: [
+                        { name: "自定义时间点", time: "由玩家背景决定", loc: "", meta: "custom" }
+                    ]
+                }
             ]
         }
     ];
+
+    const anchors = rawAnchors.map(group => ({
+        group: group.group,
+        groups: group.groups.map(chapter => ({
+            title: chapter.title,
+            items: chapter.items.map(item => ({ ...item, ...phaseMeta[item.meta] }))
+        }))
+    }));
 
     const menu = document.getElementById('mfrs-anchor-menu');
     const trigger = document.getElementById('mfrs-anchor-trigger');
     const display = document.getElementById('mfrs-anchor-display');
     const valueInput = document.getElementById('mfrs-anchor-value');
 
-    // 生成下拉菜单
-    anchors.forEach(group => {
+    function closeSiblingAccordions(node, selector) {
+        const siblings = Array.from(node.parentElement.querySelectorAll(`:scope > ${selector}`));
+        siblings.forEach(sibling => {
+            if (sibling !== node) sibling.classList.remove('is-open');
+        });
+    }
+
+    // 生成三级手风琴菜单
+    anchors.forEach((group, groupIndex) => {
         const groupDiv = document.createElement('div');
         groupDiv.className = 'mfrs-dropdown-group';
+        if (groupIndex === 0) groupDiv.classList.add('is-open');
 
         const groupTitle = document.createElement('div');
         groupTitle.className = 'mfrs-dropdown-group-title';
         groupTitle.textContent = group.group;
+        groupTitle.addEventListener('click', () => {
+            closeSiblingAccordions(groupDiv, '.mfrs-dropdown-group');
+            groupDiv.classList.toggle('is-open');
+        });
         groupDiv.appendChild(groupTitle);
 
-        group.items.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'mfrs-dropdown-item';
-            itemDiv.textContent = item.name;
-            itemDiv.addEventListener('click', () => {
-                display.textContent = `${group.group} · ${item.name}`;
-                valueInput.value = [item.name, item.loc, item.phase, item.pressure, item.intel, item.boundary].join('|');
-                menu.style.display = 'none';
+        const groupBody = document.createElement('div');
+        groupBody.className = 'mfrs-dropdown-group-body';
+
+        group.groups.forEach((chapter, chapterIndex) => {
+            const chapterDiv = document.createElement('div');
+            chapterDiv.className = 'mfrs-dropdown-chapter';
+            if (groupIndex === 0 && chapterIndex === 0) chapterDiv.classList.add('is-open');
+
+            const chapterTitle = document.createElement('div');
+            chapterTitle.className = 'mfrs-dropdown-chapter-title';
+            chapterTitle.textContent = chapter.title;
+            chapterTitle.addEventListener('click', () => {
+                closeSiblingAccordions(chapterDiv, '.mfrs-dropdown-chapter');
+                chapterDiv.classList.toggle('is-open');
             });
-            groupDiv.appendChild(itemDiv);
+            chapterDiv.appendChild(chapterTitle);
+
+            const chapterBody = document.createElement('div');
+            chapterBody.className = 'mfrs-dropdown-chapter-body';
+
+            chapter.items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'mfrs-dropdown-item';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'mfrs-dropdown-item-name';
+                nameSpan.textContent = item.name;
+                itemDiv.appendChild(nameSpan);
+
+                const metaSpan = document.createElement('span');
+                metaSpan.className = 'mfrs-dropdown-item-meta';
+                metaSpan.textContent = `${item.time} · ${item.loc || '自定义地点'}`;
+                itemDiv.appendChild(metaSpan);
+
+                itemDiv.addEventListener('click', () => {
+                    display.textContent = `${group.group} · ${chapter.title} · ${item.name}`;
+                    valueInput.value = [item.name, item.time, item.loc, item.phase, item.pressure, item.intel, item.boundary].join('|');
+                    menu.style.display = 'none';
+                });
+                chapterBody.appendChild(itemDiv);
+            });
+
+            chapterDiv.appendChild(chapterBody);
+            groupBody.appendChild(chapterDiv);
         });
 
+        groupDiv.appendChild(groupBody);
         menu.appendChild(groupDiv);
     });
 
@@ -762,11 +1073,12 @@
                        `   - 姓名：${name}\n` +
                        `   - 年龄/性别：${ageGender}\n` +
                        `   - 剧情节点：${anchorParts[0] || '未选择节点'}\n` +
-                       `   - 当前地点：${anchorParts[1] || '由当前剧情节点决定'}\n` +
-                       `   - 原著阶段：${anchorParts[2] || '未定阶段'}\n` +
-                       `   - 事件压力：${anchorParts[3] || '请根据身份与剧情节点判断接入边界'}\n` +
-                       `   - 玩家可见情报：${anchorParts[4] || '仅依据当前选择与背景设定'}\n` +
-                       `   - 禁止泄露边界：${anchorParts[5] || '不得直接揭露隐藏规律、关键生路和幕后真相'}\n\n` +
+                       `   - 当前时间：${anchorParts[1] || '由当前剧情节点决定'}\n` +
+                       `   - 当前地点：${anchorParts[2] || '由当前剧情节点决定'}\n` +
+                       `   - 原著阶段：${anchorParts[3] || '未定阶段'}\n` +
+                       `   - 事件压力：${anchorParts[4] || '请根据身份与剧情节点判断接入边界'}\n` +
+                       `   - 玩家可见情报：${anchorParts[5] || '仅依据当前选择与背景设定'}\n` +
+                       `   - 禁止泄露边界：${anchorParts[6] || '不得直接揭露隐藏规律、关键生路和幕后真相'}\n\n` +
                        `2. **身份与能力**\n` +
                        `   - 身份：${identity}\n` +
                        `   - 开局厉鬼选择（第1只可选预设或自定义，第2只可自定义）：\n` +
@@ -778,11 +1090,11 @@
                        `   ${background}\n\n` +
                        `5. **推演边界与初始化建议**\n` +
                        `   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n` +
-                       `   - 初始变量建议：将姓名、身份、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
+                       `   - 初始变量建议：将姓名、身份、当前时间、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
                        `   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n` +
                        `   - 开局厉鬼判定：若玩家在第1只厉鬼选择预设，只能把预设资料当作开局可见档案和成长方向，不得直接明牌隐藏规律、关键生路或完整拼图；若玩家自定义厉鬼，只提供厉鬼名称和可见杀人规律，影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断。第1只厉鬼只能读取预设或自定义之一，第2只仅读取自定义，超出部分无效。\n` +
-                       `   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“永久死机驾驭”，玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n` +
-                       `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。`;
+                       `   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“强外挂模式（非默认）·永久死机驾驭”，视为主动开启高强度辅助模式：玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n` +
+                       `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大变化只写入隐藏档案，不进入正文、状态栏或选项。`;
 
         // 写入输入框
         if (parent.document.getElementById('send_textarea')) {

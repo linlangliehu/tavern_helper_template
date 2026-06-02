@@ -42,6 +42,7 @@ const cards = [
     syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书', '数据库'],
     syncFiles: ['神秘复苏模拟器.png'],            // 头像图
     urlReplacements: [{ from: LOCALHOST_PATTERN, to: CDN }],
+    releaseVersion: '3.0',
   },
 ];
 
@@ -96,7 +97,7 @@ function copyFile(src, dst) {
   return statSync(dst).size;
 }
 
-function syncYaml(srcYaml, dstYaml, replacements) {
+function syncYaml(srcYaml, dstYaml, replacements, releaseVersion) {
   const content = readFileSync(srcYaml, 'utf8');
   let next = content;
   let count = 0;
@@ -110,6 +111,9 @@ function syncYaml(srcYaml, dstYaml, replacements) {
     new RegExp(`(${CDN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}dist/[^'"\\s]+?/index\\.(?:js|html))(?![?\\w=&-])`, 'g'),
     `$1?v=${CDN_CACHE_VERSION}`,
   );
+  if (releaseVersion) {
+    next = next.replace(/^版本:\s*['"][^'"]+['"]\s*$/m, `版本: '${releaseVersion}'`);
+  }
   if (!DRY_RUN) writeFileSync(dstYaml, next, 'utf8');
   return { totalReplaced: count, bytes: Buffer.byteLength(next, 'utf8') };
 }
@@ -164,8 +168,9 @@ for (const card of pickedCards) {
   const srcYaml = join(devDir, card.yamlFile);
   const dstYaml = join(pubDir, card.yamlFile);
   if (!existsSync(srcYaml)) die(`开发版 yaml 不存在: ${srcYaml}`);
-  const { totalReplaced } = syncYaml(srcYaml, dstYaml, card.urlReplacements);
-  log(`  ✓ 同步 ${card.yamlFile} 并替换 ${totalReplaced} 处链接`);
+  const { totalReplaced } = syncYaml(srcYaml, dstYaml, card.urlReplacements, card.releaseVersion);
+  const versionNote = card.releaseVersion ? `，保留版本 ${card.releaseVersion}` : '';
+  log(`  ✓ 同步 ${card.yamlFile} 并替换 ${totalReplaced} 处链接${versionNote}`);
 
   if (!NO_BUNDLE) runBundle(card.syncName);
 }

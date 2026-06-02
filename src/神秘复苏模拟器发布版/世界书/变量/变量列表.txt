@@ -1,5 +1,5 @@
-<status_current_variable>
-以下是当前消息楼层保存的 MVU 变量档案。你必须把它当作本轮推演的事实记录，但不要向玩家直接暴露“隐藏档案”字段。
+﻿<status_current_variable>
+Treat the current MVU stat_data as the binding world state. Do not reveal hidden files directly.
 
 <%_
 var stat_data = _.get(EjsTemplate.allVariables(), 'stat_data', {});
@@ -24,26 +24,13 @@ _%>
 剧情锚点: <%= canon_anchor || '未指定' %>
 <%_ } _%>
 <%_ if (deathRiskValue >= 100 || String(currentStatusText).includes('死亡')) { _%>
-终止判定: 玩家已经死亡或风险值达到死亡线。下一次回复必须输出【模拟结局】，交代死亡触发原因、最终状态、灵异事件后续和世界线影响；不得输出【推演选项：】或 A/B/C/D 行动选项。
+终止判定: 玩家已死亡或风险值达到死亡线。下一次回复输出【模拟结局】，不得输出 A/B/C/D 行动选项。
 <%_ } else { _%>
-续写判定: 玩家仍然存活。继续推演时必须继承以上数值，不得把死亡风险、复苏风险、状态、位置或事件档案重置为默认值。
+续写判定: 玩家仍然存活。继承风险、状态、位置、事件档案和主线进度，不得重置为默认值。
 <%_ } _%>
 </runtime_state_summary>
 
 {{format_message_variable::stat_data}}
 
-阅读变量时请按以下含义理解：
-- 人物档案：姓名、性别、身份、状态、所在位置、角色背景。
-- 原著接入：原著阶段、剧情锚点由系统根据开局地点、身份、事件关键词和世界书触发情况自动匹配；它们是后台正史索引，不是玩家手动填写入口，也不是强制剧情脚本。
-- 驭鬼者状态：已驾驭厉鬼、各拼图复苏进度、是否死机、压制关系、总复苏风险。
-- 收录档案：鬼档案视野内未收录、收录中和已收录的档案厉鬼名称、可见信息、规律、鬼域、收录进度、完整度和可调用范围；收录进度达到100才算收录成功，只记录玩家可见或已验证内容。
-- 收录规律：鬼拓本拓印或鬼手印窃取到的规律片段、规律类型、进阶、分解、完整度和风险备注；只记录玩家可见或已验证内容。
-- 当前灵异事件：事件代号、危害等级、发生地点、鬼域状态、死亡人数、扩散趋势、处理状态。
-- 在场人物：当前楼层实际在场、邻近或可通过合理行动接触的人物名单；只记录玩家当前可感知或档案已确认的部分。
-- 规律推理记录：玩家已经尝试过的行为、观察结果、推断与风险等级。
-- 灵异资源：鬼拼图、灵异物品、黄金储备等可用于压制、拖延或关押厉鬼的资源。
-- 势力关系：总部备案、联系人、敌对势力和可调用资源。
-- 世界线记录：已经发生且会影响后续因果的关键事件。
-- 主线进度：当前主线阶段、可触发节点、正史锚点、玩家偏移、世界压力和下一步推进条件。它用于维持世界大势，不是强制剧情脚本。
-- 隐藏档案：只用于保持灵异事件内在一致性，不要主动写进正文或状态面板。
+Variable reading notes: use Chinese schema paths. Hidden files are for consistency only. 原著阶段/剧情锚点 are background canon indexes, not forced plot rails. 当前灵异事件 tracks local case facts; 规律推理记录 tracks visible deductions; 主线进度 tracks world-scale canon drift; 世界线记录 tracks facts that affect later causality.
 </status_current_variable>
