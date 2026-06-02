@@ -42,7 +42,7 @@ const cards = [
     syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书', '数据库'],
     syncFiles: ['神秘复苏模拟器.png'],            // 头像图
     urlReplacements: [{ from: LOCALHOST_PATTERN, to: CDN }],
-    releaseVersion: '3.0',
+    releaseVersion: '4.0',
   },
 ];
 
