@@ -733,6 +733,55 @@ body {
   font-weight: 800 !important;
   margin-right: 8px !important;
 }
+
+.mfrs-choice-item {
+  display: block !important;
+}
+.mfrs-choice-item .mfrs-choice-button {
+  border-bottom-left-radius: 6px !important;
+  border-bottom-right-radius: 6px !important;
+}
+.mfrs-choice-item:has(> .mfrs-choice-why) .mfrs-choice-button {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.mfrs-choice-why {
+  border: 1px solid rgba(150,58,58,.5) !important;
+  border-top: none !important;
+  border-radius: 0 0 6px 6px !important;
+  background: rgba(20,12,12,.66) !important;
+  overflow: hidden !important;
+}
+.mfrs-choice-why > summary {
+  cursor: pointer !important;
+  list-style: none !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  color: #b89a9a !important;
+  letter-spacing: 0.06em !important;
+}
+.mfrs-choice-why > summary::-webkit-details-marker { display: none !important; }
+.mfrs-choice-why > summary::before { content: '▸ 风险明细' !important; }
+.mfrs-choice-why[open] > summary::before { content: '▾ 风险明细' !important; }
+.mfrs-choice-why > summary:hover { color: #e0a0a0 !important; }
+.mfrs-choice-why-body {
+  padding: 4px 12px 10px !important;
+  border-top: 1px solid rgba(150,58,58,.28) !important;
+}
+.mfrs-choice-why-row {
+  font-size: 12px !important;
+  line-height: 1.7 !important;
+  color: #cdbaba !important;
+}
+.mfrs-choice-why-key {
+  display: inline-block !important;
+  min-width: 4.5em !important;
+  margin-right: 6px !important;
+  font-weight: 700 !important;
+  color: #b89a9a !important;
+}
+.mfrs-choice-why-key.is-death { color: #f08080 !important; }
+.mfrs-choice-why-key.is-revive { color: #c89adf !important; }
 `;
   const hostDocument = getHostDocument();
   const hostWindow = hostDocument.defaultView as HostWindowWithThemeCleanup | null;
@@ -768,6 +817,21 @@ body {
     };
     const riskLabel = (risk: string) => risk === 'high' ? '高危' : risk === 'mid' ? '中险' : risk === 'low' ? '稳妥' : '未明';
 
+    const splitChoiceDetail = (rawText: string): { detail: string; meta: Array<{ label: string; value: string }> } => {
+      const meta: Array<{ label: string; value: string }> = [];
+      const segments = rawText.split(/[；;]/).map(s => s.trim()).filter(Boolean);
+      const detailParts: string[] = [];
+      for (const segment of segments) {
+        const m = segment.match(/^(死亡风险|复苏风险|风险来源|风险|代价|资源|后果|说明|提示)[：:]?\s*(.+)$/);
+        if (m) {
+          meta.push({ label: m[1], value: m[2].trim() });
+        } else if (/(死亡风险|复苏风险|风险来源|代价|后果)/.test(segment)) {
+          detailParts.push(segment);
+        }
+      }
+      return { detail: detailParts.join('；'), meta };
+    };
+
     const renderChoices = (body: HTMLElement, actions: string[]) => {
       body.textContent = '';
       body.style.whiteSpace = 'normal';
@@ -802,6 +866,12 @@ body {
         const actionText = getActionText(rawText);
         const visibleText = actionText || rawText;
         const risk = detectRisk(rawText);
+        const { meta } = splitChoiceDetail(rawText);
+
+        const item = hostDocument.createElement('div');
+        item.className = 'mfrs-choice-item';
+        item.dataset.risk = risk;
+
         const button = hostDocument.createElement('button');
         button.type = 'button';
         button.className = 'mfrs-choice-button';
@@ -819,7 +889,32 @@ body {
           setTextareaValue(input, actionText);
           hostWindow?.toastr?.info?.(`已填入选项 ${key}`);
         });
-        list.appendChild(button);
+        item.appendChild(button);
+
+        // 把死亡风险/复苏风险/风险来源等明细收进可折叠理由区，默认折叠保持简洁
+        if (meta.length) {
+          const details = hostDocument.createElement('details');
+          details.className = 'mfrs-choice-why';
+          const summary = hostDocument.createElement('summary');
+          details.appendChild(summary);
+          const metaWrap = hostDocument.createElement('div');
+          metaWrap.className = 'mfrs-choice-why-body';
+          meta.forEach(({ label, value }) => {
+            const row = hostDocument.createElement('div');
+            row.className = 'mfrs-choice-why-row';
+            const tag = hostDocument.createElement('span');
+            tag.className = 'mfrs-choice-why-key';
+            if (label === '死亡风险') tag.classList.add('is-death');
+            if (label === '复苏风险') tag.classList.add('is-revive');
+            tag.textContent = label;
+            row.append(tag, hostDocument.createTextNode(value));
+            metaWrap.appendChild(row);
+          });
+          details.appendChild(metaWrap);
+          item.appendChild(details);
+        }
+
+        list.appendChild(item);
       });
 
       body.appendChild(list);
@@ -888,31 +983,98 @@ body {
     }
   };
 
+  const SP_PRIMARY_KEY = /标题|死亡风险|复苏风险|风险变化|结果|可见结论|结论|建议|下一步|确认度|状态/;
+
+  const renderSpLine = (line: string) => {
+    const escaped = line
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    const fieldMatch = escaped.match(/^([^：:]{2,16})[：:](.*)$/);
+    const riskClass = /死亡风险|复苏风险|高危|濒死|失控|命中规律|被标记/.test(escaped)
+      ? ' sp-risk-high'
+      : /疑似|中等|接触|鬼域|试探/.test(escaped)
+        ? ' sp-risk-mid'
+        : /低|暂避|隔绝|撤离|无/.test(escaped)
+          ? ' sp-risk-low'
+          : '';
+    if (!fieldMatch) return `<span class="${riskClass.trim()}">${escaped}</span>`;
+    return `<span class="sp-field-line${riskClass}"><span class="sp-field-key">${fieldMatch[1]}：</span>${fieldMatch[2]}</span>`;
+  };
+
   const enhanceShortTagPanels = () => {
     const panels = hostDocument.querySelectorAll<HTMLElement>('.sp-panel-body:not([data-mfrs-sp-enhanced])');
     for (const panel of panels) {
       panel.dataset.mfrsSpEnhanced = 'true';
       const raw = panel.textContent ?? '';
       if (!raw.trim()) continue;
-      const html = raw
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .split('\n')
-        .map(line => {
-          const fieldMatch = line.match(/^([^：:]{2,16})[：:](.*)$/);
-          const riskClass = /死亡风险|复苏风险|高危|濒死|失控|命中规律|被标记/.test(line)
-            ? ' sp-risk-high'
-            : /疑似|中等|接触|鬼域|试探/.test(line)
-              ? ' sp-risk-mid'
-              : /低|暂避|隔绝|撤离|无/.test(line)
-                ? ' sp-risk-low'
-                : '';
-          if (!fieldMatch) return `<span class="${riskClass.trim()}">${line}</span>`;
-          return `<span class="sp-field-line${riskClass}"><span class="sp-field-key">${fieldMatch[1]}：</span>${fieldMatch[2]}</span>`;
-        })
-        .join('\n');
-      panel.innerHTML = html;
+      const lines = raw.split('\n');
+      const nonEmpty = lines.filter(line => line.trim());
+      // 字段较少时全部直显；字段多时把次要字段收进折叠面板，核心字段（标题/风险/结论/建议）始终直显
+      const primary: string[] = [];
+      const secondary: string[] = [];
+      nonEmpty.forEach((line, index) => {
+        const isPrimary = index === 0 || SP_PRIMARY_KEY.test(line.split(/[：:]/)[0] ?? '');
+        (isPrimary ? primary : secondary).push(line);
+      });
+      const shouldFold = nonEmpty.length > 6 && secondary.length >= 3;
+      if (!shouldFold) {
+        panel.innerHTML = lines.map(renderSpLine).join('\n');
+        continue;
+      }
+      const primaryHtml = primary.map(renderSpLine).join('\n');
+      const secondaryHtml = secondary.map(renderSpLine).join('\n');
+      panel.innerHTML =
+        `<div class="sp-primary">${primaryHtml}</div>` +
+        `<details class="sp-secondary"><summary>展开细节（${secondary.length} 项）</summary>` +
+        `<div class="sp-secondary-body">${secondaryHtml}</div></details>`;
+    }
+  };
+
+  const computeFairRoll = (seed: string) => {
+    let hash = 0;
+    for (let index = 0; index < seed.length; index += 1) {
+      hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
+    }
+    return (hash % 100) + 1;
+  };
+
+  const enhanceRollBars = () => {
+    const bars = hostDocument.querySelectorAll<HTMLElement>(
+      '.mfrs-roll[data-mfrs-roll]:not([data-mfrs-roll-ready])',
+    );
+    for (const bar of bars) {
+      bar.dataset.mfrsRollReady = 'true';
+      const seed = bar.dataset.seed ?? '';
+      const claimed = Number.parseInt(bar.dataset.roll ?? '', 10);
+      const dc = Number.parseInt(bar.dataset.dc ?? '', 10);
+      if (!seed || Number.isNaN(claimed) || Number.isNaN(dc)) continue;
+
+      const fair = computeFairRoll(seed);
+      const verified = fair === claimed;
+      const shown = verified ? claimed : fair;
+      const pass = shown >= dc;
+      const clamp = (value: number) => Math.max(0, Math.min(100, value));
+
+      const marker = bar.querySelector<HTMLElement>('.mfrs-roll-marker');
+      if (marker) marker.style.left = `${clamp(shown)}%`;
+      const dcLine = bar.querySelector<HTMLElement>('.mfrs-roll-dc');
+      if (dcLine) dcLine.style.left = `${clamp(dc)}%`;
+      const num = bar.querySelector<HTMLElement>('.mfrs-roll-num');
+      if (num) num.textContent = String(shown);
+
+      const result = bar.querySelector<HTMLElement>('.mfrs-roll-result');
+      if (result) {
+        result.textContent = pass ? '通过' : '未通过';
+        result.classList.add(pass ? 'is-pass' : 'is-fail');
+      }
+      const verify = bar.querySelector<HTMLElement>('.mfrs-roll-verify');
+      if (verify) {
+        const seedHtml = `<span class="mfrs-roll-seed">${seed}</span>`;
+        verify.innerHTML = verified
+          ? `✓ 已验证 seed ${seedHtml}`
+          : `⚠ 已按 seed 复算（原值 ${Number.isNaN(claimed) ? '无' : claimed}）seed ${seedHtml}`;
+      }
     }
   };
 
@@ -1363,6 +1525,7 @@ body {
     bindWelcomeGhostButtons();
     enhanceChoicePanels();
     enhanceShortTagPanels();
+    enhanceRollBars();
   };
 
   const timeoutIds = [0, 250, 1000, 2500].map(delay => hostWindow?.setTimeout(enhancePanels, delay));

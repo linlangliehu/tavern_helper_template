@@ -175,7 +175,7 @@
 
   - 名称: 灵异判定路由与输入锁规则
     <<: *世界书常驻规则
-    激活策略: { 类型: 绿灯, 关键字: [灵异判定, 输入锁, 行动锁定, 判定路由, mfrs_check, mfrs_suppress, mfrs_use_ghost, mfrs_deduce] }
+    激活策略: { 类型: 绿灯, 关键字: [灵异判定, 输入锁, 行动锁定, 判定路由, mfrs_check, mfrs_suppress, mfrs_use_ghost, mfrs_deduce, mfrs_roll, d100, 掷骰, 不确定性] }
     文件: 世界书/规则/灵异判定路由与输入锁规则
 
   - 名称: 驭鬼者与厉鬼复苏
@@ -5514,6 +5514,171 @@
       仅格式提示词: true
     最大深度: 3
 
+  - 正则名称: '[不发送]去除神秘复苏掷骰条'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2008
+    启用: true
+    查找表达式: "/<mfrs_roll\\b[^>]*>(?:\\s*<\\/mfrs_roll>)?/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: false
+      仅格式提示词: true
+    最大深度: 3
+
+  - 正则名称: '[显示]渲染神秘复苏掷骰条'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2007
+    启用: true
+    查找表达式: "/<mfrs_roll\\s+seed=\"([^\"]*)\"\\s+roll=\"(\\d{1,3})\"\\s+dc=\"(\\d{1,3})\"\\s+route=\"([^\"]*)\"\\s+act=\"([^\"]*)\"\\s*\\/?>(?:\\s*<\\/mfrs_roll>)?/gi"
+    替换为: |-
+      <style>
+      .mfrs-roll {
+        --roll-bg: #0a0404;
+        --roll-card: rgba(20, 7, 7, .96);
+        --roll-border: rgba(120, 28, 28, .68);
+        --roll-border-soft: rgba(120, 28, 28, .26);
+        --roll-accent: #d04a4a;
+        --roll-text: #dccaca;
+        --roll-muted: #ad8f8f;
+        --roll-pass: #8fae5a;
+        --roll-fail: #ff6a6a;
+        margin: 16px auto;
+        max-width: 820px;
+        border: 1px solid var(--roll-border);
+        border-left: 4px solid var(--roll-accent);
+        border-radius: 12px;
+        background: radial-gradient(620px 220px at 8% -20%, rgba(130,20,20,.16), transparent 60%), linear-gradient(150deg, rgba(8,3,3,.98), rgba(20,6,6,.95));
+        box-shadow: 0 16px 38px rgba(0,0,0,.7), inset 0 0 38px rgba(42,0,0,.26);
+        color: var(--roll-text);
+        font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        overflow: hidden;
+      }
+      .mfrs-roll * { box-sizing: border-box; }
+      .mfrs-roll-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 11px 15px;
+        border-bottom: 1px solid var(--roll-border-soft);
+        background: linear-gradient(90deg, rgba(28,7,7,.92), rgba(10,3,3,.82));
+      }
+      .mfrs-roll-title {
+        color: var(--roll-accent);
+        font-family: "Noto Serif SC", "SimSun", serif;
+        font-weight: 900;
+        letter-spacing: .16em;
+        font-size: 14px;
+        text-shadow: 0 0 10px rgba(180,36,36,.45);
+      }
+      .mfrs-roll-title::before { content: '🎲 '; }
+      .mfrs-roll-route {
+        flex: 0 0 auto;
+        padding: 3px 10px;
+        border: 1px solid var(--roll-border-soft);
+        border-radius: 999px;
+        color: var(--roll-muted);
+        background: rgba(8,3,3,.6);
+        font-size: 11px;
+        letter-spacing: .08em;
+      }
+      .mfrs-roll-body { padding: 14px 16px; }
+      .mfrs-roll-act { color: var(--roll-muted); font-size: 12px; line-height: 1.7; margin-bottom: 12px; letter-spacing: .04em; }
+      .mfrs-roll-act b { color: var(--roll-text); font-weight: 700; }
+      .mfrs-roll-track {
+        position: relative;
+        height: 30px;
+        border: 1px solid var(--roll-border-soft);
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(60,18,18,.5), rgba(20,6,6,.5));
+        overflow: hidden;
+      }
+      .mfrs-roll-dc {
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        width: 2px;
+        background: #e7b070;
+        box-shadow: 0 0 8px rgba(231,176,112,.7);
+      }
+      .mfrs-roll-dc::after {
+        content: 'DC ' attr(data-dc);
+        position: absolute;
+        top: -16px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #e7b070;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+      .mfrs-roll-marker {
+        position: absolute;
+        top: 50%;
+        width: 16px;
+        height: 16px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: var(--roll-accent);
+        box-shadow: 0 0 10px rgba(208,74,74,.8);
+        border: 2px solid #1a0606;
+      }
+      .mfrs-roll-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+        font-size: 12px;
+      }
+      .mfrs-roll-num { font-size: 22px; font-weight: 900; letter-spacing: .04em; }
+      .mfrs-roll-vs { color: var(--roll-muted); }
+      .mfrs-roll-result { padding: 3px 11px; border-radius: 999px; font-weight: 800; letter-spacing: .1em; }
+      .mfrs-roll-result.is-pass { color: var(--roll-pass); border: 1px solid rgba(143,174,90,.5); background: rgba(60,80,30,.22); }
+      .mfrs-roll-result.is-fail { color: var(--roll-fail); border: 1px solid rgba(255,106,106,.45); background: rgba(90,20,20,.24); }
+      .mfrs-roll-verify {
+        margin-left: auto;
+        font-size: 11px;
+        color: var(--roll-muted);
+        letter-spacing: .04em;
+      }
+      .mfrs-roll-seed { font-family: "SFMono-Regular", Consolas, monospace; color: var(--roll-muted); opacity: .82; }
+      @media (max-width: 720px) {
+        .mfrs-roll { max-width: 96vw; margin: 13px auto; }
+        .mfrs-roll-head { align-items: flex-start; flex-direction: column; }
+        .mfrs-roll-verify { margin-left: 0; }
+      }
+      </style>
+      <div class="mfrs-roll" data-mfrs-roll data-seed="$1" data-roll="$2" data-dc="$3" data-route="$4">
+        <div class="mfrs-roll-head">
+          <div class="mfrs-roll-title">不确定性结算</div>
+          <div class="mfrs-roll-route">$4</div>
+        </div>
+        <div class="mfrs-roll-body">
+          <div class="mfrs-roll-act"><b>判定：</b>$5</div>
+          <div class="mfrs-roll-track">
+            <div class="mfrs-roll-dc" data-dc="$3" style="left:$3%"></div>
+            <div class="mfrs-roll-marker" style="left:$2%"></div>
+          </div>
+          <div class="mfrs-roll-meta">
+            <span class="mfrs-roll-num">$2</span>
+            <span class="mfrs-roll-vs">/ 100　门槛 DC $3</span>
+            <span class="mfrs-roll-result">结算中</span>
+            <span class="mfrs-roll-verify">seed <span class="mfrs-roll-seed">$1</span></span>
+          </div>
+        </div>
+      </div>
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
   - 正则名称: '[显示]渲染神秘复苏开局页'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2004
     启用: true
@@ -6051,7 +6216,7 @@
         letter-spacing: .18em;
         text-shadow: 0 0 10px rgba(180,36,36,.45);
       }
-      .sp-panel-title::before { content: '◆ '; color: var(--sp-accent-dim); }
+      .sp-panel-title::before { content: var(--sp-icon, '◆') ' '; color: var(--sp-accent); }
       .sp-panel-kind {
         flex: 0 0 auto;
         padding: 4px 10px;
@@ -6087,6 +6252,33 @@
       .sp-panel-body .sp-risk-high { color: #ff6a6a; font-weight: 900; text-shadow: 0 0 8px rgba(220,40,40,.38); }
       .sp-panel-body .sp-risk-mid { color: #e7b070; font-weight: 800; }
       .sp-panel-body .sp-risk-low { color: #aac57a; font-weight: 800; }
+      .sp-panel-body .sp-primary { display: block; }
+      .sp-panel-body details.sp-secondary {
+        margin: 10px 0 0;
+        border: 1px solid var(--sp-border-soft);
+        border-radius: 8px;
+        background: rgba(8,3,3,.42);
+        overflow: hidden;
+        white-space: normal;
+      }
+      .sp-panel-body details.sp-secondary > summary {
+        cursor: pointer;
+        padding: 7px 11px;
+        color: var(--sp-muted);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        list-style: none;
+      }
+      .sp-panel-body details.sp-secondary > summary::-webkit-details-marker { display: none; }
+      .sp-panel-body details.sp-secondary > summary::before { content: '▸ '; color: var(--sp-accent); }
+      .sp-panel-body details.sp-secondary[open] > summary::before { content: '▾ '; }
+      .sp-panel-body details.sp-secondary > summary:hover { color: var(--sp-accent); }
+      .sp-panel-body .sp-secondary-body {
+        padding: 4px 12px 11px;
+        white-space: pre-wrap;
+        border-top: 1px solid var(--sp-border-soft);
+      }
       .sp-panel details {
         margin: 12px 14px 0;
         border: 1px solid var(--sp-border-soft);
@@ -6141,12 +6333,27 @@
       .sp-panel-deduce .sp-panel-mark::after { content: '规律判定'; }
       .sp-panel-item .sp-panel-mark::after { content: '灵异物品'; }
       .sp-panel-custom_ghost .sp-panel-mark::after { content: '开局厉鬼'; }
-      .sp-panel-ghost_encounter { border-left-color: #9b2323; }
-      .sp-panel-ghost_suppress { border-left-color: #b04444; }
-      .sp-panel-puzzle_solve { border-left-color: #7c2a46; }
-      .sp-panel-location_explore { border-left-color: #6f2a2a; }
-      .sp-panel-clue_deduce { border-left-color: #a45a2a; }
-      .sp-panel-item_use { border-left-color: #8a6a2a; }
+      /* 按语义分组的配色与图标：覆盖 --sp-accent / --sp-border / --sp-icon，标题色、徽章边框、左边条整体联动 */
+      .sp-panel-event, .sp-panel-ghost, .sp-panel-ghost_encounter, .sp-panel-ghost_slave, .sp-panel-use_ghost, .sp-panel-custom_ghost {
+        --sp-accent: #e25555; --sp-accent-dim: #7c1d1d; --sp-border: rgba(180, 44, 44, .72); --sp-icon: '☠';
+      }
+      .sp-panel-ghost_suppress, .sp-panel-suppress, .sp-panel-puzzle_solve {
+        --sp-accent: #d8a84a; --sp-accent-dim: #7a5e1c; --sp-border: rgba(176, 138, 52, .66); --sp-icon: '⛓';
+      }
+      .sp-panel-domain, .sp-panel-location_explore {
+        --sp-accent: #5a93d0; --sp-accent-dim: #234a72; --sp-border: rgba(74, 120, 184, .62); --sp-icon: '❖';
+      }
+      .sp-panel-check, .sp-panel-clue, .sp-panel-clue_deduce, .sp-panel-deduce {
+        --sp-accent: #46b0a0; --sp-accent-dim: #1f5a52; --sp-border: rgba(58, 150, 138, .58); --sp-icon: '◈';
+      }
+      .sp-panel-item, .sp-panel-item_use, .sp-panel-medium {
+        --sp-accent: #c9893f; --sp-accent-dim: #7a521f; --sp-border: rgba(176, 122, 52, .62); --sp-icon: '✦';
+      }
+      .sp-panel-choices { --sp-accent: #c06ad0; --sp-accent-dim: #5a2470; --sp-border: rgba(150, 74, 184, .58); --sp-icon: '⊳'; }
+      .sp-panel-status { --sp-icon: '◆'; }
+      .sp-panel-archive { --sp-icon: '▤'; }
+      .sp-panel-import { --sp-icon: '▦'; }
+      .sp-panel-database { --sp-icon: '▣'; }
       .sp-db-live, .sp-db-open { display: none; }
       .sp-panel-database .sp-db-live {
         display: block;
