@@ -727,10 +727,29 @@
             boundary: "按背景和已知线索限制剧透，不直接公开隐藏规律、关键生路和幕后真相。"
         }
     };
+    const stageGroups = [
+        { key: "stage0", group: "阶段0｜七中与敲门鬼事件" },
+        { key: "stage1", group: "阶段1｜大昌市早期事件" },
+        { key: "stage2", group: "阶段2｜总部与负责人体系" },
+        { key: "stage3", group: "阶段3｜大昌市城市级灾害" },
+        { key: "stage4", group: "阶段4｜势力冲突与中期扩张" },
+        { key: "stage5", group: "阶段5｜规则型地点与任务链" },
+        { key: "stage6", group: "阶段6｜队长计划与高危档案" },
+        { key: "stage7", group: "阶段7｜国际冲突与世界失衡" },
+        { key: "extra", group: "阶段7｜国际冲突与世界失衡" },
+        { key: "custom", group: "自定义｜玩家设定时间线" }
+    ];
+
+    function getStageGroup(metaKey) {
+        const found = stageGroups.find(stage => stage.key === metaKey);
+        return found ? found.group : "自定义｜玩家设定时间线";
+    }
+
+
 
     const rawAnchors = [
         {
-            group: "普通人视角",
+            group: "普通人接入",
             groups: [
                 {
                     title: "七中与早期怪谈",
@@ -769,7 +788,7 @@
             ]
         },
         {
-            group: "总部体系视角",
+            group: "总部体系接入",
             groups: [
                 {
                     title: "接线与备案",
@@ -796,7 +815,7 @@
             ]
         },
         {
-            group: "民间驭鬼者视角",
+            group: "民间驭鬼者接入",
             groups: [
                 {
                     title: "早期民间势力",
@@ -826,7 +845,7 @@
             ]
         },
         {
-            group: "规则型地点任务链",
+            group: "规则地点接入",
             groups: [
                 {
                     title: "城市规则地点",
@@ -857,7 +876,7 @@
             ]
         },
         {
-            group: "后期与番外",
+            group: "后期/番外接入",
             groups: [
                 {
                     title: "国际终局",
@@ -889,7 +908,7 @@
             ]
         },
         {
-            group: "自定义",
+            group: "自定义接入",
             groups: [
                 {
                     title: "兜底入口",
@@ -900,14 +919,26 @@
             ]
         }
     ];
-
-    const anchors = rawAnchors.map(group => ({
-        group: group.group,
-        groups: group.groups.map(chapter => ({
-            title: chapter.title,
-            items: chapter.items.map(item => ({ ...item, ...phaseMeta[item.meta] }))
-        }))
-    }));
+    const stageOrder = new Map(stageGroups.map((stage, index) => [stage.group, index]));
+    const stageBuckets = new Map();
+    rawAnchors.forEach(access => {
+        access.groups.forEach(chapter => {
+            chapter.items.forEach(item => {
+                const groupName = getStageGroup(item.meta);
+                const chapterTitle = `${access.group}｜${chapter.title}`;
+                if (!stageBuckets.has(groupName)) stageBuckets.set(groupName, new Map());
+                const chapters = stageBuckets.get(groupName);
+                if (!chapters.has(chapterTitle)) chapters.set(chapterTitle, []);
+                chapters.get(chapterTitle).push({ ...item, ...phaseMeta[item.meta] });
+            });
+        });
+    });
+    const anchors = Array.from(stageBuckets.entries())
+        .sort((a, b) => (stageOrder.get(a[0]) ?? 99) - (stageOrder.get(b[0]) ?? 99))
+        .map(([group, chapters]) => ({
+            group,
+            groups: Array.from(chapters.entries()).map(([title, items]) => ({ title, items }))
+        }));
 
     const menu = document.getElementById('mfrs-anchor-menu');
     const trigger = document.getElementById('mfrs-anchor-trigger');
