@@ -201,16 +201,25 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
       currentTables: status.tableNames,
       missingTables: status.missingNames,
     });
-    // scope:'chat' 让模板导入即对当前聊天生效。默认 scope:'global' 只把预设塞进预设库、
-    // 不切换当前生效模板，会导致表停留在库默认 8 表（autofix 误判成功却无变化）。
-    await api.importTemplateFromData(templateData, { scope: 'chat' });
-    await wait(250);
-    const nextStatus = await readTemplateStatus(api);
-    if (nextStatus.templateLoaded) {
+    // 导入会触发库保存设置；若 ACU 设置尚未可靠加载完成（settingsStorageReadyForSave_ACU=false），
+    // 库会拒绝保存（日志「设置尚未完成可靠加载，已拒绝本次保存」），导入静默失败、表停在库默认 8 表。
+    // 这是时序竞态：autofix 可能比设置加载更早。对策：导入→验证→未成功则退避重试，覆盖设置加载窗口。
+    // scope:'chat' 让导入即对当前聊天生效（scope:'global' 只塞预设库、不切换生效模板）。
+    const retryDelays = [250, 500, 1000, 1500, 2000, 3000, 3000, 4000];
+    let loaded = false;
+    for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+      await api.importTemplateFromData(templateData, { scope: 'chat' });
+      await wait(retryDelays[attempt]);
+      if ((await readTemplateStatus(api)).templateLoaded) {
+        loaded = true;
+        break;
+      }
+    }
+    if (loaded) {
       hostWindow.toastr?.success?.('神秘复苏 14 表模板已自动导入。');
     } else {
-      hostWindow.toastr?.warning?.('神秘复苏模板已尝试导入，但当前数据库表仍不完整。');
-      console.warn('[神秘复苏数据库前端] 自动导入后模板仍不完整。', nextStatus);
+      hostWindow.toastr?.warning?.('神秘复苏模板已尝试导入，但当前数据库表仍不完整，请稍后手动重试。');
+      console.warn('[神秘复苏数据库前端] 多次重试后模板仍不完整。', await readTemplateStatus(api));
     }
     rerenderAcu(hostWindow);
   } catch (error) {
@@ -220,7 +229,9 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
   }
 }
 
-function ensureMysteryTemplate(hostWindow: HostWindow) {
+function ensureMysteryTemplate(hostWindow: HostWindow, force = false) {
+  // force=true 用于切换聊天后强制重新校正：清掉上一轮单例 promise，重跑 autofix。
+  if (force) templateAutofixPromise = null;
   templateAutofixPromise ??= runMysteryTemplateAutofix(hostWindow);
   return templateAutofixPromise;
 }
@@ -314,6 +325,15 @@ function installCompatibilityApi() {
 
   console.info('[神秘复苏数据库前端] 已切换为 v10.2 原始可视化前端，并保留 MysteryDatabaseFrontend 兼容 API。');
   void ensureMysteryTemplate(hostWindow);
+
+  // 切换/新建聊天后，脚本不会重新注入，单例 autofix 不会重跑，新聊天会停在库默认 8 表。
+  // 监听 CHAT_CHANGED，每次切聊天强制重跑 autofix，使新聊天也自动获得神秘复苏 14 表。
+  // eventOn 仅在酒馆助手注入环境存在；脚本卸载时监听会被自动清理，无需手动 off。
+  if (typeof eventOn !== 'undefined' && typeof tavern_events !== 'undefined') {
+    eventOn(tavern_events.CHAT_CHANGED, () => {
+      void ensureMysteryTemplate(hostWindow, true);
+    });
+  }
 }
 
 installCompatibilityApi();
