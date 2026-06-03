@@ -3,7 +3,7 @@ import './v10_2_visualizer.js';
 
 type AutoCardUpdaterAPI = {
   openVisualizer?: () => unknown | Promise<unknown>;
-  importTemplateFromData?: (data: unknown) => unknown | Promise<unknown>;
+  importTemplateFromData?: (data: unknown, options?: { scope?: 'global' | 'chat'; presetName?: string }) => unknown | Promise<unknown>;
   refreshDataAndWorldbook?: () => unknown | Promise<unknown>;
   exportTableAsJson?: () => unknown | Promise<unknown>;
   getTableTemplate?: () => unknown | Promise<unknown>;
@@ -201,7 +201,9 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
       currentTables: status.tableNames,
       missingTables: status.missingNames,
     });
-    await api.importTemplateFromData(templateData);
+    // scope:'chat' 让模板导入即对当前聊天生效。默认 scope:'global' 只把预设塞进预设库、
+    // 不切换当前生效模板，会导致表停留在库默认 8 表（autofix 误判成功却无变化）。
+    await api.importTemplateFromData(templateData, { scope: 'chat' });
     await wait(250);
     const nextStatus = await readTemplateStatus(api);
     if (nextStatus.templateLoaded) {
@@ -270,7 +272,7 @@ function installCompatibilityApi() {
     async importMysteryTemplate() {
       const api = requireApi(hostWindow);
       if (!api.importTemplateFromData) throw new Error('模板导入接口不可用。');
-      await api.importTemplateFromData(templateData);
+      await api.importTemplateFromData(templateData, { scope: 'chat' });
       hostWindow.toastr?.success?.('神秘复苏 14 表模板已导入。');
       rerenderAcu(hostWindow);
       return true;
