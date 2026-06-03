@@ -2,7 +2,7 @@
 Treat the current MVU stat_data as the binding world state. Do not reveal hidden files directly.
 
 <%_
-var stat_data = _.get(EjsTemplate.allVariables(), 'stat_data', {});
+var stat_data = _.get(variables, 'stat_data', {});
 var deathRiskValue = Number(_.get(stat_data, '风险值', 0)) || 0;
 var reviveRiskValue = Number(_.get(stat_data, '驭鬼者状态.总复苏风险', _.get(stat_data, '厉鬼复苏程度', 0))) || 0;
 var currentStatusText = _.get(stat_data, '状态', '未知');

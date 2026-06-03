@@ -1,5 +1,5 @@
 const databaseScriptName = '星河璀璨·数据库';
-const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/AlbusKen/shujuku@xingv2.6/index.js';
+const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/AlbusKen/shujuku@spv3.9.5/index.js';
 
 async function loadDatabaseScript() {
   console.info(`[${databaseScriptName}] 正在加载数据库本体`);
