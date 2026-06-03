@@ -1,2 +1,2 @@
-const o='spv3.9.5·数据库';!async function(){console.info(`[${o}] 正在加载数据库本体`);try{await import('https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@__RESOURCE_HASH__/vendor/shujuku-sp-fork/index.js'),console.info(`[${o}] 数据库本体已加载`)}catch(e){throw console.error(`[${o}] 数据库本体加载失败，请检查网络、酒馆助手和数据库本体版本`,e),e}}();
+const e='spv3.9.5·数据库';!async function(){console.info(`[${e}] 正在加载数据库本体`);try{await import('https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@14a556d26212c4ab086cdfd45f1b3362941deb22/vendor/shujuku-sp-fork/index.js'),console.info(`[${e}] 数据库本体已加载`)}catch(o){throw console.error(`[${e}] 数据库本体加载失败，请检查网络、酒馆助手和数据库本体版本`,o),o}}();
 //# sourceMappingURL=index.js.map
