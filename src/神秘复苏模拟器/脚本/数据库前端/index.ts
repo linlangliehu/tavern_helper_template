@@ -99,7 +99,7 @@ function normalizeExportedData(exported: unknown) {
 
 function requireApi(hostWindow: HostWindow) {
   const api = hostWindow.AutoCardUpdaterAPI ?? (window as HostWindow).AutoCardUpdaterAPI;
-  if (!api) throw new Error('未检测到 AutoCardUpdaterAPI，请确认星河璀璨·数据库已加载。');
+  if (!api) throw new Error('未检测到 AutoCardUpdaterAPI，请确认spv3.9.5·数据库已加载。');
   return api;
 }
 

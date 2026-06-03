@@ -1,0 +1,17 @@
+{
+  "type": "script",
+  "enabled": true,
+  "name": "spv3.9.5·数据库",
+  "id": "8c4a33ef-2846-4480-a584-70f3643137c2",
+  "content": "import 'https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@__RESOURCE_HASH__/vendor/shujuku-sp-fork/index.js'",
+  "info": "自托管 fork（AM 编码已改为 SP）。__RESOURCE_HASH__ 需替换为 vendor 资源提交的完整 commit 哈希。",
+  "button": {
+    "enabled": true,
+    "buttons": []
+  },
+  "data": {},
+  "export_with": {
+    "data": true,
+    "button": true
+  }
+}

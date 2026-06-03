@@ -566,7 +566,7 @@
             </div>
             <div class="mfrs-credits-list">
                 <span class="mfrs-badge">@原著作者·佛前献花</span>
-                <span class="mfrs-badge">@星河璀璨·数据库</span>
+                <span class="mfrs-badge">@SP数据库</span>
                 <span class="mfrs-badge">@酒馆助手·模板</span>
                 <span class="mfrs-badge">@所有测试者</span>
             </div>
