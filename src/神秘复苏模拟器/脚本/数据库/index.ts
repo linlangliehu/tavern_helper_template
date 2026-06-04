@@ -1,7 +1,7 @@
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
-// __RESOURCE_HASH__ 必须在 vendor 资源提交并推送后，替换为该资源提交的完整 commit 哈希再 build。
-const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@__RESOURCE_HASH__/vendor/shujuku-sp-fork/index.js?v=r2-6-coreapi-context-proxy';
+// 指向包含 vendor 修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
+const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@be210de5f029c4720f5e3503d02f2bb4483b5be4/vendor/shujuku-sp-fork/index.js?v=r2-6-coreapi-context-proxy';
 const databaseScriptMarker = 'mfrs-r2-6-coreapi-context-proxy';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
