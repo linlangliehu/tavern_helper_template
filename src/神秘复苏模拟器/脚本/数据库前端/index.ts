@@ -59,8 +59,8 @@ type HostWindow = Window & {
   };
 };
 
-const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@be210de5f029c4720f5e3503d02f2bb4483b5be4/vendor/shujuku-sp-fork/index.js?v=r2-6-coreapi-context-proxy';
-const databaseScriptMarker = 'mfrs-r2-6-coreapi-context-proxy';
+const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@__RESOURCE_HASH__/vendor/shujuku-sp-fork/index.js?v=r2sql-template-status';
+const databaseScriptMarker = 'mfrs-r2sql-template-status';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
@@ -217,6 +217,22 @@ function requireApi(hostWindow: HostWindow) {
 async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStatus> {
   const tableNames = api.getTableTemplate ? normalizeTemplateNames(await api.getTableTemplate()) : [];
   const missingNames = templateTableNames.filter(name => !tableNames.includes(name));
+  if (missingNames.length > 0 && api.exportTableAsJson) {
+    try {
+      const exportedNames = normalizeTemplateNames(normalizeExportedData(await api.exportTableAsJson()));
+      const exportedMissingNames = templateTableNames.filter(name => !exportedNames.includes(name));
+      if (exportedMissingNames.length === 0) {
+        return {
+          templateLoaded: true,
+          tableCount: exportedNames.length,
+          tableNames: exportedNames,
+          missingNames: [],
+        };
+      }
+    } catch (error) {
+      console.debug('[神秘复苏数据库前端] 表格导出口径兜底检查失败，继续使用模板口径。', error);
+    }
+  }
   return {
     templateLoaded: missingNames.length === 0,
     tableCount: tableNames.length,
