@@ -2,6 +2,7 @@ import templateData from '../../数据库/神秘复苏表格SQL_v1.json';
 import './v10_2_visualizer.js';
 
 type AutoCardUpdaterAPI = {
+  __mfrsDatabaseScriptMarker__?: string;
   openVisualizer?: () => unknown | Promise<unknown>;
   importTemplateFromData?: (data: unknown, options?: { scope?: 'global' | 'chat'; presetName?: string }) => unknown | Promise<unknown>;
   refreshDataAndWorldbook?: () => unknown | Promise<unknown>;
@@ -25,6 +26,15 @@ type FrontendState = {
 
 type HostWindow = Window & {
   AutoCardUpdaterAPI?: AutoCardUpdaterAPI;
+  __mfrsDatabaseScriptMarker__?: string;
+  SillyTavern?: {
+    saveChat?: unknown;
+    getContext?: () => {
+      characterId?: string | number;
+      characters?: Array<{ name?: string; avatar?: string }> | Record<string, { name?: string; avatar?: string }>;
+      saveChat?: unknown;
+    };
+  };
   MysteryDatabaseFrontend?: {
     checkTemplateStatus: () => Promise<TemplateStatus>;
     importMysteryTemplate: () => Promise<boolean>;
@@ -49,6 +59,11 @@ type HostWindow = Window & {
   };
 };
 
+const databaseScriptUrl = 'https://gcore.jsdelivr.net/gh/linlangliehu/tavern_helper_template@__RESOURCE_HASH__/vendor/shujuku-sp-fork/index.js?v=r2-6-coreapi-context-proxy';
+const databaseScriptMarker = 'mfrs-r2-6-coreapi-context-proxy';
+const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
+const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
+const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
 const ACU_UI_COLLAPSE_KEY = 'acu_ui_collapse_state';
 const ACU_UI_CONFIG_KEY = 'acu_ui_config_v18';
 const legacyId = (...parts: string[]) => parts.join('-');
@@ -66,6 +81,8 @@ const templateTableNames = Object.values(templateData as Record<string, unknown>
   .map(sheet => sheet.name);
 
 let templateAutofixPromise: Promise<void> | null = null;
+let databaseScriptReloadPromise: Promise<boolean> | null = null;
+let databaseScriptReloadSeq = 0;
 
 function getHostWindow() {
   try {
@@ -73,6 +90,100 @@ function getHostWindow() {
   } catch {
     return window as HostWindow;
   }
+}
+
+function getSillyTavernContext(hostWindow: HostWindow) {
+  const localWindow = window as HostWindow;
+  for (const st of [hostWindow.SillyTavern, localWindow.SillyTavern]) {
+    try {
+      const context = st?.getContext?.();
+      if (context) return context;
+    } catch {
+      // Ignore transient host context failures while SillyTavern is switching chats.
+    }
+  }
+  return null;
+}
+
+function getCurrentCharacter(hostWindow: HostWindow) {
+  const context = getSillyTavernContext(hostWindow);
+  const characterId = context?.characterId;
+  if (characterId === undefined || characterId === null) return null;
+
+  const characters = context?.characters;
+  const character = Array.isArray(characters)
+    ? characters[Number(characterId)]
+    : characters?.[String(characterId)];
+
+  return character ? { id: String(characterId), ...character } : { id: String(characterId) };
+}
+
+function isMysteryRevivalCardActive(hostWindow: HostWindow) {
+  const character = getCurrentCharacter(hostWindow);
+  return Boolean(
+    character
+      && ((character.name && mysteryCardNames.has(character.name))
+        || (character.avatar && mysteryCardAvatars.has(character.avatar))),
+  );
+}
+
+function tagDatabaseApi(hostWindow: HostWindow) {
+  const api = hostWindow.AutoCardUpdaterAPI;
+  if (!api || typeof api !== 'object') {
+    delete hostWindow.__mfrsDatabaseScriptMarker__;
+    return;
+  }
+
+  hostWindow.__mfrsDatabaseScriptMarker__ = databaseScriptMarker;
+  Object.defineProperty(api, '__mfrsDatabaseScriptMarker__', {
+    configurable: true,
+    value: databaseScriptMarker,
+  });
+}
+
+function isExpectedDatabaseApi(api: AutoCardUpdaterAPI | null | undefined) {
+  return Boolean(api && api.__mfrsDatabaseScriptMarker__ === databaseScriptMarker);
+}
+
+function clearPreviousDatabaseInstance(hostWindow: HostWindow) {
+  const localWindow = window as HostWindow;
+  const targets = hostWindow === localWindow ? [hostWindow] : [hostWindow, localWindow];
+
+  for (const target of targets) {
+    const targetRecord = target as HostWindow & Record<string, unknown>;
+    delete target.AutoCardUpdaterAPI;
+    delete target.__mfrsDatabaseScriptMarker__;
+    delete targetRecord[databaseInstanceFlag];
+  }
+}
+
+async function reloadDatabaseScriptForCurrentCard(hostWindow: HostWindow, reason: string) {
+  if (!isMysteryRevivalCardActive(hostWindow)) return false;
+  if (databaseScriptReloadPromise) return databaseScriptReloadPromise;
+
+  const reloadUrl = `${databaseScriptUrl}&mfrs_reclaim=${Date.now()}_${databaseScriptReloadSeq++}`;
+  clearPreviousDatabaseInstance(hostWindow);
+  databaseScriptReloadPromise = import(/* webpackIgnore: true */ reloadUrl)
+    .then(async () => {
+      const api = await waitForApi(hostWindow, 30, 100);
+      if (!api) {
+        delete hostWindow.__mfrsDatabaseScriptMarker__;
+        console.warn('[神秘复苏数据库前端] 重新加载数据库本体后 API 仍未挂载。', { reason });
+        return false;
+      }
+      tagDatabaseApi(hostWindow);
+      console.info('[神秘复苏数据库前端] 已重新接管数据库 API。', { reason });
+      return true;
+    })
+    .catch(error => {
+      console.warn('[神秘复苏数据库前端] 重新加载数据库本体失败。', { reason, error });
+      return false;
+    })
+    .finally(() => {
+      databaseScriptReloadPromise = null;
+    });
+
+  return databaseScriptReloadPromise;
 }
 
 function getHostDocument(hostWindow: HostWindow) {
@@ -98,7 +209,7 @@ function normalizeExportedData(exported: unknown) {
 }
 
 function requireApi(hostWindow: HostWindow) {
-  const api = hostWindow.AutoCardUpdaterAPI ?? (window as HostWindow).AutoCardUpdaterAPI;
+  const api = hostWindow.AutoCardUpdaterAPI;
   if (!api) throw new Error('未检测到 AutoCardUpdaterAPI，请确认spv3.9.5·数据库已加载。');
   return api;
 }
@@ -164,11 +275,32 @@ function wait(ms: number) {
 
 async function waitForApi(hostWindow: HostWindow, attempts = 24, interval = 500) {
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const api = hostWindow.AutoCardUpdaterAPI ?? (window as HostWindow).AutoCardUpdaterAPI;
+    const api = hostWindow.AutoCardUpdaterAPI;
     if (api?.getTableTemplate) return api;
     await wait(interval);
   }
   return null;
+}
+
+function hasHostSaveChat(hostWindow: HostWindow) {
+  const localWindow = window as HostWindow;
+  const candidates = [hostWindow.SillyTavern, localWindow.SillyTavern];
+
+  return candidates.some(st => {
+    try {
+      return typeof st?.saveChat === 'function' || typeof st?.getContext?.().saveChat === 'function';
+    } catch {
+      return false;
+    }
+  });
+}
+
+async function waitForHostSaveChat(hostWindow: HostWindow, attempts = 20, interval = 250) {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (hasHostSaveChat(hostWindow)) return true;
+    await wait(interval);
+  }
+  return false;
 }
 
 function rerenderAcu(hostWindow: HostWindow) {
@@ -177,17 +309,41 @@ function rerenderAcu(hostWindow: HostWindow) {
 }
 
 async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
-  const api = await waitForApi(hostWindow);
+  if (!isMysteryRevivalCardActive(hostWindow)) {
+    templateAutofixPromise = null;
+    return;
+  }
+
+  let api = await waitForApi(hostWindow);
+  if (!api) {
+    await reloadDatabaseScriptForCurrentCard(hostWindow, 'api_missing');
+    api = await waitForApi(hostWindow, 16, 250);
+  }
   if (!api) {
     console.warn('[神秘复苏数据库前端] 数据库 API 超时未就绪，跳过自动模板校正。');
     templateAutofixPromise = null;
     return;
   }
 
-  const status = await readTemplateStatus(api);
+  if (!isExpectedDatabaseApi(api)) {
+    await reloadDatabaseScriptForCurrentCard(hostWindow, 'api_owner_mismatch');
+    api = (await waitForApi(hostWindow, 16, 250)) ?? api;
+  }
+
+  let status = await readTemplateStatus(api);
   if (status.templateLoaded) {
     rerenderAcu(hostWindow);
     return;
+  }
+
+  if (!isExpectedDatabaseApi(api)) {
+    await reloadDatabaseScriptForCurrentCard(hostWindow, 'template_mismatch');
+    api = (await waitForApi(hostWindow, 16, 250)) ?? api;
+    status = await readTemplateStatus(api);
+    if (status.templateLoaded) {
+      rerenderAcu(hostWindow);
+      return;
+    }
   }
 
   if (!api.importTemplateFromData) {
@@ -197,7 +353,8 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
   }
 
   try {
-    console.warn('[神秘复苏数据库前端] 检测到当前数据库模板不是神秘复苏 14 表，正在自动导入内置模板。', {
+    await waitForHostSaveChat(hostWindow);
+    console.info('[神秘复苏数据库前端] 检测到当前数据库模板不是神秘复苏 14 表，正在自动导入内置模板。', {
       currentTables: status.tableNames,
       missingTables: status.missingNames,
     });
@@ -230,9 +387,16 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
 }
 
 function ensureMysteryTemplate(hostWindow: HostWindow, force = false) {
+  if (!isMysteryRevivalCardActive(hostWindow)) {
+    if (force) templateAutofixPromise = null;
+    return Promise.resolve();
+  }
+
   // force=true 用于切换聊天后强制重新校正：清掉上一轮单例 promise，重跑 autofix。
   if (force) templateAutofixPromise = null;
-  templateAutofixPromise ??= runMysteryTemplateAutofix(hostWindow);
+  templateAutofixPromise ??= runMysteryTemplateAutofix(hostWindow).finally(() => {
+    templateAutofixPromise = null;
+  });
   return templateAutofixPromise;
 }
 
