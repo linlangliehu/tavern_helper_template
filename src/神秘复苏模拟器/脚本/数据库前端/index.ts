@@ -15,6 +15,7 @@ type TemplateStatus = {
   tableCount: number;
   tableNames: string[];
   missingNames: string[];
+  mismatchNames: string[];
 };
 
 type FrontendState = {
@@ -79,6 +80,15 @@ const LEGACY_CLEANUP_IDS = [
 const templateTableNames = Object.values(templateData as Record<string, unknown>)
   .filter((value): value is { name: string } => Boolean(value && typeof value === 'object' && 'name' in value))
   .map(sheet => sheet.name);
+
+type TemplateSheetLike = {
+  uid?: string;
+  name?: string;
+  content?: unknown;
+};
+
+const templateSheets = Object.values(templateData as Record<string, unknown>)
+  .filter((value): value is TemplateSheetLike => Boolean(value && typeof value === 'object' && 'name' in value));
 
 let templateAutofixPromise: Promise<void> | null = null;
 let databaseScriptReloadPromise: Promise<boolean> | null = null;
@@ -190,13 +200,40 @@ function getHostDocument(hostWindow: HostWindow) {
   return hostWindow.document ?? document;
 }
 
-function normalizeTemplateNames(template: unknown) {
+function normalizeTemplateSheets(template: unknown) {
   if (!template || typeof template !== 'object') return [];
   const record = template as Record<string, unknown>;
   const sheets = record.sheets && typeof record.sheets === 'object' ? (record.sheets as Record<string, unknown>) : record;
   return Object.values(sheets)
-    .filter((value): value is { name: string } => Boolean(value && typeof value === 'object' && 'name' in value))
-    .map(sheet => sheet.name);
+    .filter((value): value is TemplateSheetLike => Boolean(value && typeof value === 'object' && 'name' in value));
+}
+
+function normalizeTemplateNames(template: unknown) {
+  return normalizeTemplateSheets(template)
+    .map(sheet => sheet.name)
+    .filter((name): name is string => Boolean(name));
+}
+
+function getSheetHeader(sheet: TemplateSheetLike | undefined) {
+  const content = sheet?.content;
+  if (!Array.isArray(content) || !Array.isArray(content[0])) return [];
+  return content[0].map(value => String(value));
+}
+
+function findTemplateMismatchNames(template: unknown) {
+  const activeSheets = normalizeTemplateSheets(template);
+  const mismatchNames: string[] = [];
+  for (const expected of templateSheets) {
+    const actual = activeSheets.find(sheet =>
+      (expected.uid && sheet.uid === expected.uid)
+      || (expected.name && sheet.name === expected.name)
+    );
+    if (!actual) continue;
+    if (JSON.stringify(getSheetHeader(actual)) !== JSON.stringify(getSheetHeader(expected))) {
+      mismatchNames.push(expected.name ?? expected.uid ?? '未知表');
+    }
+  }
+  return mismatchNames;
 }
 
 function normalizeExportedData(exported: unknown) {
@@ -215,18 +252,23 @@ function requireApi(hostWindow: HostWindow) {
 }
 
 async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStatus> {
-  const tableNames = api.getTableTemplate ? normalizeTemplateNames(await api.getTableTemplate()) : [];
+  const template = api.getTableTemplate ? await api.getTableTemplate() : null;
+  const tableNames = normalizeTemplateNames(template);
   const missingNames = templateTableNames.filter(name => !tableNames.includes(name));
-  if (missingNames.length > 0 && api.exportTableAsJson) {
+  const mismatchNames = missingNames.length === 0 ? findTemplateMismatchNames(template) : [];
+  if ((missingNames.length > 0 || mismatchNames.length > 0) && api.exportTableAsJson) {
     try {
-      const exportedNames = normalizeTemplateNames(normalizeExportedData(await api.exportTableAsJson()));
+      const exportedData = normalizeExportedData(await api.exportTableAsJson());
+      const exportedNames = normalizeTemplateNames(exportedData);
       const exportedMissingNames = templateTableNames.filter(name => !exportedNames.includes(name));
-      if (exportedMissingNames.length === 0) {
+      const exportedMismatchNames = exportedMissingNames.length === 0 ? findTemplateMismatchNames(exportedData) : [];
+      if (exportedMissingNames.length === 0 && exportedMismatchNames.length === 0) {
         return {
           templateLoaded: true,
           tableCount: exportedNames.length,
           tableNames: exportedNames,
           missingNames: [],
+          mismatchNames: [],
         };
       }
     } catch (error) {
@@ -234,10 +276,11 @@ async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStat
     }
   }
   return {
-    templateLoaded: missingNames.length === 0,
+    templateLoaded: missingNames.length === 0 && mismatchNames.length === 0,
     tableCount: tableNames.length,
     tableNames,
     missingNames,
+    mismatchNames,
   };
 }
 
@@ -370,9 +413,10 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
 
   try {
     await waitForHostSaveChat(hostWindow);
-    console.info('[神秘复苏数据库前端] 检测到当前数据库模板不是神秘复苏 14 表，正在自动导入内置模板。', {
+    console.info('[神秘复苏数据库前端] 检测到当前数据库模板不是最新神秘复苏模板，正在自动导入内置模板。', {
       currentTables: status.tableNames,
       missingTables: status.missingNames,
+      mismatchTables: status.mismatchNames,
     });
     // 导入会触发库保存设置；若 ACU 设置尚未可靠加载完成（settingsStorageReadyForSave_ACU=false），
     // 库会拒绝保存（日志「设置尚未完成可靠加载，已拒绝本次保存」），导入静默失败、表停在库默认 8 表。
