@@ -89,10 +89,10 @@
     "uid": "sheet_player_state",
     "name": "玩家状态",
     "sourceData": {
-      "note": "记录玩家角色的长期档案。全表只有一行，不增不删。\n\n【列定义】\n列1=row_id（仅允许为 1）\n列2=姓名 name\n列3=身份 identity_text\n列4=所在地点 location_name\n列5=当前状态 status_text\n列6=死亡风险 death_risk，0-100，仅作数据库镜像，不覆盖 MVU /风险值\n列7=复苏风险 revival_risk，0-100，仅作数据库镜像，不覆盖 MVU /驭鬼者状态/总复苏风险\n列8=已驾驭厉鬼 controlled_ghosts\n列9=持有拼图 ghost_pieces\n列10=灵异资源 resources_text\n列11=最近行动 last_action\n\n【职责】\n本表是 MVU 的长期镜像和检索摘要，不是状态栏真源。若和 MVU 冲突，以 MVU stat_data 为准。",
+      "note": "记录玩家角色的长期档案。全表只有一行，不增不删。\n\n【列定义】\n列1=row_id（仅允许为 1）\n列2=姓名 name\n列3=身份 identity_text\n列4=所在地点 location_name\n列5=当前状态 status_text\n列6=死亡风险镜像 death_risk，0-100，仅作数据库镜像，不覆盖 MVU /风险值\n列7=复苏风险镜像 revival_risk，0-100，仅作数据库镜像，不覆盖 MVU /驭鬼者状态/总复苏风险\n列8=已驾驭厉鬼 controlled_ghosts\n列9=持有拼图 ghost_pieces\n列10=灵异资源 resources_text\n列11=最近行动 last_action\n\n【职责】\n本表是 MVU 的长期镜像和检索摘要，不是状态栏真源。若和 MVU 冲突，以 MVU stat_data 为准。",
       "initNode": "插入唯一一行，填入玩家开局身份和初始状态。\nSQL示例: INSERT INTO player_state (row_id, name, identity_text, location_name, status_text, death_risk, revival_risk, controlled_ghosts, ghost_pieces, resources_text, last_action) VALUES (1, '{{user}}', '普通人', '七中', '正常', 0, 0, '无', '无', '无', '开局');",
       "deleteNode": "禁止。",
-      "updateNode": "已存在的唯一行，字段变化时更新。死亡风险和复苏风险只记录当前摘要，不得把数据库值反向写入 MVU。\nSQL示例: UPDATE player_state SET location_name = '七中走廊', status_text = '被敲门声标记', death_risk = 35, last_action = '跟随人群撤离教室' WHERE row_id = 1;",
+      "updateNode": "已存在的唯一行，字段变化时更新。死亡风险镜像和复苏风险镜像只记录当前摘要，不得把数据库值反向写入 MVU。\nSQL示例: UPDATE player_state SET location_name = '七中走廊', status_text = '被敲门声标记', death_risk = 35, last_action = '跟随人群撤离教室' WHERE row_id = 1;",
       "insertNode": "禁止。",
       "ddl": "CREATE TABLE player_state ( -- 玩家状态\n  row_id INTEGER PRIMARY KEY CHECK(row_id = 1), -- 行号，仅允许为 1\n  name TEXT NOT NULL, -- 姓名\n  identity_text TEXT NOT NULL, -- 身份\n  location_name TEXT NOT NULL, -- 所在地点\n  status_text TEXT NOT NULL, -- 当前状态\n  death_risk INTEGER NOT NULL CHECK(death_risk BETWEEN 0 AND 100), -- 死亡风险镜像\n  revival_risk INTEGER NOT NULL CHECK(revival_risk BETWEEN 0 AND 100), -- 复苏风险镜像\n  controlled_ghosts TEXT NOT NULL, -- 已驾驭厉鬼\n  ghost_pieces TEXT NOT NULL, -- 持有拼图\n  resources_text TEXT NOT NULL, -- 灵异资源\n  last_action TEXT NOT NULL -- 最近行动\n);"
     },
@@ -103,8 +103,8 @@
         "身份",
         "所在地点",
         "当前状态",
-        "死亡风险",
-        "复苏风险",
+        "死亡风险镜像",
+        "复苏风险镜像",
         "已驾驭厉鬼",
         "持有拼图",
         "灵异资源",
@@ -399,10 +399,10 @@
     "name": "人物",
     "sourceData": {
       "note": "记录对剧情、灵异事件或势力关系有持续影响的人物。\n\n【列定义】\n列1=row_id\n列2=姓名 name（全表唯一）\n列3=身份 identity_text\n列4=阵营 faction_text\n列5=所在地点 location_name\n列6=在场状态 presence_status\n列7=生死状态 life_status\n列8=灵异能力 supernatural_ability\n列9=关系 relations_text\n列10=已知情报 known_info（≤400 字）\n\n【准入】\n有姓名、会多次出现、与事件/总部/势力/玩家关系有影响的人物才记录。一次性路人不录。",
-      "initNode": "为开局重要人物插入记录。\nSQL示例: INSERT INTO characters (row_id, name, identity_text, faction_text, location_name, presence_status, life_status, supernatural_ability, relations_text, known_info) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM characters), '杨间', '学生', '无', '七中', '在场', '存活', '未觉醒', '{{user}}:同学', '七中学生，尚未正式接触总部。');",
+      "initNode": "为开局重要人物插入记录。新增人物时不要手写 row_id，交给 SQLite 自动分配；按姓名幂等更新，避免重复插入。\nSQL示例: INSERT INTO characters (name, identity_text, faction_text, location_name, presence_status, life_status, supernatural_ability, relations_text, known_info) VALUES ('杨间', '学生', '无', '七中', '在场', '存活', '未觉醒', '{{user}}:同学', '七中学生，尚未正式接触总部。') ON CONFLICT(name) DO UPDATE SET identity_text=excluded.identity_text, faction_text=excluded.faction_text, location_name=excluded.location_name, presence_status=excluded.presence_status, life_status=excluded.life_status, supernatural_ability=excluded.supernatural_ability, relations_text=excluded.relations_text, known_info=excluded.known_info;",
       "deleteNode": "允许删除长期无剧情作用的边缘人物；死亡的重要人物不要删除，更新生死状态。",
       "updateNode": "按姓名更新位置、在场、生死、能力、关系和情报。\nSQL示例: UPDATE characters SET presence_status = '离场', location_name = '学校外', known_info = '已离开教学楼并听到异常敲门声' WHERE name = '杨间';",
-      "insertNode": "新重要人物登场时新增。\nSQL示例: INSERT INTO characters (row_id, name, identity_text, faction_text, location_name, presence_status, life_status, supernatural_ability, relations_text, known_info) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM characters), '赵开明', '刑警', '总部', '大昌市', '离场', '存活', '驭鬼者', '{{user}}:未知', '大昌市负责人相关人物。');",
+      "insertNode": "新重要人物登场时新增。批量新增时禁止在同一条多行 VALUES 中重复使用 MAX(row_id)+1；优先省略 row_id，并按 name 做幂等更新。\nSQL示例: INSERT INTO characters (name, identity_text, faction_text, location_name, presence_status, life_status, supernatural_ability, relations_text, known_info) VALUES ('赵开明', '刑警', '总部', '大昌市', '离场', '存活', '驭鬼者', '{{user}}:未知', '大昌市负责人相关人物。') ON CONFLICT(name) DO UPDATE SET identity_text=excluded.identity_text, faction_text=excluded.faction_text, location_name=excluded.location_name, presence_status=excluded.presence_status, life_status=excluded.life_status, supernatural_ability=excluded.supernatural_ability, relations_text=excluded.relations_text, known_info=excluded.known_info;",
       "ddl": "CREATE TABLE characters ( -- 人物\n  row_id INTEGER PRIMARY KEY, -- 行号\n  name TEXT NOT NULL UNIQUE, -- 姓名\n  identity_text TEXT NOT NULL, -- 身份\n  faction_text TEXT NOT NULL, -- 阵营\n  location_name TEXT NOT NULL, -- 所在地点\n  presence_status TEXT NOT NULL CHECK(presence_status IN ('在场', '离场', '可联系', '未知')), -- 在场状态\n  life_status TEXT NOT NULL CHECK(life_status IN ('存活', '死亡', '失踪', '厉鬼复苏', '未知')), -- 生死状态\n  supernatural_ability TEXT NOT NULL, -- 灵异能力\n  relations_text TEXT NOT NULL, -- 关系\n  known_info TEXT NOT NULL CHECK(LENGTH(known_info) <= 400) -- 已知情报\n);"
     },
     "content": [
@@ -702,11 +702,11 @@
     "uid": "sheet_chronicle",
     "name": "事件纪要",
     "sourceData": {
-      "note": "记录每轮或多轮合并后的客观纪要。\n\n【列定义】\n列1=row_id\n列2=纪要编号 code_index（SP0001 起递增，全表唯一）\n列3=时间跨度 time_span\n列4=关联事件 related_event\n列5=概览 summary（≤40 字）\n列6=纪要 chronicle_text（200-600 字）\n\n【规则】\n只写正文明确发生的事实，不补充未出现的隐藏真相。用于高楼层召回。",
-      "initNode": "插入 SP0001 记录，记录开局场景。\nSQL示例: INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), 'SP0001', '2004-07-01 08:00 ~ 2004-07-01 08:30', '七中敲门事件', '七中出现异常敲门声。', '七中正常上课期间，走廊里传出异常敲门声。部分学生最初以为是恶作剧，但声音持续靠近，教室内开始出现恐慌。{{user}}注意到几名学生的反应异常，并发现老师无法解释声音来源。现场还没有确认死亡案例，但撤离路线、目击证词和敲门声来源已经成为后续判断事件规律的重要线索。');",
+      "note": "记录每轮或多轮合并后的客观纪要。\n\n【列定义】\n列1=row_id\n列2=纪要编号 code_index（SP0001 起递增，全表唯一）\n列3=时间跨度 time_span\n列4=关联事件 related_event\n列5=概览 summary（≤40 字）\n列6=纪要 chronicle_text（200-600 字，推荐 300-400 字）\n\n【规则】\n只写正文明确发生的事实，不补充未出现的隐藏真相。用于高楼层召回。chronicle_text 不足 200 字时禁止输出 SQL。",
+      "initNode": "插入首条记录，记录开局场景。row_id 和 code_index 都按当前表递增生成，chronicle_text 必须写满 200-600 字，推荐 300-400 字。\nSQL示例: INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), (SELECT printf('SP%04d', COALESCE(MAX(CAST(substr(code_index, 3) AS INTEGER)), 0) + 1) FROM chronicle), '2004-07-01 08:00 ~ 2004-07-01 08:30', '七中敲门事件', '七中出现异常敲门声。', '<请写200到600字、推荐300到400字的客观纪要；不足200字禁止输出SQL>');",
       "deleteNode": "禁止。",
       "updateNode": "禁止。纪要写错时新增修正纪要，不改旧纪要。",
-      "insertNode": "每轮或多轮合并后插入一条新纪要，编号递增。\nSQL示例: INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), 'SP0002', '2004-07-01 08:30 ~ 2004-07-01 09:10', '七中敲门事件', '玩家撤离并获得证词。', '<200到600字客观纪要>');",
+      "insertNode": "每轮或多轮合并后插入一条新纪要，编号递增。chronicle_text 必须 200-600 字，推荐 300-400 字；不足 200 字时先扩写再输出 SQL。\nSQL示例: INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), (SELECT printf('SP%04d', COALESCE(MAX(CAST(substr(code_index, 3) AS INTEGER)), 0) + 1) FROM chronicle), '2004-07-01 08:30 ~ 2004-07-01 09:10', '七中敲门事件', '玩家撤离并获得证词。', '<请写200到600字、推荐300到400字的客观纪要；不足200字禁止输出SQL>');",
       "ddl": "CREATE TABLE chronicle ( -- 事件纪要\n  row_id INTEGER PRIMARY KEY, -- 行号\n  code_index TEXT NOT NULL UNIQUE CHECK(code_index GLOB 'SP[0-9][0-9][0-9][0-9]'), -- 纪要编号\n  time_span TEXT NOT NULL, -- 时间跨度\n  related_event TEXT NOT NULL, -- 关联事件\n  summary TEXT NOT NULL CHECK(LENGTH(summary) <= 40), -- 概览\n  chronicle_text TEXT NOT NULL CHECK(LENGTH(chronicle_text) >= 200 AND LENGTH(chronicle_text) <= 600) -- 纪要\n);"
     },
     "content": [
