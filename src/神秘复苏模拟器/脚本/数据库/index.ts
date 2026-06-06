@@ -1,8 +1,8 @@
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
-// 指向包含 SQL 语句边界修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5ec1aa67b1b082fe62114884bd72d079aefbf913/vendor/shujuku-sp-fork/index.js?v=phase122-incomplete-values-6-10';
-const databaseScriptMarker = 'mfrs-incomplete-values-6-10';
+// 指向包含 UPDATE SET 尾逗号归一化修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@3f59742003459058aff9ffe7aebf647fc0799f18/vendor/shujuku-sp-fork/index.js?v=phase123-update-trailing-comma-6-11';
+const databaseScriptMarker = 'mfrs-update-trailing-comma-6-11';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
 
