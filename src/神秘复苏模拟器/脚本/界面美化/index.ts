@@ -949,7 +949,6 @@ body {
       '.custom-sp-panel-choices:not([data-mfrs-choice-ready]), .sp-panel-choices:not([data-mfrs-choice-ready])',
     );
     for (const panel of panels) {
-      panel.dataset.mfrsChoiceReady = 'true';
       const body = panel.querySelector<HTMLElement>('.custom-sp-panel-body, .sp-panel-body');
       if (!body) continue;
 
@@ -970,6 +969,7 @@ body {
       if (!actions.length) continue;
 
       renderChoices(body, actions);
+      panel.dataset.mfrsChoiceReady = 'true';
     }
 
     const optionParagraphs = hostDocument.querySelectorAll<HTMLElement>('.mes_text p:not([data-mfrs-choice-ready])');
