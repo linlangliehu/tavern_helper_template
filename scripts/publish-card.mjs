@@ -26,9 +26,9 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 链接替换为 jsdelivr 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = '26cbab63eb996030811bfda86d9281650a449821';
+const CDN_REF = '1fe4322c828c6c425d4d9392acd5194fa01509c0';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase119-sql-debug-regressions-6-7';
+const CDN_CACHE_VERSION = 'phase120-choice-panel-interaction-6-8';
 
 // 把任意 http(s)://localhost(:port)/ 或 http(s)://127.0.0.1(:port)/ 替换为 CDN
 const LOCALHOST_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//g;
@@ -42,7 +42,7 @@ const cards = [
     syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书', '数据库'],
     syncFiles: ['神秘复苏模拟器.png'],            // 头像图
     urlReplacements: [{ from: LOCALHOST_PATTERN, to: CDN }],
-    releaseVersion: '6.7',
+    releaseVersion: '6.8',
   },
 ];
 
