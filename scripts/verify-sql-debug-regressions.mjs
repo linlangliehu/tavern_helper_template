@@ -321,6 +321,19 @@ INSERT OR REPLACE INTO check_suggestions (row_id, check_name, check_type, target
   assert.deepEqual(directStatements, [
     "INSERT OR REPLACE INTO check_suggestions (row_id, check_name, check_type, target_value, modifier, difficulty, result_note) VALUES (1, '观察档案', '线索', '鬼档案', 0, '中', '保留合法后续语句')",
   ]);
+
+  const incompleteFinalInsert = 'INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES';
+  const incompleteFinalInsertWithSemicolon = `${incompleteFinalInsert};`;
+  const incompleteFinalInsertWithComment = `${incompleteFinalInsert} -- AI output stopped here`;
+  for (const sql of [incompleteFinalInsert, incompleteFinalInsertWithSemicolon, incompleteFinalInsertWithComment]) {
+    assert.equal(vendor.extractSqlStatementsFromTableEdit_ACU(sql), '');
+    assert.deepEqual(Array.from(vendor.filterSqlEditStatements_ACU(vendor.splitSqlStatements(sql))), []);
+  }
+
+  const validFinalInsert = "INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '观察档案', '线索', '鬼档案', '/r 1d20');";
+  assert.deepEqual(Array.from(vendor.filterSqlEditStatements_ACU(vendor.splitSqlStatements(validFinalInsert))), [
+    "INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '观察档案', '线索', '鬼档案', '/r 1d20')",
+  ]);
 }
 
 async function testBadGatewayParsing() {
