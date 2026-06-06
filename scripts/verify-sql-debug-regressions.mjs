@@ -277,9 +277,11 @@ function buildTableMeta(template) {
 
 function testTableAndColumnPreflight(template) {
   const tableMeta = buildTableMeta(template);
-  const oldTableSql = `INSERT INTO log_summary (row_id, summary) VALUES (1, '旧表');`;
-  assert.deepEqual(Array.from(vendor.extractTableNamesFromStatements([oldTableSql])), ['log_summary']);
-  assert.ok(!tableMeta.has('log_summary'), 'log_summary must not be a current template table');
+  for (const tableName of ['log_summary', 'simulation_summary', 'summary_logs']) {
+    const oldTableSql = `INSERT INTO ${tableName} (row_id, summary) VALUES (1, '旧表');`;
+    assert.deepEqual(Array.from(vendor.extractTableNamesFromStatements([oldTableSql])), [tableName]);
+    assert.ok(!tableMeta.has(tableName), `${tableName} must not be a current template table`);
+  }
 
   const badColumnSql = `INSERT INTO chronicle (row_id, bad_column) VALUES (1, 'x');`;
   assert.deepEqual(
@@ -293,6 +295,10 @@ function testSqlFragmentCleaning() {
     `</thought>\n\nINSERT INTO chronicle (row_id, code_index) VALUES (1, 'SP0001');`,
     `INSERT INTO chronicle (row_id, code_index) VALUES (1, 'SP0001');\n这样符合“依据正文执行编辑”的要求。</thought>\n\nINSERT INTO chronicle (row_id, code_index) VALUES (2, 'SP0002');`,
     "```sql\nINSERT OR REPLACE INTO action_suggestions (row_id, option_key, idea_text, main_risk, expected_gain, death_risk_level, revival_risk_level) VALUES (1, 'A', '观察', '风险', '收益', '极低', '极高');\n```",
+    `INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES
+((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle),
+ (SELECT printf('SP%04d', COALESCE(MAX(CAST(substr(code_index, 3) AS INTEGER)), 0) + 1) FROM chronicle),
+INSERT OR REPLACE INTO check_suggestions (row_id, check_name, check_type, target_value, modifier, difficulty, result_note) VALUES (1, '观察档案', '线索', '鬼档案', 0, '中', '保留合法后续语句');`,
   ];
 
   for (const fixture of fixtures) {
@@ -305,6 +311,16 @@ function testSqlFragmentCleaning() {
       assert.match(stmt, /^(?:INSERT|UPDATE|DELETE|REPLACE|WITH|CREATE TEMP|DROP TABLE)/i);
     }
   }
+
+  const truncated = fixtures[3];
+  const cleaned = vendor.extractSqlStatementsFromTableEdit_ACU(truncated);
+  assert.doesNotMatch(cleaned, /INSERT INTO chronicle[\s\S]*INSERT OR REPLACE INTO check_suggestions/i);
+  assert.match(cleaned, /^INSERT OR REPLACE INTO check_suggestions/m);
+
+  const directStatements = Array.from(vendor.filterSqlEditStatements_ACU(vendor.splitSqlStatements(truncated)));
+  assert.deepEqual(directStatements, [
+    "INSERT OR REPLACE INTO check_suggestions (row_id, check_name, check_type, target_value, modifier, difficulty, result_note) VALUES (1, '观察档案', '线索', '鬼档案', 0, '中', '保留合法后续语句')",
+  ]);
 }
 
 async function testBadGatewayParsing() {
@@ -320,6 +336,7 @@ function testDashboardClassification() {
   const cases = [
     ['Bad Gateway', 'apiGatewayIssue'],
     ['[SqlTableService] SQL 目标表 log_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
+    ['[SqlTableService] SQL 目标表 simulation_summary, summary_logs 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SQL Mode] SQL 执行失败: near "<": syntax error', 'sqlSyntaxIssue'],
     ['CHECK constraint failed: action_suggestions.revival_risk_level', 'sqlConstraintIssue'],
     ['SQL 目标列不在当前模板中: chronicle.bad_column', 'sqlSchemaIssue'],
