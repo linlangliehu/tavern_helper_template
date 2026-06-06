@@ -878,7 +878,7 @@
       "note": "记录玩家当前已经驾驭、死机、平衡、异类化或被诅咒绑定的厉鬼与拼图。\n\n【列定义】\n列1=row_id\n列2=厉鬼代号 ghost_code，全表唯一，可用开局名称或后续档案代号\n列3=恐怖程度 terror_level，由剧情判定，不等同影响范围等级\n列4=拼图特征 puzzle_trait\n列5=杀人规律 killing_law\n列6=可用能力 usable_power\n列7=使用代价 cost_text\n列8=复苏进度 revival_progress\n列9=死机状态 dead_state\n列10=压制关系 suppression_relation\n列11=可见摘要 public_summary\n\n【规则】\n本表是玩家可见的已驾驭厉鬼面板镜像，只记录玩家已经确认或自述的内容。隐藏规律、真实源头、最终生路和未验证完整杀人规律不得写入。",
       "initNode": "开局确认玩家已驾驭厉鬼时插入；普通人开局保持空表。",
       "deleteNode": "允许删除：玩家失去驾驭、厉鬼脱离、交易解除或该条被证明不再属于玩家。删除时应先在事件纪要中留下原因。",
-      "updateNode": "按厉鬼代号更新恐怖程度、拼图特征、杀人规律、可用能力、代价、复苏进度、死机状态和压制关系。",
+      "updateNode": "按厉鬼代号更新恐怖程度、拼图特征、杀人规律、可用能力、代价、复苏进度、死机状态和压制关系。UPDATE 的 SET 列表最后一项后禁止保留尾逗号，WHERE 前不能写逗号。",
       "insertNode": "玩家新驾驭一只厉鬼、拼图被纳入本体或通过诅咒绑定形成可调用能力时新增。",
       "ddl": "CREATE TABLE controlled_ghosts ( -- 驾驭厉鬼\n  row_id INTEGER PRIMARY KEY, -- 行号\n  ghost_code TEXT NOT NULL UNIQUE, -- 厉鬼代号\n  terror_level TEXT NOT NULL, -- 恐怖程度\n  puzzle_trait TEXT NOT NULL, -- 拼图特征\n  killing_law TEXT NOT NULL, -- 杀人规律\n  usable_power TEXT NOT NULL, -- 可用能力\n  cost_text TEXT NOT NULL, -- 使用代价\n  revival_progress TEXT NOT NULL, -- 复苏进度\n  dead_state TEXT NOT NULL, -- 死机状态\n  suppression_relation TEXT NOT NULL, -- 压制关系\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
     },

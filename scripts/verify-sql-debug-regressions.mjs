@@ -218,6 +218,15 @@ function validateTemplate(filePath) {
   ].join('\n');
   assert.ok(/chronicle/.test(chronicleText), 'chronicle prompt should name the current SQL table');
   assert.ok(/log_summary/.test(chronicleText), 'chronicle prompt should forbid legacy log_summary table');
+  assert.ok(/200-600|200到600/.test(chronicleText), 'chronicle prompt should keep the 200-600 char constraint visible');
+  assert.ok(/不足\s*200\s*字.*禁止输出\s*SQL/.test(chronicleText), 'chronicle prompt should forbid short chronicle_text SQL output');
+
+  const controlledGhostsText = [
+    template.sheet_controlled_ghosts.sourceData.note,
+    template.sheet_controlled_ghosts.sourceData.updateNode,
+    template.sheet_controlled_ghosts.sourceData.insertNode,
+  ].join('\n');
+  assert.ok(/WHERE\s*前.*尾逗号|尾逗号.*WHERE/.test(controlledGhostsText), 'controlled_ghosts prompt should forbid trailing comma before WHERE');
   return template;
 }
 
@@ -258,6 +267,37 @@ function testRiskNormalizationInSqlite(template) {
       { row_id: 3, death_risk_level: '未知', revival_risk_level: '低' },
       { row_id: 4, death_risk_level: '无', revival_risk_level: '致命' },
     ]);
+  } finally {
+    db.close();
+  }
+}
+
+function testUpdateTrailingCommaNormalization(template) {
+  const ddl = template.sheet_controlled_ghosts.sourceData.ddl;
+  const seedSql = `
+    INSERT INTO controlled_ghosts
+      (row_id, ghost_code, terror_level, puzzle_trait, killing_law, usable_power, cost_text, revival_progress, dead_state, suppression_relation, public_summary)
+    VALUES
+      (1, '鬼档案', '未知', '档案媒介', '接触档案媒介', '记录异常', '轻微鼻血', '初期', '否', '无', '鬼档案初步觉醒');
+  `;
+  const rawSql = `
+    UPDATE controlled_ghosts
+    SET cost_text = '左臂皮肤纸质化，总复苏风险增加',
+    WHERE ghost_code = '鬼档案';
+  `;
+  const normalizedSql = vendor.normalizeStatementValues(rawSql.trim());
+  assert.doesNotMatch(normalizedSql, /,\s*WHERE/i, 'UPDATE normalization should remove trailing comma before WHERE');
+  assert.match(normalizedSql, /SET cost_text = '左臂皮肤纸质化，总复苏风险增加'\s+WHERE/i);
+
+  const db = new DatabaseSync(':memory:');
+  try {
+    db.exec(ddl);
+    db.exec(seedSql);
+    db.exec(normalizedSql);
+    const row = db
+      .prepare("SELECT cost_text FROM controlled_ghosts WHERE ghost_code = '鬼档案'")
+      .get();
+    assert.equal(row.cost_text, '左臂皮肤纸质化，总复苏风险增加');
   } finally {
     db.close();
   }
@@ -361,9 +401,10 @@ function testDashboardClassification() {
 
 const templates = testTemplates();
 testRiskNormalizationInSqlite(templates[0]);
+testUpdateTrailingCommaNormalization(templates[0]);
 testTableAndColumnPreflight(templates[0]);
 testSqlFragmentCleaning();
 await testBadGatewayParsing();
 testDashboardClassification();
 
-console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, risk normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification');
+console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification');
