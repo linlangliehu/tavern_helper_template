@@ -128,10 +128,16 @@ function extractRegion(startMarker, endMarker) {
 }
 
 function loadVendorRuntime() {
+  const debugMessages = [];
+  const warningMessages = [];
   const context = {
     console,
-    logDebug_ACU() {},
-    logWarn_ACU() {},
+    logDebug_ACU(...args) {
+      debugMessages.push(args.map(arg => String(arg)).join(' '));
+    },
+    logWarn_ACU(...args) {
+      warningMessages.push(args.map(arg => String(arg)).join(' '));
+    },
     logError_ACU() {},
     dashboardCopy: { logs: dashboardSentinels },
   };
@@ -140,9 +146,12 @@ function loadVendorRuntime() {
   const runtimeCode = [
     extractRegion('function extractSqlStatementsFromTableEdit_ACU', 'function isSqlContent'),
     extractRegion('const FULLWIDTH_TO_ASCII', '    /**\n     * shared/ddl-utils.ts'),
-    extractFunction('parseDDLTableName'),
-    extractFunction('parseDDLColumnNames'),
+    extractRegion('function parseDDLTableName', '    // ═══════════════════════════════════════════════════════════════\n    // 内部工具函数'),
     extractFunction('splitColumnDefinitions'),
+    extractRegion('function generateInserts', '    // ═══════════════════════════════════════════════════════════════\n    // SQL 结果'),
+    extractFunction('escapeValue'),
+    extractFunction('sanitizeIdentifier'),
+    extractFunction('chineseToIdentifier'),
     extractRegion('function splitSqlStatements', '    /**\n     * service/table/table-storage-strategy.ts'),
     extractFunction('parseNonStreamResponse_ACU'),
     extractFunction('interpretLogEntry'),
@@ -153,8 +162,13 @@ function loadVendorRuntime() {
         splitSqlStatements,
         normalizeStatementValues,
         normalizeRiskLevelValue_ACU,
+        validateChronicleTextInMutationStatements_ACU,
+        validateSqlStatementsAgainstConstraintRegistry_ACU,
+        extractSqlMutationValuesForConstraintCheck_ACU,
         parseDDLTableName,
         parseDDLColumnNames,
+        parseDDLConstraintRegistry_ACU,
+        generateInserts,
         extractTableNamesFromStatements,
         extractUnknownSqlColumnsFromStatements_ACU,
         parseNonStreamResponse_ACU,
@@ -164,13 +178,38 @@ function loadVendorRuntime() {
   ].join('\n\n');
 
   vm.runInContext(runtimeCode, context, { filename: 'sql-debug-regression-vendor.vm.js' });
-  return context.__regression;
+  return Object.assign(context.__regression, { debugMessages, warningMessages });
 }
 
 const vendor = loadVendorRuntime();
 
+function clearVendorWarnings() {
+  vendor.warningMessages.length = 0;
+}
+
+function clearVendorDebugMessages() {
+  vendor.debugMessages.length = 0;
+}
+
 function parseTemplate(filePath) {
   return JSON.parse(readFileSync(filePath, 'utf8'));
+}
+
+function getSheetPromptText(sheet) {
+  return [
+    sheet?.sourceData?.note,
+    sheet?.sourceData?.initNode,
+    sheet?.sourceData?.updateNode,
+    sheet?.sourceData?.insertNode,
+    sheet?.sourceData?.ddl,
+  ].filter(Boolean).join('\n');
+}
+
+function assertPromptIncludes(sheet, tokens, label) {
+  const promptText = getSheetPromptText(sheet);
+  for (const token of tokens) {
+    assert.ok(promptText.includes(token), `${label} prompt should mention ${token}`);
+  }
 }
 
 function getSheetEntries(template) {
@@ -211,6 +250,36 @@ function validateTemplate(filePath) {
     assert.ok(actionText.includes(token), `action_suggestions prompt should mention ${token}`);
   }
 
+  const enumPromptChecks = [
+    [
+      'sheet_supernatural_events',
+      ['【枚举硬约束】', 'handling_status', '只允许以下值', '未处理', '调查中', '对抗中', '已压制', '已关押', '失控扩散', '结束', '爆发中', '处理中', '已解决'],
+    ],
+    [
+      'sheet_ghost_archives',
+      ['【枚举硬约束】', 'containment_status', '只允许以下值', '未关押', '暂时压制', '已关押', '失控', '未知', '已收容', '临时控制'],
+    ],
+    [
+      'sheet_clues',
+      ['【枚举硬约束】', 'reliability', 'verification_status', 'visibility', '低', '中', '高', '误导', '未验证', '部分验证', '已验证', '已否定', '玩家可见', '内部记录', '高可信', '已证实', '后台记录'],
+    ],
+    [
+      'sheet_characters',
+      ['【枚举硬约束】', 'presence_status', 'life_status', '在场', '离场', '可联系', '未知', '存活', '死亡', '失踪', '厉鬼复苏', '现场', '活着', '下落不明'],
+    ],
+    [
+      'sheet_locations',
+      ['【枚举硬约束】', 'supernatural_status', 'lockdown_status', '正常', '疑似灵异', '鬼域影响', '封锁危险', '已清理', '未封锁', '警方封锁', '总部封锁', '黄金隔离', '鬼域中', '黄金封存'],
+    ],
+    [
+      'sheet_action_suggestions',
+      ['【枚举硬约束】', 'option_key', 'A、B、C、D', 'death_risk_level', 'revival_risk_level', '无', '低', '中', '高', '致命', '未知', '选项A', '方案B', '极低', '极高', '严重'],
+    ],
+  ];
+  for (const [sheetKey, tokens] of enumPromptChecks) {
+    assertPromptIncludes(template[sheetKey], tokens, sheetKey);
+  }
+
   const chronicleText = [
     template.sheet_chronicle.sourceData.note,
     template.sheet_chronicle.sourceData.insertNode,
@@ -218,6 +287,7 @@ function validateTemplate(filePath) {
   ].join('\n');
   assert.ok(/chronicle/.test(chronicleText), 'chronicle prompt should name the current SQL table');
   assert.ok(/log_summary/.test(chronicleText), 'chronicle prompt should forbid legacy log_summary table');
+  assert.ok(/event_summary/.test(chronicleText), 'chronicle prompt should forbid legacy event_summary table');
   assert.ok(/200-600|200到600/.test(chronicleText), 'chronicle prompt should keep the 200-600 char constraint visible');
   assert.ok(/不足\s*200\s*字.*禁止输出\s*SQL/.test(chronicleText), 'chronicle prompt should forbid short chronicle_text SQL output');
 
@@ -233,7 +303,307 @@ function validateTemplate(filePath) {
 function testTemplates() {
   const templatePaths = findFiles(srcRoot, filePath => filePath.endsWith('SQL_v1.json'));
   assert.equal(templatePaths.length, 2, 'expected exactly two 神秘复苏 SQL templates');
-  return templatePaths.map(validateTemplate);
+  const templates = templatePaths.map(validateTemplate);
+  const [firstTemplate, secondTemplate] = templates;
+  for (const sheetKey of [
+    'sheet_supernatural_events',
+    'sheet_ghost_archives',
+    'sheet_clues',
+    'sheet_characters',
+    'sheet_locations',
+    'sheet_action_suggestions',
+  ]) {
+    assert.equal(
+      getSheetPromptText(firstTemplate[sheetKey]),
+      getSheetPromptText(secondTemplate[sheetKey]),
+      `${sheetKey} enum prompt docs should match between dev and release templates`,
+    );
+  }
+  return templates;
+}
+
+function buildTemplateConstraintRegistry(template) {
+  const registry = {};
+  for (const [, sheet] of getSheetEntries(template)) {
+    const ddl = sheet?.sourceData?.ddl;
+    const parsed = JSON.parse(JSON.stringify(vendor.parseDDLConstraintRegistry_ACU(ddl)));
+    assert.ok(parsed.tableName, 'constraint registry should include table name');
+    assert.ok(Array.isArray(parsed.columnOrder), `${parsed.tableName} should include column order`);
+    assert.ok(parsed.columnOrder.length > 0, `${parsed.tableName} should include columns`);
+    registry[parsed.tableName] = parsed;
+  }
+  return registry;
+}
+
+function getRegistryColumn(registry, tableName, columnName) {
+  const table = registry[tableName];
+  assert.ok(table, `missing registry table ${tableName}`);
+  const column = table.columns[columnName];
+  assert.ok(column, `missing registry column ${tableName}.${columnName}`);
+  return column;
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function sqlLiteral(value) {
+  if (value === null) return 'NULL';
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function testConstraintRegistry(templates) {
+  const registries = templates.map(buildTemplateConstraintRegistry);
+  assert.deepEqual(registries[0], registries[1], 'development and release constraint registries should match');
+
+  const registry = registries[0];
+  assert.equal(Object.keys(registry).length, 14, 'constraint registry should include 14 SQL tables');
+
+  const handlingStatus = getRegistryColumn(registry, 'supernatural_events', 'handling_status');
+  assert.equal(handlingStatus.type, 'TEXT');
+  assert.equal(handlingStatus.notNull, true);
+  assert.deepEqual(
+    handlingStatus.enumValues,
+    ['未处理', '调查中', '对抗中', '已压制', '已关押', '失控扩散', '结束'],
+    'handling_status enum should be extracted from DDL CHECK',
+  );
+
+  const revivalRisk = getRegistryColumn(registry, 'action_suggestions', 'revival_risk_level');
+  assert.deepEqual(revivalRisk.enumValues, ['无', '低', '中', '高', '致命', '未知']);
+
+  const chronicleText = getRegistryColumn(registry, 'chronicle', 'chronicle_text');
+  assert.deepEqual(chronicleText.lengthRange, { min: 200, max: 600 });
+  assert.equal(chronicleText.notNull, true);
+
+  const worldPressure = getRegistryColumn(registry, 'global_state', 'world_pressure');
+  assert.deepEqual(worldPressure.numericRange, { min: 0, max: 100 });
+
+  const codeIndex = getRegistryColumn(registry, 'chronicle', 'code_index');
+  assert.equal(codeIndex.globPattern, 'SP[0-9][0-9][0-9][0-9]');
+  assert.equal(codeIndex.unique, true);
+
+  const characterName = getRegistryColumn(registry, 'characters', 'name');
+  assert.equal(characterName.unique, true);
+}
+
+function assertConstraintPreflightThrows(sql, registry, expectedPatterns) {
+  assert.throws(
+    () => vendor.validateSqlStatementsAgainstConstraintRegistry_ACU([sql], registry),
+    error => {
+      assert.match(error.message, /SQL schema\/CHECK 约束不合规/);
+      assert.doesNotMatch(error.message, /CHECK constraint failed/);
+      assert.match(error.message, /已拦截，未进入 SQLite/);
+      for (const pattern of expectedPatterns) {
+        assert.match(error.message, pattern);
+      }
+      return true;
+    },
+  );
+}
+
+function testSqlConstraintPreflight(template) {
+  const registry = buildTemplateConstraintRegistry(template);
+
+  const badHandlingStatus = "UPDATE supernatural_events SET handling_status='热闹中' WHERE event_code='DACHANG_KNOCK_001';";
+  assertConstraintPreflightThrows(badHandlingStatus, registry, [
+    /supernatural_events\.handling_status/,
+    /"热闹中" 不在允许值 \[未处理, 调查中, 对抗中, 已压制, 已关押, 失控扩散, 结束\]/,
+  ]);
+
+  const validHandlingStatus = "UPDATE supernatural_events SET handling_status='失控扩散' WHERE event_code='DACHANG_KNOCK_001';";
+  assert.doesNotThrow(() => vendor.validateSqlStatementsAgainstConstraintRegistry_ACU([validHandlingStatus], registry));
+
+  const badChronicleText = "INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), 'SP0002', '2026-06-06 18:31', '七中敲门事件', '复测员逃出教室。', 'SP0001');";
+  assertConstraintPreflightThrows(badChronicleText, registry, [
+    /chronicle\.chronicle_text/,
+    /长度无效/,
+    /疑似把编号\/代码写入了需要正文文本的字段/,
+  ]);
+
+  const badWorldPressure = "UPDATE global_state SET world_pressure=120 WHERE row_id=1;";
+  assertConstraintPreflightThrows(badWorldPressure, registry, [
+    /global_state\.world_pressure/,
+    /120 超出允许范围 0-100/,
+  ]);
+
+  const badCodeIndex = "UPDATE chronicle SET code_index='P0001' WHERE row_id=1;";
+  assertConstraintPreflightThrows(badCodeIndex, registry, [
+    /chronicle\.code_index/,
+    /"P0001" 不匹配格式 SP\[0-9\]\[0-9\]\[0-9\]\[0-9\]/,
+  ]);
+
+  const blankCheckDisplay = "INSERT INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '   ', '观察', '现场', '/r 1d20');";
+  assertConstraintPreflightThrows(blankCheckDisplay, registry, [
+    /check_suggestions\.display_text/,
+    /不能为空/,
+  ]);
+
+  const nullCharacterName = 'UPDATE characters SET name=NULL WHERE row_id=1;';
+  assertConstraintPreflightThrows(nullCharacterName, registry, [
+    /characters\.name/,
+    /不能为 NULL/,
+  ]);
+
+  const extracted = vendor.extractSqlMutationValuesForConstraintCheck_ACU([badChronicleText]);
+  assert.ok(
+    extracted.some(cell => cell.tableName === 'chronicle' && cell.columnName === 'chronicle_text' && /SP0001/.test(cell.rawValue)),
+    'constraint extractor should handle row_id expressions with nested commas',
+  );
+}
+
+function buildGeneratedConstraintViolationCases(registry) {
+  const cases = [];
+  const expectedCounts = {
+    enum: 0,
+    length: 0,
+    numeric: 0,
+    glob: 0,
+    nonEmpty: 0,
+    notNull: 0,
+  };
+
+  function addCase(tableName, columnName, type, value, expectedPattern) {
+    cases.push({
+      tableName,
+      columnName,
+      type,
+      sql: `UPDATE ${tableName} SET ${columnName}=${sqlLiteral(value)} WHERE row_id=1;`,
+      expectedPatterns: [
+        new RegExp(`${escapeRegExp(tableName)}\\.${escapeRegExp(columnName)}`),
+        expectedPattern,
+      ],
+    });
+  }
+
+  for (const [tableName, table] of Object.entries(registry)) {
+    for (const columnName of table.columnOrder || Object.keys(table.columns || {})) {
+      const column = table.columns[columnName];
+      if (!column) continue;
+
+      if (Array.isArray(column.enumValues) && column.enumValues.length > 0) {
+        expectedCounts.enum += 1;
+        addCase(tableName, columnName, 'enum', '__INVALID_ENUM__', /不在允许值/);
+      }
+
+      if (column.lengthRange) {
+        expectedCounts.length += 1;
+        const { min, max } = column.lengthRange;
+        const invalidLength = min != null && min > 0
+          ? Math.max(0, min - 1)
+          : Number(max || 0) + 1;
+        addCase(tableName, columnName, 'length', 'x'.repeat(invalidLength), /长度无效/);
+      }
+
+      if (column.numericRange) {
+        expectedCounts.numeric += 1;
+        const { min, max } = column.numericRange;
+        const invalidNumber = max != null ? Number(max) + 1 : Number(min) - 1;
+        addCase(tableName, columnName, 'numeric', invalidNumber, /超出允许范围/);
+      }
+
+      if (column.globPattern) {
+        expectedCounts.glob += 1;
+        addCase(tableName, columnName, 'glob', '__BAD_FORMAT__', /不匹配格式/);
+      }
+
+      if (column.nonEmpty) {
+        expectedCounts.nonEmpty += 1;
+        addCase(tableName, columnName, 'nonEmpty', '   ', /不能为空/);
+      }
+
+      if (column.notNull) {
+        expectedCounts.notNull += 1;
+        addCase(tableName, columnName, 'notNull', null, /不能为 NULL/);
+      }
+    }
+  }
+
+  return { cases, expectedCounts };
+}
+
+function testGeneratedConstraintViolationFixtures(template) {
+  const registry = buildTemplateConstraintRegistry(template);
+  const { cases, expectedCounts } = buildGeneratedConstraintViolationCases(registry);
+  const actualCounts = cases.reduce((counts, item) => {
+    counts[item.type] = (counts[item.type] || 0) + 1;
+    return counts;
+  }, {});
+
+  assert.deepEqual(actualCounts, expectedCounts, 'generated constraint fixture counts should match registry-derived counts');
+  assert.ok(cases.length > 0, 'generated constraint fixtures should not be empty');
+  assert.ok(expectedCounts.enum >= 12, 'generated fixtures should cover all known enum CHECK constraints');
+  assert.ok(expectedCounts.length > 0, 'generated fixtures should cover length CHECK constraints');
+  assert.ok(expectedCounts.numeric > 0, 'generated fixtures should cover numeric CHECK constraints');
+  assert.ok(expectedCounts.glob > 0, 'generated fixtures should cover GLOB CHECK constraints');
+  assert.ok(expectedCounts.nonEmpty > 0, 'generated fixtures should cover TRIM non-empty CHECK constraints');
+
+  for (const fixture of cases) {
+    assertConstraintPreflightThrows(fixture.sql, registry, fixture.expectedPatterns);
+  }
+}
+
+function testEnumAliasNormalization(template) {
+  const registry = buildTemplateConstraintRegistry(template);
+  clearVendorDebugMessages();
+
+  const aliasCases = [
+    ["UPDATE action_suggestions SET option_key='选项A' WHERE row_id=1;", /option_key\s*=\s*'A'/, /选项A/],
+    ["UPDATE ghost_archives SET containment_status='已收容' WHERE ghost_code='GHOST_001';", /containment_status\s*=\s*'已关押'/, /已收容/],
+    ["UPDATE clues SET reliability='假线索' WHERE clue_code='CLUE_001';", /reliability\s*=\s*'误导'/, /假线索/],
+    ["UPDATE clues SET verification_status='已证实' WHERE clue_code='CLUE_001';", /verification_status\s*=\s*'已验证'/, /已证实/],
+    ["UPDATE clues SET visibility='后台记录' WHERE clue_code='CLUE_001';", /visibility\s*=\s*'内部记录'/, /后台记录/],
+    ["UPDATE characters SET presence_status='当前在场' WHERE character_code='CHAR_001';", /presence_status\s*=\s*'在场'/, /当前在场/],
+    ["UPDATE characters SET life_status='下落不明' WHERE character_code='CHAR_001';", /life_status\s*=\s*'失踪'/, /下落不明/],
+    ["UPDATE locations SET supernatural_status='鬼域中' WHERE location_code='LOC_001';", /supernatural_status\s*=\s*'鬼域影响'/, /鬼域中/],
+    ["UPDATE locations SET lockdown_status='黄金封存' WHERE location_code='LOC_001';", /lockdown_status\s*=\s*'黄金隔离'/, /黄金封存/],
+  ];
+  for (const [sql, expectedPattern, removedPattern] of aliasCases) {
+    const normalizedSql = vendor.normalizeStatementValues(sql);
+    assert.match(normalizedSql, expectedPattern);
+    assert.doesNotMatch(normalizedSql, removedPattern);
+    assert.doesNotThrow(() => vendor.validateSqlStatementsAgainstConstraintRegistry_ACU([normalizedSql], registry));
+  }
+
+  const handlingUpdate = "UPDATE supernatural_events SET handling_status='爆发中' WHERE event_code='DACHANG_KNOCK_001';";
+  const normalizedHandlingUpdate = vendor.normalizeStatementValues(handlingUpdate);
+  assert.match(normalizedHandlingUpdate, /handling_status\s*=\s*'失控扩散'/);
+  assert.doesNotMatch(normalizedHandlingUpdate, /爆发中/);
+  assert.doesNotThrow(() => vendor.validateSqlStatementsAgainstConstraintRegistry_ACU([normalizedHandlingUpdate], registry));
+  assert.ok(
+    vendor.debugMessages.some(message => /SQL schema\/CHECK 约束已归一化.*supernatural_events\.handling_status.*"爆发中".*"失控扩散".*允许值/.test(message)),
+    'enum alias normalization should log table, field, original value, normalized value, and allowed values',
+  );
+
+  const textAndEnumUpdate = "UPDATE supernatural_events SET public_summary='爆发中但这里只是摘要', handling_status='处理中' WHERE event_code='DACHANG_KNOCK_001';";
+  const normalizedTextAndEnumUpdate = vendor.normalizeStatementValues(textAndEnumUpdate);
+  assert.match(normalizedTextAndEnumUpdate, /public_summary='爆发中但这里只是摘要'/);
+  assert.match(normalizedTextAndEnumUpdate, /handling_status\s*=\s*'对抗中'/);
+  assert.doesNotThrow(() => vendor.validateSqlStatementsAgainstConstraintRegistry_ACU([normalizedTextAndEnumUpdate], registry));
+
+  const handlingInsert = `
+    INSERT INTO supernatural_events
+      (row_id, event_code, event_name, location_code, first_seen, current_phase, ghost_domain_status, suspected_laws, handling_status, public_summary)
+    VALUES
+      (1, 'DACHANG_KNOCK_001', '敲门事件', 'LOC_001', '2026-06-07', '初期', '鬼域覆盖', '敲门声传播', '爆发中', '摘要含爆发中'),
+      (2, 'DACHANG_KNOCK_002', '敲门事件二', 'LOC_001', '2026-06-07', '初期', '鬼域覆盖', '敲门声传播', '交战中', '摘要含交战中');
+  `;
+  const normalizedHandlingInsert = vendor.normalizeStatementValues(handlingInsert.trim());
+  assert.match(normalizedHandlingInsert, /'失控扩散'/);
+  assert.match(normalizedHandlingInsert, /'对抗中'/);
+  assert.match(normalizedHandlingInsert, /'摘要含爆发中'/);
+  assert.match(normalizedHandlingInsert, /'摘要含交战中'/);
+  assert.doesNotMatch(normalizedHandlingInsert, /'爆发中'/);
+  assert.doesNotMatch(normalizedHandlingInsert, /'交战中'/);
+  assert.doesNotThrow(() => vendor.validateSqlStatementsAgainstConstraintRegistry_ACU([normalizedHandlingInsert], registry));
+
+  const unknownHandlingUpdate = "UPDATE supernatural_events SET handling_status='热闹中' WHERE event_code='DACHANG_KNOCK_001';";
+  const normalizedUnknownHandlingUpdate = vendor.normalizeStatementValues(unknownHandlingUpdate);
+  assert.equal(normalizedUnknownHandlingUpdate, unknownHandlingUpdate);
+  assertConstraintPreflightThrows(normalizedUnknownHandlingUpdate, registry, [
+    /supernatural_events\.handling_status/,
+    /"热闹中" 不在允许值 \[未处理, 调查中, 对抗中, 已压制, 已关押, 失控扩散, 结束\]/,
+  ]);
 }
 
 function testRiskNormalizationInSqlite(template) {
@@ -267,6 +637,37 @@ function testRiskNormalizationInSqlite(template) {
       { row_id: 3, death_risk_level: '未知', revival_risk_level: '低' },
       { row_id: 4, death_risk_level: '无', revival_risk_level: '致命' },
     ]);
+  } finally {
+    db.close();
+  }
+}
+
+function testEnumAliasNormalizationInGeneratedInserts(template) {
+  const sheet = {
+    uid: 'sheet_action_suggestions',
+    content: [
+      ['行号', '选项', '思路', '主要风险', '预期收益', '死亡风险', '复苏风险'],
+      [1, '选项A', '观察', '风险一', '收益一', '极低', '极高'],
+    ],
+    sourceData: {
+      ddl: template.sheet_action_suggestions.sourceData.ddl,
+    },
+  };
+  const inserts = vendor.generateInserts(sheet, 'action_suggestions');
+  assert.equal(inserts.length, 1);
+  assert.match(inserts[0], /'A'/);
+  assert.match(inserts[0], /'低'/);
+  assert.match(inserts[0], /'致命'/);
+  assert.doesNotMatch(inserts[0], /选项A|极低|极高/);
+
+  const db = new DatabaseSync(':memory:');
+  try {
+    db.exec(template.sheet_action_suggestions.sourceData.ddl);
+    db.exec(inserts[0]);
+    const row = db
+      .prepare('SELECT option_key, death_risk_level, revival_risk_level FROM action_suggestions WHERE row_id = 1')
+      .get();
+    assert.deepEqual({ ...row }, { option_key: 'A', death_risk_level: '低', revival_risk_level: '致命' });
   } finally {
     db.close();
   }
@@ -317,7 +718,7 @@ function buildTableMeta(template) {
 
 function testTableAndColumnPreflight(template) {
   const tableMeta = buildTableMeta(template);
-  for (const tableName of ['log_summary', 'simulation_summary', 'summary_logs']) {
+  for (const tableName of ['log_summary', 'simulation_summary', 'summary_logs', 'event_summary']) {
     const oldTableSql = `INSERT INTO ${tableName} (row_id, summary) VALUES (1, '旧表');`;
     assert.deepEqual(Array.from(vendor.extractTableNamesFromStatements([oldTableSql])), [tableName]);
     assert.ok(!tableMeta.has(tableName), `${tableName} must not be a current template table`);
@@ -328,6 +729,152 @@ function testTableAndColumnPreflight(template) {
     Array.from(vendor.extractUnknownSqlColumnsFromStatements_ACU([badColumnSql], tableMeta)),
     ['chronicle.bad_column'],
   );
+}
+
+function testChronicleSeedRowFiltering(template) {
+  clearVendorWarnings();
+  const sheet = JSON.parse(JSON.stringify(template.sheet_chronicle));
+  sheet.content = [
+    ['row_id', '纪要编号', '时间跨度', '关联事件', '概览', '纪要'],
+    ['1', 'SP0002', '2026-06-06 18:31', '七中敲门事件', '复测员逃出教室，遭遇鬼域封锁。', 'SP0001'],
+    [
+      '2',
+      'SP0003',
+      '2026-06-06 18:35',
+      '七中敲门事件',
+      '复测员记录鬼域变化。',
+      '复测员离开教室后并未立刻脱离危险，走廊尽头的门牌和窗外光线持续错位，说明鬼域仍在封锁七中局部区域。周围学生的呼救声被墙体削弱，普通撤离路线已经失效。复测员只能依据先前记录的敲门规律，避开声音最密集的方向，并把遭遇、时间、地点和可见异常整理成客观纪要，留给后续判断事件扩散趋势与行动风险。此后他短暂确认楼梯间仍能听见规律性敲门，窗外操场却没有对应人影，说明异常并非普通追逐事件，而是会改变空间感知和撤离判断的灵异现象。',
+    ],
+  ];
+  const inserts = vendor.generateInserts(sheet, 'chronicle');
+  assert.equal(inserts.length, 1, 'invalid short chronicle_text row should be skipped before SQLite');
+  assert.doesNotMatch(inserts[0], /SP0002[\s\S]*SP0001/, 'bad SP code-as-text row must not produce INSERT');
+  assert.ok(
+    vendor.warningMessages.some(message => /\[SyncBridge\].*chronicle\.chronicle_text.*长度无效.*已跳过该行/.test(message)),
+    'invalid chronicle seed row should emit a readable SyncBridge warning',
+  );
+
+  const db = new DatabaseSync(':memory:');
+  db.exec(sheet.sourceData.ddl);
+  db.exec(inserts[0]);
+  const rows = db.prepare('SELECT code_index, LENGTH(chronicle_text) AS len FROM chronicle').all();
+  assert.deepEqual(rows.map(row => row.code_index), ['SP0003']);
+  assert.ok(rows[0].len >= 200 && rows[0].len <= 600);
+  db.close();
+
+  const directBadSql = "INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES (1, 'SP0002', '2026-06-06 18:31', '七中敲门事件', '复测员逃出教室，遭遇鬼域封锁。', 'SP0001');";
+  assert.throws(
+    () => vendor.validateChronicleTextInMutationStatements_ACU([directBadSql]),
+    /chronicle_text 长度无效.*疑似把纪要编号写进了 chronicle_text/,
+  );
+
+  const directValidSql = inserts[0].replace(/;$/, '');
+  assert.doesNotThrow(() => vendor.validateChronicleTextInMutationStatements_ACU([directValidSql]));
+}
+
+function testSyncBridgeConstraintRegistryRowValidation(template) {
+  clearVendorWarnings();
+  const actionSheet = {
+    uid: 'sheet_action_suggestions',
+    name: '行动建议',
+    content: [
+      ['行号', '选项', '思路', '主要风险', '预期收益', '死亡风险', '复苏风险'],
+      [1, '选项A', '观察', '风险一', '收益一', '极低', '极高'],
+      [2, 'E', '观察', '风险二', '收益二', '低', '高'],
+      [5, 'B', '观察', '风险三', '收益三', '低', '高'],
+    ],
+    sourceData: {
+      ddl: template.sheet_action_suggestions.sourceData.ddl,
+    },
+  };
+  const actionInserts = vendor.generateInserts(actionSheet, 'action_suggestions');
+  assert.equal(actionInserts.length, 1, 'enum/range-invalid action_suggestions seed rows should be skipped');
+  assert.match(actionInserts[0], /'A'/);
+  assert.doesNotMatch(actionInserts.join('\n'), /'E'|VALUES \(5,/);
+  assert.ok(
+    vendor.warningMessages.some(message => /action_suggestions\.option_key.*"E" 不在允许值/.test(message)),
+    'invalid action_suggestions enum seed row should emit a SyncBridge warning',
+  );
+  assert.ok(
+    vendor.warningMessages.some(message => /action_suggestions\.row_id.*5 超出允许范围 1-4/.test(message)),
+    'invalid action_suggestions row_id seed row should emit a SyncBridge warning',
+  );
+
+  clearVendorWarnings();
+  const globalSheet = {
+    uid: 'sheet_global_state',
+    name: '全局状态',
+    content: [
+      ['行号', '当前时间', '当前地点', '当前城市', '原著阶段', '剧情锚点', '主线阶段', '世界压力', '总部关注度', '社会公开度'],
+      [1, '2026-06-07 18:30', '七中', '大昌市', '开局', '敲门事件', '调查', 80, 50, 20],
+      [1, '2026/06/07 18:30', '七中', '大昌市', '开局', '敲门事件', '调查', 80, 50, 20],
+      [1, '2026-06-07 18:30', '七中', '大昌市', '开局', '敲门事件', '调查', 120, 50, 20],
+    ],
+    sourceData: {
+      ddl: template.sheet_global_state.sourceData.ddl,
+    },
+  };
+  const globalInserts = vendor.generateInserts(globalSheet, 'global_state');
+  assert.equal(globalInserts.length, 1, 'GLOB/range-invalid global_state seed rows should be skipped');
+  assert.ok(
+    vendor.warningMessages.some(message => /global_state\.game_time.*不匹配格式 \?\?\?\?-\?\?-\?\? \?\?:\?\?/.test(message)),
+    'invalid global_state GLOB seed row should emit a SyncBridge warning',
+  );
+  assert.ok(
+    vendor.warningMessages.some(message => /global_state\.world_pressure.*120 超出允许范围 0-100/.test(message)),
+    'invalid global_state numeric range seed row should emit a SyncBridge warning',
+  );
+
+  clearVendorWarnings();
+  const checkSheet = {
+    uid: 'sheet_check_suggestions',
+    name: '检定建议',
+    content: [
+      ['行号', '展示文本', '检定类型', '检定依据', '骰子命令'],
+      [1, '观察门外异常', '观察', '敲门声', '/r 1d20'],
+      [2, '   ', '观察', '空白展示文本', '/r 1d20'],
+      [3, '检查门缝', '观察', '空白骰子命令', '   '],
+    ],
+    sourceData: {
+      ddl: template.sheet_check_suggestions.sourceData.ddl,
+    },
+  };
+  const checkInserts = vendor.generateInserts(checkSheet, 'check_suggestions');
+  assert.equal(checkInserts.length, 1, 'non-empty-invalid check_suggestions seed rows should be skipped');
+  assert.ok(
+    vendor.warningMessages.some(message => /check_suggestions\.display_text.*不能为空/.test(message)),
+    'blank display_text seed row should emit a SyncBridge warning',
+  );
+  assert.ok(
+    vendor.warningMessages.some(message => /check_suggestions\.dice_command.*不能为空/.test(message)),
+    'blank dice_command seed row should emit a SyncBridge warning',
+  );
+
+  const db = new DatabaseSync(':memory:');
+  try {
+    db.exec(template.sheet_action_suggestions.sourceData.ddl);
+    for (const sql of actionInserts) db.exec(sql);
+    const actionRows = db.prepare('SELECT row_id, option_key, death_risk_level, revival_risk_level FROM action_suggestions').all();
+    assert.deepEqual(actionRows.map(row => ({ ...row })), [
+      { row_id: 1, option_key: 'A', death_risk_level: '低', revival_risk_level: '致命' },
+    ]);
+
+    db.exec(template.sheet_global_state.sourceData.ddl);
+    for (const sql of globalInserts) db.exec(sql);
+    const globalRows = db.prepare('SELECT row_id, game_time, world_pressure FROM global_state').all();
+    assert.deepEqual(globalRows.map(row => ({ ...row })), [
+      { row_id: 1, game_time: '2026-06-07 18:30', world_pressure: 80 },
+    ]);
+
+    db.exec(template.sheet_check_suggestions.sourceData.ddl);
+    for (const sql of checkInserts) db.exec(sql);
+    const checkRows = db.prepare('SELECT row_id, display_text, dice_command FROM check_suggestions').all();
+    assert.deepEqual(checkRows.map(row => ({ ...row })), [
+      { row_id: 1, display_text: '观察门外异常', dice_command: '/r 1d20' },
+    ]);
+  } finally {
+    db.close();
+  }
 }
 
 function testSqlFragmentCleaning() {
@@ -374,6 +921,18 @@ INSERT OR REPLACE INTO check_suggestions (row_id, check_name, check_type, target
   assert.deepEqual(Array.from(vendor.filterSqlEditStatements_ACU(vendor.splitSqlStatements(validFinalInsert))), [
     "INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '观察档案', '线索', '鬼档案', '/r 1d20')",
   ]);
+  const incompleteFinalUpsert = "INSERT INTO characters (name, identity_text) VALUES ('测试', '学生') ON CONFLICT(name) DO UPDATE SET";
+  const incompleteFinalUpsertWithSemicolon = `${incompleteFinalUpsert};`;
+  const incompleteFinalUpsertWithComment = `${incompleteFinalUpsert} -- AI output stopped here`;
+  for (const sql of [incompleteFinalUpsert, incompleteFinalUpsertWithSemicolon, incompleteFinalUpsertWithComment]) {
+    assert.equal(vendor.extractSqlStatementsFromTableEdit_ACU(sql), '');
+    assert.deepEqual(Array.from(vendor.filterSqlEditStatements_ACU(vendor.splitSqlStatements(sql))), []);
+  }
+
+  const validFinalUpsert = "INSERT INTO characters (name, identity_text) VALUES ('测试', '学生') ON CONFLICT(name) DO UPDATE SET identity_text=excluded.identity_text;";
+  assert.deepEqual(Array.from(vendor.filterSqlEditStatements_ACU(vendor.splitSqlStatements(validFinalUpsert))), [
+    "INSERT INTO characters (name, identity_text) VALUES ('测试', '学生') ON CONFLICT(name) DO UPDATE SET identity_text=excluded.identity_text",
+  ]);
 }
 
 async function testBadGatewayParsing() {
@@ -389,9 +948,14 @@ function testDashboardClassification() {
   const cases = [
     ['Bad Gateway', 'apiGatewayIssue'],
     ['[SqlTableService] SQL 目标表 log_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
+    ['[SqlTableService] SQL 目标表 event_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SqlTableService] SQL 目标表 simulation_summary, summary_logs 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SQL Mode] SQL 执行失败: near "<": syntax error', 'sqlSyntaxIssue'],
     ['CHECK constraint failed: action_suggestions.revival_risk_level', 'sqlConstraintIssue'],
+    ['[SqlNormalizer] SQL schema/CHECK 约束已归一化: supernatural_events.handling_status "爆发中" → "失控扩散"；允许值 [未处理, 调查中, 对抗中, 已压制, 已关押, 失控扩散, 结束]', 'sqlConstraintIssue'],
+    ['[SqlTableService] SQL schema/CHECK 约束不合规: supernatural_events.handling_status="爆发中" 不在允许值 [未处理, 调查中, 对抗中, 已压制, 已关押, 失控扩散, 结束]。 已拦截，未进入 SQLite。', 'sqlConstraintIssue'],
+    ['[SyncBridge] 表 sheet_chronicle (事件纪要) 第 1 行 chronicle_text 长度无效（当前 6 字，code_index=SP0002）', 'sqlConstraintIssue'],
+    ['[SyncBridge] 表 sheet_action_suggestions (行动建议) 第 2 行 action_suggestions.option_key="E" 不在允许值 [A, B, C, D]。 已跳过该行以避免 SQLite CHECK 失败。', 'sqlConstraintIssue'],
     ['SQL 目标列不在当前模板中: chronicle.bad_column', 'sqlSchemaIssue'],
   ];
   for (const [message, expected] of cases) {
@@ -400,11 +964,18 @@ function testDashboardClassification() {
 }
 
 const templates = testTemplates();
+testConstraintRegistry(templates);
+testSqlConstraintPreflight(templates[0]);
+testGeneratedConstraintViolationFixtures(templates[0]);
+testEnumAliasNormalization(templates[0]);
 testRiskNormalizationInSqlite(templates[0]);
+testEnumAliasNormalizationInGeneratedInserts(templates[0]);
 testUpdateTrailingCommaNormalization(templates[0]);
 testTableAndColumnPreflight(templates[0]);
+testChronicleSeedRowFiltering(templates[0]);
+testSyncBridgeConstraintRegistryRowValidation(templates[0]);
 testSqlFragmentCleaning();
 await testBadGatewayParsing();
 testDashboardClassification();
 
-console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification');
+console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification');
