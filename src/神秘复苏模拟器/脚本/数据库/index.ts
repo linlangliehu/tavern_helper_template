@@ -1,8 +1,8 @@
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
-// 指向包含 UPDATE SET 尾逗号归一化修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@3f59742003459058aff9ffe7aebf647fc0799f18/vendor/shujuku-sp-fork/index.js?v=phase123-update-trailing-comma-6-11';
-const databaseScriptMarker = 'mfrs-update-trailing-comma-6-11';
+// 指向包含 schema/CHECK 约束预检与 SyncBridge 坏行跳过修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@70fbe7d9beaf7565783be9d935f499fafdd88dbc/vendor/shujuku-sp-fork/index.js?v=phase124-schema-check-constraints-6-12';
+const databaseScriptMarker = 'mfrs-schema-check-constraints-6-12';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
 
