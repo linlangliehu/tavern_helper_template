@@ -1,7 +1,7 @@
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
 // 指向包含 v6.13 SQL 防御纵深体系（四层防御 + 增强层）的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@53bf6161a8e9c0f8d2b4e3c8f5d7a9b0c1e2f3d4/vendor/shujuku-sp-fork/index.js?v=phase125-sql-defense-depth-6-13';
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@53bf6168a0ff5ab11ce8d6345a603d279ee9c49a/vendor/shujuku-sp-fork/index.js?v=phase125-sql-defense-depth-6-13';
 const databaseScriptMarker = 'mfrs-sql-defense-depth-6-13';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
