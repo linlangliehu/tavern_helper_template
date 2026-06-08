@@ -395,15 +395,17 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
     return;
   }
 
-  if (!isExpectedDatabaseApi(api)) {
-    await reloadDatabaseScriptForCurrentCard(hostWindow, 'template_mismatch');
-    api = (await waitForApi(hostWindow, 16, 250)) ?? api;
-    status = await readTemplateStatus(api);
-    if (status.templateLoaded) {
-      rerenderAcu(hostWindow);
-      return;
-    }
-  }
+  // v6.13: 禁用自动 reload 数据库脚本，避免新版本被旧版本覆盖
+  // 如果 marker 不匹配，只导入模板，不重新加载数据库本体
+  // if (!isExpectedDatabaseApi(api)) {
+  //   await reloadDatabaseScriptForCurrentCard(hostWindow, 'template_mismatch');
+  //   api = (await waitForApi(hostWindow, 16, 250)) ?? api;
+  //   status = await readTemplateStatus(api);
+  //   if (status.templateLoaded) {
+  //     rerenderAcu(hostWindow);
+  //     return;
+  //   }
+  // }
 
   if (!api.importTemplateFromData) {
     console.warn('[神秘复苏数据库前端] 当前数据库 API 不支持模板导入，无法自动切换神秘复苏模板。', status);
