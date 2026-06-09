@@ -626,7 +626,7 @@
 - [x] 代码侧保留可回滚开关：`acu_mfrs_visualizer_crud_migration=false` 与 `acu_mfrs_choices_crud_mirror=false`。
 - [x] 上一稳定远程基线：`cde40b5 fix: repair v6.15 release cdn links`。
 - [x] 发布前补齐 loader 卫生项：数据库 loader 与数据库前端 loader 均指向当前有效 6.15 vendor 资源。
-- [ ] 资源提交并推送到 GitHub。
-- [ ] 更新 `scripts/publish-card.mjs` 的新 CDN hash/cache/version，并同步发布版 YAML/PNG。
+- [x] 资源提交并推送到 GitHub：`e5e4cb6 feat: add stable CRUD table change adapter`。
+- [x] 更新 `scripts/publish-card.mjs` 的新 CDN hash/cache/version，并同步发布版 YAML/PNG：`d06dabb / 6.16 / phase128-stable-crud-adapter-6-16`。
 - [ ] 发布提交并推送到 GitHub。
-- [ ] CDN URL 与发布卡 smoke test。
+- [x] CDN URL 与发布卡 smoke test：YAML/PNG 元数据无旧 hash/cache，本轮 3 条关键 CDN 资源返回 200。

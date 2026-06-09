@@ -486,3 +486,9 @@ node tavern_sync.mjs bundle 神秘复苏模拟器发布版
 **本地 gate：** 已通过 `node scripts/verify-table-change-adapter.mjs`、`node --check "src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js"`、`pnpm exec eslint "scripts/verify-table-change-adapter.mjs" "src/神秘复苏模拟器/脚本/数据库前端/index.ts" "src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts"`、`git diff --check`、`pnpm build`。
 
 **回滚开关：** 可用 `localStorage.acu_mfrs_visualizer_crud_migration = 'false'` 关闭可视化器 CRUD 迁移；可用 `localStorage.acu_mfrs_choices_crud_mirror = 'false'` 关闭 `<choices>` 到 `行动建议` 的 CRUD 镜像。上一稳定远程基线为 `cde40b5 fix: repair v6.15 release cdn links`。
+
+**资源提交：** 已提交并推送 `e5e4cb6 feat: add stable CRUD table change adapter` 到 `origin/main`。该提交包含前端 CRUD 适配器、真页验证脚本、本地构建产物、loader marker 对齐和 planning 记录。
+
+**发布同步：** 已将 `scripts/publish-card.mjs` 更新为 `CDN_REF=d06dabb0b97bdfb7095ace084b8efee80b10210d`、`CDN_CACHE_VERSION=phase128-stable-crud-adapter-6-16`、`releaseVersion=6.16`，并执行 `pnpm run publish-card -- 神秘复苏模拟器发布版`。发布版 `index.yaml` 版本为 `6.16`，6 条资源链接指向新 hash/cache。说明：`e5e4cb6` 推送后 GitHub Actions 自动生成 `[bot] bundle` 提交 `d06dabb`，最终发布卡使用 `d06dabb` 作为 CDN 资源基线。
+
+**发布验证：** 发布版 YAML 不含 `localhost`、`127.0.0.1`、`53bf6168`、`c61cae707`、`phase125`、`phase127`、`6.15`。发布版 PNG 的 `chara` 与 `ccv3` 元数据均为 `version=6.16`，包含新 hash/cache 且无旧 hash/cache。CDN 关键资源 `数据库/index.js`、`数据库前端/index.js`、`状态栏/index.html` 均返回 `200`。
