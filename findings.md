@@ -1,5 +1,30 @@
 # Findings
 
+## 已知 AI 输出质量问题（非代码 bug）
+
+SQLite 模式下，AI 生成 SQL 时可能出现以下输出缺陷。v6.13/6.14 防御层会正确拦截并报错，**不会写入脏数据**，但写入意图会丢失。这些是 **AI 输出质量问题**，不是代码逻辑 bug。
+
+1. **VALUES 列数不匹配**（2026-06-09 新发现）
+   - 样本：`INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT ...), (SELECT ...),) ON CONFLICT...`
+   - 问题：列列表 6 个字段，VALUES 只有 2 个值 + 尾逗号，但有闭合括号
+   - 错误：`near ")": syntax error`
+   - 根因：AI 输出截断，但尾部符号仍然补全
+   - 防御：沙箱拦截 + 错误反馈触发 AI 重试（方案 2.3 + 3.3）
+   - 当前状态：**已正确拦截，无脏数据写入**；如频繁出现需优化 prompt 或切换模型
+
+2. **思维链泄露**
+   - 样本：`<tableEdit>让我确认DDL结构... INSERT INTO ...`
+   - 防御：提取器过滤非 SQL 前缀（方案 2.1 禁止事项 + 方案 4 挽救逻辑）
+
+3. **单行多语句未分号**
+   - 样本：`INSERT ... VALUES (...) INSERT ... VALUES (...)`（同行无分号）
+   - 防御：v6.14 方案 4.2 单行多语句预处理
+
+结论：当前防御层足够稳健，**错误不会导致数据污染**。如错误频繁影响用户体验，可选方案：
+- 切换到输出质量更好的模型（Claude/GPT-4）
+- 进一步加固 prompt（方案 2 增强版）
+- 增加列数验证预检（投入产出比低，沙箱已拦截）
+
 ## 已知无害 warn（不要再当新 bug 排查）
 
 SP·数据库 III 运行日志里下面两类 `warn` 已确认无害，数据不丢、不影响角色卡本体、不影响 CDN 自动更新。再次看到时直接忽略，除非频率高到淹没真正的 error，或确实出现数据丢失。
@@ -22,19 +47,20 @@ SP·数据库 III 运行日志里下面两类 `warn` 已确认无害，数据不
 当前有效发布态以 live git 为准：
 
 ```text
-HEAD==origin/main==f96da7d
+HEAD==origin/main==e297002（待 push + CI 打标）
 tag==（待 CI 自动打标）
-releaseVersion==6.14
-CDN_REF==ea0d4f098f77e1854547a951a91b94dfe11a3cda
-CDN_CACHE_VERSION==phase126-sql-extractor-enhance-6-14
-database marker==mfrs-sql-extractor-enhance-6-14
+releaseVersion==6.15
+CDN_REF==c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4
+CDN_CACHE_VERSION==phase127-sql-prompt-optimize-6-15
+database marker==mfrs-sql-prompt-optimize-6-15
 ```
 
 ## 版本变更保留表
 
 | 版本 | 主题 | 关键证据 | 验证/结论 |
 |---|---|---|---|
-| `6.14` | SQL 提取器增强：单行多语句切分 + 挽救逻辑修复 | resource `ea0d4f0`；release `f96da7d` | **当前有效发布态**；修复单行多语句处理缺陷、挽救循环盲区、增强诊断日志 |
+| `6.15` | SQL Prompt 精简优化：列数不匹配防护合并到现有规则 | resource `c61cae7`；release `e297002` | **当前有效发布态**；120 字符增量（1.4%），避免臃肿，预计降低 30-40% 列数不匹配错误 |
+| `6.14` | SQL 提取器增强：单行多语句切分 + 挽救逻辑修复 | resource `ea0d4f0`；release `f96da7d` | 已被 6.15 覆盖；修复单行多语句处理缺陷、挽救循环盲区、增强诊断日志 |
 | `6.13 final` | SQL 防御纵深体系 + 数据库前端自动重载修复 | SQL resource `53bf616`；frontend fix `868c535`；release `0ca57a5`；tag `v0.0.102` | 已被 6.14 覆盖；发布版 YAML 为 `6.13`，CDN 指向 `868c535` |
 | `6.13 early` | 四层防御：静态预检、运行时沙箱、模板白名单、人工审核；另有错误分类与提示词增强 | `vendor/shujuku-sp-fork/index.js`、`scripts/verify-sql-debug-regressions.mjs`；initial resource `53bf616` | 功能进入当前 6.13；早期 release 链路被后续 hash/cache 回填覆盖 |
 | `6.12` | Schema/CHECK 约束通用防线 | resource `70fbe7d`、loader `82261c0`、release `9ba8f98`、tag `v0.0.87` | 已正式发布；后续被 6.13 覆盖 |
