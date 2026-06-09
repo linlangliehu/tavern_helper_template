@@ -12,9 +12,9 @@
 - **自动更新边界：** 发布版卡加载 GitHub/jsdelivr 上的前端界面、脚本或美化样式，资源变化通常不需要玩家重新导入；世界书、第一条消息、系统提示词、角色卡正文、数据库模板等卡本体变化，必须更新发布版 PNG 与版本号，卡内更新入口再用 `getCharacter` / `importRawCharacter` 一类接口处理。
 - **替代工具口径：** `npx agent-browser --cdp 9222` 只是当前 Codex CLI 可用的替代 CDP 访问方式，不是本项目默认流程；默认流程仍是 Chrome DevTools MCP。
 
-## RESUME HERE - 2026-06-09 23:30 CST - v6.15 发布完成
+## RESUME HERE - 2026-06-09 - v6.16 stable CRUD adapter 发布完成
 
-**当前状态：** 根目录 planning 已整理为恢复索引。当前 live git 为 `HEAD==origin/main==c273b7d`，等待 CI 自动打标签，发布版为 `6.15`。发布卡 CDN 指向 `c61cae707d06ce8b9dce7bc63d97a26e26a5834f`，cache 为 `phase127-sql-prompt-optimize-6-15`，数据库 marker 为 `mfrs-sql-prompt-optimize-6-15`。
+**当前状态：** 根目录 planning 已整理为恢复索引。当前 stable CRUD adapter 已发布为 `6.16`，发布提交为 `1e46879 release: publish v6.16 stable CRUD adapter`，资源基线为 `d06dabb / phase128-stable-crud-adapter-6-16`。阶段 0-7 已完成大步三主线；阶段 8-9 已完成本轮 v6.16 验证与发布收口，但新一轮阶段 7 改动仍需按发布流程另行同步；阶段 10-14 仍是后续主任务。
 
 **本轮记录原则：**
 
@@ -34,9 +34,17 @@
 
 ## 当前版本与发布链路
 
-### 最新发布：6.15 SQL Prompt 精简优化
+### 最新发布：6.16 stable CRUD adapter
 
-- **状态：** active，已推送，`HEAD==origin/main==c273b7d`。
+- **状态：** active，已推送。
+- **发布提交：** `1e46879`，`release: publish v6.16 stable CRUD adapter`。
+- **资源基线：** `d06dabb / phase128-stable-crud-adapter-6-16`。
+- **发布内容：** 稳定 CRUD table change adapter、确定性入口部分迁移、发布版 YAML/PNG 同步、CDN smoke test 通过。
+- **回滚开关：** `localStorage.acu_mfrs_visualizer_crud_migration = 'false'` 可关闭可视化器 CRUD 迁移；`localStorage.acu_mfrs_choices_crud_mirror = 'false'` 可关闭 `<choices>` 到 `行动建议` 的 CRUD 镜像。
+
+### 上一发布：6.15 SQL Prompt 精简优化
+
+- **状态：** 已被 6.16 supersede；原提交已推送，旧记录中的 `HEAD==origin/main==c273b7d` 仅作历史参考。
 - **tag：** 等待 CI 自动打标。
 - **发布提交：** `265d9ba`，`release: publish v6.15 with SQL prompt optimization`。
 - **资源提交：** `c61cae7`，`build: rebuild dist with v6.15 prompt optimization`。
@@ -223,6 +231,18 @@
 - 确定性操作不调用 AI，直接走 `AutoCardUpdaterAPI.updateCell/insertRow/deleteRow`。
 - SQL 模式保留为高级维护、迁移和复杂兜底通道，不作为普通自动填表默认路径。
 
+**五个大步划分（2026-06-09 用户确认）：**
+
+- **大步一：基础确认与现状盘点**：阶段 0-1。确认数据库 API 能力，盘点当前所有写库入口，决定哪些能走 CRUD、哪些必须保留 AI。
+- **大步二：稳定写库核心**：阶段 2-4。建立“AI 不直接写 SQL，前端稳定执行”的基础能力，包括变更计划协议、CRUD 执行器、DDL 与数据约束校验。
+- **大步三：智能填表主链路迁移**：阶段 5-7。把当前 AI-SQL 填表改造成“AI 规划 + CRUD 执行”，并把 SQL 降级成兜底。
+- **大步四：神秘复苏玩法功能**：阶段 10-14。吸收骰子系统能力，但改造成神秘复苏专用玩法，包括公共前端 API、灵异判定、资源奖励、事件审计和 UI 整合。
+- **大步五：验证、发布与回滚**：阶段 8-9。完整测试、真页验收、发布版同步和回滚保障。
+
+**推荐执行顺序：** 大步一 -> 大步二 -> 大步三 -> 大步五 -> 大步四 -> 再次大步五。也就是说，先把稳定写库和智能填表链路做出来并发布一个稳定版本，再做灵异判定、资源奖励这些玩法增强。
+
+**当前进度快照：** 大步一、大步二已完成；大步三已完成阶段 5 `AI_CHANGE_PLAN_CRUD` 主链路、阶段 6 的确定性入口迁移批次和阶段 7 SQL 兜底降级；大步五已完成 v6.16 发布收口，但阶段 7 新改动尚未发布，且 SP 运行日志人工面板复核仍待办；大步四尚未开始。
+
 ### 阶段 0：基线冻结与接口确认
 
 - [x] 记录 `git status --short --branch`、当前版本、发布 hash/cache/marker。
@@ -324,25 +344,25 @@
 
 ### 阶段 5：AI 规划 + CRUD 主链路
 
-- [ ] 新增自动填表模式：`AI_CHANGE_PLAN_CRUD`。
-- [ ] 修改 AI prompt：从“输出 SQL”改为“输出变更计划 JSON”。
-- [ ] 限制输入范围：
-  - [ ] 只发送目标表
-  - [ ] 普通表支持 `sendLatestRows`
-  - [ ] 纪要/总结类表只发最近 N 行
-  - [ ] 减少无关世界书/上下文注入
-- [ ] 执行流程：
-  - [ ] 调 AI 得到计划
-  - [ ] JSON parse + schema 校验
-  - [ ] 本地 DDL 校验
-  - [ ] CRUD 执行
-  - [ ] 刷新数据库与前端
-- [ ] 失败流程：
-  - [ ] 只把失败项和局部上下文回传 AI
-  - [ ] 最多修正 1-2 次
-  - [ ] API 限流时冷却并停止，不进入 SQL 错误反馈
+- [x] 新增自动填表模式：`AI_CHANGE_PLAN_CRUD` / `ai_crud_plan`。
+- [x] 修改 AI prompt：从“输出 SQL”改为“输出变更计划 JSON”。
+- [x] 限制输入范围：
+  - [x] 只发送目标表
+  - [x] 普通表支持 `sendLatestRows`
+  - [x] 纪要/总结类表只发最近 N 行
+  - [x] 减少无关世界书/上下文注入（沿用现有上下文过滤；CRUD 模式不再追加 SQL 输出说明）
+- [x] 执行流程：
+  - [x] 调 AI 得到计划
+  - [x] JSON parse + schema 校验
+  - [x] 本地 DDL 校验
+  - [x] CRUD 执行
+  - [x] 刷新数据库与前端
+- [x] 失败流程：
+  - [x] 只把失败项和局部上下文回传 AI
+  - [x] 最多修正 1-2 次（沿用 `tableMaxRetries`）
+  - [x] API 限流时不进入 SQL 错误反馈（CRUD 模式使用独立 `CRUD_PLAN_ERROR_FEEDBACK`）
 
-**阶段 5 进展（2026-06-09）：** 已完成前端执行落点：`previewTableChangePlan()` 可无副作用预检，`applyTableChangePlan()` 可执行 CRUD。尚未修改数据库本体的 AI prompt、自动填表模式和 SQL_ERROR_FEEDBACK 链路，因此旧 AI-SQL 默认路径仍保持不变。
+**阶段 5 结论（2026-06-09）：** 已新增 `DEFAULT_CHAR_CARD_PROMPT_CRUD_PLAN_ACU`、`executeCrudPlanFill_ACU` 和 `executeCardUpdateCore_ACU` 的 `fillMode` 分支。`fillMode` 默认仍为 `ai_sql`，设置为 `ai_crud_plan` 或 `AI_CHANGE_PLAN_CRUD` 时，AI 输出 `<tableChangePlan>` JSON，由 `MysteryDatabaseFrontend.previewTableChangePlan()` / `applyTableChangePlan()` 预检并执行；执行时透传 `skipChatSave/silent`，先在内存应用 CRUD，再复用原保存链路落到目标楼层。SQL_ERROR_FEEDBACK 不参与新模式，失败反馈改为 CRUD 计划专用上下文。
 
 ### 阶段 6：确定性操作迁移
 
@@ -368,18 +388,20 @@
 
 ### 阶段 7：SQL 通道降级为兜底
 
-- [ ] 保留现有 SQL 模式能力，但改为可配置兜底。
-- [ ] 为 SQL 通道增加触发条件：
-  - [ ] 高级维护/迁移
-  - [ ] 用户手动选择 SQL 模式
-  - [ ] CRUD 无法表达的批量操作
-- [ ] API 限流分类：
-  - [ ] `Too Many Requests`
-  - [ ] HTTP 429
-  - [ ] `Retry-After`
-  - [ ] 网关错误
-- [ ] 限流错误不写入 `SQL_ERROR_FEEDBACK`。
-- [ ] 限流时使用冷却/指数退避，并避免连续批量重试。
+- [x] 保留现有 SQL 模式能力，但改为可配置兜底。
+- [x] 为 SQL 通道增加触发条件：
+  - [x] 高级维护/迁移
+  - [x] 用户手动选择 SQL 模式
+  - [x] CRUD 无法表达的批量操作
+- [x] API 限流分类：
+  - [x] `Too Many Requests`
+  - [x] HTTP 429
+  - [x] `Retry-After`
+  - [x] 网关错误
+- [x] 限流错误不写入 `SQL_ERROR_FEEDBACK`。
+- [x] 限流时使用冷却/指数退避，并避免连续批量重试。
+
+**阶段 7 结论（2026-06-09）：** 自动填表默认模式已改为 `ai_crud_plan`，显式 `ai_sql` / `AI_SQL` 仍保留给高级维护、迁移和 CRUD 无法表达的批量兜底。旧 SQL 分支在调用前会检查 API 传输冷却；`Too Many Requests`、HTTP 429、`Retry-After` 和 502/503/504 网关类错误会被分类为 API 传输问题，登记 15-120 秒指数退避冷却并停止本轮 SQL 重试，不再写入 `SQL_ERROR_FEEDBACK`。调试面板同步把限流归为 API 网关类问题；脚本级回归与生产构建已通过。
 
 ### 阶段 8：测试与真页验收
 

@@ -494,3 +494,115 @@ node tavern_sync.mjs bundle 神秘复苏模拟器发布版
 **发布验证：** 发布版 YAML 不含 `localhost`、`127.0.0.1`、`53bf6168`、`c61cae707`、`phase125`、`phase127`、`6.15`。发布版 PNG 的 `chara` 与 `ccv3` 元数据均为 `version=6.16`，包含新 hash/cache 且无旧 hash/cache。CDN 关键资源 `数据库/index.js`、`数据库前端/index.js`、`状态栏/index.html` 均返回 `200`。
 
 **最终推送：** 已提交并推送 `1e46879 release: publish v6.16 stable CRUD adapter` 到 `origin/main`。截至推送后 fetch，`main...origin/main` 同步；剩余 dirty 项均为本地参考/日志/临时文件，未纳入本轮提交。
+
+---
+
+## 2026-06-09：同步稳定 + 智能混合填表架构大步规划
+
+**用户目标：** 将当前任务清单明确为 15 个阶段，并按 5 个大步组织：基础确认与现状盘点、稳定写库核心、智能填表主链路迁移、神秘复苏玩法功能、验证发布与回滚。
+
+**已完成：**
+
+- 更新 `task_plan.md` 顶部恢复点为 v6.16 stable CRUD adapter 发布完成。
+- 在“稳定 + 智能混合填表架构”任务下补入 5 个大步划分、阶段映射和推荐执行顺序。
+- 明确当前进度快照：大步一、大步二已完成；大步三仍缺阶段 5 和阶段 7；大步五已完成 v6.16 发布收口但仍缺 SP 运行日志人工复核；大步四尚未开始。
+
+**本次未做：**
+
+- 未修改业务代码。
+- 未运行构建或测试。
+- 未提交 git。
+## 2026-06-09：阶段 5 AI 规划 + CRUD 主链路 — 进行中
+
+**目标：** 将数据库自动填表从「AI 输出 SQL」改造为「AI 输出结构化 JSON 变更计划 + 前端 CRUD 执行」。
+
+**已完成：**
+
+- [x] 任务 1：新增 `fillMode` 设置到 vendor `settings_ACU`
+  - 在 `settings_ACU` 添加 `fillMode: 'ai_sql'` (默认值，保持向后兼容)
+  - 新增 `getCurrentFillMode()` 工具函数，返回 `'ai_sql'` 或 `'ai_crud_plan'`
+  - 新增 `isCrudPlanMode()` 判断函数
+  - 修改位置：vendor/shujuku-sp-fork/index.js 第 3488 行（settings 定义）和第 5019-5032 行（工具函数）
+
+**进行中：**
+
+- [ ] 任务 2：创建 CRUD plan prompt 模板（`DEFAULT_CHAR_CARD_PROMPT_CRUD_PLAN_ACU`）
+- [ ] 任务 3：实现 `executeCrudPlanFill_ACU` 函数（AI 调用 → JSON 解析 → CRUD 执行）
+- [ ] 任务 4：在 `executeCardUpdateCore_ACU` 里分支路由到新模式
+- [ ] 任务 5：构建与验证
+
+**本次未做：**
+
+- 未修改前端代码
+- 未跑构建或测试
+- 未提交 git
+
+**下一步：** 继续任务 2-5，完成 CRUD plan 模式的完整实现链路。
+
+---
+
+## 2026-06-09：阶段 5 AI 规划 + CRUD 主链路 — 完成
+
+**目标：** 继续阶段 5，将数据库自动填表从「AI 输出 SQL」改造为「AI 输出结构化 JSON 变更计划 + 前端 CRUD 执行」。
+
+**已完成：**
+
+- [x] 任务 2：新增 `DEFAULT_CHAR_CARD_PROMPT_CRUD_PLAN_ACU`
+  - AI 输出 `<tableChangePlan>` JSON 数组，不再输出 SQL 或 `<tableEdit>`。
+  - 明确 `updateCell`、`insertRow`、`deleteRow`、`noop` 协议、定位规则、DDL/Note 约束和禁止事项。
+- [x] 任务 3：实现 `executeCrudPlanFill_ACU`
+  - 调用 AI 后提取并 `JSON.parse` 变更计划。
+  - 逐条调用 `MysteryDatabaseFrontend.previewTableChangePlan()` 和 `applyTableChangePlan()`。
+  - CRUD 执行失败时写入独立 `CRUD_PLAN_ERROR_FEEDBACK`，不进入 SQL_ERROR_FEEDBACK 链路。
+- [x] 任务 4：在 `executeCardUpdateCore_ACU` 接入 `fillMode` 分支
+  - 默认 `ai_sql` 不变，保持向后兼容。
+  - `fillMode` 支持 `ai_crud_plan`、`AI_CHANGE_PLAN_CRUD`、`ai_change_plan_crud`。
+  - CRUD 模式使用 `skipChatSave/silent` 先更新内存，再复用原保存逻辑落到目标楼层。
+- [x] 任务 5：构建与验证
+  - 更新 `src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts`，为计划执行透传 `skipChatSave/silent`。
+  - 修正 `insertRow` 调用兼容：同时支持 `(options, data)` 和 `{ data }` 对象形态。
+  - `pnpm build` 已刷新 `dist/神秘复苏模拟器/脚本/数据库前端/index.js` 与相关产物。
+
+**验证：**
+
+- `node --check vendor/shujuku-sp-fork/index.js`：通过。
+- `node scripts/verify-table-change-adapter.mjs`：通过。
+- `pnpm exec eslint "src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts"`：通过。
+- `git diff --check`：通过。
+- `pnpm build`：通过。
+
+**边界：**
+
+- 本轮未把默认模式切成 `ai_crud_plan`；默认仍是 `ai_sql`，新模式需要通过设置值启用。
+- 本轮未做酒馆真页 AI 调用验收，也未做 SP 运行日志人工面板复核。
+- 阶段 7「SQL 通道降级为兜底」仍未开始。
+
+---
+
+## 2026-06-09：阶段 7 SQL 通道降级为兜底 — 完成
+
+**目标：** 继续完成大步三的阶段 7，把旧 AI-SQL 通道从普通自动填表默认链路降级为显式 SQL 兜底，并阻止 API 限流/网关错误进入 `SQL_ERROR_FEEDBACK` 重试放大链路。
+
+**已完成：**
+
+- 将 `settings_ACU.fillMode` 默认值改为 `ai_crud_plan`；`ai_sql` / `AI_SQL` 仍可显式选择，未知或空值回落到 `ai_crud_plan`。
+- 新增 API 传输错误识别与冷却状态：`Too Many Requests`、HTTP 429、`Retry-After`、502/503/504 网关错误会被识别为传输问题。
+- 统一主要 AI fetch 失败信息格式，包含 `HTTP <status>` 与 `Retry-After`，便于日志分类和冷却判断。
+- 更新 `parseNonStreamResponse_ACU()`：非流式响应中的 Bad Gateway、Too Many Requests、HTTP 429 和 Retry-After 会抛出可分类错误。
+- 更新旧 SQL 分支：进入前检查冷却窗口；捕获 API 传输问题时登记 15-120 秒指数退避冷却，直接返回失败，不写入 `lastSqlError`，因此不追加 `SQL_ERROR_FEEDBACK`。
+- 成功完成 CRUD/SQL 写入后会清理 API 传输冷却。
+- 更新 dashboard 日志分类：429、Too Many Requests、Retry-After、API限流归入 `apiGatewayIssue`。
+- 扩展 `scripts/verify-sql-debug-regressions.mjs`，增加 429/Retry-After 解析和 dashboard 分类用例。
+
+**验证：**
+
+- `node --check vendor/shujuku-sp-fork/index.js`：通过。
+- `node scripts/verify-sql-debug-regressions.mjs`：通过。
+- `node scripts/verify-table-change-adapter.mjs`：通过。
+- `pnpm build`：通过。
+- `git diff --check`：通过。
+
+**边界：**
+
+- 本轮未做酒馆真页手动 AI 调用验收，也未做 SP 运行日志人工面板复核。
+- 阶段 7 代码已完成但尚未走发布版同步和 CDN 发布流程；后续若要发布，需要进入大步五/阶段 9。

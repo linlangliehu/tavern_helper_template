@@ -19,6 +19,8 @@ export type TableChangePlan = {
   data?: Record<string, Primitive>;
   reason?: string;
   confidence?: number;
+  skipChatSave?: boolean;
+  silent?: boolean;
 };
 
 export type TableChangeErrorCode =
@@ -66,6 +68,7 @@ export type AutoCardUpdaterCrudApi = {
           column?: string;
           colIdentifier?: string;
           value?: Primitive;
+          skipChatSave?: boolean;
           silent?: boolean;
         },
     rowIndex?: number,
@@ -79,6 +82,7 @@ export type AutoCardUpdaterCrudApi = {
           tableName?: string;
           table?: string;
           data?: Record<string, Primitive>;
+          skipChatSave?: boolean;
           silent?: boolean;
         },
     data?: Record<string, Primitive>,
@@ -91,6 +95,7 @@ export type AutoCardUpdaterCrudApi = {
           table?: string;
           rowIndex?: number;
           row?: number;
+          skipChatSave?: boolean;
           silent?: boolean;
         },
     rowIndex?: number,
@@ -231,16 +236,33 @@ export async function applyTableChangePlan(
   if (resolved.plan.action === 'noop') return preview;
 
   if (resolved.plan.action === 'insertRow') {
+    const allowImportFallback = !resolved.plan.skipChatSave;
     if (!api.insertRow) {
-      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, currentData);
+      const fallbackRowIndex = allowImportFallback
+        ? await tryImportJsonInsertFallback(api, resolved, currentData)
+        : null;
       if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
         return { ...preview, insertedRowIndex: fallbackRowIndex };
       }
       return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 insertRow。');
     }
-    const insertedRowIndex = await api.insertRow({ tableName: resolved.table.name }, toApiInsertValues(resolved));
+    const insertOptions: {
+      tableName: string;
+      skipChatSave?: boolean;
+      silent?: boolean;
+      data?: Record<string, Primitive>;
+    } = { tableName: resolved.table.name };
+    if (resolved.plan.skipChatSave) insertOptions.skipChatSave = true;
+    if (resolved.plan.silent) insertOptions.silent = true;
+    const insertValues = toApiInsertValues(resolved);
+    let insertedRowIndex = await api.insertRow(insertOptions, insertValues);
     if (typeof insertedRowIndex !== 'number' || insertedRowIndex < 0) {
-      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, currentData);
+      insertedRowIndex = await api.insertRow({ ...insertOptions, data: insertValues });
+    }
+    if (typeof insertedRowIndex !== 'number' || insertedRowIndex < 0) {
+      const fallbackRowIndex = allowImportFallback
+        ? await tryImportJsonInsertFallback(api, resolved, currentData)
+        : null;
       if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
         return { ...preview, insertedRowIndex: fallbackRowIndex };
       }
@@ -254,17 +276,24 @@ export async function applyTableChangePlan(
   }
 
   if (resolved.plan.action === 'deleteRow') {
+    const allowImportFallback = !resolved.plan.skipChatSave;
     if (!api.deleteRow) {
-      if (await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
+      if (allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
       return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 deleteRow。');
     }
-    const ok = await api.deleteRow({ tableName: resolved.table.name, rowIndex: resolved.rowIndex });
-    if (!ok && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
+    const ok = await api.deleteRow({
+      tableName: resolved.table.name,
+      rowIndex: resolved.rowIndex,
+      skipChatSave: resolved.plan.skipChatSave,
+      silent: resolved.plan.silent,
+    });
+    if (!ok && allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
     return ok ? preview : withError(preview, 'API_MUTATION_FAILED', 'deleteRow 执行失败。');
   }
 
+  const allowImportFallback = !resolved.plan.skipChatSave;
   if (!api.updateCell) {
-    if (await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
+    if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
     return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 updateCell。');
   }
   for (const column of resolved.columns) {
@@ -273,9 +302,11 @@ export async function applyTableChangePlan(
       rowIndex: resolved.rowIndex,
       column: column.header,
       value: resolved.values[column.header],
+      skipChatSave: resolved.plan.skipChatSave,
+      silent: resolved.plan.silent,
     });
     if (!ok) {
-      if (await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
+      if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
       return withError(preview, 'API_MUTATION_FAILED', `updateCell 执行失败：${column.header}。`, column.header);
     }
   }
@@ -473,6 +504,8 @@ function normalizePlan(record: Record<string, unknown>): TableChangePlan {
   if (isPrimitive(record.value)) plan.value = record.value;
   if (isPrimitiveRecord(record.set)) plan.set = record.set;
   if (isPrimitiveRecord(record.data)) plan.data = record.data;
+  if (record.skipChatSave === true) plan.skipChatSave = true;
+  if (record.silent === true) plan.silent = true;
   return plan;
 }
 

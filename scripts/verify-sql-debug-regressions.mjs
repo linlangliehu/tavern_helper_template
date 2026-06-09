@@ -158,6 +158,8 @@ function loadVendorRuntime() {
     extractFunction('sanitizeIdentifier'),
     extractFunction('chineseToIdentifier'),
     extractRegion('function splitSqlStatements', '    /**\n     * service/table/table-storage-strategy.ts'),
+    extractFunction('getResponseRetryAfterText_ACU'),
+    extractFunction('buildApiResponseFailureMessage_ACU'),
     extractFunction('parseNonStreamResponse_ACU'),
     extractFunction('interpretLogEntry'),
     `
@@ -943,9 +945,21 @@ INSERT OR REPLACE INTO check_suggestions (row_id, check_name, check_type, target
 async function testBadGatewayParsing() {
   await assert.rejects(
     () => vendor.parseNonStreamResponse_ACU({
+      status: 502,
+      statusText: 'Bad Gateway',
+      headers: { get: () => '' },
       json: async () => ({ error: { message: 'Bad Gateway' } }),
     }),
     /API上游网关错误: Bad Gateway/,
+  );
+  await assert.rejects(
+    () => vendor.parseNonStreamResponse_ACU({
+      status: 429,
+      statusText: 'Too Many Requests',
+      headers: { get: name => (name === 'Retry-After' ? '30' : '') },
+      json: async () => ({ error: { message: 'Too Many Requests' } }),
+    }),
+    /API限流: .*HTTP 429.*Retry-After: 30/,
   );
 }
 
@@ -1004,6 +1018,9 @@ function testEnhancedErrorClassification() {
 function testDashboardClassification() {
   const cases = [
     ['Bad Gateway', 'apiGatewayIssue'],
+    ['Too Many Requests', 'apiGatewayIssue'],
+    ['API请求失败 HTTP 429 (Too Many Requests); Retry-After: 30', 'apiGatewayIssue'],
+    ['API限流：Too Many Requests', 'apiGatewayIssue'],
     ['[SqlTableService] SQL 目标表 log_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SqlTableService] SQL 目标表 event_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SqlTableService] SQL 目标表 simulation_summary, summary_logs 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],

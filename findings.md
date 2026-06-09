@@ -602,3 +602,11 @@ SQL 模式的关键链路仍在数据库本体内：
 - 真页固定行验证已覆盖 `行动建议/action_suggestions` 的 row_id 1-4 补行、row_id=2 更新、row_id=5 越界拦截，并恢复原始表状态。
 - 发布边界：本轮没有切换旧自动填表主链路到 `AI_CHANGE_PLAN_CRUD`，也没有移除 SQL 模式。当前完成的是确定性前端操作和 choices 镜像的稳定 CRUD 层。
 - 回滚方式：`localStorage.acu_mfrs_visualizer_crud_migration = 'false'` 可关闭可视化器 CRUD 迁移；`localStorage.acu_mfrs_choices_crud_mirror = 'false'` 可关闭 choices 镜像。
+
+## 2026-06-09 大步三阶段 7：SQL 兜底与 API 限流边界
+
+- 阶段 7 的核心边界是“SQL 保留但不默认”：普通自动填表默认走 `ai_crud_plan`，旧 `ai_sql` 仍可由用户显式选择，用于高级维护、迁移或 CRUD plan 无法表达的复杂批量操作。
+- `Too Many Requests`、HTTP 429、`Retry-After`、502/503/504 网关错误属于 API 传输层问题，不是 SQL 语法/约束问题。它们不应进入 `SQL_ERROR_FEEDBACK`，否则会把上游限流误当成 SQL 可修复错误，导致 prompt 变长并继续放大请求。
+- 旧 SQL 分支现在先检查 API 传输冷却窗口；遇到限流/网关错误会登记指数退避冷却并立即停止本轮重试，避免连续批量填表时把多个批次全部推向同一个限流上游。
+- 非流式 API 响应解析也需要保留 `HTTP <status>` 和 `Retry-After` 信息，否则日志面板和冷却逻辑无法可靠区分“模型输出坏了”和“上游暂时不可用”。
+- 调试面板当前把限流归入 `apiGatewayIssue`，因为现有 dashboard 没有单独的 rate-limit 文案；后续若做更细 UI，可新增独立 `apiRateLimitIssue` 分类。
