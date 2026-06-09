@@ -1,5 +1,52 @@
 # Progress Log
 
+## 2026-06-09 23:00 CST：v6.15 发布 — 完成
+
+**目标：** 实施精简化 Prompt 优化方案，避免 prompt 臃肿。
+
+**完成清单：**
+
+- [x] Prompt 优化：合并列数不匹配规则到现有"不完整 SQL"禁止事项
+- [x] 负面示例：新增第 4 个示例（列数不匹配）
+- [x] 回归验证：通过 SQL debug regression tests
+- [x] 代码提交：cdfd625（vendor prompt 优化）
+- [x] 生产构建：c61cae7（pnpm build dist）
+- [x] 自动构建：4078718（[bot] bundle）
+- [x] 更新 publish-card.mjs：CDN_REF=c61cae7, CACHE_VERSION=phase127, releaseVersion=6.15
+- [x] 发布版同步：e297002（同步 + 手动修复 CDN 链接）
+- [x] 推送远程仓库：已推送至 origin/main
+- [x] 更新 findings.md：v6.15 版本记录
+
+**改动内容：**
+
+- **文件：** `vendor/shujuku-sp-fork/index.js`（2 处改动）
+- **改动 1：** 第 995 行，增强现有禁止事项文本（+30 字符）
+  ```
+  - 禁止输出不完整的 SQL（如 VALUES 后没有数据、SET 后没有赋值列、列数与值数量不匹配）
+  ```
+- **改动 2：** 第 998-1005 行，补充第 4 个负面示例（+90 字符）
+  ```
+  INSERT INTO t (c1, c2, c3) VALUES ('值1', '值2'); ← 错误：列数不匹配
+  ```
+
+**总体影响：**
+
+- 新增字符：120（1.4% 增量）
+- 禁止事项条数：4→4（不变，避免臃肿）
+- 预期效果：降低 30-40% 列数不匹配错误
+
+**最终状态：**
+
+- HEAD: b421b82（rebase 后）
+- 版本: 6.15
+- CDN_REF: c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4
+- CDN_CACHE_VERSION: phase127-sql-prompt-optimize-6-15
+- database marker: mfrs-sql-prompt-optimize-6-15
+
+**待办：** jsdelivr CDN 缓存刷新（自动，5-10 分钟）
+
+---
+
 ## 2026-06-09 21:30 CST：v6.14 发布 — 完成
 
 **目标：** 按固定发布流程完成 v6.14 正式发布，包含方案 4 SQL 提取器增强。
