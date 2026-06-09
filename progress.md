@@ -606,3 +606,30 @@ node tavern_sync.mjs bundle 神秘复苏模拟器发布版
 
 - 本轮未做酒馆真页手动 AI 调用验收，也未做 SP 运行日志人工面板复核。
 - 阶段 7 代码已完成但尚未走发布版同步和 CDN 发布流程；后续若要发布，需要进入大步五/阶段 9。
+---
+
+## 2026-06-09：大步五「验证、发布与回滚」v6.17 收口
+
+**目标：** 将阶段 7「SQL 通道降级为兜底 + API 限流冷却」从本地实现推进到发布版/CDN。
+
+**已完成：**
+
+- 阶段 8 本地 gate 重新通过：`node --check vendor/shujuku-sp-fork/index.js`、`node scripts/verify-sql-debug-regressions.mjs`、`node scripts/verify-table-change-adapter.mjs`、`pnpm build`、`git diff --check`。
+- 真页只读 smoke 通过：`http://127.0.0.1:8000/` 可连接，`AutoCardUpdaterAPI` 与 `MysteryDatabaseFrontend` 均存在，`getTableMetadata()` 返回 14 张表。
+- 资源提交并推送：`44ab669 feat: default fill table to CRUD plan`。
+- GitHub Actions 生成资源 bundle：`550a89f [bot] bundle`。
+- loader 回填并推送：`a349ba0 build: point loaders to v6.17 resources`，数据库 loader 与数据库前端 loader 均指向 `550a89f` / `phase129-sql-fallback-cooldown-6-17` / `mfrs-sql-fallback-cooldown-6-17`。
+- GitHub Actions 生成发布资源 bundle：`576e7b0 [bot] bundle`。
+- `scripts/publish-card.mjs` 更新为 `CDN_REF=576e7b0d5df759b46c4837ba99b8d84540da179c`、`CDN_CACHE_VERSION=phase129-sql-fallback-cooldown-6-17`、`releaseVersion=6.17`。
+- 执行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，发布版 YAML/PNG 已同步为 6.17。
+- 发布验证：YAML 主入口为 `6.17` 且 6 条资源链接均指向 `576e7b0` / `phase129`；PNG `chara` 与 `ccv3` 元数据均为 `version=6.17`，包含新 hash/cache，且无旧 hash/cache 或 localhost/127.0.0.1。
+- CDN smoke：发布版数据库 loader、数据库前端、状态栏 HTML 以及 loader 指向的 vendor 四条 URL 均返回 200。
+
+**错误与修正：**
+
+- 第一次 PNG 元数据解析尝试直接 import `png-chunks-extract` 失败；改用无依赖 PNG `tEXt` chunk 解析器完成验证。
+- 第二次 PNG 解析因 PowerShell 管道中文路径编码变成问号失败；改用 Node 在 `src/` 下按 Unicode suffix 定位发布版目录后完成验证。
+
+**仍需人工复核：**
+
+- SP 高级工具运行日志面板未做人工导出复核；本轮已通过真页只读 smoke 与本地/发布 gate 覆盖主要链路。

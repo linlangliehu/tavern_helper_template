@@ -652,3 +652,16 @@
 - [x] 更新 `scripts/publish-card.mjs` 的新 CDN hash/cache/version，并同步发布版 YAML/PNG：`d06dabb / 6.16 / phase128-stable-crud-adapter-6-16`。
 - [x] 发布提交并推送到 GitHub：`1e46879 release: publish v6.16 stable CRUD adapter`。
 - [x] CDN URL 与发布卡 smoke test：YAML/PNG 元数据无旧 hash/cache，本轮 3 条关键 CDN 资源返回 200。
+## 2026-06-09 大步五 v6.17 收口：验证、发布与回滚
+
+- [x] 阶段 8 本地 gate：`node --check`、SQL 回归、table-change adapter 回归、`pnpm build`、`git diff --check` 全部通过。
+- [x] 阶段 8 真页只读 smoke：Chrome 9222 当前页可连接，数据库前端存在并返回 14 张表。
+- [x] 阶段 9 资源提交：`44ab669 feat: default fill table to CRUD plan` 已推送。
+- [x] 阶段 9 资源 bundle：`550a89f [bot] bundle` 已生成。
+- [x] 阶段 9 loader 回填：`a349ba0 build: point loaders to v6.17 resources` 已推送，loader 指向 `550a89f` / `phase129-sql-fallback-cooldown-6-17` / `mfrs-sql-fallback-cooldown-6-17`。
+- [x] 阶段 9 发布资源 bundle：`576e7b0 [bot] bundle` 已生成。
+- [x] 阶段 9 发布版同步：`scripts/publish-card.mjs` 更新为 `6.17`、`576e7b0d5df759b46c4837ba99b8d84540da179c`、`phase129-sql-fallback-cooldown-6-17`，并已执行发布版同步。
+- [x] 阶段 9 发布验证：YAML、PNG `chara`、PNG `ccv3` 均为 6.17 且无旧 hash/cache、本地链接；关键 CDN URL 均返回 200。
+- [ ] SP 运行日志人工面板复核：仍需用户或后续真页手动导出确认；本轮未从 SP 高级工具 UI 导出新运行日志。
+
+**当前发布状态：** v6.17 已完成本地 gate、真页只读 smoke、发布版 YAML/PNG 同步和 CDN smoke。回滚开关仍保留：显式选择 `ai_sql` / `AI_SQL` 可走旧 SQL 兜底；`localStorage.acu_mfrs_visualizer_crud_migration = 'false'` 与 `localStorage.acu_mfrs_choices_crud_mirror = 'false'` 仍可关闭确定性 CRUD 迁移入口。

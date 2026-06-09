@@ -610,3 +610,10 @@ SQL 模式的关键链路仍在数据库本体内：
 - 旧 SQL 分支现在先检查 API 传输冷却窗口；遇到限流/网关错误会登记指数退避冷却并立即停止本轮重试，避免连续批量填表时把多个批次全部推向同一个限流上游。
 - 非流式 API 响应解析也需要保留 `HTTP <status>` 和 `Retry-After` 信息，否则日志面板和冷却逻辑无法可靠区分“模型输出坏了”和“上游暂时不可用”。
 - 调试面板当前把限流归入 `apiGatewayIssue`，因为现有 dashboard 没有单独的 rate-limit 文案；后续若做更细 UI，可新增独立 `apiRateLimitIssue` 分类。
+## 2026-06-09 大步五 v6.17 发布验证结论
+
+- v6.17 的资源链路采用两段式发布：先提交阶段 7 业务资源 `44ab669`，等待 `[bot] bundle` 生成 `550a89f`；再把数据库 loader 和数据库前端 loader 回填到 `550a89f` / `phase129-sql-fallback-cooldown-6-17`，生成最终发布资源 bundle `576e7b0`。
+- 发布版 `index.yaml` 的卡版本为 `6.17`，6 条加载链接均指向 `576e7b0d5df759b46c4837ba99b8d84540da179c` 与 `phase129-sql-fallback-cooldown-6-17`。
+- 发布版 PNG 的 `chara` 与 `ccv3` 元数据均为 `version=6.17`；均包含新 hash/cache，不包含 `d06dabb`、`c61cae7`、`53bf6168`、`phase125/127/128` 或 localhost/127.0.0.1。
+- CDN smoke 显示发布版数据库 loader、数据库前端、状态栏 HTML，以及 loader 指向的 vendor 均返回 200。
+- `rg` 在发布版世界书历史测试记录中仍能找到 localhost 文本；这是测试记录正文，不是运行时资源加载链接，不影响发布版 CDN 链路判定。
