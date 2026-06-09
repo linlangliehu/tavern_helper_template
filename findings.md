@@ -1,5 +1,32 @@
 # Findings
 
+## 2026-06-09 项目理解快照（完成）
+
+- `CLAUDE.md` 指向 `.cursor/rules/*.mdc`，这些规则是理解项目开发规范的第一入口。
+- 项目核心不是单纯模板，而是 Tavern Helper / SillyTavern 角色卡、前端界面、脚本、世界书、MVU 变量和数据库扩展的综合工程。
+- 当前主线项目为 `src/神秘复苏模拟器/`；发布镜像为 `src/神秘复苏模拟器发布版/`。
+- 当前工作区基线：`main...origin/main`，dirty 项主要是 `.claude/worktrees/**`、`acu-logs-*.json`、`planning_archive_2026-06/**`、`tavern_current_view.png`，按既有规则默认视为本地参考。
+- 现有 planning 已高度压缩为恢复索引；历史长流水应读 `planning_archive_2026-06/**`，不要靠摘要猜细节。
+
+- 开发规则：前端界面项目是同时有 `index.ts` 与 `index.html` 的目录；脚本项目是只有 `index.ts` 的目录。代码加载时使用 `$(() => {})`，不要依赖 `DOMContentLoaded`。
+- 构建入口：`webpack.config.ts` 会扫描 `{示例,src}/**/index.{ts,tsx,js,jsx}`，有 `index.html` 的入口打包为 `dist/**/index.html`，无 HTML 的入口打包为 `dist/**/index.js`。
+- 常用命令：`pnpm watch` 实时开发，`pnpm build` 生产构建，`pnpm sync` 调 `tavern_sync.mjs`，`pnpm run publish-card -- 神秘复苏模拟器发布版` 同步发布版。
+- MVU 状态：`src/神秘复苏模拟器/schema.ts` 定义 `Schema`，状态栏通过 `界面/状态栏/store.ts` 的 `defineMvuDataStore(Schema, { type: 'message', message_id: getCurrentMessageId() })` 访问消息楼层变量。
+- 角色卡入口：`src/神秘复苏模拟器/index.yaml` 聚合第一条消息、系统提示词、脚本、界面和世界书。世界书规模约 386 个文件，主要分布在人物、灵异事件、原著剧情锚点、地点、厉鬼档案、灵异物品、规则、势力等目录。
+- 运行时脚本：`脚本/变量结构` 注册 MVU schema；`脚本/数据库` 加载自托管 `vendor/shujuku-sp-fork/index.js`；`脚本/数据库前端` 暴露 `MysteryDatabaseFrontend` 并自动校正神秘复苏 14 表模板；`脚本/固定状态栏` 在输入区上方显示最新状态摘要；`脚本/界面美化` 注入宿主页面主题和开局/选项交互增强。
+- 发布链路：`scripts/publish-card.mjs` 维护 `CDN_REF`、`CDN_CACHE_VERSION` 和 `releaseVersion`，把开发版镜像到发布版并调用 `tavern_sync.mjs bundle` 生成 PNG；已知它只自动替换 localhost/127.0.0.1 链接，已有 jsdelivr 旧 hash/cache 需要额外检查或手动替换。
+
+## 2026-06-09 发布版前端 404 诊断
+
+发布版 `src/神秘复苏模拟器发布版/index.yaml` 和 `scripts/publish-card.mjs` 曾写入错误的 `CDN_REF`：`c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4`，但本地 git 不存在这个完整对象。真实的 `c61cae7` 完整 hash 是 `c61cae707d06ce8b9dce7bc63d97a26e26a5834f`。
+
+验证结果：
+
+- 错误 URL：`@c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4/dist/.../脚本/数据库前端/index.js` 返回 `404`。
+- 正确 URL：`@c61cae707d06ce8b9dce7bc63d97a26e26a5834f/dist/.../脚本/数据库前端/index.js` 返回 `200`。
+
+结论：发布版前端不加载、14 表格不显示的直接原因是发布版 CDN 链接指向了错误的 commit hash，远程脚本加载失败。开发版能加载，是因为开发版走本地/实时调试链路或旧的有效资源链路，不依赖这个错误的发布版 CDN_REF。
+
 ## 已知 AI 输出质量问题（非代码 bug）
 
 SQLite 模式下，AI 生成 SQL 时可能出现以下输出缺陷。v6.13/6.14 防御层会正确拦截并报错，**不会写入脏数据**，但写入意图会丢失。这些是 **AI 输出质量问题**，不是代码逻辑 bug。
@@ -50,7 +77,7 @@ SP·数据库 III 运行日志里下面两类 `warn` 已确认无害，数据不
 HEAD==origin/main==e297002（待 push + CI 打标）
 tag==（待 CI 自动打标）
 releaseVersion==6.15
-CDN_REF==c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4
+CDN_REF==c61cae707d06ce8b9dce7bc63d97a26e26a5834f
 CDN_CACHE_VERSION==phase127-sql-prompt-optimize-6-15
 database marker==mfrs-sql-prompt-optimize-6-15
 ```

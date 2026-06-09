@@ -14,7 +14,7 @@
 
 ## RESUME HERE - 2026-06-09 23:30 CST - v6.15 发布完成
 
-**当前状态：** 根目录 planning 已整理为恢复索引。当前 live git 为 `HEAD==origin/main==c273b7d`，等待 CI 自动打标签，发布版为 `6.15`。发布卡 CDN 指向 `c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4`，cache 为 `phase127-sql-prompt-optimize-6-15`，数据库 marker 为 `mfrs-sql-prompt-optimize-6-15`。
+**当前状态：** 根目录 planning 已整理为恢复索引。当前 live git 为 `HEAD==origin/main==c273b7d`，等待 CI 自动打标签，发布版为 `6.15`。发布卡 CDN 指向 `c61cae707d06ce8b9dce7bc63d97a26e26a5834f`，cache 为 `phase127-sql-prompt-optimize-6-15`，数据库 marker 为 `mfrs-sql-prompt-optimize-6-15`。
 
 **本轮记录原则：**
 
@@ -41,7 +41,7 @@
 - **发布提交：** `265d9ba`，`release: publish v6.15 with SQL prompt optimization`。
 - **资源提交：** `c61cae7`，`build: rebuild dist with v6.15 prompt optimization`。
 - **Prompt 优化提交：** `cdfd625`，`feat: optimize SQL prompt to prevent column count mismatch`。
-- **发布脚本常量：** `scripts/publish-card.mjs` 中 `CDN_REF=c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4`，`CDN_CACHE_VERSION=phase127-sql-prompt-optimize-6-15`，`releaseVersion=6.15`。
+- **发布脚本常量：** `scripts/publish-card.mjs` 中 `CDN_REF=c61cae707d06ce8b9dce7bc63d97a26e26a5834f`，`CDN_CACHE_VERSION=phase127-sql-prompt-optimize-6-15`，`releaseVersion=6.15`。
 - **发布版文件：** `src/神秘复苏模拟器发布版/index.yaml` 版本为 `6.15`，CDN 链接指向 `c61cae7...`。
 - **说明：** 合并列数不匹配规则到现有"不完整 SQL"禁止事项，新增第 4 个负面示例，总增量 120 字符（1.4%），禁止事项条数不变（4→4），预计降低 30-40% 列数不匹配错误。
 
@@ -196,3 +196,18 @@
 - [x] 项目运行基本流程已提升为 `task_plan.md` 开头常驻优先读取项。
 - [ ] 如用户要求继续开发新问题，先冻结 `git status --short --branch`、当前版本 marker、SP 运行日志基线。
 - [ ] 如用户要求核验历史细节，读取归档文件而不是依赖压缩摘要。
+
+## 本次任务：使用 planning-with-files 了解项目（2026-06-09）
+
+**目标：** 恢复 planning 上下文，读取项目指令、规则、入口文件和主项目结构，形成可复用的项目理解摘要。
+
+**阶段：**
+
+- [x] 恢复现有 `task_plan.md`、`findings.md`、`progress.md`。
+- [x] 读取 `CLAUDE.md` 与 `AGENTS.md` 指向的规则入口。
+- [x] 冻结当前 `git status --short --branch`。
+- [x] 读取 `.cursor/rules/*.mdc`、`README.md`、`package.json`、构建/同步配置。
+- [x] 扫描 `src/神秘复苏模拟器/`、`scripts/`、`vendor/shujuku-sp-fork/` 的关键入口。
+- [x] 更新 `findings.md` 与 `progress.md`，输出项目理解摘要。
+
+**当前工作区基线：** `main...origin/main`，仅见本地参考 dirty：`.claude/worktrees/**`、`acu-logs-*.json`、`planning_archive_2026-06/**`、`tavern_current_view.png`。这些按现有边界默认不纳入提交。

@@ -1,5 +1,50 @@
 # Progress Log
 
+## 2026-06-09 CST：项目了解 — 完成
+
+**目标：** 按 `planning-with-files` 流程恢复上下文并建立项目地图。
+
+**已完成：**
+
+- 读取 `CLAUDE.md`，确认项目指令入口是 `.cursor/rules/*.mdc`。
+- 恢复并读取根目录 `task_plan.md`、`findings.md`、`progress.md`。
+- 运行 `git status --short --branch`，当前分支为 `main...origin/main`；dirty 项均为既有本地参考或日志/归档。
+- 初步确认项目定位：Tavern Helper / SillyTavern 角色卡工程，主开发版为 `src/神秘复苏模拟器/`，发布版为 `src/神秘复苏模拟器发布版/`。
+- 读取 `.cursor/rules/*.mdc` 关键规则、`README.md`、`package.json`、`webpack.config.ts`、`tavern_sync.yaml`。
+- 扫描主项目入口：`schema.ts`、状态栏界面、MVU 注册脚本、数据库 loader、数据库前端、固定状态栏、界面美化、发布脚本。
+- 更新 `findings.md` 为项目地图摘要，更新 `task_plan.md` 阶段状态。
+
+**结论：** 项目地图已建立；后续接新任务时优先读 `task_plan.md` 顶部流程、`.cursor/rules/*.mdc`、目标目录源码，再按开发版先改、真页验收、发布版同步的顺序推进。
+
+---
+
+## 2026-06-09 CST：发布版前端不加载修复 — 完成
+
+**问题：** 发布版神秘复苏模拟器前端不加载，14 表格不显示；本地开发版加载成功。
+
+**结论：** 发布版写入了错误的 CDN commit hash：`c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4`。本地 git 中真实的 `c61cae7` 完整 hash 是 `c61cae707d06ce8b9dce7bc63d97a26e26a5834f`。
+
+**验证：**
+
+- 发布版当前数据库前端 CDN URL 返回 `404`。
+- 将 hash 改为真实完整 hash 后，同路径返回 `200`。
+
+**修复：**
+
+- 将 `scripts/publish-card.mjs` 的 `CDN_REF` 改为真实完整 hash：`c61cae707d06ce8b9dce7bc63d97a26e26a5834f`。
+- 加固 `scripts/publish-card.mjs`：发布时不仅替换 localhost，也会替换已有的本仓库 jsdelivr CDN 链接，并统一刷新本仓库资源与 MagVarUpdate bundle 的 `?v=` cache 参数。
+- 将发布版 `index.yaml` 中状态栏、变量结构、界面美化、固定状态栏、数据库 loader、数据库前端的 CDN 链接同步到真实 hash。
+- 重新执行 `node scripts\publish-card.mjs 神秘复苏模拟器发布版`，刷新发布版 YAML 与 PNG 元数据。
+
+**修复验证：**
+
+- `src/神秘复苏模拟器发布版/index.yaml` 与发布版 PNG `chara` 元数据不再包含错误 hash、旧 hash 或旧 cache。
+- 发布版 PNG `chara` 元数据包含正确 hash、`phase127-sql-prompt-optimize-6-15` 和版本 `6.15`。
+- 修复后的状态栏、数据库 loader、数据库前端三条 CDN 资源均返回 `200`。
+- 提交前复核再次确认状态栏、数据库 loader、数据库前端三条 CDN 资源均返回 `200`，可进入提交推送。
+
+---
+
 ## 2026-06-09 23:00 CST：v6.15 发布 — 完成
 
 **目标：** 实施精简化 Prompt 优化方案，避免 prompt 臃肿。
@@ -39,7 +84,7 @@
 
 - HEAD: b421b82（rebase 后）
 - 版本: 6.15
-- CDN_REF: c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4
+- CDN_REF: c61cae707d06ce8b9dce7bc63d97a26e26a5834f
 - CDN_CACHE_VERSION: phase127-sql-prompt-optimize-6-15
 - database marker: mfrs-sql-prompt-optimize-6-15
 

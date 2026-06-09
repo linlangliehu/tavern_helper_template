@@ -26,12 +26,14 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 链接替换为 jsdelivr 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = 'c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4';
+const CDN_REF = 'c61cae707d06ce8b9dce7bc63d97a26e26a5834f';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 const CDN_CACHE_VERSION = 'phase127-sql-prompt-optimize-6-15';
 
 // 把任意 http(s)://localhost(:port)/ 或 http(s)://127.0.0.1(:port)/ 替换为 CDN
 const LOCALHOST_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//g;
+const REPO_PATTERN = REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const EXISTING_CDN_PATTERN = new RegExp(`https://testingcf\\.jsdelivr\\.net/gh/${REPO_PATTERN}@[^/'"\\s]+/`, 'g');
 
 const cards = [
   {
@@ -41,7 +43,10 @@ const cards = [
     yamlFile: 'index.yaml',
     syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书', '数据库'],
     syncFiles: ['神秘复苏模拟器.png'],            // 头像图
-    urlReplacements: [{ from: LOCALHOST_PATTERN, to: CDN }],
+    urlReplacements: [
+      { from: LOCALHOST_PATTERN, to: CDN },
+      { from: EXISTING_CDN_PATTERN, to: CDN },
+    ],
     releaseVersion: '6.15',
   },
 ];
@@ -108,7 +113,11 @@ function syncYaml(srcYaml, dstYaml, replacements, releaseVersion) {
     });
   }
   next = next.replace(
-    new RegExp(`(${CDN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}dist/[^'"\\s]+?/index\\.(?:js|html))(?![?\\w=&-])`, 'g'),
+    new RegExp(`(${CDN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}dist/[^'"\\s]+?/index\\.(?:js|html))(?:\\?v=[^'"\\s]+)?`, 'g'),
+    `$1?v=${CDN_CACHE_VERSION}`,
+  );
+  next = next.replace(
+    /(https:\/\/testingcf\.jsdelivr\.net\/gh\/MagicalAstrogy\/MagVarUpdate\/artifact\/bundle\.js)(?:\?v=[^'"\s]+)?/g,
     `$1?v=${CDN_CACHE_VERSION}`,
   );
   if (releaseVersion) {
