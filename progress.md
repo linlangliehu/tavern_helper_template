@@ -1,5 +1,43 @@
 # Progress Log
 
+## 2026-06-09 21:30 CST：v6.14 发布 — 完成
+
+**目标：** 按固定发布流程完成 v6.14 正式发布，包含方案 4 SQL 提取器增强。
+
+**完成清单：**
+
+- [x] 代码提交：f9e6806（vendor 改动 + planning）
+- [x] 生产构建：ea0d4f0（pnpm build dist）
+- [x] 自动构建：7a501cd（[bot] bundle）
+- [x] 更新 publish-card.mjs：CDN_REF=ea0d4f0, CACHE_VERSION=phase126, releaseVersion=6.14
+- [x] 发布版同步：eeea5f9（初次同步，CDN 链接未更新）
+- [x] CDN 链接修正：f96da7d（手动 sed 替换 + 重新打包 PNG）
+- [x] 推送远程仓库：所有提交已推送至 origin/main
+- [x] 验证发布版：版本 6.14，CDN 指向 ea0d4f0，cache phase126
+
+**流程缺陷发现：**
+
+`publish-card.mjs` 的 `syncYaml` 函数只替换 `localhost/127.0.0.1` 链接（第 104-109 行），不处理已有的 jsdelivr CDN 链接。发布版 YAML 中已经是 CDN 格式（旧 hash），导致首次同步时链接未更新。
+
+**解决方案：** 手动执行 sed 批量替换：
+```bash
+sed -i 's|c164fd35...5c70f82|ea0d4f098...fe11a3cda|g' index.yaml
+sed -i 's|phase125-sql-defense-depth-6-13|phase126-sql-extractor-enhance-6-14|g' index.yaml
+node tavern_sync.mjs bundle 神秘复苏模拟器发布版
+```
+
+**最终状态：**
+
+- HEAD: f96da7d
+- 版本: 6.14
+- CDN_REF: ea0d4f098f77e1854547a951a91b94dfe11a3cda
+- CDN_CACHE_VERSION: phase126-sql-extractor-enhance-6-14
+- 发布版 PNG 已同步所有 CDN 链接
+
+**待办：** jsdelivr CDN 缓存刷新（自动，5-10 分钟）
+
+---
+
 ## 2026-06-09 11:30 CST：方案 4 提取器增强 — 完成
 
 **目标：** 解决新日志（acu-logs-2026-06-09T03-16-20-219Z.json）中完整 SQL 仍被误判为 malformed 的问题，修复单行多语句处理缺陷和挽救逻辑盲区。

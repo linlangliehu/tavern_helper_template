@@ -22,19 +22,20 @@ SP·数据库 III 运行日志里下面两类 `warn` 已确认无害，数据不
 当前有效发布态以 live git 为准：
 
 ```text
-HEAD==origin/main==0ca57a5
-tag==v0.0.102
-releaseVersion==6.13
-CDN_REF==868c535e150f55f68fc076ad7fa76a58513ef13c
-CDN_CACHE_VERSION==phase125-sql-defense-depth-6-13
-database marker==mfrs-sql-defense-depth-6-13
+HEAD==origin/main==f96da7d
+tag==（待 CI 自动打标）
+releaseVersion==6.14
+CDN_REF==ea0d4f098f77e1854547a951a91b94dfe11a3cda
+CDN_CACHE_VERSION==phase126-sql-extractor-enhance-6-14
+database marker==mfrs-sql-extractor-enhance-6-14
 ```
 
 ## 版本变更保留表
 
 | 版本 | 主题 | 关键证据 | 验证/结论 |
 |---|---|---|---|
-| `6.13 final` | SQL 防御纵深体系 + 数据库前端自动重载修复 | SQL resource `53bf616`；frontend fix `868c535`；release `0ca57a5`；tag `v0.0.102` | 当前有效发布态；发布版 YAML 为 `6.13`，CDN 指向 `868c535` |
+| `6.14` | SQL 提取器增强：单行多语句切分 + 挽救逻辑修复 | resource `ea0d4f0`；release `f96da7d` | **当前有效发布态**；修复单行多语句处理缺陷、挽救循环盲区、增强诊断日志 |
+| `6.13 final` | SQL 防御纵深体系 + 数据库前端自动重载修复 | SQL resource `53bf616`；frontend fix `868c535`；release `0ca57a5`；tag `v0.0.102` | 已被 6.14 覆盖；发布版 YAML 为 `6.13`，CDN 指向 `868c535` |
 | `6.13 early` | 四层防御：静态预检、运行时沙箱、模板白名单、人工审核；另有错误分类与提示词增强 | `vendor/shujuku-sp-fork/index.js`、`scripts/verify-sql-debug-regressions.mjs`；initial resource `53bf616` | 功能进入当前 6.13；早期 release 链路被后续 hash/cache 回填覆盖 |
 | `6.12` | Schema/CHECK 约束通用防线 | resource `70fbe7d`、loader `82261c0`、release `9ba8f98`、tag `v0.0.87` | 已正式发布；后续被 6.13 覆盖 |
 | `6.11` | `UPDATE ... SET ..., WHERE` 尾逗号与中间修复链路 | `mfrs-update-trailing-comma-6-11`、`phase123-update-trailing-comma-6-11` | 中间链路，最终由 6.12/6.13 覆盖 |
@@ -79,9 +80,19 @@ database marker==mfrs-sql-defense-depth-6-13
 6. 回填 loader 的资源 hash、cache、marker，再构建并提交 loader 回填。
 7. 更新 `scripts/publish-card.mjs` 的 `CDN_REF`、`CDN_CACHE_VERSION`、`releaseVersion`。
 8. 执行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，将开发版镜像到发布版，并把本地链接替换成 jsdelivr CDN 链接。
-9. 验证 YAML、PNG `chara`、PNG `ccv3` 元数据，确认没有 localhost、旧 hash 或旧 cache 残留。
-10. 提交发布版同步结果并推送到 GitHub 远程仓库。
-11. 验证 CDN 200 与发布卡真页运行态。
+9. **手动检查并更新发布版 YAML 中的 CDN 链接**（publish-card.mjs 只替换 localhost，不处理已有 jsdelivr 链接）：
+   ```bash
+   # 替换旧 CDN hash 和 cache version
+   sed -i 's|<旧hash>|<新hash>|g' "src/神秘复苏模拟器发布版/index.yaml"
+   sed -i 's|<旧cache>|<新cache>|g' "src/神秘复苏模拟器发布版/index.yaml"
+   # 重新生成 PNG
+   node tavern_sync.mjs bundle 神秘复苏模拟器发布版
+   ```
+10. 验证 YAML、PNG `chara`、PNG `ccv3` 元数据，确认没有 localhost、旧 hash 或旧 cache 残留。
+11. 提交发布版同步结果并推送到 GitHub 远程仓库。
+12. 验证 CDN 200 与发布卡真页运行态。
+
+**已知缺陷：** `publish-card.mjs` 的 `syncYaml` 函数（第 100-119 行）只替换 `localhost/127.0.0.1` 链接（第 104-109 行），不会替换已有的 jsdelivr CDN 链接。发布版 YAML 中如果已经是 CDN 格式，需要手动 sed 替换或改进脚本逻辑。
 
 ### 发布版自动更新资源
 
