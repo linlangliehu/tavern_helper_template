@@ -283,3 +283,322 @@ database marker==mfrs-sql-prompt-optimize-6-15
 - 本次压缩前完整 planning：`planning_archive_2026-06/2026-06-08-post-v6-13-before-planning-optimization/`。
 - 6.12 发布后压缩前原文：`planning_archive_2026-06/2026-06-07-post-s9-before-optimization/`。
 - 更早的 2026-06-02 压缩归档：`planning_archive_2026-06/*.before-compress.md`。
+
+## 2026-06-09 骰子系统方案研究结论
+
+研究对象：`jerryzmtz/my-tavern-scripts` 仓库，入口由根目录 `--.json` 指向：
+
+- GitHub 仓库：`jerryzmtz/my-tavern-scripts`
+- 发布资源：`dist/骰子系统/stable.js`
+- 源码入口：`src/骰子系统/index.ts`
+
+关键结论：
+
+- 骰子系统是前端增强层，不是数据库本体；它依赖数据库本体暴露的 `AutoCardUpdaterAPI`。
+- 初始化方式：远程 `import(stable.js)` 后执行自执行脚本，挂载 `window.AcuDice`，DOM ready 后运行 `init()`。
+- 数据读取依赖 `getCurrentData()` 或 `exportTableAsJson()`。
+- 数据写入默认走 CRUD API：`updateCell()`、`insertRow()`、`deleteRow()`。
+- 骰子系统不会默认让 AI 输出 SQL；普通按钮、抽卡、数值更新、状态变化等确定性操作不请求 AI。
+- SQL/SQLite 细节被当作数据库后端实现细节处理。前端只做 DDL 兼容解析与本地约束校验。
+
+骰子系统对 SQL 模式的关键兼容策略：
+
+- 从 `sourceData.ddl` 解析真实 SQL 表名。
+- 解析 DDL 列名、注释 alias、`NOT NULL`、`CHECK(... IN (...))`、`LENGTH(...)`、`row_id`。
+- CRUD 写入前先做本地约束校验，提前给出可行动错误。
+- `updateCell` 失败时，某些场景有 JSON 楼层 fallback，但仍不让 AI 生成 SQL。
+
+与本项目当前 AI-SQL 填表链路的区别：
+
+- 当前 SQL 填表链路：`DDL + 当前数据 + 上下文 -> AI -> SQL -> SQLite 执行`，会触发 API 请求，容易被 `Too Many Requests` 放大。
+- 骰子系统链路：`前端已知操作 -> CRUD API -> 数据库`，不走 AI，不触发 SQL prompt 限流。
+
+综合推荐：
+
+- 不应完全替换当前 AI 填表；当前方案在“理解剧情并自动判断更新内容”上仍有优势。
+- 应采用混合架构：AI 负责输出结构化变更计划，前端负责 DDL 校验和 CRUD 执行；SQL 保留为高级兜底。
+- 确定性操作优先迁移到 CRUD，减少无意义 AI 请求。
+- API 限流应分类处理，不能混入 SQL 错误反馈重试。
+
+### 可吸收进神秘复苏前端的骰子系统能力
+
+优先吸收：
+
+- CRUD 直写数据库：适合所有确定性操作，是稳定性收益最大的部分。
+- DDL 约束校验：适合保存前阻止 `NOT NULL`、`CHECK`、长度、`row_id` 类错误。
+- 公共 API：可做成 `window.MFRS`，供正则按钮、楼层界面、世界书脚本调用。
+- 事件监听和自动刷新：监听聊天切换、消息更新、数据库更新后刷新界面。
+- 历史记录与审计：适合改造成推演日志、灵异判定记录、数据库写入记录。
+
+适合改造成神秘复苏玩法：
+
+- 掷骰/检定：改造成生存判定、复苏风险判定、厉鬼压制、鬼域对抗、关押成功率等。
+- 抽卡/商店：改造成总部资源兑换、灵异物品获取、事件结算奖励、档案权限或库存系统。
+- 检定历史：改造成事件判定记录、灵异对抗记录、推演日志。
+
+不建议直接照搬：
+
+- 骰子系统整套 UI：跑团/抽卡导向强，直接搬入神秘复苏会割裂。
+- 冲突检测逻辑：骰子系统用于避免与可视化前端同时启用，本项目前端自身是主界面，不应照搬“不能同时启用”的限制。
+- 大段骰子系统内置预设、素材和文档：会增加体积和维护成本，应只抽取架构思想和必要 API 模式。
+
+实现方向：
+
+- 第一优先级是“稳定层”：CRUD API、DDL 校验、错误分类。
+- 第二优先级是“智能层”：AI 变更计划 + CRUD 执行。
+- 第三优先级是“玩法层”：灵异判定、资源奖励、日志审计。
+- 所有玩法能力必须用神秘复苏语义重写，不保留外置骰子系统的外观和文案。
+
+## 2026-06-09 大步一：基础确认与现状盘点
+
+执行范围：阶段 0「基线冻结与接口确认」和阶段 1「现有填表链路盘点」。本次只做调查与 planning 更新，未修改业务代码。
+
+### 基线
+
+- 当前工作区：`main...origin/main`，`HEAD == origin/main == cde40b5f308d7ee423bbb014d59be4dd13e09043`。
+- 当前发布版：`6.15`。
+- 当前发布资源：`CDN_REF = c61cae707d06ce8b9dce7bc63d97a26e26a5834f`，`CDN_CACHE_VERSION = phase127-sql-prompt-optimize-6-15`。
+- 发布版 `src/神秘复苏模拟器发布版/index.yaml` 已指向 `c61cae707...` 与 `phase127...`。
+- SP 运行日志基线：只把 `2026-06-09 18:02:58 +08:00` 之后的新运行日志作为后续验证依据；当前 `acu-logs-2026-06-09T03-16-20-219Z.json` 与 `acu-logs-2026-06-09T04-37-31-071Z.json` 只算历史参考。
+- 注意：开发版 `src/神秘复苏模拟器/脚本/数据库/index.ts` 与 `src/神秘复苏模拟器/脚本/数据库前端/index.ts` 仍写着旧资源 `53bf6168...`、`phase125-sql-defense-depth-6-13`、`mfrs-sql-defense-depth-6-13`。这不是本次要修的内容，但进入实现前需要复核开发版/发布版资源边界，避免误判版本。
+
+### 数据库本体 API
+
+`vendor/shujuku-sp-fork/index.js` 已经暴露混合方案需要的基础 API：
+
+- 更新通知：`registerTableUpdateCallback`、`unregisterTableUpdateCallback`、`_notifyTableUpdate`。
+- 读取：`exportTableAsJson`。
+- 写入：`updateCell`、`insertRow`、`deleteRow`。
+- 刷新：`refreshDataAndWorldbook`。
+
+结论：基础方案不是被数据库本体卡住。数据库已经有 CRUD 能力，当前缺的是神秘复苏前端自己的兼容/适配层：表名 alias、列名 alias、row_id/自然键行定位、DDL 约束校验、批量写入队列、错误分类和限流冷却。
+
+### SQL/AI 链路
+
+SQL 模式的关键链路仍在数据库本体内：
+
+- `isSqliteMode()` 判定 SQLite/SQL 模式。
+- `prepareAIInput_ACU()` 组装 AI 输入。
+- `callCustomOpenAI_ACU()` 请求上游模型。
+- `parseAndApplyTableEdits_ACU()` 与 `extractSqlStatementsFromTableEdit_ACU()` 解析并执行 AI 输出。
+- `SQL_ERROR_FEEDBACK` 重试链路会在 SQL 错误后把错误反馈给 AI。
+
+结论：`Too Many Requests` 的主要放大器是 SQL 模式下的 AI 请求和错误反馈重试链路，不是 14 表加载失败，也不是数据库文件损坏。原生/确定性 CRUD 操作不会默认进入这条 AI-SQL 回路。
+
+### 神秘复苏前端现状
+
+- `src/神秘复苏模拟器/脚本/数据库前端/index.ts` 目前类型化的公开能力主要是打开可视化器、导入模板、刷新、导出和读取模板；尚未把 `updateCell/insertRow/deleteRow` 作为神秘复苏前端自己的稳定适配接口暴露出来。
+- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 当前读库经 `exportTableAsJson`，保存路径集中在 `saveDataToDatabase`，包括全局保存、单元格编辑、插入/卡片保存等入口；这是第一批迁移到 CRUD 的候选。
+- `src/神秘复苏模拟器/界面/状态栏/App.vue` 的 `<choices>` 解析、风险变化和按钮操作主要通过 `updateVariablesWith` 写 MVU；add/remove ghost/item 也是 MVU 操作，不是数据库写入。未来是否镜像到数据库，需要先定义 MVU 与数据库的主从关系。
+- 世界书规则已经明确：MVU 是即时真实状态，数据库是长期镜像；数据库写入建议应短，不应把长 SQL 暴露给玩家。这支持“AI 判断 + 前端校验 CRUD 执行”的混合设计。
+
+### 迁移优先级
+
+1. 可视化器手动编辑、保存、新增、删除：已知表/行/列/值，适合优先改成 CRUD。
+2. `行动建议` / `<choices>` 镜像：如果决定把 4 个选项同步进数据库，应走确定性 CRUD。
+3. 状态、资源、厉鬼、物品等 MVU 镜像：先明确主从策略，再做 CRUD。
+4. 自动剧情理解：改为 AI 输出结构化 `tableChangePlan` JSON，前端本地校验并执行 CRUD。
+5. SQL 模式：保留为高级维护、迁移和复杂兜底，不再作为普通自动填表默认路径。
+
+## 2026-06-09 大步二：协议与前端 CRUD 执行层
+
+执行范围：阶段 2「定义 AI 变更计划协议」、阶段 3「前端 CRUD 执行器」、阶段 4「DDL 与数据约束校验」，以及阶段 5 的前端执行落点。本次已修改业务代码，但没有切换旧 AI-SQL 默认链路。
+
+### 新增代码
+
+- `src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts`
+  - 定义 `TableChangePlan` / `TableChangeResult` / `TableChangeError`。
+  - 从当前导出数据和内置模板合并表信息，解析表名、DDL 物理表名、表头、DDL 注释 alias。
+  - 支持按用户可见表名、sheet uid、DDL 物理表名定位表。
+  - 支持按中文表头、DDL 物理列名、DDL 注释 alias 定位列。
+  - 支持按 `rowIndex`、`row_id`、自然键/多条件 `match` 定位行。
+  - 支持 `previewTableChangePlan()` 无副作用预检和 `applyTableChangePlan()` 执行 CRUD。
+- `src/神秘复苏模拟器/脚本/数据库前端/index.ts`
+  - 扩展 `MysteryDatabaseFrontend`：
+    - `getTableChangeSchema()`
+    - `getTableMetadata()`
+    - `previewTableChangePlan(plan)`
+    - `applyTableChangePlan(plan)`
+  - `applyTableChangePlan` 已串行排队，避免并发写库踩踏。
+  - 成功执行后触发可视化器重绘，但不改变现有 v10.2 可视化器默认保存路径。
+- `dist/神秘复苏模拟器/脚本/数据库前端/index.js`
+  - `pnpm build` 生成的生产产物。
+
+### tableChangePlan 最小协议
+
+成功示例：更新行动建议 A 的风险。
+
+```json
+{
+  "action": "updateCell",
+  "table": "行动建议",
+  "match": { "row_id": 1 },
+  "set": {
+    "主要风险": "可能触发敲门声靠近",
+    "死亡风险": "中",
+    "复苏风险": "无"
+  },
+  "reason": "本轮选项 A 是接近声音源头调查，存在中等死亡风险。",
+  "confidence": 0.82
+}
+```
+
+成功示例：插入人物。
+
+```json
+{
+  "action": "insertRow",
+  "table": "characters",
+  "data": {
+    "name": "张伟",
+    "identity_text": "七中学生",
+    "faction_text": "普通人",
+    "location_name": "七中教学楼",
+    "presence_status": "在场",
+    "life_status": "存活",
+    "supernatural_ability": "无",
+    "relations_text": "同校学生",
+    "known_info": "听到敲门声后出现恐慌。"
+  },
+  "reason": "正文明确出现新人物并给出位置与状态。",
+  "confidence": 0.76
+}
+```
+
+负面示例：禁止 SQL。
+
+```json
+{
+  "action": "updateCell",
+  "table": "行动建议",
+  "match": { "row_id": 1 },
+  "set": {
+    "SQL": "UPDATE action_suggestions SET death_risk_level='中' WHERE row_id=1;"
+  }
+}
+```
+
+负面示例：禁止无法唯一定位。
+
+```json
+{
+  "action": "deleteRow",
+  "table": "人物",
+  "match": { "life_status": "存活" },
+  "reason": "会命中多行，必须补充姓名或 row_id。"
+}
+```
+
+### 错误分类
+
+当前前端执行层会返回结构化错误，不直接进入 AI 重试：
+
+- `INVALID_PLAN`
+- `TABLE_NOT_FOUND`
+- `ROW_NOT_FOUND`
+- `MULTIPLE_ROWS_MATCHED`
+- `COLUMN_NOT_FOUND`
+- `NOT_NULL_VIOLATION`
+- `CHECK_IN_VIOLATION`
+- `LENGTH_VIOLATION`
+- `API_UNAVAILABLE`
+- `API_MUTATION_FAILED`
+
+这些错误适合后续阶段 5 只把失败项和局部上下文回传 AI，而不是把错误塞进 SQL_ERROR_FEEDBACK。
+
+### 当前边界
+
+- 已有执行层，不代表旧自动填表已经切到新链路；数据库本体内的 `prepareAIInput_ACU`、`callCustomOpenAI_ACU`、`parseAndApplyTableEdits_ACU`、`SQL_ERROR_FEEDBACK` 仍保持原状。
+- DDL 解析已覆盖 `CREATE TABLE`、列定义、`NOT NULL`、`CHECK(... IN (...))`、`LENGTH(...)`、`PRIMARY KEY`；复杂 `CHECK BETWEEN/GLOB/TRIM` 与自动 row_id 推断后续再补。
+- `applyTableChangePlan()` 目前适合确定性前端操作和后续 AI JSON 计划执行，不建议直接让玩家手写复杂计划。
+
+### 2026-06-09 补充验证发现
+
+- 新增 `scripts/verify-table-change-adapter.mjs` 后，确认适配层已经能覆盖当前大步二最关键的行为：表 alias、列 alias、`row_id` 行定位、危险多行匹配阻断、DDL `CHECK IN` 与 `LENGTH` 预检、CRUD API 参数转换。
+- 验证脚本暴露的是脚本断言问题，不是运行时代码问题：第一次失败是样例文本未超过长度限制；第二次失败是 `vm` 跨上下文对象原型导致 `deepStrictEqual` 不适合直接比较。已改成稳定字段断言。
+- 结论：大步二不只是“API 暴露出来”，而是有了可重复的本地回归门。后续迁移确定性入口时，可以先扩展这个脚本，再接入真实入口，避免把错误推到酒馆真页才发现。
+
+## 2026-06-09 大步三：确定性入口迁移第一批
+
+本次迁移对象是 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 的手动可视化编辑入口。
+
+已迁移入口：
+
+- 单元格编辑：已知表名、行号、列名和值，直接转为 `tableChangePlan.updateCell`。
+- 整体编辑：把同一行的多个列变更合并成 `set`，直接转为 `tableChangePlan.updateCell`。
+- 删除行提交：把待删除集合转为 `tableChangePlan.deleteRow`，先全量 preview，再 apply。
+
+关键设计：
+
+- 默认启用 CRUD 迁移；可用 `localStorage.acu_mfrs_visualizer_crud_migration = 'false'` 关闭。
+- CRUD 失败不硬失败：会 toast 暴露结构化错误，然后回退旧 `saveDataToDatabase` 快照保存。
+- 删除行优先使用 `row_id` 匹配，缺少 `row_id` 才使用 content 行索引，避免多行删除时索引漂移。
+
+未迁移入口：
+
+- 插入新行仍保留旧路径。原因是当前 UI 的语义是“在当前位置后插入空白占位行”，而底层 CRUD `insertRow` 更适合“追加一条完整合法行”。神秘复苏 14 表大量列有 `NOT NULL` / `CHECK` / `LENGTH` 约束，直接插入空行会把本地校验变成常态失败。
+
+后续建议：
+
+- 如果要迁移新增行，应先改 UI：从“空白占位行”改为“新增表单”，用户填完必填列后再调用 `insertRow`。
+- 下一批迁移比新增行更适合先做 `行动建议` / `<choices>` 镜像，因为它天然有 4 条固定 row_id 和确定字段，CRUD 语义更稳。
+
+## 2026-06-09 大步三：确定性入口迁移第二批
+
+本次迁移对象是 `src/神秘复苏模拟器/界面/状态栏/App.vue` 解析出的 `<choices>` / A-B-C-D 推演选项到数据库 `行动建议` 表的镜像。
+
+关键发现：
+
+- `行动建议` 表是阶段 6 中最适合第二批迁移的入口：表结构固定 4 行，`row_id` 1-4 对应 A-D，字段与状态栏选项天然一致。
+- 这个入口不需要 AI 理解，也不需要 SQL；状态栏已经能从当前楼层消息中解析选项文本和风险数值，因此可以直接构造成 `tableChangePlan.updateCell`。
+- 状态栏和数据库前端是不同入口，不能直接模块导入数据库适配器；更稳的连接方式是弱连接顶层 `window.MysteryDatabaseFrontend.applyTableChangePlan()`。
+- 镜像失败不应该打断玩家体验：状态栏的主职责是展示选项和填入输入框，因此数据库 API 缺失或写库失败只应跳过/记录 `console.warn`，不弹 toast。
+- 风险数值到数据库枚举的映射必须在前端完成，避免把 `death=10`、`revive=5` 之类内部数值写进只允许 `无/低/中/高/致命/未知` 的列。
+
+已落地设计：
+
+- 默认启用 `<choices>` -> `行动建议` CRUD 镜像；可用 `localStorage.acu_mfrs_choices_crud_mirror = 'false'` 关闭。
+- 只在 A/B/C/D 四项齐全时镜像，避免把半截选项写入数据库。
+- 同一组选项只写一次，减少重复 CRUD 写库。
+- 写入顺序为 row_id 1-4；优先 `updateCell`，如果目标行不存在则尝试完整 `insertRow` 补行。
+- 优先使用 MVU `/行动建议` 里的“思路/主要风险/预期收益”，否则从 `<choices>` 文本、风险来源和固定兜底文案生成数据库字段。
+- 文本写入前截断到 80 字符以内，配合 DDL `LENGTH` 约束避免常态失败。
+
+当前边界：
+
+- 这次只镜像“展示给玩家的推演选项”，没有把玩家点击选项后产生的风险值/MVU 状态变化写进数据库。
+- 点击选项后的状态镜像需要先明确主从关系：当前 MVU 是即时状态源，数据库更像长期镜像/审计层，不能贸然双写。
+- 还没有做酒馆真页验收；需要实测当前楼层输出 `<choices>` 后，`行动建议` 表刷新且 SP 运行日志没有新增 SQL/AI 错误。
+
+## 2026-06-09 大步三补充：固定行 row_id 范围校验
+
+本次补充对象是 `table-change-adapter.ts` 的 DDL 约束解析层。
+
+发现：
+
+- `行动建议` 与 `检定建议` 都是固定行表，DDL 用 `CHECK(row_id BETWEEN 1 AND 4/5)` 限制行号。
+- 迁移 `<choices>` 镜像后，状态栏补行逻辑虽然只会写 1-4，但适配层本身还没有理解这个约束；后续如果迁移 `检定建议` 或其他固定行表，越界 row_id 应该在本地预检阶段就被拦截。
+- 原 `insertRow` 校验只检查非主键列，对显式传入的 `row_id` 没有做范围约束；这会让补行类操作少一道前端保险。
+
+已落地：
+
+- 新增 `CHECK_RANGE_VIOLATION` 错误码。
+- 解析数值型 `CHECK(<column> BETWEEN min AND max)`，目前覆盖 `row_id` 这类固定行约束。
+- `insertRow` 若显式包含主键列，也会校验主键列的范围。
+- `getTableMetadata()` 现在能暴露 `minValue` / `maxValue`，后续 UI 可用它判断固定行数量。
+- 验证脚本新增越界 row_id 样例，确认 `row_id: 5` 写入 `行动建议` 会在本地被拦截。
+
+边界：
+
+- 这不是完整 SQL CHECK 解析器；`TRIM(...) <> ''`、`GLOB` 等复杂表达式仍未覆盖。
+- row_id 自动生成或推断仍不在本次范围内。
+
+## 2026-06-09 大步五验证结论：CRUD fallback 与发布边界
+
+- 真实页验证确认，神秘复苏数据库前端最新 dist 能在 `http://127.0.0.1:8000/` 的 `神秘复苏模拟器` 当前角色页上返回完整 14 表。
+- 底层 `AutoCardUpdaterAPI.insertRow/updateCell/deleteRow` 在 SQLite 模式下可能返回失败或不稳定；这不是数据库模板损坏，也不是 14 表加载问题，而是底层 SQLite mutation 路径与当前表格结构/调用形态之间的兼容问题。
+- 前端适配器的有效修复是：先做表名/列名/行定位/DDL 约束校验，再尝试底层 CRUD；底层 mutation 失败时，克隆当前导出 JSON，执行最小行级变更，并通过 `importTableAsJson` 写回。这个路径不触发 AI，也不触发 SQL 生成，因此不会放大 `Too Many Requests`。
+- 真页普通表验证已覆盖 `人物/characters` 的 insert、update、delete，临时行最终清理为 0。
+- 真页固定行验证已覆盖 `行动建议/action_suggestions` 的 row_id 1-4 补行、row_id=2 更新、row_id=5 越界拦截，并恢复原始表状态。
+- 发布边界：本轮没有切换旧自动填表主链路到 `AI_CHANGE_PLAN_CRUD`，也没有移除 SQL 模式。当前完成的是确定性前端操作和 choices 镜像的稳定 CRUD 层。
+- 回滚方式：`localStorage.acu_mfrs_visualizer_crud_migration = 'false'` 可关闭可视化器 CRUD 迁移；`localStorage.acu_mfrs_choices_crud_mirror = 'false'` 可关闭 choices 镜像。

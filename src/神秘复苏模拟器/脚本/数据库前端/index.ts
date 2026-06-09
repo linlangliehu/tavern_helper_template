@@ -1,5 +1,16 @@
 import templateData from '../../数据库/神秘复苏表格SQL_v1.json';
 import './v10_2_visualizer.js';
+import {
+  applyTableChangePlan,
+  listTableMetadata,
+  normalizeExportedTableData,
+  previewTableChangePlan,
+  tableChangePlanSchemaDescription,
+  type AutoCardUpdaterCrudApi,
+  type TableChangePlan,
+  type TableChangeResult,
+  type TableMetaSummary,
+} from './table-change-adapter';
 
 type AutoCardUpdaterAPI = {
   __mfrsDatabaseScriptMarker__?: string;
@@ -8,6 +19,9 @@ type AutoCardUpdaterAPI = {
   refreshDataAndWorldbook?: () => unknown | Promise<unknown>;
   exportTableAsJson?: () => unknown | Promise<unknown>;
   getTableTemplate?: () => unknown | Promise<unknown>;
+  updateCell?: AutoCardUpdaterCrudApi['updateCell'];
+  insertRow?: AutoCardUpdaterCrudApi['insertRow'];
+  deleteRow?: AutoCardUpdaterCrudApi['deleteRow'];
 };
 
 type TemplateStatus = {
@@ -45,6 +59,10 @@ type HostWindow = Window & {
     openStatus: () => Promise<void>;
     refreshDatabase: () => Promise<void>;
     exportCurrentData: () => Promise<unknown>;
+    getTableChangeSchema: () => typeof tableChangePlanSchemaDescription;
+    getTableMetadata: () => Promise<TableMetaSummary[]>;
+    previewTableChangePlan: (plan: TableChangePlan) => Promise<TableChangeResult>;
+    applyTableChangePlan: (plan: TableChangePlan) => Promise<TableChangeResult>;
     getPanelState: () => Promise<FrontendState>;
     refreshPanel: () => Promise<void>;
   };
@@ -60,8 +78,8 @@ type HostWindow = Window & {
   };
 };
 
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@53bf6168a0ff5ab11ce8d6345a603d279ee9c49a/vendor/shujuku-sp-fork/index.js?v=phase125-sql-defense-depth-6-13';
-const databaseScriptMarker = 'mfrs-sql-defense-depth-6-13';
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@c61cae707d06ce8b9dce7bc63d97a26e26a5834f/vendor/shujuku-sp-fork/index.js?v=phase127-sql-prompt-optimize-6-15';
+const databaseScriptMarker = 'mfrs-sql-prompt-optimize-6-15';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
@@ -93,6 +111,7 @@ const templateSheets = Object.values(templateData as Record<string, unknown>)
 let templateAutofixPromise: Promise<void> | null = null;
 let databaseScriptReloadPromise: Promise<boolean> | null = null;
 let databaseScriptReloadSeq = 0;
+let tableChangeQueue: Promise<unknown> = Promise.resolve();
 
 function getHostWindow() {
   try {
@@ -237,18 +256,24 @@ function findTemplateMismatchNames(template: unknown) {
 }
 
 function normalizeExportedData(exported: unknown) {
-  if (typeof exported !== 'string') return exported;
-  try {
-    return JSON.parse(exported) as unknown;
-  } catch {
-    return exported;
-  }
+  return normalizeExportedTableData(exported);
 }
 
 function requireApi(hostWindow: HostWindow) {
   const api = hostWindow.AutoCardUpdaterAPI;
   if (!api) throw new Error('未检测到 AutoCardUpdaterAPI，请确认spv3.9.5·数据库已加载。');
   return api;
+}
+
+async function exportCurrentDatabaseData(api: AutoCardUpdaterAPI) {
+  if (!api.exportTableAsJson) throw new Error('表格导出接口不可用。');
+  return normalizeExportedData(await api.exportTableAsJson());
+}
+
+function enqueueTableChange<T>(task: () => Promise<T>) {
+  const run = tableChangeQueue.then(task, task);
+  tableChangeQueue = run.catch(() => undefined);
+  return run;
 }
 
 async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStatus> {
@@ -389,7 +414,7 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
     api = (await waitForApi(hostWindow, 16, 250)) ?? api;
   }
 
-  let status = await readTemplateStatus(api);
+  const status = await readTemplateStatus(api);
   if (status.templateLoaded) {
     rerenderAcu(hostWindow);
     return;
@@ -534,9 +559,28 @@ function installCompatibilityApi() {
       await api.refreshDataAndWorldbook();
     },
     async exportCurrentData() {
+      return exportCurrentDatabaseData(requireApi(hostWindow));
+    },
+    getTableChangeSchema() {
+      return tableChangePlanSchemaDescription;
+    },
+    async getTableMetadata() {
       const api = requireApi(hostWindow);
-      if (!api.exportTableAsJson) throw new Error('表格导出接口不可用。');
-      return normalizeExportedData(await api.exportTableAsJson());
+      return listTableMetadata(await exportCurrentDatabaseData(api), templateData);
+    },
+    async previewTableChangePlan(plan) {
+      const api = requireApi(hostWindow);
+      return previewTableChangePlan(plan, await exportCurrentDatabaseData(api), templateData);
+    },
+    async applyTableChangePlan(plan) {
+      return enqueueTableChange(async () => {
+        const api = requireApi(hostWindow);
+        const result = await applyTableChangePlan(api, plan, await exportCurrentDatabaseData(api), templateData);
+        if (result.ok) {
+          rerenderAcu(hostWindow);
+        }
+        return result;
+      });
     },
     async getPanelState() {
       return {

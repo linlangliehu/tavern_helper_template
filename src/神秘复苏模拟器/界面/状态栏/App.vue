@@ -364,9 +364,28 @@ const isFirstFloor = getCurrentMessageId() === 0
 // 解析当前楼 AI 文本里的「推演选项」并渲染为按钮，点击后把选项文本填进酒馆输入框。
 type OptionRisk = { death: number; revive: number; source: string; tagged: boolean }
 type OptionItem = { key: string; text: string; risk: OptionRisk }
+type TableChangePlanInput = {
+  action: 'updateCell' | 'insertRow'
+  table: string
+  match?: { row_id?: number }
+  set?: Record<string, string>
+  data?: Record<string, string | number>
+  reason?: string
+  confidence?: number
+}
+type TableChangeResultLike = {
+  ok?: boolean
+  errors?: Array<{ code?: string; message?: string }>
+}
+type MysteryDatabaseFrontendApi = {
+  applyTableChangePlan?: (plan: TableChangePlanInput) => Promise<TableChangeResultLike> | TableChangeResultLike
+}
 
 const optionRiskOpenTagPattern = /<risk\b[^>]*\/?>/i
 const optionRiskTagPattern = /<\/?risk\b[^>]*>/gi
+const actionSuggestionKeys = ['A', 'B', 'C', 'D'] as const
+let lastMirroredChoicesSignature = ''
+let choicesMirrorQueue: Promise<unknown> = Promise.resolve()
 
 function clampRiskDelta(value: unknown) {
   const n = Number(value)
@@ -502,6 +521,131 @@ function normalizeOptionKey(rawKey: string) {
   }
   if (/^[A-D]$/.test(key)) return key
   return map[key] ?? ''
+}
+
+function truncateDbText(value: unknown, max = 80, fallback = '未知') {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim() || fallback
+  return text.length > max ? text.slice(0, max) : text
+}
+
+function riskLevelFromDelta(value: number) {
+  if (value <= 0) return '无'
+  if (value <= 2) return '低'
+  if (value <= 5) return '中'
+  if (value <= 8) return '高'
+  return '致命'
+}
+
+function getMysteryDatabaseFrontendApi() {
+  const candidates: unknown[] = []
+  try {
+    candidates.push(window.parent)
+  } catch {
+    // ignore cross-frame access errors
+  }
+  candidates.push(window)
+
+  for (const candidate of candidates) {
+    const frontend = (candidate as { MysteryDatabaseFrontend?: MysteryDatabaseFrontendApi } | undefined)
+      ?.MysteryDatabaseFrontend
+    if (frontend?.applyTableChangePlan) return frontend
+  }
+  return null
+}
+
+function isChoicesCrudMirrorEnabled() {
+  try {
+    return window.localStorage?.getItem('acu_mfrs_choices_crud_mirror') !== 'false'
+  } catch {
+    return true
+  }
+}
+
+function normalizeOptionsForDatabase(sourceOptions: OptionItem[]) {
+  const byKey = new Map(sourceOptions.map(option => [option.key, option]))
+  if (!byKey.has('D') && sourceOptions.length >= 3) {
+    byKey.set('D', {
+      key: 'D',
+      text: '自定义行动',
+      risk: { death: 0, revive: 0, source: '自定义行动', tagged: true },
+    })
+  }
+  if (!actionSuggestionKeys.every(key => byKey.has(key))) return []
+  return actionSuggestionKeys.map(key => byKey.get(key) as OptionItem)
+}
+
+function findMvuActionSuggestion(key: string) {
+  const suggestions = Array.isArray(d().行动建议) ? d().行动建议 : []
+  return suggestions.find(item => normalizeOptionKey(String(item?.选项 ?? '')) === key)
+}
+
+function buildActionSuggestionSet(option: OptionItem) {
+  const mvuSuggestion = findMvuActionSuggestion(option.key)
+  return {
+    option_key: option.key,
+    idea_text: truncateDbText(mvuSuggestion?.思路 || option.text),
+    main_risk: truncateDbText(mvuSuggestion?.主要风险 || option.risk.source || optionRiskLabel(option.risk)),
+    expected_gain: truncateDbText(
+      mvuSuggestion?.预期收益 || (option.key === 'D' ? '取决于自定义行动' : '推进当前调查或降低不确定性'),
+    ),
+    death_risk_level: riskLevelFromDelta(option.risk.death),
+    revival_risk_level: riskLevelFromDelta(option.risk.revive),
+  }
+}
+
+function hasRowNotFoundError(result: TableChangeResultLike) {
+  return result.errors?.some(error => error.code === 'ROW_NOT_FOUND') ?? false
+}
+
+async function applyActionSuggestionPlan(
+  api: MysteryDatabaseFrontendApi,
+  rowId: number,
+  set: Record<string, string>,
+) {
+  const updateResult = await api.applyTableChangePlan?.({
+    action: 'updateCell',
+    table: '行动建议',
+    match: { row_id: rowId },
+    set,
+    reason: '状态栏推演选项镜像',
+    confidence: 1,
+  })
+  if (updateResult?.ok || !updateResult || !hasRowNotFoundError(updateResult)) return updateResult
+
+  return api.applyTableChangePlan?.({
+    action: 'insertRow',
+    table: '行动建议',
+    data: { row_id: rowId, ...set },
+    reason: '状态栏推演选项镜像补行',
+    confidence: 1,
+  })
+}
+
+function mirrorActionSuggestionsToDatabase(sourceOptions: OptionItem[]) {
+  if (!isChoicesCrudMirrorEnabled()) return
+  const normalizedOptions = normalizeOptionsForDatabase(sourceOptions)
+  if (normalizedOptions.length === 0) return
+
+  const payload = normalizedOptions.map(option => ({ rowId: actionSuggestionKeys.indexOf(option.key as 'A' | 'B' | 'C' | 'D') + 1, set: buildActionSuggestionSet(option) }))
+  const signature = JSON.stringify({ messageId: getCurrentMessageId(), payload })
+  if (signature === lastMirroredChoicesSignature) return
+
+  const api = getMysteryDatabaseFrontendApi()
+  if (!api?.applyTableChangePlan) return
+
+  lastMirroredChoicesSignature = signature
+  choicesMirrorQueue = choicesMirrorQueue.then(async () => {
+    for (const item of payload) {
+      const result = await applyActionSuggestionPlan(api, item.rowId, item.set)
+      if (!result?.ok) {
+        console.warn('[MFRS Status] 行动建议 CRUD 镜像失败。', { item, result })
+        return
+      }
+    }
+  }).catch(error => {
+    lastMirroredChoicesSignature = ''
+    console.warn('[MFRS Status] 行动建议 CRUD 镜像异常。', error)
+  })
 }
 
 function splitOptionLines(rawBlock: string) {
@@ -859,7 +1003,9 @@ function parseAIMarkers() {
 
 watchEffect(() => {
   void statusPanel.value
-  options.value = extractOptions()
+  const nextOptions = extractOptions()
+  options.value = nextOptions
+  mirrorActionSuggestionsToDatabase(nextOptions)
   parseAIMarkers()
 })
 
@@ -1090,7 +1236,7 @@ const controlledGhostPanelItems = computed(() => {
   }))
   return arrayToPanelItems(source).map(ghost => ({
     title: objectText(ghost, '代号', '未命名厉鬼'),
-    meta: `复苏 ${objectText(ghost, '复苏进度', '0')}% / ${Boolean((ghost as Record<string, unknown>).是否死机) ? '死机' : '未死机'}`,
+    meta: `复苏 ${objectText(ghost, '复苏进度', '0')}% / ${(ghost as Record<string, unknown>).是否死机 ? '死机' : '未死机'}`,
     rows: [
       { label: '规律', value: objectText(ghost, '杀人规律') },
       { label: '拼图', value: objectText(ghost, '拼图特征', '未确认') },

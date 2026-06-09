@@ -211,3 +211,422 @@
 - [x] 更新 `findings.md` 与 `progress.md`，输出项目理解摘要。
 
 **当前工作区基线：** `main...origin/main`，仅见本地参考 dirty：`.claude/worktrees/**`、`acu-logs-*.json`、`planning_archive_2026-06/**`、`tavern_current_view.png`。这些按现有边界默认不纳入提交。
+
+## 后续任务：稳定 + 智能混合填表架构（AI 规划 + CRUD 执行）
+
+**目标：** 结合当前 SQL/AI 填表方案的剧情理解能力，以及骰子系统前端的 CRUD 直写稳定性，设计并逐步实现一套“AI 负责判断、前端负责校验与执行、SQL 仅作兜底”的新架构，降低 SQL 模式 `Too Many Requests`、SQL 语法错误和重试放大风险。
+
+**总原则：**
+
+- AI 不再默认直接输出 SQL；默认输出结构化变更计划。
+- 前端负责表名/列名解析、DDL 约束校验、row_id 处理和 CRUD 执行。
+- 确定性操作不调用 AI，直接走 `AutoCardUpdaterAPI.updateCell/insertRow/deleteRow`。
+- SQL 模式保留为高级维护、迁移和复杂兜底通道，不作为普通自动填表默认路径。
+
+### 阶段 0：基线冻结与接口确认
+
+- [x] 记录 `git status --short --branch`、当前版本、发布 hash/cache/marker。
+- [x] 记录 SP 运行日志基线时间戳，避免把旧错误当新错误。
+- [x] 确认当前数据库本体暴露的 API：
+  - [x] `AutoCardUpdaterAPI.getCurrentData` 或 `exportTableAsJson`
+  - [x] `AutoCardUpdaterAPI.updateCell`
+  - [x] `AutoCardUpdaterAPI.insertRow`
+  - [x] `AutoCardUpdaterAPI.deleteRow`
+  - [x] `refreshDataAndWorldbook` 或 `_notifyTableUpdate`
+- [x] 对照骰子系统 `jerryzmtz/my-tavern-scripts` 的 CRUD 兼容层，整理可借鉴函数清单。
+- [x] 输出接口兼容性结论：能直接实现、需要 polyfill、需要升级数据库本体。
+
+**阶段 0 结论（2026-06-09）：** 数据库本体已经暴露读取、CRUD、刷新和更新通知能力，基础混合方案不需要先升级数据库本体。下一步主要补前端适配层：表名/列名 alias、row_id/自然键行定位、DDL 约束校验、批量队列与错误分类。SP 运行日志基线按 `2026-06-09 18:02:58 +08:00` 之后的新日志计算，已有 `acu-logs-*.json` 只作历史参考。
+
+### 阶段 1：现有填表链路盘点
+
+- [x] 梳理开发版前端中所有会修改数据库的入口：
+  - [x] 手动编辑/保存
+  - [x] 推演选项点击
+  - [x] 状态切换/按钮操作
+  - [x] 自动剧情填表
+  - [x] 导入/初始化/重填
+- [x] 按操作类型分类：
+  - [x] 确定性 CRUD 操作
+  - [x] 需要 AI 判断的剧情操作
+  - [x] 只能 SQL 兜底的高级操作
+- [x] 标出当前仍会触发 AI-SQL 填表的入口。
+- [x] 形成迁移优先级：先迁移高频、确定性、低风险操作。
+
+**阶段 1 结论（2026-06-09）：** 当前神秘复苏前端读库主要经 `exportTableAsJson`，可视化编辑仍偏整表快照保存；状态栏 `<choices>` 和按钮主要写 MVU，不是数据库 CRUD。AI-SQL 仍由数据库本体的自动填表、纪要/总结合并和 SQL 模板 prompt 链路触发。迁移优先级为：可视化手动编辑/新增/删除 -> 行动建议/choices 镜像 -> 明确状态/资源镜像 -> AI 剧情结构化变更计划 -> SQL 高级兜底。
+
+### 阶段 2：定义 AI 变更计划协议
+
+- [x] 设计 `tableChangePlan` JSON schema：
+  - [x] `action`: `updateCell` / `insertRow` / `deleteRow` / `noop`
+  - [x] `table`: 用户可见表名
+  - [x] `match`: 行定位条件
+  - [x] `set` 或 `data`: 写入字段
+  - [x] `reason`: 剧情依据
+  - [x] `confidence`: 置信度
+- [x] 设计失败反馈 schema：
+  - [x] 表不存在
+  - [x] 行定位失败/多行匹配
+  - [x] 列不存在
+  - [x] NOT NULL/CHECK/LENGTH 约束失败
+  - [x] API 限流
+- [x] 明确 AI 只能输出 JSON，不输出 SQL、不输出解释正文。
+- [x] 为当前 14 表写最小示例 prompt 和负面示例。
+
+**阶段 2 结论（2026-06-09）：** 已在数据库前端新增 `tableChangePlan` 运行时协议与 schema 描述，公开为 `MysteryDatabaseFrontend.getTableChangeSchema()`；示例和负面约束记录在 `findings.md`。当前只是前端协议落点，尚未替换数据库本体内旧 AI-SQL prompt。
+
+### 阶段 3：前端 CRUD 执行器
+
+- [x] 实现数据库 API 适配层：
+  - [x] 安全获取顶层 `AutoCardUpdaterAPI`
+  - [x] API 缺失时给出可行动错误
+  - [x] 支持 `getCurrentData/exportTableAsJson` 读取
+- [x] 实现表定位：
+  - [x] 用户可见表名 -> sheetKey
+  - [x] SQL DDL 表名 -> sheetKey
+  - [x] 表名 alias/fallback
+- [x] 实现列定位：
+  - [x] 用户可见表头
+  - [x] DDL 物理列名
+  - [x] DDL 注释 alias
+- [x] 实现行定位：
+  - [x] row_id
+  - [x] 主显示列/自然键
+  - [x] 多条件 match
+  - [x] 多行匹配时阻止写入并反馈 AI/用户
+- [x] 实现 CRUD 执行：
+  - [x] `updateCell`
+  - [x] `insertRow`
+  - [x] `deleteRow`
+  - [x] 批量执行队列，避免并发写入踩踏
+
+**阶段 3 结论（2026-06-09）：** 已新增 `table-change-adapter.ts`，并通过 `MysteryDatabaseFrontend.previewTableChangePlan()` / `applyTableChangePlan()` / `getTableMetadata()` 对外暴露。执行入口串行排队，不改变现有可视化器默认保存路径。
+
+### 阶段 4：DDL 与数据约束校验
+
+- [x] 从 `sourceData.ddl` 解析：
+  - [x] `CREATE TABLE` 真实 SQL 表名
+  - [x] 列定义
+  - [x] `NOT NULL`
+  - [x] `CHECK(... IN (...))`
+  - [x] `LENGTH(...)`
+  - [x] `PRIMARY KEY` / `row_id`
+- [x] 保存前校验：
+  - [x] 必填列是否有值
+  - [x] 枚举值是否合法
+  - [x] 字符长度是否合法
+  - [ ] row_id 是否缺失或需要推断
+    - [x] `CHECK(row_id BETWEEN N AND M)` 范围解析与显式 row_id 写入预检
+- [x] 失败时生成结构化错误，供 AI 只修正失败项。
+- [x] 明确哪些约束错误应直接提示用户，不再重试 AI。
+
+**阶段 4 结论（2026-06-09）：** 已完成 DDL 基础解析与本地约束预检，能在 CRUD 前阻止未知列、空必填、枚举越界、长度越界、多行匹配等问题。后续补充了数值型 `CHECK(... BETWEEN ... AND ...)` 范围解析，固定行表的显式 `row_id` 越界会在本地被拦截；复杂 `GLOB/TRIM` 与 row_id 自动推断仍留到增强阶段。
+
+### 阶段 5：AI 规划 + CRUD 主链路
+
+- [ ] 新增自动填表模式：`AI_CHANGE_PLAN_CRUD`。
+- [ ] 修改 AI prompt：从“输出 SQL”改为“输出变更计划 JSON”。
+- [ ] 限制输入范围：
+  - [ ] 只发送目标表
+  - [ ] 普通表支持 `sendLatestRows`
+  - [ ] 纪要/总结类表只发最近 N 行
+  - [ ] 减少无关世界书/上下文注入
+- [ ] 执行流程：
+  - [ ] 调 AI 得到计划
+  - [ ] JSON parse + schema 校验
+  - [ ] 本地 DDL 校验
+  - [ ] CRUD 执行
+  - [ ] 刷新数据库与前端
+- [ ] 失败流程：
+  - [ ] 只把失败项和局部上下文回传 AI
+  - [ ] 最多修正 1-2 次
+  - [ ] API 限流时冷却并停止，不进入 SQL 错误反馈
+
+**阶段 5 进展（2026-06-09）：** 已完成前端执行落点：`previewTableChangePlan()` 可无副作用预检，`applyTableChangePlan()` 可执行 CRUD。尚未修改数据库本体的 AI prompt、自动填表模式和 SQL_ERROR_FEEDBACK 链路，因此旧 AI-SQL 默认路径仍保持不变。
+
+### 阶段 6：确定性操作迁移
+
+- [ ] 将不需要 AI 的前端操作迁移到 CRUD：
+  - [x] 单元格编辑
+  - [ ] 行增删
+    - [x] 删除行提交：优先 CRUD 预检与 `deleteRow`
+    - [ ] 新增空行：暂留旧快照路径，因当前 UI 是“当前位置后插入空白占位行”，底层 `insertRow` 更适合追加合法完整行
+  - [x] 整体编辑/多列编辑
+  - [ ] 状态按钮
+  - [ ] 推演选项中确定的数值/状态写入
+    - [x] `<choices>` / 状态栏推演选项镜像到 `行动建议` 固定 4 行：优先 CRUD `updateCell`，缺行时尝试合法 `insertRow`
+    - [ ] 点击选项后的风险值/MVU 状态是否镜像入数据库：待先明确 MVU 与数据库主从关系
+  - [ ] 任何“已知表、已知行、已知列、已知值”的操作
+- [x] 每迁移一个入口，保留原路径 fallback 开关。
+- [ ] 为用户可见错误增加区分：
+  - [ ] 数据库 API 缺失
+  - [ ] 模板不兼容
+  - [x] 约束不合法
+  - [ ] 保存失败
+
+**阶段 6 进展（2026-06-09）：** v10.2 可视化器第一批确定性入口已迁移：单元格编辑、整体编辑、待删除行提交会优先调用 `MysteryDatabaseFrontend.applyTableChangePlan()`；CRUD 预检/执行失败时自动回退旧 `saveDataToDatabase` 快照路径。第二批已接入状态栏 `<choices>` 解析结果到 `行动建议` 表固定 4 行，使用顶层 `MysteryDatabaseFrontend.applyTableChangePlan()` 弱连接，默认启用，可用 `localStorage.acu_mfrs_choices_crud_mirror = 'false'` 关闭；数据库前端或 CRUD API 不存在时只跳过，不影响状态栏显示。新增空行暂不迁移，因为当前 UI 生成空必填列占位并要求插入到当前位置后，直接用底层 `insertRow` 会改变语义且容易触发 NOT NULL 约束。
+
+### 阶段 7：SQL 通道降级为兜底
+
+- [ ] 保留现有 SQL 模式能力，但改为可配置兜底。
+- [ ] 为 SQL 通道增加触发条件：
+  - [ ] 高级维护/迁移
+  - [ ] 用户手动选择 SQL 模式
+  - [ ] CRUD 无法表达的批量操作
+- [ ] API 限流分类：
+  - [ ] `Too Many Requests`
+  - [ ] HTTP 429
+  - [ ] `Retry-After`
+  - [ ] 网关错误
+- [ ] 限流错误不写入 `SQL_ERROR_FEEDBACK`。
+- [ ] 限流时使用冷却/指数退避，并避免连续批量重试。
+
+### 阶段 8：测试与真页验收
+
+- [ ] 单元/脚本级验证：
+  - [ ] JSON schema 校验样例
+  - [ ] 表名/列名 alias 解析
+  - [ ] NOT NULL/CHECK/LENGTH 校验
+  - [ ] row_id 推断
+  - [ ] CRUD 执行失败分类
+  - [x] `行动建议` 固定 4 行 CRUD 镜像样例：row_id 更新、缺行插入、枚举/长度约束拦截
+  - [x] 固定行表 `row_id BETWEEN` 范围约束样例：越界 row_id 阻止写入
+- [ ] 真页手动测试：
+  - [ ] 开发版 14 表加载
+  - [ ] 确定性按钮 CRUD 写入
+  - [ ] AI_CHANGE_PLAN_CRUD 自动填表
+  - [ ] SQL 兜底仍可用
+  - [ ] SP 运行日志无新增 SQL 错误
+- [ ] 对比指标：
+  - [ ] API 请求次数
+  - [ ] prompt 大小
+  - [ ] `Too Many Requests` 发生率
+  - [ ] 填表成功率
+  - [ ] 数据一致性
+
+### 阶段 9：发布与回滚
+
+- [ ] 开发版验收通过后，同步发布版。
+- [ ] 跑固定 gate：
+  - [ ] `git diff --check`
+  - [ ] `node --check` / 项目对应静态检查
+  - [ ] SQL 回归脚本
+  - [ ] `pnpm build`
+- [ ] 按固定发布流程更新 CDN hash/cache/marker/version。
+- [ ] 发布版真页 smoke test。
+- [ ] 保留配置开关：
+  - [ ] 默认新链路
+  - [ ] 可回退旧 AI-SQL
+  - [ ] 可禁用 CRUD 迁移入口
+
+### 阶段 10：神秘复苏公共前端 API
+
+**目标：** 借鉴 `window.AcuDice`，为神秘复苏模拟器提供统一公共 API，供前端按钮、正则、楼层界面、世界书脚本和后续玩法模块调用。
+
+- [ ] 设计全局命名空间：
+  - [ ] `window.MFRS` 或 `window.MysteriousRevival`
+  - [ ] API 版本号，如 `version: '1.0.0'`
+  - [ ] `onReady(callback)` 与 `mfrs:ready` 事件
+- [ ] 暴露数据库读写 API：
+  - [ ] `getData()`
+  - [ ] `findTable(tableName)`
+  - [ ] `findRow(tableName, match)`
+  - [ ] `updateCell(tableName, match, column, value)`
+  - [ ] `insertRow(tableName, data)`
+  - [ ] `deleteRow(tableName, match)`
+- [ ] 暴露剧情/模拟器 API：
+  - [ ] `getCharacterState(name)`
+  - [ ] `updateCharacterState(name, patch)`
+  - [ ] `getEventState(eventName)`
+  - [ ] `recordDecision(decision)`
+- [ ] 暴露判定 API：
+  - [ ] `roll(expression)`
+  - [ ] `check(options)`
+  - [ ] `spiritualCheck(options)`
+  - [ ] `ghostSuppressionCheck(options)`
+- [ ] 暴露事件订阅：
+  - [ ] `on(event, handler)`
+  - [ ] `off(event, handler)`
+  - [ ] 事件：`data_updated`、`check_done`、`resource_changed`、`plan_applied`、`error`
+- [ ] 防覆盖保护：
+  - [ ] 不重复初始化
+  - [ ] 不覆盖已有 API
+  - [ ] 顶层 window 与当前 iframe/window 同步挂载
+
+### 阶段 11：灵异判定系统
+
+**目标：** 将骰子系统的检定能力改造成神秘复苏专用判定，不直接照搬跑团 UI。
+
+- [ ] 定义判定类型：
+  - [ ] 生存判定
+  - [ ] 复苏风险判定
+  - [ ] 厉鬼压制判定
+  - [ ] 鬼域对抗判定
+  - [ ] 关押成功判定
+  - [ ] 理智/污染/侵蚀判定
+- [ ] 定义判定输入：
+  - [ ] 角色名
+  - [ ] 相关属性/状态
+  - [ ] 灵异等级/风险等级
+  - [ ] 场景修正
+  - [ ] 目标难度
+- [ ] 定义判定公式：
+  - [ ] 默认随机表达式，如 `1d100` 或项目自定义权重
+  - [ ] 成功规则：小于等于/大于等于/区间/等级对抗
+  - [ ] 大成功/大失败规则
+- [ ] 从数据库读取判定数值：
+  - [ ] 人物状态表
+  - [ ] 驭鬼者/厉鬼相关表
+  - [ ] 事件/地点风险表
+- [ ] 判定后写入数据库：
+  - [ ] 角色状态变化
+  - [ ] 风险等级变化
+  - [ ] 事件进度变化
+  - [ ] 判定记录表/日志表
+- [ ] UI 设计：
+  - [ ] 轻量弹窗或侧栏，不照搬骰子面板
+  - [ ] 快捷判定按钮
+  - [ ] 判定结果卡片
+  - [ ] 支持确认后写库、取消不写库
+
+### 阶段 12：资源与奖励系统
+
+**目标：** 将骰子系统的抽卡/商店能力改造成神秘复苏世界观下的资源、奖励和库存系统。
+
+- [ ] 设计资源类型：
+  - [ ] 总部贡献/功勋
+  - [ ] 现金/资产
+  - [ ] 灵异资源点
+  - [ ] 鬼烛/替死娃娃/棺材钉等特殊物品库存
+  - [ ] 档案权限/情报点
+- [ ] 设计奖励来源：
+  - [ ] 事件结算奖励
+  - [ ] 关押厉鬼奖励
+  - [ ] 总部任务奖励
+  - [ ] 探索发现奖励
+  - [ ] 随机灵异物品获取
+- [ ] 设计奖励执行：
+  - [ ] 前端确定性奖励走 CRUD
+  - [ ] AI 可建议奖励计划，但由前端校验后执行
+  - [ ] 写入物品表、装备表、档案表或资源字段
+- [ ] 设计商店/兑换：
+  - [ ] 资源兑换物品
+  - [ ] 权限不足提示
+  - [ ] 库存不足提示
+  - [ ] 兑换记录
+- [ ] 可选随机池：
+  - [ ] 灵异物品池
+  - [ ] 档案线索池
+  - [ ] 危险事件池
+  - [ ] 稀有度/保底只在玩法需要时引入，避免跑团抽卡感过重
+- [ ] DDL 校验：
+  - [ ] 奖励写入前检查目标表必填列、枚举、长度限制
+  - [ ] 缺少字段时提示用户修模板或补配置
+
+### 阶段 13：判定历史、事件日志与审计
+
+**目标：** 借鉴骰子系统检定历史，但改成“推演日志/灵异判定记录/数据库写入审计”。
+
+- [ ] 设计日志类型：
+  - [ ] 灵异判定记录
+  - [ ] AI 变更计划记录
+  - [ ] CRUD 写入记录
+  - [ ] 奖励/资源变化记录
+  - [ ] 失败/回滚记录
+- [ ] 设计日志字段：
+  - [ ] 时间
+  - [ ] 来源：用户按钮 / AI 计划 / 自动剧情 / 系统
+  - [ ] 目标表/行/列
+  - [ ] 旧值/新值
+  - [ ] 判定结果/原因
+  - [ ] 错误分类
+- [ ] UI 功能：
+  - [ ] 最近记录面板
+  - [ ] 按角色/事件/表名筛选
+  - [ ] 展开查看执行细节
+  - [ ] 复制错误报告
+- [ ] 审计与恢复：
+  - [ ] 执行前快照
+  - [ ] 单次操作撤销
+  - [ ] 失败时保留局部恢复信息
+
+### 阶段 14：前端体验整合
+
+**目标：** 把新能力整合进神秘复苏模拟器现有界面，保持世界观一致，不把骰子系统 UI 生硬塞入。
+
+- [ ] 信息架构：
+  - [ ] “数据库/表格”仍作为基础层
+  - [ ] “推演/判定”作为玩法层
+  - [ ] “资源/奖励”作为结算层
+  - [ ] “日志/审计”作为调试和回溯层
+- [ ] 入口设计：
+  - [ ] 顶部/侧栏工具按钮
+  - [ ] 角色卡片内快捷操作
+  - [ ] 事件卡片内快捷判定
+  - [ ] 物品/资源卡片内兑换操作
+- [ ] 状态反馈：
+  - [ ] 操作成功 toast
+  - [ ] 约束失败可行动提示
+  - [ ] API 限流提示
+  - [ ] 模板不兼容提示
+- [ ] 视觉原则：
+  - [ ] 不照搬骰子系统跑团/抽卡外观
+  - [ ] 使用神秘复苏的“档案、总部、灵异事件、风险评级”语义
+  - [ ] 控件保持紧凑、可扫描、适合反复操作
+- [ ] 移动端验收：
+  - [ ] 弹窗不溢出
+  - [ ] 按钮不遮挡正文
+  - [ ] 长表/日志可滚动
+  - [ ] 输入框和工具栏不互相挤压
+
+**优先级建议：**
+
+1. P0：接口确认、现有入口盘点、确定性 CRUD 迁移。
+2. P1：AI 变更计划协议 + CRUD 执行器。
+3. P2：DDL 校验与失败分类。
+4. P3：公共前端 API + 灵异判定最小闭环。
+5. P4：资源奖励、历史审计、体验整合。
+6. P5：SQL 通道降级、限流分类、发布流程。
+
+**成功标准：**
+
+- 确定性前端交互不再触发 AI 请求。
+- 自动剧情填表默认不要求 AI 输出 SQL。
+- SQL 模式 `Too Many Requests` 发生率显著下降。
+- 失败日志能明确区分 API 限流、CRUD 约束失败、模板不兼容和 SQL 兜底失败。
+- 用户仍保留根据剧情自动更新数据库的智能体验。
+- 前端提供稳定公共 API，正则/楼层界面/按钮可复用。
+- 灵异判定、资源奖励、历史日志与神秘复苏世界观一致，不表现为外置骰子系统。
+
+## 2026-06-09 大步二补充收口
+
+- [x] 新增专项验证脚本：`scripts/verify-table-change-adapter.mjs`。
+- [x] 验证 `tableChangePlan` 的表名定位：用户可见表名、DDL 物理表名。
+- [x] 验证列名定位：中文表头、DDL 物理列名、DDL 注释 alias。
+- [x] 验证行定位：`row_id` 精确匹配和多行匹配阻断。
+- [x] 验证 DDL 约束：`CHECK IN`、`LENGTH <=`、`LENGTH BETWEEN`。
+- [x] 验证 CRUD 调用参数：`updateCell`、`insertRow`、阻断失败时不调用 `deleteRow`。
+- [x] 补跑 `pnpm build` 与 `git diff --check`。
+
+**收口结论：** 大步二的协议层、前端 CRUD 执行层和本地约束预检已经具备脚本级回归验证。旧 AI-SQL 主链路仍未切换，后续应进入确定性入口迁移或阶段 5 主链路切换。
+
+## 2026-06-09 大步五收口：验证、发布与回滚
+
+### 阶段 8：测试与真页验收（本轮完成项）
+
+- [x] 最新数据库前端 dist 注入真页后，`getTableMetadata()` 返回完整 14 表。
+- [x] `人物/characters` 普通表真页 CRUD 烟测通过：insert/update/delete 均 `ok=true`，临时行最终清理为 0。
+- [x] `行动建议/action_suggestions` 固定行表真页验证通过：row_id 1-4 补行、row_id=2 更新、row_id=5 本地预检拦截。
+- [x] loader marker 已从旧 `mfrs-sql-defense-depth-6-13` 接管为 `mfrs-sql-prompt-optimize-6-15`，14 表仍完整。
+- [x] 本地 gate 通过：`verify-table-change-adapter`、`node --check`、eslint、`git diff --check`、`pnpm build`。
+- [ ] SP 运行日志人工面板复核：本轮通过前端 CRUD 路径验证不触发 AI/SQL，但未从 SP 高级工具 UI 手动导出新运行日志。
+
+### 阶段 9：发布与回滚（本轮发布路径）
+
+- [x] 代码侧保留可回滚开关：`acu_mfrs_visualizer_crud_migration=false` 与 `acu_mfrs_choices_crud_mirror=false`。
+- [x] 上一稳定远程基线：`cde40b5 fix: repair v6.15 release cdn links`。
+- [x] 发布前补齐 loader 卫生项：数据库 loader 与数据库前端 loader 均指向当前有效 6.15 vendor 资源。
+- [ ] 资源提交并推送到 GitHub。
+- [ ] 更新 `scripts/publish-card.mjs` 的新 CDN hash/cache/version，并同步发布版 YAML/PNG。
+- [ ] 发布提交并推送到 GitHub。
+- [ ] CDN URL 与发布卡 smoke test。

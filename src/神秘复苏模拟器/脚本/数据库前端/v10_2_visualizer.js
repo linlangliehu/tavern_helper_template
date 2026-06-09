@@ -12,6 +12,7 @@
     const STORAGE_KEY_REVERSE_TABLES = 'acu_reverse_tables';
     const STORAGE_KEY_HIDDEN_TABLES = 'acu_hidden_tables';
     const STORAGE_KEY_TABLE_STYLES = 'acu_table_styles';
+    const STORAGE_KEY_MFRS_CRUD_MIGRATION = 'acu_mfrs_visualizer_crud_migration';
     
     const TAB_DASHBOARD = 'acu_tab_dashboard_home';
     const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
@@ -288,6 +289,61 @@
             $: window.jQuery || w.jQuery,
             getDB: () => w.AutoCardUpdaterAPI || window.AutoCardUpdaterAPI
         };
+    };
+
+    const getMysteryFrontendApi = () => {
+        try {
+            const w = window.parent || window;
+            return w.MysteryDatabaseFrontend || window.MysteryDatabaseFrontend || null;
+        } catch (e) {
+            return window.MysteryDatabaseFrontend || null;
+        }
+    };
+
+    const isMfrsCrudMigrationEnabled = () => {
+        try {
+            const w = window.parent || window;
+            const value = (w.localStorage || window.localStorage).getItem(STORAGE_KEY_MFRS_CRUD_MIGRATION);
+            return value !== 'false';
+        } catch (e) {
+            return true;
+        }
+    };
+
+    const formatTableChangeErrors = (errors) => {
+        if (!Array.isArray(errors) || errors.length === 0) return '未知错误';
+        return errors.map(error => {
+            const column = error.column ? ` / ${error.column}` : '';
+            return `${error.code || 'ERROR'}${column}: ${error.message || ''}`;
+        }).join('；');
+    };
+
+    const applyMfrsCrudPlan = async (plan, fallbackLabel = '旧保存路径') => {
+        if (!isMfrsCrudMigrationEnabled()) return false;
+        const api = getMysteryFrontendApi();
+        if (!api || typeof api.applyTableChangePlan !== 'function') return false;
+        try {
+            const result = await api.applyTableChangePlan(plan);
+            if (result && result.ok) return true;
+            console.warn('[MFRS Visualizer] CRUD 写入预检/执行失败，回退旧保存路径。', { plan, result });
+            if (window.toastr) window.toastr.warning(`CRUD 写入未通过，已回退${fallbackLabel}：${formatTableChangeErrors(result?.errors)}`);
+        } catch (error) {
+            console.warn('[MFRS Visualizer] CRUD 写入异常，回退旧保存路径。', { plan, error });
+            if (window.toastr) window.toastr.warning(`CRUD 写入异常，已回退${fallbackLabel}`);
+        }
+        return false;
+    };
+
+    const previewMfrsCrudPlan = async (plan) => {
+        if (!isMfrsCrudMigrationEnabled()) return null;
+        const api = getMysteryFrontendApi();
+        if (!api || typeof api.previewTableChangePlan !== 'function') return null;
+        try {
+            return await api.previewTableChangePlan(plan);
+        } catch (error) {
+            console.warn('[MFRS Visualizer] CRUD 预检异常。', { plan, error });
+            return null;
+        }
     };
 
     const getIconForTableName = (name) => {
@@ -1142,6 +1198,86 @@
                 $saveBtn.html(originalIcon || '<i class="fa-solid fa-save"></i>').prop('disabled', false);
             }
         }
+    };
+
+    const applyCellEditWithCrud = async (tableName, rowIndex, columnName, value) => {
+        if (!tableName || !columnName) return false;
+        return applyMfrsCrudPlan({
+            action: 'updateCell',
+            table: tableName,
+            match: { rowIndex: rowIndex + 1 },
+            column: columnName,
+            value: value ?? '',
+            reason: 'v10.2 可视化器单元格编辑',
+            confidence: 1
+        }, '单元格快照保存');
+    };
+
+    const applyRowEditWithCrud = async (tableName, rowIndex, changes) => {
+        if (!tableName || !changes || Object.keys(changes).length === 0) return false;
+        return applyMfrsCrudPlan({
+            action: 'updateCell',
+            table: tableName,
+            match: { rowIndex: rowIndex + 1 },
+            set: changes,
+            reason: 'v10.2 可视化器整体编辑',
+            confidence: 1
+        }, '整行快照保存');
+    };
+
+    const buildPendingDeletePlans = (tableData) => {
+        const plans = [];
+        if (!tableData || !pendingDeletes.size) return plans;
+        for (const sheetId in tableData) {
+            const sheet = tableData[sheetId];
+            if (!sheet || !sheet.name || !Array.isArray(sheet.content)) continue;
+            const prefix = `${sheet.name}-row-`;
+            for (const deleteKey of pendingDeletes) {
+                if (!String(deleteKey).startsWith(prefix)) continue;
+                const realIndex = Number(String(deleteKey).slice(prefix.length));
+                if (!Number.isInteger(realIndex) || realIndex < 0) continue;
+                const contentIndex = realIndex + 1;
+                const row = sheet.content[contentIndex];
+                if (!Array.isArray(row)) continue;
+                plans.push({
+                    action: 'deleteRow',
+                    table: sheet.name,
+                    match: row[0] !== undefined && row[0] !== null && String(row[0]).trim() !== ''
+                        ? { row_id: row[0] }
+                        : { rowIndex: contentIndex },
+                    reason: 'v10.2 可视化器待删除行提交',
+                    confidence: 1
+                });
+            }
+        }
+        return plans;
+    };
+
+    const commitPendingDeletesWithCrud = async (tableData) => {
+        if (!isMfrsCrudMigrationEnabled() || pendingDeletes.size === 0) return false;
+        const plans = buildPendingDeletePlans(tableData);
+        if (plans.length !== pendingDeletes.size) return false;
+        for (const plan of plans) {
+            const preview = await previewMfrsCrudPlan(plan);
+            if (!preview || !preview.ok) {
+                console.warn('[MFRS Visualizer] 删除行 CRUD 预检失败，回退旧保存路径。', { plan, preview });
+                if (window.toastr) window.toastr.warning(`删除行 CRUD 预检失败，已回退旧保存路径：${formatTableChangeErrors(preview?.errors)}`);
+                return false;
+            }
+        }
+        for (const plan of plans) {
+            const ok = await applyMfrsCrudPlan(plan, '删除快照保存');
+            if (!ok) return false;
+        }
+        pendingDeletes.clear();
+        updateSaveBtnState();
+        currentDiffMap.clear();
+        $('.acu-highlight-changed').removeClass('acu-highlight-changed');
+        const latestData = getTableData();
+        if (latestData) saveSnapshot(latestData);
+        renderInterface();
+        if (window.toastr) window.toastr.success('已通过 CRUD 删除选中行。');
+        return true;
     };
 
     const processJsonData = (json) => {
@@ -3012,7 +3148,13 @@
         $('#acu-btn-settings').off('click').on('click', (e) => { e.stopPropagation(); if (isEditingOrder) { toggleOrderEditMode(); } else { showSettingsModal(); } });
         $('#acu-btn-cancel-mode').off('click').on('click', (e) => { e.stopPropagation(); isEditingOrder = false; renderInterface(); });
         $('#acu-btn-save-mode').off('click').on('click', (e) => { e.stopPropagation(); toggleOrderEditMode(); });
-        $('#acu-btn-save-global').off('click').on('click', async function(e) { e.stopPropagation(); const rawData = getTableData(); if (rawData) await saveDataToDatabase(rawData, false, true); });
+        $('#acu-btn-save-global').off('click').on('click', async function(e) {
+            e.stopPropagation();
+            const rawData = getTableData();
+            if (!rawData) return;
+            if (pendingDeletes.size > 0 && await commitPendingDeletesWithCrud(rawData)) return;
+            await saveDataToDatabase(rawData, false, true);
+        });
         $('#acu-btn-open-native').off('click').on('click', function(e) {
             e.preventDefault(); e.stopPropagation();
             const api = getCore().getDB();
@@ -3287,10 +3429,14 @@
                 $displayTarget.addClass('acu-highlight-changed');
 
                 const rawData = getTableData();
-                if (rawData && rawData[tableKey]?.content[rowIdx + 1]) { 
-                      rawData[tableKey].content[rowIdx + 1][colIdx] = newVal;
-                    await saveDataToDatabase(rawData, true);
-                } 
+                if (rawData && rawData[tableKey]?.content[rowIdx + 1]) {
+                    const columnName = rawData[tableKey].content[0]?.[colIdx];
+                    const savedByCrud = await applyCellEditWithCrud(tableName, rowIdx, columnName, newVal);
+                    if (!savedByCrud) {
+                        rawData[tableKey].content[rowIdx + 1][colIdx] = newVal;
+                        await saveDataToDatabase(rawData, true);
+                    }
+                }
             });
         });
         menu.find('#act-insert').click(async () => {
@@ -3372,16 +3518,25 @@
             if (currentData && currentData[tableKey]) {
                 const currentRow = currentData[tableKey].content[rowIndex + 1];
                 let hasChanges = false;
+                const changes = {};
                 dialog.find('textarea').each(function () {
                     const colIdx = parseInt($(this).data('col'));
                     const newVal = $(this).val();
                     if (String(currentRow[colIdx]) !== String(newVal)) {
                         hasChanges = true;
-                        currentRow[colIdx] = newVal;
+                        const columnName = currentData[tableKey].content[0]?.[colIdx];
+                        if (columnName) changes[columnName] = newVal ?? '';
                     }
                 });
                 if (hasChanges) {
-                    await saveDataToDatabase(currentData, false);
+                    const savedByCrud = await applyRowEditWithCrud(tableName, rowIndex, changes);
+                    if (!savedByCrud) {
+                        dialog.find('textarea').each(function () {
+                            const colIdx = parseInt($(this).data('col'));
+                            currentRow[colIdx] = $(this).val();
+                        });
+                        await saveDataToDatabase(currentData, false);
+                    }
                 }
             }
             closeDialog();
