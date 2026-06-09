@@ -12,9 +12,9 @@
 - **自动更新边界：** 发布版卡加载 GitHub/jsdelivr 上的前端界面、脚本或美化样式，资源变化通常不需要玩家重新导入；世界书、第一条消息、系统提示词、角色卡正文、数据库模板等卡本体变化，必须更新发布版 PNG 与版本号，卡内更新入口再用 `getCharacter` / `importRawCharacter` 一类接口处理。
 - **替代工具口径：** `npx agent-browser --cdp 9222` 只是当前 Codex CLI 可用的替代 CDP 访问方式，不是本项目默认流程；默认流程仍是 Chrome DevTools MCP。
 
-## RESUME HERE - 2026-06-08 18:10 CST - planning 记录已压缩
+## RESUME HERE - 2026-06-09 23:30 CST - v6.15 发布完成
 
-**当前状态：** 根目录 planning 已整理为恢复索引。当前 live git 为 `HEAD==origin/main==0ca57a5`，tag `v0.0.102`，发布版仍为 `6.13`。发布卡 CDN 指向 `868c535e150f55f68fc076ad7fa76a58513ef13c`，cache 为 `phase125-sql-defense-depth-6-13`，数据库 marker 为 `mfrs-sql-defense-depth-6-13`。
+**当前状态：** 根目录 planning 已整理为恢复索引。当前 live git 为 `HEAD==origin/main==c273b7d`，等待 CI 自动打标签，发布版为 `6.15`。发布卡 CDN 指向 `c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4`，cache 为 `phase127-sql-prompt-optimize-6-15`，数据库 marker 为 `mfrs-sql-prompt-optimize-6-15`。
 
 **本轮记录原则：**
 
@@ -34,23 +34,24 @@
 
 ## 当前版本与发布链路
 
-### 最新发布：6.13 SQL 防御纵深体系最终发布
+### 最新发布：6.15 SQL Prompt 精简优化
 
-- **状态：** active，已推送，`HEAD==origin/main==0ca57a5`。
-- **tag：** `v0.0.102`。
-- **发布提交：** `0ca57a5`，`fix: update release CDN_REF to 868c535 (with auto-reload fix)`。
-- **前端修复资源：** `868c535`，`fix: disable database script auto-reload on marker mismatch`。
-- **SQL 防御资源：** `53bf616`，`feat: v6.13 SQL 防御纵深体系`。
-- **发布脚本常量：** `scripts/publish-card.mjs` 中 `CDN_REF=868c535e150f55f68fc076ad7fa76a58513ef13c`，`CDN_CACHE_VERSION=phase125-sql-defense-depth-6-13`，`releaseVersion=6.13`。
-- **发布版文件：** `src/神秘复苏模拟器发布版/index.yaml` 版本为 `6.13`，CDN 链接指向 `868c535...`。
-- **说明：** 数据库前端 dist 由 `868c535` 发布，但其中数据库本体 URL 仍指向 `53bf616.../vendor/shujuku-sp-fork/index.js?v=phase125-sql-defense-depth-6-13`，这是 v6.13 SQL 防御资源。
+- **状态：** active，已推送，`HEAD==origin/main==c273b7d`。
+- **tag：** 等待 CI 自动打标。
+- **发布提交：** `265d9ba`，`release: publish v6.15 with SQL prompt optimization`。
+- **资源提交：** `c61cae7`，`build: rebuild dist with v6.15 prompt optimization`。
+- **Prompt 优化提交：** `cdfd625`，`feat: optimize SQL prompt to prevent column count mismatch`。
+- **发布脚本常量：** `scripts/publish-card.mjs` 中 `CDN_REF=c61cae79c95498f1aee9e5e27e13e3e12cb6a3f4`，`CDN_CACHE_VERSION=phase127-sql-prompt-optimize-6-15`，`releaseVersion=6.15`。
+- **发布版文件：** `src/神秘复苏模拟器发布版/index.yaml` 版本为 `6.15`，CDN 链接指向 `c61cae7...`。
+- **说明：** 合并列数不匹配规则到现有"不完整 SQL"禁止事项，新增第 4 个负面示例，总增量 120 字符（1.4%），禁止事项条数不变（4→4），预计降低 30-40% 列数不匹配错误。
 
 ### 版本变更索引
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
-| `6.13 final` | SQL 防御纵深体系 + 数据库前端自动重载修复 | SQL resource `53bf616`；frontend fix `868c535`；release `0ca57a5`；tag `v0.0.102` | `mfrs-sql-defense-depth-6-13` / `phase125-sql-defense-depth-6-13` | 当前有效 |
-| `6.13 early` | 四层防御：静态预检、运行时沙箱、模板白名单、人工审核、细粒度错误分类 | initial resource `53bf616`，后续经历 vendor hash、loader、CDN_REF 多轮回填 | 同上 | 被 final release 覆盖 |
+| `6.15` | SQL Prompt 精简优化：列数不匹配防护合并到现有规则 | prompt `cdfd625` -> resource `c61cae7` -> CI `4078718` -> release `265d9ba` | `mfrs-sql-prompt-optimize-6-15` / `phase127-sql-prompt-optimize-6-15` | 当前有效 |
+| `6.14` | SQL 提取器增强：单行多语句切分 + 挽救逻辑修复 | resource `ea0d4f0` -> release `f96da7d` | `mfrs-sql-extractor-enhance-6-14` / `phase126-sql-extractor-enhance-6-14` | 已被 6.15 覆盖 |
+| `6.13 final` | SQL 防御纵深体系 + 数据库前端自动重载修复 | SQL resource `53bf616`；frontend fix `868c535`；release `0ca57a5`；tag `v0.0.102` | `mfrs-sql-defense-depth-6-13` / `phase125-sql-defense-depth-6-13` | 已被 6.14 覆盖 |
 | `6.12` | Schema/CHECK 约束通用防线 | resource `70fbe7d` -> loader `82261c0` -> release `9ba8f98`，tag `v0.0.87` | `mfrs-schema-check-constraints-6-12` / `phase124-schema-check-constraints-6-12` | 已发布，后续被 6.13 覆盖 |
 | `6.11` | `UPDATE ... SET ..., WHERE` 尾逗号与 P7 修复链路 | resource `3f59742`、loader `3ef8d3b` 等历史链路 | `mfrs-update-trailing-comma-6-11` / `phase123-update-trailing-comma-6-11` | 中间链路 |
 | `6.10` | `INSERT ... VALUES` 截断导致 `incomplete input` | parser `5ec1aa` -> loader `66e4c2e` -> release `aaf14dc` | `mfrs-incomplete-values-6-10` / `phase122-incomplete-values-6-10` | 已发布，后续覆盖 |
