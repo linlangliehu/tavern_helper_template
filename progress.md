@@ -492,3 +492,5 @@ node tavern_sync.mjs bundle 神秘复苏模拟器发布版
 **发布同步：** 已将 `scripts/publish-card.mjs` 更新为 `CDN_REF=d06dabb0b97bdfb7095ace084b8efee80b10210d`、`CDN_CACHE_VERSION=phase128-stable-crud-adapter-6-16`、`releaseVersion=6.16`，并执行 `pnpm run publish-card -- 神秘复苏模拟器发布版`。发布版 `index.yaml` 版本为 `6.16`，6 条资源链接指向新 hash/cache。说明：`e5e4cb6` 推送后 GitHub Actions 自动生成 `[bot] bundle` 提交 `d06dabb`，最终发布卡使用 `d06dabb` 作为 CDN 资源基线。
 
 **发布验证：** 发布版 YAML 不含 `localhost`、`127.0.0.1`、`53bf6168`、`c61cae707`、`phase125`、`phase127`、`6.15`。发布版 PNG 的 `chara` 与 `ccv3` 元数据均为 `version=6.16`，包含新 hash/cache 且无旧 hash/cache。CDN 关键资源 `数据库/index.js`、`数据库前端/index.js`、`状态栏/index.html` 均返回 `200`。
+
+**最终推送：** 已提交并推送 `1e46879 release: publish v6.16 stable CRUD adapter` 到 `origin/main`。截至推送后 fetch，`main...origin/main` 同步；剩余 dirty 项均为本地参考/日志/临时文件，未纳入本轮提交。

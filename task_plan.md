@@ -628,5 +628,5 @@
 - [x] 发布前补齐 loader 卫生项：数据库 loader 与数据库前端 loader 均指向当前有效 6.15 vendor 资源。
 - [x] 资源提交并推送到 GitHub：`e5e4cb6 feat: add stable CRUD table change adapter`。
 - [x] 更新 `scripts/publish-card.mjs` 的新 CDN hash/cache/version，并同步发布版 YAML/PNG：`d06dabb / 6.16 / phase128-stable-crud-adapter-6-16`。
-- [ ] 发布提交并推送到 GitHub。
+- [x] 发布提交并推送到 GitHub：`1e46879 release: publish v6.16 stable CRUD adapter`。
 - [x] CDN URL 与发布卡 smoke test：YAML/PNG 元数据无旧 hash/cache，本轮 3 条关键 CDN 资源返回 200。
