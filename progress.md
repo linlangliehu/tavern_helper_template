@@ -3,8 +3,12 @@
 ## 2026-06-10 CST：第 2-3 步 v6.18 发布完成
 
 - 资源提交 `a4f5aa3`（vendor 修复⑥ + 回归脚本 + 开发版卡 YAML loader + planning）→ CI bundle `c3e5a70`。
-- loader 回填提交 `6f42f4a`：数据库/数据库前端 index.ts、开发版卡 YAML 6 处 hash + 7 处 cache → `c3e5a70/phase130-crud-param-binding-6-18`，marker `mfrs-crud-param-binding-6-18`，已重新 build 推送。
-- 发布版同步：`publish-card.mjs` CDN_REF=`c3e5a70...`、CACHE=`phase130-crud-param-binding-6-18`、releaseVersion=`6.18`；`pnpm run publish-card` 替换 6 处链接；发布版 YAML `版本: '6.18'`，新 hash×6/新 cache×7，旧 hash/cache/localhost 残留 0；PNG ccv3 `character_version: 6.18`，元数据内新 hash×6 旧引用 0。
+- loader 回填提交 `6f42f4a`：数据库/数据库前端 index.ts、开发版卡 YAML 6 处 hash + 7 处 cache → `c3e5a70/phase130-crud-param-binding-6-18`，marker `mfrs-crud-param-binding-6-18` → 回填后 CI bundle `77b510a`。
+- 发布版同步：`publish-card.mjs` CACHE=`phase130-crud-param-binding-6-18`、releaseVersion=`6.18`；发布提交 `53eb5e8`（rebase 后 `3b4fa4c`）。
+- **CDN_REF 修正**：首轮 CDN_REF 用了 `c3e5a70`，但其 dist loader 仍是 v6.17 内容（回填在其后）；卡内 dist URL 必须指向回填后 bundle `77b510a`。已重定向开发版 YAML 6 处 + CDN_REF + 重新 publish-card，修正提交 `8d28fcc`。最终口径：卡 → dist@`77b510a` → vendor@`c3e5a70`。
+- CDN smoke 通过：状态栏 html / 数据库 loader / 数据库前端 loader / vendor 4 个 URL 全 200；db+frontend loader 均含 `mfrs-crud-param-binding-6-18` marker，db loader vendor ref=`c3e5a70`；vendor 含 `_inlineSqlParams`（修复⑥已上线）。
+- 顺带：HEAD 后 dist 状态栏 html 仅 webpack module ID 漂移（351→234），无内容变化，已 checkout 还原不提交。
+- 后续观察：修复⑤ prompt 瘦身与修复② CRUD 限流冷却（验收轮未触发）。
 
 ## 2026-06-10 CST：第 2 步 v6.18 资源提交已推送
 

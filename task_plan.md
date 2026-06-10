@@ -12,9 +12,9 @@
 - **自动更新边界：** 发布版卡加载 GitHub/jsdelivr 上的前端界面、脚本或美化样式，资源变化通常不需要玩家重新导入；世界书、第一条消息、系统提示词、角色卡正文、数据库模板等卡本体变化，必须更新发布版 PNG 与版本号，卡内更新入口再用 `getCharacter` / `importRawCharacter` 一类接口处理。
 - **替代工具口径：** `npx agent-browser --cdp 9222` 只是当前 Codex CLI 可用的替代 CDP 访问方式，不是本项目默认流程；默认流程仍是 Chrome DevTools MCP。
 
-## RESUME HERE - 2026-06-10 - v6.18 已发布（CRUD 参数绑定修复），待 CDN smoke 确认与观察
+## RESUME HERE - 2026-06-10 - v6.18 发布完成（CRUD 参数绑定修复），CDN smoke 通过
 
-**当前状态：** v6.18 发布链路完成：资源提交 `a4f5aa3` → CI bundle `c3e5a70` → loader 回填 `6f42f4a`（含开发版卡 YAML 6 处）→ 发布版同步 `releaseVersion=6.18`、CDN_REF=`c3e5a70...`、cache=`phase130-crud-param-binding-6-18`、marker=`mfrs-crud-param-binding-6-18`。发布版 YAML/PNG 元数据已验证无旧 hash 残留。剩余：发布提交推送 + CDN smoke；发布后观察修复⑤ prompt 瘦身与修复② CRUD 限流冷却（验收轮未触发）。详见 `progress.md` 顶部。
+**当前状态：** v6.18 发布链路全部完成：资源提交 `a4f5aa3` → CI bundle `c3e5a70` → loader 回填 `6f42f4a`（含开发版卡 YAML 6 处）→ 回填后 CI bundle `77b510a` → 发布提交 `53eb5e8`（rebase 后 `3b4fa4c`）→ 卡 dist URL 重定向到 `77b510a` 的发布修正 `8d28fcc`。最终口径：卡内 dist/界面 URL 指向 `77b510a`，dist loader 内 vendor URL 指向 `c3e5a70`，cache=`phase130-crud-param-binding-6-18`，marker=`mfrs-crud-param-binding-6-18`，发布版 `版本: '6.18'`。CDN smoke：4 个资源 200，loader 含 6-18 marker 与 c3e5a70 vendor ref，vendor 含 `_inlineSqlParams`。后续观察：修复⑤ prompt 瘦身与修复② CRUD 限流冷却（验收轮未触发）。
 
 ## RESUME HERE（旧）- 2026-06-10 - 第 1 步验收通过（含新修复⑥），待发布 v6.18
 
@@ -69,7 +69,7 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
-| `6.18` | CRUD executeMutation 参数内插修复（修复⑥）+ v6.17 验收 6 项修复合集 | resource `a4f5aa3` -> CI `c3e5a70` -> loader `6f42f4a` | `mfrs-crud-param-binding-6-18` / `phase130-crud-param-binding-6-18` | 当前有效 |
+| `6.18` | CRUD executeMutation 参数内插修复（修复⑥）+ v6.17 验收 6 项修复合集 | resource `a4f5aa3` -> CI `c3e5a70` -> loader `6f42f4a` -> CI `77b510a` -> release `3b4fa4c`+`8d28fcc` | `mfrs-crud-param-binding-6-18` / `phase130-crud-param-binding-6-18` | 当前有效 |
 | `6.17` | SQL 兜底限流冷却 + CRUD 默认主链路 | resource `44ab669` -> CI `550a89f` -> loader `a349ba0` -> release `bf8b678` | `mfrs-sql-fallback-cooldown-6-17` / `phase129-sql-fallback-cooldown-6-17` | 已被 6.18 覆盖 |
 | `6.16` | stable CRUD adapter | release `1e46879`，资源基线 `d06dabb` | `phase128-stable-crud-adapter-6-16` | 已被 6.17 覆盖 |
 | `6.15` | SQL Prompt 精简优化：列数不匹配防护合并到现有规则 | prompt `cdfd625` -> resource `c61cae7` -> CI `4078718` -> release `265d9ba` | `mfrs-sql-prompt-optimize-6-15` / `phase127-sql-prompt-optimize-6-15` | 已被 6.16 覆盖 |
