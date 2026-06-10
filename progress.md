@@ -1,5 +1,11 @@
 # Progress Log
 
+## 2026-06-10 CST：第 2 步 v6.18 资源提交已推送
+
+- 停掉 watch（6620）后 `pnpm build` production 构建成功；`node --check` + `verify-crud-plan-parse.mjs`（9/9）+ `verify-sql-debug-regressions.mjs` 复跑通过。
+- 资源提交 `a4f5aa3`（rebase 到远端 `9b23931 [bot] Bump deps` 之上）：vendor 修复⑥ + `scripts/verify-crud-plan-parse.mjs` + 开发版卡 YAML 6 处 loader（576e7b0/phase129）+ dist 状态栏 + planning 三件套 + 开发版 PNG。已推送。
+- 进行中：等 GitHub Actions `[bot] bundle` 提交 → loader 回填（数据库/数据库前端 index.ts + 开发版卡 YAML 6 处）→ 发布版同步 v6.18。
+
 ## 2026-06-10 CST：第 1 步重跑验收 — 发现修复⑥参数绑定 bug，真页填表成功
 
 **本地 gate（全部通过）：** `node --check vendor`、`verify-crud-plan-parse.mjs`（9/9）、`verify-table-change-adapter.mjs`、`verify-sql-debug-regressions.mjs`、`pnpm build`、`git diff --check`。
