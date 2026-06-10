@@ -36,6 +36,7 @@ const active_tab = useLocalStorage<string | null>('status_bar:active_tab', null)
 .card {
   width: 100%;
   max-width: 720px;
+<<<<<<< HEAD
   background-color: var(--c-charcoal);
   border: 1.5px solid var(--c-gold-dim);
   box-shadow: 0 0 20px var(--c-gold-glow), inset 0 0 60px rgba(0, 0, 0, 0.3);
@@ -56,13 +57,28 @@ const active_tab = useLocalStorage<string | null>('status_bar:active_tab', null)
     pointer-events: none;
     z-index: 1;
   }
+=======
+  background-color: var(--c-mint-cream);
+  border: 3px solid var(--c-granite);
+  box-shadow: 5px 5px 0px rgba(60, 73, 63, 0.16);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-archive);
+  color: var(--c-granite);
+  font-size: 13px;
+  line-height: 1.35;
+  margin: 0 auto;
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
 }
 
 .content-area {
   padding: 12px;
   min-height: 0;
+<<<<<<< HEAD
   position: relative;
   z-index: 2;
+=======
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
 }
 
 .tab-pane {

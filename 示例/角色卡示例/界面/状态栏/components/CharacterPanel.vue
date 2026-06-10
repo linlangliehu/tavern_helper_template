@@ -40,6 +40,7 @@ const store = useDataStore();
 
 .section-head {
   font-size: 0.95rem;
+<<<<<<< HEAD
   font-family: var(--font-title);
   border-bottom: 1px solid var(--c-gold-dim);
   display: inline-block;
@@ -55,6 +56,12 @@ const store = useDataStore();
     font-size: 0.6em;
     vertical-align: middle;
   }
+=======
+  border-bottom: 3px solid var(--c-celadon);
+  display: inline-block;
+  margin-bottom: 8px;
+  font-weight: bold;
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
 }
 
 .title-grid {
@@ -65,6 +72,7 @@ const store = useDataStore();
 }
 
 .title-box {
+<<<<<<< HEAD
   border: 1px solid var(--c-gold-dark);
   padding: 7px;
   background: var(--c-dark-surface);
@@ -85,17 +93,40 @@ const store = useDataStore();
   font-weight: bold;
   margin-bottom: 3px;
   letter-spacing: 0.5px;
+=======
+  border: 1.5px solid var(--c-granite);
+  padding: 7px;
+  background: #fff;
+  box-shadow: 2px 2px 0 var(--c-ash-grey);
+}
+
+.title-name {
+  background: var(--c-granite);
+  color: var(--c-celadon);
+  display: inline-block;
+  padding: 2px 4px;
+  font-size: 0.72rem;
+  font-weight: bold;
+  margin-bottom: 3px;
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
 }
 
 .title-effect {
   font-size: 0.78rem;
   margin-bottom: 3px;
+<<<<<<< HEAD
   color: var(--c-white);
+=======
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
 }
 
 .title-quote {
   font-size: 0.7rem;
+<<<<<<< HEAD
   color: var(--c-ghost);
+=======
+  color: var(--c-grey-olive);
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
   font-style: italic;
 }
 
@@ -106,6 +137,7 @@ const store = useDataStore();
 }
 
 .attire-item {
+<<<<<<< HEAD
   border: 1px solid var(--c-mid-border);
   padding: 6px;
   font-size: 0.82rem;
@@ -115,6 +147,16 @@ const store = useDataStore();
 
 .attire-slot {
   color: var(--c-gold-dim);
+=======
+  border: 1px solid var(--c-grey-olive);
+  padding: 6px;
+  font-size: 0.82rem;
+  background: #fff;
+}
+
+.attire-slot {
+  color: var(--c-grey-olive);
+>>>>>>> fdfcbc5386747889d0b011123d4dde6612c67d1b
   font-size: 0.72rem;
   display: block;
 }
