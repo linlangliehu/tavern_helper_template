@@ -12,9 +12,9 @@
 - **自动更新边界：** 发布版卡加载 GitHub/jsdelivr 上的前端界面、脚本或美化样式，资源变化通常不需要玩家重新导入；世界书、第一条消息、系统提示词、角色卡正文、数据库模板等卡本体变化，必须更新发布版 PNG 与版本号，卡内更新入口再用 `getCharacter` / `importRawCharacter` 一类接口处理。
 - **替代工具口径：** `npx agent-browser --cdp 9222` 只是当前 Codex CLI 可用的替代 CDP 访问方式，不是本项目默认流程；默认流程仍是 Chrome DevTools MCP。
 
-## RESUME HERE - 2026-06-10 - v6.18 发布完成（CRUD 参数绑定修复），CDN smoke 通过
+## RESUME HERE - 2026-06-10 - v6.18 发布完成，真页 smoke 通过
 
-**当前状态：** v6.18 发布链路全部完成：资源提交 `a4f5aa3` → CI bundle `c3e5a70` → loader 回填 `6f42f4a`（含开发版卡 YAML 6 处）→ 回填后 CI bundle `77b510a` → 发布提交 `53eb5e8`（rebase 后 `3b4fa4c`）→ 卡 dist URL 重定向到 `77b510a` 的发布修正 `8d28fcc`。最终口径：卡内 dist/界面 URL 指向 `77b510a`，dist loader 内 vendor URL 指向 `c3e5a70`，cache=`phase130-crud-param-binding-6-18`，marker=`mfrs-crud-param-binding-6-18`，发布版 `版本: '6.18'`。CDN smoke：4 个资源 200，loader 含 6-18 marker 与 c3e5a70 vendor ref，vendor 含 `_inlineSqlParams`。后续观察：修复⑤ prompt 瘦身与修复② CRUD 限流冷却（验收轮未触发）。
+**当前状态：** v6.18 发布链路全部完成并通过发布版真页 smoke：真页激活卡即发布版，marker `mfrs-crud-param-binding-6-18`，资源链路 卡→dist@`77b510a`→vendor@`c3e5a70` 实测命中，`getFillMode()='ai_crud_plan'`，CRUD API 齐全，console 无数据库相关错误（仅 watch 已停导致的 TavernSync 6620 重连噪音）。提交链：资源 `a4f5aa3` → CI `c3e5a70` → loader 回填 `6f42f4a` → CI `77b510a` → 发布 `3b4fa4c`+`8d28fcc` → planning `dfac757`。遗留观察：修复⑤ prompt 瘦身与修复② CRUD 限流冷却（待实际游玩触发）；SP 运行日志人工面板复核。下一步候选：阶段 6 确定性入口继续迁移 / 大步四（阶段 10-14 玩法功能）。
 
 ## RESUME HERE（旧）- 2026-06-10 - 第 1 步验收通过（含新修复⑥），待发布 v6.18
 

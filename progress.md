@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-10 CST：v6.18 发布版真页 smoke 通过
+
+- 真页当前激活角色卡即 **神秘复苏模拟器发布版**，marker `mfrs-crud-param-binding-6-18`（window 与 API 双确认）。
+- 资源加载链路确认：卡 → dist loader@`77b510a`（?v=phase130）→ vendor@`c3e5a70`，network 实测命中。
+- `AutoCardUpdaterAPI` 83 个成员；`getFillMode()='ai_crud_plan'`、`setFillMode`/`triggerUpdate`/`updateCell`/`insertRow`/`deleteRow` 均在。
+- console 仅 `[TavernSync] ws://localhost:6620` 重连报错（watch 已停所致，开发环境噪音，玩家无此脚本），无数据库/资源加载错误。
+- v6.18 发布链路至此全部收口。遗留观察：修复⑤ prompt 瘦身、修复② CRUD 限流冷却（待实际游玩触发）；SP 运行日志人工面板复核。
+
 ## 2026-06-10 CST：第 2-3 步 v6.18 发布完成
 
 - 资源提交 `a4f5aa3`（vendor 修复⑥ + 回归脚本 + 开发版卡 YAML loader + planning）→ CI bundle `c3e5a70`。
