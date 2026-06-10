@@ -255,10 +255,11 @@ export async function applyTableChangePlan(
     if (resolved.plan.skipChatSave) insertOptions.skipChatSave = true;
     if (resolved.plan.silent) insertOptions.silent = true;
     const insertValues = toApiInsertValues(resolved);
-    let insertedRowIndex = await api.insertRow(insertOptions, insertValues);
-    if (typeof insertedRowIndex !== 'number' || insertedRowIndex < 0) {
-      insertedRowIndex = await api.insertRow({ ...insertOptions, data: insertValues });
-    }
+    // 真实 vendor 的 insertRow 第一参为对象时按选项包解析，只从 options.data 取数据并忽略第二参，
+    // 因此必须用单参 { tableName, data } 形态；旧的两参调用 (insertOptions, insertValues) 第一次必失败，
+    // 靠后续单参重试兜底，徒增一次 "data must be an object" 错误日志。
+    insertOptions.data = insertValues;
+    let insertedRowIndex = await api.insertRow(insertOptions);
     if (typeof insertedRowIndex !== 'number' || insertedRowIndex < 0) {
       const fallbackRowIndex = allowImportFallback
         ? await tryImportJsonInsertFallback(api, resolved, currentData)
@@ -620,7 +621,9 @@ function parseDdl(ddl: string | undefined) {
 
 function parseDdlColumn(line: string): ColumnMeta | null {
   const trimmed = line.trim().replace(/,$/, '');
-  if (!trimmed || /^(CREATE|CONSTRAINT|PRIMARY|UNIQUE|CHECK|FOREIGN|\);)/i.test(trimmed)) return null;
+  // 只过滤真正的表级约束行/结束行；关键字加 \b 词边界，避免误杀 check_type、unique_id 等
+  // 以约束关键字开头的物理列名（check_ 列曾被 ^CHECK 整行吞掉导致列错位 + COLUMN_NOT_FOUND）。
+  if (!trimmed || /^(?:(?:CREATE|CONSTRAINT|PRIMARY|UNIQUE|CHECK|FOREIGN)\b|\);)/i.test(trimmed)) return null;
 
   const match = trimmed.match(/^`?([A-Za-z_][\w]*)`?\s+(.+)$/);
   if (!match) return null;

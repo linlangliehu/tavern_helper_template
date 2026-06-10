@@ -2,7 +2,7 @@ const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
 // 指向包含 v6.18 CRUD executeMutation 参数内插修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
 const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@c3e5a70c8f5622e1f4a96181ea17bf8fb4f0e39d/vendor/shujuku-sp-fork/index.js?v=phase130-crud-param-binding-6-18';
-const databaseScriptMarker = 'mfrs-crud-param-binding-6-18';
+const databaseScriptMarker = 'mfrs-crud-param-binding-6-19';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
 

@@ -92,6 +92,55 @@ const rowIdColumn = metadata[0].columns.find(column => column.header === 'row_id
 assert.equal(rowIdColumn.minValue, 1);
 assert.equal(rowIdColumn.maxValue, 4);
 
+// P0 回归：以约束关键字开头的物理列（check_type/check_basis）不能被 DDL 列解析的
+// ^CHECK 整行吞掉。曾导致这两列从 columns 消失 + 后续列按 index 错位 + COLUMN_NOT_FOUND。
+const CHECK_TABLE = '检定建议'; // 检定建议
+const CHECK_COL_DISPLAY = '展示文本'; // 展示文本
+const CHECK_COL_TYPE = '检定类型'; // 检定类型
+const CHECK_COL_BASIS = '检定依据'; // 检定依据
+const CHECK_COL_DICE = '骰子命令'; // 骰子命令
+const checkCurrentData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_check_suggestions: {
+    uid: 'sheet_check_suggestions',
+    name: CHECK_TABLE,
+    sourceData: {
+      ddl: `CREATE TABLE check_suggestions ( -- ${CHECK_TABLE}
+  row_id INTEGER PRIMARY KEY CHECK(row_id BETWEEN 1 AND 5), -- row_id
+  display_text TEXT NOT NULL CHECK(TRIM(display_text) <> ''), -- ${CHECK_COL_DISPLAY}
+  check_type TEXT NOT NULL, -- ${CHECK_COL_TYPE}
+  check_basis TEXT NOT NULL, -- ${CHECK_COL_BASIS}
+  dice_command TEXT NOT NULL CHECK(TRIM(dice_command) <> '') -- ${CHECK_COL_DICE}
+);`,
+    },
+    content: [
+      ['row_id', CHECK_COL_DISPLAY, CHECK_COL_TYPE, CHECK_COL_BASIS, CHECK_COL_DICE],
+      [1, '调查', '感知', '环境', '/r 1d100'],
+    ],
+  },
+};
+const checkMeta = listTableMetadata(checkCurrentData)[0];
+const checkTypeCol = checkMeta.columns.find(column => column.physicalName === 'check_type');
+const checkBasisCol = checkMeta.columns.find(column => column.physicalName === 'check_basis');
+assert.ok(checkTypeCol, 'check_type 列应被解析出来，未被 ^CHECK 误杀');
+assert.ok(checkBasisCol, 'check_basis 列应被解析出来，未被 ^CHECK 误杀');
+assert.equal(checkTypeCol.header, CHECK_COL_TYPE);
+assert.equal(checkBasisCol.header, CHECK_COL_BASIS);
+// 列顺序不错位：dice_command 仍对齐到最后一列“骰子命令”，没被前移。
+const diceCol = checkMeta.columns.find(column => column.physicalName === 'dice_command');
+assert.equal(diceCol.header, CHECK_COL_DICE);
+// 真约束行 CHECK(TRIM(...)) 仍被正确过滤，不会被当成名为 “CHECK(TRIM...” 的列。
+// 注意只匹配 CHECK( / CHECK 空格，不能匹配 check_type 这类合法列名。
+assert.ok(!checkMeta.columns.some(column => /^CHECK\b/i.test(column.physicalName ?? '')));
+// AI 用 check_type/check_basis 列名写入时能命中别名，不再 COLUMN_NOT_FOUND。
+const checkPreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'check_suggestions',
+  match: { row_id: 1 },
+  set: { check_type: '推理', check_basis: '线索' },
+}, checkCurrentData);
+assert.equal(checkPreview.ok, true, `check_type/check_basis 写入应通过校验，实际: ${JSON.stringify(checkPreview.errors)}`);
+
 const preview = previewTableChangePlan({
   action: 'updateCell',
   table: 'action_suggestions',
@@ -170,10 +219,11 @@ const api = {
     calls.push(['updateCell', options]);
     return true;
   },
-  async insertRow(options, data) {
-    if (options?.data) return -1;
-    if (!data || typeof data !== 'object') return -1;
-    calls.push(['insertRow', options, data]);
+  async insertRow(options) {
+    // 真实 vendor：第一参为对象时按选项包解析，数据只从 options.data 取（忽略第二参）。
+    if (!options || typeof options !== 'object') return -1;
+    if (!options.data || typeof options.data !== 'object') return -1;
+    calls.push(['insertRow', options, options.data]);
     return 3;
   },
   async deleteRow(options) {
@@ -213,9 +263,9 @@ assert.equal(appliedInsert.ok, true);
 assert.equal(appliedInsert.insertedRowIndex, 3);
 const insertCall = calls.at(-1);
 assert.equal(insertCall[0], 'insertRow');
+// P2\uff1a\u5355\u53c2\u9009\u9879\u5305\u5f62\u6001\uff0cdata \u5185\u8054\u5728\u9009\u9879\u5305\u91cc\uff08\u4e0e\u771f\u5b9e vendor \u7684 parseInsertRowArgs_ACU \u4e00\u81f4\uff09\u3002
 assert.equal(insertCall[1].tableName, TABLE_ACTION);
-assert.deepEqual({ ...insertCall[1] }, { tableName: TABLE_ACTION });
-assert.deepEqual({ ...insertCall[2] }, {
+assert.deepEqual({ ...insertCall[1].data }, {
   [COL_OPTION]: 'C',
   [COL_IDEA]: '\u7ed5\u884c\u89c2\u5bdf',
   [COL_MAIN_RISK]: '\u7ed5\u884c\u89c2\u5bdf',

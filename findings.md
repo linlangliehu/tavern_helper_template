@@ -1,5 +1,93 @@
 # Findings
 
+## 2026-06-10 v6.18 发布后填表全失败诊断（native + SQL 双模式均 0 落盘）— 仅诊断，未改代码
+
+**触发上下文：** v6.18 上线后，玩家报告 14 表（玩家状态等）不再同步更新；不论原生模式还是 SQL 模式都不写库。旧版本原生模式从无此问题、SQL 模式偶有问题但仍能写。本次两种模式同时全挂。
+
+**证据来源：** 两份运行日志 `acu-logs-2026-06-10T10-13-13-410Z.json`（含 `[SQL 沙箱]`，SQL/sqlite 路径）与 `acu-logs-2026-06-10T10-21-33-503Z.json`（无沙箱，native 路径）；真页 Chrome DevTools 实查现网表结构/行数/DDL/storageMode；`vendor/shujuku-sp-fork/index.js` 与 `src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts` 源码。
+
+### 一句话根因
+
+v6.18 把默认填表模式切成 `ai_crud_plan`（提交 `44ab669 feat: default fill table to CRUD plan`），所有写入统一走 CRUD 计划适配器的**原子批次**——一批计划里任一条失败即整批回滚、0 行落盘。而每批里**必然有一条踩雷计划**：native 路径踩毒计划 A，SQL 路径踩毒计划 B。旧版本逐表独立写入、单表坏不连累其它，所以原生模式以前从不出事。
+
+### 放大器（共同总闸）：CRUD 原子批次一损俱损
+
+`index.js:36239` 批次执行器：
+
+```js
+runTableUpdateApplyWithScopeLock_ACU(key, async () => {
+  _set_currentJsonTableData_ACU(JSON.parse(JSON.stringify(batchBaseSnapshot))); // ① 先回滚到快照
+  const parsedKeys = await applyPlans();       // ② 任一计划 throw 即中断
+  return await persistAppliedTableUpdate(...);  // ③ 抛错则到不了这里 → 不保存
+});
+```
+
+`applyPlans`（`index.js:36207`）逐条 apply，preview 不过（36221）或 execute 不过（36226）就 `throw`。一旦抛错：后续计划全跳过 + 前面成功的内存改动被开头的快照覆盖丢弃 + persist 不执行。**一条坏计划毒死整批，表保持空。**
+
+### 毒计划 A（native 路径致命）：DDL 列解析正则误杀 `check_` 开头列
+
+`table-change-adapter.ts:623`：
+
+```js
+if (/^(CREATE|CONSTRAINT|PRIMARY|UNIQUE|CHECK|FOREIGN|\);)/i.test(trimmed)) return null;
+```
+
+`检定建议(check_suggestions)` 表物理列 **`check_type`、`check_basis` 以 "check" 开头，被 `^CHECK` 误判为 CHECK 约束行过滤掉**。后果（真页实测坐实）：
+
+- 两列从 `ddlMeta.columns` 消失 → 按 index 对齐错位：表头「检定类型」被错配到物理列 `dice_command`，「检定依据」无物理名。
+- `columnAliases` 缺 `check_type/check_basis` → AI 用这两列名写入 → `COLUMN_NOT_FOUND` → throw → 整批回滚。
+
+→ 对应 native 日志 `COLUMN_NOT_FOUND: 检定建议: check_type / check_basis`，它就是毒死整批的那一条。
+
+### 毒计划 B（SQL/sqlite 路径致命）：固定行表 insert 撞 CHECK
+
+`global_state`（`CHECK(row_id = 1)`）、`action_suggestions`（`CHECK(row_id BETWEEN 1 AND 4)`）是设计上「先有固定行、只 update」的表（模板 `insertNode: 禁止`）。现网实查这些表 **rows:0（空）**，AI 改发 `insertRow`。SQLite 分支生成的 INSERT 靠自增 row_id 落在 CHECK 范围外 → `CHECK constraint failed: row_id = 1` / `row_id BETWEEN 1 AND 4` → 返回 -1 → `API_MUTATION_FAILED` → throw → 整批回滚。
+
+→ 对应 SQL 日志 `[SQL 沙箱] ... CHECK constraint failed: row_id = 1`。
+
+### 噪音 + 二次失败：`insertRow` 位置参数约定不匹配
+
+适配器调用（`table-change-adapter.ts:258`）：
+
+```js
+await api.insertRow(insertOptions, insertValues); // 第一参 = {tableName, skipChatSave, silent}
+```
+
+但 `parseInsertRowArgs_ACU`（`index.js:52048`）见第一参是 plain object 就当「选项包」，去里面找 `.data/.values/.rowData` → 没有 → 报 `insertRow: data must be an object` 返回 -1。第二行 `insertRow({...insertOptions, data})`（260）重试才对。
+
+- native：第二次能救回内存写入（但仍被原子批次拖死）。
+- sqlite：第二次进 SQL 又撞毒计划 B 的 CHECK。
+
+→ 两份日志满屏 `insertRow: data must be an object` 的来源。
+
+### 伴生现象
+
+- `LENGTH_VIOLATION: 事件纪要: 纪要 长度不能小于 200`：AI 写的纪要太短，也是一条毒计划。
+- `HTTP 200 Too Many Requests` → `CRUD 填表已冷却 15 秒`：v6.18 修复②限流冷却确实生效，但前面已全败，冷却只是雪上加霜。
+
+### 现网状态快照（真页实查）
+
+- `storageMode = native`，`fillMode = ai_crud_plan`（settings 在 IndexedDB 以 JSON 字符串存储，242416 字符）。
+- 除 `检定建议` 有 5 行外，其余 13 张业务表 **rows 全为 0**（全局状态/玩家状态/灵异事件/线索/人物/地点/行动建议/事件纪要等均空）——印证写入意图从未落盘。
+- ⚠️ 安全：该 settings 记录含明文 `apiConfig.apiKey` 与反代 `apiConfig.url`，诊断中已避开，未复述具体值；勿原样外传该 storage。
+
+### 为什么「这次原生模式也挂」
+
+| | 旧版本 | v6.18 |
+|---|---|---|
+| 默认写入 | 逐表独立、容错 | CRUD 计划原子批次 |
+| 单表/单计划失败 | 只丢该项，其它照常落盘 | **整批回滚，0 落盘** |
+| native 是否受影响 | 否（不走 CRUD 严格校验） | 是（同样过严格校验 + 原子批次） |
+
+默认模式一换，native 与 SQL 被绑进同一原子事务，各自的毒计划（A/B）都能让整批归零。
+
+### 诚实标注
+
+- 两份日志路径不同（一份 SQL 沙箱、一份 native），说明测试期间切过模式；但终点一致：CRUD 计划整批失败、0 行落盘，与毒计划 A/B 一一对应。
+- 本节仅诊断，未改任何代码。修复方向（待确认后再做）：① 列解析正则改为只匹配「行级约束关键字 + 后随定义」而非误吃 `check_` 列名；② 固定行表 insert 应退化为「行不存在则按固定 row_id 插入 / 行存在则 update」；③ `insertRow` 适配器调用统一为单参选项包 `{tableName, data, ...}`；④ CRUD 批次考虑「部分成功也落盘 + 失败项反馈」而非全有或全无。
+
+---
+
 ## 2026-06-10 v6.17 真页验收结论（第 1 步收口）— 验收不通过
 
 **测试环境：** 开发版卡（已修复卡 YAML loader 至 v6.17，marker `mfrs-sql-fallback-cooldown-6-17`），酒馆主 API gemini-3.1-pro-preview（上游代理），SP 日志基线 2026-06-10 10:02 +08:00。
