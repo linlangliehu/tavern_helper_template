@@ -1,5 +1,11 @@
 # Progress Log
 
+## 2026-06-10 CST：第 2-3 步 v6.18 发布完成
+
+- 资源提交 `a4f5aa3`（vendor 修复⑥ + 回归脚本 + 开发版卡 YAML loader + planning）→ CI bundle `c3e5a70`。
+- loader 回填提交 `6f42f4a`：数据库/数据库前端 index.ts、开发版卡 YAML 6 处 hash + 7 处 cache → `c3e5a70/phase130-crud-param-binding-6-18`，marker `mfrs-crud-param-binding-6-18`，已重新 build 推送。
+- 发布版同步：`publish-card.mjs` CDN_REF=`c3e5a70...`、CACHE=`phase130-crud-param-binding-6-18`、releaseVersion=`6.18`；`pnpm run publish-card` 替换 6 处链接；发布版 YAML `版本: '6.18'`，新 hash×6/新 cache×7，旧 hash/cache/localhost 残留 0；PNG ccv3 `character_version: 6.18`，元数据内新 hash×6 旧引用 0。
+
 ## 2026-06-10 CST：第 2 步 v6.18 资源提交已推送
 
 - 停掉 watch（6620）后 `pnpm build` production 构建成功；`node --check` + `verify-crud-plan-parse.mjs`（9/9）+ `verify-sql-debug-regressions.mjs` 复跑通过。
