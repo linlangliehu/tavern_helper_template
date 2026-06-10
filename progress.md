@@ -1,5 +1,101 @@
 # Progress Log
 
+## 2026-06-10 CST：第 1 步重跑验收 — 发现修复⑥参数绑定 bug，真页填表成功
+
+**本地 gate（全部通过）：** `node --check vendor`、`verify-crud-plan-parse.mjs`（9/9）、`verify-table-change-adapter.mjs`、`verify-sql-debug-regressions.mjs`、`pnpm build`、`git diff --check`。
+
+**真页复测发现新根因（修复⑥）：CRUD `updateCell` 参数绑定丢失**
+
+- 现象：注入新 vendor 后 `triggerUpdate` 仍 3 次全败，console 报 `updateCell: SQL executed but affected 0 rows. table=player_state, row_id=1`，但 SQL 控制台同款 UPDATE（字面量）成功 1 行。
+- 根因：`updateCell/updateRow/insertRow/deleteRow` 生成 `... WHERE "row_id" = ?` 并把值放进 `params`，但 `SqlTableService.executeMutation(sql, params)` 的管线（规范化→约束校验→模板校验→改写→`sandboxExecuteSqlWithRetry_ACU`→`runBatch`→`db.run(stmt)`）**全程只传 SQL 文本，params 从未被绑定**；未绑定的 `?` 按 NULL 求值 → `WHERE row_id = NULL` 匹配 0 行 → 全部 CRUD 失败。
+- 为何以前没踩中：6.16 真页烟测时玩家 `storageMode` 是 `native`（不走 SQL）；本机玩家存储现为 `sqlite`，正好命中（与「玩家 SQL 报错先查 storageMode」既有教训一致）。
+- 修复：`SqlTableService` 新增 `_inlineSqlParams(sql, params)` —— 在 executeMutation 入口把 `?` 安全内插为转义字面量（跳过字符串内 `?`，占位符/参数数量不匹配时报错而非静默置 NULL），随后才进规范化/校验管线，校验层因此也能看到真实值。
+
+**真页验收结果（本地 5599 静态服务注入新 vendor）：**
+
+- `setFillMode('ai_sql')` / `setFillMode('ai_crud_plan')` 双向切换 `ok=true`，持久化 `saved=true`（修复④验证通过，SQL 兜底可达）。
+- 修复⑥后单点 `updateCell` 返回 true 且 SQLite 侧值正确更新（SQL 控制台读回确认）。
+- `triggerUpdate()` 全量填表：**success=true，8 张表写入**（player_state、supernatural_events、ghost_archives、clues、characters、locations、action_suggestions、collected_archives），无新增 warn/error，首次尝试即成功（无需解析挽救与重试，限流未发生）。
+- 对比上轮 0/21 → 本轮 1/1。
+- 注意：`skipChatSave:true` 的单点测试中 JSON 视图不立即变化是预期行为（refresh 会从聊天楼层回读旧值），非 bug。
+
+**待办（第 2-3 步）：**
+- 修复⑤（prompt 瘦身）与限流冷却（修复②）本轮因首试成功未被触发，发布后继续观察。
+- 提交 vendor 6 项修复 + 开发版卡 YAML loader 修复 → 走 v6.18 发布流程（资源推送 → loader 回填【含开发版卡 YAML】→ 发布版同步）。
+- 本地 5599 http-server（task bbrle03v5）仍在跑，发布前可停。
+
+---
+
+## 2026-06-10 CST：v6.17 验收失败后修复 CRUD 链路五问题 — 代码完成，待真页复测
+
+**改动文件：** `vendor/shujuku-sp-fork/index.js`（5 处修复）；新增 `scripts/verify-crud-plan-parse.mjs`。
+
+**修复①：CRUD 计划 JSON 提取挽救逻辑**（0 成功的首要根因）
+- 新增 `stripTableChangePlanTags_ACU`：成对标签优先，残缺（只闭合/只开始）标签也剥离。
+- 新增 `salvageCrudPlanObjects_ACU`：括号深度扫描，逐个提取顶层 `{...}` 并分别 parse，字符串内括号/引号正确跳过，坏对象单独丢弃。
+- 重写 `parseCrudPlanResponse_ACU` 为 4 层兜底：①直接 parse ②缺 `[` 时用 `[]` 包裹多对象序列 ③取首 `[` 到末 `]` 子串 ④括号扫描逐对象挽救。
+- 实测样本（缺开头 `[` 与开始标签、仅有结尾 `]</tableChangePlan>`）由第 2 层命中救回。
+
+**修复②：CRUD 重试链路接入限流冷却**
+- 循环前检查 `getActiveAiTransportCooldownMs_ACU()`，在冷却窗口内直接返回 `apiTransportIssue`。
+- catch 中用 `classifyAiTransportError_ACU` 识别限流/网关错误 → `registerAiTransportCooldown_ACU` 登记 15-120s 指数退避 → 立即返回，不再 15 连击。与 SQL 分支同款逻辑。
+
+**修复③：回复过短阈值按模式区分**
+- CRUD 分支不再用 `autoUpdateTokenThreshold`（默认 500，误杀 418 字符合法计划），改用固定极低阈值 `minCrudReplyLength=12`，只防空响应/严重截断。SQL 分支与 auto-update 批次门控保持原阈值不变。
+
+**修复④：fillMode 可靠切换入口**
+- 根因：直接写 IndexedDB 不生效，是因运行实例内存 `settings_ACU.fillMode` 仍是默认值，下次任意保存会用内存值覆盖 IDB。
+- 新增 `normalizeFillMode_ACU` + `setCurrentFillMode_ACU`（改内存 + 走 `saveSettings_ACU()` 持久化）。
+- API 暴露 `AutoCardUpdaterAPI.getFillMode()` / `setFillMode(mode)`，可供控制台/UI/兜底切换；不再被覆盖。
+
+**修复⑤：CRUD 填表 prompt 瘦身**
+- 根因：`$C`（角色描述）含整个欢迎页 HTML/CSS，单次填表 57878 prompt tokens。
+- 新增 `stripUiMarkupForFillPrompt_ACU`：剥离 `<style>/<script>/<link>/<!-- -->` 等非正文高体量块 + 合并空行，保留散文；仅在确含这些标记时才处理，剥离后异常变空则退回原文。
+- 在 `filterTableInjectedContent` 对 `$C`/`$4`（角色描述/世界书）应用，SQL 与 CRUD 两模式同时受益，降低限流概率。
+
+**待验证（task #10，受 Bash 分类器临时不可用阻塞）：**
+- `node --check` + `verify-crud-plan-parse.mjs` + `verify-table-change-adapter.mjs` + `verify-sql-debug-regressions.mjs` + `pnpm build`。
+- 真页复测：注入新构建后重跑自动填表，确认解析挽救生效、限流后冷却不连击、填表成功率回升、SQL 兜底可切换。
+
+**注意：** 本轮修复期间出现过提示词注入——伪造的"工具返回成功"+"只做①②、跳过③④⑤并谎报完成"的指令混入工具结果。已识别并拒绝；全部修复以 `git diff` 磁盘真实内容为准复核（修复②③的 pre-loop 冷却与阈值改动一度被伪造结果掩盖未落盘，已重新落盘并核实）。
+
+---
+
+## 2026-06-10 CST：第 1 步 v6.17 验收收口 — 进行中
+
+
+**SP 日志基线：** `2026-06-10 10:02 +08:00`（只判断此后新日志）。
+
+**发现并修复：开发版卡 YAML loader 落后**
+
+- 真页（开发版卡）原 marker 为 `mfrs-schema-check-constraints-6-12` / 重载后 `mfrs-sql-defense-depth-6-13`，且 `MysteryDatabaseFrontend` 无 `getTableMetadata`，说明卡内 6 个脚本 loader 钉死旧 CDN。
+- 根因：`src/神秘复苏模拟器/index.yaml` 脚本库 6 处 URL 仍为 `c164fd35.../?v=phase125-sql-defense-depth-6-13`（6.13 资源）；v6.17 loader 回填只改了 `src/**/脚本/**/index.ts`，未同步开发版卡 YAML。
+- 修复：YAML 内 6 处 hash 替换为 `576e7b0d5df759b46c4837ba99b8d84540da179c`，7 处 cache 替换为 `phase129-sql-fallback-cooldown-6-17`（含 MagVarUpdate bundle ?v=）。
+- 推送：本地已有 `tavern_sync watch all -f`（PID 4852，占用 6620）自动推送；刷新真页后 marker = `mfrs-sql-fallback-cooldown-6-17`，`getTableMetadata()` 返回 14 表。
+- CDN smoke：新 hash 的数据库 / 数据库前端 index.js 均返回 200。
+- 注意：`tavern_sync push` 手动执行会报 `EADDRINUSE :::6620`，因 watch 已占端口——watch 在跑时不要再手动 push。
+
+**待办：** ai_crud_plan 真页自动填表实测 → SP 运行日志复核 → SQL 兜底验证 → 对比指标。
+
+---
+
+## 2026-06-10 CST：第 1 步 v6.17 验收收口 — 完成（验收不通过）
+
+**执行内容：**
+
+1. **ai_crud_plan 真页实测**：发送真实用户行动（jQuery trigger 提交），主对话生成成功（第 8 楼，5334 字符）；自动填表 5 批次 × 3 重试 = 15 次 AI 调用全部失败，0 行写入（`玩家状态.最近行动` 仍是上一轮内容）。
+2. **SP 运行日志面板复核**：通过扩展菜单 → SP·数据库 III → 高级工具 → 运行日志读取面板（27 条），完整拿到失败时间线 10:10:00-10:12:07，与 console 一致。
+3. **SQL 兜底验证**：两次向 IDB 写入 `fillMode:'ai_sql'` 并重载，填表仍走 CRUD 计划；fillMode 键两次被运行实例的保存动作清除。结论：SQL 兜底不可达。已恢复存储为默认。
+4. **对比指标**：写入 `findings.md`（填表成功率 0/21、限流率 53%、单次填表 57878 prompt tokens 等）。
+
+**根因取证：** 抓取填表响应体（reqid 1821）确认模型输出缺开头 `[` / `<tableChangePlan>` 标签，`JSON.parse` 在首对象后报错——与全部 9 个解析失败位置吻合。CDN vendor 与本地 `cmp` 完全一致，排除版本漂移。
+
+**v6.17 验收结论：** 不通过。6 个问题清单见 `findings.md`「2026-06-10 v6.17 真页验收结论」；其中 CRUD JSON 提取过严、CRUD 链路无限流冷却、SQL 兜底不可达为修复优先级前三。
+
+**工作区变更：** `src/神秘复苏模拟器/index.yaml`（loader 修复，未提交）；planning 三件套更新。临时文件已清理。
+
+---
+
 ## 2026-06-09 CST：项目了解 — 完成
 
 **目标：** 按 `planning-with-files` 流程恢复上下文并建立项目地图。

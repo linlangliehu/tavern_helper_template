@@ -12,7 +12,15 @@
 - **自动更新边界：** 发布版卡加载 GitHub/jsdelivr 上的前端界面、脚本或美化样式，资源变化通常不需要玩家重新导入；世界书、第一条消息、系统提示词、角色卡正文、数据库模板等卡本体变化，必须更新发布版 PNG 与版本号，卡内更新入口再用 `getCharacter` / `importRawCharacter` 一类接口处理。
 - **替代工具口径：** `npx agent-browser --cdp 9222` 只是当前 Codex CLI 可用的替代 CDP 访问方式，不是本项目默认流程；默认流程仍是 Chrome DevTools MCP。
 
-## RESUME HERE - 2026-06-09 - v6.16 stable CRUD adapter 发布完成
+## RESUME HERE - 2026-06-10 - 第 1 步验收通过（含新修复⑥），待发布 v6.18
+
+**当前状态：** v6.17 验收失败的 5 项修复 + 真页复测中新发现的修复⑥（CRUD `executeMutation` 参数绑定丢失，`?` 按 NULL 求值导致 sqlite 模式下全部 CRUD 0 行）已全部代码完成并通过本地 gate + 真页验收：`triggerUpdate` 全量填表 success，8 表写入；`setFillMode` 双向切换可用。详见 `progress.md` 顶部。下一步：精确提交 `vendor/shujuku-sp-fork/index.js`、`scripts/verify-crud-plan-parse.mjs`、`src/神秘复苏模拟器/index.yaml`（loader 修复）+ planning 三件套，走 v6.18 发布流程（资源推送 → loader 回填【必须含开发版卡 YAML 6 处】→ 发布版同步 → CDN smoke）。
+
+## RESUME HERE（旧）- 2026-06-10 - v6.17 真页验收不通过，待修复 CRUD 链路三问题
+
+**当前状态：** v6.17 已发布，但 2026-06-10 第 1 步真页验收**不通过**：自动填表 21 次 AI 调用 0 成功。问题清单见 `findings.md`「2026-06-10 v6.17 真页验收结论」。修复优先级：① CRUD 计划 JSON 提取挽救逻辑（缺 `[`/标签时补救）；② CRUD 重试链路接入限流冷却（现只挂在 SQL 分支）；③ 回复过短阈值按模式区分；④ SQL 兜底 `fillMode` 无 UI 且持久化写入不生效；⑤ CRUD 填表 prompt 臃肿（57878 tokens）。开发版卡 YAML loader 漂移已修复（6 处 hash → `576e7b0/phase129`，未提交）。上一恢复点（v6.16 发布完成）正文保留在下方。
+
+## RESUME HERE（旧）- 2026-06-09 - v6.16 stable CRUD adapter 发布完成
 
 **当前状态：** 根目录 planning 已整理为恢复索引。当前 stable CRUD adapter 已发布为 `6.16`，发布提交为 `1e46879 release: publish v6.16 stable CRUD adapter`，资源基线为 `d06dabb / phase128-stable-crud-adapter-6-16`。阶段 0-7 已完成大步三主线；阶段 8-9 已完成本轮 v6.16 验证与发布收口，但新一轮阶段 7 改动仍需按发布流程另行同步；阶段 10-14 仍是后续主任务。
 
@@ -652,7 +660,21 @@
 - [x] 更新 `scripts/publish-card.mjs` 的新 CDN hash/cache/version，并同步发布版 YAML/PNG：`d06dabb / 6.16 / phase128-stable-crud-adapter-6-16`。
 - [x] 发布提交并推送到 GitHub：`1e46879 release: publish v6.16 stable CRUD adapter`。
 - [x] CDN URL 与发布卡 smoke test：YAML/PNG 元数据无旧 hash/cache，本轮 3 条关键 CDN 资源返回 200。
-## 2026-06-09 大步五 v6.17 收口：验证、发布与回滚
+## 2026-06-10 第 1 步 v6.17 真页验收收口 — 验收不通过，转修复任务
+
+- [x] 阶段 8 真页 AI 填表验收（2026-06-10）：`ai_crud_plan` 模式确认生效，但 21 次填表 AI 调用 0 成功，**验收不通过**。
+- [x] SP 运行日志人工面板复核（2026-06-10）：已从高级工具 → 运行日志面板读取完整失败时间线。
+- [x] SQL 兜底通道验证（2026-06-10）：**不可达**——`fillMode` 无 UI，持久化写入不生效且被保存动作清除。
+- [x] 修复 ①（2026-06-10 代码完成）：CRUD 计划 JSON 提取挽救逻辑 —— `stripTableChangePlanTags_ACU`（含残缺标签）+ `salvageCrudPlanObjects_ACU`（括号扫描）+ `parseCrudPlanResponse_ACU` 4 层兜底。
+- [x] 修复 ②（2026-06-10 代码完成）：CRUD 重试链路接入 API 限流冷却 —— 循环前冷却门控 + catch 内 `classifyAiTransportError_ACU`/`registerAiTransportCooldown_ACU` 后立即返回。
+- [x] 修复 ③（2026-06-10 代码完成）：CRUD 分支改用 `minCrudReplyLength=12`，不再用 `autoUpdateTokenThreshold`；SQL 分支与批次门控阈值不变。
+- [x] 修复 ④（2026-06-10 代码完成）：`setCurrentFillMode_ACU`（改内存 + `saveSettings_ACU` 持久化）+ API `getFillMode`/`setFillMode`。根因：内存值会覆盖裸 IDB 写入。
+- [x] 修复 ⑤（2026-06-10 代码完成）：`stripUiMarkupForFillPrompt_ACU` 剥离 `$C`/`$4` 的 style/script/link/注释，降低 57878 token 体量。
+- [x] 修复 ⑥（2026-06-10 真页复测新发现，代码完成）：`SqlTableService.executeMutation` 参数绑定丢失 —— 新增 `_inlineSqlParams` 把 `?` 安全内插为字面量；此前 sqlite 模式下 `updateCell` 等全部 CRUD 因 `WHERE row_id = NULL` 匹配 0 行。
+- [ ] 流程项：发布回填 loader 时同步开发版卡 YAML 脚本库 URL（本轮已手工修复，未提交）。
+- [x] 重跑第 1 步验收（2026-06-10 完成，通过）：本地 gate 全过；真页注入复测 `setFillMode` 双向切换可用、`triggerUpdate` 全量填表 success（8 表写入，首试即成功）。解析挽救与限流冷却因首试成功未被实际触发，发布后观察。
+
+## 2026-06-09 大步五 v6.17 收口：验证、发布与回滚（旧）
 
 - [x] 阶段 8 本地 gate：`node --check`、SQL 回归、table-change adapter 回归、`pnpm build`、`git diff --check` 全部通过。
 - [x] 阶段 8 真页只读 smoke：Chrome 9222 当前页可连接，数据库前端存在并返回 14 张表。

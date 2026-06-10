@@ -1,5 +1,60 @@
 # Findings
 
+## 2026-06-10 v6.17 真页验收结论（第 1 步收口）— 验收不通过
+
+**测试环境：** 开发版卡（已修复卡 YAML loader 至 v6.17，marker `mfrs-sql-fallback-cooldown-6-17`），酒馆主 API gemini-3.1-pro-preview（上游代理），SP 日志基线 2026-06-10 10:02 +08:00。
+
+### 结论总览
+
+- `ai_crud_plan` 默认模式确实生效（确认 fillMode 未设置时回落 CRUD 计划模式）。
+- 但本轮真实对话自动填表 **15 次 AI 调用（5 批次 × 3 重试）全部失败，0 行写入，写入意图丢失**；另两次手动 `triggerUpdate` 各 3 次尝试也全失败。合计 ~21 次填表 AI 调用，成功 0 次。
+- SQL 兜底通道实测**不可达**（见问题 4），限流冷却（阶段 7 主特性）因此无法验证。
+
+### 发现的问题（按优先级）
+
+1. **CRUD 计划 JSON 提取过严（高频失败根因）**
+   - 实测响应（reqid 1821）：模型输出缺开头 `[` 和 `<tableChangePlan>` 标签，但有结尾 `]</tableChangePlan>`；内容以 `{...},\n{...}` 开始。
+   - `JSON.parse` 解析完第一个对象即在逗号处报 `Unexpected non-whitespace character after JSON at position 234`（与日志 234/281/418/344/323/608/210/200/258 全部吻合）。
+   - 需要类比 SQL 时代提取器的挽救逻辑：剥标签、缺 `[` 时补包裹、逐对象挽救解析。
+
+2. **CRUD 重试链路没有限流冷却**
+   - 上游代理返回 HTTP 200 + body `{"error":{"message":"Too Many Requests"},"quota_error":false}`；`parseNonStreamResponse_ACU` 正确识别分类（这部分 v6.17 生效）。
+   - 但 CRUD 分支收到限流后 2 秒内继续下一次尝试，5 个批次连环 15 连击。阶段 7 的 15-120 秒指数退避只挂在旧 SQL 分支，CRUD 分支完全没接入。
+   - 首轮限流发生率 8/15 ≈ 53%。
+
+3. **`AI回复过短` 阈值误判合法 CRUD 计划**
+   - 418 字符的合法 JSON 计划被 500 字符阈值拒绝。该阈值为 SQL/正文回复设计，CRUD JSON 计划天然较短，需按模式区分。
+
+4. **SQL 兜底通道（`ai_sql`）实际不可达 —— 阶段 7 验收级缺陷**
+   - `fillMode` 在 vendor 中只有默认值定义和 getter，**没有任何设置 UI**。
+   - 直接向 IndexedDB `shujuku_v120_config_v1/kv/shujuku_v120_profile_v1____default____settings` 写入 `fillMode:'ai_sql'`，重载后填表仍走 CRUD 计划；且 fillMode 键随后被运行实例的设置保存动作清除（两次复现）。疑似设置保存/加载链路只保留 UI 已知字段或存在覆盖竞态，待修复时一并排查。
+   - 结果：「显式选择 ai_sql 走 SQL 兜底」「SQL 限流冷却」当前用户均无法触达。
+
+5. **CRUD 填表 prompt 仍然臃肿**
+   - 单次填表请求体 ~217KB，`prompt_tokens=57878`，背景设定把整个欢迎页 HTML/CSS 都带上。阶段 5 的"减少无关上下文注入"在 CRUD 模式没有收紧，限流与该体量直接相关。
+
+6. **开发版卡 YAML loader 漂移（已修复）**
+   - 开发版 `src/神秘复苏模拟器/index.yaml` 6 个脚本 loader 钉死 `c164fd35/phase125`（6.13 资源）；v6.17 loader 回填只改了 `src/**/脚本/**/index.ts`。已替换为 `576e7b0/phase129` 并由 tavern_sync watch 自动推送，真页 marker 已是 6.17。
+   - **流程教训：发布回填 loader 时，开发版卡 YAML 的脚本库 URL 也必须同步**，否则真页验收跑的是旧代码。
+
+### 对比指标（本轮实测）
+
+| 指标 | 数值 |
+|---|---|
+| 主对话生成 | 1 次成功（流式 ~24s） |
+| 自动填表 AI 调用 | 15 次（5 批 × 3 重试），全失败 |
+| 手动 triggerUpdate | 2 轮 × 3 次，全失败 |
+| 填表成功率 | 0/21 |
+| 失败分类（首轮 15 次） | JSON 解析 6、限流 8、回复过短 1 |
+| 单次填表 prompt | ~217KB 请求体 / 57878 prompt tokens |
+| 限流响应形态 | HTTP 200 + Too Many Requests body（代理特性） |
+| 数据一致性 | 无脏数据写入（失败均在解析/预检前拦截）✓ |
+
+### 已知无害项（本轮再次出现，忽略）
+
+- `[SyncBridge] sheet_chronicle chronicle_text 长度无效（6 字 < 200-600）已跳过`：旧数据问题，每次加载必现 2 条，非本轮引入。
+
+
 ## 2026-06-09 项目理解快照（完成）
 
 - `CLAUDE.md` 指向 `.cursor/rules/*.mdc`，这些规则是理解项目开发规范的第一入口。
