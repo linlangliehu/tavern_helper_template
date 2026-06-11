@@ -318,7 +318,7 @@ export async function applyTableChangePlan(
 function toApiInsertValues(resolved: ResolvedPlan) {
   const values = { ...resolved.values };
   for (const column of resolved.columns) {
-    if (column.primaryKey) delete values[column.header];
+    if (column.primaryKey && values[column.header] == null) delete values[column.header];
   }
   return values;
 }
