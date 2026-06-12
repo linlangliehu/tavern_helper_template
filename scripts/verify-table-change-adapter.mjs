@@ -340,6 +340,52 @@ assert.deepEqual(importedSnapshots[0].sheet_action_suggestions.content[1], [
   RISK_NONE,
 ]);
 
+const failedButAppliedInsertData = JSON.parse(JSON.stringify(emptyCurrentData));
+const failedButAppliedInsertImports = [];
+const failedButAppliedInsertApi = {
+  async insertRow(options) {
+    failedButAppliedInsertData.sheet_action_suggestions.content.push([
+      options.data.row_id,
+      options.data[COL_OPTION],
+      options.data[COL_IDEA],
+      options.data[COL_MAIN_RISK],
+      options.data[COL_GAIN],
+      options.data[COL_DEATH],
+      options.data[COL_REVIVAL],
+    ]);
+    return -1;
+  },
+  async exportTableAsJson() {
+    return JSON.stringify(failedButAppliedInsertData);
+  },
+  async importTableAsJson(jsonString) {
+    failedButAppliedInsertImports.push(JSON.parse(jsonString));
+    return true;
+  },
+};
+const failedButAppliedInsert = await applyTableChangePlan(failedButAppliedInsertApi, {
+  action: 'insertRow',
+  table: table.name,
+  data: {
+    row_id: 2,
+    option_key: 'B',
+    idea_text: 'verified insert',
+    main_risk: 'verified risk',
+    expected_gain: 'verified gain',
+    death_risk_level: RISK_LOW,
+    revival_risk_level: RISK_NONE,
+  },
+}, emptyCurrentData);
+assert.equal(failedButAppliedInsert.ok, true);
+assert.equal(failedButAppliedInsert.insertedRowIndex, 1);
+assert.equal(failedButAppliedInsertImports.length, 0);
+assert.equal(failedButAppliedInsertData.sheet_action_suggestions.content.length, 2);
+assert.equal(
+  failedButAppliedInsertData.sheet_action_suggestions.content
+    .filter(row => Array.isArray(row) && row.includes('verified insert')).length,
+  1,
+);
+
 const promotedUpdateCalls = [];
 const promotedUpdateApi = {
   async insertRow(options) {
@@ -442,6 +488,37 @@ assert.equal(updateFallbackImports.length, 1);
 assert.equal(updateFallbackImports[0].sheet_action_suggestions.content[1][2], 'fallback update');
 assert.equal(updateFallbackImports[0].sheet_action_suggestions.content[1][3], 'fallback update risk');
 
+const failedButAppliedUpdateData = JSON.parse(JSON.stringify(currentData));
+const failedButAppliedUpdateImports = [];
+const failedButAppliedUpdateApi = {
+  async updateCell(options) {
+    const headers = failedButAppliedUpdateData.sheet_action_suggestions.content[0];
+    const columnIndex = headers.indexOf(options.column);
+    failedButAppliedUpdateData.sheet_action_suggestions.content[options.rowIndex][columnIndex] = options.value;
+    return false;
+  },
+  async exportTableAsJson() {
+    return JSON.stringify(failedButAppliedUpdateData);
+  },
+  async importTableAsJson(jsonString) {
+    failedButAppliedUpdateImports.push(JSON.parse(jsonString));
+    return true;
+  },
+};
+const failedButAppliedUpdate = await applyTableChangePlan(failedButAppliedUpdateApi, {
+  action: 'updateCell',
+  table: TABLE_ACTION,
+  match: { row_id: 1 },
+  set: {
+    idea_text: 'verified update',
+    main_risk: 'verified update risk',
+  },
+}, currentData);
+assert.equal(failedButAppliedUpdate.ok, true);
+assert.equal(failedButAppliedUpdateImports.length, 0);
+assert.equal(failedButAppliedUpdateData.sheet_action_suggestions.content[1][2], 'verified update');
+assert.equal(failedButAppliedUpdateData.sheet_action_suggestions.content[1][3], 'verified update risk');
+
 const deleteFallbackImports = [];
 const deleteFallbackApi = {
   async deleteRow() {
@@ -460,6 +537,31 @@ const fallbackDelete = await applyTableChangePlan(deleteFallbackApi, {
 assert.equal(fallbackDelete.ok, true);
 assert.equal(deleteFallbackImports.length, 1);
 assert.equal(deleteFallbackImports[0].sheet_action_suggestions.content.length, 1);
+
+const failedButAppliedDeleteData = JSON.parse(JSON.stringify(currentData));
+const failedButAppliedDeleteImports = [];
+const failedButAppliedDeleteApi = {
+  async deleteRow(options) {
+    failedButAppliedDeleteData.sheet_action_suggestions.content.splice(options.rowIndex, 1);
+    return false;
+  },
+  async exportTableAsJson() {
+    return JSON.stringify(failedButAppliedDeleteData);
+  },
+  async importTableAsJson(jsonString) {
+    failedButAppliedDeleteImports.push(JSON.parse(jsonString));
+    return true;
+  },
+};
+const failedButAppliedDelete = await applyTableChangePlan(failedButAppliedDeleteApi, {
+  action: 'deleteRow',
+  table: TABLE_ACTION,
+  match: { row_id: 1 },
+}, currentData);
+assert.equal(failedButAppliedDelete.ok, true);
+assert.equal(failedButAppliedDeleteImports.length, 0);
+assert.equal(failedButAppliedDeleteData.sheet_action_suggestions.content.length, currentData.sheet_action_suggestions.content.length - 1);
+assert.equal(failedButAppliedDeleteData.sheet_action_suggestions.content.some(row => Array.isArray(row) && row[0] === 1), false);
 
 const beforeDeleteCalls = calls.length;
 const blockedDelete = await applyTableChangePlan(api, {

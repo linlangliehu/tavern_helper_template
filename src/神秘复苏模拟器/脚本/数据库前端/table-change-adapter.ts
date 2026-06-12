@@ -261,6 +261,10 @@ export async function applyTableChangePlan(
     insertOptions.data = insertValues;
     let insertedRowIndex = await api.insertRow(insertOptions);
     if (typeof insertedRowIndex !== 'number' || insertedRowIndex < 0) {
+      const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, currentData);
+      if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
+        return { ...preview, insertedRowIndex: verifiedRowIndex };
+      }
       const fallbackRowIndex = allowImportFallback
         ? await tryImportJsonInsertFallback(api, resolved, currentData)
         : null;
@@ -288,6 +292,7 @@ export async function applyTableChangePlan(
       skipChatSave: resolved.plan.skipChatSave,
       silent: resolved.plan.silent,
     });
+    if (!ok && await verifyDeleteAppliedAfterFailedResult(api, resolved, currentData)) return preview;
     if (!ok && allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
     return ok ? preview : withError(preview, 'API_MUTATION_FAILED', 'deleteRow 执行失败。');
   }
@@ -307,6 +312,7 @@ export async function applyTableChangePlan(
       silent: resolved.plan.silent,
     });
     if (!ok) {
+      if (await verifyUpdateAppliedAfterFailedResult(api, resolved, column)) continue;
       if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
       return withError(preview, 'API_MUTATION_FAILED', `updateCell 执行失败：${column.header}。`, column.header);
     }
@@ -321,6 +327,104 @@ function toApiInsertValues(resolved: ResolvedPlan) {
     if (column.primaryKey && values[column.header] == null) delete values[column.header];
   }
   return values;
+}
+
+async function verifyInsertAppliedAfterFailedResult(
+  api: AutoCardUpdaterCrudApi,
+  resolved: ResolvedPlan,
+  currentData: unknown,
+) {
+  const verifiedData = await exportVerifiedData(api);
+  const verifiedContent = getSheetContent(verifiedData, resolved.table);
+  if (!verifiedContent) return null;
+
+  const beforeContent = getSheetContent(normalizeRecordData(currentData), resolved.table);
+  const beforeCount = beforeContent ? countRowsMatchingPlan(beforeContent, resolved) : 0;
+  const matches = findRowsMatchingResolvedValues(verifiedContent, resolved);
+  if (matches.length <= beforeCount) return null;
+  return matches[matches.length - 1];
+}
+
+async function verifyDeleteAppliedAfterFailedResult(
+  api: AutoCardUpdaterCrudApi,
+  resolved: ResolvedPlan,
+  currentData: unknown,
+) {
+  const verifiedData = await exportVerifiedData(api);
+  const beforeContent = getSheetContent(normalizeRecordData(currentData), resolved.table);
+  const verifiedContent = getSheetContent(verifiedData, resolved.table);
+  if (!beforeContent || !verifiedContent) return false;
+  return wasDeleteApplied(beforeContent, verifiedContent, resolved);
+}
+
+async function verifyUpdateAppliedAfterFailedResult(
+  api: AutoCardUpdaterCrudApi,
+  resolved: ResolvedPlan,
+  column: ColumnMeta,
+) {
+  if (resolved.rowIndex === undefined) return false;
+  const verifiedData = await exportVerifiedData(api);
+  const verifiedContent = getSheetContent(verifiedData, resolved.table);
+  const row = verifiedContent?.[resolved.rowIndex];
+  return Array.isArray(row)
+    && normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]);
+}
+
+async function exportVerifiedData(api: AutoCardUpdaterCrudApi) {
+  if (!api.exportTableAsJson) return null;
+  try {
+    const exported = await api.exportTableAsJson();
+    return normalizeRecordData(exported);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRecordData(data: unknown) {
+  const normalized = normalizeExportedTableData(data);
+  return isRecord(normalized) ? normalized : null;
+}
+
+function getSheetContent(data: Record<string, unknown> | null, table: TableMeta) {
+  if (!data) return null;
+  const sheet = findSheetInData(data, table);
+  if (!sheet || !Array.isArray(sheet.content)) return null;
+  return sheet.content.filter((row): row is unknown[] => Array.isArray(row));
+}
+
+function findRowsMatchingResolvedValues(content: unknown[][], resolved: ResolvedPlan) {
+  const matches: number[] = [];
+  for (let rowIndex = 1; rowIndex < content.length; rowIndex += 1) {
+    if (rowMatchesResolvedValues(content[rowIndex], resolved)) matches.push(rowIndex);
+  }
+  return matches;
+}
+
+function rowMatchesResolvedValues(row: unknown[], resolved: ResolvedPlan) {
+  if (resolved.columns.length === 0) return false;
+  return resolved.columns.every(column =>
+    normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]),
+  );
+}
+
+function countRowsMatchingPlan(content: unknown[][], resolved: ResolvedPlan) {
+  return findRowsMatchingResolvedValues(content, resolved).length;
+}
+
+function wasDeleteApplied(beforeContent: unknown[][], verifiedContent: unknown[][], resolved: ResolvedPlan) {
+  if (resolved.rowIndex === undefined) return false;
+  const targetRow = beforeContent[resolved.rowIndex];
+  if (!Array.isArray(targetRow)) return false;
+  return countRowsEqualTo(verifiedContent, targetRow) < countRowsEqualTo(beforeContent, targetRow);
+}
+
+function countRowsEqualTo(content: unknown[][], targetRow: unknown[]) {
+  return content.slice(1).filter(row => rowsEqual(row, targetRow)).length;
+}
+
+function rowsEqual(left: unknown[], right: unknown[]) {
+  return left.length === right.length
+    && left.every((value, index) => normalizeCellValue(value) === normalizeCellValue(right[index]));
 }
 
 async function tryImportJsonInsertFallback(
