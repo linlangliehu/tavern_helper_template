@@ -49,6 +49,12 @@ const RISK_NONE = '\u65e0';
 const RISK_LOW = '\u4f4e';
 const RISK_MID = '\u4e2d';
 const RISK_UNKNOWN = '\u672a\u77e5';
+const TABLE_CHRONICLE = '\u4e8b\u4ef6\u7eaa\u8981';
+const COL_CODE_INDEX = '\u7eaa\u8981\u7f16\u53f7';
+const COL_TIME_SPAN = '\u65f6\u95f4\u8de8\u5ea6';
+const COL_RELATED_EVENT = '\u5173\u8054\u4e8b\u4ef6';
+const COL_SUMMARY = '\u6982\u89c8';
+const COL_CHRONICLE_TEXT = '\u7eaa\u8981';
 
 const table = {
   uid: 'sheet_action_suggestions',
@@ -76,6 +82,26 @@ const table = {
 const currentData = {
   mate: { type: 'chatSheets', version: 1 },
   sheet_action_suggestions: table,
+};
+
+const chronicleTable = {
+  uid: 'sheet_chronicle',
+  name: TABLE_CHRONICLE,
+  sourceData: {
+    ddl: `CREATE TABLE chronicle ( -- ${TABLE_CHRONICLE}
+  row_id INTEGER PRIMARY KEY, -- row_id
+  code_index TEXT NOT NULL UNIQUE CHECK(code_index GLOB 'SP[0-9][0-9][0-9][0-9]'), -- ${COL_CODE_INDEX}
+  time_span TEXT NOT NULL, -- ${COL_TIME_SPAN}
+  related_event TEXT NOT NULL, -- ${COL_RELATED_EVENT}
+  summary TEXT NOT NULL CHECK(LENGTH(summary) <= 40), -- ${COL_SUMMARY}
+  chronicle_text TEXT NOT NULL CHECK(LENGTH(chronicle_text) >= 200 AND LENGTH(chronicle_text) <= 600) -- ${COL_CHRONICLE_TEXT}
+);`,
+  },
+  content: [
+    ['row_id', COL_CODE_INDEX, COL_TIME_SPAN, COL_RELATED_EVENT, COL_SUMMARY, COL_CHRONICLE_TEXT],
+    [1, 'SP0001', '2004-07-01 08:00 ~ 08:30', '\u4e03\u4e2d\u6572\u95e8\u4e8b\u4ef6', '\u5f00\u5c40\u51fa\u73b0\u6572\u95e8\u58f0', '\u5f00\u5c40\u7eaa\u8981'.repeat(30)],
+    [2, 'SP0002', '2004-07-01 08:30 ~ 09:00', '\u4e03\u4e2d\u6572\u95e8\u4e8b\u4ef6', '\u73a9\u5bb6\u5f00\u59cb\u64a4\u79bb', '\u64a4\u79bb\u7eaa\u8981'.repeat(30)],
+  ],
 };
 
 function assertError(result, code) {
@@ -266,6 +292,7 @@ assert.equal(insertCall[0], 'insertRow');
 // P2\uff1a\u5355\u53c2\u9009\u9879\u5305\u5f62\u6001\uff0cdata \u5185\u8054\u5728\u9009\u9879\u5305\u91cc\uff08\u4e0e\u771f\u5b9e vendor \u7684 parseInsertRowArgs_ACU \u4e00\u81f4\uff09\u3002
 assert.equal(insertCall[1].tableName, TABLE_ACTION);
 assert.deepEqual({ ...insertCall[1].data }, {
+  row_id: 4,
   [COL_OPTION]: 'C',
   [COL_IDEA]: '\u7ed5\u884c\u89c2\u5bdf',
   [COL_MAIN_RISK]: '\u7ed5\u884c\u89c2\u5bdf',
@@ -312,6 +339,84 @@ assert.deepEqual(importedSnapshots[0].sheet_action_suggestions.content[1], [
   RISK_LOW,
   RISK_NONE,
 ]);
+
+const promotedUpdateCalls = [];
+const promotedUpdateApi = {
+  async insertRow(options) {
+    promotedUpdateCalls.push(['insertRow', options]);
+    return 1;
+  },
+};
+const promotedFixedRowUpdate = await applyTableChangePlan(promotedUpdateApi, {
+  action: 'updateCell',
+  table: TABLE_ACTION,
+  match: { row_id: 2 },
+  set: {
+    option_key: 'B',
+    idea_text: '\u64a4\u79bb\u73b0\u573a',
+    main_risk: '\u53ef\u80fd\u9519\u8fc7\u7ebf\u7d22',
+    expected_gain: '\u964d\u4f4e\u6b7b\u4ea1\u98ce\u9669',
+    death_risk_level: RISK_LOW,
+    revival_risk_level: RISK_NONE,
+  },
+}, emptyCurrentData);
+assert.equal(promotedFixedRowUpdate.ok, true);
+assert.equal(promotedFixedRowUpdate.action, 'insertRow');
+assert.equal(promotedFixedRowUpdate.insertedRowIndex, 1);
+assert.equal(promotedUpdateCalls.length, 1);
+assert.equal(promotedUpdateCalls[0][1].tableName, TABLE_ACTION);
+assert.deepEqual({ ...promotedUpdateCalls[0][1].data }, {
+  row_id: 2,
+  [COL_OPTION]: 'B',
+  [COL_IDEA]: '\u64a4\u79bb\u73b0\u573a',
+  [COL_MAIN_RISK]: '\u53ef\u80fd\u9519\u8fc7\u7ebf\u7d22',
+  [COL_GAIN]: '\u964d\u4f4e\u6b7b\u4ea1\u98ce\u9669',
+  [COL_DEATH]: RISK_LOW,
+  [COL_REVIVAL]: RISK_NONE,
+});
+
+const promotedIncompleteFixedRow = previewTableChangePlan({
+  action: 'updateCell',
+  table: TABLE_ACTION,
+  match: { row_id: 3 },
+  set: { option_key: 'C' },
+}, emptyCurrentData);
+assert.equal(promotedIncompleteFixedRow.ok, false);
+assert.ok(promotedIncompleteFixedRow.errors.some(error => error.code === 'NOT_NULL_VIOLATION'));
+
+const chronicleCalls = [];
+const chronicleApi = {
+  async insertRow(options) {
+    chronicleCalls.push(['insertRow', options]);
+    return 3;
+  },
+};
+const chronicleText = '\u672c\u8f6e\u7eaa\u8981\u4ee5\u7b2c\u4e09\u65b9\u89c6\u89d2\u8bb0\u5f55\u5df2\u7ecf\u53d1\u751f\u7684\u4e8b\u5b9e\uff0c\u53ea\u4fdd\u7559\u73a9\u5bb6\u5728\u573a\u80fd\u591f\u786e\u8ba4\u7684\u884c\u52a8\u3001\u73af\u5883\u53d8\u5316\u548c\u7ebf\u7d22\u53d6\u5f97\u8fc7\u7a0b\uff0c\u4e0d\u8865\u5199\u9690\u85cf\u771f\u76f8\u6216\u672a\u51fa\u573a\u7684\u89c4\u5f8b\u3002'.repeat(4);
+const chronicleInsert = await applyTableChangePlan(chronicleApi, {
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 09:00 ~ 09:30',
+    related_event: '\u4e03\u4e2d\u6572\u95e8\u4e8b\u4ef6',
+    summary: '\u73a9\u5bb6\u83b7\u5f97\u65b0\u8bc1\u8bcd',
+    chronicle_text: chronicleText,
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assert.equal(chronicleInsert.ok, true);
+assert.equal(chronicleCalls.length, 1);
+assert.equal(chronicleCalls[0][1].data[COL_CODE_INDEX], 'SP0003');
+
+const shortChroniclePreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: TABLE_CHRONICLE,
+  data: {
+    time_span: '2004-07-01 09:00 ~ 09:30',
+    related_event: '\u4e03\u4e2d\u6572\u95e8\u4e8b\u4ef6',
+    summary: '\u8fc7\u77ed\u7eaa\u8981',
+    chronicle_text: '\u8fc7\u77ed\u7eaa\u8981',
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(shortChroniclePreview, 'LENGTH_VIOLATION');
 
 const updateFallbackImports = [];
 const updateFallbackApi = {

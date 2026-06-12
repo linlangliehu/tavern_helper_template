@@ -483,12 +483,74 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
   }
 
   const values = extractPlanValues(plan, errors);
-  const columns = resolveColumns(table, values, errors);
+  applyGeneratedInsertDefaults(table, plan, values);
+  let columns = resolveColumns(table, values, errors);
   validateColumnValues(table, columns, values, plan.action, errors);
 
-  const rowIndex = plan.action === 'insertRow' ? undefined : resolveRowIndex(table, plan.match, errors);
+  let rowIndex = plan.action === 'insertRow' ? undefined : resolveRowIndex(table, plan.match, errors);
+
+  const promoted = tryPromoteMissingFixedRowUpdateToInsert(table, plan, values, rowIndex, errors);
+  if (promoted) {
+    columns = resolveColumns(table, promoted.values, promoted.errors);
+    validateColumnValues(table, columns, promoted.values, promoted.plan.action, promoted.errors);
+    return {
+      plan: promoted.plan,
+      table,
+      rowIndex: undefined,
+      values: promoted.values,
+      columns,
+      errors: promoted.errors,
+    };
+  }
 
   return { plan, table, rowIndex, values, columns, errors };
+}
+
+function applyGeneratedInsertDefaults(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+) {
+  if (plan.action !== 'insertRow') return;
+  if (!isChronicleTable(table)) return;
+  const codeIndexColumn = findColumnByAlias(table, 'code_index');
+  if (!codeIndexColumn || hasColumnValue(table, values, codeIndexColumn)) return;
+  values[codeIndexColumn.header] = nextChronicleCodeIndex(table, codeIndexColumn);
+}
+
+function tryPromoteMissingFixedRowUpdateToInsert(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+  rowIndex: number | undefined,
+  errors: TableChangeError[],
+) {
+  if (plan.action !== 'updateCell' || rowIndex !== undefined) return null;
+  if (!errors.some(error => error.code === 'ROW_NOT_FOUND')) return null;
+
+  const primaryKeyColumn = getRowIdPrimaryKeyColumn(table);
+  if (!primaryKeyColumn || primaryKeyColumn.minValue === undefined || primaryKeyColumn.maxValue === undefined) return null;
+  const matchedRowId = getMatchedPrimaryKeyValue(table, plan.match, primaryKeyColumn);
+  if (matchedRowId === undefined || matchedRowId === null) return null;
+  const numericRowId = typeof matchedRowId === 'number' ? matchedRowId : Number(String(matchedRowId).trim());
+  if (!Number.isFinite(numericRowId)
+    || numericRowId < primaryKeyColumn.minValue
+    || numericRowId > primaryKeyColumn.maxValue) {
+    return null;
+  }
+  if (tableHasPrimaryKeyRow(table, primaryKeyColumn, matchedRowId)) return null;
+
+  const promotedValues = { ...values, [primaryKeyColumn.header]: matchedRowId };
+  return {
+    plan: {
+      ...plan,
+      action: 'insertRow' as const,
+      match: undefined,
+      data: promotedValues,
+    },
+    values: promotedValues,
+    errors: errors.filter(error => error.code !== 'ROW_NOT_FOUND'),
+  };
 }
 
 function normalizePlan(record: Record<string, unknown>): TableChangePlan {
@@ -809,6 +871,61 @@ function resolveRowIndex(table: TableMeta, match: TableChangeMatch | undefined, 
 
   errors.push({ code: 'ROW_NOT_FOUND', message: 'match 未命中任何行。', table: table.name });
   return undefined;
+}
+
+function getRowIdPrimaryKeyColumn(table: TableMeta) {
+  return table.columns.find(column => column.primaryKey && normalizeAlias(column.physicalName ?? column.header) === 'row_id')
+    ?? table.columns.find(column => column.primaryKey && normalizeAlias(column.header) === 'row_id')
+    ?? null;
+}
+
+function getMatchedPrimaryKeyValue(
+  table: TableMeta,
+  match: TableChangeMatch | undefined,
+  primaryKeyColumn: ColumnMeta,
+) {
+  if (!match) return undefined;
+  if (match.row_id !== undefined && match.row_id !== null) return match.row_id;
+  const conditions = extractMatchConditions(match);
+  for (const [rawColumn, value] of Object.entries(conditions)) {
+    const column = table.columnAliases.get(normalizeAlias(rawColumn));
+    if (column === primaryKeyColumn) return value;
+  }
+  return undefined;
+}
+
+function tableHasPrimaryKeyRow(table: TableMeta, primaryKeyColumn: ColumnMeta, rowId: Primitive) {
+  return table.rows
+    .slice(1)
+    .some(row => normalizeCellValue(row[primaryKeyColumn.index]) === normalizeCellValue(rowId));
+}
+
+function findColumnByAlias(table: TableMeta, alias: string) {
+  return table.columnAliases.get(normalizeAlias(alias)) ?? null;
+}
+
+function hasColumnValue(table: TableMeta, values: Record<string, Primitive>, column: ColumnMeta) {
+  const aliases = [column.header, column.physicalName, column.commentAlias]
+    .map(normalizeAlias)
+    .filter(Boolean);
+  return Object.keys(values).some(key => aliases.includes(normalizeAlias(key)));
+}
+
+function isChronicleTable(table: TableMeta) {
+  return normalizeAlias(table.sqlName) === 'chronicle'
+    || normalizeAlias(table.name) === normalizeAlias('事件纪要')
+    || normalizeAlias(table.uid) === 'sheet_chronicle';
+}
+
+function nextChronicleCodeIndex(table: TableMeta, codeIndexColumn: ColumnMeta) {
+  const maxIndex = table.rows
+    .slice(1)
+    .map(row => String(row[codeIndexColumn.index] ?? '').trim())
+    .map(value => /^SP(\d{4})$/i.exec(value)?.[1])
+    .map(value => Number(value ?? NaN))
+    .filter(Number.isFinite)
+    .reduce((highest, value) => Math.max(highest, value), 0);
+  return `SP${String(maxIndex + 1).padStart(4, '0')}`;
 }
 
 function extractMatchConditions(match: TableChangeMatch) {
