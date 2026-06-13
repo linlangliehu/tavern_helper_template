@@ -26,9 +26,9 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 链接替换为 jsdelivr 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = '3c003a6d0ba5a1783ea8ad541e2990b668934ec0';
+const CDN_REF = 'da5a25b4510e154dd343e99f0bf1d2e681f73329';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase136-sqlite-export-headers-6-23';
+const CDN_CACHE_VERSION = 'phase137-duplicate-insert-update-6-24';
 
 // 把任意 http(s)://localhost(:port)/ 或 http(s)://127.0.0.1(:port)/ 替换为 CDN
 const LOCALHOST_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//g;
@@ -47,7 +47,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '6.23',
+    releaseVersion: '6.24',
   },
 ];
 
