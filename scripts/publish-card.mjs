@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 链接替换为 jsdelivr 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = '78c5dbbf2bd789c1045b6f4abd3a610db5d58593';
+const CDN_REF = 'bea7926e9a0f5e81645e9c6bb38f118e70aca8ae';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 const CDN_CACHE_VERSION = 'phase134-naked-instance-fallback-6-21';
 
