@@ -645,7 +645,7 @@ function tryPromoteDuplicateInsertToUpdate(
 
   const updateValues: Record<string, Primitive> = {};
   for (const column of columns) {
-    if (column.primaryKey) continue;
+    if (column.primaryKey || column.unique) continue;
     if (!Object.prototype.hasOwnProperty.call(values, column.header)) continue;
     updateValues[column.header] = values[column.header] ?? null;
   }
