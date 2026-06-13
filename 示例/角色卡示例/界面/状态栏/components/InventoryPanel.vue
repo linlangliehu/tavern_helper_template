@@ -44,30 +44,49 @@ function getItemIcon(name: string): string {
 .item-row {
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   border: 1px solid var(--c-gold-dark);
   padding: 8px;
   background: var(--c-dark-surface);
   transition: all 0.2s;
+=======
+  border: 1.5px solid var(--c-granite);
+  padding: 8px;
+  background: #fff;
+  transition: transform 0.2s;
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
 }
 
 .item-row:hover {
   transform: translateX(5px);
+<<<<<<< HEAD
   border-color: var(--c-gold-dim);
   box-shadow: 0 0 8px var(--c-gold-glow);
+=======
+  background: var(--c-mint-cream);
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
 }
 
 .item-icon {
   width: 28px;
   height: 28px;
+<<<<<<< HEAD
   background: linear-gradient(135deg, var(--c-gold-dark), var(--c-gold-dim));
   border: 1px solid var(--c-gold);
+=======
+  background: var(--c-celadon);
+  border: 1.5px solid var(--c-granite);
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 10px;
   font-weight: bold;
   font-size: 0.7rem;
+<<<<<<< HEAD
   color: var(--c-charcoal);
+=======
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
 }
 
 .item-detail {
@@ -77,11 +96,15 @@ function getItemIcon(name: string): string {
 .item-name {
   font-weight: bold;
   display: block;
+<<<<<<< HEAD
   color: var(--c-white);
+=======
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
 }
 
 .item-desc {
   font-size: 0.76rem;
+<<<<<<< HEAD
   color: var(--c-ghost);
 }
 
@@ -92,15 +115,31 @@ function getItemIcon(name: string): string {
   font-size: 0.72rem;
   font-weight: bold;
   letter-spacing: 0.5px;
+=======
+  color: var(--c-grey-olive);
+}
+
+.item-count {
+  background: var(--c-granite);
+  color: #fff;
+  padding: 2px 5px;
+  font-size: 0.72rem;
+  border-radius: 3px;
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
 }
 
 .empty-state {
   text-align: center;
+<<<<<<< HEAD
   color: var(--c-ghost);
+=======
+  color: var(--c-grey-olive);
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
   padding: 18px;
   font-style: italic;
   font-size: 0.85rem;
 }
+<<<<<<< HEAD
 
 .section-head {
   font-size: 0.95rem;
@@ -120,4 +159,6 @@ function getItemIcon(name: string): string {
     vertical-align: middle;
   }
 }
+=======
+>>>>>>> 953e75dbee8f57836eb5651fcf1275f064938d35
 </style>
