@@ -55,6 +55,22 @@ const COL_TIME_SPAN = '\u65f6\u95f4\u8de8\u5ea6';
 const COL_RELATED_EVENT = '\u5173\u8054\u4e8b\u4ef6';
 const COL_SUMMARY = '\u6982\u89c8';
 const COL_CHRONICLE_TEXT = '\u7eaa\u8981';
+const TABLE_EVENTS = '\u7075\u5f02\u4e8b\u4ef6';
+const COL_EVENT_CODE = '\u4e8b\u4ef6\u4ee3\u53f7';
+const COL_DANGER_LEVEL = '\u5371\u5bb3\u7b49\u7ea7';
+const COL_LOCATION = '\u53d1\u751f\u5730\u70b9';
+const COL_GHOST_DOMAIN = '\u9b3c\u57df\u72b6\u6001';
+const COL_KNOWN_LAWS = '\u5df2\u77e5\u6740\u4eba\u89c4\u5f8b';
+const COL_SUSPECTED_LAWS = '\u731c\u6d4b\u6740\u4eba\u89c4\u5f8b';
+const COL_WRONG_INFERENCES = '\u9519\u8bef\u63a8\u65ad';
+const COL_DEATH_COUNT = '\u6b7b\u4ea1\u4eba\u6570';
+const COL_SPREAD_TREND = '\u6269\u6563\u8d8b\u52bf';
+const COL_HANDLING_STATUS = '\u5904\u7406\u72b6\u6001';
+const COL_PUBLIC_SUMMARY = '\u53ef\u89c1\u6458\u8981';
+const STATUS_UNHANDLED = '\u672a\u5904\u7406';
+const STATUS_INVESTIGATING = '\u8c03\u67e5\u4e2d';
+const STATUS_CONFRONTING = '\u5bf9\u6297\u4e2d';
+const STATUS_SPREADING = '\u5931\u63a7\u6269\u6563';
 
 const table = {
   uid: 'sheet_action_suggestions',
@@ -104,9 +120,77 @@ const chronicleTable = {
   ],
 };
 
+const eventsTable = {
+  uid: 'sheet_supernatural_events',
+  name: TABLE_EVENTS,
+  sourceData: {
+    ddl: `CREATE TABLE supernatural_events ( -- ${TABLE_EVENTS}
+  row_id INTEGER PRIMARY KEY, -- row_id
+  event_code TEXT NOT NULL UNIQUE, -- ${COL_EVENT_CODE}
+  danger_level TEXT NOT NULL, -- ${COL_DANGER_LEVEL}
+  location_name TEXT NOT NULL, -- ${COL_LOCATION}
+  ghost_domain_status TEXT NOT NULL, -- ${COL_GHOST_DOMAIN}
+  known_laws TEXT NOT NULL, -- ${COL_KNOWN_LAWS}
+  suspected_laws TEXT NOT NULL, -- ${COL_SUSPECTED_LAWS}
+  wrong_inferences TEXT NOT NULL, -- ${COL_WRONG_INFERENCES}
+  death_count INTEGER NOT NULL CHECK(death_count >= 0), -- ${COL_DEATH_COUNT}
+  spread_trend TEXT NOT NULL, -- ${COL_SPREAD_TREND}
+  handling_status TEXT NOT NULL CHECK(handling_status IN ('${STATUS_UNHANDLED}', '${STATUS_INVESTIGATING}', '${STATUS_CONFRONTING}', '\u5df2\u538b\u5236', '\u5df2\u5173\u62bc', '${STATUS_SPREADING}', '\u7ed3\u675f')), -- ${COL_HANDLING_STATUS}
+  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 160) -- ${COL_PUBLIC_SUMMARY}
+);`,
+  },
+  content: [
+    [
+      'row_id',
+      COL_EVENT_CODE,
+      COL_DANGER_LEVEL,
+      COL_LOCATION,
+      COL_GHOST_DOMAIN,
+      COL_KNOWN_LAWS,
+      COL_SUSPECTED_LAWS,
+      COL_WRONG_INFERENCES,
+      COL_DEATH_COUNT,
+      COL_SPREAD_TREND,
+      COL_HANDLING_STATUS,
+      COL_PUBLIC_SUMMARY,
+    ],
+    [
+      1,
+      '\u4e03\u4e2d\u6572\u95e8\u4e8b\u4ef6',
+      '\u672a\u77e5',
+      '\u4e03\u4e2d',
+      '\u672a\u786e\u8ba4',
+      '\u65e0',
+      '\u542c\u5230\u6572\u95e8\u58f0\u540e\u53ef\u80fd\u88ab\u6807\u8bb0',
+      '\u65e0',
+      0,
+      '\u5c40\u90e8',
+      STATUS_INVESTIGATING,
+      '\u4e03\u4e2d\u51fa\u73b0\u5f02\u5e38\u6572\u95e8\u58f0\u3002',
+    ],
+  ],
+};
+
 function assertError(result, code) {
   assert.equal(result.ok, false);
   assert.ok(result.errors.some(error => error.code === code), `Expected ${code}, got ${JSON.stringify(result.errors)}`);
+}
+
+function createEventData(overrides = {}) {
+  return {
+    event_code: '\u4e03\u4e2d\u6572\u95e8\u4e8b\u4ef6',
+    danger_level: '\u672a\u77e5',
+    location_name: '\u4e03\u4e2d',
+    ghost_domain_status: '\u672a\u786e\u8ba4',
+    known_laws: '\u65e0',
+    suspected_laws: '\u542c\u5230\u6572\u95e8\u58f0\u540e\u53ef\u80fd\u88ab\u6807\u8bb0',
+    wrong_inferences: '\u65e0',
+    death_count: 0,
+    spread_trend: '\u5c40\u90e8',
+    handling_status: STATUS_INVESTIGATING,
+    public_summary: '\u4e03\u4e2d\u51fa\u73b0\u5f02\u5e38\u6572\u95e8\u58f0\u3002',
+    ...overrides,
+  };
 }
 
 const metadata = listTableMetadata(currentData);
@@ -166,6 +250,14 @@ const checkPreview = previewTableChangePlan({
   set: { check_type: '推理', check_basis: '线索' },
 }, checkCurrentData);
 assert.equal(checkPreview.ok, true, `check_type/check_basis 写入应通过校验，实际: ${JSON.stringify(checkPreview.errors)}`);
+
+const eventsCurrentData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_supernatural_events: eventsTable,
+};
+const eventsMetadata = listTableMetadata(eventsCurrentData)[0];
+const eventCodeColumn = eventsMetadata.columns.find(column => column.physicalName === 'event_code');
+assert.equal(eventCodeColumn.unique, true);
 
 const preview = previewTableChangePlan({
   action: 'updateCell',
@@ -286,7 +378,29 @@ const appliedInsert = await applyTableChangePlan(api, {
   },
 }, currentData);
 assert.equal(appliedInsert.ok, true);
-assert.equal(appliedInsert.insertedRowIndex, 3);
+assert.equal(appliedInsert.action, 'updateCell');
+assert.equal(appliedInsert.rowIndex, 4);
+assert.equal(calls.at(-1)[0], 'updateCell');
+assert.equal(calls.at(-1)[1].rowIndex, 4);
+
+const emptyCurrentData = JSON.parse(JSON.stringify(currentData));
+emptyCurrentData.sheet_action_suggestions.content = [table.content[0]];
+
+const appliedInsertIntoEmpty = await applyTableChangePlan(api, {
+  action: 'insertRow',
+  table: TABLE_ACTION,
+  data: {
+    row_id: 4,
+    option_key: 'C',
+    idea_text: '\u7ed5\u884c\u89c2\u5bdf',
+    main_risk: '\u7ed5\u884c\u89c2\u5bdf',
+    expected_gain: '\u53d1\u73b0\u51fa\u53e3',
+    death_risk_level: RISK_LOW,
+    revival_risk_level: RISK_NONE,
+  },
+}, emptyCurrentData);
+assert.equal(appliedInsertIntoEmpty.ok, true);
+assert.equal(appliedInsertIntoEmpty.insertedRowIndex, 3);
 const insertCall = calls.at(-1);
 assert.equal(insertCall[0], 'insertRow');
 // P2\uff1a\u5355\u53c2\u9009\u9879\u5305\u5f62\u6001\uff0cdata \u5185\u8054\u5728\u9009\u9879\u5305\u91cc\uff08\u4e0e\u771f\u5b9e vendor \u7684 parseInsertRowArgs_ACU \u4e00\u81f4\uff09\u3002
@@ -300,9 +414,6 @@ assert.deepEqual({ ...insertCall[1].data }, {
   [COL_DEATH]: RISK_LOW,
   [COL_REVIVAL]: RISK_NONE,
 });
-
-const emptyCurrentData = JSON.parse(JSON.stringify(currentData));
-emptyCurrentData.sheet_action_suggestions.content = [table.content[0]];
 const importedSnapshots = [];
 const fallbackApi = {
   async insertRow() {
@@ -463,6 +574,70 @@ const shortChroniclePreview = previewTableChangePlan({
   },
 }, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
 assertError(shortChroniclePreview, 'LENGTH_VIOLATION');
+
+const duplicateEventPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'supernatural_events',
+  data: createEventData({ handling_status: '\u7206\u53d1\u4e2d' }),
+}, eventsCurrentData);
+assert.equal(duplicateEventPreview.ok, true, `duplicate event insert should promote: ${JSON.stringify(duplicateEventPreview.errors)}`);
+assert.equal(duplicateEventPreview.action, 'updateCell');
+assert.equal(duplicateEventPreview.rowIndex, 1);
+
+const eventUpdateCalls = [];
+const eventUpdateApi = {
+  async updateCell(options) {
+    eventUpdateCalls.push(['updateCell', options]);
+    return true;
+  },
+  async insertRow(options) {
+    eventUpdateCalls.push(['insertRow', options]);
+    return 2;
+  },
+};
+const duplicateEventApply = await applyTableChangePlan(eventUpdateApi, {
+  action: 'insertRow',
+  table: TABLE_EVENTS,
+  data: createEventData({
+    death_count: 1,
+    spread_trend: '\u6821\u5185\u6269\u6563',
+    handling_status: '\u5904\u7406\u4e2d',
+    public_summary: '\u6572\u95e8\u58f0\u5df2\u5728\u6559\u5b66\u697c\u5185\u6269\u6563\u3002',
+  }),
+}, eventsCurrentData);
+assert.equal(duplicateEventApply.ok, true);
+assert.equal(duplicateEventApply.action, 'updateCell');
+assert.equal(duplicateEventApply.rowIndex, 1);
+assert.equal(eventUpdateCalls.some(call => call[0] === 'insertRow'), false);
+assert.ok(eventUpdateCalls.some(call =>
+  call[0] === 'updateCell'
+  && call[1].column === COL_HANDLING_STATUS
+  && call[1].value === STATUS_CONFRONTING
+));
+
+const emptyEventsCurrentData = JSON.parse(JSON.stringify(eventsCurrentData));
+emptyEventsCurrentData.sheet_supernatural_events.content = [eventsTable.content[0]];
+const eventInsertCalls = [];
+const eventInsertApi = {
+  async insertRow(options) {
+    eventInsertCalls.push(['insertRow', options]);
+    return 1;
+  },
+};
+const newEventApply = await applyTableChangePlan(eventInsertApi, {
+  action: 'insertRow',
+  table: 'supernatural_events',
+  data: createEventData({
+    event_code: '\u5546\u573a\u65e0\u5934\u5f71\u4e8b\u4ef6',
+    location_name: '\u5f18\u6cd5\u5546\u573a',
+    handling_status: '\u7206\u53d1\u4e2d',
+    public_summary: '\u5546\u573a\u76d1\u63a7\u62cd\u5230\u5f02\u5e38\u9ed1\u5f71\u3002',
+  }),
+}, emptyEventsCurrentData);
+assert.equal(newEventApply.ok, true);
+assert.equal(newEventApply.action, 'insertRow');
+assert.equal(eventInsertCalls.length, 1);
+assert.equal(eventInsertCalls[0][1].data[COL_HANDLING_STATUS], STATUS_SPREADING);
 
 const updateFallbackImports = [];
 const updateFallbackApi = {

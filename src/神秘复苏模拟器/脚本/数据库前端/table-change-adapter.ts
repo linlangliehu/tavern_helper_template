@@ -119,6 +119,7 @@ type ColumnMeta = {
   commentAlias?: string;
   notNull: boolean;
   primaryKey: boolean;
+  unique: boolean;
   checkIn?: string[];
   minValue?: number;
   maxValue?: number;
@@ -136,6 +137,7 @@ export type TableMetaSummary = {
     commentAlias?: string;
     notNull: boolean;
     primaryKey: boolean;
+    unique: boolean;
     checkIn?: string[];
     minValue?: number;
     maxValue?: number;
@@ -206,6 +208,7 @@ export function listTableMetadata(currentData: unknown, templateData?: unknown):
       commentAlias: column.commentAlias,
       notNull: column.notNull,
       primaryKey: column.primaryKey,
+      unique: column.unique,
       checkIn: column.checkIn,
       minValue: column.minValue,
       maxValue: column.maxValue,
@@ -589,6 +592,23 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
   const values = extractPlanValues(plan, errors);
   applyGeneratedInsertDefaults(table, plan, values);
   let columns = resolveColumns(table, values, errors);
+
+  const duplicateInsert = tryPromoteDuplicateInsertToUpdate(table, plan, values, columns, errors);
+  if (duplicateInsert) {
+    const promotedErrors = [...duplicateInsert.errors];
+    const promotedValues = { ...duplicateInsert.values };
+    const promotedColumns = resolveColumns(table, promotedValues, promotedErrors);
+    validateColumnValues(table, promotedColumns, promotedValues, duplicateInsert.plan.action, promotedErrors);
+    return {
+      plan: duplicateInsert.plan,
+      table,
+      rowIndex: duplicateInsert.rowIndex,
+      values: promotedValues,
+      columns: promotedColumns,
+      errors: promotedErrors,
+    };
+  }
+
   validateColumnValues(table, columns, values, plan.action, errors);
 
   let rowIndex = plan.action === 'insertRow' ? undefined : resolveRowIndex(table, plan.match, errors);
@@ -608,6 +628,71 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
   }
 
   return { plan, table, rowIndex, values, columns, errors };
+}
+
+function tryPromoteDuplicateInsertToUpdate(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+  columns: ColumnMeta[],
+  errors: TableChangeError[],
+) {
+  if (plan.action !== 'insertRow') return null;
+  if (errors.some(error => error.code === 'COLUMN_NOT_FOUND')) return null;
+
+  const duplicateRowIndex = findDuplicateInsertRowIndex(table, values, columns);
+  if (duplicateRowIndex === undefined) return null;
+
+  const updateValues: Record<string, Primitive> = {};
+  for (const column of columns) {
+    if (column.primaryKey) continue;
+    if (!Object.prototype.hasOwnProperty.call(values, column.header)) continue;
+    updateValues[column.header] = values[column.header] ?? null;
+  }
+  if (Object.keys(updateValues).length === 0) {
+    return {
+      plan: { ...plan, action: 'noop' as const, data: undefined },
+      rowIndex: duplicateRowIndex,
+      values: {},
+      errors: [],
+    };
+  }
+
+  return {
+    plan: {
+      ...plan,
+      action: 'updateCell' as const,
+      match: { rowIndex: duplicateRowIndex },
+      data: undefined,
+      set: updateValues,
+    },
+    rowIndex: duplicateRowIndex,
+    values: updateValues,
+    errors: [],
+  };
+}
+
+function findDuplicateInsertRowIndex(
+  table: TableMeta,
+  values: Record<string, Primitive>,
+  columns: ColumnMeta[],
+) {
+  const keyColumns = columns.filter(column =>
+    (column.primaryKey || column.unique)
+    && Object.prototype.hasOwnProperty.call(values, column.header)
+    && !isBlank(values[column.header])
+  );
+
+  for (const column of keyColumns) {
+    const expected = values[column.header];
+    const matches = table.rows
+      .map((row, rowIndex) => ({ row, rowIndex }))
+      .filter(({ rowIndex }) => rowIndex > 0)
+      .filter(({ row }) => normalizeCellValue(row[column.index]) === normalizeCellValue(expected));
+    if (matches.length === 1) return matches[0].rowIndex;
+  }
+
+  return undefined;
 }
 
 function applyGeneratedInsertDefaults(
@@ -738,6 +823,7 @@ function buildTableMeta(sheet: SheetLike, key: string): TableMeta {
       commentAlias: ddlColumn?.commentAlias,
       notNull: Boolean(ddlColumn?.notNull),
       primaryKey: Boolean(ddlColumn?.primaryKey),
+      unique: Boolean(ddlColumn?.unique),
       checkIn: ddlColumn?.checkIn,
       minValue: ddlColumn?.minValue,
       maxValue: ddlColumn?.maxValue,
@@ -819,6 +905,7 @@ function parseDdlColumn(line: string): ColumnMeta | null {
     commentAlias,
     notNull: /\bNOT\s+NULL\b/i.test(definition),
     primaryKey: /\bPRIMARY\s+KEY\b/i.test(definition),
+    unique: /\bUNIQUE\b/i.test(definition),
     checkIn,
     minValue: Number.isFinite(minValue) ? minValue : undefined,
     maxValue: Number.isFinite(maxValue) ? maxValue : undefined,
@@ -890,6 +977,11 @@ function validateColumnValues(
     if (!hasValue || value === null || value === undefined) continue;
     const text = String(value);
     if (column.checkIn && column.checkIn.length > 0 && !column.checkIn.includes(text)) {
+      const normalized = normalizeEnumAliasValue(table, column, text);
+      if (normalized && column.checkIn.includes(normalized)) {
+        values[column.header] = normalized;
+        continue;
+      }
       errors.push({
         code: 'CHECK_IN_VIOLATION',
         message: `列「${column.header}」只能是：${column.checkIn.join('、')}。`,
@@ -935,6 +1027,41 @@ function validateColumnValues(
       });
     }
   }
+}
+
+function normalizeEnumAliasValue(table: TableMeta, column: ColumnMeta, rawText: string) {
+  const allowed = column.checkIn ?? [];
+  const normalizedText = normalizeAlias(rawText);
+  const tableName = normalizeAlias(table.sqlName || table.name || table.uid);
+  const columnName = normalizeAlias(column.physicalName || column.header || column.commentAlias);
+
+  if (tableName === 'supernatural_events' && columnName === 'handling_status') {
+    const aliases: Record<string, string> = {
+      爆发中: '失控扩散',
+      正在爆发: '失控扩散',
+      扩散中: '失控扩散',
+      快速扩散: '失控扩散',
+      严重扩散: '失控扩散',
+      处理中: '对抗中',
+      处置中: '对抗中',
+      交战中: '对抗中',
+      正在对抗: '对抗中',
+      已解决: '结束',
+      已完结: '结束',
+      已处理: '结束',
+      已控制: '已压制',
+      已压制中: '已压制',
+      已收容: '已关押',
+      未开始: '未处理',
+      待处理: '未处理',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  const direct = allowed.find(value => normalizeAlias(value) === normalizedText);
+  if (direct) return direct;
+  return null;
 }
 
 function resolveRowIndex(table: TableMeta, match: TableChangeMatch | undefined, errors: TableChangeError[]) {
