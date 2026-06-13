@@ -154,6 +154,7 @@ function loadVendorRuntime() {
     extractRegion('function parseDDLTableName', '    // ═══════════════════════════════════════════════════════════════\n    // 内部工具函数'),
     extractFunction('splitColumnDefinitions'),
     extractRegion('function generateInserts', '    // ═══════════════════════════════════════════════════════════════\n    // SQL 结果'),
+    extractFunction('resultToContent'),
     extractFunction('escapeValue'),
     extractFunction('sanitizeIdentifier'),
     extractFunction('chineseToIdentifier'),
@@ -174,6 +175,8 @@ function loadVendorRuntime() {
         extractSqlMutationValuesForConstraintCheck_ACU,
         parseDDLTableName,
         parseDDLColumnNames,
+        buildColumnNameMap,
+        resultToContent,
         parseDDLConstraintRegistry_ACU,
         generateInserts,
         extractTableNamesFromStatements,
@@ -884,6 +887,23 @@ function testSyncBridgeConstraintRegistryRowValidation(template) {
   }
 }
 
+function testSyncBridgeExportKeepsDdlHeadersForEmptyTables(template) {
+  const ddl = template.sheet_supernatural_events.sourceData.ddl;
+  const columns = vendor.parseDDLColumnNames(ddl);
+  const { sqlToChinese } = vendor.buildColumnNameMap(ddl);
+  const content = vendor.resultToContent(columns, [], sqlToChinese);
+
+  assert.equal(
+    JSON.stringify(Array.from(content[0])),
+    JSON.stringify(['row_id', '事件代号', '危害等级', '发生地点', '鬼域状态', '已知杀人规律', '猜测杀人规律', '错误推断', '死亡人数', '扩散趋势', '处理状态', '可见摘要']),
+    'empty SQLite export should keep the full DDL-derived header row',
+  );
+  assert.ok(
+    vendorSource.includes('resultToContent(exportColumns, exportValues, sqlToChinese)'),
+    'SyncBridge _exportSheet should use DDL-aligned export columns, not raw query columns only',
+  );
+}
+
 function testSqlFragmentCleaning() {
   const fixtures = [
     `</thought>\n\nINSERT INTO chronicle (row_id, code_index) VALUES (1, 'SP0001');`,
@@ -1050,6 +1070,7 @@ testUpdateTrailingCommaNormalization(templates[0]);
 testTableAndColumnPreflight(templates[0]);
 testChronicleSeedRowFiltering(templates[0]);
 testSyncBridgeConstraintRegistryRowValidation(templates[0]);
+testSyncBridgeExportKeepsDdlHeadersForEmptyTables(templates[0]);
 testSqlFragmentCleaning();
 await testBadGatewayParsing();
 testDashboardClassification();
@@ -1060,4 +1081,4 @@ testSqlAutoRewrite(templates[0]);
 testSqlTemplateMatching();
 testEnhancedErrorClassification();
 
-console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification, v6.13 UNIQUE/FK/rewrite/templates/classification');
+console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, sqlite export headers, old table preflight, SQL cleaning, Bad Gateway, dashboard classification, v6.13 UNIQUE/FK/rewrite/templates/classification');
