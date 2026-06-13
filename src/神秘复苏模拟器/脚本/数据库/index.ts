@@ -1,8 +1,8 @@
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
 // 指向包含 v6.21 SQLite 写前初始化兜底修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@0881382254b209f8ef23963ec21ff2c7cf89c780/vendor/shujuku-sp-fork/index.js?v=phase134-naked-instance-fallback-6-21';
-const databaseScriptMarker = 'mfrs-naked-instance-fallback-6-21';
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b49ebdeb1867d1411c475aa9be3787bd2051cbb9/vendor/shujuku-sp-fork/index.js?v=phase135-crud-retry-state-sync-6-22';
+const databaseScriptMarker = 'mfrs-crud-retry-state-sync-6-22';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
 
