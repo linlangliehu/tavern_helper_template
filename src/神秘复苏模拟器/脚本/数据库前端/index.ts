@@ -78,8 +78,8 @@ type HostWindow = Window & {
   };
 };
 
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@599e2962beaa95354ab7beb41d45228251e9f0be/vendor/shujuku-sp-fork/index.js?v=phase138-duplicate-insert-vendor-ref-6-25';
-const databaseScriptMarker = 'mfrs-duplicate-insert-vendor-ref-6-25';
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@474c1230dc90142b92161c76087283945cefc560/vendor/shujuku-sp-fork/index.js?v=phase139-provider-mode-guard-6-26';
+const databaseScriptMarker = 'mfrs-provider-mode-guard-6-26';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
