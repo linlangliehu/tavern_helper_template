@@ -6,8 +6,8 @@
  *   1. 把开发版的若干数据目录（世界书/、第一条消息/、对话示例/、系统提示词/）镜像到发布版
  *      （删除 → 重新复制，确保开发版删过的文件也会从发布版消失）
  *   2. 把指定附属文件（如头像 PNG）复制到发布版
- *   3. 把开发版 index.yaml 复制到发布版，并按规则把 localhost / 127.0.0.1 链接
- *      替换为 jsdelivr CDN 链接（指向当前 fork 仓库）
+ *   3. 把开发版 index.yaml 复制到发布版，并按规则把 localhost / 127.0.0.1
+ *      以及已有 jsdelivr 旧 hash/cache 链接替换为当前 CDN 链接
  *   4. 调 `node tavern_sync.mjs bundle <配置名>` 生成最终可分发 PNG
  *
  * 用法：
@@ -23,17 +23,25 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 // ─────────────────────────────── 配置 ───────────────────────────────
-// 仓库标识：用于把开发版的 localhost 链接替换为 jsdelivr 链接
+// 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
 const CDN_REF = 'a18bba270385d32e1b33f94e3a82532b24a11f89';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 const CDN_CACHE_VERSION = 'phase140-meta-table-no-error-6-27';
 
+const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // 把任意 http(s)://localhost(:port)/ 或 http(s)://127.0.0.1(:port)/ 替换为 CDN
 const LOCALHOST_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//g;
-const REPO_PATTERN = REPO.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const EXISTING_CDN_PATTERN = new RegExp(`https://testingcf\\.jsdelivr\\.net/gh/${REPO_PATTERN}@[^/'"\\s]+/`, 'g');
+const REPO_PATTERN = escapeRegExp(REPO);
+const JSDELIVR_REPO_BASE_PATTERN = `https://(?:(?:testingcf|cdn)\\.)?jsdelivr\\.net/gh/${REPO_PATTERN}@[^/'"\\s]+/`;
+const EXISTING_CDN_PATTERN = new RegExp(JSDELIVR_REPO_BASE_PATTERN, 'g');
+const CURRENT_CDN_DIST_ENTRY_PATTERN = new RegExp(
+  `(${escapeRegExp(CDN)}dist/[^'"\\s]+?/index\\.(?:js|html))(?:\\?v=[^'"\\s]+)?`,
+  'g',
+);
+const MAGVAR_BUNDLE_PATTERN = /(https:\/\/(?:(?:testingcf|cdn)\.)?jsdelivr\.net\/gh\/MagicalAstrogy\/MagVarUpdate\/artifact\/bundle\.js)(?:\?v=[^'"\s]+)?/g;
 
 const cards = [
   {
@@ -102,24 +110,41 @@ function copyFile(src, dst) {
   return statSync(dst).size;
 }
 
+function replaceAndCount(content, pattern, replacer) {
+  let count = 0;
+  const next = content.replace(pattern, (...args) => {
+    count += 1;
+    return typeof replacer === 'function' ? replacer(...args) : replacer;
+  });
+  return { next, count };
+}
+
 function syncYaml(srcYaml, dstYaml, replacements, releaseVersion) {
   const content = readFileSync(srcYaml, 'utf8');
   let next = content;
   let count = 0;
   for (const { from, to } of replacements) {
-    next = next.replace(from, match => {
-      count += 1;
-      return to;
-    });
+    const result = replaceAndCount(next, from, to);
+    next = result.next;
+    count += result.count;
   }
-  next = next.replace(
-    new RegExp(`(${CDN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}dist/[^'"\\s]+?/index\\.(?:js|html))(?:\\?v=[^'"\\s]+)?`, 'g'),
-    `$1?v=${CDN_CACHE_VERSION}`,
+
+  const projectCacheResult = replaceAndCount(
+    next,
+    CURRENT_CDN_DIST_ENTRY_PATTERN,
+    (_match, entryUrl) => `${entryUrl}?v=${CDN_CACHE_VERSION}`,
   );
-  next = next.replace(
-    /(https:\/\/testingcf\.jsdelivr\.net\/gh\/MagicalAstrogy\/MagVarUpdate\/artifact\/bundle\.js)(?:\?v=[^'"\s]+)?/g,
-    `$1?v=${CDN_CACHE_VERSION}`,
+  next = projectCacheResult.next;
+  count += projectCacheResult.count;
+
+  const magvarCacheResult = replaceAndCount(
+    next,
+    MAGVAR_BUNDLE_PATTERN,
+    (_match, entryUrl) => `${entryUrl}?v=${CDN_CACHE_VERSION}`,
   );
+  next = magvarCacheResult.next;
+  count += magvarCacheResult.count;
+
   if (releaseVersion) {
     next = next.replace(/^版本:\s*['"][^'"]+['"]\s*$/m, `版本: '${releaseVersion}'`);
   }
