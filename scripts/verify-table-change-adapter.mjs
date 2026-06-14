@@ -81,6 +81,17 @@ const COL_MAIN_PHASE = '\u4e3b\u7ebf\u9636\u6bb5';
 const COL_WORLD_PRESSURE = '\u4e16\u754c\u538b\u529b';
 const COL_HQ_ATTENTION = '\u603b\u90e8\u5173\u6ce8\u5ea6';
 const COL_PUBLIC_EXPOSURE = '\u793e\u4f1a\u516c\u5f00\u5ea6';
+const TABLE_PLAYER = '\u73a9\u5bb6\u72b6\u6001';
+const COL_PLAYER_NAME = '\u59d3\u540d';
+const COL_PLAYER_IDENTITY = '\u8eab\u4efd';
+const COL_PLAYER_LOCATION = '\u6240\u5728\u5730\u70b9';
+const COL_PLAYER_STATUS = '\u5f53\u524d\u72b6\u6001';
+const COL_PLAYER_DEATH_RISK = '\u6b7b\u4ea1\u98ce\u9669\u955c\u50cf';
+const COL_PLAYER_REVIVAL_RISK = '\u590d\u82cf\u98ce\u9669\u955c\u50cf';
+const COL_PLAYER_GHOSTS = '\u5df2\u9a7e\u9a6d\u5389\u9b3c';
+const COL_PLAYER_PIECES = '\u6301\u6709\u62fc\u56fe';
+const COL_PLAYER_RESOURCES = '\u7075\u5f02\u8d44\u6e90';
+const COL_PLAYER_LAST_ACTION = '\u6700\u8fd1\u884c\u52a8';
 
 const table = {
   uid: 'sheet_action_suggestions',
@@ -209,6 +220,39 @@ const globalStateTable = {
     COL_WORLD_PRESSURE,
     COL_HQ_ATTENTION,
     COL_PUBLIC_EXPOSURE,
+  ]],
+};
+
+const playerStateTable = {
+  uid: 'sheet_player_state',
+  name: TABLE_PLAYER,
+  sourceData: {
+    ddl: `CREATE TABLE player_state ( -- ${TABLE_PLAYER}
+  row_id INTEGER PRIMARY KEY CHECK(row_id = 1), -- row_id
+  name TEXT NOT NULL, -- ${COL_PLAYER_NAME}
+  identity_text TEXT NOT NULL, -- ${COL_PLAYER_IDENTITY}
+  location_name TEXT NOT NULL, -- ${COL_PLAYER_LOCATION}
+  status_text TEXT NOT NULL, -- ${COL_PLAYER_STATUS}
+  death_risk INTEGER NOT NULL CHECK(death_risk BETWEEN 0 AND 100), -- ${COL_PLAYER_DEATH_RISK}
+  revival_risk INTEGER NOT NULL CHECK(revival_risk BETWEEN 0 AND 100), -- ${COL_PLAYER_REVIVAL_RISK}
+  controlled_ghosts TEXT NOT NULL, -- ${COL_PLAYER_GHOSTS}
+  ghost_pieces TEXT NOT NULL, -- ${COL_PLAYER_PIECES}
+  resources_text TEXT NOT NULL, -- ${COL_PLAYER_RESOURCES}
+  last_action TEXT NOT NULL -- ${COL_PLAYER_LAST_ACTION}
+);`,
+  },
+  content: [[
+    'row_id',
+    COL_PLAYER_NAME,
+    COL_PLAYER_IDENTITY,
+    COL_PLAYER_LOCATION,
+    COL_PLAYER_STATUS,
+    COL_PLAYER_DEATH_RISK,
+    COL_PLAYER_REVIVAL_RISK,
+    COL_PLAYER_GHOSTS,
+    COL_PLAYER_PIECES,
+    COL_PLAYER_RESOURCES,
+    COL_PLAYER_LAST_ACTION,
   ]],
 };
 
@@ -666,6 +710,92 @@ assert.equal(singletonInsertCalls.length, 1);
 assert.equal(singletonInsertCalls[0][1].tableName, TABLE_GLOBAL);
 assert.equal(singletonInsertCalls[0][1].data.row_id, 1);
 assert.equal(singletonInsertCalls[0][1].data[COL_CURRENT_CITY], '\u5927\u660c\u5e02');
+
+const templateFallbackData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_global_state: globalStateTable,
+  sheet_player_state: playerStateTable,
+  sheet_supernatural_events: eventsTable,
+};
+const runtimeBareData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_global_state: { content: globalStateTable.content },
+  sheet_player_state: { content: playerStateTable.content },
+  sheet_supernatural_events: { content: eventsTable.content },
+};
+const fallbackMetadata = listTableMetadata(runtimeBareData, templateFallbackData);
+assert.ok(
+  fallbackMetadata.find(sheet => sheet.sqlName === 'player_state')
+    ?.columns.some(column => column.physicalName === 'name' && column.header === COL_PLAYER_NAME),
+  'bare runtime sheet should recover player_state physical aliases from template by sheet key',
+);
+assert.ok(
+  fallbackMetadata.find(sheet => sheet.sqlName === 'supernatural_events')
+    ?.columns.some(column => column.physicalName === 'event_code' && column.header === COL_EVENT_CODE),
+  'bare runtime sheet should recover supernatural_events physical aliases from template by sheet key',
+);
+
+const aliasInsertCalls = [];
+const aliasApi = {
+  async insertRow(options) {
+    aliasInsertCalls.push(['insertRow', options]);
+    return 1;
+  },
+};
+const currentTimeAliasUpdate = await applyTableChangePlan(aliasApi, {
+  action: 'updateCell',
+  table: 'global_state',
+  match: { current_city: '\u5927\u660c\u5e02' },
+  set: {
+    current_time: '2024-04-12 22:15:48',
+    current_location: '\u8001\u65e7\u5c45\u6c11\u697c\u8d70\u5eca',
+    current_city: '\u5927\u660c\u5e02',
+    canon_stage: '\u6572\u95e8\u9b3c\u4e8b\u4ef6\u524d',
+    canon_anchor: '\u5c45\u6c11\u697c\u5f00\u5c40',
+    main_phase: '\u5f00\u5c40\u63a5\u5165',
+    world_pressure: 12,
+    hq_attention: 0,
+    public_exposure: 0,
+  },
+}, runtimeBareData, templateFallbackData);
+assert.equal(currentTimeAliasUpdate.ok, true);
+assert.equal(currentTimeAliasUpdate.action, 'insertRow');
+assert.equal(aliasInsertCalls[0][1].tableName, TABLE_GLOBAL);
+assert.equal(aliasInsertCalls[0][1].data[COL_GAME_TIME], '2024-04-12 22:15');
+
+const playerPhysicalPreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'player_state',
+  match: { location_name: '\u8001\u65e7\u5c45\u6c11\u697c' },
+  set: {
+    name: '\u79e6\u5b9e',
+    identity_text: '\u666e\u901a\u4eba',
+    location_name: '\u8001\u65e7\u5c45\u6c11\u697c',
+    status_text: '\u89c2\u5bdf\u4e2d',
+    death_risk: 12,
+    revival_risk: 0,
+    controlled_ghosts: '\u65e0',
+    ghost_pieces: '\u65e0',
+    resources_text: '\u624b\u673a',
+    last_action: '\u89c2\u5bdf\u5899\u4e0a\u6e7f\u811a\u5370',
+  },
+}, runtimeBareData, templateFallbackData);
+assert.equal(playerPhysicalPreview.ok, true);
+assert.equal(playerPhysicalPreview.action, 'insertRow');
+assert.ok(!playerPhysicalPreview.errors.some(error => error.code === 'COLUMN_NOT_FOUND'));
+
+const eventPhysicalPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'supernatural_events',
+  data: createEventData({
+    event_code: '\u5c45\u6c11\u697c\u6e7f\u811a\u5370\u4e8b\u4ef6',
+    danger_level: 'C',
+    location_name: '\u8001\u65e7\u5c45\u6c11\u697c',
+    public_summary: '\u5c45\u6c11\u697c\u8d70\u5eca\u51fa\u73b0\u5f02\u5e38\u6e7f\u811a\u5370\u3002',
+  }),
+}, runtimeBareData, templateFallbackData);
+assert.equal(eventPhysicalPreview.ok, true);
+assert.ok(!eventPhysicalPreview.errors.some(error => error.code === 'COLUMN_NOT_FOUND'));
 
 const chronicleCalls = [];
 const chronicleApi = {

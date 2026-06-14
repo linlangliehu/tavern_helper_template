@@ -104,6 +104,7 @@ export type AutoCardUpdaterCrudApi = {
 };
 
 type SheetLike = {
+  __recordKey?: string;
   uid?: string;
   name?: string;
   sourceData?: {
@@ -795,15 +796,15 @@ function extractPlanValues(plan: TableChangePlan, errors: TableChangeError[]) {
 function buildTables(currentData: unknown, templateData?: unknown): TableMeta[] {
   const templateSheets = normalizeSheets(templateData);
   const currentSheets = normalizeSheets(currentData);
-  const templateByUid = new Map(templateSheets.map(sheet => [sheet.uid, sheet]));
-  const templateByName = new Map(templateSheets.map(sheet => [sheet.name, sheet]));
+  const templateAliases = buildSheetAliasMap(templateSheets);
 
   return currentSheets.map((sheet, index) => {
-    const fallback = (sheet.uid ? templateByUid.get(sheet.uid) : undefined)
-      ?? (sheet.name ? templateByName.get(sheet.name) : undefined);
+    const fallback = findTemplateSheetFallback(templateAliases, sheet);
     const mergedSheet: SheetLike = {
       ...fallback,
       ...sheet,
+      uid: sheet.uid ?? fallback?.uid ?? sheet.__recordKey,
+      name: sheet.name ?? fallback?.name ?? sheet.__recordKey,
       sourceData: {
         ...fallback?.sourceData,
         ...sheet.sourceData,
@@ -817,7 +818,39 @@ function normalizeSheets(data: unknown): SheetLike[] {
   if (!data || typeof data !== 'object') return [];
   const record = data as Record<string, unknown>;
   const sheets = record.sheets && typeof record.sheets === 'object' ? (record.sheets as Record<string, unknown>) : record;
-  return Object.values(sheets).filter(isSheetLike);
+  return Object.entries(sheets)
+    .map(([recordKey, value]) => (isSheetLike(value) ? { ...(value as SheetLike), __recordKey: recordKey } : null))
+    .filter((sheet): sheet is SheetLike => Boolean(sheet));
+}
+
+function buildSheetAliasMap(sheets: SheetLike[]) {
+  const aliases = new Map<string, SheetLike>();
+  for (const sheet of sheets) {
+    addSheetAlias(aliases, sheet.__recordKey, sheet);
+    addSheetAlias(aliases, sheet.uid, sheet);
+    addSheetAlias(aliases, sheet.name, sheet);
+    addSheetAlias(aliases, parseDdl(sheet.sourceData?.ddl).tableName, sheet);
+  }
+  return aliases;
+}
+
+function findTemplateSheetFallback(templateAliases: Map<string, SheetLike>, sheet: SheetLike) {
+  const candidates = [
+    sheet.__recordKey,
+    sheet.uid,
+    sheet.name,
+    parseDdl(sheet.sourceData?.ddl).tableName,
+  ];
+  for (const candidate of candidates) {
+    const fallback = templateAliases.get(normalizeAlias(candidate));
+    if (fallback) return fallback;
+  }
+  return undefined;
+}
+
+function addSheetAlias(aliasMap: Map<string, SheetLike>, alias: string | undefined, sheet: SheetLike) {
+  const normalized = normalizeAlias(alias);
+  if (normalized && !aliasMap.has(normalized)) aliasMap.set(normalized, sheet);
 }
 
 function buildTableMeta(sheet: SheetLike, key: string): TableMeta {
@@ -826,7 +859,7 @@ function buildTableMeta(sheet: SheetLike, key: string): TableMeta {
   const rows = content.filter((row): row is unknown[] => Array.isArray(row));
   const ddlMeta = parseDdl(sheet.sourceData?.ddl);
   const columns = headers.map((header, index) => {
-    const ddlColumn = ddlMeta.columns[index] ?? findDdlColumnForHeader(ddlMeta.columns, header);
+    const ddlColumn = findDdlColumnForHeader(ddlMeta.columns, header) ?? ddlMeta.columns[index];
     return {
       header,
       index,
@@ -859,6 +892,7 @@ function buildTableMeta(sheet: SheetLike, key: string): TableMeta {
     addColumnAlias(table, column.physicalName, column);
     addColumnAlias(table, column.commentAlias, column);
   }
+  addBuiltInColumnAliases(table);
   return table;
 }
 
@@ -953,10 +987,12 @@ function resolveColumns(table: TableMeta, values: Record<string, Primitive>, err
       continue;
     }
     columns.push(column);
+    const rawValue = values[rawColumn];
     if (column.header !== rawColumn) {
-      values[column.header] = values[rawColumn] ?? null;
+      values[column.header] = rawValue ?? null;
       delete values[rawColumn];
     }
+    values[column.header] = normalizeColumnValueForColumn(table, column, values[column.header]);
   }
   return columns;
 }
@@ -1199,6 +1235,44 @@ function extractMatchConditions(match: TableChangeMatch) {
   return conditions;
 }
 
+function addBuiltInColumnAliases(table: TableMeta) {
+  if (isTableNamed(table, ['global_state', 'sheet_global_state', '全局状态'])) {
+    const gameTimeColumn = findColumnByAlias(table, 'game_time') ?? findColumnByAlias(table, '当前时间');
+    if (gameTimeColumn) {
+      addColumnAlias(table, 'current_time', gameTimeColumn);
+      addColumnAlias(table, 'cur_time', gameTimeColumn);
+      addColumnAlias(table, 'time', gameTimeColumn);
+    }
+  }
+}
+
+function normalizeColumnValueForColumn(table: TableMeta, column: ColumnMeta, value: Primitive): Primitive {
+  if (isTableNamed(table, ['global_state', 'sheet_global_state', '全局状态'])
+    && isColumnNamed(column, ['game_time', 'current_time', 'cur_time', 'time', '当前时间'])) {
+    return normalizeDateTimeMinuteValue(value);
+  }
+  return value;
+}
+
+function normalizeDateTimeMinuteValue(value: Primitive): Primitive {
+  if (value === null || typeof value === 'boolean') return value;
+  const text = String(value).trim();
+  const match = text.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T]|\s+|日\s*)?(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (!match) return value;
+  const [, year, month, day, hour, minute] = match;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${minute}`;
+}
+
+function isTableNamed(table: TableMeta, aliases: string[]) {
+  const tableAliases = [table.name, table.uid, table.sqlName, table.key].map(normalizeAlias).filter(Boolean);
+  return aliases.map(normalizeAlias).some(alias => tableAliases.includes(alias));
+}
+
+function isColumnNamed(column: ColumnMeta, aliases: string[]) {
+  const columnAliases = [column.header, column.physicalName, column.commentAlias].map(normalizeAlias).filter(Boolean);
+  return aliases.map(normalizeAlias).some(alias => columnAliases.includes(alias));
+}
+
 function addColumnAlias(table: TableMeta, alias: string | undefined, column: ColumnMeta) {
   const normalized = normalizeAlias(alias);
   if (normalized) table.columnAliases.set(normalized, column);
@@ -1245,7 +1319,11 @@ function isPrimitiveRecord(value: unknown): value is Record<string, Primitive> {
 }
 
 function isSheetLike(value: unknown): value is SheetLike {
-  return isRecord(value) && (typeof value.name === 'string' || typeof value.uid === 'string');
+  return isRecord(value)
+    && (typeof value.name === 'string'
+      || typeof value.uid === 'string'
+      || Array.isArray(value.content)
+      || isRecord(value.sourceData));
 }
 
 function isTableChangeAction(action: unknown): action is TableChangeAction {

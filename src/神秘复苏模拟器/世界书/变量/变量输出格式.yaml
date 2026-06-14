@@ -2,7 +2,7 @@
 update_output_contract:
   must_output: |-
     End every reply with one variable update block. Update only facts that happened, were revealed, or were resolved in this turn.
-    Analysis and JSONPatch are internal payloads: keep them inside <UpdateVariable> only, and never output a standalone English summary, standalone JSON Patch, or debug note outside the required tags.
+    Analysis and JSONPatch are internal payloads: keep them inside <UpdateVariable> only, and never output a standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone JSON Patch, or debug note outside the required tags.
 
     <UpdateVariable>
     <Analysis>English, <=80 words: time/transition; visible evidence; rule/risk/resource/faction changes.</Analysis>

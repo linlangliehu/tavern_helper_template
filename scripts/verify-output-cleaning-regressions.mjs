@@ -22,7 +22,9 @@ const requiredCleanupNames = [
   '[\u663e\u793a]\u9690\u85cf\u88f8 choices JSON\uff08\u7531\u6b63\u6587 sp \u9762\u677f\u66ff\u4ee3\uff09',
   '[\u663e\u793a]\u9690\u85cf\u88f8 JSON Patch',
   '[\u663e\u793a]\u9690\u85cf\u72ec\u7acb JSONPatch \u6807\u7b7e',
+  '[\u663e\u793a]\u9690\u85cf\u5185\u90e8\u8349\u7a3f\u4e0e\u786e\u8ba4\u5757',
   '[\u663e\u793a]\u9690\u85cf\u82f1\u6587\u8c03\u8bd5\u6458\u8981',
+  '[\u663e\u793a]\u9690\u85cf\u5916\u8bed\u4e2d\u95f4\u7a3f',
 ];
 
 function parseRegexExpression(expression) {
@@ -116,7 +118,13 @@ const sample = [
   '  { "op": "replace", "path": "/standalone_path", "value": "should be hidden" }',
   ']',
   '</JSONPatch>',
+  '<draft>',
+  'La luz del tel\u00e9fono m\u00f3vil recorre el pasillo y revela una sombra pegada a la pared antes de que el personaje decida moverse.',
+  '</draft>',
+  '<pacing_rules>Keep pressure slow and do not resolve the anomaly too early.</pacing_rules>',
+  '<\u4fee\u6539\u786e\u8ba4>Internal patch confirmed and should not be visible.</\u4fee\u6539\u786e\u8ba4>',
   'Lin Che wakes up in a corridor. The primary anomaly is a knocking sound, and the visible evidence points to a nearby door.',
+  'La luz del tel\u00e9fono m\u00f3vil ilumina el pasillo, la pared mojada y el riesgo de acercarse a las opciones del estado.',
   '<UpdateVariable>',
   '<Analysis>Lin Che stays still and watches the corridor.</Analysis>',
   '<JSONPatch>',
@@ -146,7 +154,11 @@ assert.equal(displayed.includes('<choices>'), false, 'tagged choices block shoul
 assert.equal(displayed.includes('risk.death'), false, 'naked choices JSON should be hidden in display output');
 assert.equal(displayed.includes('"op": "replace"'), false, 'naked JSON Patch should be hidden in display output');
 assert.equal(displayed.includes('/standalone_path'), false, 'standalone JSONPatch tag should be hidden in display output');
+assert.equal(displayed.includes('<draft>'), false, 'draft block should be hidden in display output');
+assert.equal(displayed.includes('pacing_rules'), false, 'pacing rules block should be hidden in display output');
+assert.equal(displayed.includes('\u4fee\u6539\u786e\u8ba4'), false, 'modification confirmation block should be hidden in display output');
 assert.equal(displayed.includes('Lin Che wakes up in a corridor'), false, 'English debug summary should be hidden in display output');
+assert.equal(displayed.includes('tel\u00e9fono m\u00f3vil'), false, 'foreign-language draft should be hidden in display output');
 assert.equal(displayed.includes('<UpdateVariable>'), false, 'tagged variable update should be hidden in display output');
 assert.equal(displayed.includes('<JSONPatch>'), false, 'tagged JSONPatch should be hidden in display output');
 
