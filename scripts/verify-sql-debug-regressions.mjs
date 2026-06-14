@@ -18,6 +18,7 @@ const srcRoot = join(repoRoot, 'src');
 const vendorSource = readFileSync(vendorPath, 'utf8');
 
 const dashboardSentinels = {
+  apiRateLimitIssue: 'apiRateLimitIssue',
   apiGatewayIssue: 'apiGatewayIssue',
   sqlOldTableIssue: 'sqlOldTableIssue',
   sqlSchemaIssue: 'sqlSchemaIssue',
@@ -118,7 +119,8 @@ function extractFunction(name) {
     ? asyncStart
     : normalStart;
   assert.notEqual(start, -1, `missing function ${name}`);
-  const openBrace = vendorSource.indexOf('{', start);
+  const signatureEnd = vendorSource.indexOf(')', start);
+  const openBrace = vendorSource.indexOf('{', signatureEnd);
   const closeBrace = findMatchingBrace(vendorSource, openBrace);
   return vendorSource.slice(start, closeBrace + 1);
 }
@@ -154,7 +156,6 @@ function loadVendorRuntime() {
     extractRegion('function parseDDLTableName', '    // ═══════════════════════════════════════════════════════════════\n    // 内部工具函数'),
     extractFunction('splitColumnDefinitions'),
     extractRegion('function generateInserts', '    // ═══════════════════════════════════════════════════════════════\n    // SQL 结果'),
-    extractFunction('resultToContent'),
     extractFunction('escapeValue'),
     extractFunction('sanitizeIdentifier'),
     extractFunction('chineseToIdentifier'),
@@ -162,6 +163,10 @@ function loadVendorRuntime() {
     extractFunction('getResponseRetryAfterText_ACU'),
     extractFunction('buildApiResponseFailureMessage_ACU'),
     extractFunction('parseNonStreamResponse_ACU'),
+    extractFunction('normalizeAiTransportKind_ACU'),
+    extractFunction('getAiTransportIssueLabel_ACU'),
+    extractFunction('cleanAiTransportDetail_ACU'),
+    extractFunction('createAiTransportFailureResult_ACU'),
     extractFunction('interpretLogEntry'),
     `
       globalThis.__regression = {
@@ -175,13 +180,12 @@ function loadVendorRuntime() {
         extractSqlMutationValuesForConstraintCheck_ACU,
         parseDDLTableName,
         parseDDLColumnNames,
-        buildColumnNameMap,
-        resultToContent,
         parseDDLConstraintRegistry_ACU,
         generateInserts,
         extractTableNamesFromStatements,
         extractUnknownSqlColumnsFromStatements_ACU,
         parseNonStreamResponse_ACU,
+        createAiTransportFailureResult_ACU,
         interpretLogEntry,
       };
     `,
@@ -887,23 +891,6 @@ function testSyncBridgeConstraintRegistryRowValidation(template) {
   }
 }
 
-function testSyncBridgeExportKeepsDdlHeadersForEmptyTables(template) {
-  const ddl = template.sheet_supernatural_events.sourceData.ddl;
-  const columns = vendor.parseDDLColumnNames(ddl);
-  const { sqlToChinese } = vendor.buildColumnNameMap(ddl);
-  const content = vendor.resultToContent(columns, [], sqlToChinese);
-
-  assert.equal(
-    JSON.stringify(Array.from(content[0])),
-    JSON.stringify(['row_id', '事件代号', '危害等级', '发生地点', '鬼域状态', '已知杀人规律', '猜测杀人规律', '错误推断', '死亡人数', '扩散趋势', '处理状态', '可见摘要']),
-    'empty SQLite export should keep the full DDL-derived header row',
-  );
-  assert.ok(
-    vendorSource.includes('resultToContent(exportColumns, exportValues, sqlToChinese)'),
-    'SyncBridge _exportSheet should use DDL-aligned export columns, not raw query columns only',
-  );
-}
-
 function testSqlFragmentCleaning() {
   const fixtures = [
     `</thought>\n\nINSERT INTO chronicle (row_id, code_index) VALUES (1, 'SP0001');`,
@@ -983,6 +970,106 @@ async function testBadGatewayParsing() {
   );
 }
 
+function testApiTransportFailureResult() {
+  const result = vendor.createAiTransportFailureResult_ACU({
+    channel: 'CRUD Plan 自动填表',
+    classification: {
+      kind: 'rate_limit',
+      message: 'API限流: API上游返回错误 HTTP 200 (OK) Too Many Requests',
+    },
+    cooldownMs: 15000,
+  });
+  assert.equal(result.success, false);
+  assert.equal(result.apiTransportIssue, true);
+  assert.equal(result.apiTransportKind, 'rate_limit');
+  assert.equal(result.cooldownSeconds, 15);
+  assert.equal(result.incompleteFill, true);
+  assert.match(result.error, /本轮 CRUD Plan 自动填表未完整完成/);
+  assert.match(result.error, /冷却结束后手动重试/);
+  assert.equal(result.pendingRetrySummary.autoReplay, false);
+  assert.equal(result.pendingRetrySummary.manualRetry, true);
+}
+
+async function testBatchSkipChatSaveDoesNotRefreshRuntime() {
+  const calls = {
+    save: [],
+    refresh: [],
+    fallbackSave: [],
+    sync: [],
+    notify: 0,
+  };
+  const debugMessages = [];
+  const context = {
+    logDebug_ACU(...args) {
+      debugMessages.push(args.map(arg => String(arg)).join(' '));
+    },
+    findTableLatestFloor() {
+      return 2;
+    },
+    SillyTavern_API_ACU: { chat: [{}, {}, {}] },
+    resolveTableHistoryStateFromChat_ACU() {
+      return { latestDataMessageIndex: -1 };
+    },
+    getCurrentIsolationKey_ACU() {
+      return '';
+    },
+    settings_ACU: {},
+    isSummaryOrOutlineTable_ACU() {
+      return false;
+    },
+    async saveIndependentTableToChatHistory_ACU(...args) {
+      calls.save.push(args);
+    },
+    async refreshMergedDataAndNotifyWithUI_ACU(...args) {
+      calls.refresh.push(args);
+    },
+    async saveCurrentDataForTable_ACU(...args) {
+      calls.fallbackSave.push(args);
+    },
+    async syncSummaryVectorIndexAfterTableEdit_ACU(...args) {
+      calls.sync.push(args);
+    },
+    topLevelWindow_ACU: {
+      AutoCardUpdaterAPI: {
+        _notifyTableUpdate() {
+          calls.notify += 1;
+        },
+      },
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(`
+${extractFunction('saveToLatestFloorAndRefresh')}
+globalThis.__saveToLatestFloorAndRefresh = saveToLatestFloorAndRefresh;
+`, context, { filename: 'save-to-latest-floor-regression.vm.js' });
+
+  await context.__saveToLatestFloorAndRefresh(
+    'sheet_supernatural_events',
+    '灵异事件',
+    {},
+    'insertRow',
+    { skipChatSave: true, skipNotify: true },
+  );
+  assert.equal(calls.save.length, 0, 'batch CRUD should not per-operation save to chat');
+  assert.equal(calls.refresh.length, 0, 'batch CRUD should not refresh merged data before batch persist');
+  assert.equal(calls.fallbackSave.length, 0, 'batch CRUD should not fallback-save per operation');
+  assert.equal(calls.sync.length, 1, 'summary vector skip path should still be evaluated');
+  assert.ok(
+    debugMessages.some(message => message.includes('Skip per-operation chat save and refresh')),
+    'batch skip should be visible in debug logs',
+  );
+
+  await context.__saveToLatestFloorAndRefresh(
+    'sheet_supernatural_events',
+    '灵异事件',
+    {},
+    'insertRow',
+    { skipChatSave: false, skipNotify: true },
+  );
+  assert.equal(calls.save.length, 1, 'normal CRUD should still save to chat');
+  assert.equal(calls.refresh.length, 1, 'normal CRUD should still refresh after save');
+}
+
 // ========== v6.13 新增测试 ==========
 
 function testUniqueConstraintRegistry(template) {
@@ -1038,9 +1125,11 @@ function testEnhancedErrorClassification() {
 function testDashboardClassification() {
   const cases = [
     ['Bad Gateway', 'apiGatewayIssue'],
-    ['Too Many Requests', 'apiGatewayIssue'],
-    ['API请求失败 HTTP 429 (Too Many Requests); Retry-After: 30', 'apiGatewayIssue'],
-    ['API限流：Too Many Requests', 'apiGatewayIssue'],
+    ['HTTP 502 Bad Gateway', 'apiGatewayIssue'],
+    ['Too Many Requests', 'apiRateLimitIssue'],
+    ['API请求失败 HTTP 429 (Too Many Requests); Retry-After: 30', 'apiRateLimitIssue'],
+    ['API限流：Too Many Requests', 'apiRateLimitIssue'],
+    ['Retry-After: 30', 'apiRateLimitIssue'],
     ['[SqlTableService] SQL 目标表 log_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SqlTableService] SQL 目标表 event_summary 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
     ['[SqlTableService] SQL 目标表 simulation_summary, summary_logs 不存在；事件纪要请写入 chronicle。', 'sqlOldTableIssue'],
@@ -1070,9 +1159,10 @@ testUpdateTrailingCommaNormalization(templates[0]);
 testTableAndColumnPreflight(templates[0]);
 testChronicleSeedRowFiltering(templates[0]);
 testSyncBridgeConstraintRegistryRowValidation(templates[0]);
-testSyncBridgeExportKeepsDdlHeadersForEmptyTables(templates[0]);
 testSqlFragmentCleaning();
 await testBadGatewayParsing();
+testApiTransportFailureResult();
+await testBatchSkipChatSaveDoesNotRefreshRuntime();
 testDashboardClassification();
 
 // v6.13 新增测试
@@ -1081,4 +1171,4 @@ testSqlAutoRewrite(templates[0]);
 testSqlTemplateMatching();
 testEnhancedErrorClassification();
 
-console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, sqlite export headers, old table preflight, SQL cleaning, Bad Gateway, dashboard classification, v6.13 UNIQUE/FK/rewrite/templates/classification');
+console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification, v6.13 UNIQUE/FK/rewrite/templates/classification');

@@ -5300,6 +5300,62 @@
       仅格式显示: true
       仅格式提示词: false
 
+  - 正则名称: '[显示]隐藏裸 choices JSON（由正文 sp 面板替代）'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2014
+    启用: true
+    查找表达式: "/(?:^|\\n)\\s*(?=\\{[\\s\\S]{0,8000}?\"A\"\\s*:)(?=\\{[\\s\\S]{0,8000}?\"B\"\\s*:)(?=\\{[\\s\\S]{0,8000}?\"C\"\\s*:)(?=\\{[\\s\\S]{0,8000}?\"D\"\\s*:)(?=\\{[\\s\\S]{0,8000}?(?:\"risk\\.death\"|\"death\"\\s*:))\\{[\\s\\S]{0,8000}?\\}\\s*(?=\\n\\s*(?:<|【|\\[|[A-Z][A-Za-z ]{2,}|$)|$)/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]隐藏裸 JSON Patch'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2015
+    启用: true
+    查找表达式: "/(?:^|\\n)\\s*\\[\\s*(?=\\{\\s*\"op\"\\s*:\\s*\"(?:add|replace|remove|delta|insert|move)\")(?=[\\s\\S]{0,12000}?\"path\"\\s*:\\s*\"\\/)[\\s\\S]{0,12000}?\\]\\s*(?=\\n\\s*(?:<|【|[A-Z][A-Za-z ]{2,}|$)|$)/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]隐藏独立 JSONPatch 标签'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2017
+    启用: true
+    查找表达式: "/<JSONPatch>[\\s\\S]*?<\\/JSONPatch>/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]隐藏英文调试摘要'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2016
+    启用: true
+    查找表达式: "/(?:^|\\n)\\s*(?=(?:[A-Z][A-Za-z'\\-]*\\s+){3,})(?=[^\\n]{40,})(?=[\\s\\S]{0,700}\\b(?:wakes?|observes?|corridor|anomaly|primary|risk|summary|database|choices|patch|status|visible evidence|transition)\\b)[A-Za-z0-9 ,.'\";:()\\[\\]\\/\\-]+(?:\\n(?!\\s*(?:<|【|\\{|\\[|$))[A-Za-z0-9 ,.'\";:()\\[\\]\\/\\-]+){0,4}\\s*(?=\\n\\s*(?:<|【|$)|$)/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
   - 正则名称: '[显示]隐藏无标题状态面板字段（由正文 sp 面板替代）'
     id: a1b2c3d4-0008-4000-8000-000000000008
     启用: false

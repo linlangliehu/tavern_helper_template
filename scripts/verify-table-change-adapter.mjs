@@ -71,6 +71,16 @@ const STATUS_UNHANDLED = '\u672a\u5904\u7406';
 const STATUS_INVESTIGATING = '\u8c03\u67e5\u4e2d';
 const STATUS_CONFRONTING = '\u5bf9\u6297\u4e2d';
 const STATUS_SPREADING = '\u5931\u63a7\u6269\u6563';
+const TABLE_GLOBAL = '\u5168\u5c40\u72b6\u6001';
+const COL_GAME_TIME = '\u5f53\u524d\u65f6\u95f4';
+const COL_CURRENT_LOCATION = '\u5f53\u524d\u5730\u70b9';
+const COL_CURRENT_CITY = '\u5f53\u524d\u57ce\u5e02';
+const COL_CANON_STAGE = '\u539f\u8457\u9636\u6bb5';
+const COL_CANON_ANCHOR = '\u5267\u60c5\u951a\u70b9';
+const COL_MAIN_PHASE = '\u4e3b\u7ebf\u9636\u6bb5';
+const COL_WORLD_PRESSURE = '\u4e16\u754c\u538b\u529b';
+const COL_HQ_ATTENTION = '\u603b\u90e8\u5173\u6ce8\u5ea6';
+const COL_PUBLIC_EXPOSURE = '\u793e\u4f1a\u516c\u5f00\u5ea6';
 
 const table = {
   uid: 'sheet_action_suggestions',
@@ -169,6 +179,37 @@ const eventsTable = {
       '\u4e03\u4e2d\u51fa\u73b0\u5f02\u5e38\u6572\u95e8\u58f0\u3002',
     ],
   ],
+};
+
+const globalStateTable = {
+  uid: 'sheet_global_state',
+  name: TABLE_GLOBAL,
+  sourceData: {
+    ddl: `CREATE TABLE global_state ( -- ${TABLE_GLOBAL}
+  row_id INTEGER PRIMARY KEY CHECK(row_id = 1), -- row_id
+  game_time TEXT NOT NULL CHECK(game_time GLOB '????-??-?? ??:??'), -- ${COL_GAME_TIME}
+  current_location TEXT NOT NULL, -- ${COL_CURRENT_LOCATION}
+  current_city TEXT NOT NULL, -- ${COL_CURRENT_CITY}
+  canon_stage TEXT NOT NULL, -- ${COL_CANON_STAGE}
+  canon_anchor TEXT NOT NULL, -- ${COL_CANON_ANCHOR}
+  main_phase TEXT NOT NULL, -- ${COL_MAIN_PHASE}
+  world_pressure INTEGER NOT NULL CHECK(world_pressure BETWEEN 0 AND 100), -- ${COL_WORLD_PRESSURE}
+  hq_attention INTEGER NOT NULL CHECK(hq_attention BETWEEN 0 AND 100), -- ${COL_HQ_ATTENTION}
+  public_exposure INTEGER NOT NULL CHECK(public_exposure BETWEEN 0 AND 100) -- ${COL_PUBLIC_EXPOSURE}
+);`,
+  },
+  content: [[
+    'row_id',
+    COL_GAME_TIME,
+    COL_CURRENT_LOCATION,
+    COL_CURRENT_CITY,
+    COL_CANON_STAGE,
+    COL_CANON_ANCHOR,
+    COL_MAIN_PHASE,
+    COL_WORLD_PRESSURE,
+    COL_HQ_ATTENTION,
+    COL_PUBLIC_EXPOSURE,
+  ]],
 };
 
 function assertError(result, code) {
@@ -497,6 +538,51 @@ assert.equal(
   1,
 );
 
+const failedButMutatedInputInsertData = JSON.parse(JSON.stringify(emptyCurrentData));
+const failedButMutatedInputInsertImports = [];
+const failedButMutatedInputInsertApi = {
+  async insertRow(options) {
+    failedButMutatedInputInsertData.sheet_action_suggestions.content.push([
+      options.data.row_id,
+      options.data[COL_OPTION],
+      options.data[COL_IDEA],
+      options.data[COL_MAIN_RISK],
+      options.data[COL_GAIN],
+      options.data[COL_DEATH],
+      options.data[COL_REVIVAL],
+    ]);
+    return -1;
+  },
+  async exportTableAsJson() {
+    return JSON.stringify(failedButMutatedInputInsertData);
+  },
+  async importTableAsJson(jsonString) {
+    failedButMutatedInputInsertImports.push(JSON.parse(jsonString));
+    return true;
+  },
+};
+const failedButMutatedInputInsert = await applyTableChangePlan(failedButMutatedInputInsertApi, {
+  action: 'insertRow',
+  table: table.name,
+  data: {
+    row_id: 3,
+    option_key: 'C',
+    idea_text: 'mutated input insert',
+    main_risk: 'mutated input risk',
+    expected_gain: 'mutated input gain',
+    death_risk_level: RISK_LOW,
+    revival_risk_level: RISK_NONE,
+  },
+}, failedButMutatedInputInsertData);
+assert.equal(failedButMutatedInputInsert.ok, true);
+assert.equal(failedButMutatedInputInsert.insertedRowIndex, 1);
+assert.equal(failedButMutatedInputInsertImports.length, 0);
+assert.equal(
+  failedButMutatedInputInsertData.sheet_action_suggestions.content
+    .filter(row => Array.isArray(row) && row.includes('mutated input insert')).length,
+  1,
+);
+
 const promotedUpdateCalls = [];
 const promotedUpdateApi = {
   async insertRow(options) {
@@ -540,6 +626,46 @@ const promotedIncompleteFixedRow = previewTableChangePlan({
 }, emptyCurrentData);
 assert.equal(promotedIncompleteFixedRow.ok, false);
 assert.ok(promotedIncompleteFixedRow.errors.some(error => error.code === 'NOT_NULL_VIOLATION'));
+
+const singletonCurrentData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_global_state: globalStateTable,
+};
+const singletonMetadata = listTableMetadata(singletonCurrentData);
+const singletonRowId = singletonMetadata[0].columns.find(column => column.header === 'row_id');
+assert.equal(singletonRowId.minValue, 1);
+assert.equal(singletonRowId.maxValue, 1);
+
+const singletonInsertCalls = [];
+const singletonApi = {
+  async insertRow(options) {
+    singletonInsertCalls.push(['insertRow', options]);
+    return 1;
+  },
+};
+const promotedSingletonUpdate = await applyTableChangePlan(singletonApi, {
+  action: 'updateCell',
+  table: 'global_state',
+  match: { [COL_CURRENT_CITY]: '\u5927\u660c\u5e02' },
+  set: {
+    game_time: '2004-07-01 08:00',
+    current_location: '\u8001\u65e7\u516c\u5bd3\u8d70\u5eca',
+    current_city: '\u5927\u660c\u5e02',
+    canon_stage: '\u6572\u95e8\u9b3c\u4e8b\u4ef6\u524d',
+    canon_anchor: '\u516c\u5bd3\u5f00\u5c40',
+    main_phase: '\u5f00\u5c40\u63a5\u5165',
+    world_pressure: 10,
+    hq_attention: 0,
+    public_exposure: 0,
+  },
+}, singletonCurrentData);
+assert.equal(promotedSingletonUpdate.ok, true);
+assert.equal(promotedSingletonUpdate.action, 'insertRow');
+assert.equal(promotedSingletonUpdate.insertedRowIndex, 1);
+assert.equal(singletonInsertCalls.length, 1);
+assert.equal(singletonInsertCalls[0][1].tableName, TABLE_GLOBAL);
+assert.equal(singletonInsertCalls[0][1].data.row_id, 1);
+assert.equal(singletonInsertCalls[0][1].data[COL_CURRENT_CITY], '\u5927\u660c\u5e02');
 
 const chronicleCalls = [];
 const chronicleApi = {
@@ -737,6 +863,34 @@ assert.equal(failedButAppliedDelete.ok, true);
 assert.equal(failedButAppliedDeleteImports.length, 0);
 assert.equal(failedButAppliedDeleteData.sheet_action_suggestions.content.length, currentData.sheet_action_suggestions.content.length - 1);
 assert.equal(failedButAppliedDeleteData.sheet_action_suggestions.content.some(row => Array.isArray(row) && row[0] === 1), false);
+
+const failedButMutatedInputDeleteData = JSON.parse(JSON.stringify(currentData));
+const failedButMutatedInputDeleteImports = [];
+const failedButMutatedInputDeleteApi = {
+  async deleteRow(options) {
+    failedButMutatedInputDeleteData.sheet_action_suggestions.content.splice(options.rowIndex, 1);
+    return false;
+  },
+  async exportTableAsJson() {
+    return JSON.stringify(failedButMutatedInputDeleteData);
+  },
+  async importTableAsJson(jsonString) {
+    failedButMutatedInputDeleteImports.push(JSON.parse(jsonString));
+    return true;
+  },
+};
+const failedButMutatedInputDelete = await applyTableChangePlan(failedButMutatedInputDeleteApi, {
+  action: 'deleteRow',
+  table: TABLE_ACTION,
+  match: { row_id: 1 },
+}, failedButMutatedInputDeleteData);
+assert.equal(failedButMutatedInputDelete.ok, true);
+assert.equal(failedButMutatedInputDeleteImports.length, 0);
+assert.equal(
+  failedButMutatedInputDeleteData.sheet_action_suggestions.content.length,
+  currentData.sheet_action_suggestions.content.length - 1,
+);
+assert.equal(failedButMutatedInputDeleteData.sheet_action_suggestions.content.some(row => Array.isArray(row) && row[0] === 1), false);
 
 const beforeDeleteCalls = calls.length;
 const blockedDelete = await applyTableChangePlan(api, {

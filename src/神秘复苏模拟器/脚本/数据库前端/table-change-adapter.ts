@@ -237,6 +237,7 @@ export async function applyTableChangePlan(
   const preview = toResult(resolved);
   if (!preview.ok || !resolved) return preview;
   if (resolved.plan.action === 'noop') return preview;
+  const baselineData = cloneDataSnapshot(currentData);
 
   if (resolved.plan.action === 'insertRow') {
     const allowImportFallback = !resolved.plan.skipChatSave;
@@ -264,12 +265,12 @@ export async function applyTableChangePlan(
     insertOptions.data = insertValues;
     let insertedRowIndex = await api.insertRow(insertOptions);
     if (typeof insertedRowIndex !== 'number' || insertedRowIndex < 0) {
-      const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, currentData);
+      const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, baselineData);
       if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
         return { ...preview, insertedRowIndex: verifiedRowIndex };
       }
       const fallbackRowIndex = allowImportFallback
-        ? await tryImportJsonInsertFallback(api, resolved, currentData)
+        ? await tryImportJsonInsertFallback(api, resolved, baselineData)
         : null;
       if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
         return { ...preview, insertedRowIndex: fallbackRowIndex };
@@ -295,8 +296,8 @@ export async function applyTableChangePlan(
       skipChatSave: resolved.plan.skipChatSave,
       silent: resolved.plan.silent,
     });
-    if (!ok && await verifyDeleteAppliedAfterFailedResult(api, resolved, currentData)) return preview;
-    if (!ok && allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
+    if (!ok && await verifyDeleteAppliedAfterFailedResult(api, resolved, baselineData)) return preview;
+    if (!ok && allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, baselineData)) return preview;
     return ok ? preview : withError(preview, 'API_MUTATION_FAILED', 'deleteRow 执行失败。');
   }
 
@@ -316,12 +317,22 @@ export async function applyTableChangePlan(
     });
     if (!ok) {
       if (await verifyUpdateAppliedAfterFailedResult(api, resolved, column)) continue;
-      if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
+      if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, baselineData)) return preview;
       return withError(preview, 'API_MUTATION_FAILED', `updateCell 执行失败：${column.header}。`, column.header);
     }
   }
 
   return preview;
+}
+
+function cloneDataSnapshot(data: unknown) {
+  const normalized = normalizeExportedTableData(data);
+  if (!isRecord(normalized)) return data;
+  try {
+    return JSON.parse(JSON.stringify(normalized));
+  } catch {
+    return normalized;
+  }
 }
 
 function toApiInsertValues(resolved: ResolvedPlan) {
@@ -645,7 +656,7 @@ function tryPromoteDuplicateInsertToUpdate(
 
   const updateValues: Record<string, Primitive> = {};
   for (const column of columns) {
-    if (column.primaryKey || column.unique) continue;
+    if (column.primaryKey) continue;
     if (!Object.prototype.hasOwnProperty.call(values, column.header)) continue;
     updateValues[column.header] = values[column.header] ?? null;
   }
@@ -719,7 +730,7 @@ function tryPromoteMissingFixedRowUpdateToInsert(
 
   const primaryKeyColumn = getRowIdPrimaryKeyColumn(table);
   if (!primaryKeyColumn || primaryKeyColumn.minValue === undefined || primaryKeyColumn.maxValue === undefined) return null;
-  const matchedRowId = getMatchedPrimaryKeyValue(table, plan.match, primaryKeyColumn);
+  const matchedRowId = getPromotablePrimaryKeyValue(table, plan.match, primaryKeyColumn);
   if (matchedRowId === undefined || matchedRowId === null) return null;
   const numericRowId = typeof matchedRowId === 'number' ? matchedRowId : Number(String(matchedRowId).trim());
   if (!Number.isFinite(numericRowId)
@@ -892,11 +903,14 @@ function parseDdlColumn(line: string): ColumnMeta | null {
   const betweenValue = definition.match(
     new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s+BETWEEN\\s+(-?\\d+(?:\\.\\d+)?)\\s+AND\\s+(-?\\d+(?:\\.\\d+)?)`, 'i'),
   );
+  const exactValue = definition.match(
+    new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s*=\\s*(-?\\d+(?:\\.\\d+)?)\\s*\\)`, 'i'),
+  );
   const betweenLength = definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s+BETWEEN\s+(\d+)\s+AND\s+(\d+)/i);
   const maxLength = Number(definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*<=\s*(\d+)/i)?.[1] ?? betweenLength?.[2]);
   const minLength = Number(definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*>=\s*(\d+)/i)?.[1] ?? betweenLength?.[1]);
-  const minValue = Number(betweenValue?.[1]);
-  const maxValue = Number(betweenValue?.[2]);
+  const minValue = Number(betweenValue?.[1] ?? exactValue?.[1]);
+  const maxValue = Number(betweenValue?.[2] ?? exactValue?.[1]);
 
   return {
     header: commentAlias ?? physicalName,
@@ -1123,6 +1137,22 @@ function getMatchedPrimaryKeyValue(
     if (column === primaryKeyColumn) return value;
   }
   return undefined;
+}
+
+function getPromotablePrimaryKeyValue(
+  table: TableMeta,
+  match: TableChangeMatch | undefined,
+  primaryKeyColumn: ColumnMeta,
+) {
+  const matched = getMatchedPrimaryKeyValue(table, match, primaryKeyColumn);
+  if (matched !== undefined && matched !== null) return matched;
+
+  const minValue = primaryKeyColumn.minValue;
+  const maxValue = primaryKeyColumn.maxValue;
+  if (minValue === undefined || maxValue === undefined) return undefined;
+  if (normalizeCellValue(minValue) !== normalizeCellValue(maxValue)) return undefined;
+  if (table.rows.length > 1) return undefined;
+  return minValue;
 }
 
 function tableHasPrimaryKeyRow(table: TableMeta, primaryKeyColumn: ColumnMeta, rowId: Primitive) {
