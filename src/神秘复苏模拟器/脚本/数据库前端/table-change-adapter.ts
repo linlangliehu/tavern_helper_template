@@ -800,11 +800,13 @@ function buildTables(currentData: unknown, templateData?: unknown): TableMeta[] 
 
   return currentSheets.map((sheet, index) => {
     const fallback = findTemplateSheetFallback(templateAliases, sheet);
+    const content = mergeContentWithTemplateHeader(sheet, fallback);
     const mergedSheet: SheetLike = {
       ...fallback,
       ...sheet,
       uid: sheet.uid ?? fallback?.uid ?? sheet.__recordKey,
       name: sheet.name ?? fallback?.name ?? sheet.__recordKey,
+      content,
       sourceData: {
         ...fallback?.sourceData,
         ...sheet.sourceData,
@@ -894,6 +896,68 @@ function buildTableMeta(sheet: SheetLike, key: string): TableMeta {
   }
   addBuiltInColumnAliases(table);
   return table;
+}
+
+function mergeContentWithTemplateHeader(sheet: SheetLike, fallback: SheetLike | undefined) {
+  const currentContent = normalizeContentRows(sheet.content);
+  const currentHeader = getContentHeader(currentContent);
+  const fallbackContent = normalizeContentRows(fallback?.content);
+  const fallbackHeader = getContentHeader(fallbackContent);
+  if (fallbackHeader.length === 0) return currentContent;
+  if (currentHeader.length === 0) return [fallbackHeader];
+
+  const fallbackDdlColumns = parseDdl(fallback?.sourceData?.ddl).columns;
+  const targetIndexes = currentHeader.map(header =>
+    findTemplateHeaderIndex(fallbackHeader, fallbackDdlColumns, header),
+  );
+  const hasMissingTemplateColumns = fallbackHeader.some((_, index) => !targetIndexes.includes(index));
+  const hasReorderedTemplateColumns = targetIndexes.some((targetIndex, index) => targetIndex >= 0 && targetIndex !== index);
+  const hasPhysicalOrAliasHeaders = currentHeader.some((header, index) => {
+    const targetIndex = targetIndexes[index];
+    return targetIndex >= 0 && normalizeAlias(header) !== normalizeAlias(fallbackHeader[targetIndex]);
+  });
+  if (!hasMissingTemplateColumns && !hasReorderedTemplateColumns && !hasPhysicalOrAliasHeaders) return currentContent;
+
+  const extraHeaders = currentHeader.filter((_, index) => targetIndexes[index] < 0);
+  const mergedHeader = [...fallbackHeader, ...extraHeaders];
+  const extraOffsetBySourceIndex = new Map<number, number>();
+  let extraIndex = fallbackHeader.length;
+  targetIndexes.forEach((targetIndex, sourceIndex) => {
+    if (targetIndex < 0) extraOffsetBySourceIndex.set(sourceIndex, extraIndex++);
+  });
+
+  const mergedRows = currentContent.slice(1).map(row => {
+    const nextRow = Array.from({ length: mergedHeader.length }, () => '');
+    currentHeader.forEach((_, sourceIndex) => {
+      const targetIndex = targetIndexes[sourceIndex];
+      const outputIndex = targetIndex >= 0 ? targetIndex : extraOffsetBySourceIndex.get(sourceIndex);
+      if (outputIndex !== undefined) nextRow[outputIndex] = row[sourceIndex] ?? '';
+    });
+    return nextRow;
+  });
+
+  return [mergedHeader, ...mergedRows];
+}
+
+function normalizeContentRows(content: unknown) {
+  return Array.isArray(content) ? content.filter((row): row is unknown[] => Array.isArray(row)) : [];
+}
+
+function getContentHeader(content: unknown[][]) {
+  return Array.isArray(content[0]) ? content[0].map(value => String(value)) : [];
+}
+
+function findTemplateHeaderIndex(fallbackHeader: string[], fallbackDdlColumns: ColumnMeta[], header: string) {
+  const normalizedHeader = normalizeAlias(header);
+  return fallbackHeader.findIndex((templateHeader, index) => {
+    const ddlColumn = findDdlColumnForHeader(fallbackDdlColumns, templateHeader) ?? fallbackDdlColumns[index];
+    return [
+      templateHeader,
+      ddlColumn?.header,
+      ddlColumn?.physicalName,
+      ddlColumn?.commentAlias,
+    ].some(alias => normalizeAlias(alias) === normalizedHeader);
+  });
 }
 
 function findDdlColumnForHeader(columns: ColumnMeta[], header: string) {

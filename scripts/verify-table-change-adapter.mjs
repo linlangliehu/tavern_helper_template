@@ -16,6 +16,13 @@ const adapterPath = join(
   '\u6570\u636e\u5e93\u524d\u7aef',
   'table-change-adapter.ts',
 );
+const mysteryTemplatePath = join(
+  repoRoot,
+  'src',
+  '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668',
+  '\u6570\u636e\u5e93',
+  '\u795e\u79d8\u590d\u82cf\u8868\u683cSQL_v1.json',
+);
 
 function loadAdapter() {
   const source = readFileSync(adapterPath, 'utf8');
@@ -37,6 +44,7 @@ const {
   listTableMetadata,
   previewTableChangePlan,
 } = loadAdapter();
+const mysteryTemplateData = JSON.parse(readFileSync(mysteryTemplatePath, 'utf8'));
 
 const TABLE_ACTION = '\u884c\u52a8\u5efa\u8bae';
 const COL_OPTION = '\u9009\u9879';
@@ -796,6 +804,189 @@ const eventPhysicalPreview = previewTableChangePlan({
 }, runtimeBareData, templateFallbackData);
 assert.equal(eventPhysicalPreview.ok, true);
 assert.ok(!eventPhysicalPreview.errors.some(error => error.code === 'COLUMN_NOT_FOUND'));
+
+const p5CrudAliasCases = [
+  {
+    key: 'sheet_player_state',
+    sqlName: 'player_state',
+    expectedAction: 'insertRow',
+    physicalPlan: {
+      action: 'updateCell',
+      table: 'player_state',
+      match: { row_id: 1 },
+      set: {
+        name: '秦实',
+        identity_text: '普通人',
+        location_name: '老旧居民楼',
+        status_text: '观察中',
+        death_risk: 12,
+        revival_risk: 0,
+        controlled_ghosts: '无',
+        ghost_pieces: '无',
+        resources_text: '手机',
+        last_action: '观察墙上湿脚印',
+      },
+    },
+  },
+  {
+    key: 'sheet_ghost_archives',
+    sqlName: 'ghost_archives',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'ghost_archives',
+      data: {
+        archive_code: 'G0001',
+        ghost_name: '湿脚印鬼',
+        event_code: 'EVT_湿脚印',
+        phenomenon: '走廊反复出现湿脚印',
+        known_law: '无',
+        suspected_law: '踩入湿脚印可能被跟随',
+        suppression_method: '保持距离并封锁走廊',
+        containment_status: '未知',
+        puzzle_relation: '疑似水迹媒介',
+        danger_note: '低声呼吸靠近',
+      },
+    },
+  },
+  {
+    key: 'sheet_clues',
+    sqlName: 'clues',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'clues',
+      data: {
+        clue_code: 'C0001',
+        event_code: 'EVT_湿脚印',
+        source_text: '走廊观察',
+        clue_text: '脚印从封闭房门内侧延伸到楼梯口',
+        reliability: '中',
+        inference_text: '异常可能依附湿脚印移动',
+        verification_status: '未验证',
+        visibility: '玩家可见',
+      },
+    },
+  },
+  {
+    key: 'sheet_locations',
+    sqlName: 'locations',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'locations',
+      data: {
+        location_name: '老旧居民楼',
+        city_name: '大昌市',
+        location_type: '居民楼',
+        supernatural_status: '疑似灵异',
+        lockdown_status: '未封锁',
+        related_event: 'EVT_湿脚印',
+        description: '楼道潮湿且照明异常闪烁',
+        interaction_options: '观察走廊;联系物业;撤离楼道',
+      },
+    },
+  },
+  {
+    key: 'sheet_controlled_ghosts',
+    sqlName: 'controlled_ghosts',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'controlled_ghosts',
+      data: {
+        ghost_code: 'ARCHIVE_GHOST',
+        terror_level: '未知',
+        puzzle_trait: '档案化记录',
+        killing_law: '未验证',
+        usable_power: '记录可见灵异线索',
+        cost_text: '精神压力上升',
+        revival_progress: '0%',
+        dead_state: '未死机',
+        suppression_relation: '无',
+        public_summary: '玩家暂未稳定驾驭厉鬼，仅记录候选能力边界。',
+      },
+    },
+  },
+  {
+    key: 'sheet_collected_archives',
+    sqlName: 'collected_archives',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'collected_archives',
+      data: {
+        archive_ghost_name: '湿脚印鬼',
+        archive_status: '收录中',
+        ghost_info: '走廊出现持续湿脚印，疑似有看不见的灵异经过。',
+        known_law: '无',
+        suspected_law: '踩入湿脚印可能被跟随',
+        ghost_domain: '未确认',
+        archive_progress: 25,
+        archive_completeness: '低',
+        callable_scope: '仅作危险提示',
+        public_summary: '档案仍处于早期观察，不能稳定调用规律。',
+      },
+    },
+  },
+];
+
+const p5SparseRuntimeData = { mate: { type: 'chatSheets', version: 1 } };
+for (const { key } of p5CrudAliasCases) {
+  p5SparseRuntimeData[key] = { content: [['row_id']] };
+}
+const p5SparseMetadata = listTableMetadata(p5SparseRuntimeData, mysteryTemplateData);
+
+function metadataBySqlName(sqlName) {
+  return p5SparseMetadata.find(sheet => sheet.sqlName === sqlName);
+}
+
+function planValues(plan) {
+  return plan.action === 'insertRow' ? plan.data : plan.set;
+}
+
+function headerAliasData(sqlName, physicalData) {
+  const metadata = metadataBySqlName(sqlName);
+  assert.ok(metadata, `${sqlName} metadata should exist`);
+  const output = {};
+  for (const [physicalName, value] of Object.entries(physicalData)) {
+    const column = metadata.columns.find(item => item.physicalName === physicalName || item.header === physicalName);
+    assert.ok(column, `${sqlName}.${physicalName} should be recovered from template metadata`);
+    output[column.commentAlias ?? column.header] = value;
+  }
+  return output;
+}
+
+function assertNoColumnNotFound(result, label) {
+  assert.equal(result.ok, true, `${label} should pass: ${JSON.stringify(result.errors)}`);
+  assert.ok(!result.errors.some(error => error.code === 'COLUMN_NOT_FOUND'), `${label} should not emit COLUMN_NOT_FOUND`);
+}
+
+for (const testCase of p5CrudAliasCases) {
+  const metadata = metadataBySqlName(testCase.sqlName);
+  assert.ok(metadata, `${testCase.sqlName} should be present in sparse runtime metadata`);
+  const values = planValues(testCase.physicalPlan);
+  for (const physicalName of Object.keys(values)) {
+    assert.ok(
+      metadata.columns.some(column => column.physicalName === physicalName),
+      `${testCase.sqlName}.${physicalName} should be recovered when runtime header only has row_id`,
+    );
+  }
+
+  const physicalPreview = previewTableChangePlan(testCase.physicalPlan, p5SparseRuntimeData, mysteryTemplateData);
+  assertNoColumnNotFound(physicalPreview, `${testCase.sqlName} physical aliases`);
+  if (testCase.expectedAction) assert.equal(physicalPreview.action, testCase.expectedAction);
+
+  const sheetName = mysteryTemplateData[testCase.key].name;
+  const commentAliasPlan = testCase.physicalPlan.action === 'insertRow'
+    ? {
+        ...testCase.physicalPlan,
+        table: sheetName,
+        data: headerAliasData(testCase.sqlName, testCase.physicalPlan.data),
+      }
+    : {
+        ...testCase.physicalPlan,
+        table: sheetName,
+        set: headerAliasData(testCase.sqlName, testCase.physicalPlan.set),
+      };
+  const commentAliasPreview = previewTableChangePlan(commentAliasPlan, p5SparseRuntimeData, mysteryTemplateData);
+  assertNoColumnNotFound(commentAliasPreview, `${testCase.sqlName} comment aliases`);
+}
 
 const chronicleCalls = [];
 const chronicleApi = {
