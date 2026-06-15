@@ -1,8 +1,8 @@
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
-// 指向包含 v6.27 _acu_sheet_meta 缺表日志降噪的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@39043087cc9e28c56ba76b81c5118980610381c8/vendor/shujuku-sp-fork/index.js?v=phase144-sparse-insert-verify-6-28-p5-1';
-const databaseScriptMarker = 'mfrs-sparse-insert-verify-6-28-p5-1';
+// 指向包含 v6.28 P5.1 SQLite import fallback 同步修复的资源提交；后续若再改 fork，需同步更新此哈希并重新 build。
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@ce47e0c13a3333ddaa64e1a56d3bc0960ac25b98/vendor/shujuku-sp-fork/index.js?v=phase145-sqlite-import-sync-6-28-p5-1';
+const databaseScriptMarker = 'mfrs-sqlite-import-sync-6-28-p5-1';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 let databaseScriptLoadSeq = 0;
 
