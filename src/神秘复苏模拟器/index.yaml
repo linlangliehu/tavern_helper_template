@@ -5398,6 +5398,62 @@
       仅格式显示: true
       仅格式提示词: false
 
+  - 正则名称: '[显示]清理短标签内部英文标题'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2020
+    启用: true
+    查找表达式: "/(?:^|\\n)\\s*Title\\s*:\\s*(?:choices|status)\\s*(?=\\n|$)/gi"
+    替换为: "\n"
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]短标签 Name 字段中文化'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2021
+    启用: true
+    查找表达式: "/(^|\\n)\\s*Name\\s*:\\s*/gi"
+    替换为: "$1姓名："
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]短标签 Status 字段中文化'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2022
+    启用: true
+    查找表达式: "/(^|\\n)\\s*Status\\s*:\\s*/gi"
+    替换为: "$1状态："
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
+  - 正则名称: '[显示]短标签 Location 字段中文化'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2023
+    启用: true
+    查找表达式: "/(^|\\n)\\s*Location\\s*:\\s*/gi"
+    替换为: "$1所在位置："
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
   - 正则名称: 渲染警告与系统提示
     id: a1b2c3d4-0001-4000-8000-000000000001
     启用: true
@@ -6302,14 +6358,7 @@
       }
       .sp-panel-title::before { content: var(--sp-icon, '◆') ' '; color: var(--sp-accent); }
       .sp-panel-kind {
-        flex: 0 0 auto;
-        padding: 4px 10px;
-        border: 1px solid var(--sp-border-soft);
-        border-radius: 999px;
-        color: var(--sp-muted);
-        background: rgba(8,3,3,.66);
-        font-size: 11px;
-        letter-spacing: .08em;
+        display: none;
       }
       .sp-panel-body {
         position: relative;

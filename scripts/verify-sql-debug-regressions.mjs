@@ -1148,6 +1148,29 @@ function testDashboardClassification() {
   }
 }
 
+function testCrudPlanDiffTrackingGuards() {
+  assert.ok(
+    vendorSource.includes('collectCrudPlanChangedSheetKeys_ACU'),
+    'CRUD Plan execution should compare before/after effective table data',
+  );
+  assert.ok(
+    vendorSource.includes('执行返回成功但未检测到有效 diff'),
+    'CRUD Plan successful no-diff operations should not be tracked as updates',
+  );
+  assert.ok(
+    vendorSource.includes('[CRUD Plan 摘要]'),
+    'CRUD Plan should emit a low-noise summary log',
+  );
+  assert.ok(
+    vendorSource.includes('CRUD Plan 缺少 4.0 关键表计划或 noop'),
+    'CRUD Plan should enforce critical 4.0 table coverage or explicit noop',
+  );
+  assert.ok(
+    vendorSource.includes('keysToTrackAsUpdated = keysToPersist'),
+    'first initialization should only track tables with real persisted changes',
+  );
+}
+
 const templates = testTemplates();
 testConstraintRegistry(templates);
 testSqlConstraintPreflight(templates[0]);
@@ -1164,6 +1187,7 @@ await testBadGatewayParsing();
 testApiTransportFailureResult();
 await testBatchSkipChatSaveDoesNotRefreshRuntime();
 testDashboardClassification();
+testCrudPlanDiffTrackingGuards();
 
 // v6.13 新增测试
 testUniqueConstraintRegistry(templates[0]);
@@ -1171,4 +1195,4 @@ testSqlAutoRewrite(templates[0]);
 testSqlTemplateMatching();
 testEnhancedErrorClassification();
 
-console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification, v6.13 UNIQUE/FK/rewrite/templates/classification');
+console.log('[ok] SQL Debug regressions verified: templates=2, sheets=14, generated CHECK fixtures, constraint registry/preflight, enum alias normalization, risk/update normalization, old table preflight, SQL cleaning, Bad Gateway, dashboard classification, CRUD Plan diff tracking guards, v6.13 UNIQUE/FK/rewrite/templates/classification');

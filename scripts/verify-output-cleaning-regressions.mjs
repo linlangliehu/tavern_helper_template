@@ -8,6 +8,8 @@ import YAML from 'yaml';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
 const indexPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', 'index.yaml');
+const statusAppPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u754c\u9762', '\u72b6\u6001\u680f', 'App.vue');
+const visualizerPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'v10_2_visualizer.js');
 
 const EXT = '\u6269\u5c55\u5b57\u6bb5';
 const REGEX = '\u6b63\u5219';
@@ -25,6 +27,10 @@ const requiredCleanupNames = [
   '[\u663e\u793a]\u9690\u85cf\u5185\u90e8\u8349\u7a3f\u4e0e\u786e\u8ba4\u5757',
   '[\u663e\u793a]\u9690\u85cf\u82f1\u6587\u8c03\u8bd5\u6458\u8981',
   '[\u663e\u793a]\u9690\u85cf\u5916\u8bed\u4e2d\u95f4\u7a3f',
+  '[\u663e\u793a]\u6e05\u7406\u77ed\u6807\u7b7e\u5185\u90e8\u82f1\u6587\u6807\u9898',
+  '[\u663e\u793a]\u77ed\u6807\u7b7e Name \u5b57\u6bb5\u4e2d\u6587\u5316',
+  '[\u663e\u793a]\u77ed\u6807\u7b7e Status \u5b57\u6bb5\u4e2d\u6587\u5316',
+  '[\u663e\u793a]\u77ed\u6807\u7b7e Location \u5b57\u6bb5\u4e2d\u6587\u5316',
 ];
 
 function parseRegexExpression(expression) {
@@ -146,10 +152,19 @@ assert.equal(parsedPatch[0].op, 'replace');
 
 const displayRegexes = loadDisplayRegexes();
 const displayed = applyDisplayFormatting(sample, displayRegexes);
+const statusAppSource = readFileSync(statusAppPath, 'utf8');
+const visualizerSource = readFileSync(visualizerPath, 'utf8');
 
 assert.ok(displayed.includes(storyToken), 'normal narration should remain visible');
 assert.ok(displayed.includes('sp-panel-choices'), 'sp_choices panel should still render');
 assert.ok(displayed.includes('sp-panel-status'), 'sp_status panel should still render');
+assert.equal(displayed.includes('Title: choices'), false, 'internal sp_choices title should be hidden');
+assert.equal(displayed.includes('Name: Lin Che'), false, 'English Name label should be localized');
+assert.equal(displayed.includes('Status: alive'), false, 'English Status label should be localized');
+assert.equal(displayed.includes('Location: old residential corridor'), false, 'English Location label should be localized');
+assert.ok(displayed.includes('姓名：Lin Che'), 'localized Name field should remain visible');
+assert.ok(displayed.includes('状态：alive'), 'localized Status field should remain visible');
+assert.ok(displayed.includes('所在位置：old residential corridor'), 'localized Location field should remain visible');
 assert.equal(displayed.includes('<choices>'), false, 'tagged choices block should be hidden in display output');
 assert.equal(displayed.includes('risk.death'), false, 'naked choices JSON should be hidden in display output');
 assert.equal(displayed.includes('"op": "replace"'), false, 'naked JSON Patch should be hidden in display output');
@@ -161,5 +176,13 @@ assert.equal(displayed.includes('Lin Che wakes up in a corridor'), false, 'Engli
 assert.equal(displayed.includes('tel\u00e9fono m\u00f3vil'), false, 'foreign-language draft should be hidden in display output');
 assert.equal(displayed.includes('<UpdateVariable>'), false, 'tagged variable update should be hidden in display output');
 assert.equal(displayed.includes('<JSONPatch>'), false, 'tagged JSONPatch should be hidden in display output');
+assert.ok(statusAppSource.includes('<sp_status>'), 'status bar should parse <sp_status> fallback');
+assert.ok(statusAppSource.includes('spStatusKeyMap'), 'status bar should map English sp_status keys');
+assert.ok(statusAppSource.includes('displayLocation'), 'status bar should display MVU/sp_status location fallback');
+assert.ok(statusAppSource.includes('mirrorCoreStateToDatabase'), 'status bar should mirror key 4.0 tables from MVU/sp_status when database is empty');
+assert.ok(statusAppSource.includes('acu_mfrs_core_state_crud_mirror'), 'core state mirror should have a localStorage kill switch');
+assert.ok(visualizerSource.includes('renderMfrsTableFallback'), 'database dashboard should provide MVU fallback for empty key tables');
+assert.ok(visualizerSource.includes('数据库尚未落盘'), 'database dashboard fallback should label readonly non-persisted summaries');
+assert.ok(visualizerSource.includes('tableHasEffectiveRows'), 'database dashboard should treat row_id-only tables as empty for fallback');
 
 console.log('verify-output-cleaning-regressions: passed');

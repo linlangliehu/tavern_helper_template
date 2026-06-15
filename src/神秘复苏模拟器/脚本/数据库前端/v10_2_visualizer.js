@@ -129,6 +129,84 @@
             <span class="acu-dash-stat-label" style="color:var(--acu-title-color); font-size:1em; flex:0 0 92px; white-space:normal; overflow-wrap:break-word;">${escapeHtml(label)}</span>
             <span class="acu-dash-stat-val" style="color:var(--acu-text-main); font-weight:bold; font-size:1em; white-space:pre-wrap; word-break:break-word; text-align:left;">${escapeHtml(textValue(value, fallback))}</span>
         </div>`;
+    const renderReadOnlyFallbackRows = (title, rows) => {
+        const rowHtml = rows
+            .filter(row => row && textValue(row.value, '') !== '')
+            .map(row => statusLine(row.label, row.value, row.fallback || '未知'))
+            .join('');
+        return `
+            <div class="acu-dash-char-info mfrs-readonly-fallback" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; height:100%; padding-right:4px;">
+                <div style="padding:8px 10px; color:var(--acu-text-sub); font-size:12px; line-height:1.7; border:1px dashed var(--acu-border); border-radius:8px;">
+                    ${escapeHtml(title)}：数据库尚未落盘，以下为 MVU / 状态面板只读摘要。
+                </div>
+                ${rowHtml || statusLine('摘要', '暂无可读状态')}
+            </div>`;
+    };
+
+    const renderMfrsTableFallback = (keyword) => {
+        const stat = readMfrsState();
+        if (!stat) return '';
+        const key = String(keyword || '');
+        const event = stat.当前灵异事件 || {};
+        const ghostState = stat.驭鬼者状态 || {};
+        const mainline = stat.主线进度 || {};
+        const resources = stat.灵异资源 || {};
+        if (key.includes('玩家状态')) {
+            return renderReadOnlyFallbackRows('玩家状态', [
+                { label: '姓名', value: stat.姓名 },
+                { label: '身份', value: stat.身份 },
+                { label: '所在地点', value: stat.所在位置 || event.发生地点 },
+                { label: '当前状态', value: stat.状态 },
+                { label: '死亡风险', value: riskValue(stat.风险值, '/100') },
+                { label: '复苏风险', value: riskValue(ghostState.总复苏风险 ?? stat.厉鬼复苏程度, '%') },
+                { label: '灵异资源', value: resources },
+                { label: '最近行动', value: getPath(stat, '最近行动判定.行动', '无') },
+            ]);
+        }
+        if (key.includes('全局状态')) {
+            return renderReadOnlyFallbackRows('全局状态', [
+                { label: '当前时间', value: stat.当前时间 || stat.game_time },
+                { label: '当前地点', value: stat.所在位置 || event.发生地点 },
+                { label: '当前城市', value: stat.当前城市 || stat.城市 },
+                { label: '原著阶段', value: stat.原著阶段 },
+                { label: '剧情锚点', value: stat.剧情锚点 },
+                { label: '主线阶段', value: mainline.当前阶段 },
+                { label: '世界压力', value: stat.世界压力 },
+            ]);
+        }
+        if (key.includes('灵异事件')) {
+            return renderReadOnlyFallbackRows('灵异事件', [
+                { label: '事件代号', value: event.事件代号 },
+                { label: '危害等级', value: event.危害等级 },
+                { label: '发生地点', value: event.发生地点 || stat.所在位置 },
+                { label: '鬼域状态', value: event.鬼域状态 },
+                { label: '已知规律', value: event.已知杀人规律 },
+                { label: '猜测规律', value: event.猜测杀人规律 },
+                { label: '处理状态', value: event.处理状态 },
+                { label: '可见摘要', value: event.可见摘要 || getPath(stat, '最近行动判定.可见结论', '') },
+            ]);
+        }
+        if (key.includes('线索')) {
+            return renderReadOnlyFallbackRows('线索', [
+                { label: '关联事件', value: event.事件代号 },
+                { label: '来源', value: '当前剧情/MVU' },
+                { label: '内容', value: event.可见摘要 || getPath(stat, '最近行动判定.可见结论', '') },
+                { label: '推断', value: event.猜测杀人规律 || event.已知杀人规律 },
+                { label: '验证状态', value: '未验证' },
+                { label: '可见性', value: '玩家可见' },
+            ]);
+        }
+        return '';
+    };
+    const tableHasEffectiveRows = (table) => {
+        const headers = Array.isArray(table?.headers) ? table.headers : [];
+        const rows = Array.isArray(table?.rows) ? table.rows : [];
+        return rows.some(row => Array.isArray(row) && row.some((cell, index) => {
+            const header = String(headers[index] || '').trim().toLowerCase();
+            if (header === 'row_id' || header === '行号') return false;
+            return String(cell ?? '').trim() !== '';
+        }));
+    };
 
     const renderMfrsStatusModule = () => {
         const stat = readMfrsState();
@@ -2493,7 +2571,9 @@
             const key = findKey(keyword);
             const table = key ? tables[key] : null;
 
-            if (!table || !table.rows || table.rows.length === 0) {
+            if (!table || !table.rows || table.rows.length === 0 || !tableHasEffectiveRows(table)) {
+                const fallbackHtml = renderMfrsTableFallback(keyword);
+                if (fallbackHtml) return fallbackHtml;
                 return `<div style="padding:15px; color:var(--acu-text-sub); font-size:12px; text-align:center;">未找到表格: ${keyword}</div>`;
             }
 
@@ -2532,7 +2612,9 @@
             const key = findKey(keyword);
             const table = key ? tables[key] : null;
 
-            if (!table || !table.rows || table.rows.length === 0) {
+            if (!table || !table.rows || table.rows.length === 0 || !tableHasEffectiveRows(table)) {
+                 const fallbackHtml = renderMfrsTableFallback(keyword);
+                 if (fallbackHtml) return fallbackHtml;
                  return `<div style="padding:15px; color:var(--acu-text-sub); font-size:12px; text-align:center;">未找到表格: ${keyword}</div>`;
             }
 
