@@ -289,6 +289,9 @@ export async function applyTableChangePlan(
     if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
       return { ...preview, insertedRowIndex: fallbackRowIndex };
     }
+    if (api.exportTableAsJson) {
+      return withError(preview, 'API_MUTATION_FAILED', 'insertRow 返回成功，但导出复核未发现新增行。');
+    }
     return { ...preview, insertedRowIndex };
   }
 
@@ -476,7 +479,11 @@ async function tryImportJsonInsertFallback(
   }
 
   sheet.content.push(newRow);
-  return await importJsonData(api, cloned) ? sheet.content.length - 1 : null;
+  if (!await importJsonData(api, cloned)) return null;
+  if (!api.exportTableAsJson) return sheet.content.length - 1;
+
+  const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, currentData);
+  return typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0 ? verifiedRowIndex : null;
 }
 
 async function tryImportJsonUpdateFallback(

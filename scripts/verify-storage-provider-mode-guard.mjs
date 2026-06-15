@@ -26,6 +26,14 @@ const strategySource = sliceBetween(
 assert.match(strategySource, /currentProvider\.mode !== mode/);
 assert.match(strategySource, /SQLite Provider 未按当前设置初始化/);
 
+const coreDataApiSource = sliceBetween(
+  'async function syncSqliteRuntimeAfterJsonImport_ACU(importedData)',
+  '/**\n     * presentation/bootstrap/api-groups/table-crud-api.ts',
+);
+assert.match(coreDataApiSource, /resetFromTableData\(importedData\)/);
+assert.match(coreDataApiSource, /SQLite runtime synced after JSON import/);
+assert.match(coreDataApiSource, /SQLite 运行库同步失败/);
+
 const logs = [];
 const context = {
   settings_ACU: { storageMode: 'native' },

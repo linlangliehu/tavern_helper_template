@@ -1130,6 +1130,40 @@ assert.deepEqual(
 assert.equal(sparseEventImports[0].sheet_supernatural_events.content[1][1], 'CodexSparseEventSmoke');
 assert.equal(sparseEventImports[0].sheet_supernatural_events.content[1][10], STATUS_INVESTIGATING);
 
+const staleSqliteEventCurrentData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_supernatural_events: {
+    uid: 'sheet_supernatural_events',
+    name: TABLE_EVENTS,
+    content: [eventsTable.content[0]],
+  },
+};
+const staleSqliteEventImports = [];
+const staleSqliteEventApi = {
+  async exportTableAsJson() {
+    return JSON.parse(JSON.stringify(staleSqliteEventCurrentData));
+  },
+  async insertRow() {
+    return 1;
+  },
+  async importTableAsJson(jsonString) {
+    staleSqliteEventImports.push(JSON.parse(jsonString));
+    return true;
+  },
+};
+const staleSqliteEventApply = await applyTableChangePlan(staleSqliteEventApi, {
+  action: 'insertRow',
+  table: 'supernatural_events',
+  data: createEventData({
+    event_code: 'CodexStaleSqliteEventSmoke',
+    location_name: 'Codex stale sqlite location',
+    handling_status: STATUS_INVESTIGATING,
+    public_summary: 'Import fallback must be verified against the active runtime view.',
+  }),
+}, staleSqliteEventCurrentData, templateFallbackData);
+assertError(staleSqliteEventApply, 'API_MUTATION_FAILED');
+assert.equal(staleSqliteEventImports.length, 1, 'stale sqlite insert should try import fallback once');
+
 const updateFallbackImports = [];
 const updateFallbackApi = {
   async updateCell() {
