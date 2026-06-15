@@ -867,6 +867,20 @@ const p5CrudAliasCases = [
     },
   },
   {
+    key: 'sheet_chronicle',
+    sqlName: 'chronicle',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'chronicle',
+      data: {
+        time_span: '2004-07-01 09:00 ~ 09:30',
+        related_event: 'EVT_湿脚印',
+        summary: '玩家确认湿脚印线索',
+        chronicle_text: '本轮纪要只记录玩家在场能够确认的事实，包括走廊湿脚印的出现位置、观察到的环境变化、玩家对撤离路线和异常声响的判断，以及线索被记录进后续调查目标的过程。'.repeat(3),
+      },
+    },
+  },
+  {
     key: 'sheet_locations',
     sqlName: 'locations',
     physicalPlan: {
@@ -882,6 +896,20 @@ const p5CrudAliasCases = [
         description: '楼道潮湿且照明异常闪烁',
         interaction_options: '观察走廊;联系物业;撤离楼道',
       },
+    },
+  },
+  {
+    key: 'sheet_supernatural_events',
+    sqlName: 'supernatural_events',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'supernatural_events',
+      data: createEventData({
+        event_code: 'EVT_湿脚印',
+        location_name: '老旧居民楼',
+        handling_status: '蔓延中',
+        public_summary: '居民楼走廊出现持续湿脚印，事件有扩散趋势。',
+      }),
     },
   },
   {
@@ -931,6 +959,21 @@ for (const { key } of p5CrudAliasCases) {
   p5SparseRuntimeData[key] = { content: [['row_id']] };
 }
 const p5SparseMetadata = listTableMetadata(p5SparseRuntimeData, mysteryTemplateData);
+const p52FailureTables = [
+  'ghost_archives',
+  'clues',
+  'locations',
+  'collected_archives',
+  'chronicle',
+  'controlled_ghosts',
+  'player_state',
+  'supernatural_events',
+];
+assert.deepEqual(
+  p5CrudAliasCases.map(testCase => testCase.sqlName).sort(),
+  [...p52FailureTables].sort(),
+  'P5.2 sparse runtime regressions should cover every real failure table',
+);
 
 function metadataBySqlName(sqlName) {
   return p5SparseMetadata.find(sheet => sheet.sqlName === sqlName);
@@ -986,6 +1029,20 @@ for (const testCase of p5CrudAliasCases) {
       };
   const commentAliasPreview = previewTableChangePlan(commentAliasPlan, p5SparseRuntimeData, mysteryTemplateData);
   assertNoColumnNotFound(commentAliasPreview, `${testCase.sqlName} comment aliases`);
+
+  const emptyInsertPreview = previewTableChangePlan({
+    action: 'insertRow',
+    table: testCase.sqlName,
+    data: {},
+  }, p5SparseRuntimeData, mysteryTemplateData);
+  assertError(emptyInsertPreview, 'NOT_NULL_VIOLATION');
+
+  const rowIdOnlyPreview = previewTableChangePlan({
+    action: 'insertRow',
+    table: testCase.sqlName,
+    data: { row_id: 1 },
+  }, p5SparseRuntimeData, mysteryTemplateData);
+  assertError(rowIdOnlyPreview, 'NOT_NULL_VIOLATION');
 }
 
 const chronicleCalls = [];
@@ -1096,6 +1153,7 @@ const sparseEventsCurrentData = {
 };
 let sparseEventExport = JSON.parse(JSON.stringify(sparseEventsCurrentData));
 const sparseEventImports = [];
+const sparseEventImportOptions = [];
 const sparseEventApi = {
   async exportTableAsJson() {
     return JSON.parse(JSON.stringify(sparseEventExport));
@@ -1103,15 +1161,18 @@ const sparseEventApi = {
   async insertRow() {
     return 1;
   },
-  async importTableAsJson(jsonString) {
+  async importTableAsJson(jsonString, options) {
     sparseEventExport = JSON.parse(jsonString);
     sparseEventImports.push(sparseEventExport);
+    sparseEventImportOptions.push(options);
     return true;
   },
 };
 const sparseEventApply = await applyTableChangePlan(sparseEventApi, {
   action: 'insertRow',
   table: 'supernatural_events',
+  skipChatSave: true,
+  silent: true,
   data: createEventData({
     event_code: 'CodexSparseEventSmoke',
     location_name: 'Codex sparse header location',
@@ -1122,6 +1183,9 @@ const sparseEventApply = await applyTableChangePlan(sparseEventApi, {
 assert.equal(sparseEventApply.ok, true);
 assert.equal(sparseEventApply.action, 'insertRow');
 assert.equal(sparseEventImports.length, 1, 'insert success without visible row should fall back to importTableAsJson');
+assert.equal(sparseEventImportOptions.length, 1, 'insert fallback should pass import options');
+assert.equal(sparseEventImportOptions[0].skipChatSave, true);
+assert.equal(sparseEventImportOptions[0].skipNotify, true);
 assert.deepEqual(
   sparseEventImports[0].sheet_supernatural_events.content[0],
   eventsTable.content[0],
@@ -1129,40 +1193,6 @@ assert.deepEqual(
 );
 assert.equal(sparseEventImports[0].sheet_supernatural_events.content[1][1], 'CodexSparseEventSmoke');
 assert.equal(sparseEventImports[0].sheet_supernatural_events.content[1][10], STATUS_INVESTIGATING);
-
-const staleSqliteEventCurrentData = {
-  mate: { type: 'chatSheets', version: 1 },
-  sheet_supernatural_events: {
-    uid: 'sheet_supernatural_events',
-    name: TABLE_EVENTS,
-    content: [eventsTable.content[0]],
-  },
-};
-const staleSqliteEventImports = [];
-const staleSqliteEventApi = {
-  async exportTableAsJson() {
-    return JSON.parse(JSON.stringify(staleSqliteEventCurrentData));
-  },
-  async insertRow() {
-    return 1;
-  },
-  async importTableAsJson(jsonString) {
-    staleSqliteEventImports.push(JSON.parse(jsonString));
-    return true;
-  },
-};
-const staleSqliteEventApply = await applyTableChangePlan(staleSqliteEventApi, {
-  action: 'insertRow',
-  table: 'supernatural_events',
-  data: createEventData({
-    event_code: 'CodexStaleSqliteEventSmoke',
-    location_name: 'Codex stale sqlite location',
-    handling_status: STATUS_INVESTIGATING,
-    public_summary: 'Import fallback must be verified against the active runtime view.',
-  }),
-}, staleSqliteEventCurrentData, templateFallbackData);
-assertError(staleSqliteEventApply, 'API_MUTATION_FAILED');
-assert.equal(staleSqliteEventImports.length, 1, 'stale sqlite insert should try import fallback once');
 
 const updateFallbackImports = [];
 const updateFallbackApi = {

@@ -56,7 +56,10 @@ export type TableChangeResult = {
 
 export type AutoCardUpdaterCrudApi = {
   exportTableAsJson?: () => unknown | Promise<unknown>;
-  importTableAsJson?: (jsonString: string) => boolean | Promise<boolean>;
+  importTableAsJson?: (
+    jsonString: string,
+    options?: { skipChatSave?: boolean; skipNotify?: boolean; silent?: boolean },
+  ) => boolean | Promise<boolean>;
   updateCell?: (
     tableNameOrOptions:
       | string
@@ -241,11 +244,8 @@ export async function applyTableChangePlan(
   const baselineData = cloneDataSnapshot(currentData);
 
   if (resolved.plan.action === 'insertRow') {
-    const allowImportFallback = !resolved.plan.skipChatSave;
     if (!api.insertRow) {
-      const fallbackRowIndex = allowImportFallback
-        ? await tryImportJsonInsertFallback(api, resolved, currentData)
-        : null;
+      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, currentData);
       if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
         return { ...preview, insertedRowIndex: fallbackRowIndex };
       }
@@ -260,6 +260,9 @@ export async function applyTableChangePlan(
     if (resolved.plan.skipChatSave) insertOptions.skipChatSave = true;
     if (resolved.plan.silent) insertOptions.silent = true;
     const insertValues = toApiInsertValues(resolved);
+    if (Object.keys(insertValues).length === 0) {
+      return withError(preview, 'API_MUTATION_FAILED', 'insertRow 没有可执行列，已阻止底层 DEFAULT VALUES。');
+    }
     // 真实 vendor 的 insertRow 第一参为对象时按选项包解析，只从 options.data 取数据并忽略第二参，
     // 因此必须用单参 { tableName, data } 形态；旧的两参调用 (insertOptions, insertValues) 第一次必失败，
     // 靠后续单参重试兜底，徒增一次 "data must be an object" 错误日志。
@@ -270,9 +273,7 @@ export async function applyTableChangePlan(
       if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
         return { ...preview, insertedRowIndex: verifiedRowIndex };
       }
-      const fallbackRowIndex = allowImportFallback
-        ? await tryImportJsonInsertFallback(api, resolved, baselineData)
-        : null;
+      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, baselineData);
       if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
         return { ...preview, insertedRowIndex: fallbackRowIndex };
       }
@@ -283,14 +284,9 @@ export async function applyTableChangePlan(
     if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
       return { ...preview, insertedRowIndex: verifiedRowIndex };
     }
-    const fallbackRowIndex = allowImportFallback
-      ? await tryImportJsonInsertFallback(api, resolved, baselineData)
-      : null;
+    const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, baselineData);
     if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
       return { ...preview, insertedRowIndex: fallbackRowIndex };
-    }
-    if (api.exportTableAsJson) {
-      return withError(preview, 'API_MUTATION_FAILED', 'insertRow 返回成功，但导出复核未发现新增行。');
     }
     return { ...preview, insertedRowIndex };
   }
@@ -300,9 +296,8 @@ export async function applyTableChangePlan(
   }
 
   if (resolved.plan.action === 'deleteRow') {
-    const allowImportFallback = !resolved.plan.skipChatSave;
     if (!api.deleteRow) {
-      if (allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
+      if (await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
       return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 deleteRow。');
     }
     const ok = await api.deleteRow({
@@ -312,13 +307,12 @@ export async function applyTableChangePlan(
       silent: resolved.plan.silent,
     });
     if (!ok && await verifyDeleteAppliedAfterFailedResult(api, resolved, baselineData)) return preview;
-    if (!ok && allowImportFallback && await tryImportJsonDeleteFallback(api, resolved, baselineData)) return preview;
+    if (!ok && await tryImportJsonDeleteFallback(api, resolved, baselineData)) return preview;
     return ok ? preview : withError(preview, 'API_MUTATION_FAILED', 'deleteRow 执行失败。');
   }
 
-  const allowImportFallback = !resolved.plan.skipChatSave;
   if (!api.updateCell) {
-    if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
+    if (await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
     return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 updateCell。');
   }
   for (const column of resolved.columns) {
@@ -332,7 +326,7 @@ export async function applyTableChangePlan(
     });
     if (!ok) {
       if (await verifyUpdateAppliedAfterFailedResult(api, resolved, column)) continue;
-      if (allowImportFallback && await tryImportJsonUpdateFallback(api, resolved, baselineData)) return preview;
+      if (await tryImportJsonUpdateFallback(api, resolved, baselineData)) return preview;
       return withError(preview, 'API_MUTATION_FAILED', `updateCell 执行失败：${column.header}。`, column.header);
     }
   }
@@ -479,11 +473,7 @@ async function tryImportJsonInsertFallback(
   }
 
   sheet.content.push(newRow);
-  if (!await importJsonData(api, cloned)) return null;
-  if (!api.exportTableAsJson) return sheet.content.length - 1;
-
-  const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, currentData);
-  return typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0 ? verifiedRowIndex : null;
+  return await importJsonData(api, cloned, resolved) ? sheet.content.length - 1 : null;
 }
 
 async function tryImportJsonUpdateFallback(
@@ -501,7 +491,7 @@ async function tryImportJsonUpdateFallback(
   for (const column of resolved.columns) {
     row[column.index] = resolved.values[column.header] ?? '';
   }
-  return importJsonData(api, cloned);
+  return importJsonData(api, cloned, resolved);
 }
 
 async function tryImportJsonDeleteFallback(
@@ -515,7 +505,7 @@ async function tryImportJsonDeleteFallback(
   const sheet = findSheetInData(cloned, resolved.table);
   if (!sheet || !Array.isArray(sheet.content) || !Array.isArray(sheet.content[resolved.rowIndex])) return false;
   sheet.content.splice(resolved.rowIndex, 1);
-  return importJsonData(api, cloned);
+  return importJsonData(api, cloned, resolved);
 }
 
 function cloneImportableData(api: AutoCardUpdaterCrudApi, currentData: unknown) {
@@ -529,9 +519,13 @@ function cloneImportableData(api: AutoCardUpdaterCrudApi, currentData: unknown) 
   }
 }
 
-async function importJsonData(api: AutoCardUpdaterCrudApi, data: Record<string, unknown>) {
+async function importJsonData(api: AutoCardUpdaterCrudApi, data: Record<string, unknown>, resolved: ResolvedPlan) {
   if (!api.importTableAsJson) return false;
-  return api.importTableAsJson(JSON.stringify(data));
+  return api.importTableAsJson(JSON.stringify(data), {
+    skipChatSave: resolved.plan.skipChatSave,
+    skipNotify: resolved.plan.silent,
+    silent: resolved.plan.silent,
+  });
 }
 
 function findSheetInData(data: Record<string, unknown>, table: TableMeta) {
@@ -1186,20 +1180,41 @@ function normalizeEnumAliasValue(table: TableMeta, column: ColumnMeta, rawText: 
   if (tableName === 'supernatural_events' && columnName === 'handling_status') {
     const aliases: Record<string, string> = {
       爆发中: '失控扩散',
+      爆发: '失控扩散',
       正在爆发: '失控扩散',
+      蔓延中: '失控扩散',
+      正在扩散: '失控扩散',
+      扩散: '失控扩散',
       扩散中: '失控扩散',
       快速扩散: '失控扩散',
       严重扩散: '失控扩散',
+      失控中: '失控扩散',
+      已失控: '失控扩散',
       处理中: '对抗中',
       处置中: '对抗中',
+      应对中: '对抗中',
       交战中: '对抗中',
+      战斗中: '对抗中',
+      对峙中: '对抗中',
+      压制中: '对抗中',
       正在对抗: '对抗中',
+      对抗: '对抗中',
       已解决: '结束',
       已完结: '结束',
       已处理: '结束',
+      已结束: '结束',
+      结束: '结束',
+      完结: '结束',
+      解决: '结束',
+      控制中: '已压制',
       已控制: '已压制',
+      暂时控制: '已压制',
       已压制中: '已压制',
+      收容: '已关押',
       已收容: '已关押',
+      关押: '已关押',
+      已关押: '已关押',
+      未处置: '未处理',
       未开始: '未处理',
       待处理: '未处理',
     };

@@ -22,17 +22,28 @@ const strategySource = sliceBetween(
   '/** 当前活跃的 Provider 实例 */',
   '/**\n     * service/runtime/template-vars/sql-query-var.ts',
 );
+const coreDataSource = sliceBetween(
+  'function createCoreDataApi',
+  '    /**\n     * presentation/bootstrap/api-groups/table-crud-api.ts',
+);
+const tableCrudSource = sliceBetween(
+  'function resolveColumnForSheet',
+  '    /**\n     * 用反引号包裹标识符',
+);
 
 assert.match(strategySource, /currentProvider\.mode !== mode/);
 assert.match(strategySource, /SQLite Provider 未按当前设置初始化/);
-
-const coreDataApiSource = sliceBetween(
-  'async function syncSqliteRuntimeAfterJsonImport_ACU(importedData)',
-  '/**\n     * presentation/bootstrap/api-groups/table-crud-api.ts',
+assert.match(coreDataSource, /importTableAsJson: async function \(jsonString, options = \{\}\)/);
+assert.match(coreDataSource, /parseMutationOptions_ACU\(isPlainObjectArg_ACU\(options\) \? options : null\)/);
+assert.match(coreDataSource, /provider\.resetFromTableData\(currentJsonTableData_ACU\)/);
+assert.match(coreDataSource, /if \(!skipChatSave\) \{\s*await refreshMergedDataAndNotifyWithUI_ACU\(\{ skipNotify \}\);/);
+assert.match(tableCrudSource, /function buildSqliteMutationColumnGate_ACU/);
+assert.match(tableCrudSource, /function resolveSqliteMutationColumn_ACU/);
+assert.doesNotMatch(tableCrudSource, /INSERT INTO[\s\S]{0,120}DEFAULT VALUES/);
+assert.match(
+  tableCrudSource,
+  /if \(isSqliteMode\(\)\) \{[\s\S]*resolveSqliteMutationColumn_ACU[\s\S]*\}\s*else if \(numericColIdentifier === null\) \{[\s\S]*headers\.includes\(chineseColName\)/,
 );
-assert.match(coreDataApiSource, /resetFromTableData\(importedData\)/);
-assert.match(coreDataApiSource, /SQLite runtime synced after JSON import/);
-assert.match(coreDataApiSource, /SQLite 运行库同步失败/);
 
 const logs = [];
 const context = {
