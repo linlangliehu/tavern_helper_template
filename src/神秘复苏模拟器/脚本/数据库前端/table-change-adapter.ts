@@ -278,6 +278,17 @@ export async function applyTableChangePlan(
       }
       return withError(preview, 'API_MUTATION_FAILED', 'insertRow 执行失败。');
     }
+
+    const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, baselineData);
+    if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
+      return { ...preview, insertedRowIndex: verifiedRowIndex };
+    }
+    const fallbackRowIndex = allowImportFallback
+      ? await tryImportJsonInsertFallback(api, resolved, baselineData)
+      : null;
+    if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
+      return { ...preview, insertedRowIndex: fallbackRowIndex };
+    }
     return { ...preview, insertedRowIndex };
   }
 
@@ -451,6 +462,7 @@ async function tryImportJsonInsertFallback(
   if (!cloned) return null;
   const sheet = findSheetInData(cloned, resolved.table);
   if (!sheet || !Array.isArray(sheet.content) || !Array.isArray(sheet.content[0])) return null;
+  ensureImportSheetUsesResolvedHeader(sheet, resolved.table);
 
   const newRow = new Array(sheet.content[0].length).fill('');
   for (const column of resolved.table.columns) {
@@ -521,6 +533,21 @@ function findSheetInData(data: Record<string, unknown>, table: TableMeta) {
     if ((table.uid && value.uid === table.uid) || value.name === table.name) return value;
   }
   return null;
+}
+
+function ensureImportSheetUsesResolvedHeader(sheet: SheetLike, table: TableMeta) {
+  if (!Array.isArray(sheet.content) || !Array.isArray(sheet.content[0])) return;
+  if (!Array.isArray(table.sheet.content) || !Array.isArray(table.sheet.content[0])) return;
+
+  const currentHeader = sheet.content[0].map(value => String(value));
+  const resolvedHeader = table.sheet.content[0].map(value => String(value));
+  if (resolvedHeader.length <= currentHeader.length) return;
+
+  try {
+    sheet.content = JSON.parse(JSON.stringify(table.sheet.content));
+  } catch {
+    sheet.content = table.sheet.content.map(row => Array.isArray(row) ? [...row] : row);
+  }
 }
 
 function nextPrimaryKeyValue(rows: unknown[][], columnIndex: number) {

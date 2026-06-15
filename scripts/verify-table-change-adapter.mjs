@@ -1086,6 +1086,50 @@ assert.equal(newEventApply.action, 'insertRow');
 assert.equal(eventInsertCalls.length, 1);
 assert.equal(eventInsertCalls[0][1].data[COL_HANDLING_STATUS], STATUS_SPREADING);
 
+const sparseEventsCurrentData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_supernatural_events: {
+    uid: 'sheet_supernatural_events',
+    name: TABLE_EVENTS,
+    content: [['row_id']],
+  },
+};
+let sparseEventExport = JSON.parse(JSON.stringify(sparseEventsCurrentData));
+const sparseEventImports = [];
+const sparseEventApi = {
+  async exportTableAsJson() {
+    return JSON.parse(JSON.stringify(sparseEventExport));
+  },
+  async insertRow() {
+    return 1;
+  },
+  async importTableAsJson(jsonString) {
+    sparseEventExport = JSON.parse(jsonString);
+    sparseEventImports.push(sparseEventExport);
+    return true;
+  },
+};
+const sparseEventApply = await applyTableChangePlan(sparseEventApi, {
+  action: 'insertRow',
+  table: 'supernatural_events',
+  data: createEventData({
+    event_code: 'CodexSparseEventSmoke',
+    location_name: 'Codex sparse header location',
+    handling_status: STATUS_INVESTIGATING,
+    public_summary: 'Sparse header event insert should import canonical header.',
+  }),
+}, sparseEventsCurrentData, templateFallbackData);
+assert.equal(sparseEventApply.ok, true);
+assert.equal(sparseEventApply.action, 'insertRow');
+assert.equal(sparseEventImports.length, 1, 'insert success without visible row should fall back to importTableAsJson');
+assert.deepEqual(
+  sparseEventImports[0].sheet_supernatural_events.content[0],
+  eventsTable.content[0],
+  'insert fallback should import the canonical supernatural_events header, not the sparse row_id-only header',
+);
+assert.equal(sparseEventImports[0].sheet_supernatural_events.content[1][1], 'CodexSparseEventSmoke');
+assert.equal(sparseEventImports[0].sheet_supernatural_events.content[1][10], STATUS_INVESTIGATING);
+
 const updateFallbackImports = [];
 const updateFallbackApi = {
   async updateCell() {
