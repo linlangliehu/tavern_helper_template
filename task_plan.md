@@ -15,7 +15,7 @@
 
 ## 当前状态
 
-**当前有效发布版：** `v6.28`（P5.2 收口版）。P5.2 已从开发卡同步到发布版并完成发布收口；发布提交 `aa11645efe234443b68bf03093614abd0488829e` 已推送到 `origin/main`，发布版 YAML/可导入 PNG、CDN/resource smoke、真页发布版非 AI `clues` + `supernatural_events` 可逆 CRUD smoke 和 SP 运行日志复核均已通过。当前发布版详细链路保留在 `版本变更索引`。
+**当前有效发布版：** `v6.28`（P5.2 收口版）。P5.2 已从开发卡同步到发布版并完成发布收口；发布提交 `aa11645efe234443b68bf03093614abd0488829e` 已进入远端历史，发布版 YAML/可导入 PNG、CDN/resource smoke、真页发布版非 AI `clues` + `supernatural_events` 可逆 CRUD smoke 和 SP 运行日志复核均已通过。当前发布版详细链路保留在 `版本变更索引`。
 
 **当前候选线 / 下一工作阶段：** `v6.28 P5.2` 已完成发布收口。发布后真实 AI 暴露的 `insertRow` 稀疏表头 / `DEFAULT VALUES` / `NOT NULL` / `API_MUTATION_FAILED` / 枚举归一化问题已完成本地修复、开发卡资源链路、开发卡真页非 AI smoke、低频真实 AI 验证、发布版同步、CDN smoke 和发布版真页非 AI smoke。后续只保留用户手动真实游玩观察，不主动压力触发 AI。
 

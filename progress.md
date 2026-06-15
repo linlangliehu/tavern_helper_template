@@ -19,7 +19,7 @@
 **P5.2-16 发布版同步与 CDN smoke：**
 - 在 `.codex-v628-p5-resource` 更新 `scripts/publish-card.mjs`：`CDN_REF=b89e19b99fb32e5b546d3424924ae2c93b74b5da`，`CDN_CACHE_VERSION=phase148-crud-header-gate-6-28`，`releaseVersion=6.28`。
 - `node --check scripts/publish-card.mjs` 通过；`pnpm run publish-card -- 神秘复苏模拟器发布版` 成功，替换 13 处链接并生成 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。
-- 精确提交并推送发布版同步：`aa11645efe234443b68bf03093614abd0488829e release: publish v6.28 p5.2 card`；`origin/main` 已指向该提交。
+- 精确提交并推送发布版同步：`aa11645efe234443b68bf03093614abd0488829e release: publish v6.28 p5.2 card`；该发布提交已进入远端历史，后续可有 planning 记录提交位于其后。
 - CDN smoke：release YAML、YAML 头像 PNG、可导入发布 PNG 均 200；release YAML 含 `版本: '6.28'`、`b89e19b...`、`phase148...`，不含 P5.1 旧 hash/cache、`localhost` 或 `127.0.0.1`。
 - 可导入 `神秘复苏模拟器发布版.png` 的 PNG `chara` / `ccv3` 元数据含 `6.28`、`b89e19b...`、`phase148...`，不含旧 P5.1 hash/cache 或本地链接。发布目录头像 PNG 仍保留开发卡 metadata（指向 `64d863...` / `phase147...`），这是 `publish-card` 复制头像的既有行为；发布判据以可导入发布 PNG 为准。
 - 从远端 release YAML 抽取的 8 个资源 URL 全部 200；数据库前端远端脚本包含 marker `mfrs-crud-header-gate-6-28-p5-2` 和 self-reclaim resource `5849eae635549729b2e8707d1b772c8fb6a7bc9a`。数据库 loader 仍先加载 P5.1 vendor，但数据库前端会 self-reclaim 到 P5.2 vendor，这是开发卡真页验证时的实际运行口径。

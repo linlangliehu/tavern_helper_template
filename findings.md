@@ -2,7 +2,7 @@
 
 ## 2026-06-15 v6.28 P5.2 发布收口结论
 
-- P5.2 已正式同步到发布版，发布提交为 `aa11645efe234443b68bf03093614abd0488829e`，远端 `origin/main` 已指向该提交。发布版版本号仍为 `6.28`，运行口径是 P5.2。
+- P5.2 已正式同步到发布版，发布提交为 `aa11645efe234443b68bf03093614abd0488829e`，且已进入远端历史；后续 planning 记录提交可位于其后。发布版版本号仍为 `6.28`，运行口径是 P5.2。
 - 发布版资源口径：release YAML / 可导入 PNG 指向 `b89e19b99fb32e5b546d3424924ae2c93b74b5da`，cache 为 `phase148-crud-header-gate-6-28`；数据库前端 self-reclaim 指向 P5.2 resource `5849eae635549729b2e8707d1b772c8fb6a7bc9a`，runtime marker 为 `mfrs-crud-header-gate-6-28-p5-2`。
 - 低频真实 AI 验证通过 P5.2 数据库完整性判据：开发卡单轮真实回复后自动填表最终成功，数据从基线 5 行到 20 行；未出现 `NOT NULL`、`API_MUTATION_FAILED`、`CHECK_IN_VIOLATION`、`COLUMN_NOT_FOUND`、`DEFAULT VALUES`、`Too Many Requests`。本轮唯一新增异常是一次上游 `HTTP 200 (OK) <none>` 的 `parseNonStreamResponse` ERROR/WARN，自动重试后成功，不能当作 header gate/CRUD 修复失败。
 - 发布版 CDN smoke 通过：release YAML、YAML 头像 PNG、可导入发布 PNG 均 200；可导入 PNG 的 `chara` / `ccv3` 元数据含 `6.28`、`b89e19b...`、`phase148...`，不含 P5.1 旧 hash/cache、`localhost` 或 `127.0.0.1`。
