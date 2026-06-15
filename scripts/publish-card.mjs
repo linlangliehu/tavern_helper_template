@@ -26,9 +26,9 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = 'e79f078a7742d7e3428d99bc108f0e3a33b838c6';
+const CDN_REF = 'b89e19b99fb32e5b546d3424924ae2c93b74b5da';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase146-sqlite-import-sync-6-28';
+const CDN_CACHE_VERSION = 'phase148-crud-header-gate-6-28';
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
