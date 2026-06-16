@@ -14,8 +14,10 @@ try {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
 const vendorPath = join(repoRoot, 'vendor', 'shujuku-sp-fork', 'index.js');
+const choicesRulePath = join(repoRoot, 'src', '神秘复苏模拟器', '世界书', '规则', '必须输出推演选项.txt');
 const srcRoot = join(repoRoot, 'src');
 const vendorSource = readFileSync(vendorPath, 'utf8');
+const choicesRuleSource = readFileSync(choicesRulePath, 'utf8');
 
 const dashboardSentinels = {
   apiRateLimitIssue: 'apiRateLimitIssue',
@@ -1237,9 +1239,23 @@ function testCrudPlanDiffTrackingGuards() {
     vendorSource.includes('applyMfrsRateLimitRecoveryCrudPlans_ACU'),
     'transport error handling should apply deterministic recovery plans before returning',
   );
+  {
+    const recoveryFunction = extractFunction('applyMfrsRateLimitRecoveryCrudPlans_ACU');
+    const resetIndex = recoveryFunction.indexOf('resetCrudPlanRuntimeStateToBatchSnapshot_ACU');
+    const synthesizeIndex = recoveryFunction.indexOf('synthesizeMfrsRateLimitRecoveryCrudPlans_ACU');
+    assert.ok(
+      resetIndex !== -1 && synthesizeIndex !== -1 && resetIndex < synthesizeIndex,
+      'rate-limit recovery plans must be generated after resetting transient failed-attempt rows',
+    );
+  }
   assert.ok(
     vendorSource.includes('expandTargetSheetKeysForMfrsFallbackPlans_ACU'),
     'fallback plans outside the current auto-update group should expand the save scope before persisting',
+  );
+  assert.ok(
+    choicesRuleSource.includes('正文剧情（首段控制在 350 字以内）')
+      && choicesRuleSource.indexOf('<sp_status>') < choicesRuleSource.indexOf('<choices>'),
+    'visible output rule should put compact status/clue protocol before long choices to avoid token truncation',
   );
   assert.ok(
     vendorSource.includes('partialSuccess'),
