@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 .vscode/chrome-debug-profile/
 
@@ -39,3 +40,5 @@ et --hard
 
 # 本地构建 sourcemap
 /dist/**/*.map
+=======
+>>>>>>> 1fdfca54e89542414750e2c88ad8fca7d4a3f85c

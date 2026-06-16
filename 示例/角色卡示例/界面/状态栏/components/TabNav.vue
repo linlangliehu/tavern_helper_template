@@ -28,8 +28,13 @@ function toggleTab(id: string) {
 <style lang="scss" scoped>
 .tabs {
   display: flex;
+<<<<<<< HEAD
   background-color: var(--c-abyss);
   border-bottom: 1px solid var(--c-gold-dim);
+=======
+  background-color: var(--c-grey-olive);
+  border-bottom: 3px solid var(--c-granite);
+>>>>>>> 1fdfca54e89542414750e2c88ad8fca7d4a3f85c
 }
 
 .tab-button {
@@ -37,6 +42,7 @@ function toggleTab(id: string) {
   padding: 8px;
   border: none;
   background: transparent;
+<<<<<<< HEAD
   color: var(--c-gold-dim);
   font-size: 0.92rem;
   font-weight: bold;
@@ -47,6 +53,16 @@ function toggleTab(id: string) {
   letter-spacing: 1px;
   border-right: 1px solid var(--c-gold-dark);
   text-shadow: none;
+=======
+  color: var(--c-mint-cream);
+  font-size: 0.92rem;
+  font-weight: bold;
+  font-family: var(--font-archive);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  border-right: 1.5px solid var(--c-granite);
+>>>>>>> 1fdfca54e89542414750e2c88ad8fca7d4a3f85c
 }
 
 .tab-button:last-child {
@@ -54,6 +70,7 @@ function toggleTab(id: string) {
 }
 
 .tab-button:hover {
+<<<<<<< HEAD
   background-color: var(--c-dark-surface);
   color: var(--c-gold-light);
   text-shadow: 0 0 6px var(--c-gold-glow);
@@ -76,5 +93,17 @@ function toggleTab(id: string) {
     height: 2px;
     background: linear-gradient(90deg, transparent, var(--c-gold), transparent);
   }
+=======
+  background-color: var(--c-ash-grey);
+  color: var(--c-granite);
+}
+
+.tab-button.active {
+  background-color: var(--c-mint-cream);
+  color: var(--c-granite);
+  position: relative;
+  top: 1px;
+  padding-bottom: 10px;
+>>>>>>> 1fdfca54e89542414750e2c88ad8fca7d4a3f85c
 }
 </style>
