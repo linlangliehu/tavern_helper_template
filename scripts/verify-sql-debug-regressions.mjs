@@ -1166,6 +1166,26 @@ function testCrudPlanDiffTrackingGuards() {
     'CRUD Plan should enforce critical 4.0 table coverage or explicit noop',
   );
   assert.ok(
+    vendorSource.includes('synthesizeMissingCriticalCrudPlans_ACU'),
+    'CRUD Plan should synthesize deterministic fallback plans before critical coverage validation',
+  );
+  assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_missing_clue_plan\''),
+    'CRUD Plan should add a deterministic fallback clue row when real AI omits clues despite visible evidence',
+  );
+  assert.ok(
+    vendorSource.includes('hasEffectiveRowsForTrackedSheet_ACU'),
+    'table update tracking should require effective rows before marking critical sheets as persisted changes',
+  );
+  assert.ok(
+    vendorSource.includes('hasHistorySheetEffectiveRows_ACU'),
+    'history state should not treat empty critical sheet snapshots as real table data',
+  );
+  assert.ok(
+    vendorSource.includes('hasEffectiveTrackedUpdateRowsInMessage_ACU'),
+    'history state should ignore tracked critical sheet keys when the stored sheet has zero effective rows',
+  );
+  assert.ok(
     vendorSource.includes('chronicle_text/纪要必须写 200-600 字'),
     'CRUD Plan prompt should make chronicle_text 200-600 chars mandatory',
   );
