@@ -1218,6 +1218,14 @@ function testCrudPlanDiffTrackingGuards() {
     'rate-limit recovery should restore action suggestions from visible choices',
   );
   assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_check_suggestions\''),
+    'rate-limit recovery should restore fixed check suggestions from visible choices and scene evidence',
+  );
+  assert.ok(
+    vendorSource.includes('buildMfrsClueFallbackPlan_ACU(dynamicContent, options)'),
+    'rate-limit recovery should also restore clues when transport failure interrupts later CRUD batches',
+  );
+  assert.ok(
     vendorSource.includes('_acuFallback: \'mfrs_rate_limit_chronicle\''),
     'rate-limit recovery should restore chronicle rows when visible facts are long enough',
   );
@@ -1228,6 +1236,10 @@ function testCrudPlanDiffTrackingGuards() {
   assert.ok(
     vendorSource.includes('applyMfrsRateLimitRecoveryCrudPlans_ACU'),
     'transport error handling should apply deterministic recovery plans before returning',
+  );
+  assert.ok(
+    vendorSource.includes('expandTargetSheetKeysForMfrsFallbackPlans_ACU'),
+    'fallback plans outside the current auto-update group should expand the save scope before persisting',
   );
   assert.ok(
     vendorSource.includes('partialSuccess'),
