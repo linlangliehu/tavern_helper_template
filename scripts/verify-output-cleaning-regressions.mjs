@@ -9,6 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
 const indexPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', 'index.yaml');
 const statusAppPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u754c\u9762', '\u72b6\u6001\u680f', 'App.vue');
+const themeScriptPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u754c\u9762\u7f8e\u5316', 'index.ts');
 const visualizerPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'v10_2_visualizer.js');
 
 const EXT = '\u6269\u5c55\u5b57\u6bb5';
@@ -158,6 +159,7 @@ assert.equal(parsedPatch[0].op, 'replace');
 const displayRegexes = loadDisplayRegexes();
 const displayed = applyDisplayFormatting(sample, displayRegexes);
 const statusAppSource = readFileSync(statusAppPath, 'utf8');
+const themeScriptSource = readFileSync(themeScriptPath, 'utf8');
 const visualizerSource = readFileSync(visualizerPath, 'utf8');
 
 assert.ok(displayed.includes(storyToken), 'normal narration should remain visible');
@@ -174,6 +176,7 @@ assert.ok(displayed.includes('状态：alive'), 'localized Status field should r
 assert.ok(displayed.includes('所在位置：old residential corridor'), 'localized Location field should remain visible');
 assert.equal(displayed.includes('<choices>'), false, 'tagged choices block should be hidden in display output');
 assert.equal(displayed.includes('risk.death'), false, 'naked choices JSON should be hidden in display output');
+assert.equal(displayed.includes('risk.revive'), false, 'naked choices revive JSON should be hidden in display output');
 assert.equal(displayed.includes('"op": "replace"'), false, 'naked JSON Patch should be hidden in display output');
 assert.equal(displayed.includes('/standalone_path'), false, 'standalone JSONPatch tag should be hidden in display output');
 assert.equal(displayed.includes('<draft>'), false, 'draft block should be hidden in display output');
@@ -191,6 +194,10 @@ assert.ok(statusAppSource.includes('acu_mfrs_core_state_crud_mirror'), 'core sta
 assert.ok(statusAppSource.includes('暂无可收录档案，等待首次遭遇或可见证据'), 'collected archives empty state should be explicit and reviewable');
 assert.ok(statusAppSource.includes('collectedArchivesFromStart'), 'start flow should seed collected archives when archive evidence or ability exists');
 assert.ok(statusAppSource.includes('hasArchiveVisionAbility'), 'status bar should detect archive-vision style start abilities');
+assert.ok(themeScriptSource.includes('hideInternalChoicePayloadLeaks'), 'theme script should provide DOM fallback for leaked choices payloads');
+assert.ok(themeScriptSource.includes('INTERNAL_CHOICES_TAG_HTML'), 'theme script should strip rendered <choices> blocks from message DOM');
+assert.ok(themeScriptSource.includes('risk\\.death'), 'theme script should hide naked risk.death leaks from message DOM');
+assert.ok(themeScriptSource.includes('risk\\.revive'), 'theme script should hide naked risk.revive leaks from message DOM');
 assert.ok(visualizerSource.includes('renderMfrsTableFallback'), 'database dashboard should provide MVU fallback for empty key tables');
 assert.ok(visualizerSource.includes('数据库尚未落盘'), 'database dashboard fallback should label readonly non-persisted summaries');
 assert.ok(visualizerSource.includes('tableHasEffectiveRows'), 'database dashboard should treat row_id-only tables as empty for fallback');

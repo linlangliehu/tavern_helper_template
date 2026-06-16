@@ -1045,6 +1045,17 @@ for (const testCase of p5CrudAliasCases) {
   assertError(rowIdOnlyPreview, 'NOT_NULL_VIOLATION');
 }
 
+const clueMetadata = p5SparseMetadata.find(sheet => sheet.sqlName === 'clues');
+assert.equal(clueMetadata?.columns.find(column => column.physicalName === 'clue_code')?.checkGlob, 'C[0-9][0-9][0-9][0-9]');
+const invalidClueCodePreview = previewTableChangePlan({
+  ...p5CrudAliasCases.find(testCase => testCase.sqlName === 'clues').physicalPlan,
+  data: {
+    ...p5CrudAliasCases.find(testCase => testCase.sqlName === 'clues').physicalPlan.data,
+    clue_code: 'C541499',
+  },
+}, p5SparseRuntimeData, mysteryTemplateData);
+assertError(invalidClueCodePreview, 'CHECK_PATTERN_VIOLATION');
+
 const chronicleCalls = [];
 const chronicleApi = {
   async insertRow(options) {

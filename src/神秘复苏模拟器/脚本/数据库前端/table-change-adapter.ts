@@ -32,6 +32,7 @@ export type TableChangeErrorCode =
   | 'NOT_NULL_VIOLATION'
   | 'CHECK_IN_VIOLATION'
   | 'CHECK_RANGE_VIOLATION'
+  | 'CHECK_PATTERN_VIOLATION'
   | 'LENGTH_VIOLATION'
   | 'API_UNAVAILABLE'
   | 'API_MUTATION_FAILED';
@@ -125,6 +126,7 @@ type ColumnMeta = {
   primaryKey: boolean;
   unique: boolean;
   checkIn?: string[];
+  checkGlob?: string;
   minValue?: number;
   maxValue?: number;
   minLength?: number;
@@ -143,6 +145,7 @@ export type TableMetaSummary = {
     primaryKey: boolean;
     unique: boolean;
     checkIn?: string[];
+    checkGlob?: string;
     minValue?: number;
     maxValue?: number;
     minLength?: number;
@@ -214,6 +217,7 @@ export function listTableMetadata(currentData: unknown, templateData?: unknown):
       primaryKey: column.primaryKey,
       unique: column.unique,
       checkIn: column.checkIn,
+      checkGlob: column.checkGlob,
       minValue: column.minValue,
       maxValue: column.maxValue,
       minLength: column.minLength,
@@ -899,6 +903,7 @@ function buildTableMeta(sheet: SheetLike, key: string): TableMeta {
       primaryKey: Boolean(ddlColumn?.primaryKey),
       unique: Boolean(ddlColumn?.unique),
       checkIn: ddlColumn?.checkIn,
+      checkGlob: ddlColumn?.checkGlob,
       minValue: ddlColumn?.minValue,
       maxValue: ddlColumn?.maxValue,
       minLength: ddlColumn?.minLength,
@@ -1033,6 +1038,9 @@ function parseDdlColumn(line: string): ColumnMeta | null {
     new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s*=\\s*(-?\\d+(?:\\.\\d+)?)\\s*\\)`, 'i'),
   );
   const betweenLength = definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s+BETWEEN\s+(\d+)\s+AND\s+(\d+)/i);
+  const checkGlob = definition.match(
+    new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s+GLOB\\s+(['"])(.*?)\\1\\s*\\)`, 'i'),
+  )?.[2];
   const maxLength = Number(definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*<=\s*(\d+)/i)?.[1] ?? betweenLength?.[2]);
   const minLength = Number(definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*>=\s*(\d+)/i)?.[1] ?? betweenLength?.[1]);
   const minValue = Number(betweenValue?.[1] ?? exactValue?.[1]);
@@ -1047,6 +1055,7 @@ function parseDdlColumn(line: string): ColumnMeta | null {
     primaryKey: /\bPRIMARY\s+KEY\b/i.test(definition),
     unique: /\bUNIQUE\b/i.test(definition),
     checkIn,
+    checkGlob,
     minValue: Number.isFinite(minValue) ? minValue : undefined,
     maxValue: Number.isFinite(maxValue) ? maxValue : undefined,
     minLength: Number.isFinite(minLength) ? minLength : undefined,
@@ -1147,6 +1156,16 @@ function validateColumnValues(
           value,
         });
       }
+    }
+
+    if (column.checkGlob && !globPatternToRegExp(column.checkGlob).test(text)) {
+      errors.push({
+        code: 'CHECK_PATTERN_VIOLATION',
+        message: `列「${column.header}」必须匹配格式 ${column.checkGlob}。`,
+        table: table.name,
+        column: column.header,
+        value,
+      });
     }
 
     if (column.minLength !== undefined && text.length < column.minLength) {
@@ -1409,6 +1428,33 @@ function normalizeAlias(value: unknown) {
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function globPatternToRegExp(pattern: string) {
+  let source = '^';
+  for (let index = 0; index < pattern.length; index += 1) {
+    const char = pattern[index];
+    if (char === '*') {
+      source += '.*';
+      continue;
+    }
+    if (char === '?') {
+      source += '.';
+      continue;
+    }
+    if (char === '[') {
+      const end = pattern.indexOf(']', index + 1);
+      if (end > index) {
+        let group = pattern.slice(index + 1, end);
+        if (group.startsWith('!')) group = `^${group.slice(1)}`;
+        source += `[${group}]`;
+        index = end;
+        continue;
+      }
+    }
+    source += escapeRegExp(char);
+  }
+  return new RegExp(`${source}$`);
 }
 
 function normalizeCellValue(value: unknown) {
