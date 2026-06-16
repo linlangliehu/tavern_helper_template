@@ -101,6 +101,11 @@ const sample = [
   'Location: old residential corridor',
   'Status: alive',
   '</sp_status>',
+  '<sp_clue_deduce>',
+  '线索：走廊尽头的敲门声只在无人接近时重复出现。',
+  '推断：声音可能是触发媒介，仍需验证。',
+  '下一步：保持距离记录门缝和温度变化。',
+  '</sp_clue_deduce>',
   '<choices>',
   '[',
   '  { "key": "A", "text": "hold position", "risk": { "death": 5, "revive": 0, "source": "sound" } },',
@@ -158,6 +163,8 @@ const visualizerSource = readFileSync(visualizerPath, 'utf8');
 assert.ok(displayed.includes(storyToken), 'normal narration should remain visible');
 assert.ok(displayed.includes('sp-panel-choices'), 'sp_choices panel should still render');
 assert.ok(displayed.includes('sp-panel-status'), 'sp_status panel should still render');
+assert.ok(displayed.includes('sp-panel-clue_deduce'), 'sp_clue_deduce panel should still render');
+assert.ok(displayed.includes('线索推演'), 'sp_clue_deduce panel should retain the visible clue deduction label');
 assert.equal(displayed.includes('Title: choices'), false, 'internal sp_choices title should be hidden');
 assert.equal(displayed.includes('Name: Lin Che'), false, 'English Name label should be localized');
 assert.equal(displayed.includes('Status: alive'), false, 'English Status label should be localized');
@@ -192,6 +199,8 @@ const vendorSource = readFileSync(join(repoRoot, 'vendor', 'shujuku-sp-fork', 'i
 const clueRuleSource = readFileSync(join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u4e16\u754c\u4e66', '\u89c4\u5219', '\u5fc5\u987b\u8f93\u51fa\u63a8\u6f14\u9009\u9879.txt'), 'utf8');
 assert.ok(vendorSource.includes('数据库增量更新成功，已处理'), 'automatic update should retain a final success message in the visible layer');
 assert.ok(vendorSource.includes('数据库增量更新完成，本轮没有待处理表格'), 'automatic update should retain a no-op final status message');
+assert.ok(vendorSource.includes('数据库增量更新部分完成，已写入'), 'automatic update should retain a partial-success final status message when API rate limits interrupt completion');
+assert.ok(vendorSource.includes('剩余表等待冷却后重试'), 'partial-success message should explain the rate-limit retry state');
 assert.ok(clueRuleSource.includes('必须优先输出 `<sp_clue_deduce>`'), 'worldbook should force clue deduction panel for visible anomaly/evidence turns');
 
 console.log('verify-output-cleaning-regressions: passed');

@@ -1194,6 +1194,34 @@ function testCrudPlanDiffTrackingGuards() {
     'CRUD Plan prompt should tell the model to noop instead of outputting short chronicle rows',
   );
   assert.ok(
+    vendorSource.includes('synthesizeMfrsRateLimitRecoveryCrudPlans_ACU'),
+    'CRUD Plan should synthesize deterministic recovery plans around API rate limits',
+  );
+  assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_action_suggestions\''),
+    'rate-limit recovery should restore action suggestions from visible choices',
+  );
+  assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_chronicle\''),
+    'rate-limit recovery should restore chronicle rows when visible facts are long enough',
+  );
+  assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_collected_archive\''),
+    'rate-limit recovery should restore collected archives from visible supernatural evidence',
+  );
+  assert.ok(
+    vendorSource.includes('applyMfrsRateLimitRecoveryCrudPlans_ACU'),
+    'transport error handling should apply deterministic recovery plans before returning',
+  );
+  assert.ok(
+    vendorSource.includes('partialSuccess'),
+    'transport recovery should return an explicit partial-success result instead of full success',
+  );
+  assert.ok(
+    vendorSource.includes('数据库增量更新部分完成，已写入'),
+    'UI should retain a partial-success message for rate-limited CRUD updates',
+  );
+  assert.ok(
     vendorSource.includes('collected_archives/收录档案 输出最小合法记录'),
     'CRUD Plan prompt should require collected archives when visible paranormal archive evidence exists',
   );
