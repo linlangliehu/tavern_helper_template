@@ -6,27 +6,18 @@
 
 你左眼刺痛。体内的鬼正在躁动。
 
-<choices>
-[
-  {"key":"A","text":"点燃红色鬼烛，沿楼层边缘寻找退路。","risk":{"death":6,"revive":0,"source":"资源消耗换取隔绝"}},
-  {"key":"B","text":"闭眼贴墙静听，记录敲门声和老人移动的间隔。","risk":{"death":4,"revive":0,"source":"低暴露观察"}},
-  {"key":"C","text":"主动与老人对视，测试盲鬼的眼睛能否压制它。","risk":{"death":20,"revive":15,"source":"主动用鬼直面源头"}},
-  {"key":"D","text":"自定义行动","risk":{"death":0,"revive":0,"source":"自定义行动"}}
-]
-</choices>
-
-<sp_choices>
-A. 点燃红色鬼烛，沿楼层边缘寻找退路。死亡风险 +6；复苏风险 +0；资源消耗换取隔绝。
-B. 闭眼贴墙静听，记录敲门声和老人移动的间隔。死亡风险 +4；复苏风险 +0；低暴露观察。
-C. 主动与老人对视，测试盲鬼的眼睛能否压制它。死亡风险 +20；复苏风险 +15；主动用鬼直面源头。
-D. 自定义行动。死亡风险 +0；复苏风险 +0。
-</sp_choices>
-
-【推演选项：】
-A. 点燃红色鬼烛，沿楼层边缘寻找退路。<risk death="6" revive="0" source="资源消耗换取隔绝">
-B. 闭眼贴墙静听，记录敲门声和老人移动的间隔。<risk death="4" revive="0" source="低暴露观察">
-C. 主动与老人对视，测试盲鬼的眼睛能否压制它。<risk death="20" revive="15" source="主动用鬼直面源头">
-D. 自定义行动 <risk death="0" revive="0" source="自定义行动">
+<sp_ghost_encounter>
+标题：厉鬼遭遇
+鬼名/代号：旧大褂老人
+异常征兆：无脚步声；脑内响起敲门声；视野灰白
+疑似媒介：声音或视线
+距离/接触：楼下空地；疑似已被感知
+玩家可见规律：未确认
+可见恐怖程度：疑似高危，需要验证
+死亡风险：未结算；接触风险上升
+复苏风险：盲鬼的眼睛躁动
+建议行动：先验证媒介，不要直接暴露身体
+</sp_ghost_encounter>
 
 <sp_status>
 姓名：林安
@@ -50,6 +41,40 @@ D. 自定义行动 <risk death="0" revive="0" source="自定义行动">
 猜测规律：敲门声可能是定位媒介
 复苏风险：30%
 持有拼图/灵异物品：盲鬼的眼睛；半截红色鬼烛
+
+<sp_clue_deduce>
+标题：线索推演
+线索：老人没有脚步声，但脑内出现敲门声
+依据：视觉观察、听觉异常、厉鬼躁动
+猜测规律：声音可能是定位媒介，视线接触也可能触发
+已排除误判：无
+确认度：猜测
+判定路由：媒介
+风险提示：贸然对视会同时增加死亡风险和复苏风险
+下一步验证：隔绝视线后记录敲门声间隔
+</sp_clue_deduce>
+
+<choices>
+[
+  {"key":"A","text":"点燃红色鬼烛，沿楼层边缘寻找退路。","risk":{"death":6,"revive":0,"source":"资源消耗换取隔绝"}},
+  {"key":"B","text":"闭眼贴墙静听，记录敲门声和老人移动的间隔。","risk":{"death":4,"revive":0,"source":"低暴露观察"}},
+  {"key":"C","text":"主动与老人对视，测试盲鬼的眼睛能否压制它。","risk":{"death":20,"revive":15,"source":"主动用鬼直面源头"}},
+  {"key":"D","text":"自定义行动","risk":{"death":0,"revive":0,"source":"自定义行动"}}
+]
+</choices>
+
+<sp_choices>
+A. 点燃红色鬼烛，沿楼层边缘寻找退路。死亡风险 +6；复苏风险 +0；资源消耗换取隔绝。
+B. 闭眼贴墙静听，记录敲门声和老人移动的间隔。死亡风险 +4；复苏风险 +0；低暴露观察。
+C. 主动与老人对视，测试盲鬼的眼睛能否压制它。死亡风险 +20；复苏风险 +15；主动用鬼直面源头。
+D. 自定义行动。死亡风险 +0；复苏风险 +0。
+</sp_choices>
+
+【推演选项：】
+A. 点燃红色鬼烛，沿楼层边缘寻找退路。<risk death="6" revive="0" source="资源消耗换取隔绝">
+B. 闭眼贴墙静听，记录敲门声和老人移动的间隔。<risk death="4" revive="0" source="低暴露观察">
+C. 主动与老人对视，测试盲鬼的眼睛能否压制它。<risk death="20" revive="15" source="主动用鬼直面源头">
+D. 自定义行动 <risk death="0" revive="0" source="自定义行动">
 
 <UpdateVariable>
 <Analysis>Opening setup establishes a suspected knocking event. The player is alive, already a ghost user, and has one red ghost candle. No rule is verified yet.</Analysis>

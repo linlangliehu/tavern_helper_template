@@ -15,6 +15,18 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
 const vendorPath = join(repoRoot, 'vendor', 'shujuku-sp-fork', 'index.js');
 const choicesRulePath = join(repoRoot, 'src', '神秘复苏模拟器', '世界书', '规则', '必须输出推演选项.txt');
+const releaseChoicesRulePath = join(repoRoot, 'src', '神秘复苏模拟器发布版', '世界书', '规则', '必须输出推演选项.txt');
+const outputProtocolExamplePaths = [
+  join(repoRoot, 'src', '神秘复苏模拟器', '对话示例', '0.txt'),
+  join(repoRoot, 'src', '神秘复苏模拟器发布版', '对话示例', '0.txt'),
+];
+const outputProtocolPromptPaths = [
+  choicesRulePath,
+  releaseChoicesRulePath,
+  join(repoRoot, 'src', '神秘复苏模拟器', '系统提示词', '0.txt'),
+  join(repoRoot, 'src', '神秘复苏模拟器发布版', '系统提示词', '0.txt'),
+  ...outputProtocolExamplePaths,
+];
 const srcRoot = join(repoRoot, 'src');
 const vendorSource = readFileSync(vendorPath, 'utf8');
 const choicesRuleSource = readFileSync(choicesRulePath, 'utf8');
@@ -1283,6 +1295,33 @@ function testCrudPlanDiffTrackingGuards() {
   );
 }
 
+function testMfrsOutputProtocolPromptOrder() {
+  for (const filePath of outputProtocolPromptPaths) {
+    const source = readFileSync(filePath, 'utf8');
+    const label = relative(repoRoot, filePath);
+    assert.ok(source.includes('<sp_status>'), `${label} should mention the sp_status protocol block`);
+    assert.ok(source.includes('<choices>'), `${label} should mention the choices protocol block`);
+    assert.ok(
+      source.indexOf('<sp_status>') < source.indexOf('<choices>'),
+      `${label} should put <sp_status> before <choices>`,
+    );
+    if (source.includes('<sp_clue_deduce>') && source.includes('<choices>')) {
+      assert.ok(
+        source.indexOf('<sp_clue_deduce>') < source.indexOf('<choices>'),
+        `${label} should put <sp_clue_deduce> before <choices> when clue deduction is required`,
+      );
+    }
+  }
+  for (const filePath of outputProtocolExamplePaths) {
+    const source = readFileSync(filePath, 'utf8');
+    assert.equal(
+      source.includes('<StatusPlaceHolderImpl/>'),
+      false,
+      `${relative(repoRoot, filePath)} should not show the old StatusPlaceHolderImpl placeholder in examples`,
+    );
+  }
+}
+
 const templates = testTemplates();
 testConstraintRegistry(templates);
 testSqlConstraintPreflight(templates[0]);
@@ -1300,6 +1339,7 @@ testApiTransportFailureResult();
 await testBatchSkipChatSaveDoesNotRefreshRuntime();
 testDashboardClassification();
 testCrudPlanDiffTrackingGuards();
+testMfrsOutputProtocolPromptOrder();
 
 // v6.13 新增测试
 testUniqueConstraintRegistry(templates[0]);
