@@ -1166,6 +1166,26 @@ function testCrudPlanDiffTrackingGuards() {
     'CRUD Plan should enforce critical 4.0 table coverage or explicit noop',
   );
   assert.ok(
+    vendorSource.includes('chronicle_text/纪要必须写 200-600 字'),
+    'CRUD Plan prompt should make chronicle_text 200-600 chars mandatory',
+  );
+  assert.ok(
+    vendorSource.includes('素材不足 200 字时不要输出短纪要'),
+    'CRUD Plan prompt should tell the model to noop instead of outputting short chronicle rows',
+  );
+  assert.ok(
+    vendorSource.includes('collected_archives/收录档案 输出最小合法记录'),
+    'CRUD Plan prompt should require collected archives when visible paranormal archive evidence exists',
+  );
+  assert.ok(
+    vendorSource.includes('isDeferredShortChronicleCrudFailure_ACU'),
+    'CRUD Plan should classify short chronicle text as a deliberate deferred update',
+  );
+  assert.ok(
+    vendorSource.includes('事件纪要短文本已按事实链不足延后'),
+    'short chronicle text should be deferred without normal CRUD batch warning noise',
+  );
+  assert.ok(
     vendorSource.includes('keysToTrackAsUpdated = keysToPersist'),
     'first initialization should only track tables with real persisted changes',
   );

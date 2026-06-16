@@ -181,8 +181,17 @@ assert.ok(statusAppSource.includes('spStatusKeyMap'), 'status bar should map Eng
 assert.ok(statusAppSource.includes('displayLocation'), 'status bar should display MVU/sp_status location fallback');
 assert.ok(statusAppSource.includes('mirrorCoreStateToDatabase'), 'status bar should mirror key 4.0 tables from MVU/sp_status when database is empty');
 assert.ok(statusAppSource.includes('acu_mfrs_core_state_crud_mirror'), 'core state mirror should have a localStorage kill switch');
+assert.ok(statusAppSource.includes('暂无可收录档案，等待首次遭遇或可见证据'), 'collected archives empty state should be explicit and reviewable');
+assert.ok(statusAppSource.includes('collectedArchivesFromStart'), 'start flow should seed collected archives when archive evidence or ability exists');
+assert.ok(statusAppSource.includes('hasArchiveVisionAbility'), 'status bar should detect archive-vision style start abilities');
 assert.ok(visualizerSource.includes('renderMfrsTableFallback'), 'database dashboard should provide MVU fallback for empty key tables');
 assert.ok(visualizerSource.includes('数据库尚未落盘'), 'database dashboard fallback should label readonly non-persisted summaries');
 assert.ok(visualizerSource.includes('tableHasEffectiveRows'), 'database dashboard should treat row_id-only tables as empty for fallback');
+
+const vendorSource = readFileSync(join(repoRoot, 'vendor', 'shujuku-sp-fork', 'index.js'), 'utf8');
+const clueRuleSource = readFileSync(join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u4e16\u754c\u4e66', '\u89c4\u5219', '\u5fc5\u987b\u8f93\u51fa\u63a8\u6f14\u9009\u9879.txt'), 'utf8');
+assert.ok(vendorSource.includes('数据库增量更新成功，已处理'), 'automatic update should retain a final success message in the visible layer');
+assert.ok(vendorSource.includes('数据库增量更新完成，本轮没有待处理表格'), 'automatic update should retain a no-op final status message');
+assert.ok(clueRuleSource.includes('必须优先输出 `<sp_clue_deduce>`'), 'worldbook should force clue deduction panel for visible anomaly/evidence turns');
 
 console.log('verify-output-cleaning-regressions: passed');

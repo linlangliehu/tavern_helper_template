@@ -283,7 +283,7 @@
               </dl>
             </article>
           </div>
-          <div v-else class="runtime-detail-empty">暂无收录档案</div>
+          <div v-else class="runtime-detail-empty">暂无可收录档案，等待首次遭遇或可见证据</div>
         </section>
 
         <section class="runtime-detail-block">
@@ -374,6 +374,19 @@ type TableChangePlanInput = {
   confidence?: number
   skipChatSave?: boolean
   silent?: boolean
+}
+
+type CollectedArchiveRecord = {
+  档案厉鬼名称: string
+  收录状态: string
+  厉鬼信息: string
+  已知规律: string
+  猜测规律: string
+  鬼域: string
+  收录进度: number
+  档案完整度: string
+  可调用范围: string
+  可见摘要: string
 }
 type TableChangeResultLike = {
   ok?: boolean
@@ -1373,6 +1386,51 @@ function controlledGhostsFrom(ghostList: ReturnType<typeof filledGhosts>) {
   }))
 }
 
+function hasArchiveVisionAbility() {
+  const text = [
+    d().特殊能力描述,
+    d().角色背景,
+    d().身份,
+    ...filledGhosts().flatMap(ghost => [ghost.厉鬼名称, ghost.杀人规律]),
+    ...filledItems().flatMap(item => [item.名称, item.效果, item.使用限制]),
+  ].map(value => textOrFallback(value, '')).join(' ')
+  return ['灵异档案视野', '鬼档案', '档案', '收录', '记录', '档案化', '调用档案'].some(keyword => text.includes(keyword))
+}
+
+function collectedArchivesFromStart(ghostList: ReturnType<typeof filledGhosts>, eventFile: Record<string, unknown>): CollectedArchiveRecord[] {
+  const eventName = textOrFallback(eventFile.事件代号, '开局异常事件')
+  const eventLocation = textOrFallback(eventFile.发生地点, d().所在位置 || d().开局地点 || '未知地点')
+  const suspectedLaws = Array.isArray(eventFile.猜测杀人规律)
+    ? eventFile.猜测杀人规律.map(rule => textOrFallback(rule, '')).filter(Boolean)
+    : []
+  const archiveTargets = ghostList.length
+    ? ghostList.map(ghost => ({
+      name: ghost.厉鬼名称,
+      info: `开局设定中出现${ghost.厉鬼名称}，能力边界仍待现实事件验证。`,
+      suspected: ghost.杀人规律 && ghost.杀人规律 !== '无' ? ghost.杀人规律 : '待通过首轮异常验证',
+    }))
+    : hasArchiveVisionAbility()
+      ? [{
+        name: eventName.includes('异常') ? eventName.replace(/异常.*$/, '异常源头') : `${eventLocation}疑似厉鬼`,
+        info: `${eventLocation}出现可建档的灵异征兆，暂以玩家可见现象建立候选档案。`,
+        suspected: suspectedLaws.length ? suspectedLaws.join('；') : '待通过现场证据判断触发条件',
+      }]
+      : []
+
+  return archiveTargets.map(target => ({
+    档案厉鬼名称: target.name,
+    收录状态: '未收录',
+    厉鬼信息: target.info,
+    已知规律: '未验证',
+    猜测规律: target.suspected,
+    鬼域: textOrFallback(eventFile.鬼域状态, '未确认'),
+    收录进度: 10,
+    档案完整度: '低',
+    可调用范围: '仅作危险提示',
+    可见摘要: `${target.name}已建立早期档案，等待首次遭遇、死亡案例或可见证据补全。`,
+  }))
+}
+
 function resourcesFrom(itemList: ReturnType<typeof filledItems>, ghostList: ReturnType<typeof filledGhosts>) {
   return {
     鬼拼图: ghostList.map(ghost => ghost.厉鬼名称),
@@ -1593,6 +1651,7 @@ function commitStartData() {
     扩散趋势: '未观察',
     处理状态: '初始化',
   }
+  const collectedArchives = collectedArchivesFromStart(ghostList, eventFile)
   Object.assign(data.value, {
     驾驭厉鬼: ghostList,
     所在位置: location,
@@ -1608,7 +1667,7 @@ function commitStartData() {
       总复苏风险: initialReviveRisk,
       已驾驭厉鬼: controlledGhosts,
     },
-    收录档案: [],
+    收录档案: collectedArchives,
     收录规律: [],
     灵异资源: resources,
     势力关系: {
