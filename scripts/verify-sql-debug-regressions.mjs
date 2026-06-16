@@ -1174,6 +1174,22 @@ function testCrudPlanDiffTrackingGuards() {
     'CRUD Plan should add a deterministic fallback clue row when real AI omits clues despite visible evidence',
   );
   assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_missing_global_state_plan\''),
+    'CRUD Plan should add a deterministic global_state fallback row when visible status exists',
+  );
+  assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_missing_player_state_plan\''),
+    'CRUD Plan should add a deterministic player_state fallback row when visible status exists',
+  );
+  assert.ok(
+    vendorSource.includes('_acuFallback: \'mfrs_missing_supernatural_event_plan\''),
+    'CRUD Plan should add a deterministic supernatural_events fallback row when visible event evidence exists',
+  );
+  assert.ok(
+    vendorSource.includes('shouldSynthesizeMfrsStateFallback_ACU'),
+    'CRUD Plan should detect visible status/event content before synthesizing critical state fallbacks',
+  );
+  assert.ok(
     vendorSource.includes('hasEffectiveRowsForTrackedSheet_ACU'),
     'table update tracking should require effective rows before marking critical sheets as persisted changes',
   );
