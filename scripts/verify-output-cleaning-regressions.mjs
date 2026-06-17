@@ -11,6 +11,8 @@ const indexPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5
 const statusAppPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u754c\u9762', '\u72b6\u6001\u680f', 'App.vue');
 const themeScriptPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u754c\u9762\u7f8e\u5316', 'index.ts');
 const visualizerPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'v10_2_visualizer.js');
+const systemPromptPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u7cfb\u7edf\u63d0\u793a\u8bcd', '0.txt');
+const choicesRulePath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u4e16\u754c\u4e66', '\u89c4\u5219', '\u5fc5\u987b\u8f93\u51fa\u63a8\u6f14\u9009\u9879.txt');
 
 const EXT = '\u6269\u5c55\u5b57\u6bb5';
 const REGEX = '\u6b63\u5219';
@@ -206,11 +208,20 @@ assert.ok(visualizerSource.includes('数据库尚未落盘'), 'database dashboar
 assert.ok(visualizerSource.includes('tableHasEffectiveRows'), 'database dashboard should treat row_id-only tables as empty for fallback');
 
 const vendorSource = readFileSync(join(repoRoot, 'vendor', 'shujuku-sp-fork', 'index.js'), 'utf8');
-const clueRuleSource = readFileSync(join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u4e16\u754c\u4e66', '\u89c4\u5219', '\u5fc5\u987b\u8f93\u51fa\u63a8\u6f14\u9009\u9879.txt'), 'utf8');
+const clueRuleSource = readFileSync(choicesRulePath, 'utf8');
+const systemPromptSource = readFileSync(systemPromptPath, 'utf8');
 assert.ok(vendorSource.includes('数据库增量更新成功，已处理'), 'automatic update should retain a final success message in the visible layer');
 assert.ok(vendorSource.includes('数据库增量更新完成，本轮没有待处理表格'), 'automatic update should retain a no-op final status message');
 assert.ok(vendorSource.includes('数据库增量更新部分完成，已写入'), 'automatic update should retain a partial-success final status message when API rate limits interrupt completion');
 assert.ok(vendorSource.includes('剩余表等待冷却后重试'), 'partial-success message should explain the rate-limit retry state');
+assert.ok(vendorSource.includes('sanitizeMfrsRawProtocolMessage_ACU'), 'vendor should sanitize raw AI protocol before chat save');
+assert.ok(vendorSource.includes('sanitizeLatestAiMessageRawProtocol_ACU(message_id)'), 'GENERATION_ENDED should run raw protocol sanitation');
+assert.ok(vendorSource.includes('StatusPlaceHolderI[m]pl'), 'raw sanitation should avoid reintroducing the complete old placeholder literal');
 assert.ok(clueRuleSource.includes('必须优先输出 `<sp_clue_deduce>`'), 'worldbook should force clue deduction panel for visible anomaly/evidence turns');
+assert.ok(clueRuleSource.includes('Markdown 选项、编号列表或只有【推演选项：】不算完成协议'), 'worldbook should reject markdown-only choices as protocol-complete');
+assert.ok(clueRuleSource.includes('<choices>[{"key":"A"'), 'worldbook should include a compact structured choices skeleton');
+assert.ok(clueRuleSource.includes('<sp_choices>'), 'worldbook should include a compact sp_choices skeleton');
+assert.ok(systemPromptSource.includes('Markdown 选项或只有【推演选项：】不算完成协议'), 'system prompt should reject markdown-only choices as protocol-complete');
+assert.ok(systemPromptSource.includes('<sp_clue_deduce>'), 'system prompt should include clue deduction skeleton');
 
 console.log('verify-output-cleaning-regressions: passed');

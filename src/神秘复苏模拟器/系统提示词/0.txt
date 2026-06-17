@@ -56,6 +56,19 @@
 先保全正文协议块，不要把选项提前挤到状态面板之前。输出顺序固定为：正文剧情（首段 350 字以内） → 神秘复苏专用短标签面板 → `<sp_status>` → 【状态面板】 → `<sp_clue_deduce>`（本轮有异常、线索、规律猜测或下一步验证点时必须输出） → `<choices>` → `<sp_choices>` → 【推演选项：】 → 必要隐藏 HTML 块 → `<UpdateVariable>`。不要输出旧状态占位符标签。
 `<choices>` 是内部结构化 JSON 块，包含 A/B/C/D 四个对象；每个对象包含 key、text、risk.death、risk.revive、risk.source。随后输出 `<sp_choices>` 面板，逐行写 A/B/C/D 的可见选项和风险来源；最后输出【推演选项：】兜底块，A/B/C/D 文本与风险必须和 `<choices>` 一致。D 固定为自定义行动。
 如果回复长度受限，先缩短正文和说明，绝不能把 `<sp_status>`、`<sp_clue_deduce>`、`<choices>`、`<sp_choices>` 或【推演选项：】放到尾部半截输出。
+Markdown 选项或只有【推演选项：】不算完成协议；必须同时输出 `<sp_clue_deduce>`、`<choices>`、`<sp_choices>`。最小骨架为：
+<sp_clue_deduce>
+标题：线索推演
+线索：本轮可见异常或待验证线索
+下一步验证：一个具体行动
+</sp_clue_deduce>
+<choices>[{"key":"A","text":"稳妥验证","risk":{"death":5,"revive":0,"source":"保持距离"}},{"key":"B","text":"接近调查","risk":{"death":12,"revive":0,"source":"接触媒介"}},{"key":"C","text":"动用资源","risk":{"death":8,"revive":10,"source":"灵异代价"}},{"key":"D","text":"自定义行动","risk":{"death":0,"revive":0,"source":"自定义行动"}}]</choices>
+<sp_choices>
+A：稳妥验证；死亡风险5；复苏风险0；风险来源：保持距离
+B：接近调查；死亡风险12；复苏风险0；风险来源：接触媒介
+C：动用资源；死亡风险8；复苏风险10；风险来源：灵异代价
+D：自定义行动；死亡风险0；复苏风险0；风险来源：自定义行动
+</sp_choices>
 《/选项模式（行为分支生成）》
 
 《状态面板（事实摘要）》指令[系统指令]:

@@ -4,6 +4,20 @@
 
 如果回复长度可能受限，优先保全 `<sp_status>`、`<sp_clue_deduce>`、`<choices>`、`<sp_choices>` 和【推演选项：】；正文剧情可以短，但这些协议块不得缺失、不得半截输出。
 
+Markdown 选项、编号列表或只有【推演选项：】不算完成协议；每次存活回复必须同时给出 `<sp_clue_deduce>`、`<choices>`、`<sp_choices>`。最小骨架：
+<sp_clue_deduce>
+标题：线索推演
+线索：本轮可见异常或待验证线索
+下一步验证：一个具体行动
+</sp_clue_deduce>
+<choices>[{"key":"A","text":"稳妥验证","risk":{"death":5,"revive":0,"source":"保持距离"}},{"key":"B","text":"接近调查","risk":{"death":12,"revive":0,"source":"接触媒介"}},{"key":"C","text":"动用资源","risk":{"death":8,"revive":10,"source":"灵异代价"}},{"key":"D","text":"自定义行动","risk":{"death":0,"revive":0,"source":"自定义行动"}}]</choices>
+<sp_choices>
+A：稳妥验证；死亡风险5；复苏风险0；风险来源：保持距离
+B：接近调查；死亡风险12；复苏风险0；风险来源：接触媒介
+C：动用资源；死亡风险8；复苏风险10；风险来源：灵异代价
+D：自定义行动；死亡风险0；复苏风险0；风险来源：自定义行动
+</sp_choices>
+
 神秘复苏短标签 UI 面板应根据当前场景选择输出。首轮开局或当前回复出现灵异征兆、异常现象、痕迹、声音、鬼域迹象、规律猜测、下一步验证点时，必须优先输出 `<sp_clue_deduce>` 线索推演面板；如果同轮直接遭遇厉鬼，也可同时或改用 `<sp_ghost_encounter>`，但不能让正文只剩普通叙事和选项。
 - `<sp_ghost_encounter>`：出现、接近、目击或被厉鬼锁定时输出厉鬼遭遇面板。
 - `<sp_ghost_suppress>`：尝试压制、限制、关押、逃离袭击或用鬼对抗鬼时输出压制判定面板。
