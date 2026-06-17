@@ -411,6 +411,18 @@ function clampRiskDelta(value: unknown) {
   return Math.max(0, Math.min(100, Math.round(n)))
 }
 
+function normalizeOptionRiskDelta(value: unknown, fallback = 0) {
+  const numeric = Number(value)
+  if (Number.isFinite(numeric)) return clampRiskDelta(numeric)
+  const text = String(value ?? '').trim()
+  if (/致命|自杀|极高/.test(text)) return 10
+  if (/高|死亡|必死|厉鬼|接触/.test(text)) return 7
+  if (/中|异常|调查|危险/.test(text)) return 4
+  if (/低|轻微|日常/.test(text)) return 2
+  if (/无|安全|自定义/.test(text)) return 0
+  return fallback
+}
+
 function readRiskNumber(tag: string, name: string) {
   const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
   return clampRiskDelta(match?.[1])
@@ -511,6 +523,116 @@ function parseStructuredChoices(message: string): OptionItem[] {
     return out
   } catch (e) {
     console.warn('[MFRS Status] 解析结构化推演选项失败', e)
+    return []
+  }
+}
+
+function extractFirstJsonArrayText(text: string) {
+  let depth = 0
+  let start = -1
+  let inString = false
+  let quote = ''
+  let escape = false
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]
+    if (inString) {
+      if (escape) escape = false
+      else if (ch === '\\') escape = true
+      else if (ch === quote) inString = false
+      continue
+    }
+    if (ch === '"' || ch === "'") {
+      inString = true
+      quote = ch
+      continue
+    }
+    if (ch === '[') {
+      if (depth === 0) start = i
+      depth += 1
+    } else if (ch === ']') {
+      if (depth > 0) {
+        depth -= 1
+        if (depth === 0 && start !== -1) return text.slice(start, i + 1)
+      }
+    }
+  }
+  return ''
+}
+
+function parseUpdateVariablePatchArray(message: string) {
+  const match = message.match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i)
+  if (!match) return []
+  const source = match[1]
+    .replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi, '')
+    .replace(/<\/?JSON[P]atch\b[^>]*>/gi, '')
+    .trim()
+  const arrayText = extractFirstJsonArrayText(source)
+  if (!arrayText) return []
+  try {
+    const parsed = JSON.parse(arrayText)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    try {
+      const parsed = JSON.parse(arrayText.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"))
+      return Array.isArray(parsed) ? parsed : []
+    } catch {
+      return []
+    }
+  }
+}
+
+function parseUpdateVariableActionSuggestions(message: string): OptionItem[] {
+  try {
+    const patches = parseUpdateVariablePatchArray(message)
+    const rawItems: unknown[] = []
+    for (const patch of patches) {
+      if (!patch || typeof patch !== 'object') continue
+      const record = patch as { path?: unknown; value?: unknown }
+      const root = String(record.path ?? '').replace(/^\/+/, '').split('/')[0]
+      if (root === '行动建议' && Array.isArray(record.value)) rawItems.push(...record.value)
+    }
+    if (rawItems.length === 0) return []
+
+    const seen = new Set<string>()
+    const out: OptionItem[] = []
+    for (const raw of rawItems) {
+      if (!raw || typeof raw !== 'object') continue
+      const item = raw as Record<string, unknown>
+      const risk = item.risk && typeof item.risk === 'object' ? item.risk as Record<string, unknown> : {}
+      const key = normalizeOptionKey(String(item.key ?? item.id ?? item.option ?? item.option_key ?? item.选项 ?? ''))
+      if (!key || seen.has(key)) continue
+
+      const source = String(risk.source ?? item.main_risk ?? item.主要风险 ?? item.风险 ?? '').replace(/\s+/g, ' ').trim()
+      const text = String(item.text ?? item.idea_text ?? item.思路 ?? item.行动 ?? item.内容 ?? source ?? '')
+        .replace(optionRiskTagPattern, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+      if (!text) continue
+
+      const riskText = `${text} ${source}`
+      out.push({
+        key,
+        text,
+        risk: {
+          death: normalizeOptionRiskDelta(risk.death ?? item.death ?? item.death_risk ?? item.死亡风险 ?? item.death_risk_level, optionDeathRiskDelta(riskText)),
+          revive: normalizeOptionRiskDelta(risk.revive ?? item.revive ?? item.revival_risk ?? item.复苏风险 ?? item.revival_risk_level, /复苏|厉鬼/.test(riskText) ? 3 : 0),
+          source: source || 'UpdateVariable 行动建议',
+          tagged: true,
+        },
+      })
+      seen.add(key)
+    }
+
+    if (!seen.has('D') && out.length >= 3) {
+      out.push({
+        key: 'D',
+        text: '自定义行动',
+        risk: { death: 0, revive: 0, source: '自定义行动', tagged: true },
+      })
+    }
+    return actionSuggestionKeys.map(key => out.find(option => option.key === key)).filter(Boolean) as OptionItem[]
+  } catch (e) {
+    console.warn('[MFRS Status] 从 UpdateVariable 解析行动建议失败', e)
     return []
   }
 }
@@ -886,6 +1008,8 @@ function extractOptions(): OptionItem[] {
     const mes = getChatMessages(getCurrentMessageId())[0]?.message ?? ''
     const structured = parseStructuredChoices(mes)
     if (structured.length > 0) return structured
+    const fromUpdateVariable = parseUpdateVariableActionSuggestions(mes)
+    if (fromUpdateVariable.length > 0) return fromUpdateVariable
 
     // 优先解析本卡格式；同时兼容常见预设的“行动/选择/Options/Choices”标题和数字序号。
     const blockRe = /【[^】]*(?:选项|行动|选择|Options|Choices)[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/gi

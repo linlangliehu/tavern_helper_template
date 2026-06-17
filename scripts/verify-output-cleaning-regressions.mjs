@@ -93,6 +93,25 @@ function parseTaggedPatch(text) {
   return JSON.parse(arrayMatch[1]);
 }
 
+function parseUpdateVariableActionSuggestionSample(text) {
+  const match = text.match(/<UpdateVariable>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);
+  assert.ok(match, 'sample should contain UpdateVariable');
+  const arrayMatch = match[1].match(/(\[[\s\S]*\])/);
+  assert.ok(arrayMatch, 'sample UpdateVariable should contain a JSON patch array');
+  const patch = JSON.parse(arrayMatch[1]);
+  const actionPatch = patch.find(item => item.path === '/\u884c\u52a8\u5efa\u8bae');
+  assert.ok(actionPatch, 'sample should carry /行动建议 in UpdateVariable');
+  const choices = actionPatch.value.map(item => ({
+    key: item['\u9009\u9879'],
+    text: item['\u601d\u8def'],
+    source: item['\u4e3b\u8981\u98ce\u9669'],
+  }));
+  if (!choices.some(item => item.key === 'D')) {
+    choices.push({ key: 'D', text: '\u81ea\u5b9a\u4e49\u884c\u52a8', source: '\u81ea\u5b9a\u4e49\u884c\u52a8' });
+  }
+  return choices;
+}
+
 const storyToken = 'MFRS_OUTPUT_CLEAN_STORY_TOKEN';
 const sample = [
   `${storyToken}: corridor narration stays visible.`,
@@ -160,6 +179,23 @@ const parsedPatch = parseTaggedPatch(sample);
 assert.equal(parsedPatch.length, 1);
 assert.equal(parsedPatch[0].op, 'replace');
 
+const updateVariableOnlySample = [
+  'Only markdown narration and variable patch are present.',
+  '<UpdateVariable>',
+  '[',
+  '  { "op": "replace", "path": "/\u884c\u52a8\u5efa\u8bae", "value": [',
+  '    { "\u9009\u9879": "A", "\u601d\u8def": "\u7559\u5728\u539f\u5730\u89c2\u5bdf", "\u4e3b\u8981\u98ce\u9669": "\u53ef\u80fd\u9519\u8fc7\u6551\u547d\u7a97\u53e3" },',
+  '    { "\u9009\u9879": "B", "\u601d\u8def": "\u9760\u8fd1\u58f0\u97f3\u6e90\u5934", "\u4e3b\u8981\u98ce\u9669": "\u53ef\u80fd\u63a5\u89e6\u5389\u9b3c" },',
+  '    { "\u9009\u9879": "C", "\u601d\u8def": "\u6cbf\u5899\u64a4\u79bb", "\u4e3b\u8981\u98ce\u9669": "\u53ef\u80fd\u88ab\u8ffd\u8e2a" }',
+  '  ] }',
+  ']',
+  '</UpdateVariable>',
+].join('\n');
+const fallbackChoices = parseUpdateVariableActionSuggestionSample(updateVariableOnlySample);
+assert.equal(fallbackChoices.length, 4, 'UpdateVariable-only action suggestions should deterministically yield A-D');
+assert.equal(fallbackChoices[0].key, 'A');
+assert.equal(fallbackChoices[3].text, '\u81ea\u5b9a\u4e49\u884c\u52a8');
+
 const displayRegexes = loadDisplayRegexes();
 const displayed = applyDisplayFormatting(sample, displayRegexes);
 const statusAppSource = readFileSync(statusAppPath, 'utf8');
@@ -194,6 +230,7 @@ assert.ok(statusAppSource.includes('<sp_status>'), 'status bar should parse <sp_
 assert.ok(statusAppSource.includes('spStatusKeyMap'), 'status bar should map English sp_status keys');
 assert.ok(statusAppSource.includes('displayLocation'), 'status bar should display MVU/sp_status location fallback');
 assert.ok(statusAppSource.includes('item.id'), 'status bar should accept id as a structured choices key alias');
+assert.ok(statusAppSource.includes('parseUpdateVariableActionSuggestions'), 'status bar should parse /行动建议 from UpdateVariable when <choices> is missing');
 assert.ok(statusAppSource.includes('mirrorCoreStateToDatabase'), 'status bar should mirror key 4.0 tables from MVU/sp_status when database is empty');
 assert.ok(statusAppSource.includes('acu_mfrs_core_state_crud_mirror'), 'core state mirror should have a localStorage kill switch');
 assert.ok(statusAppSource.includes('暂无可收录档案，等待首次遭遇或可见证据'), 'collected archives empty state should be explicit and reviewable');
@@ -216,6 +253,8 @@ assert.ok(vendorSource.includes('数据库增量更新部分完成，已写入')
 assert.ok(vendorSource.includes('剩余表等待冷却后重试'), 'partial-success message should explain the rate-limit retry state');
 assert.ok(vendorSource.includes('sanitizeMfrsRawProtocolMessage_ACU'), 'vendor should sanitize raw AI protocol before chat save');
 assert.ok(vendorSource.includes('sanitizeLatestAiMessageRawProtocol_ACU(message_id)'), 'GENERATION_ENDED should run raw protocol sanitation');
+assert.ok(vendorSource.includes('buildMfrsChoicesProtocolPatch_ACU'), 'vendor should synthesize missing short tags/choices from UpdateVariable');
+assert.ok(vendorSource.includes('myactivity\\.google\\.com\\/product\\/gemini'), 'vendor sanitizer should remove Gemini activity prompt lines');
 assert.ok(vendorSource.includes('StatusPlaceHolderI[m]pl'), 'raw sanitation should avoid reintroducing the complete old placeholder literal');
 assert.ok(clueRuleSource.includes('必须优先输出 `<sp_clue_deduce>`'), 'worldbook should force clue deduction panel for visible anomaly/evidence turns');
 assert.ok(clueRuleSource.includes('Markdown 选项、编号列表或只有【推演选项：】不算完成协议'), 'worldbook should reject markdown-only choices as protocol-complete');
