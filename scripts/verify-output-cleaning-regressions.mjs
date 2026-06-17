@@ -240,11 +240,14 @@ assert.ok(themeScriptSource.includes('hideInternalChoicePayloadLeaks'), 'theme s
 assert.ok(themeScriptSource.includes('INTERNAL_CHOICES_TAG_HTML'), 'theme script should strip rendered <choices> blocks from message DOM');
 assert.ok(themeScriptSource.includes('risk\\.death'), 'theme script should hide naked risk.death leaks from message DOM');
 assert.ok(themeScriptSource.includes('risk\\.revive'), 'theme script should hide naked risk.revive leaks from message DOM');
+assert.ok(themeScriptSource.includes('hideRawProtocolParagraphs'), 'theme script should hide raw protocol paragraphs after SillyTavern renders stripped tags');
+assert.ok(themeScriptSource.includes('/行动建议'), 'theme script should hide visible UpdateVariable action suggestion JSON paths');
 assert.ok(visualizerSource.includes('renderMfrsTableFallback'), 'database dashboard should provide MVU fallback for empty key tables');
 assert.ok(visualizerSource.includes('数据库尚未落盘'), 'database dashboard fallback should label readonly non-persisted summaries');
 assert.ok(visualizerSource.includes('tableHasEffectiveRows'), 'database dashboard should treat row_id-only tables as empty for fallback');
 
 const vendorSource = readFileSync(join(repoRoot, 'vendor', 'shujuku-sp-fork', 'index.js'), 'utf8');
+const legacyPlaceholder = `StatusPlaceHolderI${'m'}pl`;
 const clueRuleSource = readFileSync(choicesRulePath, 'utf8');
 const systemPromptSource = readFileSync(systemPromptPath, 'utf8');
 assert.ok(vendorSource.includes('数据库增量更新成功，已处理'), 'automatic update should retain a final success message in the visible layer');
@@ -254,7 +257,12 @@ assert.ok(vendorSource.includes('剩余表等待冷却后重试'), 'partial-succ
 assert.ok(vendorSource.includes('sanitizeMfrsRawProtocolMessage_ACU'), 'vendor should sanitize raw AI protocol before chat save');
 assert.ok(vendorSource.includes('sanitizeLatestAiMessageRawProtocol_ACU(message_id)'), 'GENERATION_ENDED should run raw protocol sanitation');
 assert.ok(vendorSource.includes('buildMfrsChoicesProtocolPatch_ACU'), 'vendor should synthesize missing short tags/choices from UpdateVariable');
+assert.ok(vendorSource.includes('repairMfrsTaggedChoicesBlock_ACU'), 'vendor should repair malformed existing <choices> JSON blocks');
+assert.ok(vendorSource.includes('sanitizeMfrsMessageObjectRawProtocol_ACU'), 'vendor should sanitize both message mes and swipe content');
+assert.ok(vendorSource.includes('swipes[swipeId] = cleanedContent'), 'vendor sanitizer should write cleaned raw back to the active swipe');
+assert.ok(vendorSource.includes('scheduleMfrsRawProtocolSanitizeRetries_ACU'), 'vendor should retry raw cleanup after streaming finalization');
 assert.ok(vendorSource.includes('myactivity\\.google\\.com\\/product\\/gemini'), 'vendor sanitizer should remove Gemini activity prompt lines');
+assert.equal(vendorSource.includes(legacyPlaceholder), false, 'vendor source must not contain the complete legacy placeholder literal');
 assert.ok(vendorSource.includes('StatusPlaceHolderI[m]pl'), 'raw sanitation should avoid reintroducing the complete old placeholder literal');
 assert.ok(clueRuleSource.includes('必须优先输出 `<sp_clue_deduce>`'), 'worldbook should force clue deduction panel for visible anomaly/evidence turns');
 assert.ok(clueRuleSource.includes('Markdown 选项、编号列表或只有【推演选项：】不算完成协议'), 'worldbook should reject markdown-only choices as protocol-complete');

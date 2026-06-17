@@ -852,6 +852,18 @@ body {
     }
   };
 
+  const hideRawProtocolParagraphs = () => {
+    const protocolPattern = /<UpdateVariable|<\/UpdateVariable|<JSONPatch|<\/JSONPatch|StatusPlaceHolderImpl|myactivity\.google\.com\/product\/gemini|No\.7 High School setting locked|"\s*op\s*"\s*:\s*"\s*replace\s*"|\/行动建议|\/当前灵异事件|\/最近行动判定/;
+    hostDocument.querySelectorAll<HTMLElement>('.mes_text p:not([data-mfrs-protocol-hidden])').forEach(paragraph => {
+      const text = paragraph.innerText || paragraph.textContent || '';
+      if (!protocolPattern.test(text)) return;
+      paragraph.dataset.mfrsProtocolHidden = 'true';
+      paragraph.hidden = true;
+      paragraph.setAttribute('aria-hidden', 'true');
+      paragraph.style.display = 'none';
+    });
+  };
+
   const enhanceChoicePanels = () => {
     const detectRisk = (text: string): 'high' | 'mid' | 'low' | 'unknown' => {
       const lower = text;
@@ -1571,6 +1583,7 @@ body {
     bindWelcomeGhostButtons();
     enhanceChoicePanels();
     enhanceShortTagPanels();
+    hideRawProtocolParagraphs();
     enhanceRollBars();
   };
 
