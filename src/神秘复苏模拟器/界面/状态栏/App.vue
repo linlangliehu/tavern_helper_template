@@ -403,6 +403,7 @@ const actionSuggestionKeys = ['A', 'B', 'C', 'D'] as const
 let lastMirroredChoicesSignature = ''
 let lastMirroredCoreStateSignature = ''
 let choicesMirrorQueue: Promise<unknown> = Promise.resolve()
+let choicesMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null
 
 function clampRiskDelta(value: unknown) {
   const n = Number(value)
@@ -466,29 +467,33 @@ function parseStructuredChoices(message: string): OptionItem[] {
     const source = match[1]
       .replace(/^\s*```(?:json)?\s*/i, '')
       .replace(/\s*```\s*$/i, '')
-      .replace(/[“”]/g, '"')
-      .replace(/[‘’]/g, "'")
       .trim()
-    const parsed = JSON.parse(source)
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(source)
+    } catch {
+      parsed = JSON.parse(source.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"))
+    }
     if (!Array.isArray(parsed)) return []
 
     const seen = new Set<string>()
     const out: OptionItem[] = []
     for (const item of parsed) {
       if (!item || typeof item !== 'object') continue
-      const key = normalizeOptionKey(String(item.key ?? ''))
+      const key = normalizeOptionKey(String(item.key ?? item.id ?? item.option ?? item.选项 ?? ''))
       if (!key || seen.has(key)) continue
 
       const text = String(item.text ?? '').replace(optionRiskTagPattern, '').replace(/\s+/g, ' ').trim()
       if (!text) continue
 
       const risk = item.risk && typeof item.risk === 'object' ? item.risk : {}
+      const fallbackDeath = optionDeathRiskDelta(text)
       out.push({
         key,
         text,
         risk: {
-          death: clampRiskDelta(risk.death),
-          revive: clampRiskDelta(risk.revive),
+          death: clampRiskDelta(risk.death ?? item.death ?? item.death_risk ?? item.死亡风险 ?? fallbackDeath),
+          revive: clampRiskDelta(risk.revive ?? item.revive ?? item.revival_risk ?? item.复苏风险),
           source: String(risk.source ?? '结构化选项').replace(/\s+/g, ' ').trim() || '结构化选项',
           tagged: true,
         },
@@ -648,7 +653,19 @@ function mirrorActionSuggestionsToDatabase(sourceOptions: OptionItem[]) {
   if (signature === lastMirroredChoicesSignature) return
 
   const api = getMysteryDatabaseFrontendApi()
-  if (!api?.applyTableChangePlan) return
+  if (!api?.applyTableChangePlan) {
+    if (choicesMirrorRetryTimer == null) {
+      choicesMirrorRetryTimer = window.setTimeout(() => {
+        choicesMirrorRetryTimer = null
+        mirrorActionSuggestionsToDatabase(sourceOptions)
+      }, 1000)
+    }
+    return
+  }
+  if (choicesMirrorRetryTimer != null) {
+    window.clearTimeout(choicesMirrorRetryTimer)
+    choicesMirrorRetryTimer = null
+  }
 
   lastMirroredChoicesSignature = signature
   choicesMirrorQueue = choicesMirrorQueue.then(async () => {

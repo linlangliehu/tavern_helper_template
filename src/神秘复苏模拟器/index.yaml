@@ -5106,7 +5106,7 @@
   - 正则名称: '[不发送]去除界面展示块'
     id: 7d6a8e3b-2f4c-4c5e-9a11-9f7b2d3e6c41
     启用: true
-    查找表达式: "/(?:<choices>[\\s\\S]*?<\\/choices>|<(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>[\\s\\S]*?<\\/(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>|(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)|<StatusPlaceHolderImpl\\/>)/g"
+    查找表达式: "/(?:<choices>[\\s\\S]*?<\\/choices>|<(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>[\\s\\S]*?<\\/(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>|(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)|<StatusPlaceHolderI[m]pl\\/>)/g"
     替换为: ''
     来源:
       用户输入: false
@@ -5193,7 +5193,7 @@
   - 正则名称: '[界面]状态栏'
     id: b50d0bed-ff40-4a25-9ada-14feb4283324
     启用: false
-    查找表达式: <StatusPlaceHolderImpl/>
+    查找表达式: /<StatusPlaceHolderI[m]pl\/>/g
     内容: |-
       ```
       <body>
@@ -5331,7 +5331,7 @@
   - 正则名称: '[显示]隐藏独立 JSONPatch 标签'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2017
     启用: true
-    查找表达式: "/<JSONPatch>[\\s\\S]*?<\\/JSONPatch>/gi"
+    查找表达式: "/<JSON[P]atch>[\\s\\S]*?<\\/JSON[P]atch>/gi"
     替换为: ""
     来源:
       用户输入: false

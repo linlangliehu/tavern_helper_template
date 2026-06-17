@@ -2,21 +2,19 @@
 update_output_contract:
   must_output: |-
     End every reply with one variable update block. Update only facts that happened, were revealed, or were resolved in this turn.
-    Analysis and JSONPatch are internal payloads: keep them inside <UpdateVariable> only, and never output a standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone JSON Patch, or debug note outside the required tags.
+    Analysis and the patch array are internal payloads: keep them inside <UpdateVariable> only, and never output a standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note outside the required tags.
 
     <UpdateVariable>
     <Analysis>English, <=80 words: time/transition; visible evidence; rule/risk/resource/faction changes.</Analysis>
-    <JSONPatch>
     [
       { "op": "delta", "path": "/风险值", "value": 0 },
       { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 0 },
       { "op": "replace", "path": "/最近行动判定", "value": { "类型": "investigate/move/use-ghost/suppress/test-rule/use-resource", "行动": "current action", "依据": ["player-visible evidence"], "触发项": ["visible medium or risk"], "结果": "visible result", "代价": "resource/injury/attention/time", "死亡风险变化": "+0", "复苏风险变化": "+0", "资源代价": "none or exact cost", "后续建议": "visible next step", "可见结论": "no hidden truth" } },
       { "op": "replace", "path": "/行动建议", "value": [{ "选项": "A", "思路": "visible plan", "主要风险": "visible risk", "预期收益": "visible gain" }] }
     ]
-    </JSONPatch>
     </UpdateVariable>
   patch_rules:
-    - JSONPatch must be a valid JSON array. Supported ops: replace, delta, insert, remove, move.
+    - The patch payload must be a valid JSON array directly inside <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
     - Paths are rooted at stat_data. Never use obsolete paths: /known_rules, /current_event, /in_scene_characters, /death_risk, /resurrection_risk, /status, /location.
     - Do not update readonly fields whose names start with _.
     - Death danger uses /风险值 only. Ghost revival risk uses /驭鬼者状态/总复苏风险. Do not write /死亡风险; /厉鬼复苏程度 is legacy mirror only.

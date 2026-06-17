@@ -82,9 +82,13 @@ function parseTaggedChoices(text) {
 }
 
 function parseTaggedPatch(text) {
-  const match = text.match(/<UpdateVariable>[\s\S]*?<JSONPatch>\s*([\s\S]*?)\s*<\/JSONPatch>[\s\S]*?<\/UpdateVariable>/i);
-  assert.ok(match, 'raw message should retain tagged <UpdateVariable>/<JSONPatch>');
-  return JSON.parse(match[1]);
+  const match = text.match(/<UpdateVariable>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);
+  assert.ok(match, 'raw message should retain tagged <UpdateVariable>');
+  assert.equal(/<JSONPatch>/i.test(match[1]), false, 'raw UpdateVariable should not require a nested <JSONPatch> tag');
+  const withoutAnalysis = match[1].replace(/<Analysis>[\s\S]*?<\/Analysis>/i, '').trim();
+  const arrayMatch = withoutAnalysis.match(/(\[[\s\S]*\])/);
+  assert.ok(arrayMatch, 'raw UpdateVariable should contain a direct JSON patch array');
+  return JSON.parse(arrayMatch[1]);
 }
 
 const storyToken = 'MFRS_OUTPUT_CLEAN_STORY_TOKEN';
@@ -139,11 +143,9 @@ const sample = [
   'La luz del tel\u00e9fono m\u00f3vil ilumina el pasillo, la pared mojada y el riesgo de acercarse a las opciones del estado.',
   '<UpdateVariable>',
   '<Analysis>Lin Che stays still and watches the corridor.</Analysis>',
-  '<JSONPatch>',
   '[',
   '  { "op": "replace", "path": "/recent_action", "value": { "result": "watch corridor" } }',
   ']',
-  '</JSONPatch>',
   '</UpdateVariable>',
 ].join('\n');
 
@@ -189,6 +191,7 @@ assert.equal(displayed.includes('<JSONPatch>'), false, 'tagged JSONPatch should 
 assert.ok(statusAppSource.includes('<sp_status>'), 'status bar should parse <sp_status> fallback');
 assert.ok(statusAppSource.includes('spStatusKeyMap'), 'status bar should map English sp_status keys');
 assert.ok(statusAppSource.includes('displayLocation'), 'status bar should display MVU/sp_status location fallback');
+assert.ok(statusAppSource.includes('item.id'), 'status bar should accept id as a structured choices key alias');
 assert.ok(statusAppSource.includes('mirrorCoreStateToDatabase'), 'status bar should mirror key 4.0 tables from MVU/sp_status when database is empty');
 assert.ok(statusAppSource.includes('acu_mfrs_core_state_crud_mirror'), 'core state mirror should have a localStorage kill switch');
 assert.ok(statusAppSource.includes('暂无可收录档案，等待首次遭遇或可见证据'), 'collected archives empty state should be explicit and reviewable');

@@ -78,12 +78,10 @@ D. 自定义行动 <risk death="0" revive="0" source="自定义行动">
 
 <UpdateVariable>
 <Analysis>Opening setup establishes a suspected knocking event. The player is alive, already a ghost user, and has one red ghost candle. No rule is verified yet.</Analysis>
-<JSONPatch>
 [
   { "op": "replace", "path": "/姓名", "value": "林安" },
   { "op": "replace", "path": "/所在位置", "value": "大昌市郊区废弃烂尾楼三楼" },
   { "op": "replace", "path": "/驭鬼者状态/总复苏风险", "value": 30 },
   { "op": "replace", "path": "/行动建议", "value": [{ "选项": "A", "思路": "用鬼烛争取隔绝和退路", "主要风险": "消耗资源", "预期收益": "降低直接死亡风险" }] }
 ]
-</JSONPatch>
 </UpdateVariable>
