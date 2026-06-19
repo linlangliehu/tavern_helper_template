@@ -283,7 +283,7 @@
               </dl>
             </article>
           </div>
-          <div v-else class="runtime-detail-empty">暂无可收录档案，等待首次遭遇或可见证据</div>
+          <div v-else class="runtime-detail-empty">暂无收录档案</div>
         </section>
 
         <section class="runtime-detail-block">
@@ -375,19 +375,6 @@ type TableChangePlanInput = {
   skipChatSave?: boolean
   silent?: boolean
 }
-
-type CollectedArchiveRecord = {
-  档案厉鬼名称: string
-  收录状态: string
-  厉鬼信息: string
-  已知规律: string
-  猜测规律: string
-  鬼域: string
-  收录进度: number
-  档案完整度: string
-  可调用范围: string
-  可见摘要: string
-}
 type TableChangeResultLike = {
   ok?: boolean
   errors?: Array<{ code?: string; message?: string }>
@@ -404,6 +391,7 @@ let lastMirroredChoicesSignature = ''
 let lastMirroredCoreStateSignature = ''
 let choicesMirrorQueue: Promise<unknown> = Promise.resolve()
 let choicesMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null
+let coreStateMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null
 
 function clampRiskDelta(value: unknown) {
   const n = Number(value)
@@ -471,8 +459,40 @@ function parseOptionRisk(rawText: string) {
   }
 }
 
+function stripThinkingBlocks(message: string) {
+  let source = String(message || '')
+    .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<thought[^>]*>[\s\S]*?<\/thought>/gi, '')
+    .replace(/<reasoning[^>]*>[\s\S]*?<\/reasoning>/gi, '')
+    .replace(/<\/(?:think|thinking|thought|reasoning)>/gi, '')
+  const openPattern = /<(?:think|thinking|thought|reasoning)\b[^>]*>/i
+  let openMatch = openPattern.exec(source)
+  while (openMatch) {
+    const prefix = source.slice(0, openMatch.index)
+    const rest = source.slice(openMatch.index + openMatch[0].length)
+    const protocolPatterns = [
+      /<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/i,
+      /<choices\b[^>]*>[\s\S]*?<\/choices>/i,
+      /<sp_status\b[^>]*>[\s\S]*?<\/sp_status>/i,
+      /<sp_clue_deduce\b[^>]*>[\s\S]*?<\/sp_clue_deduce>/i,
+      /<sp_choices\b[^>]*>[\s\S]*?<\/sp_choices>/i,
+    ]
+    let keepIndex = -1
+    for (const pattern of protocolPatterns) {
+      const protocolMatch = pattern.exec(rest)
+      if (protocolMatch && (keepIndex < 0 || protocolMatch.index < keepIndex)) keepIndex = protocolMatch.index
+    }
+    source = keepIndex >= 0 ? `${prefix}${rest.slice(keepIndex)}` : prefix
+    openMatch = openPattern.exec(source)
+  }
+  return source
+    .replace(/<\/?(?:think|thinking|thought|reasoning)[^>]*>/gi, '')
+    .trim()
+}
+
 function parseStructuredChoices(message: string): OptionItem[] {
-  const match = message.match(/<choices>\s*([\s\S]*?)\s*<\/choices>/i)
+  const match = stripThinkingBlocks(message).match(/<choices>\s*([\s\S]*?)\s*<\/choices>/i)
   if (!match) return []
 
   try {
@@ -560,7 +580,7 @@ function extractFirstJsonArrayText(text: string) {
 }
 
 function parseUpdateVariablePatchArray(message: string) {
-  const match = message.match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i)
+  const match = stripThinkingBlocks(message).match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i)
   if (!match) return []
   const source = match[1]
     .replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi, '')
@@ -570,15 +590,33 @@ function parseUpdateVariablePatchArray(message: string) {
   if (!arrayText) return []
   try {
     const parsed = JSON.parse(arrayText)
-    return Array.isArray(parsed) ? parsed : []
+    return Array.isArray(parsed) ? coerceDirectActionOptionsPatchArray(parsed) : []
   } catch {
     try {
       const parsed = JSON.parse(arrayText.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"))
-      return Array.isArray(parsed) ? parsed : []
+      return Array.isArray(parsed) ? coerceDirectActionOptionsPatchArray(parsed) : []
     } catch {
       return []
     }
   }
+}
+
+function isDirectActionOption(item: unknown) {
+  if (!item || typeof item !== 'object') return false
+  const record = item as Record<string, unknown>
+  if ('path' in record || 'op' in record) return false
+  const risk = record.risk && typeof record.risk === 'object' ? record.risk as Record<string, unknown> : {}
+  const key = normalizeOptionKey(String(record.key ?? record.id ?? record.option ?? record.option_key ?? record.选项 ?? ''))
+  const text = String(record.text ?? record.idea_text ?? record.思路 ?? record.行动 ?? record.内容 ?? risk.source ?? record.主要风险 ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return !!key && !!text
+}
+
+function coerceDirectActionOptionsPatchArray(parsed: unknown[]) {
+  const options = parsed.filter(isDirectActionOption)
+  if (options.length === 0) return parsed
+  return [{ op: 'replace', path: '/行动建议', value: options }]
 }
 
 function parseUpdateVariableActionSuggestions(message: string): OptionItem[] {
@@ -794,6 +832,7 @@ function mirrorActionSuggestionsToDatabase(sourceOptions: OptionItem[]) {
     for (const item of payload) {
       const result = await applyActionSuggestionPlan(api, item.rowId, item.set)
       if (!result?.ok) {
+        lastMirroredChoicesSignature = ''
         console.warn('[MFRS Status] 行动建议 CRUD 镜像失败。', { item, result })
         return
       }
@@ -951,9 +990,6 @@ function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanIn
 
 function mirrorCoreStateToDatabase() {
   if (isFirstFloor || !isCoreStateCrudMirrorEnabled()) return
-  const api = getMysteryDatabaseFrontendApi()
-  if (!api?.applyTableChangePlan || !api.exportCurrentData) return
-
   const signature = JSON.stringify({
     messageId: getCurrentMessageId(),
     status: statusPanel.value,
@@ -963,17 +999,36 @@ function mirrorCoreStateToDatabase() {
     reviveRisk: resurrectionRiskValue.value,
   })
   if (signature === lastMirroredCoreStateSignature) return
+
+  const api = getMysteryDatabaseFrontendApi()
+  if (!api?.applyTableChangePlan || !api.exportCurrentData) {
+    if (coreStateMirrorRetryTimer == null) {
+      coreStateMirrorRetryTimer = window.setTimeout(() => {
+        coreStateMirrorRetryTimer = null
+        mirrorCoreStateToDatabase()
+      }, 1000)
+    }
+    return
+  }
+  if (coreStateMirrorRetryTimer != null) {
+    window.clearTimeout(coreStateMirrorRetryTimer)
+    coreStateMirrorRetryTimer = null
+  }
+
   lastMirroredCoreStateSignature = signature
 
   choicesMirrorQueue = choicesMirrorQueue.then(async () => {
     const currentData = await api.exportCurrentData?.()
     const plans = buildCoreStatePlansForDatabase(currentData)
+    let hasFailure = false
     for (const plan of plans) {
       const result = await api.applyTableChangePlan?.({ ...plan, skipChatSave: true, silent: true } as TableChangePlanInput)
       if (!result?.ok) {
+        hasFailure = true
         console.warn('[MFRS Status] 关键状态 CRUD 镜像兜底失败。', { plan, result })
       }
     }
+    if (hasFailure) lastMirroredCoreStateSignature = ''
   }).catch(error => {
     lastMirroredCoreStateSignature = ''
     console.warn('[MFRS Status] 关键状态 CRUD 镜像兜底异常。', error)
@@ -1527,51 +1582,6 @@ function controlledGhostsFrom(ghostList: ReturnType<typeof filledGhosts>) {
   }))
 }
 
-function hasArchiveVisionAbility() {
-  const text = [
-    d().特殊能力描述,
-    d().角色背景,
-    d().身份,
-    ...filledGhosts().flatMap(ghost => [ghost.厉鬼名称, ghost.杀人规律]),
-    ...filledItems().flatMap(item => [item.名称, item.效果, item.使用限制]),
-  ].map(value => textOrFallback(value, '')).join(' ')
-  return ['灵异档案视野', '鬼档案', '档案', '收录', '记录', '档案化', '调用档案'].some(keyword => text.includes(keyword))
-}
-
-function collectedArchivesFromStart(ghostList: ReturnType<typeof filledGhosts>, eventFile: Record<string, unknown>): CollectedArchiveRecord[] {
-  const eventName = textOrFallback(eventFile.事件代号, '开局异常事件')
-  const eventLocation = textOrFallback(eventFile.发生地点, d().所在位置 || d().开局地点 || '未知地点')
-  const suspectedLaws = Array.isArray(eventFile.猜测杀人规律)
-    ? eventFile.猜测杀人规律.map(rule => textOrFallback(rule, '')).filter(Boolean)
-    : []
-  const archiveTargets = ghostList.length
-    ? ghostList.map(ghost => ({
-      name: ghost.厉鬼名称,
-      info: `开局设定中出现${ghost.厉鬼名称}，能力边界仍待现实事件验证。`,
-      suspected: ghost.杀人规律 && ghost.杀人规律 !== '无' ? ghost.杀人规律 : '待通过首轮异常验证',
-    }))
-    : hasArchiveVisionAbility()
-      ? [{
-        name: eventName.includes('异常') ? eventName.replace(/异常.*$/, '异常源头') : `${eventLocation}疑似厉鬼`,
-        info: `${eventLocation}出现可建档的灵异征兆，暂以玩家可见现象建立候选档案。`,
-        suspected: suspectedLaws.length ? suspectedLaws.join('；') : '待通过现场证据判断触发条件',
-      }]
-      : []
-
-  return archiveTargets.map(target => ({
-    档案厉鬼名称: target.name,
-    收录状态: '未收录',
-    厉鬼信息: target.info,
-    已知规律: '未验证',
-    猜测规律: target.suspected,
-    鬼域: textOrFallback(eventFile.鬼域状态, '未确认'),
-    收录进度: 10,
-    档案完整度: '低',
-    可调用范围: '仅作危险提示',
-    可见摘要: `${target.name}已建立早期档案，等待首次遭遇、死亡案例或可见证据补全。`,
-  }))
-}
-
 function resourcesFrom(itemList: ReturnType<typeof filledItems>, ghostList: ReturnType<typeof filledGhosts>) {
   return {
     鬼拼图: ghostList.map(ghost => ghost.厉鬼名称),
@@ -1792,7 +1802,6 @@ function commitStartData() {
     扩散趋势: '未观察',
     处理状态: '初始化',
   }
-  const collectedArchives = collectedArchivesFromStart(ghostList, eventFile)
   Object.assign(data.value, {
     驾驭厉鬼: ghostList,
     所在位置: location,
@@ -1808,7 +1817,7 @@ function commitStartData() {
       总复苏风险: initialReviveRisk,
       已驾驭厉鬼: controlledGhosts,
     },
-    收录档案: collectedArchives,
+    收录档案: [],
     收录规律: [],
     灵异资源: resources,
     势力关系: {

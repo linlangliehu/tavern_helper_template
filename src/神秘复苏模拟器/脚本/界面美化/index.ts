@@ -782,9 +782,6 @@ body {
 }
 .mfrs-choice-why-key.is-death { color: #f08080 !important; }
 .mfrs-choice-why-key.is-revive { color: #c89adf !important; }
-.mfrs-hidden-internal-choice-payload {
-  display: none !important;
-}
 `;
   const hostDocument = getHostDocument();
   const hostWindow = hostDocument.defaultView as HostWindowWithThemeCleanup | null;
@@ -809,60 +806,6 @@ body {
   const HostMutationObserver = hostDocument.defaultView?.MutationObserver ?? MutationObserver;
   const observer = new HostMutationObserver(ensureStyleMounted);
   observer.observe(hostDocument.head, { childList: true });
-
-  const INTERNAL_CHOICES_TAG_HTML = /(?:&lt;|<)\s*choices\s*(?:&gt;|>)[\s\S]*?(?:&lt;|<)\s*\/\s*choices\s*(?:&gt;|>)/gi;
-  const INTERNAL_CHOICE_RISK_LINE_HTML = /(?:^|<br\s*\/?>|\n|\r)[^<\n\r]*(?:risk\.death|risk\.revive)[^<\n\r]*/gi;
-  const INTERNAL_CHOICE_LEAK_SELECTOR = [
-    '.mes_text p',
-    '.mes_text pre',
-    '.mes_text code',
-    '.mes_text li',
-    '.mes_text blockquote',
-  ].join(',');
-
-  const isInsideRenderedChoicePanel = (element: Element) =>
-    Boolean(element.closest('.custom-sp-panel-choices, .sp-panel-choices, .mfrs-choice-list'));
-
-  const isInternalChoiceLeakText = (text: string) => {
-    const normalized = text.replace(/\s+/g, ' ').trim();
-    if (!normalized) return false;
-    if (/<\s*choices\s*>[\s\S]*?<\s*\/\s*choices\s*>/i.test(normalized)) return true;
-    if (!/(?:risk\.death|risk\.revive)/i.test(normalized)) return false;
-    return /[{\[]|"\s*[A-D]\s*"|'[A-D]'|key\s*[:=]/i.test(normalized);
-  };
-
-  const stripInternalChoicePayloadsFromHtml = (html: string) => html
-    .replace(INTERNAL_CHOICES_TAG_HTML, '')
-    .replace(INTERNAL_CHOICE_RISK_LINE_HTML, '')
-    .replace(/(?:<br\s*\/?>\s*){3,}/gi, '<br><br>');
-
-  const hideInternalChoicePayloadLeaks = () => {
-    for (const block of hostDocument.querySelectorAll<HTMLElement>(INTERNAL_CHOICE_LEAK_SELECTOR)) {
-      if (isInsideRenderedChoicePanel(block)) continue;
-      if (!isInternalChoiceLeakText(block.textContent ?? '')) continue;
-      block.classList.add('mfrs-hidden-internal-choice-payload');
-      block.setAttribute('aria-hidden', 'true');
-    }
-
-    for (const root of hostDocument.querySelectorAll<HTMLElement>('.mes_text')) {
-      const currentHtml = root.innerHTML;
-      if (!/(?:&lt;|<)\s*choices\s*(?:&gt;|>)|risk\.death|risk\.revive/i.test(currentHtml)) continue;
-      const nextHtml = stripInternalChoicePayloadsFromHtml(currentHtml);
-      if (nextHtml !== currentHtml) root.innerHTML = nextHtml;
-    }
-  };
-
-  const hideRawProtocolParagraphs = () => {
-    const protocolPattern = /<UpdateVariable|<\/UpdateVariable|<JSONPatch|<\/JSONPatch|StatusPlaceHolderImpl|myactivity\.google\.com\/product\/gemini|No\.7 High School setting locked|"\s*op\s*"\s*:\s*"\s*replace\s*"|\/行动建议|\/当前灵异事件|\/最近行动判定/;
-    hostDocument.querySelectorAll<HTMLElement>('.mes_text p:not([data-mfrs-protocol-hidden])').forEach(paragraph => {
-      const text = paragraph.innerText || paragraph.textContent || '';
-      if (!protocolPattern.test(text)) return;
-      paragraph.dataset.mfrsProtocolHidden = 'true';
-      paragraph.hidden = true;
-      paragraph.setAttribute('aria-hidden', 'true');
-      paragraph.style.display = 'none';
-    });
-  };
 
   const enhanceChoicePanels = () => {
     const detectRisk = (text: string): 'high' | 'mid' | 'low' | 'unknown' => {
@@ -1086,6 +1029,20 @@ body {
         `<details class="sp-secondary"><summary>展开细节（${secondary.length} 项）</summary>` +
         `<div class="sp-secondary-body">${secondaryHtml}</div></details>`;
     }
+  };
+
+  const MFRS_INLINE_PROTOCOL_TAG_PATTERN = /<\/?\s*(?:choices|sp_choices|UpdateVariable|JSONPatch|Analysis)\b/i;
+
+  const hideRawProtocolParagraphs = () => {
+    const protocolPattern = /<UpdateVariable|<\/UpdateVariable|<JSONPatch|<\/JSONPatch|StatusPlaceHolderImpl|myactivity\.google\.com\/product\/gemini|No\.7 High School setting locked|"\s*op\s*"\s*:\s*"\s*replace\s*"|\/行动建议|\/当前灵异事件|\/最近行动判定/;
+    hostDocument.querySelectorAll<HTMLElement>('.mes_text p:not([data-mfrs-protocol-hidden])').forEach(paragraph => {
+      const text = paragraph.innerText || paragraph.textContent || '';
+      if (!protocolPattern.test(text) && !MFRS_INLINE_PROTOCOL_TAG_PATTERN.test(text)) return;
+      paragraph.dataset.mfrsProtocolHidden = 'true';
+      paragraph.hidden = true;
+      paragraph.setAttribute('aria-hidden', 'true');
+      paragraph.style.display = 'none';
+    });
   };
 
   const computeFairRoll = (seed: string) => {
@@ -1577,7 +1534,6 @@ body {
   };
 
   const enhancePanels = () => {
-    hideInternalChoicePayloadLeaks();
     enhanceWelcomeAnchors();
     bindWelcomePresetControls();
     bindWelcomeGhostButtons();

@@ -2,23 +2,29 @@
 update_output_contract:
   must_output: |-
     End every reply with one variable update block. Update only facts that happened, were revealed, or were resolved in this turn.
-    Analysis and the patch array are internal payloads: keep them inside <UpdateVariable> only, and never output a standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note outside the required tags.
+    The payload inside <UpdateVariable> must be a valid JSON array directly. Do not include an analysis tag, prose, code fences, comments, standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note.
 
     <UpdateVariable>
-    <Analysis>English, <=80 words: time/transition; visible evidence; rule/risk/resource/faction changes.</Analysis>
     [
       { "op": "delta", "path": "/风险值", "value": 0 },
       { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 0 },
       { "op": "replace", "path": "/最近行动判定", "value": { "类型": "investigate/move/use-ghost/suppress/test-rule/use-resource", "行动": "current action", "依据": ["player-visible evidence"], "触发项": ["visible medium or risk"], "结果": "visible result", "代价": "resource/injury/attention/time", "死亡风险变化": "+0", "复苏风险变化": "+0", "资源代价": "none or exact cost", "后续建议": "visible next step", "可见结论": "no hidden truth" } },
-      { "op": "replace", "path": "/行动建议", "value": [{ "选项": "A", "思路": "visible plan", "主要风险": "visible risk", "预期收益": "visible gain" }] }
+      { "op": "replace", "path": "/行动建议", "value": [
+        { "选项": "A", "思路": "visible plan A", "主要风险": "visible risk A", "预期收益": "visible gain A" },
+        { "选项": "B", "思路": "visible plan B", "主要风险": "visible risk B", "预期收益": "visible gain B" },
+        { "选项": "C", "思路": "visible plan C", "主要风险": "visible risk C", "预期收益": "visible gain C" },
+        { "选项": "D", "思路": "自定义行动", "主要风险": "取决于玩家输入", "预期收益": "保留自由行动" }
+      ] }
     ]
     </UpdateVariable>
   patch_rules:
     - The patch payload must be a valid JSON array directly inside <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
+    - Never output analysis text or any explanatory text inside <UpdateVariable>; the first non-space character after <UpdateVariable> must be [ and the last non-space character before </UpdateVariable> must be ].
     - Paths are rooted at stat_data. Never use obsolete paths: /known_rules, /current_event, /in_scene_characters, /death_risk, /resurrection_risk, /status, /location.
     - Do not update readonly fields whose names start with _.
     - Death danger uses /风险值 only. Ghost revival risk uses /驭鬼者状态/总复苏风险. Do not write /死亡风险; /厉鬼复苏程度 is legacy mirror only.
     - Every resolved player action must replace /最近行动判定. Whenever A/B/C/D options are output or refreshed, replace /行动建议.
+    - When <choices>, <sp_choices>, or visible A/B/C/D options are output, /行动建议 must contain exactly A, B, C, and D, and must match the visible options. D is always 自定义行动.
     - /最近行动判定, /行动建议, /收录档案, and /收录规律 may contain only player-visible evidence. Never reveal hidden files, complete killing laws, key survival routes, or true ghost locations.
     - Insert objects, not strings, into /规律推理记录/-. Required fields: 时间点, 行为, 观察结果, 推断, 确认等级, 是否触发规律, 风险等级. 确认等级 is one of 猜测, 疑似, 部分确认, 已验证, 可执行应对.
     - When ghost power, ghost domain, medium contact, body testing, wrong deduction, supernatural item cost, or faction intervention occurs, update the matching risk/resource/event/rule/worldline fields.

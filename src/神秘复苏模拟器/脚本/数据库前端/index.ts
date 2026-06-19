@@ -174,13 +174,23 @@ function isExpectedDatabaseApi(api: AutoCardUpdaterAPI | null | undefined) {
   return Boolean(api && api.__mfrsDatabaseScriptMarker__ === databaseScriptMarker);
 }
 
+function isUsableDatabaseApi(api: AutoCardUpdaterAPI | null | undefined) {
+  return Boolean(
+    api
+      && typeof api === 'object'
+      && (typeof api.getTableTemplate === 'function' || typeof api.exportTableAsJson === 'function'),
+  );
+}
+
 function clearPreviousDatabaseInstance(hostWindow: HostWindow) {
   const localWindow = window as HostWindow;
   const targets = hostWindow === localWindow ? [hostWindow] : [hostWindow, localWindow];
 
   for (const target of targets) {
     const targetRecord = target as HostWindow & Record<string, unknown>;
-    delete target.AutoCardUpdaterAPI;
+    if (!isUsableDatabaseApi(target.AutoCardUpdaterAPI)) {
+      delete target.AutoCardUpdaterAPI;
+    }
     delete target.__mfrsDatabaseScriptMarker__;
     delete targetRecord[databaseInstanceFlag];
   }
@@ -310,10 +320,22 @@ async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStat
 }
 
 function cleanupLegacyFrontend(hostDocument: Document, hostWindow: HostWindow) {
+  const apiBeforeCleanup = hostWindow.AutoCardUpdaterAPI;
+  const hostRecord = hostWindow as HostWindow & Record<string, unknown>;
+  const hadDatabaseInstanceFlag = Object.prototype.hasOwnProperty.call(hostRecord, databaseInstanceFlag);
+  const databaseInstanceFlagValue = hostRecord[databaseInstanceFlag];
+
   try {
     hostWindow.__mfrsDatabaseFrontendCleanup__?.();
   } catch (error) {
     console.warn('[神秘复苏数据库前端] 旧前端 cleanup 执行失败，继续清理固定节点。', error);
+  }
+
+  if (!hostWindow.AutoCardUpdaterAPI && isUsableDatabaseApi(apiBeforeCleanup)) {
+    hostWindow.AutoCardUpdaterAPI = apiBeforeCleanup;
+    if (hadDatabaseInstanceFlag) hostRecord[databaseInstanceFlag] = databaseInstanceFlagValue;
+    tagDatabaseApi(hostWindow);
+    console.info('[神秘复苏数据库前端] 旧前端 cleanup 曾移除当前数据库 API，已恢复当前 runtime。');
   }
 
   for (const id of LEGACY_CLEANUP_IDS) {
@@ -400,18 +422,16 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
 
   let api = await waitForApi(hostWindow);
   if (!api) {
-    await reloadDatabaseScriptForCurrentCard(hostWindow, 'api_missing');
-    api = await waitForApi(hostWindow, 16, 250);
-  }
-  if (!api) {
     console.warn('[神秘复苏数据库前端] 数据库 API 超时未就绪，跳过自动模板校正。');
     templateAutofixPromise = null;
     return;
   }
 
   if (!isExpectedDatabaseApi(api)) {
-    await reloadDatabaseScriptForCurrentCard(hostWindow, 'api_owner_mismatch');
-    api = (await waitForApi(hostWindow, 16, 250)) ?? api;
+    // 资源链路由角色卡 loader/vendor 本身负责。这里不再用硬编码 URL self-reclaim，
+    // 避免本地/候选 runtime 被旧 CDN 数据库本体覆盖。
+    tagDatabaseApi(hostWindow);
+    console.info('[神秘复苏数据库前端] 检测到数据库 API marker 不匹配，继续使用当前已加载 API。');
   }
 
   const status = await readTemplateStatus(api);
