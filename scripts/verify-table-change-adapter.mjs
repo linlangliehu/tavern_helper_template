@@ -1090,6 +1090,108 @@ const shortChroniclePreview = previewTableChangePlan({
 }, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
 assertError(shortChroniclePreview, 'LENGTH_VIOLATION');
 
+const codeAsChronicleTextInsertPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 09:00 ~ 09:30',
+    related_event: '七中敲门事件',
+    summary: '编号误填',
+    chronicle_text: 'SP0001',
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(codeAsChronicleTextInsertPreview, 'LENGTH_VIOLATION');
+
+const codeAsChronicleTextUpdatePreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'chronicle',
+  match: { code_index: 'SP0002' },
+  set: {
+    chronicle_text: 'SP0001',
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(codeAsChronicleTextUpdatePreview, 'LENGTH_VIOLATION');
+
+// 事件纪要追加式守卫：禁止删除已有纪要行（避免开局 SP0001 纪要被后续轮次删掉）。
+const chronicleDeletePreview = previewTableChangePlan({
+  action: 'deleteRow',
+  table: 'chronicle',
+  match: { code_index: 'SP0001' },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(chronicleDeletePreview, 'CHRONICLE_APPEND_ONLY');
+
+// 事件纪要追加式守卫：禁止把已有行的纪要编号改写成另一个编号（避免覆盖独立开局纪要）。
+const chronicleCodeRewritePreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'chronicle',
+  match: { code_index: 'SP0002' },
+  set: {
+    code_index: 'SP0001',
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(chronicleCodeRewritePreview, 'CHRONICLE_CODE_IMMUTABLE');
+
+// 合法回归：在已有纪要行上修订正文（200-600 字客观纪要、不动编号）仍应通过，守卫不能误伤正常编辑。
+const chronicleContentUpdatePreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'chronicle',
+  match: { code_index: 'SP0002' },
+  set: {
+    chronicle_text: '本轮纪要补充玩家在场可确认的事实。'.repeat(12),
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assert.equal(
+  chronicleContentUpdatePreview.ok,
+  true,
+  `chronicle content update should pass: ${JSON.stringify(chronicleContentUpdatePreview.errors)}`,
+);
+
+// 作用域隔离守卫：事件纪要追加式守卫只能作用于 chronicle，
+// 绝不能误伤玩家状态的姓名修订或其它表的删除/编号字段。
+// 这同时保证“姓名保持”不被纪要隔离守卫连带锁死——玩家姓名仍可正常更新。
+const seededPlayerStateTable = {
+  ...playerStateTable,
+  content: [
+    playerStateTable.content[0],
+    [
+      1, '林川', '普通学生', '七中', '观察中',
+      12, 0, '无', '无', '手机', '观察走廊',
+    ],
+  ],
+};
+const playerNameUpdatePreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'player_state',
+  match: { row_id: 1 },
+  set: { name: '周铭' },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_player_state: seededPlayerStateTable });
+assert.equal(
+  playerNameUpdatePreview.ok,
+  true,
+  `player name update should pass: ${JSON.stringify(playerNameUpdatePreview.errors)}`,
+);
+assert.ok(
+  !playerNameUpdatePreview.errors.some(error => error.code === 'CHRONICLE_APPEND_ONLY' || error.code === 'CHRONICLE_CODE_IMMUTABLE'),
+  'chronicle guards must not fire on player_state name update',
+);
+
+const playerDeleteCalls = [];
+const playerDeleteApi = {
+  async deleteRow(options) {
+    playerDeleteCalls.push(['deleteRow', options]);
+    return true;
+  },
+};
+const playerDeleteApply = await applyTableChangePlan(playerDeleteApi, {
+  action: 'deleteRow',
+  table: 'player_state',
+  match: { row_id: 1 },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_player_state: seededPlayerStateTable });
+assert.ok(
+  !playerDeleteApply.errors.some(error => error.code === 'CHRONICLE_APPEND_ONLY'),
+  'chronicle append-only guard must not fire on non-chronicle deleteRow',
+);
+
 const duplicateEventPreview = previewTableChangePlan({
   action: 'insertRow',
   table: 'supernatural_events',

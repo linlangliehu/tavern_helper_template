@@ -34,6 +34,8 @@ export type TableChangeErrorCode =
   | 'CHECK_RANGE_VIOLATION'
   | 'CHECK_PATTERN_VIOLATION'
   | 'LENGTH_VIOLATION'
+  | 'CHRONICLE_APPEND_ONLY'
+  | 'CHRONICLE_CODE_IMMUTABLE'
   | 'API_UNAVAILABLE'
   | 'API_MUTATION_FAILED';
 
@@ -657,6 +659,8 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
 
   let rowIndex = plan.action === 'insertRow' ? undefined : resolveRowIndex(table, plan.match, errors);
 
+  validateChronicleAppendOnly(table, plan, values, rowIndex, errors);
+
   const promoted = tryPromoteMissingFixedRowUpdateToInsert(table, plan, values, rowIndex, errors);
   if (promoted) {
     columns = resolveColumns(table, promoted.values, promoted.errors);
@@ -1127,6 +1131,16 @@ function validateColumnValues(
 
     if (!hasValue || value === null || value === undefined) continue;
     const text = String(value);
+    if (isChronicleTable(table) && isChronicleTextColumn(column) && /^SP\d{4}$/i.test(text.trim())) {
+      errors.push({
+        code: 'LENGTH_VIOLATION',
+        message: `列「${column.header}」不能只填写纪要编号，必须是 200-600 字客观纪要。`,
+        table: table.name,
+        column: column.header,
+        value,
+      });
+    }
+
     if (column.checkIn && column.checkIn.length > 0 && !column.checkIn.includes(text)) {
       const normalized = normalizeEnumAliasValue(table, column, text);
       if (normalized && column.checkIn.includes(normalized)) {
@@ -1333,6 +1347,15 @@ function findColumnByAlias(table: TableMeta, alias: string) {
   return table.columnAliases.get(normalizeAlias(alias)) ?? null;
 }
 
+function isChronicleTextColumn(column: ColumnMeta) {
+  return [
+    column.header,
+    column.physicalName,
+    column.commentAlias,
+  ].some(alias => normalizeAlias(alias) === 'chronicle_text'
+    || normalizeAlias(alias) === normalizeAlias('纪要'));
+}
+
 function hasColumnValue(table: TableMeta, values: Record<string, Primitive>, column: ColumnMeta) {
   const aliases = [column.header, column.physicalName, column.commentAlias]
     .map(normalizeAlias)
@@ -1355,6 +1378,43 @@ function nextChronicleCodeIndex(table: TableMeta, codeIndexColumn: ColumnMeta) {
     .filter(Number.isFinite)
     .reduce((highest, value) => Math.max(highest, value), 0);
   return `SP${String(maxIndex + 1).padStart(4, '0')}`;
+}
+
+function validateChronicleAppendOnly(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+  rowIndex: number | undefined,
+  errors: TableChangeError[],
+) {
+  if (!isChronicleTable(table)) return;
+  // 事件纪要是追加式历史记录：开局 SP0001 等纪要行是独立的客观事实快照，
+  // 后续轮次只应 insertRow 追加新编号，不应删除或重写已有行的编号，
+  // 否则会出现“只剩 SP0002、开局 SP0001 纪要丢失”这类覆盖独立开局纪要的问题。
+  if (plan.action === 'deleteRow') {
+    errors.push({
+      code: 'CHRONICLE_APPEND_ONLY',
+      message: '事件纪要是追加式历史记录，禁止删除已有纪要行；记录新事实请用 insertRow 追加新的纪要编号。',
+      table: table.name,
+    });
+    return;
+  }
+  if (plan.action !== 'updateCell') return;
+  const codeIndexColumn = findColumnByAlias(table, 'code_index');
+  if (!codeIndexColumn || !hasColumnValue(table, values, codeIndexColumn)) return;
+  const newCode = String(values[codeIndexColumn.header] ?? '').trim();
+  const existingCode = rowIndex !== undefined && rowIndex > 0
+    ? String(table.rows[rowIndex]?.[codeIndexColumn.index] ?? '').trim()
+    : '';
+  if (existingCode && newCode && normalizeCellValue(newCode) !== normalizeCellValue(existingCode)) {
+    errors.push({
+      code: 'CHRONICLE_CODE_IMMUTABLE',
+      message: `事件纪要编号「${existingCode}」不可被改写为「${newCode}」；记录新事实请 insertRow 追加新的纪要编号，避免覆盖独立开局纪要。`,
+      table: table.name,
+      column: codeIndexColumn.header,
+      value: newCode,
+    });
+  }
 }
 
 function extractMatchConditions(match: TableChangeMatch) {

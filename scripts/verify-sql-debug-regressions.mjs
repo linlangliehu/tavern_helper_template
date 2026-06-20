@@ -190,6 +190,7 @@ function loadVendorRuntime() {
         normalizeStatementValues,
         normalizeRiskLevelValue_ACU,
         validateChronicleTextInMutationStatements_ACU,
+        validateChronicleAppendOnlyInMutationStatements_ACU,
         validateSqlStatementsAgainstConstraintRegistry_ACU,
         extractSqlMutationValuesForConstraintCheck_ACU,
         parseDDLTableName,
@@ -798,6 +799,40 @@ function testChronicleSeedRowFiltering(template) {
 
   const directValidSql = inserts[0].replace(/;$/, '');
   assert.doesNotThrow(() => vendor.validateChronicleTextInMutationStatements_ACU([directValidSql]));
+
+  // 事件纪要追加式守卫：禁止 DELETE 已有纪要行、禁止改写 code_index，避免覆盖独立开局纪要（如开局 SP0001）。
+  assert.throws(
+    () => vendor.validateChronicleAppendOnlyInMutationStatements_ACU(["DELETE FROM chronicle WHERE code_index='SP0001';"]),
+    /事件纪要.*禁止 DELETE/,
+    'deleting an existing chronicle row should be blocked',
+  );
+  assert.throws(
+    () => vendor.validateChronicleAppendOnlyInMutationStatements_ACU(["UPDATE chronicle SET code_index='SP0002' WHERE code_index='SP0001';"]),
+    /code_index 不可改写/,
+    'rewriting an existing chronicle code_index should be blocked',
+  );
+  // 同一行只改正文/概览等非编号字段应放行（编辑既有纪要内容是合法的）。
+  assert.doesNotThrow(
+    () => vendor.validateChronicleAppendOnlyInMutationStatements_ACU([
+      "UPDATE chronicle SET summary='补充客观细节' WHERE code_index='SP0001';",
+    ]),
+    'editing non-code chronicle fields on an existing row should be allowed',
+  );
+  // 追加新纪要行（INSERT）应放行。
+  assert.doesNotThrow(
+    () => vendor.validateChronicleAppendOnlyInMutationStatements_ACU([directValidSql]),
+    'inserting a new chronicle row should be allowed',
+  );
+  // 作用域隔离：纪要追加式守卫只能管 chronicle，绝不能误伤 player_state 的姓名更新或删除，
+  // 否则会破坏“玩家姓名可被合法更新/保持”的既有行为。
+  assert.doesNotThrow(
+    () => vendor.validateChronicleAppendOnlyInMutationStatements_ACU([
+      "UPDATE player_state SET name='林川' WHERE row_id=1;",
+      "DELETE FROM player_state WHERE row_id=2;",
+      "UPDATE characters SET code_index='X' WHERE row_id=1;",
+    ]),
+    'chronicle append-only guard must not affect non-chronicle tables (player_state name update/delete)',
+  );
 }
 
 function testSyncBridgeConstraintRegistryRowValidation(template) {
