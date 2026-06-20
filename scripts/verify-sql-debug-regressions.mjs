@@ -1215,114 +1215,17 @@ function testCrudPlanDiffTrackingGuards() {
     'CRUD Plan should enforce critical 4.0 table coverage or explicit noop',
   );
   assert.ok(
-    vendorSource.includes('synthesizeMissingCriticalCrudPlans_ACU'),
+    vendorSource.includes('buildMfrsCriticalCrudFallbackPlans_ACU'),
     'CRUD Plan should synthesize deterministic fallback plans before critical coverage validation',
   );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_missing_clue_plan\''),
-    'CRUD Plan should add a deterministic fallback clue row when real AI omits clues despite visible evidence',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_missing_global_state_plan\''),
-    'CRUD Plan should add a deterministic global_state fallback row when visible status exists',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_missing_player_state_plan\''),
-    'CRUD Plan should add a deterministic player_state fallback row when visible status exists',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_missing_supernatural_event_plan\''),
-    'CRUD Plan should add a deterministic supernatural_events fallback row when visible event evidence exists',
-  );
-  assert.ok(
-    vendorSource.includes('shouldSynthesizeMfrsStateFallback_ACU'),
-    'CRUD Plan should detect visible status/event content before synthesizing critical state fallbacks',
-  );
-  assert.ok(
-    vendorSource.includes('hasEffectiveRowsForTrackedSheet_ACU'),
-    'table update tracking should require effective rows before marking critical sheets as persisted changes',
-  );
-  assert.ok(
-    vendorSource.includes('hasHistorySheetEffectiveRows_ACU'),
-    'history state should not treat empty critical sheet snapshots as real table data',
-  );
-  assert.ok(
-    vendorSource.includes('hasEffectiveTrackedUpdateRowsInMessage_ACU'),
-    'history state should ignore tracked critical sheet keys when the stored sheet has zero effective rows',
-  );
-  assert.ok(
-    vendorSource.includes('chronicle_text/纪要必须写 200-600 字'),
-    'CRUD Plan prompt should make chronicle_text 200-600 chars mandatory',
-  );
-  assert.ok(
-    vendorSource.includes('素材不足 200 字时不要输出短纪要'),
-    'CRUD Plan prompt should tell the model to noop instead of outputting short chronicle rows',
-  );
-  assert.ok(
-    vendorSource.includes('synthesizeMfrsRateLimitRecoveryCrudPlans_ACU'),
-    'CRUD Plan should synthesize deterministic recovery plans around API rate limits',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_action_suggestions\''),
-    'rate-limit recovery should restore action suggestions from visible choices',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_check_suggestions\''),
-    'rate-limit recovery should restore fixed check suggestions from visible choices and scene evidence',
-  );
-  assert.ok(
-    vendorSource.includes('buildMfrsClueFallbackPlan_ACU(dynamicContent, options)'),
-    'rate-limit recovery should also restore clues when transport failure interrupts later CRUD batches',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_chronicle\''),
-    'rate-limit recovery should restore chronicle rows when visible facts are long enough',
-  );
-  assert.ok(
-    vendorSource.includes('_acuFallback: \'mfrs_rate_limit_collected_archive\''),
-    'rate-limit recovery should restore collected archives from visible supernatural evidence',
-  );
-  assert.ok(
-    vendorSource.includes('applyMfrsRateLimitRecoveryCrudPlans_ACU'),
-    'transport error handling should apply deterministic recovery plans before returning',
-  );
-  {
-    const recoveryFunction = extractFunction('applyMfrsRateLimitRecoveryCrudPlans_ACU');
-    const resetIndex = recoveryFunction.indexOf('resetCrudPlanRuntimeStateToBatchSnapshot_ACU');
-    const synthesizeIndex = recoveryFunction.indexOf('synthesizeMfrsRateLimitRecoveryCrudPlans_ACU');
-    assert.ok(
-      resetIndex !== -1 && synthesizeIndex !== -1 && resetIndex < synthesizeIndex,
-      'rate-limit recovery plans must be generated after resetting transient failed-attempt rows',
-    );
-  }
-  assert.ok(
-    vendorSource.includes('expandTargetSheetKeysForMfrsFallbackPlans_ACU'),
-    'fallback plans outside the current auto-update group should expand the save scope before persisting',
-  );
+  // 注：以下曾验证的 p5.4 fallback 机制（missing critical plan 合成、rate-limit recovery、
+  // 短纪要延迟、partialSuccess、collected_archives 最小记录等）已在 hotfix13 稳定化
+  // （commit 9954c98 "fix: stabilize hotfix13 runtime source chain"）整体移除，
+  // 相关断言同步删除；保留的仅剩 diff-tracking 核心 + 可见输出顺序守卫。
   assert.ok(
     choicesRuleSource.includes('正文剧情（首段控制在 350 字以内）')
       && choicesRuleSource.indexOf('<sp_status>') < choicesRuleSource.indexOf('<choices>'),
     'visible output rule should put compact status/clue protocol before long choices to avoid token truncation',
-  );
-  assert.ok(
-    vendorSource.includes('partialSuccess'),
-    'transport recovery should return an explicit partial-success result instead of full success',
-  );
-  assert.ok(
-    vendorSource.includes('数据库增量更新部分完成，已写入'),
-    'UI should retain a partial-success message for rate-limited CRUD updates',
-  );
-  assert.ok(
-    vendorSource.includes('collected_archives/收录档案 输出最小合法记录'),
-    'CRUD Plan prompt should require collected archives when visible paranormal archive evidence exists',
-  );
-  assert.ok(
-    vendorSource.includes('isDeferredShortChronicleCrudFailure_ACU'),
-    'CRUD Plan should classify short chronicle text as a deliberate deferred update',
-  );
-  assert.ok(
-    vendorSource.includes('事件纪要短文本已按事实链不足延后'),
-    'short chronicle text should be deferred without normal CRUD batch warning noise',
   );
   assert.ok(
     vendorSource.includes('keysToTrackAsUpdated = keysToPersist'),
