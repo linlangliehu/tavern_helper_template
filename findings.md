@@ -1,5 +1,11 @@
 # Findings
 
+## 2026-06-21：SillyTavern 重启后运行态自动恢复干净 + 外部 JSON 双禁用字段格式修复
+
+- **SillyTavern 重启后运行态自动恢复：** handoff 摘要记录重启后运行态 383/0 全启用（污染），但实际在 SillyTavern 完成 reload + 异步角色数据加载后，运行态自动从干净磁盘文件重载，恢复为 383/33/5851。说明 handoff 的 383/0 可能是 reload 过程中异步加载未完成时的瞬时状态，不是稳定污染。下次重启后验证运行态应等待 15+ 秒让角色数据异步加载完成。
+- **角色数组索引随重启漂移：** 旧 `characters[9]` 在 SillyTavern 重启后变为 `characters[4]`（角色数组从更多条目缩减为 7 条）。不要硬编码索引，应按 avatar 文件名或角色名匹配定位。`SillyTavern.getContext().characters` 是正确入口，不是全局 `characters`（后者 ReferenceError）。
+- **外部 worldbook JSON 双禁用字段格式修复：** `tavern_sync bundle` 从 index.yaml 打包的 PNG 嵌入 ccv3 用 `enabled=false` 原生形状，但 `tavern_sync push` 生成的外部 JSON 只有 `disable=true` 缺 `enabled=false`。gate 脚本对 JSON 源严格要双字段（`--expect-mfrs-runtime` 设 `requireDualDisabled=true`，PNG 源自动放宽，JSON 源不放宽）。用 `normalize-worldbook-disabled-flags.mjs --backup --write` 可补齐。这是格式问题不是数据问题——33 条确实禁用，只是缺冗余字段。
+
 ## 2026-06-21：CDP 直读替代未加载的 chrome-devtools MCP + characterId=9 运行态源是卡内嵌 ccv3
 
 - **CDP 替代法：** 当 Codex 会话未加载 chrome-devtools MCP（\.mcp.json\/config.toml 配了但 \list_mcp_resources\ 空、工具列表无 \evaluate_script\）时，可写裸 CDP 脚本替代：\scripts/cdp-evaluate.mjs\ 用 Node 24 内置 \WebSocket\（无需 \ws\ 模块）连 \ws://127.0.0.1:9222/devtools/page/<id>\，发 \Runtime.evaluate\ (\eturnByValue:true, awaitPromise:true\)，等价 MCP \evaluate_script\。target 从 \http://127.0.0.1:9222/json\ 按 \	ype=page\+url 过滤。含中文/特殊字符的 JS 表达式用 \--file\ 传，避免 shell 转义破坏（PowerShell 传 \has getContext\ 这类带空格字符串会被拆成标识符）。

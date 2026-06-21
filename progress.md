@@ -1,5 +1,17 @@
 # Progress Log
 
+## 2026-06-21 CST（SillyTavern 重启后运行态重新验证 + 外部 JSON 格式修复 + 三方闭环最终确认）
+
+**状态：** 用户授权执行步骤 1-3（重新验证运行态 → 如仍污染则修复 → 三方 gate 闭环确认）。SillyTavern 已重启（PID 6812，端口 8000），页面已 reload，Chrome CDP 9222 正常。用 `scripts/cdp-evaluate.mjs`（裸 CDP）做运行态验证。未触发真实 AI、未碰真页交互。
+
+**完成：**
+- **步骤 1（重新验证运行态）：** handoff 摘要称重启后运行态 383/0 全启用（污染），但实测已恢复干净。`SillyTavern.getContext().characters` 当前 7 个角色，关键三角色（i=2 `神秘复苏模拟器9.png`、i=3 `神秘复苏模拟器发布版.png` 内存缓存、i=4 `神秘复苏模拟器发布版5.png`）全部 383/33/5851。运行态从干净磁盘文件重载，handoff 的 383/0 已不存在。（旧 `characters[9]` 索引因重启后角色数组缩小变为 i=4。）
+- **步骤 2（外部 worldbook JSON 格式修复）：** 磁盘外部 JSON `E:/SillyTavern/data/banyan/worlds/神秘复苏模拟器发布版.json` 数据正确（33 disabled），但 33 个 disabled 条目只有 `disable=true` 缺 `enabled=false`，gate 对 JSON 源要求双禁用字段。用 `scripts/normalize-worldbook-disabled-flags.mjs --backup --write` 补齐双字段（备份在 `.before-disabled-normalize.bak`）。`神秘复苏模拟器.json` 已是双字段格式，无需修改。
+- **步骤 3（三方 gate 闭环最终确认）：** 全部通过——磁盘外部 JSON（`神秘复苏模拟器发布版.json` + `神秘复苏模拟器.json` 均 383/33/5851 双禁用字段合规）；磁盘 PNG（`发布版5.png` chara+ccv3 + `模拟器9.png` chara+ccv3 均 383/33/5851）；运行态内存（i=2/3/4 三角色均 383/33/5851，ccv3 `enabled=false` 原生形状，gate 放宽双禁用要求通过）。
+- **仓库 source PNG 当前干净：** `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` git 标记 modified 但实测 383/33/5851（chara+ccv3 通过），可能被某进程 touch 产生二进制 diff 但数据未污染。
+
+**待续：** planning 三件套本轮增量待提交；唯一剩余任务仍是 B-I 真实 AI 回归（需用户授权 + chrome-devtools MCP 加载）。
+
 ## 2026-06-21 CST（worldbook hard gate 彻底闭环：CDP 直读运行态内存确认 383/33/5851）
 
 **状态：** 用户授权做可选补充——把运行态 world_info 间接证据升级为直接内存快照。因 Codex 会话未加载 chrome-devtools MCP，用裸 CDP 替代。未触发真实 AI、未切换激活角色（只读内存）。

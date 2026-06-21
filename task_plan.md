@@ -16,6 +16,8 @@
 
 ## 当前状态
 
+**2026-06-21 SillyTavern 重启后三方闭环最终确认（383/33/5851）：** SillyTavern 重启（PID 6812）+ 页面 reload 后，用 `cdp-evaluate.mjs` 重新验证运行态：i=2/3/4 三角色全部 383/33/5851（handoff 的 383/0 是 reload 异步加载未完成的瞬时状态）。外部 JSON `神秘复苏模拟器发布版.json` 33 个 disabled 条目用 `normalize-worldbook-disabled-flags.mjs` 补齐 `enabled=false` 双字段（备份 `.before-disabled-normalize.bak`）。三方 gate 闭环全绿：磁盘 JSON × 2 + 磁盘 PNG × 4（chara+ccv3 各 2）+ 运行态 × 3 = 383/33/5851。
+
 **2026-06-21 B-I 启动点（方案甲，待重启 Codex 加载 chrome-devtools MCP 后继续）：** 用户选择方案甲（完整 B-I，用 chrome-devtools MCP 的 evaluate_script/navigate_page/select_page/take_snapshot 做完整 A8 baseline + B-I 全链路）。当前 Codex 会话未加载 chrome-devtools MCP（`.mcp.json`/`~/.codex/config.toml` 已配但 `list_mcp_resources` 空、无 evaluate_script 工具），需用户退出并重启 Codex 会话让 MCP server 加载。**重启后新会话接续入口：** 用户说"继续 B-I"即可，按 `当前任务清单` 的 B-I 执行步骤推进。前置已全清（见下）。当前激活角色是 `SillyTavern System`（非 characterId=9），重启后需切回 characterId=9。
 
 **2026-06-21 worldbook hard gate 彻底闭环（运行态内存快照确认 383/33/5851）：** 用 `scripts/cdp-evaluate.mjs`（裸 CDP 替代未加载的 MCP）直读运行态内存。**关键认知修正：characterId=9 不绑定外部世界书**（`c9.world`/`c9.data.world` 空，下拉框对该卡全未选）——运行态 world_info 源是**卡内嵌 ccv3 character_book**，不是外部 JSON；旧 findings"运行态从外部 JSON 加载"对 characterId=9 不成立。运行态内存快照（`characters[9].data.character_book.entries`）：383 entries / 33 disabled（全 `enabled=false` 原生形状）/ 350 enabled / maxEnabledLen 5851 / maxEnabledTitle `鬼奴与衍生物规则`，与磁盘 PNG gate、磁盘外部 JSON gate 三方一致全绿。详见 findings.md 顶部 + progress.md 顶部。
