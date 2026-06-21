@@ -19,7 +19,7 @@
 3. 读取 `progress.md` 顶部最近 2-3 条，确认上次实际执行到哪里。
 4. 需要背景时读取 `findings.md` 顶部相关经验；旧长流水按版本号回查，不凭记忆补细节。
 5. 如果任务涉及旧版体验退化、发布后可玩性、正文面板、MVU、状态栏或数据库展示，读取 `4.0功能基线回归清单.md`。
-6. 如果要操控酒馆真页，确认当前 Codex 会话工具列表已经暴露 Chrome DevTools MCP 的 page/browser 操作工具；若未暴露，重启/恢复 Codex 会话加载 MCP 后再继续。
+6. 如果要操控酒馆真页，确认当前 Codex 会话工具列表已经暴露 Chrome DevTools MCP 的 page/browser 操作工具；若未暴露，重启/恢复 Codex 会话加载 MCP 后再继续。无 MCP 时可用 `scripts/cdp-evaluate.mjs`（裸 CDP via Node 内置 WebSocket 连 9222 page target 发 `Runtime.evaluate`，等价 evaluate_script）替代，但 navigate/click/snapshot 需扩展裸 CDP。
 7. 运行 `git status --short --branch`，先区分当前任务文件和既有无关 dirty。
 8. 如果 `session-catchup.py` 报旧 v6.21 中段残片，按 `task_plan.md` 当前状态处理：默认已被 v6.25/v6.27/v6.28 P5 线覆盖，除非用户要求回查历史。
 9. 新对话只需默认读取 `progress.md` 和 `findings.md` 顶部最近条目；旧长流水按版本号回查，避免重复扫描历史。
@@ -168,7 +168,7 @@
 
 本地 `main` 分支长期停留在旧基线、落后 origin 上百提交且工作树长期脏（发布与 hotfix 工作实际在 `.codex-*` worktree 完成、从 worktree push 到 origin/main）。因此**任何要落到 origin 的改动都不能在本地 main 上直接 commit/push**，按以下流程：
 
-1. `git fetch origin`，确认 `origin/main` tip（当前 `dbcbdd9` / v0.0.235）。
+1. `git fetch origin`，确认 `origin/main` tip（当前 `dbcbdd9` / v0.0.235（fork origin/main tip））。
 2. `git worktree add -b <branch> .codex-<name> origin/main`——从 origin tip 切干净 worktree，不碰脏的主工作区。
 3. 在 worktree 内编辑源码/脚本（用 Read/Edit/Write，不依赖 Bash 分类器）。
 4. 在 worktree 内 `pnpm install` + 跑 gate + `pnpm build` 验证。**注意**：worktree 的 `pnpm install` 可能解析到比 origin 已提交 dist 更新的依赖，导致 dist 重建带噪声——若 dist 出现未改源码文件也被重打包，说明依赖漂移，**只提交 source+测试，dist 留给发布流程在一致环境重建**（或先 `pnpm install --frozen-lockfile`）。
