@@ -1,5 +1,13 @@
 # Findings
 
+## 2026-06-21：CDP 直读替代未加载的 chrome-devtools MCP + characterId=9 运行态源是卡内嵌 ccv3
+
+- **CDP 替代法：** 当 Codex 会话未加载 chrome-devtools MCP（\.mcp.json\/config.toml 配了但 \list_mcp_resources\ 空、工具列表无 \evaluate_script\）时，可写裸 CDP 脚本替代：\scripts/cdp-evaluate.mjs\ 用 Node 24 内置 \WebSocket\（无需 \ws\ 模块）连 \ws://127.0.0.1:9222/devtools/page/<id>\，发 \Runtime.evaluate\ (\eturnByValue:true, awaitPromise:true\)，等价 MCP \evaluate_script\。target 从 \http://127.0.0.1:9222/json\ 按 \	ype=page\+url 过滤。含中文/特殊字符的 JS 表达式用 \--file\ 传，避免 shell 转义破坏（PowerShell 传 \has getContext\ 这类带空格字符串会被拆成标识符）。
+- **⚠️ 认知修正——characterId=9 运行态 world_info 源是卡内嵌 ccv3，不是外部 JSON：** 旧 findings 记"运行态 \world_info\ 从外部 JSON 加载（非卡内嵌）"对 characterId=9 不成立。实测：\characters[9].world\/\characters[9].data.world\ 均空，世界书下拉框（\#world_info\ HTMLSelectElement）对该卡全 \selected:false\，\wiSelectValue=""\。运行态数据源是 \characters[9].data.character_book.entries\（ccv3 形状）。外部 JSON 污染（\神秘复苏模拟器发布版.json\ 383/5/40613）只影响**绑定了该外部世界书的卡**，characterId=9 不受其影响——这解释了为何重建外部 JSON 后 characterId=9 运行态本就该干净。
+- **⚠️ world_info 全局变量是 HTMLSelectElement 不是数据：** SillyTavern 全局 \world_info\ 是世界书选择下拉框 DOM（\constructor.name=HTMLSelectElement\，6 个 option），不是世界书数据本身。数据在 \SillyTavern.getContext().characters[id].data.character_book.entries\（ccv3）或 \.character_book.entries\（旧 chara），以及模块私有的激活缓存 \world_info_data\（不在 window，无法直读）。要验运行态源数据，读 character_book.entries 即可。
+- **运行态内存快照三处一致：** characterId=9 ccv3 内存数据 = 磁盘 PNG chara/ccv3 gate = 磁盘外部 JSON gate，均 383/33/5851。ccv3 内 33 disabled 全是 \enabled=false\ 原生形状（无 \disable=true\），gate \isEntryDisabled\ 认 \disable===true || enabled===false\ 所以通过。
+- **删 PNG 文件不等于删角色：** \E:/SillyTavern/data/banyan/characters/\ 删 6 张污染 PNG 后，SillyTavern 内存 \characters\ 数组仍缓存 characterId=4-8 条目（avatar 引用已不存在的文件名但对象还在）。要彻底清理需 UI 侧删角色或重载角色列表。但只要不激活这些卡，不影响 worldbook。
+
 ## 2026-06-21：优先级 1 完成——工作树 source PNG 用 git checkout HEAD 修复（HEAD 实测干净）
 
 - **问题：** 仓库 source PNG 工作树漂回污染 383/5/40613，但 git show HEAD:<png> gate 通过 383/33/5851，HEAD 实际干净。旧 task_plan 第 13 条"HEAD 污染"已失效。
