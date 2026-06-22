@@ -6610,7 +6610,7 @@
           console.error(`[${label}] 加载失败，请检查 CDN 可用性`);
         };
 
-        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@6ace1ad/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix13-gen-ended-fix');
+        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@8fdcc4a77531ff1cc0ceec147e795f8f4d8323e0/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix13');
 
     - 名称: 变量结构
       id: f65ab164-4268-4366-8228-16af904c2251
