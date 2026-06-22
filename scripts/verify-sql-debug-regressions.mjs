@@ -317,8 +317,8 @@ function validateTemplate(filePath) {
   assert.ok(/chronicle/.test(chronicleText), 'chronicle prompt should name the current SQL table');
   assert.ok(/log_summary/.test(chronicleText), 'chronicle prompt should forbid legacy log_summary table');
   assert.ok(/event_summary/.test(chronicleText), 'chronicle prompt should forbid legacy event_summary table');
-  assert.ok(/200-600|200到600/.test(chronicleText), 'chronicle prompt should keep the 200-600 char constraint visible');
-  assert.ok(/不足\s*200\s*字.*禁止输出\s*SQL/.test(chronicleText), 'chronicle prompt should forbid short chronicle_text SQL output');
+  assert.ok(/20-600|20到600/.test(chronicleText), 'chronicle prompt should keep the 20-600 char constraint visible (v6.28.1 relaxed from 200)');
+  assert.ok(/不足\s*20\s*字.*禁止输出\s*SQL/.test(chronicleText), 'chronicle prompt should forbid short chronicle_text SQL output (v6.28.1 relaxed from 200)');
 
   const controlledGhostsText = [
     template.sheet_controlled_ghosts.sourceData.note,
@@ -402,7 +402,7 @@ function testConstraintRegistry(templates) {
   assert.deepEqual(revivalRisk.enumValues, ['无', '低', '中', '高', '致命', '未知']);
 
   const chronicleText = getRegistryColumn(registry, 'chronicle', 'chronicle_text');
-  assert.deepEqual(chronicleText.lengthRange, { min: 200, max: 600 });
+  assert.deepEqual(chronicleText.lengthRange, { min: 20, max: 600 }); // v6.28.1 relaxed from 200
   assert.equal(chronicleText.notNull, true);
 
   const worldPressure = getRegistryColumn(registry, 'global_state', 'world_pressure');
