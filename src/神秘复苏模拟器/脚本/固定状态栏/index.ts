@@ -181,22 +181,21 @@ function retryMount(attempt = 1) {
   if (attempt < 20) setTimeout(() => retryMount(attempt + 1), 1000);
 }
 
-$(() => {
-  retryMount();
+// 立即执行初始化，不依赖 jQuery ready（动态加载的脚本可能在页面 ready 后才加载）
+retryMount();
 
-  const refreshEvents = [
-    tavern_events.CHAT_CHANGED,
-    tavern_events.MESSAGE_RECEIVED,
-    tavern_events.MESSAGE_UPDATED,
-    tavern_events.MESSAGE_SWIPED,
-    tavern_events.GENERATION_ENDED,
-  ];
+const refreshEvents = [
+  tavern_events.CHAT_CHANGED,
+  tavern_events.MESSAGE_RECEIVED,
+  tavern_events.MESSAGE_UPDATED,
+  tavern_events.MESSAGE_SWIPED,
+  tavern_events.GENERATION_ENDED,
+];
 
-  for (const eventName of refreshEvents) {
-    eventOn(eventName, () => setTimeout(refreshFixedStatusBar, 250));
-  }
+for (const eventName of refreshEvents) {
+  eventOn(eventName, () => setTimeout(refreshFixedStatusBar, 250));
+}
 
-  $(window).on('pagehide', () => {
-    document.querySelector(`#${statusContainerId}`)?.remove();
-  });
+$(window).on('pagehide', () => {
+  document.querySelector(`#${statusContainerId}`)?.remove();
 });
