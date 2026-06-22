@@ -164,17 +164,48 @@
 - 4.0 基线清单类提交可额外包含 `4.0功能基线回归清单.md`。
 - 临时日志、截图、CDP 探针输出、`.codex-*` worktree、`planning_archive_2026-06/**` 默认不提交，除非用户明确要求共享证据。
 
-## worktree → PR 工作流（本地 main 停滞，正式改动必须走这条）
+## 分支合并策略（单人项目简化版）
 
-本地 `main` 分支长期停留在旧基线、落后 origin 上百提交且工作树长期脏（发布与 hotfix 工作实际在 `.codex-*` worktree 完成、从 worktree push 到 origin/main）。因此**任何要落到 origin 的改动都不能在本地 main 上直接 commit/push**，按以下流程：
+本项目为单人开发，采用分级合并策略：日常改动使用快速合并，重要改动可选择 PR 流程。
 
-1. `git fetch origin`，确认 `origin/main` tip（当前 `dbcbdd9` / v0.0.235（fork origin/main tip））。
-2. `git worktree add -b <branch> .codex-<name> origin/main`——从 origin tip 切干净 worktree，不碰脏的主工作区。
-3. 在 worktree 内编辑源码/脚本（用 Read/Edit/Write，不依赖 Bash 分类器）。
-4. 在 worktree 内 `pnpm install` + 跑 gate + `pnpm build` 验证。**注意**：worktree 的 `pnpm install` 可能解析到比 origin 已提交 dist 更新的依赖，导致 dist 重建带噪声——若 dist 出现未改源码文件也被重打包，说明依赖漂移，**只提交 source+测试，dist 留给发布流程在一致环境重建**（或先 `pnpm install --frozen-lockfile`）。
-5. 精确 `git add <具体文件>`（绝不 `git add .`，不混入 dist 噪声/无关 dirty），commit。
-6. `git push -u origin <branch>`。
-7. 在 GitHub `compare/main...<branch>` 建 PR，**base repository 必须设为自己 fork `linlangliehu/tavern_helper_template`**（不是上游模板仓库）；默认合并方式 Create a merge commit 即可。
-8. 合并后按需 `git worktree remove .codex-<name>` 清理。
+### 快速合并流程（适合大部分日常改动）
 
-**反模式：** 不要 cherry-pick / push 本地 main 上的杂烩提交（如 `8c30884`，+2051 行 vendor bundle，非纯净）；不要用文件级覆盖运行中角色 PNG 代替 SillyTavern 正式导入；不要在依赖漂移的 worktree 里提交 dist。
+适用场景：
+- Planning 文档更新（task_plan.md、progress.md、findings.md）
+- 明确的小 bug 修复（如 CHECK 约束调整、字段校验）
+- 文档修正、注释更新
+- 配置调整、脚本优化
+
+流程：
+1. `git fetch origin`，确认 `origin/main` 最新状态
+2. `git checkout -b <branch>` 或 `git worktree add -b <branch> .codex-<name> origin/main`
+3. 改动 + 测试 + commit（精确 `git add <具体文件>`，不用 `git add .`）
+4. `git push origin <branch>`（远程留痕，可回溯）
+5. `git checkout main && git merge <branch> --no-ff -m "Merge branch '<branch>' into main"`（保留分支历史）
+6. `git push origin main`
+7. `git branch -d <branch> && git push origin --delete <branch>`（清理分支）
+
+**注意**：worktree 的 `pnpm install` 可能解析到比 origin 已提交 dist 更新的依赖，导致 dist 重建带噪声——若 dist 出现未改源码文件也被重打包，说明依赖漂移，**只提交 source+测试，dist 留给 bot bundle Action 在 CI 一致环境重建**。
+
+### PR 流程（可选，用于重要改动）
+
+适用场景：
+- 发布新版本（如 v6.28 → v6.29）
+- 涉及世界书、系统提示词、数据库模板等核心逻辑
+- 新功能开发或重大重构
+- vendor 源码修改
+- 需要在 GitHub 保留详细讨论记录和验收报告
+
+流程：
+1. `git fetch origin`，确认 `origin/main` tip
+2. `git worktree add -b <branch> .codex-<name> origin/main`——从 origin tip 切干净 worktree
+3. 在 worktree 内编辑源码/脚本（用 Read/Edit/Write）
+4. 在 worktree 内 `pnpm install` + 跑 gate + `pnpm build` 验证
+5. 精确 `git add <具体文件>`（绝不 `git add .`，不混入 dist 噪声/无关 dirty），commit
+6. `git push -u origin <branch>`
+7. 在 GitHub `compare/main...<branch>` 建 PR，**base repository 必须设为自己 fork `linlangliehu/tavern_helper_template`**（不是上游模板仓库）
+8. 在 PR 描述中添加改动说明、验收结果、相关 commit
+9. 合并 PR（默认 Create a merge commit）
+10. `git worktree remove .codex-<name>` 清理
+
+**反模式：** 不要 cherry-pick / push 本地 main 上的杂烩提交；不要用文件级覆盖运行中角色 PNG 代替 SillyTavern 正式导入；不要在依赖漂移的 worktree 里提交 dist。
