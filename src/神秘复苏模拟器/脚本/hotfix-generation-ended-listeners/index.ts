@@ -107,6 +107,30 @@ async function cleanProtocolBlocks(messageIndex: number) {
   }
 }
 
+async function handleMessageReceived() {
+  const hostWindow = getHostWindow();
+  const context = getSillyTavernContext(hostWindow);
+  const chat = context?.chat;
+
+  if (!chat || chat.length === 0) {
+    console.debug('[Hotfix] MESSAGE_RECEIVED: 聊天记录为空，跳过处理');
+    return;
+  }
+
+  const lastMessageIndex = chat.length - 1;
+  const lastMessage = chat[lastMessageIndex];
+
+  console.debug('[Hotfix] MESSAGE_RECEIVED 触发', {
+    messageIndex: lastMessageIndex,
+    hasUpdateVariable: lastMessage.mes?.includes('<UpdateVariable>'),
+    hasChoices: lastMessage.mes?.includes('<choices>'),
+  });
+
+  // 立即清洗协议块（在界面渲染之前）
+  // 这样可以确保内存与界面同步
+  await cleanProtocolBlocks(lastMessageIndex);
+}
+
 async function handleGenerationEnded() {
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
@@ -138,7 +162,7 @@ async function handleGenerationEnded() {
     console.warn('[Hotfix] window.Mvu.parseMessage 不可用，跳过 MVU 解析');
   }
 
-  // 2. 清洗协议块（在 MVU 解析之后）
+  // 2. 再次清洗协议块（防御性清洗，以防 MESSAGE_RECEIVED 未触发或 MVU 解析后内容变化）
   await cleanProtocolBlocks(lastMessageIndex);
 
   // 3. 触发数据库刷新（如果需要）
@@ -151,7 +175,7 @@ async function handleGenerationEnded() {
   }
 }
 
-function registerGenerationEndedListener() {
+function registerEventListeners() {
   const hostWindow = getHostWindow();
   const eventSource = getEventSource(hostWindow);
 
@@ -162,29 +186,45 @@ function registerGenerationEndedListener() {
 
   // 检查是否已经注册过（避免重复注册）
   const events = eventSource.events || {};
-  const existingListeners = events.GENERATION_ENDED || events.generation_ended || [];
+  const existingGenerationEndedListeners = events.GENERATION_ENDED || events.generation_ended || [];
+  const existingMessageReceivedListeners = events.MESSAGE_RECEIVED || events.message_received || [];
 
-  console.info('[Hotfix] 当前 GENERATION_ENDED 监听器数量', {
-    GENERATION_ENDED: Array.isArray(existingListeners) ? existingListeners.length : 0,
+  console.info('[Hotfix] 当前监听器数量', {
+    GENERATION_ENDED: Array.isArray(existingGenerationEndedListeners) ? existingGenerationEndedListeners.length : 0,
+    MESSAGE_RECEIVED: Array.isArray(existingMessageReceivedListeners) ? existingMessageReceivedListeners.length : 0,
     allEvents: Object.keys(events).length,
   });
 
-  // 注册监听器
+  let successCount = 0;
+
+  // 注册 MESSAGE_RECEIVED 监听器（优先清洗，确保在界面渲染前完成）
+  if (typeof eventSource.on === 'function') {
+    eventSource.on('MESSAGE_RECEIVED', handleMessageReceived);
+    console.info('[Hotfix] 已注册 MESSAGE_RECEIVED 监听器（eventSource.on）');
+    successCount++;
+  } else if (typeof hostWindow.eventOn === 'function' && hostWindow.tavern_events?.MESSAGE_RECEIVED) {
+    hostWindow.eventOn(hostWindow.tavern_events.MESSAGE_RECEIVED, handleMessageReceived);
+    console.info('[Hotfix] 已注册 MESSAGE_RECEIVED 监听器（tavern eventOn）');
+    successCount++;
+  }
+
+  // 注册 GENERATION_ENDED 监听器（触发 MVU + 防御性二次清洗）
   if (typeof eventSource.on === 'function') {
     eventSource.on('GENERATION_ENDED', handleGenerationEnded);
     console.info('[Hotfix] 已注册 GENERATION_ENDED 监听器（eventSource.on）');
-    return true;
-  }
-
-  // Fallback: 尝试酒馆助手的 eventOn
-  if (typeof hostWindow.eventOn === 'function' && hostWindow.tavern_events?.GENERATION_ENDED) {
+    successCount++;
+  } else if (typeof hostWindow.eventOn === 'function' && hostWindow.tavern_events?.GENERATION_ENDED) {
     hostWindow.eventOn(hostWindow.tavern_events.GENERATION_ENDED, handleGenerationEnded);
     console.info('[Hotfix] 已注册 GENERATION_ENDED 监听器（tavern eventOn）');
-    return true;
+    successCount++;
   }
 
-  console.error('[Hotfix] 无可用的事件注册方法，监听器注册失败');
-  return false;
+  if (successCount === 0) {
+    console.error('[Hotfix] 无可用的事件注册方法，监听器注册失败');
+    return false;
+  }
+
+  return true;
 }
 
 // 等待 SillyTavern 和 Mvu 初始化
@@ -216,7 +256,7 @@ async function installHotfix() {
     return;
   }
 
-  const success = registerGenerationEndedListener();
+  const success = registerEventListeners();
   if (success) {
     console.info('[Hotfix] GENERATION_ENDED 监听器补丁安装成功');
   } else {
