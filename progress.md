@@ -1,11 +1,11 @@
 # Progress Log
 
-## 2026-06-22 CST（任务 E 进行中：vendor 表初始化 bug 修复已提交，等待 bot bundle）
+## 2026-06-22 CST（任务 E 阶段 1 完成：v6.29 已发布，待本地和真页验证）
 
-**状态：** 已修复 vendor 源码并推送分支 `fix-vendor-table-init-bug`（commit `e4048a6`），等待 bot 自动 bundle。
+**状态：** v6.29 已推送 origin/main（commit `a3c5108`），CDN ref `9433a67`，发布版 PNG 已打包（383/33/5851 通过）。
 
 **完成：**
-- **根因定位**：`normalizeGuideData_ACU` 等 3 处函数的 fallback 逻辑缺陷
+- **根因定位与修复**：`normalizeGuideData_ACU` 等 3 处函数的 fallback 逻辑缺陷
   - 检查 `content[0]` 是否为数组，但没有检查 `content` 是否为空数组
   - 如果 `content = []`，则 `content[0] = undefined`，fallback 到 `[null]`
   - 后续迁移逻辑把 `[null]` 转换为 `["row_id"]`，导致表头截断
@@ -15,18 +15,20 @@
   - `restoreSeedRows` 内部 (line 7834)
 - **Git 操作**：
   - 创建 worktree `.codex-vendor-fix`，分支 `fix-vendor-table-init-bug`
-  - 提交 `e4048a6`
-  - 推送到远程分支
+  - 提交 vendor 源码修复 `e4048a6`，推送远程分支
+  - PR #16 合并到 main（commit `9433a67`）
+  - bot 未生成新 bundle（vendor 文件不经过 webpack，merge commit 已包含修复）
+  - 确认 CDN 可访问 `9433a67` 的 vendor 文件（HTTP 200）
+  - 更新 `publish-card.mjs` CDN ref 为 `9433a67`，版本号 `6.29`
+  - 运行 `pnpm run publish-card`，worldbook gate 通过 383/33/5851
+  - 提交发布版 `a3c5108`，推送 origin/main
 
 **下一步：**
-1. 等待 bot 自动构建 dist（`[bot] bundle`）
-2. 更新 `publish-card.mjs` CDN ref 为 bot bundle commit
-3. 运行 `pnpm run publish-card`
-4. 本地验证：检查灵异物品和收录规律表头是否完整
-5. 真页验证：重新导入角色卡，真实 AI 对话，检查 14/14 张表写入
-6. 回归测试：`verify-sql-debug-regressions.mjs`
-7. 提交发布版并推送
-8. 发布 v6.28.4
+1. 本地验证：启动 Chrome 调试，检查灵异物品和收录规律表头是否完整（9 列和 10 列）
+2. 真页验证：重新导入角色卡，真实 AI 对话，检查 14/14 张表写入
+3. 回归测试：`verify-sql-debug-regressions.mjs`
+4. 更新 task_plan.md 标记任务 E 阶段 1 完成
+5. 可选：任务 E 阶段 2（追查上游根因，为什么 content 变空）
 
 **预期结果：** 数据库写入成功率从 85.7% (12/14) 提升到 100% (14/14)。
 
