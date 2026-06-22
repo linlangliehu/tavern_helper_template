@@ -16,40 +16,39 @@
 
 ## 当前状态
 
-**2026-06-22 v6.29 已发布。** origin/main 当前 tip `a3c5108`（release: v6.29 - 修复 vendor 表初始化 bug）。
+**2026-06-22 v6.30 已发布。** origin/main 当前 tip `5f37095`（release: v6.30 - 修复 AI 不输出 SQL）。
 
-**当前版本：** v6.29，CDN ref `@9433a67`，cache `phase164-4-0-final-baseline-6-28-p5-4-hotfix13`。
+**当前版本：** v6.30，CDN ref `@c087823`，cache `phase164-4-0-final-baseline-6-28-p5-4-hotfix13`。
 
-**本轮已完成任务（v6.28.1 → v6.29）：**
-1. ✅ 任务 A：修复事件纪要 CHECK 约束（200→20 字），合并 `744647a`，发布 v6.28.1
-2. ✅ 任务 B：修复固定状态栏初始化（移除 jQuery ready 封装），合并 `db0ec51`，发布 v6.28.2（CDN `@d4b1d23`）
-3. ✅ 任务 C：优化内存清洗时机（新增 MESSAGE_RECEIVED 监听器），合并 `1165716`，发布 v6.28.3（CDN `@1861e16`）
-4. ✅ 任务 G：更新项目文档（重写 README.md + 新增 CHANGELOG.md），合并 `9756e2a`
-5. ✅ 任务 E 阶段 1：修复 vendor 表初始化 bug（灵异物品、收录规律），PR #16 `9433a67`，发布 v6.29（CDN `@9433a67`）
+**本轮已完成任务（v6.29 → v6.30）：**
+1. ✅ 诊断 AI 不输出 SQL 根因：使用 Chrome DevTools MCP 查看 `getStoryContext()`，发现数据库联动规则未注入（`hasDatabaseInstruction: false`）
+2. ✅ 定位配置问题：数据库联动规则使用绿灯（selective）激活策略，需要关键词匹配，但最近对话未触发关键词
+3. ✅ 修复实现：将数据库联动规则改为蓝灯（constant）激活策略，PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`
+4. ✅ 发布 v6.30：更新 CDN ref 和版本号，发布 `5f37095`，打标签 `v6.30`
 
 **前置已全清：** worldbook hard gate 三方闭环（383/33/5851）；仓库 source PNG 与 HEAD 干净一致。
 
 ## 当前任务清单
 
-**任务 E 阶段 1 已完成，待本地和真页验证。**
+**v6.30 已发布，待真页验证。**
 
 **已完成任务（勿重做）：**
+- ✅ 任务 E 阶段 1（vendor 表初始化 bug 修复）：PR #16 `9433a67`，v6.29 已推送
+- ✅ AI 不输出 SQL 问题修复：数据库联动规则改为常驻激活，PR #17，v6.30 已发布
 - ✅ 任务 F（worktree 清理）：已清理
 - ✅ 任务 A（事件纪要 CHECK 约束修复 → v6.28.1）：已发布
 - ✅ 任务 D（PROJECT_FLOW.md 更新）：已合并
 - ✅ 任务 B（固定状态栏初始化修复 → v6.28.2）：已发布
 - ✅ 任务 C（内存界面同步优化 → v6.28.3）：已发布
 - ✅ 任务 G（项目文档更新）：README.md + CHANGELOG.md 已合并 `9756e2a`
-- ✅ 任务 E 阶段 1（vendor 表初始化 bug 修复）：PR #16 `9433a67`，v6.29 已推送
 - 任务 1（chronicle 追加式守卫）：adapter CRUD Plan + vendor SQL 双路径已合并 fork main（PR `chronicle-append-guard`），v0.0.235 已发版。
 - 任务 4（姓名/纪要 scope 隔离回归）：双侧已补。
 - 任务 3（doubao 辅助 status 0）：已决策为不改源码、不改主聊天 API、只观察。
 - worldbook hard gate 三方闭环（磁盘外部 JSON + 磁盘 PNG + 运行态内存 ccv3 均 383/33/5851）。
 
-**待验证（任务 E）：**
-1. 本地验证：启动 Chrome 调试，检查灵异物品和收录规律表头是否完整（9 列和 10 列）
-2. 真页验证：重新导入角色卡，AI 对话，检查 14/14 张表写入
-3. 回归测试：`verify-sql-debug-regressions.mjs`
+**待验证（v6.30）：**
+1. 真页验证：重新导入 v6.30 角色卡，AI 对话，验证数据库 14/14 张表写入成功
+2. 回归测试：`verify-sql-debug-regressions.mjs`
 
 **可选长期任务：**
 - **任务 E 阶段 2（追查上游根因）**：为什么 content 变空数组（非阻塞，阶段 1 已防御性修复）
@@ -63,7 +62,8 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
-| `v6.29`（**当前有效发布版**） | 修复 vendor 表初始化 bug：灵异物品、收录规律表头截断 | PR #16 `9433a67`，发布 `a3c5108`；CDN ref `@9433a67` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；待本地和真页验证 |
+| `v6.30`（**当前有效发布版**） | 修复 AI 不输出 SQL：数据库联动规则改为常驻激活（蓝灯） | PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`，发布 `5f37095`；CDN ref `@c087823` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；待真页验证 |
+| `v6.29` | 修复 vendor 表初始化 bug：灵异物品、收录规律表头截断 | PR #16 `9433a67`，发布 `a3c5108`；CDN ref `@9433a67` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；已被 v6.30 覆盖 |
 | `v6.28.3` | 优化内存与界面同步：新增 MESSAGE_RECEIVED 监听器，立即清洗协议块 | 合并 `1165716`，bot bundle `1861e16`，发布 `8de8ed6`；CDN ref `@1861e16` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；已被 v6.29 覆盖 |
 | `v6.28.2` | 修复固定状态栏初始化：移除 jQuery ready 封装，立即执行 retryMount() | 合并 `db0ec51`，bot bundle `d4b1d23`，发布 `0598241` | 同上 | 已发布；被 v6.28.3 覆盖 |
 | `v6.28.1` | 放宽事件纪要 CHECK 约束（200→20 字） | 合并 `744647a`，bot bundle `f3b60c9`，发布 `bbda149` | 同上 | 已发布；被 v6.28.2 覆盖 |

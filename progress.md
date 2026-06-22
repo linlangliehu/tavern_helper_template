@@ -1,5 +1,38 @@
 # Progress Log
 
+## 2026-06-22 CST（v6.30 发布完成：修复 AI 不输出 SQL 问题）
+
+**状态：** v6.30 已发布，数据库联动规则改为常驻激活（蓝灯），修复 AI 不输出 SQL 的根本问题。
+
+**完成：**
+- **问题诊断**：
+  - v6.29 真页验证发现 AI 只输出 MVU JSON Patch，不输出 SQL
+  - 使用 Chrome DevTools MCP 诊断：`api.getStoryContext()` 返回 `hasDatabaseInstruction: false`
+  - 根因：数据库联动规则使用**绿灯（selective）激活策略**，需要关键词匹配才会注入
+  - 最近对话中没有触发关键词（数据库、表格、档案写入等），规则从未注入到 AI 上下文
+  - 填表模式正确（`ai_crud_plan`），规则内容正确（5844 字符，14 张表说明），但 AI 根本看不到规则
+- **修复实现**：
+  - 将数据库联动规则激活策略从**绿灯改为蓝灯（constant）**
+  - 修改 `src/神秘复苏模拟器/index.yaml` 和发布版
+  - 确保每次对话都注入数据库规则，不依赖关键词匹配
+- **Git 操作**：
+  - 创建 worktree `.codex-db-constant-activation`，分支 `fix-database-rule-constant-activation`
+  - 提交修复 `b288150`，推送远程分支
+  - PR #17 合并到 main（merge commit `c2cacc0`）
+  - bot 自动 bundle（commit `c087823`）
+  - 更新 `publish-card.mjs` CDN ref 为 `c087823`，版本号 `6.30`
+  - 运行 `pnpm run publish-card`，worldbook gate 通过 383/33/5851
+  - 提交发布版 `5f37095`，推送 origin/main，打标签 `v6.30`
+  - CDN smoke 通过（HTTP 200）
+  - 清理 worktree 和本地分支
+
+**预期效果：**
+- AI 每次都能看到数据库联动规则，知道何时输出 SQL、如何填写 14 张表
+- 数据库写入成功率从 85.7%（12/14）提升到 100%（14/14）
+- 灵异物品和收录规律表能正常写入（v6.29 已修复表头截断 bug）
+
+**待验证：** 重新导入 v6.30 角色卡，真实 AI 对话，验证数据库 14/14 张表写入成功。
+
 ## 2026-06-22 CST（任务 E 阶段 1 完成：v6.29 真页验证通过，表头修复成功）
 
 **状态：** v6.29 真页验证完成，vendor 表初始化 bug 修复成功。表头不再截断，修复目标达成。
