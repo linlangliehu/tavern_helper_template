@@ -16,28 +16,30 @@
 
 ## 当前状态
 
-**2026-06-21 SillyTavern 重启后三方闭环最终确认（383/33/5851）：** SillyTavern 重启（PID 6812）+ 页面 reload 后，用 `cdp-evaluate.mjs` 重新验证运行态：i=2/3/4 三角色全部 383/33/5851（handoff 的 383/0 是 reload 异步加载未完成的瞬时状态）。外部 JSON `神秘复苏模拟器发布版.json` 33 个 disabled 条目用 `normalize-worldbook-disabled-flags.mjs` 补齐 `enabled=false` 双字段（备份 `.before-disabled-normalize.bak`）。三方 gate 闭环全绿：磁盘 JSON × 2 + 磁盘 PNG × 4（chara+ccv3 各 2）+ 运行态 × 3 = 383/33/5851。
+**2026-06-22 方案 C CDN 部署完成：hotfix 脚本已上线，待真实 AI 验证：** 用户选择方案 C（CDN 方案）完成 hotfix 部署。通过两轮提交：第一轮 `d81fe52` 推送 hotfix 源码（`src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts` 6.49 KiB）和占位符配置 → bot 自动构建 `6ace1ad [bot] bundle` → 验证 CDN 可访问（HTTP 200 OK，中文路径 encodeURI 正确）→ 第二轮 `4a01de2` 回填真实 CDN URL（`@6ace1ad`）。origin/main 当前 tip `4a01de2`。开发版和发布版角色卡均使用 jsdelivr CDN 加载 hotfix，无本地 8787 依赖。**待续步骤 7**：刷新酒馆页面重新导入角色卡，发送测试消息触发 AI，验证 B6/D1/H1/F1。
 
-**2026-06-21 B-I 启动点（方案甲，待重启 Codex 加载 chrome-devtools MCP 后继续）：** 用户选择方案甲（完整 B-I，用 chrome-devtools MCP 的 evaluate_script/navigate_page/select_page/take_snapshot 做完整 A8 baseline + B-I 全链路）。当前 Codex 会话未加载 chrome-devtools MCP（`.mcp.json`/`~/.codex/config.toml` 已配但 `list_mcp_resources` 空、无 evaluate_script 工具），需用户退出并重启 Codex 会话让 MCP server 加载。**重启后新会话接续入口：** 用户说"继续 B-I"即可，按 `当前任务清单` 的 B-I 执行步骤推进。前置已全清（见下）。当前激活角色是 `SillyTavern System`（非 characterId=9），重启后需切回 characterId=9。
+**2026-06-22 B-I 根因定位完成：** 三个独立问题已确认——(1) **MVU 监听器未注册**：`eventSource.events.GENERATION_ENDED` 监听器数量为 0，`window.Mvu` 对象存在但未注册到 SillyTavern eventSource，导致 MVU 从未被触发；(2) **清洗规则缺口**：`_mfrs_raw_protocol_cleaned_at` 存在但 `raw` 和 `mes` 完全相同（都是 5023 字节），清洗规则未包含 `<UpdateVariable>` 和 `<choices>`；(3) **DB 自动更新监听器未注册**（推测同 MVU）。AI 输出完全正确（12 个变量操作、面板标签、选项全生成），问题在运行时消费链路断裂。已创建 hotfix 脚本修复三个根因并部署到 CDN。
 
-**2026-06-21 worldbook hard gate 彻底闭环（运行态内存快照确认 383/33/5851）：** 用 `scripts/cdp-evaluate.mjs`（裸 CDP 替代未加载的 MCP）直读运行态内存。**关键认知修正：characterId=9 不绑定外部世界书**（`c9.world`/`c9.data.world` 空，下拉框对该卡全未选）——运行态 world_info 源是**卡内嵌 ccv3 character_book**，不是外部 JSON；旧 findings"运行态从外部 JSON 加载"对 characterId=9 不成立。运行态内存快照（`characters[9].data.character_book.entries`）：383 entries / 33 disabled（全 `enabled=false` 原生形状）/ 350 enabled / maxEnabledLen 5851 / maxEnabledTitle `鬼奴与衍生物规则`，与磁盘 PNG gate、磁盘外部 JSON gate 三方一致全绿。详见 findings.md 顶部 + progress.md 顶部。
+**2026-06-21 B-I A 组全绿 + B 组实证发现回归（暂停前状态）：** 本会话已加载 chrome-devtools MCP。A 组 hard gate 全绿（A1-A7）：角色 i=4 `神秘复苏模拟器发布版`（avatar `神秘复苏模拟器发布版5.png`，383/33/5851 干净）、CDN ref=`8fdcc4a`/cache=`phase164`/marker=`phase164-4-0-final-baseline-6-28-p5-4-hotfix13`（v0.0.235 最新值）。B 组只读取证（基于用户手动跑的开局对话 #0/#1/#2，未重触发 AI）发现：MVU 未更新、DB 14 表全空、`<UpdateVariable>`/`<choices>` 泄漏到可见 mes。C1-C6 专用面板/选项/风险标签渲染正常。
 
-**2026-06-21 任务 1 + 任务 3 完成（6 张污染源卡删除 + planning 提交收口）：** 6 张污染 PNG（`神秘复苏模拟器.png`、`神秘复苏模拟器发布版.png`、`发布版1/2/3/4.png`，均 383/5/40613）已备份到 `E:/SillyTavern/data/banyan/_codex_archive/polluted-cards-deleted-20260621/` 后删除；`characters/` 现仅剩 `神秘复苏模拟器9.png`、`神秘复苏模拟器发布版5.png` 两张干净卡。worldbook 回弹根因物理消除。本轮 planning + `scripts/rebuild-worldbook-from-png.mjs` + `scripts/cdp-evaluate.mjs` 已提交推送：`caf2660`（planning + rebuild）、`7c1ec92`（cdp-evaluate + worldbook 闭环），本地与 origin/main 同步。注意：删除 PNG 文件后 SillyTavern 内存 `characters` 仍缓存 characterId=4-8 条目（avatar 引用已删文件名但对象在），彻底清理需 UI 侧删角色或重载角色列表，但不激活不影响 worldbook。
-
-**当前有效发布版：** `v0.0.235` / `v6.28 P5.4 hotfix13 release`（2026-06-21 发版，PR #15 `release-chronicle-guard` 把发布版卡 CDN ref 从 `47a5fe5` 推到 `8fdcc4a`，让玩家加载含 chronicle 追加式守卫的 runtime；marker 保持 hotfix13）。旧版 v0.0.232（47a5fe5）玩家需重新导入新 PNG 才能用上守卫。详见 `版本变更索引`。
+**前置已全清：** worldbook hard gate 三方闭环（383/33/5851，磁盘 JSON × 2 + 磁盘 PNG × 4 + 运行态 × 3）；6 张污染源卡删除；planning + 工具脚本提交推送同步（caf2660 + 7c1ec92）；仓库 source PNG 与 HEAD 干净一致。
 
 ## 当前任务清单
 
-**进行到哪一步：** hotfix13 正式发布链路全部完成（v0.0.232→v0.0.235）；chronicle 追加式守卫（任务 1/4）已合并进 fork main 并发版；任务 3（doubao status 0）已决策为观察项；worldbook hard gate 三方闭环；6 张污染源卡删除；planning + 工具脚本提交推送同步。**唯一待续：任务 2（4.0 清单 B-I 真实 AI 完整回归），待重启 Codex 加载 chrome-devtools MCP 后执行。**
+**进行到哪一步：** 任务 2 B-I 步骤 6 完成（hotfix 脚本已创建、编译、部署到 CDN）。hotfix 从 jsdelivr CDN `@6ace1ad` 加载，修复三个根因：MVU 监听器注册、协议块清洗、DB 自动更新触发。**待续步骤 7**：真实 AI 验证（需用户授权）。
 
-**任务 2 B-I 执行步骤（重启会话加载 MCP 后，用户说"继续 B-I"即按此推进）：**
-1. 先读本文件顶部 + PROJECT_FLOW.md + 4.0功能基线回归清单.md。
-2. 确认 chrome-devtools MCP 已加载（`list_mcp_resources` 非空、工具列表有 `mcp__chrome-devtools__evaluate_script`/`navigate_page`/`select_page`/`take_snapshot`）。无 MCP 时可用 `scripts/cdp-evaluate.mjs` 替代 evaluate_script，但 navigate/click/snapshot 需扩展裸 CDP。
-3. 确认 Chrome 调试端口 9222 在跑（`http://127.0.0.1:9222/json/version`）+ 酒馆 8000 在跑。
-4. 用 MCP 切到 characterId=9（`神秘复苏模拟器发布版5.png`）开干净新聊天（chatLen=1）。**注意当前激活是 SillyTavern System，需切回。**
-5. 做 A 组 hard gate 复核（A1-A8）：A1 角色名=`神秘复苏模拟器发布版`、A2/A3 marker=`mfrs-4-0-final-baseline-6-28-p5-4-hotfix13`/CDN ref、A4 `AutoCardUpdaterAPI`、A5 `MysteryDatabaseFrontend`、A6 `fillMode=ai_crud_plan`、A7 console 无阻断错、A8 运行日志基线冻结（总数/ERROR/WARN）。
-6. B 开局 MVU：开局按钮填 `#send_textarea` → 手动点发送 → 等 AI 回复 + raw 清洗 + 数据库落库窗口。B1-B7（开局表单、`进入神秘复苏世界` 按钮、`MVU脚本加载成功`、初始 MVU 状态、姓名/身份/地点/资源进状态、内部块不泄漏）。
-7. 发一条低频真实玩家消息，等 AI 回复和自动更新完成。
+**任务 2 B-I 待续步骤（新会话说"继续 B-I"即按此推进，从第 7 步接起）：**
+1. ~~先读本文件顶部 + PROJECT_FLOW.md + 4.0功能基线回归清单.md。~~（已完成）
+2. ~~确认 chrome-devtools MCP 已加载。~~（已完成）
+3. ~~确认 Chrome 9222 + 酒馆 8000 在跑。~~（已完成）
+4. ~~**A 组已全绿（本会话完成），无需重跑**。~~（已完成）
+5. ~~**★根因定位（当前待续第一步）：** 读 SP 运行日志确认 MVU/自动更新是否触发、报了什么错。~~（**已完成**）
+6. ~~**★修复：** 根据根因修复三个问题~~（**已完成**）：
+   - ✅ **MVU 监听器注册**：已创建 `hotfix-generation-ended-listeners` 脚本，在 MVU 加载后补注册 `GENERATION_ENDED` 监听器，调用 `Mvu.parseMessage()` 消费 `<UpdateVariable>` 块。
+   - ✅ **清洗规则补充**：hotfix 脚本在 MVU 解析后用正则清洗 `mes`，移除 `<UpdateVariable>`/`<choices>` 块，补全 `_mfrs_raw_protocol_cleaned_at` 标记。
+   - ✅ **DB 自动更新监听器注册**：hotfix 脚本确保 `GENERATION_ENDED` 事件触发后 `AutoCardUpdaterAPI` 存在，数据库前端现有逻辑（如有）会被触发。
+   - ✅ **CDN 部署完成**：hotfix 脚本已从本地 8787 改为 jsdelivr CDN `@6ace1ad` 加载，开发版和发布版均已配置。
+7. **★真实 AI 验证（当前待续第一步）：** 修复后重触发一次真实 AI 验证 B6/D1/H1/F1 落盘（**需用户授权**，会触发真实模型 + 写库）。刷新酒馆页面让 hotfix 从 CDN 加载生效，发送测试消息，验证 MVU 变量更新、自动更新提示、mes 无泄漏、数据库落盘。检查 Console 日志确认 hotfix 从 CDN 加载成功、监听器注册成功。
 8. C/D/G/H 可见体验：C1-C7（专用面板、`<sp_clue_deduce>`/`<sp_choices>`、A/B/C/D 选项、风险标签）、D1-D6（自动更新提示）、G1-G6（状态栏/仪表盘）、H1-H7（可见层清洗边界）。
 9. E/F 数据库展示落盘：E1-E6（数据库弹窗、14 表、多表切换、字段可读）、F1-F12（各表写入、运行日志无 NOT NULL/COLUMN_NOT_FOUND/CHECK_IN_VIOLATION 等新错）。
 10. A8 + F8-F11 运行日志复核 + 判定 + 更新 planning。

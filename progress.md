@@ -1,5 +1,27 @@
 # Progress Log
 
+## 2026-06-22 CST（方案 C CDN 部署完成：hotfix 脚本已上线，待真实 AI 验证）
+
+**状态：** 用户选择方案 C（CDN 方案）。通过 worktree → push main 流程完成 hotfix 脚本的 CDN 部署。**未触发真实 AI、未碰真页交互**。
+
+**完成：**
+- **第一轮提交（hotfix 源码 + CDN 占位符）：** 在 `.codex-hotfix-gen` worktree 中创建 `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`（6.49 KiB），更新开发版和发布版 yaml 添加 hotfix 脚本加载器（使用 `COMMIT_HASH_PLACEHOLDER` 占位符）。提交 `d81fe52`，直接推送到 origin/main。
+- **bot 自动构建：** GitHub Actions 自动触发 bundle workflow，bot 构建 dist 并提交 `6ace1ad [bot] bundle`。
+- **CDN 可用性验证：** 测试 jsdelivr CDN 访问 hotfix 脚本（`https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@6ace1ad/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js`），返回 HTTP 200 OK，中文路径 encodeURI 正确。
+- **第二轮提交（CDN URL 回填）：** 在 `.codex-hotfix-cdn` worktree 中将两个角色卡 yaml 的占位符替换为真实 commit hash `6ace1ad`。提交 `4a01de2`，推送到 origin/main。
+- **最终状态：** origin/main 当前 tip 为 `4a01de2`，开发版和发布版角色卡均使用 jsdelivr CDN 加载 hotfix 脚本，无本地 8787 依赖。
+
+**CDN 部署链路：**
+1. 源码提交 → 2. bot 自动构建 dist → 3. CDN 自动同步 → 4. 回填 CDN URL → 5. 完成
+
+**待续（步骤 7）：真实 AI 验证**
+1. 刷新酒馆页面，重新导入角色卡（让 CDN 版 hotfix 生效）
+2. 发送测试消息触发 AI 生成
+3. 验证 B6（MVU 变量更新）、D1（自动更新提示）、H1/H3（mes 无泄漏）、F1-F6（数据库落盘）
+4. 检查 Console 日志确认 hotfix 从 CDN 加载成功、监听器注册、MVU parseMessage 执行、清洗生效
+
+**关键提醒：** CDN 方案已完成，hotfix 脚本现在从 jsdelivr 加载，不再依赖本地 8787 服务。
+
 ## 2026-06-21 CST（SillyTavern 重启后运行态重新验证 + 外部 JSON 格式修复 + 三方闭环最终确认）
 
 **状态：** 用户授权执行步骤 1-3（重新验证运行态 → 如仍污染则修复 → 三方 gate 闭环确认）。SillyTavern 已重启（PID 6812，端口 8000），页面已 reload，Chrome CDP 9222 正常。用 `scripts/cdp-evaluate.mjs`（裸 CDP）做运行态验证。未触发真实 AI、未碰真页交互。
