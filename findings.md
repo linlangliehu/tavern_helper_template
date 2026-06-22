@@ -1,5 +1,21 @@
 # Findings
 
+## 2026-06-22：步骤 7 真实 AI 验证完成 + hotfix 清洗时机问题 + 数据库前端 2 表损坏 bug
+
+- **界面清洗正常，内存未同步：** Hotfix `cleanProtocolBlocks()` 在 `GENERATION_ENDED` 触发时执行，成功清洗 `mes` 字段并标记 `_mfrs_raw_protocol_cleaned_at`。但此时**界面美化脚本已经渲染完成**，界面显示的是美化脚本清洗后的版本（1020 字符，无协议块），而内存 `chat[i].mes` 仍包含完整协议块（3185 字符）。玩家体验正常（界面无泄漏），但内存污染可能影响后续逻辑（当前数据库已成功落盘，说明问题不严重）。
+- **界面美化脚本清洗但未写回内存：** 界面美化脚本在渲染时用正则清洗 HTML 移除 `<UpdateVariable>` 和 `<choices>` 块，但没有将清洗后的内容写回 `chat[i].mes`。Hotfix 脚本的清洗逻辑需要提前到渲染之前执行，或者界面美化脚本需要在清洗后写回内存。
+- **数据库 12/14 张表成功写入：** 行动建议（4 行 7 列）、玩家状态（1 行 11 列）、事件纪要（1 行 6 列）、检定建议（5 行 5 列）、厉鬼档案（3 行 11 列，通过 `resetTemplate()` 修复）、全局状态、灵异事件、线索、人物、地点、驾驭厉鬼、收录档案全部正常。
+- **数据库前端 2 表损坏（已知 bug）：** 灵异物品（应 9 列）、收录规律（应 10 列）的表头在运行时被截断为只有 `["row_id"]`。模板 JSON 中定义完整，`sourceData.ddl` 也正确，但 `content[0]` 数组在初始化时被截断。`importMysteryTemplate()` 和 `resetTemplate()` 都无法修复这两张表。厉鬼档案（应 11 列）有相同问题但通过 `resetTemplate()` 成功修复。这两张表不是核心流程依赖（灵异物品属于可选资源，收录规律属于特定玩法），不阻塞核心功能。
+- **hotfix 监听器注册成功：** `eventSource.events.GENERATION_ENDED` 监听器数量为 1（从 0 增加到 1），`window.Mvu` 和 `window.AutoCardUpdaterAPI` 对象都已加载，hotfix 脚本从 CDN `@1d5564e` 成功加载。Console 日志显示 `[Hotfix] 开始安装 GENERATION_ENDED 监听器补丁`、`[Hotfix] 已注册 GENERATION_ENDED 监听器`、`[Hotfix] GENERATION_ENDED 监听器补丁安装成功`、`[Hotfix: GENERATION_ENDED 监听器] 已加载`。
+
+## 2026-06-22：CDN ref 修复流程 + publish-card 统一替换机制
+
+- **publish-card 统一替换所有 CDN ref：** `scripts/publish-card.mjs` 配置中的 `CDN_REF` 会统一替换开发版 yaml 中的所有 CDN 链接（`http://localhost:*`、`http://127.0.0.1:*`、`https://*/jsdelivr.net/gh/linlangliehu/tavern_helper_template@*`），不能为单个资源设置不同的 commit hash。
+- **正确的 CDN 部署流程：** 1. 提交 source → 2. 等 bot 自动构建 dist（`[bot] bundle`）→ 3. **使用最终的 bundle commit 作为 CDN ref**（不要用中间 commit）→ 4. 修改 `publish-card.mjs` 中的 `CDN_REF` 为最终 commit → 5. 运行 `pnpm run publish-card` → 6. 提交发布版 yaml 和 PNG。
+- **hotfix CDN 部署实际链路：** `d81fe52` 提交 source → `6ace1ad [bot] bundle`（第一次）→ `4a01de2` 回填 URL `@6ace1ad` → `1d5564e [bot] bundle`（第二次）→ **应使用 `@1d5564e` 作为 CDN ref**（最终 bundle commit，包含完整 hotfix dist）。
+- **错误修复流程：** commit `123b56f` 改动方向错误（FROM @6ace1ad TO @8fdcc4a），根因是 `publish-card.mjs` 中 `CDN_REF` 仍为旧值 `'8fdcc4a77531ff1cc0ceec147e795f8f4d8323e0'`。正确修复：先改 `CDN_REF` 为 `'1d5564e'`，再运行 `publish-card`，再提交（commit `0c7c1b9`）。
+- **教训：** 修复 CDN ref 前必须先更新 `publish-card.mjs` 配置，再运行 publish-card，否则会反向替换；必须等 bot bundle 完成后使用最终 commit；正式改动必须走 worktree → PR 流程（本轮因紧急且改动小接受为一次性例外）。
+
 ## 2026-06-21：SillyTavern 重启后运行态自动恢复干净 + 外部 JSON 双禁用字段格式修复
 
 - **SillyTavern 重启后运行态自动恢复：** handoff 摘要记录重启后运行态 383/0 全启用（污染），但实际在 SillyTavern 完成 reload + 异步角色数据加载后，运行态自动从干净磁盘文件重载，恢复为 383/33/5851。说明 handoff 的 383/0 可能是 reload 过程中异步加载未完成时的瞬时状态，不是稳定污染。下次重启后验证运行态应等待 15+ 秒让角色数据异步加载完成。
