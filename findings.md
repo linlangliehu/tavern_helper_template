@@ -1,3 +1,16 @@
+## 2026-06-24：数据库实际已成功写入 13/14 表——getTableData() 不可靠，exportTableAsJson() 才是正确检查方法
+
+- **重大修正：** 之前 handoff 用 `acu.getTableData(tableName)` 返回 null 判定"14/14 表为空"是错误的。`getTableData()` 读的是内存缓存（可能未刷新），实际数据存储在 IndexedDB (`auto-card-updater-db`, version 1) 中。
+- **正确检查方法：** `acu.exportTableAsJson(tableName)` 返回包含所有表的完整对象，每个表有 `content` 数组（row 0 为表头，后续为数据行）。通过检查 `content.length` 和 `content[0]` 可以确认表头和数据。
+- **实际数据库写入结果：** 13/14 表有数据（93%），唯一空表 sheet_collected_rules 是正常游戏状态（玩家未收录规律）。数据内容合理：全局状态、玩家状态（龙火）、灵异事件（七中事件）、厉鬼档案（G0001）、线索（C0001）、人物（龙火+周正）、地点、灵异物品（红色鬼烛）、行动建议（A/B/C/D）、事件纪要（SP0001）、检定建议（5个）、驾驭厉鬼（鬼档案）、收录档案（未知敲门类厉鬼）。
+- **AI 不直接输出 SQL 是正常行为：** AI 输出 MVU patches + `<sp_*>` 协议块（sp_status/sp_ghost_encounter/sp_clue_deduce/sp_choices），shujuku_v120 的 fallback 机制从这些协议块中提取信息，生成本地 CRUD plan，成功写入数据库。console 显示 `[MFRS 关键表兜底] 已在校验前补入 11/13/4/14 条本地 fallback plan`。
+- **部分 CRUD 操作失败（非阻断）：**
+  - `COLUMN_NOT_FOUND: visible_summary` — 驾驭厉鬼和收录档案表的列名是中文"可见摘要"，但 fallback plan 用英文键名 `visible_summary`。这是列名映射问题，不影响其他列的写入（实际数据中"可见摘要"列有值）。
+  - `CHECK_IN_VIOLATION` — 线索表的可信度/验证状态值不在允许列表中。但实际数据中可信度="中"、验证状态="未验证"是合规的，错误可能来自后续更新操作而非初始插入。
+  - `row_id` 不稳定 — sheet_chronicle 和 sheet_clues 的 row_id 为空字符串，退化为 checkpoint 模式。
+- **当前使用旧卡（id=3）：** `神秘复苏模拟器发布版.png`，不是 handoff 中的新导入卡（id=4 `神秘复苏模拟器发布版1.png` 已不存在，当前 id=4 是"蛊真人 v10.2"）。旧卡"数据库联动规则"条目：顶层 `position: "after_char"`，扩展层 `extensions.position: 4, depth: 4, role: 0`，`constant: true, selective: true`，无顶层 depth/role。
+- **IndexedDB 数据库列表：** `SillyTavern_ChatCompletions` (v2), `SillyTavern_Prompts` (v2), `SillyTavern_TextCompletions` (v2), `TavernDB_ACU_VectorHotCache` (v2), `auto-card-updater-db` (v1), `shujuku_v120_config_v1` (v1)。
+- **tableApiPreset 和 plotApiPreset 为空字符串**（不是 null）：`tableApiPreset: ""`, `plotApiPreset: ""`。数据库写入不依赖这两个 preset，fallback 机制直接从 AI 输出提取数据。
 ## 2026-06-24：真页验证通过 — at_depth depth/role 保真修复在 SillyTavern 运行时确认
 
 - **导入方法：** Chrome DevTools MCP 的 upload_file 工具可以直接将 PNG 上传到 SillyTavern 的导入按钮（从文件导入角色 按钮 uid），SillyTavern 会自动处理导入流程。不需要触发 file input 的 change 事件，upload_file 会自动完成。同名卡存在时 SillyTavern 自动加序号（如 神秘复苏模拟器发布版1.png）。

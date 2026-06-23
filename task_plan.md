@@ -28,6 +28,7 @@
 5. ✅ 回归验证：`verify-worldbook-pollution-gate` 三 PNG 均通过（383/33/5851）；`node scripts/verify-sql-debug-regressions.mjs` 通过。
 
 **当前待判定：** 工作区有未提交 dirty（多份 `dist/神秘复苏模拟器/**`、`src/神秘复苏模拟器发布版/神秘复苏模拟器.png`、两个 `.claude/worktrees/*` gitlink）。这些不自动等同于待提交任务；下一步要先判定它们是本次修复发布产物还是本地构建/工具残留。
+**当前状态（2026-06-24 真页验证突破）：** 数据库实际已成功写入 13/14 表（93%），之前"失败"结论为检查方法错误（getTableData() 不可靠，应用 exportTableAsJson()）。当前使用旧卡 id=3，新卡 id=4 已不存在。at_depth 保真修复核心验证已通过，旧卡测试也证明 fallback 机制可在无顶层 depth/role 时工作。
 
 ## 当前任务清单
 
@@ -55,9 +56,10 @@
 - ✅ 真页验证核心步骤：通过 Chrome DevTools MCP 导入更新后的发布版 PNG，验证 ccv3 顶层 depth/role + convertCharacterBook 内部 WI 格式 + extensionPrompts 槽位，确认数据库联动规则按系统角色 depth 4 注入。
 
 **当前待办：**
-1. 可选：连接 AI API 后触发一次真实生成，验证 `customDepthWI_4_0` 内容被填充且 AI 输出 SQL（需用户授权 + AI API 可用）。
-2. 可选：导入更新后的开发版 PNG（当前只导入了发布版）。
-3. 提交 planning 增量（本次真页验证结果）到 git。
+1. 提交 planning 增量（本次真页验证突破结果）到 git 并推送。
+2. 可选：导入更新后的卡（含 at_depth 顶层 depth/role 修复）以完全验证 v0.0.264 修复在真实对话中的效果。
+3. 可选：修复 visible_summary 列名映射问题（vendor fallback plan 使用英文键名，但表头列名是中文）。
+4. 可选：修复 row_id 不稳定问题（sheet_chronicle 和 sheet_clues 的 row_id 为空字符串）。
 
 **可选长期任务：**
 - **任务 E 阶段 2（追查上游根因）**：为什么 content 变空数组（非阻塞，阶段 1 已防御性修复）

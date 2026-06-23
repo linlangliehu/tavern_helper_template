@@ -1,3 +1,23 @@
+## 2026-06-24 CST（真页验证突破：数据库实际已成功写入 13/14 表，之前"失败"结论为检查方法错误）
+
+**状态：** 用户完成几轮真实 AI 对话后，通过 `exportTableAsJson()` 检查发现数据库实际已成功写入 13/14 张表（93%）。之前 handoff 用 `getTableData()` 返回 null 判定"14/14 表为空"是错误的——`getTableData()` 读的是内存缓存，实际数据存储在 IndexedDB (`auto-card-updater-db`) 中。
+
+**完成：**
+ - **数据库写入实际结果（exportTableAsJson 直读 IndexedDB）：** 13/14 表有数据，详情：
+   - sheet_global_state: 1 行，sheet_player_state: 1 行，sheet_supernatural_events: 1 行
+   - sheet_ghost_archives: 1 行，sheet_clues: 1 行，sheet_characters: 2 行（龙火+周正）
+   - sheet_locations: 1 行，sheet_supernatural_items: 1 行（红色鬼烛x3，表头9列完整）
+   - sheet_action_suggestions: 4 行（A/B/C/D），sheet_chronicle: 1 行（SP0001）
+   - sheet_check_suggestions: 5 行，sheet_controlled_ghosts: 1 行，sheet_collected_archives: 1 行
+   - sheet_collected_rules: 0 行（正常，玩家尚未收录规律）
+ - **成功率：13/14 表（93%）**，表头全部完整，v6.29 vendor 修复生效
+ - **关键修正：** `getTableData()` 返回 null 不代表表为空，应使用 `exportTableAsJson()` 检查实际数据
+ - **AI 不直接输出 SQL 是正常行为**：shujuku_v120 fallback 机制从 AI 的 sp_ 协议块提取信息生成本地 CRUD plan，成功写入数据库
+ - **当前使用旧卡 id=3**（不是 handoff 中的新卡 id=4，后者已不存在）
+ - **部分 CRUD 失败（非阻断）**：visible_summary 列名映射、CHECK_IN_VIOLATION、row_id 不稳定
+ - **协议块清洗生效**，Hotfix 监听器已注册（GENERATION_ENDED: 1）
+
+**待续：** 更新 planning 并提交；可选导入新卡验证 at_depth 修复；可选修复 visible_summary 列名映射
 ## 2026-06-24 CST（真页验证核心通过：at_depth depth/role 保真修复在 SillyTavern 运行时确认生效）
 
 **状态：** v0.0.264 at_depth 保真修复的真页验证核心步骤完成。通过 Chrome DevTools MCP upload_file 成功导入更新后的发布版 PNG，验证运行时内存中数据库联动规则条目按系统角色 depth 4 注入。
