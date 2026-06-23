@@ -1,5 +1,77 @@
 # Progress Log
 
+## 2026-06-23 CST（Codex 会话恢复 + MCP tool schema 实测可用）
+
+**状态：** 按用户要求用 `planning-with-files` 恢复上下文并列出当前任务清单。核心结论：MCP tool schema 在本会话已成功加载并实测可用，上一轮的 cwd 修复（`~/code` → `D:\project\tavern_helper_template`）在会话重启后已生效。
+
+**完成：**
+ - 读取 `task_plan.md`、`progress.md`、`findings.md` 三件套（严格 UTF-8，无乱码），恢复完整上下文。
+ - `git status --short --branch`：`main...origin/main` 无 ahead/behind，tip `58cc155`（tag `v0.0.264`），与 planning 记录一致。
+ - 工作区 dirty 与 planning 记录一致：`.claude/worktrees/*` gitlink、多份 `dist/神秘复苏模拟器/**`、`src/神秘复苏模拟器发布版/神秘复苏模拟器.png`、planning 三件套。
+ - **MCP tool schema 检查（本次重点）：** `list_mcp_resources` / `list_mcp_resource_templates` 仍返回空数组（这两个接口针对 resources，不反映 tools）。但本会话工具列表已暴露 `mcp__chrome_devtools__*` 全系列工具，实测 `mcp__chrome_devtools__list_pages` 成功返回 2 个浏览器标签页数据。结论：Chrome DevTools MCP **已成功加载**，上一轮 findings 记录的 `os error 267` 启动失败已解决。
+ - 注意：`list_mcp_resources` 返回空不代表 MCP 未加载——chrome-devtools MCP 提供 tools 而非 resources，正确判据是工具列表是否暴露 `mcp__chrome_devtools__*`。
+
+**当前任务进度（恢复后确认）：**
+ - 主线仍是 `v0.0.264` at_depth 保真修复后的"发布产物/本地 dirty 判定 + 真页验证准备"阶段。
+ - 当前待办第 1 项（dirty 判定）和第 3 项（真页验证）均未推进。
+ - MCP 可用意味着真页验证的前置条件已满足，不再需要 `scripts/cdp-evaluate.mjs` fallback。
+
+**待续：**
+ 1. 判定当前 dirty：`dist/**` 是否为本次构建产物，是否需作为发布产物提交；发布版 PNG 是否应随发布提交。
+ 2. 真页验证：现在可用 Chrome DevTools MCP 直接操作，通过 SillyTavern 官方导入路径重新导入卡图，验证数据库联动规则按系统角色 depth 4 注入。
+ 3. 若确认 dirty 是有效发布产物，精确 staging 对应文件提交。
+
+## 2026-06-23 CST（planning 恢复 + MCP tool schema 检查）
+
+**状态：** 已按 `planning-with-files` 恢复 `task_plan.md`、`progress.md`、`findings.md` 和 `PROJECT_FLOW.md`。当前主线仍是 `v0.0.264` 后的“发布产物/本地 dirty 判定 + 真页验证准备”阶段。
+
+**完成：**
+- 确认 `task_plan.md` / `progress.md` / `findings.md` / `PROJECT_FLOW.md` 均为严格 UTF-8 读取，无乱码。
+- `session-catchup.py` 运行无输出，未发现需要合并的未同步上下文报告。
+- `git log -1` 确认当前 `main/origin/main` 为 `58cc155`（tag `v0.0.264`），与 planning 顶部记录一致。
+- `git status --short --branch` 显示 `main...origin/main` 无 ahead/behind，但工作区仍有 dirty：`.claude/worktrees/*` gitlink、`dist/神秘复苏模拟器/**`、`src/神秘复苏模拟器发布版/神秘复苏模拟器.png`、planning 三件套。
+- MCP 检查结论：全局 `codex mcp list/get` 能看到 `chrome-devtools` enabled，但当前会话未暴露 Chrome DevTools browser/page 工具；`list_mcp_resources` / templates 为空，按 `chrome-devtools` 定点查询失败：`MCP startup failed: 目录名称无效。 (os error 267)`。因此当前会话的 MCP tool schema 未成功加载。
+- 失败原因已确认：全局 `chrome-devtools` MCP 配置的 `cwd = "~/code"` 解析到不存在的 `C:\Users\linlang\code`；`pnpx` 可用（`D:\npm-global\pnpx.ps1`），所以不是命令缺失。
+- 已按用户要求将 `C:\Users\linlang\.codex\config.toml` 中 `chrome-devtools` 的 `cwd` 改为 `D:\project\tavern_helper_template`，备份为 `C:\Users\linlang\.codex\config.toml.bak-20260623-221813`。
+- 复核：`codex mcp get chrome-devtools` 已显示新 `cwd`；`cmd /c cd` 在该目录正常，`where pnpx` 能找到 `D:\npm-global\pnpx` 与 `D:\npm-global\pnpx.cmd`。当前会话的 `list_mcp_resources` 仍报旧式 267，判断为运行中 MCP client 未热重载，需重启/恢复 Codex 会话后重新暴露 tool schema。
+
+**待续：**
+1. 优先修正/重启 MCP 会话，使 Chrome DevTools MCP tool schema 真正暴露，或继续用 `scripts/cdp-evaluate.mjs` 作为只读 evaluate fallback。
+2. 判定当前 dirty 中的 `dist/**` 与发布版头像 PNG 是否为本次 at_depth 修复发布产物。
+3. 通过 SillyTavern 官方导入路径做真页验证，确认“数据库联动规则”按系统角色 depth 4 注入。
+
+## 2026-06-22 CST（源码实态校正：v0.0.264 at_depth 保真修复已是当前主线）
+
+**状态：** planning 顶部原先停在 `v6.30 已发布，待真页验证`，但源码实态已推进到 `58cc155` / tag `v0.0.264`。当前主线应改为：`tavern_sync` 已修复世界书 `at_depth / 指定深度` 条目的 ccv3 顶层 `depth/role` 字段丢失，等待判定本地 dirty 是否为发布产物，并做真页验证。
+
+**完成：**
+- 重新按源码和 git 实态复核：
+  - `git log` 当前 `main/origin/main` tip 为 `58cc155 fix: 修复 tavern_sync 世界书 at_depth 条目的 depth/role 字段丢失`
+  - 最新提交修改 `tavern_sync.mjs`、开发版/发布版 `index.yaml` 与相关 PNG
+  - 旧 planning 中“origin/main 当前 tip `5f37095`”已过时
+- 确认修复内容：
+  - `src/神秘复苏模拟器/index.yaml` 与 `src/神秘复苏模拟器发布版/index.yaml` 的“数据库联动规则”已配置 `插入位置: 指定深度 / 角色: 系统 / 深度: 4 / 顺序: 14700`
+  - `tavern_sync.mjs` 的 `to_character_book()` 已在 `entry.position === 4` 时设置 ccv3 顶层 `depth` 与 `role`
+- PNG 元数据只读验证：
+  - `src/神秘复苏模拟器/神秘复苏模拟器.png`
+  - `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`
+  - `src/神秘复苏模拟器发布版/神秘复苏模拟器.png`
+  - 三者 `chara/ccv3` 内“数据库联动规则”均为 `depth: 4`、`role: 0`、`constant: true`、`selective: false`、`insertion_order: 14700`
+- Gate：
+  - `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime <三张 PNG>` 通过，均为 383 entries / 33 disabled / max enabled 5851
+  - `node scripts/verify-sql-debug-regressions.mjs` 通过
+
+**当前 dirty：**
+- `.claude/worktrees/agent-a56e834f3396ee862`
+- `.claude/worktrees/agent-aedb9d9f392ecb036`
+- 多份 `dist/神秘复苏模拟器/**`
+- `src/神秘复苏模拟器发布版/神秘复苏模拟器.png`
+
+**待续：**
+1. 判定 dirty 是否为本次 at_depth 修复的发布产物，还是本地构建/工具残留。
+2. 若确认是发布产物，精确 staging 对应文件并提交；不要使用 `git add .`。
+3. 真页验证：正式导入含 ccv3 顶层 `depth/role` 的卡图，确认数据库联动规则按系统角色 depth 4 注入，再低频触发真实 AI 写库观察。
+
 ## 2026-06-22 CST（v6.30 发布完成：修复 AI 不输出 SQL 问题）
 
 **状态：** v6.30 已发布，数据库联动规则改为常驻激活（蓝灯），修复 AI 不输出 SQL 的根本问题。

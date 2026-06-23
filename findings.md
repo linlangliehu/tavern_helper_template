@@ -1,5 +1,26 @@
 # Findings
 
+## 2026-06-23：当前 Codex 会话 MCP tool schema 未成功加载
+
+- 项目 `.mcp.json` 存在 `chrome-devtools` 配置，指向 `cmd /c pnpx chrome-devtools-mcp@latest --browserUrl http://127.0.0.1:9222`。
+- `codex mcp list` / `codex mcp get chrome-devtools` 显示全局 `chrome-devtools` 为 `enabled`，但实际全局配置口径是 `args: /c pnpx chrome-devtools-mcp@latest --autoConnect`，`cwd: ~/code`。
+- 当前会话没有暴露 Chrome DevTools MCP 的 browser/page 操作工具；`list_mcp_resources` 与 `list_mcp_resource_templates` 对全部 server 返回空。
+- 对 `chrome-devtools` 定点查询 resources/templates 会触发启动失败：`MCP startup failed: 目录名称无效。 (os error 267)`。最可能原因是全局 MCP 配置里的 `cwd: ~/code` 在当前 Windows 环境下不是有效目录。
+- 已确认 `C:\Users\linlang\code` 不存在，而 `D:\project\tavern_helper_template` 存在；`pnpx` 本身存在于 `D:\npm-global\pnpx.ps1`。因此本次启动失败的直接根因是全局 MCP server 的 `cwd` 指向不存在目录，不是 MCP 包命令缺失。
+- 已将全局配置 `C:\Users\linlang\.codex\config.toml` 的 `cwd` 改为 `D:\project\tavern_helper_template`，并保留备份 `config.toml.bak-20260623-221813`。`codex mcp get chrome-devtools` 已读取到新值。
+- 当前会话继续用 `list_mcp_resources(server="chrome-devtools")` 仍报 267，说明 MCP client/schema 在会话启动时固定，修改配置后不会热重载；需要重启/恢复 Codex 会话后再检查工具列表。
+- 结论：配置存在不等于 schema 已加载。真页验证前需要修正 MCP cwd/启动参数并重启或恢复 Codex 会话；若只需要 evaluate，可继续使用 `scripts/cdp-evaluate.mjs` 作为裸 CDP fallback。
+
+## 2026-06-22：tavern_sync at_depth 字段保真修复 + planning 源码实态校正
+
+- **planning 顶部曾过时：** `task_plan.md` 原先写当前 tip 为 `5f37095`、状态为“v6.30 已发布，待真页验证”，但实际 `main/origin/main` 已是 `58cc155`（tag `v0.0.264`）。后续恢复状态必须以源码/git 实态为准：当前主线是 `tavern_sync` at_depth 保真修复已提交，待 dirty 判定与真页验证。
+- **根因补强：** v6.30 已把“数据库联动规则”从绿灯改为蓝灯常驻，但仅常驻不够；该规则还需要按 SillyTavern 的 at-depth 机制以系统角色、depth 4 注入。`tavern_sync` 之前只把 `depth/role` 写在 `extensions`，没有写到 ccv3 条目顶层，可能导致 SillyTavern 不按指定深度/角色处理。
+- **源码修复点：** `tavern_sync.mjs` 的 `to_character_book()` 现在检测 `entry.position === 4`，并为该条目设置顶层 `depth = entry.depth ?? 4`、`role = entry.role ?? 0`。这对应 SillyTavern ccv3 `position: at_depth` 条目的实际消费字段。
+- **角色卡配置修复点：** 开发版与发布版 `index.yaml` 的“数据库联动规则”均已加 `插入位置: 指定深度 / 角色: 系统 / 深度: 4 / 顺序: 14700`，同时保留蓝灯常驻策略。
+- **PNG 元数据验证：** 开发版 PNG、发布版主 PNG、发布版头像 PNG 的 `chara` 与 `ccv3` 内，“数据库联动规则”均已实际写入 `depth: 4`、`role: 0`、`constant: true`、`selective: false`、`insertion_order: 14700`。注意 ccv3 顶层 `position` 仍显示为 `after_char`，但 `extensions.position === 4` 且顶层 `depth/role` 已存在；这是当前打包形状，需要真页验证最终确认 SillyTavern 消费行为。
+- **已跑 gate：** `verify-worldbook-pollution-gate` 对三张 PNG 均通过（383/33/5851）；`verify-sql-debug-regressions.mjs` 通过。
+- **当前风险：** 工作区 dirty 中有多份 `dist/**` 和 `src/神秘复苏模拟器发布版/神秘复苏模拟器.png`。这些可能是发布产物，也可能是本地构建残留；提交前必须先判定，不要直接 `git add .`。
+
 ## 2026-06-22：步骤 7 真实 AI 验证完成 + hotfix 清洗时机问题 + 数据库前端 2 表损坏 bug
 
 - **界面清洗正常，内存未同步：** Hotfix `cleanProtocolBlocks()` 在 `GENERATION_ENDED` 触发时执行，成功清洗 `mes` 字段并标记 `_mfrs_raw_protocol_cleaned_at`。但此时**界面美化脚本已经渲染完成**，界面显示的是美化脚本清洗后的版本（1020 字符，无协议块），而内存 `chat[i].mes` 仍包含完整协议块（3185 字符）。玩家体验正常（界面无泄漏），但内存污染可能影响后续逻辑（当前数据库已成功落盘，说明问题不严重）。

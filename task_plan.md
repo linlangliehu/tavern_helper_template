@@ -16,23 +16,27 @@
 
 ## 当前状态
 
-**2026-06-22 v6.30 已发布。** origin/main 当前 tip `5f37095`（release: v6.30 - 修复 AI 不输出 SQL）。
+**2026-06-22 源码实态校正：当前 main/origin/main tip 是 `58cc155`（tag `v0.0.264`，`fix: 修复 tavern_sync 世界书 at_depth 条目的 depth/role 字段丢失`）。** 旧记录里“origin/main 当前 tip `5f37095` / 只待 v6.30 真页验证”已经过时。
 
-**当前版本：** v6.30，CDN ref `@c087823`，cache `phase164-4-0-final-baseline-6-28-p5-4-hotfix13`。
+**当前有效修复线：** v6.30 仍是发布版业务版本号，CDN ref 仍为 `@c087823`，cache `phase164-4-0-final-baseline-6-28-p5-4-hotfix13`；其后又完成了 `tavern_sync` 打包保真修复（`v0.0.264`），让 `指定深度 / at_depth` 世界书条目在 ccv3 顶层保留 `depth/role`。
 
-**本轮已完成任务（v6.29 → v6.30）：**
-1. ✅ 诊断 AI 不输出 SQL 根因：使用 Chrome DevTools MCP 查看 `getStoryContext()`，发现数据库联动规则未注入（`hasDatabaseInstruction: false`）
-2. ✅ 定位配置问题：数据库联动规则使用绿灯（selective）激活策略，需要关键词匹配，但最近对话未触发关键词
-3. ✅ 修复实现：将数据库联动规则改为蓝灯（constant）激活策略，PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`
-4. ✅ 发布 v6.30：更新 CDN ref 和版本号，发布 `5f37095`，打标签 `v6.30`
+**本轮已完成任务（v6.30 后续修复）：**
+1. ✅ 定位 v6.30 后续问题：数据库联动规则虽然已改为蓝灯常驻，但需要按“指定深度 / 系统 / depth 4”注入，`tavern_sync` 打包时没有把 at_depth 条目的 `depth/role` 写到 ccv3 顶层。
+2. ✅ 修复角色卡配置：`src/神秘复苏模拟器/index.yaml` 与 `src/神秘复苏模拟器发布版/index.yaml` 的“数据库联动规则”已添加 `插入位置: 指定深度 / 角色: 系统 / 深度: 4 / 顺序: 14700`。
+3. ✅ 修复打包器：`tavern_sync.mjs` 的 `to_character_book()` 已在 `entry.position === 4` 时写入顶层 `depth = entry.depth ?? 4`、`role = entry.role ?? 0`，提交 `58cc155` 已在 `main/origin/main`。
+4. ✅ 静态验证：开发版 PNG、发布版主 PNG、发布版头像 PNG 的 `chara/ccv3` 内“数据库联动规则”均已包含 `depth: 4`、`role: 0`、`constant: true`、`selective: false`、`insertion_order: 14700`。
+5. ✅ 回归验证：`verify-worldbook-pollution-gate` 三 PNG 均通过（383/33/5851）；`node scripts/verify-sql-debug-regressions.mjs` 通过。
 
-**前置已全清：** worldbook hard gate 三方闭环（383/33/5851）；仓库 source PNG 与 HEAD 干净一致。
+**当前待判定：** 工作区有未提交 dirty（多份 `dist/神秘复苏模拟器/**`、`src/神秘复苏模拟器发布版/神秘复苏模拟器.png`、两个 `.claude/worktrees/*` gitlink）。这些不自动等同于待提交任务；下一步要先判定它们是本次修复发布产物还是本地构建/工具残留。
 
 ## 当前任务清单
 
-**v6.30 已发布，待真页验证。**
+**v0.0.264 / at_depth 保真修复已提交，当前处于“发布产物/本地 dirty 判定 + 真页验证准备”阶段。**
 
 **已完成任务（勿重做）：**
+- ✅ `tavern_sync` at_depth 顶层字段修复：`58cc155`，已在 `main/origin/main`，修复 ccv3 顶层 `depth/role` 丢失。
+- ✅ 数据库联动规则指定深度注入：开发版与发布版 YAML 均已配置 `指定深度 / 系统 / depth 4 / order 14700`。
+- ✅ PNG 元数据静态校验：开发版 PNG、发布版主 PNG、发布版头像 PNG 的 `chara/ccv3` 均确认目标条目包含 `depth: 4`、`role: 0`。
 - ✅ 任务 E 阶段 1（vendor 表初始化 bug 修复）：PR #16 `9433a67`，v6.29 已推送
 - ✅ AI 不输出 SQL 问题修复：数据库联动规则改为常驻激活，PR #17，v6.30 已发布
 - ✅ 任务 F（worktree 清理）：已清理
@@ -46,9 +50,14 @@
 - 任务 3（doubao 辅助 status 0）：已决策为不改源码、不改主聊天 API、只观察。
 - worldbook hard gate 三方闭环（磁盘外部 JSON + 磁盘 PNG + 运行态内存 ccv3 均 383/33/5851）。
 
-**待验证（v6.30）：**
-1. 真页验证：重新导入 v6.30 角色卡，AI 对话，验证数据库 14/14 张表写入成功
-2. 回归测试：`verify-sql-debug-regressions.mjs`
+**当前待办：**
+1. 判定当前 dirty：
+   - `dist/神秘复苏模拟器/**` 是否为本次构建产物，是否需要作为发布产物提交；
+   - `src/神秘复苏模拟器发布版/神秘复苏模拟器.png` 是否是 `publish-card`/打包生成的头像 PNG，是否应随发布提交；
+   - `.claude/worktrees/*` gitlink 只作为本地工具状态，默认不提交。
+2. 若确认 dirty 是有效发布产物：精确 staging 对应文件，不用 `git add .`，并记录发布/验证结果。
+3. 真页验证：通过 SillyTavern 官方导入路径重新导入包含 at_depth 顶层 `depth/role` 的卡图，验证数据库联动规则在真实上下文中按系统角色 depth 4 注入，再低频触发真实 AI 写库观察。
+4. 已完成本轮静态回归：`verify-sql-debug-regressions.mjs` 已通过；后续如改动 dirty 或重新构建，再按变更范围复跑。
 
 **可选长期任务：**
 - **任务 E 阶段 2（追查上游根因）**：为什么 content 变空数组（非阻塞，阶段 1 已防御性修复）
@@ -62,7 +71,8 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
-| `v6.30`（**当前有效发布版**） | 修复 AI 不输出 SQL：数据库联动规则改为常驻激活（蓝灯） | PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`，发布 `5f37095`；CDN ref `@c087823` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；待真页验证 |
+| `v0.0.264`（**当前 main/origin/main tip**） | 修复 `tavern_sync` 世界书 `at_depth / 指定深度` 条目的 ccv3 顶层 `depth/role` 字段丢失；数据库联动规则配置为系统 depth 4 注入 | commit `58cc155`；修改 `tavern_sync.mjs`、开发版/发布版 YAML 与卡图 | 沿用 v6.30 CDN ref/cache：`@c087823` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已提交到 main；静态 gate 通过；待 dirty 判定与真页验证 |
+| `v6.30` | 修复 AI 不输出 SQL：数据库联动规则改为常驻激活（蓝灯） | PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`，发布 `5f37095`；CDN ref `@c087823` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；后续被 `v0.0.264` at_depth 保真修复补强 |
 | `v6.29` | 修复 vendor 表初始化 bug：灵异物品、收录规律表头截断 | PR #16 `9433a67`，发布 `a3c5108`；CDN ref `@9433a67` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；已被 v6.30 覆盖 |
 | `v6.28.3` | 优化内存与界面同步：新增 MESSAGE_RECEIVED 监听器，立即清洗协议块 | 合并 `1165716`，bot bundle `1861e16`，发布 `8de8ed6`；CDN ref `@1861e16` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；已被 v6.29 覆盖 |
 | `v6.28.2` | 修复固定状态栏初始化：移除 jQuery ready 封装，立即执行 retryMount() | 合并 `db0ec51`，bot bundle `d4b1d23`，发布 `0598241` | 同上 | 已发布；被 v6.28.3 覆盖 |
@@ -75,7 +85,15 @@
 
 ## 需要提交的文件
 
-**当前无待提交的本轮改动**（`caf2660` + `7c1ec92` 已推送同步）。后续 B-I 产生的 planning 增量按下方口径精确 staging。
+**当前有待判定 dirty，不要直接提交。** `git status --short --branch` 显示 `main...origin/main`，HEAD 与远端一致，但工作区有：
+- 多份 `dist/神秘复苏模拟器/**` 修改；
+- `src/神秘复苏模拟器发布版/神秘复苏模拟器.png` 修改；
+- 两个 `.claude/worktrees/*` gitlink 状态。
+
+这些 dirty 需要先判断来源：
+- 若是本次 `tavern_sync` at_depth 修复的发布产物，按发布边界精确提交对应 `dist/**` 与发布版 PNG；
+- 若只是本地构建/工具残留，保持原样或按用户明确指令处理；
+- `.claude/worktrees/*` 默认属于本地工具状态，不纳入仓库提交。
 
 **chronicle 守卫已合并（不再待提交）：** `src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts`、`vendor/shujuku-sp-fork/index.js`、`scripts/verify-table-change-adapter.mjs`、`scripts/verify-sql-debug-regressions.mjs` 已通过 PR 合并进 fork main，**不要再提交**。dist 由 bot 自动重建，不手动提交。
 
