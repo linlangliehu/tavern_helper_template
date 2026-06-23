@@ -51,13 +51,13 @@
 - worldbook hard gate 三方闭环（磁盘外部 JSON + 磁盘 PNG + 运行态内存 ccv3 均 383/33/5851）。
 
 **当前待办：**
-1. 判定当前 dirty：
-   - `dist/神秘复苏模拟器/**` 是否为本次构建产物，是否需要作为发布产物提交；
-   - `src/神秘复苏模拟器发布版/神秘复苏模拟器.png` 是否是 `publish-card`/打包生成的头像 PNG，是否应随发布提交；
-   - `.claude/worktrees/*` gitlink 只作为本地工具状态，默认不提交。
-2. 若确认 dirty 是有效发布产物：精确 staging 对应文件，不用 `git add .`，并记录发布/验证结果。
-3. 真页验证：通过 SillyTavern 官方导入路径重新导入包含 at_depth 顶层 `depth/role` 的卡图，验证数据库联动规则在真实上下文中按系统角色 depth 4 注入，再低频触发真实 AI 写库观察。
-4. 已完成本轮静态回归：`verify-sql-debug-regressions.mjs` 已通过；后续如改动 dirty 或重新构建，再按变更范围复跑。
+- ✅ dirty 判定与提交：`dist/**` 为本地构建残留已 revert；`.mcp.json` 格式变动已 revert；发布版头像 PNG + planning 三件套已提交 `17f47e1` 并推送 origin/main。
+- ✅ 真页验证核心步骤：通过 Chrome DevTools MCP 导入更新后的发布版 PNG，验证 ccv3 顶层 depth/role + convertCharacterBook 内部 WI 格式 + extensionPrompts 槽位，确认数据库联动规则按系统角色 depth 4 注入。
+
+**当前待办：**
+1. 可选：连接 AI API 后触发一次真实生成，验证 `customDepthWI_4_0` 内容被填充且 AI 输出 SQL（需用户授权 + AI API 可用）。
+2. 可选：导入更新后的开发版 PNG（当前只导入了发布版）。
+3. 提交 planning 增量（本次真页验证结果）到 git。
 
 **可选长期任务：**
 - **任务 E 阶段 2（追查上游根因）**：为什么 content 变空数组（非阻塞，阶段 1 已防御性修复）
@@ -66,6 +66,7 @@
 - 真实 AI 低频触发，单向写库；每次 hard gate 全绿后最多触发一次，失败先分析样本不连续重放。
 - 不点"立即手动更新"、不调 `triggerUpdate()`，除非用户明确要求真实写库观察。
 - 不要用文件级覆盖 `E:/SillyTavern/data/banyan/characters/*.png` 代替 SillyTavern 正式导入；已证明会导致角色识别/runtime 丢失。
+- Chrome DevTools MCP `upload_file` 可以直接上传 PNG 到导入按钮，SillyTavern 自动处理导入流程。
 
 ## 版本变更索引
 

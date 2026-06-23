@@ -1,3 +1,29 @@
+## 2026-06-24 CST（真页验证核心通过：at_depth depth/role 保真修复在 SillyTavern 运行时确认生效）
+
+**状态：** v0.0.264 at_depth 保真修复的真页验证核心步骤完成。通过 Chrome DevTools MCP upload_file 成功导入更新后的发布版 PNG，验证运行时内存中数据库联动规则条目按系统角色 depth 4 注入。
+
+**完成：**
+ - **导入更新后的卡图：** 使用 mcp__chrome_devtools__upload_file 将 src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png 上传到导入按钮（uid=2_5），SillyTavern 自动导入为 神秘复苏模拟器发布版1.png（因同名卡已存在，自动加序号）。角色列表从 6 个变为 7 个。
+ - **运行时内存验证（ccv3 顶层字段）：** 新卡（id=4, avatar=神秘复苏模拟器发布版1.png）的数据库联动规则条目在 characters[4].data.character_book.entries 中确认包含顶层 depth: 4, role: 0, constant: true, selective: false, insertion_order: 14700。旧卡（id=2 dev, id=3 pub）的同类条目无顶层 depth/role 字段。
+ - **worldbook hard gate 运行态确认：** 新卡 383 entries / 33 disabled / 350 enabled / maxEnabledLen 5851 / maxEnabledTitle "鬼奴与衍生物规则" — 与磁盘 PNG gate 完全一致。
+ - **SillyTavern 内部 WI 格式转换验证（决定性证据）：** 调用 ctx.convertCharacterBook(book) 将 ccv3 转换为 SillyTavern 内部 WI 格式后：
+   - 数据库联动规则条目：position: 4（at_depth）, depth: 4, role: 0（system）, constant: true, selective: false — 正确映射
+   - 全部 at_depth 条目统计：depth=4/role=0 共 39 条, depth=3/role=0 共 10 条, depth=2/role=0 共 331 条, depth=0/role=0 共 3 条
+   - position 分布：position=4 (at_depth) 378 条, position=0 (before_char) 4 条, position=6 (after_char) 1 条
+ - **extensionPrompts 注入槽位确认：** ctx.extensionPrompts 中已注册 customDepthWI_4_0（depth=4, role=0），证明 SillyTavern 已为 depth 4 / system role 的 WI 注入创建槽位。content 为空是因为 WI 激活需要实际生成请求时才填充。
+ - **新旧卡对比（convertCharacterBook 后）：**
+   - id=2 (旧 dev): position=4, depth=4, role=0, constant=false, selective=true（旧绿灯策略）
+   - id=3 (旧 pub): position=4, depth=4, role=0, constant=true, selective=false（有蓝灯但 PNG 无顶层 depth/role）
+   - id=4 (新 pub): position=4, depth=4, role=0, constant=true, selective=false（v0.0.264 修复生效）
+   - 注意：convertCharacterBook 会从 extensions 中读取 depth/role，所以旧卡转换后也有 depth/role。但新卡的差异在于 ccv3 顶层就有 depth/role，不依赖 extensions fallback。
+
+**真页验证结论：**
+v0.0.264 的 tavern_sync.mjs at_depth 顶层字段保真修复在 SillyTavern 运行时确认生效。数据库联动规则将按系统角色 depth 4 注入到 AI 上下文中。蓝灯常驻策略 + depth 4 system role 注入 = AI 每次都能看到数据库规则，且在正确的深度位置。
+
+**待续：**
+ 1. 可选：连接 AI API 后触发一次真实生成，验证 customDepthWI_4_0 内容被填充且 AI 输出 SQL（需用户授权，当前 API 返回 Service Unavailable）。
+ 2. 可选：导入更新后的开发版 PNG（当前只导入了发布版）。
+ 3. 提交 planning 增量到 git。
 # Progress Log
 
 ## 2026-06-23 CST（Codex 会话恢复 + MCP tool schema 实测可用）

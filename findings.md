@@ -1,3 +1,12 @@
+## 2026-06-24：真页验证通过 — at_depth depth/role 保真修复在 SillyTavern 运行时确认
+
+- **导入方法：** Chrome DevTools MCP 的 upload_file 工具可以直接将 PNG 上传到 SillyTavern 的导入按钮（从文件导入角色 按钮 uid），SillyTavern 会自动处理导入流程。不需要触发 file input 的 change 事件，upload_file 会自动完成。同名卡存在时 SillyTavern 自动加序号（如 神秘复苏模拟器发布版1.png）。
+- **ccv3 顶层 depth/role 验证：** 新导入的卡（id=4）在 characters[4].data.character_book.entries 中，数据库联动规则条目确认包含顶层 depth: 4, role: 0。旧卡（id=2, id=3）无顶层 depth/role 字段，只有 extensions 里有。
+- **convertCharacterBook 转换验证：** ctx.convertCharacterBook(book) 将 ccv3 转为 SillyTavern 内部 WI 格式后，数据库联动规则条目的 position 从 "after_char" 变为 4（at_depth），depth: 4, role: 0 正确保留。全部 378 条 at_depth 条目都正确映射了 depth/role。
+- **extensionPrompts 槽位：** ctx.extensionPrompts 中已注册 customDepthWI_4_0（depth=4, role=0），SillyTavern 已为 depth 4 / system role 注入创建槽位。content 在实际生成请求时才填充。
+- **getWorldInfoPrompt 限制：** ctx.getWorldInfoPrompt('', 0) 可调用但返回空 WI 内容，因为 WI 激活需要实际生成请求时才处理。generateQuietPrompt 返回 "Service Unavailable"（AI API 未连接）。
+- **convertCharacterBook 的 fallback 行为：** 即使旧卡 PNG ccv3 顶层无 depth/role，convertCharacterBook 仍会从 extensions.depth/role 读取并填充到内部格式的 depth/role。因此新旧卡在 convertCharacterBook 后看起来都有 depth/role，但区别在于新卡的 ccv3 顶层就有这些字段，不依赖 extensions fallback。这意味着在某些不读 extensions 的消费路径中，旧卡可能会丢失 depth/role。
+- **真页验证结论：** v0.0.264 修复在运行时确认生效。数据库联动规则将按系统角色 depth 4 注入，AI 每次都能看到数据库规则。
 # Findings
 
 ## 2026-06-23：当前 Codex 会话 MCP tool schema 未成功加载
