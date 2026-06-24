@@ -2620,8 +2620,8 @@
     };
 
     const renderTableContent = (tableData, tableName) => {
-        if (!tableData || !tableData.rows.length) return `<div class="acu-panel-header"><div class="acu-panel-title">${tableName} ${(tableData && tableData._missingInfo) ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : ((tableData && tableData._hasWarning) ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">0</span>')}</div><div class="acu-header-actions"><button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button></div></div><div class="acu-panel-content"><div style="text-align:center;color:var(--acu-text-sub);padding:20px;">暂无数据</div></div>`;
-        
+        if (!tableData || !tableData.rows.length) return `<div class="acu-panel-header"><div class="acu-panel-title">${tableName} ${(tableData && tableData._missingInfo) ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : ((tableData && tableData._hasWarning) ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">0</span>')}</div><div class="acu-header-actions"><button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button></div></div><div class="acu-panel-content"><div style="text-align:center;color:var(--acu-text-sub);padding:40px 20px;"><i class="fa-solid fa-inbox" style="font-size:48px;opacity:0.3;margin-bottom:15px;"></i><div style="font-size:16px;margin-bottom:8px;">暂无数据</div><div style="font-size:12px;opacity:0.7;">该表格当前没有任何记录</div></div></div>`;
+
         const headers = tableData.headers.slice(1);
         let titleColIndex = 1;const codeIdx = tableData.headers.findIndex(h => h && (String(h).includes('编码') || String(h).includes('索引')));if (codeIdx > 0) titleColIndex = codeIdx;
         
@@ -2904,21 +2904,26 @@
                  }
             });
 
+            let searchDebounceTimer = null;
             $('.acu-search-input').off('input').on('input', function() {
-                currentSearchTerm = $(this).val().toLowerCase();
-                currentPage = 1;
-                globalScrollTop = 0;
-                 const tableName = $('.acu-nav-btn.active').data('table');
-                if (tableName && tables[tableName]) {
-                     const fullHtml = renderTableContent(tables[tableName], tableName);
-                     const $temp = $('<div>').html(fullHtml);
-                     
-                     $('.acu-panel-content').html($temp.find('.acu-panel-content').html());
-                     $('.acu-panel-title').html($temp.find('.acu-panel-title').html());
-                     
-                     bindDynamicContentEvents(); bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid')); 
-               }
-             });
+                const inputValue = $(this).val().toLowerCase();
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    currentSearchTerm = inputValue;
+                    currentPage = 1;
+                    globalScrollTop = 0;
+                    const tableName = $('.acu-nav-btn.active').data('table');
+                    if (tableName && tables[tableName]) {
+                        const fullHtml = renderTableContent(tables[tableName], tableName);
+                        const $temp = $('<div>').html(fullHtml);
+
+                        $('.acu-panel-content').html($temp.find('.acu-panel-content').html());
+                        $('.acu-panel-title').html($temp.find('.acu-panel-title').html());
+
+                        bindDynamicContentEvents(); bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
+                    }
+                }, 300);
+            });
 
             $('.acu-height-drag-handle').off('pointerdown').on('pointerdown', function(e) {
                 if (e.button !== 0) return;
@@ -2996,7 +3001,17 @@
                }
             });
 
-            $('#acu-btn-refresh, #acu-btn-refresh-emb').off('click').on('click', (e) => { e.stopPropagation(); renderInterface(); if (window.toastr) window.toastr.info('已刷新'); });
+            $('#acu-btn-refresh, #acu-btn-refresh-emb').off('click').on('click', function(e) {
+                e.stopPropagation();
+                const $btn = $(this);
+                const originalHtml = $btn.html();
+                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+                setTimeout(() => {
+                    renderInterface();
+                    $btn.html(originalHtml).prop('disabled', false);
+                    if (window.toastr) window.toastr.info('已刷新');
+                }, 100);
+            });
 
             $('#acu-btn-dash-edit, #acu-btn-dash-edit-emb').off('click').on('click', (e) => { e.stopPropagation(); isDashEditing = !isDashEditing; renderInterface(); });
             $('.acu-slot-setting-btn').off('click').on('click', function(e) { e.stopPropagation(); showDashSlotSettings($(this).data('slot')); });
@@ -3015,16 +3030,42 @@
         $('#acu-btn-save-global').off('click').on('click', async function(e) { e.stopPropagation(); const rawData = getTableData(); if (rawData) await saveDataToDatabase(rawData, false, true); });
         $('#acu-btn-open-native').off('click').on('click', function(e) {
             e.preventDefault(); e.stopPropagation();
+            const $btn = $(this);
+            const originalHtml = $btn.html();
             const api = getCore().getDB();
-            if (api && api.openVisualizer) api.openVisualizer();
-            else if (window.toastr) window.toastr.error('无法调用原生编辑器 API');
+            if (api && api.openVisualizer) {
+                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+                try {
+                    api.openVisualizer();
+                    setTimeout(() => {
+                        $btn.html(originalHtml).prop('disabled', false);
+                    }, 500);
+                } catch (err) {
+                    $btn.html(originalHtml).prop('disabled', false);
+                    if (window.toastr) window.toastr.error('打开原生编辑器失败：' + err.message);
+                }
+            } else {
+                if (window.toastr) window.toastr.error('无法调用原生编辑器 API，请检查数据库脚本是否正确加载');
+            }
         });
         $('#acu-btn-manual-update').off('click').on('click', async function(e) {
             e.preventDefault(); e.stopPropagation();
+            const $btn = $(this);
+            const originalHtml = $btn.html();
             const api = getCore().getDB();
             if (api && api.manualUpdate) {
-                await api.manualUpdate();
-            } else if (window.toastr) window.toastr.error('无法调用数据库更新接口');
+                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+                try {
+                    await api.manualUpdate();
+                    $btn.html(originalHtml).prop('disabled', false);
+                    if (window.toastr) window.toastr.success('数据库更新成功');
+                } catch (err) {
+                    $btn.html(originalHtml).prop('disabled', false);
+                    if (window.toastr) window.toastr.error('数据库更新失败：' + (err.message || '未知错误'));
+                }
+            } else {
+                if (window.toastr) window.toastr.error('无法调用数据库更新接口，请检查 API 是否可用');
+            }
         });
 
         $('#send_but').off('click.acu_opt_hide').on('click.acu_opt_hide', function() {
