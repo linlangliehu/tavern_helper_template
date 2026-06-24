@@ -1,5 +1,32 @@
 # Progress Log
 
+## 2026-06-24 CST（真页验证确认：用户手动导入新卡后真实对话，v0.0.264 修复效果持续生效）
+
+**状态：** 用户手动导入更新后的卡（含 at_depth 顶层 depth/role 修复）并进行了几轮真实 AI 对话。通过 `MysteryDatabaseFrontend.exportCurrentData()` 检查数据库写入状态，确认 13/14 表成功写入（93%），与上次验证结果一致。v0.0.264 at_depth 保真修复在真实对话中持续生效。
+
+**完成：**
+ - 验证环境：角色 id=3（神秘复苏模拟器发布版），7 条对话，marker `mfrs-4-0-final-baseline-6-28-p5-4-hotfix13`
+ - extensionPrompts 槽位确认：customDepthWI_4_0（depth=4, role=0）已注册，死亡裁定守则按系统 depth 4 注入
+ - 数据库写入结果（exportCurrentData 直读）：13/14 表有数据
+   - sheet_global_state: 1 行（大昌市七中，世界压力 32，row_id=1）
+   - sheet_player_state: 1 行（阳朔，初级驭鬼者，死亡风险 5，row_id=1）
+   - sheet_supernatural_events: 1 行（七中敲门事件，可见摘要正常写入，row_id=1）
+   - sheet_ghost_archives: 2 行（G0002 周正体内厉鬼 + G0003 敲门鬼，row_id=2,1）
+   - sheet_clues: 1 行（C0001，row_id="" 空字符串）
+   - sheet_characters: 2 行（阳朔 + 周正，row_id=1,2）
+   - sheet_locations: 1 行（大昌市第七中学，row_id=1）
+   - sheet_supernatural_items: 1 行（红色鬼烛x3，表头 9 列完整，row_id=1）
+   - sheet_action_suggestions: 4 行（A/B/C/D，row_id=1-4）
+   - sheet_chronicle: 1 行（SP0001，row_id="" 空字符串，纪要列值异常为"SP0001"而非纪要文本）
+   - sheet_check_suggestions: 5 行（row_id=1-5）
+   - sheet_controlled_ghosts: 1 行（鬼档案，可见摘要正常写入，row_id=1）
+   - sheet_collected_archives: 2 行（周正体内厉鬼 5% + 敲门鬼 0%，row_id=1,"" 一行空）
+   - sheet_collected_rules: 0 行（正常，玩家尚未收录规律）
+ - AI 输出 MVU JSON Patch 正常行为，shujuku_v120 fallback 机制从 sp_ 协议块提取信息生成本地 CRUD plan
+ - 协议块清洗生效，AI 消息中 update_output_contract 已被清洗，无残留协议块泄漏
+ - public_summary（可见摘要）列名映射正常，3 张有 public_summary 列的表均成功写入可见摘要
+ - 已知非阻断问题仍存在：row_id 空字符串、sheet_chronicle 纪要列值异常、minLength=20 约束未拦截 6 字符值
+
 ## 2026-06-24 CST（真页验证突破：数据库实际已成功写入 13/14 表，之前"失败"结论为检查方法错误）
 
 **状态：** 用户完成几轮真实 AI 对话后，通过 `exportTableAsJson()` 检查发现数据库实际已成功写入 13/14 张表（93%）。之前 handoff 用 `getTableData()` 返回 null 判定"14/14 表为空"是错误的——`getTableData()` 读的是内存缓存，实际数据存储在 IndexedDB (`auto-card-updater-db`) 中。

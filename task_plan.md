@@ -15,11 +15,22 @@
 
 ## 当前状态
 
-**2026-06-24 真页验证突破：** 数据库实际已成功写入 13/14 表（93%），之前"失败"结论为检查方法错误（`getTableData()` 不可靠，应用 `exportTableAsJson()`）。当前 `main/origin/main` tip 为 `90af422`。
+**2026-06-24 planning 整理暂停点：** 核心修复线全部验证通过，任务暂停。当前 `main/origin/main` tip 为 `90af422`。
 
-**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）均已提交并在真页验证中确认生效。at_depth 保真修复核心验证通过（ccv3 顶层 depth/role → convertCharacterBook → extensionPrompts 槽位 → WI 激活 → 数据库写入 13/14 表）。
+**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）均已提交并在真页验证中确认生效。
 
-**工作区状态：** 干净，仅有 `.claude/worktrees/*` gitlink（本地工具状态，不提交）。planning 三件套已提交推送。
+**2026-06-24 验证进展：**
+1. 真页验证突破：数据库实际写入 13/14 表（93%），之前"失败"结论为检查方法错误（`getTableData()` 不可靠，应用 `exportCurrentData()`）。
+2. at_depth 保真修复核心验证通过：ccv3 顶层 depth/role -> convertCharacterBook -> extensionPrompts 槽位 -> WI 激活 -> 数据库写入 13/14 表。
+3. 用户手动导入新卡真实对话验证：v0.0.264 修复在真实对话中持续生效，public_summary 列名映射正常，13/14 表成功写入。
+4. planning 整理暂停：四件套整理完成，等待用户下一步指示。
+
+**已知非阻断问题（均与上次验证一致，无恶化）：**
+- row_id 空字符串：sheet_clues、sheet_chronicle、sheet_collected_archives 部分行
+- sheet_chronicle 纪要列值异常：值为编号"SP0001"而非纪要文本，可能是 AI 输出映射问题
+- sheet_chronicle minLength=20 约束未拦截 6 字符值：fallback 路径可能跳过 CHECK 约束
+
+**工作区状态：** 有 dist 本地构建残留（`dist/神秘复苏模拟器/**` 多个文件，不提交，留给 bot bundle Action）和 planning 三件套（`task_plan.md`、`progress.md` 待提交）。`.claude/worktrees/*` gitlink 为本地工具状态，不提交。
 
 ## 当前任务清单
 
@@ -38,9 +49,10 @@
 - ✅ worldbook hard gate 三方闭环（磁盘外部 JSON + 磁盘 PNG + 运行态内存 ccv3 均 383/33/5851）
 
 **当前待办（均为可选，无阻断）：**
-1. 可选：重新导入更新后的卡（含 at_depth 顶层 depth/role 修复），在真实对话中完全验证 v0.0.264 修复效果。当前真实对话用的是旧卡 id=3（fallback 机制可工作），新卡 id=4 已不存在。
-2. 可选：修复 `visible_summary` 列名映射问题 — vendor fallback plan 用英文键名 `visible_summary`，但表头列名是中文"可见摘要"，导致驾驭厉鬼和收录档案表部分操作失败。
-3. 可选：修复 `row_id` 不稳定问题 — sheet_chronicle 和 sheet_clues 的 row_id 为空字符串，退化为 checkpoint 模式。
+1. ~~重新导入更新后的卡并在真实对话中验证 v0.0.264 修复效果。~~ **已完成（2026-06-24）：** 用户手动导入新卡，真实对话验证 13/14 表写入成功，修复持续生效。
+2. 可选：修复 `row_id` 不稳定问题 — sheet_clues、sheet_chronicle、sheet_collected_archives 部分行 row_id 为空字符串，退化为 checkpoint 模式。
+3. 可选：修复 sheet_chronicle 纪要列值映射异常 — AI 输出的纪要编号被写入纪要文本列，minLength=20 约束未拦截。
+4. 可选：修复 `visible_summary` 列名映射问题 — vendor fallback plan 用英文键名 `visible_summary`，但表头列名是中文"可见摘要"。（注：2026-06-24 真页验证中 public_summary 映射正常，此问题可能已自然修复，需复测确认。）
 
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
@@ -51,6 +63,10 @@
 - 不要用文件级覆盖 `E:/SillyTavern/data/banyan/characters/*.png` 代替 SillyTavern 正式导入；已证明会导致角色识别/runtime 丢失。
 - Chrome DevTools MCP `upload_file` 可以直接上传 PNG 到导入按钮，SillyTavern 自动处理导入流程。
 - 检查数据库写入状态必须用 `exportTableAsJson()`，不要用 `getTableData()`（后者读内存缓存，返回 null 不代表表为空）。
+- 更准确的检查方法：`MysteryDatabaseFrontend.exportCurrentData()` 返回完整表数据，每表 `content` 数组 row 0 为表头、后续为数据行。
+- 检查 extensionPrompts 槽位：`SillyTavern.getContext().extensionPrompts`，找 `customDepthWI_4_0`（depth=4, role=0）。
+- 检查 worldbook 运行态：`SillyTavern.getContext().worldInfo.entries`，统计 enabled/disabled/maxEnabledLen。
+- 检查 AI 消息协议块清洗：`SillyTavern.getContext().chat` 过滤 `is_user === false`，检查 `mes` 字段是否残留协议块。
 
 ## 版本变更索引
 
@@ -69,7 +85,7 @@
 
 ## 需要提交的文件
 
-**当前工作区干净，无待提交文件。** 仅有 `.claude/worktrees/*` gitlink 为本地工具状态，不提交。
+**当前待提交：** planning 整理 — `task_plan.md`、`progress.md`。`findings.md` 和 `PROJECT_FLOW.md` 本轮未变更。dist 本地构建残留不提交，留给 bot bundle Action 在 CI 重建。
 
 **按任务类型精确 staging 规则：**
 - 源码或世界书变更：只提交实际改动的 `src/**`、`util/**`、`@types/**`、`初始模板/**`、`示例/**` 等相关文件。
