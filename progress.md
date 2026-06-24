@@ -1,5 +1,19 @@
 # Progress Log
 
+## 2026-06-24 CST（vendor row_id 稳定性修复提交）
+
+**状态：** 提交 vendor row_id 自动分配修复。原生模式下，当调用方未提供 row_id 时，insertRow 函数自动分配 max+1，防止 newRow[0] 留空字符串导致 hasStableRowIds_ACU 判定失败、delta 退化为 checkpoint。
+
+**完成：**
+ - 修复位置：vendor/shujuku-sp-fork/index.js 的 insertRow 函数
+ - 修复逻辑：检查 headers[0] === 'row_id' 且 newRow[0] 为空/null/undefined 时，遍历现有行找到 max row_id，自动分配 max+1
+ - 针对问题：sheet_clues、sheet_chronicle、sheet_collected_archives 部分行 row_id 为空字符串
+ - 日志输出：logDebug_ACU 记录自动分配的 row_id 值和表名
+ - 提交内容：仅 vendor/shujuku-sp-fork/index.js（16 行新增代码）
+ - dist 本地构建残留保持原样，不提交（留给 bot bundle Action）
+
+**下一步：** 真页验证修复效果，检查 row_id 是否不再为空字符串。
+
 ## 2026-06-24 CST（真页验证确认：用户手动导入新卡后真实对话，v0.0.264 修复效果持续生效）
 
 **状态：** 用户手动导入更新后的卡（含 at_depth 顶层 depth/role 修复）并进行了几轮真实 AI 对话。通过 `MysteryDatabaseFrontend.exportCurrentData()` 检查数据库写入状态，确认 13/14 表成功写入（93%），与上次验证结果一致。v0.0.264 at_depth 保真修复在真实对话中持续生效。

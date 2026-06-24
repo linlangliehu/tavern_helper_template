@@ -15,9 +15,9 @@
 
 ## 当前状态
 
-**2026-06-24 planning 整理暂停点：** 核心修复线全部验证通过，任务暂停。当前 `main/origin/main` tip 为 `90af422`。
+**2026-06-24 vendor row_id 修复提交：** 核心修复线全部验证通过，补提交 vendor row_id 稳定性修复。当前 `main/origin/main` tip 为 `90af422`。
 
-**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）均已提交并在真页验证中确认生效。
+**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）均已提交并在真页验证中确认生效。新增 vendor row_id 自动分配修复（原生模式下自动分配 max+1，防止空字符串导致 delta 退化）。
 
 **2026-06-24 验证进展：**
 1. 真页验证突破：数据库实际写入 13/14 表（93%），之前"失败"结论为检查方法错误（`getTableData()` 不可靠，应用 `exportCurrentData()`）。
@@ -50,7 +50,7 @@
 
 **当前待办（均为可选，无阻断）：**
 1. ~~重新导入更新后的卡并在真实对话中验证 v0.0.264 修复效果。~~ **已完成（2026-06-24）：** 用户手动导入新卡，真实对话验证 13/14 表写入成功，修复持续生效。
-2. 可选：修复 `row_id` 不稳定问题 — sheet_clues、sheet_chronicle、sheet_collected_archives 部分行 row_id 为空字符串，退化为 checkpoint 模式。
+2. ~~修复 `row_id` 不稳定问题 — sheet_clues、sheet_chronicle、sheet_collected_archives 部分行 row_id 为空字符串，退化为 checkpoint 模式。~~ **已完成（2026-06-24）：** vendor 原生模式下当 row_id 为空时自动分配 max+1，待真页验证。
 3. 可选：修复 sheet_chronicle 纪要列值映射异常 — AI 输出的纪要编号被写入纪要文本列，minLength=20 约束未拦截。
 4. 可选：修复 `visible_summary` 列名映射问题 — vendor fallback plan 用英文键名 `visible_summary`，但表头列名是中文"可见摘要"。（注：2026-06-24 真页验证中 public_summary 映射正常，此问题可能已自然修复，需复测确认。）
 
