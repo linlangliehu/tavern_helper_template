@@ -15,9 +15,17 @@
 
 ## 当前状态
 
+**2026-06-25 代码同步完成：** 成功同步远程仓库，bot bundle 自动构建产物已更新。本地 main 分支与 origin/main 完全同步，工作区保持干净。
+
+**当前版本：**
+- 最新提交：`55e6b71` - `[bot] bundle`（自动构建 dist 产物）
+- 源码版本：`1ca3f84` - 抽卡系统完整实现（+1,182 行代码）
+- 规划文档：`0d54e93` - 项目规划文档整理完成
+- 发布版 PNG：7.5 MB（包含所有功能）
+
 **2026-06-25 重大突破：** 真页验证确认所有 14/14 表 row_id 全部为正常数字，无任何空字符串。此前一直存在的 sheet_clues、sheet_chronicle、sheet_collected_archives 三张表的 row_id 退化问题彻底解决。项目所有已知阻断/非阻断问题全部解决，进入稳定可用状态。
 
-**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）+ vendor row_id 修复（52b2e62）+ fallback plan 中文字段名修复（aa50677）+ 数据库前端交互优化（11b9cfc，已合并到 main）。
+**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）+ vendor row_id 修复（52b2e62）+ fallback plan 中文字段名修复（aa50677）+ 数据库前端交互优化（11b9cfc）+ 抽卡系统（1ca3f84，+1,182 行）。
 
 **2026-06-25 验证进展：**
 1. 数据库写入：14/14 表（100%），所有 row_id 为正常数字
@@ -26,23 +34,14 @@
 4. collected_archives 增加到 2 行
 5. delta 模式稳定工作，无 checkpoint 退化警告
 6. 数据库前端交互优化已生效（加载状态、空状态、搜索防抖、错误提示）
-
-**2026-06-24 vendor row_id 修复提交：** 核心修复线全部验证通过，补提交 vendor row_id 稳定性修复。当前 `main/origin/main` tip 为 `52b6416`。
-
-**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）均已提交并在真页验证中确认生效。新增 vendor row_id 自动分配修复（原生模式下自动分配 max+1，防止空字符串导致 delta 退化）。
-
-**2026-06-24 验证进展：**
-1. 真页验证突破：数据库实际写入 13/14 表（93%），之前"失败"结论为检查方法错误（`getTableData()` 不可靠，应用 `exportCurrentData()`）。
-2. at_depth 保真修复核心验证通过：ccv3 顶层 depth/role -> convertCharacterBook -> extensionPrompts 槽位 -> WI 激活 -> 数据库写入 13/14 表。
-3. 用户手动导入新卡真实对话验证：v0.0.264 修复在真实对话中持续生效，public_summary 列名映射正常，13/14 表成功写入。
-4. planning 整理暂停：四件套整理完成，等待用户下一步指示。
+7. 抽卡系统已实现并打包（19种灵异物品、4个抽卡池、完整保底机制、数据库同步）
 
 **已知非阻断问题（2026-06-25 已全部解决）：**
 - ~~row_id 空字符串：sheet_clues、sheet_chronicle、sheet_collected_archives 部分行~~ **已修复（2026-06-25）：** vendor row_id 自动分配 + fallback plan 中文字段名修复，14/14 表 row_id 全部为正常数字。
 - ~~sheet_chronicle 纪要列值异常：值为编号"SP0001"而非纪要文本~~ **已修复（2026-06-25）：** fallback plan 使用中文字段名"纪要"，正确写入纪要文本。
 - ~~sheet_chronicle minLength=20 约束未拦截 6 字符值~~ **已修复（2026-06-25）：** fallback plan 生成的纪要文本符合长度要求。
 
-**工作区状态：** 有 dist 本地构建残留（`dist/神秘复苏模拟器/**` 多个文件，不提交，留给 bot bundle Action）和 planning 三件套（`task_plan.md`、`progress.md` 待提交）。`.claude/worktrees/*` gitlink 为本地工具状态，不提交。
+**工作区状态：** 本地 main 分支与 origin/main 同步（`55e6b71`）。本地构建残留已暂存（`stash@{0}`）。planning 三件套（`task_plan.md`、`progress.md`）本轮已更新，待提交。`.claude/worktrees/*` gitlink 为本地工具状态，不提交。
 
 ## 当前任务清单
 
@@ -66,6 +65,8 @@
 3. ~~修复 sheet_chronicle 纪要列值映射异常 — AI 输出的纪要编号被写入纪要文本列，minLength=20 约束未拦截。~~ **已完成（2026-06-25）：** fallback plan 使用中文字段名"纪要"，正确写入纪要文本。
 4. ~~修复 `visible_summary` 列名映射问题 — vendor fallback plan 用英文键名 `visible_summary`，但表头列名是中文"可见摘要"。~~ **已完成（2026-06-25）：** 整体 fallback plan 字段名已统一为中文。
 5. ~~阶段6：前端完整集成与验证 - 交互细节打磨、性能与边界测试、代码清理~~ **已完成（2026-06-24）：** 数据库前端交互优化已合并到 main（commit `11b9cfc`）。
+6. ~~实现神秘复苏抽卡系统~~ **已完成（2026-06-25）：** 完整实现并打包（commit `1ca3f84`，+1,182 行代码），包含 19 种灵异物品、4 个抽卡池、保底机制、数据库同步。
+7. 抽卡系统真机验证（可选）：导入最新发布版 PNG → 测试抽卡功能 → 验证数据库写入（线索/知识/灵异物品表）。
 
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
@@ -99,7 +100,7 @@
 
 ## 需要提交的文件
 
-**当前待提交：** planning 整理 — `task_plan.md`、`progress.md`。`findings.md` 和 `PROJECT_FLOW.md` 本轮未变更。dist 本地构建残留不提交，留给 bot bundle Action 在 CI 重建。
+**当前待提交：** planning 更新记录 — `task_plan.md`、`progress.md`（本轮已更新代码同步进度和抽卡系统完成状态）。`findings.md` 和 `PROJECT_FLOW.md` 本轮未变更。dist 本地构建残留已暂存，不提交（留给 bot bundle Action 在 CI 重建）。
 
 **按任务类型精确 staging 规则：**
 - 源码或世界书变更：只提交实际改动的 `src/**`、`util/**`、`@types/**`、`初始模板/**`、`示例/**` 等相关文件。
