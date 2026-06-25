@@ -1,5 +1,32 @@
 # Progress Log
 
+## 2026-06-25 CST（会话整理：项目规划文档更新完成）
+
+**状态：** 用户要求整理项目进度和工作流程，确保新会话可以无缝继续任务。
+
+**完成：**
+ - ✅ 创建 `.cursor/workflow.md` - 项目工作流程常驻文档
+   - 项目结构、开发流程、Git 工作流、真机验证、发布流程
+   - 关键技术（数据库系统、CDN 部署链路、角色卡格式）
+   - 常见问题排查（分类器故障、CDN 同步、数据库检查、worktree 污染）
+   - 版本历史里程碑
+ - ✅ 创建 `.cursor/tasks.md` - 任务清单文档
+   - 当前任务：抽卡系统实现（4 个 Phase，详细分解）
+   - 已完成任务：剧情召回（已 revert）、数据库前端优化、vendor 修复、ccv3 修复
+   - 待办事项：表结构校验、时空锚点扩展、性能监控
+   - 技术债务记录
+   - 会话恢复检查清单
+ - ✅ 整理 `progress.md` 保留版本变更历史
+ - ✅ TaskList 清理：当前 4 个待办任务（抽卡系统相关）
+
+**文件提交规则整理：**
+ - ✅ **需要提交**：`src/`、`vendor/`、`神秘复苏模拟器发布版/*.png`、`progress.md`、`.cursor/workflow.md`、`.cursor/tasks.md`
+ - ❌ **不提交**：`dist/`（bot bundle 自动生成）、`.tmp-*`、截图、worktree 目录
+
+**下一步：** 
+ - 继续实现抽卡系统 Phase 1（核心数据结构）
+ - 或新会话通过读取 `.cursor/workflow.md` + `.cursor/tasks.md` 快速恢复上下文
+
 ## 2026-06-25 CST（🎉 重大突破：所有已知 row_id 问题全部修复 - 14/14 表完全正常）
 
 **状态：** 真页验证确认 - 所有 14 张表 row_id 全部为正常数字，**无任何空字符串**。此前一直存在的 sheet_clues、sheet_chronicle、sheet_collected_archives 三张表的 row_id 退化问题彻底解决。
