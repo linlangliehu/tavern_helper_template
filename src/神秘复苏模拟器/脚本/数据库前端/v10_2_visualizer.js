@@ -15,7 +15,6 @@
     const STORAGE_KEY_MFRS_CRUD_MIGRATION = 'acu_mfrs_visualizer_crud_migration';
     
     const TAB_DASHBOARD = 'acu_tab_dashboard_home';
-    const TAB_PLOT_RECALL = 'acu_tab_plot_recall';
     const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
     const MFRS_DASHBOARD_SLOTS = [
         { id: 'slot_2_1', kw: '玩家状态', title: '玩家状态', rule: 'kv' },
@@ -994,121 +993,7 @@
                 @keyframes pulse-highlight { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
                 @keyframes acu-shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0deg); } }
                 .acu-save-alert { animation: acu-shake 0.4s ease-in-out infinite; color: #fff !important; background-color: #e74c3c !important; text-shadow: 0 0 5px rgba(231, 76, 60, 0.5); border-color: #c0392b !important; }
-
-                /* 剧情召回样式 */
-                .acu-plot-timeline {
-                    padding: 20px;
-                    overflow-y: auto;
-                    height: 100%;
-                    box-sizing: border-box;
-                }
-                .acu-plot-item {
-                    display: flex;
-                    gap: 16px;
-                    margin-bottom: 24px;
-                    position: relative;
-                }
-                .acu-plot-marker {
-                    flex: 0 0 20px;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    padding-top: 6px;
-                }
-                .acu-plot-dot {
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 50%;
-                    background: var(--acu-highlight, #d35400);
-                    box-shadow: 0 0 0 4px var(--acu-highlight-bg, rgba(211,84,0,0.2));
-                    flex: 0 0 14px;
-                }
-                .acu-plot-line {
-                    flex: 1;
-                    width: 2px;
-                    background: var(--acu-border, #ccc);
-                    margin-top: 4px;
-                    min-height: 30px;
-                }
-                .acu-plot-item:last-child .acu-plot-line { display: none; }
-                .acu-plot-content {
-                    flex: 1;
-                    background: var(--acu-card-bg, #fff);
-                    border: 1px solid var(--acu-border, #ccc);
-                    border-radius: 8px;
-                    padding: 12px 16px;
-                    box-shadow: 0 2px 5px var(--acu-shadow, rgba(0,0,0,0.05));
-                    transition: all 0.2s;
-                }
-                .acu-plot-content:hover {
-                    box-shadow: 0 4px 12px var(--acu-shadow, rgba(0,0,0,0.1));
-                    transform: translateY(-1px);
-                }
-                .acu-plot-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 8px;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                }
-                .acu-plot-code {
-                    color: var(--acu-highlight, #d35400);
-                    font-weight: bold;
-                    font-size: 0.9em;
-                    background: var(--acu-highlight-bg, rgba(211,84,0,0.1));
-                    padding: 2px 8px;
-                    border-radius: 4px;
-                }
-                .acu-plot-time {
-                    color: var(--acu-text-sub, #888);
-                    font-size: 0.85em;
-                }
-                .acu-plot-summary {
-                    color: var(--acu-text-main, #333);
-                    font-size: 1em;
-                    line-height: 1.5;
-                    margin-bottom: 8px;
-                    font-weight: 500;
-                }
-                .acu-plot-detail {
-                    margin-top: 12px;
-                    padding-top: 12px;
-                    border-top: 1px dashed var(--acu-border, #ccc);
-                }
-                .acu-plot-text {
-                    color: var(--acu-text-main, #333);
-                    font-size: 0.95em;
-                    line-height: 1.7;
-                    white-space: pre-wrap;
-                    word-break: break-word;
-                }
-                .acu-plot-toggle {
-                    background: none;
-                    border: none;
-                    color: var(--acu-text-sub, #888);
-                    font-size: 0.85em;
-                    cursor: pointer;
-                    padding: 4px 0;
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    transition: color 0.2s;
-                }
-                .acu-plot-toggle:hover {
-                    color: var(--acu-highlight, #d35400);
-                }
-                .acu-plot-empty {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 60px 20px;
-                    height: 100%;
-                    color: var(--acu-text-sub, #888);
-                    text-align: center;
-                }
-
+                
                 .acu-menu-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: transparent; z-index: 2147483640; }
                 .acu-cell-menu { position: fixed !important; background: var(--acu-menu-bg) !important; border: 1px solid var(--acu-border) !important; color: var(--acu-text-main) !important; box-shadow: 0 6px 20px var(--acu-shadow) !important; z-index: 2147483647 !important; border-radius: 8px; overflow: hidden; min-width: 150px; backdrop-filter: blur(5px); }
                 .acu-cell-menu-item { padding: 12px 16px; cursor: pointer; font-size: 14px; display: flex; gap: 12px; align-items: center; color: var(--acu-text-main); font-weight: 500; background: transparent; }
@@ -2534,8 +2419,6 @@
             let contentHtml = '';
             if (currentTabName === TAB_DASHBOARD) {
                 contentHtml = renderDashboard(tables);
-            } else if (currentTabName === TAB_PLOT_RECALL) {
-                contentHtml = renderPlotRecall();
             } else if (currentTabName && tables[currentTabName]) {
                 contentHtml = renderTableContent(tables[currentTabName], currentTabName);
             }
@@ -2586,7 +2469,6 @@
                         ${orderControlsHtml}
                         <div class="acu-nav-tabs-area">
                             ${(showDash && config.dashboardPosition === 'panel') ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-tachometer-alt"></i><span>仪表盘</span></button>` : ''}
-                            <button class="acu-nav-btn ${currentTabName === TAB_PLOT_RECALL ? 'active' : ''}" data-table="${TAB_PLOT_RECALL}"><i class="fa-solid fa-book-open"></i><span>剧情召回</span></button>
             `;
             orderedNames.forEach(name => {
                 if (hiddenTables.includes(name)) return;
@@ -3105,106 +2987,6 @@
         return html;
     };
 
-    const renderPlotRecall = () => {
-        const { $ } = getCore();
-        if (!$) return '';
-
-        const rawData = getTableData();
-        if (!rawData) {
-            return `<div class="acu-plot-empty">
-                <i class="fa-solid fa-book-open" style="font-size:48px; opacity:0.3; margin-bottom:16px;"></i>
-                <div style="color:var(--acu-text-sub); font-size:14px;">暂无剧情纪要</div>
-            </div>`;
-        }
-
-        // 查找 chronicle 表（支持多种命名）
-        const chronicleKeywords = ['chronicle', '纪要', '总结', '事件纪要', 'sheet_chronicle'];
-        let chronicleTable = null;
-        let chronicleKey = '';
-
-        for (const key in rawData) {
-            const tableName = rawData[key]?.name || '';
-            if (chronicleKeywords.some(kw => tableName.includes(kw) || key.includes(kw))) {
-                chronicleTable = rawData[key];
-                chronicleKey = key;
-                break;
-            }
-        }
-
-        if (!chronicleTable || !chronicleTable.content || chronicleTable.content.length <= 1) {
-            return `<div class="acu-plot-empty">
-                <i class="fa-solid fa-book-open" style="font-size:48px; opacity:0.3; margin-bottom:16px;"></i>
-                <div style="color:var(--acu-text-sub); font-size:14px;">暂无剧情纪要</div>
-                <div style="color:var(--acu-text-sub); font-size:12px; margin-top:8px;">未找到纪要表或纪要表为空</div>
-            </div>`;
-        }
-
-        const headers = chronicleTable.content[0];
-        const rows = chronicleTable.content.slice(1);
-
-        // 找到关键列索引
-        const findColIndex = (keywords) => {
-            return headers.findIndex(h => keywords.some(kw => String(h).includes(kw)));
-        };
-
-        const codeIndex = findColIndex(['编码', '索引', 'code', 'index']);
-        const timeIndex = findColIndex(['时间', '跨度', 'time', 'span']);
-        const summaryIndex = findColIndex(['概览', '摘要', 'summary']);
-        const contentIndex = findColIndex(['纪要', '内容', '正文', 'content', 'chronicle']);
-
-        // 倒序取最近 10 条
-        const recentRows = rows.slice(-10).reverse();
-
-        let html = `
-            <div class="acu-panel-header">
-                <div class="acu-panel-title">
-                    <div class="acu-title-main"><i class="fa-solid fa-book-open"></i> <span class="acu-title-text">剧情召回</span></div>
-                    <div class="acu-title-sub">最近 ${recentRows.length} 条纪要</div>
-                </div>
-                <div class="acu-header-actions">
-                    <button class="acu-header-btn" id="acu-btn-plot-close" title="关闭">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="acu-plot-timeline">`;
-
-        recentRows.forEach((row, idx) => {
-            const code = codeIndex >= 0 ? row[codeIndex] : `#${rows.length - idx}`;
-            const time = timeIndex >= 0 ? row[timeIndex] : '';
-            const summary = summaryIndex >= 0 ? row[summaryIndex] : '无概览';
-            const content = contentIndex >= 0 ? row[contentIndex] : '无内容';
-
-            const itemId = `plot-item-${idx}`;
-
-            html += `
-                <div class="acu-plot-item" data-id="${itemId}">
-                    <div class="acu-plot-marker">
-                        <div class="acu-plot-dot"></div>
-                        <div class="acu-plot-line"></div>
-                    </div>
-                    <div class="acu-plot-content">
-                        <div class="acu-plot-header">
-                            <span class="acu-plot-code">${code}</span>
-                            <span class="acu-plot-time">${time}</span>
-                        </div>
-                        <div class="acu-plot-summary">${summary}</div>
-                        <div class="acu-plot-detail" id="${itemId}-detail" style="display:none;">
-                            <div class="acu-plot-text">${String(content).replace(/\n/g, '<br>')}</div>
-                        </div>
-                        <button class="acu-plot-toggle" data-target="${itemId}-detail">
-                            <i class="fa-solid fa-chevron-down"></i>
-                            <span>展开完整纪要</span>
-                        </button>
-                    </div>
-                </div>`;
-        });
-
-        html += `</div>`;
-
-        return html;
-    };
-
     const closePanel = () => {
         const { $ } = getCore();
         if (!$) return;
@@ -3257,16 +3039,11 @@
             currentPage = 1;
             currentSearchTerm = '';
             globalScrollTop = 0;
-
+            
             if (tableName === TAB_DASHBOARD) {
                 $('#acu-data-area').html(renderDashboard(tables)).addClass('visible');
                 const h = getTableHeights()[TAB_DASHBOARD];
                 $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
-                bindDataAreaEvents();
-            } else if (tableName === TAB_PLOT_RECALL) {
-                $('#acu-data-area').html(renderPlotRecall()).addClass('visible');
-                const h = getTableHeights()[TAB_PLOT_RECALL] || '60vh';
-                $('#acu-data-area').css({height: h, maxHeight: '95vh'});
                 bindDataAreaEvents();
             } else if (tables[tableName]) {
                 $('#acu-data-area').html(renderTableContent(tables[tableName], tableName)).addClass('visible');
@@ -3331,27 +3108,7 @@
         
         const bindDataAreaEvents = () => {
             $('#acu-btn-close').off('click').on('click', function(e) { e.stopPropagation(); closePanel(); });
-            $('#acu-btn-plot-close').off('click').on('click', function(e) { e.stopPropagation(); closePanel(); });
-
-            // 剧情召回：展开/折叠按钮
-            $('.acu-plot-toggle').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const targetId = $(this).data('target');
-                const $detail = $(`#${targetId}`);
-                const $icon = $(this).find('i');
-                const $text = $(this).find('span');
-
-                if ($detail.is(':visible')) {
-                    $detail.slideUp(200);
-                    $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-                    $text.text('展开完整纪要');
-                } else {
-                    $detail.slideDown(200);
-                    $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-                    $text.text('收起纪要');
-                }
-            });
-
+            
             $('#acu-btn-search-toggle').off('click').on('click', function(e) {
                 e.stopPropagation();
                 $(this).hide();
