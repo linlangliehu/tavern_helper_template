@@ -8,7 +8,10 @@
  * 1. 监听 GENERATION_ENDED 事件
  * 2. 触发 MVU 解析当前消息的 <UpdateVariable> 块
  * 3. 触发数据库自动更新逻辑
- * 4. 清洗 mes 字段，移除 <UpdateVariable> 和 <choices> 块
+ * 4. 清洗 mes 字段：
+ *    - 整段删除 <UpdateVariable> 和 <choices>（纯内部协议）
+ *    - 剥离 <sp_*> / <mfrs_*> 标签本身，保留内部展示文本（玩家可见面板）
+ *    - 删除自闭合 <mfrs_roll ... />（无内部文本）
  */
 
 type HostWindow = Window & {
@@ -87,10 +90,14 @@ async function cleanProtocolBlocks(messageIndex: number) {
 
   const originalMes = message.mes;
 
-  // 清洗 <UpdateVariable> 和 <choices> 块
+  // 清洗 <UpdateVariable> 和 <choices> 块（纯内部协议，整段删除）
   let cleanedMes = originalMes
     .replace(/<UpdateVariable>[\s\S]*?<\/UpdateVariable>/gi, '')
-    .replace(/<choices>[\s\S]*?<\/choices>/gi, '');
+    .replace(/<choices>[\s\S]*?<\/choices>/gi, '')
+    // 剥离 <sp_*> / <mfrs_*> 标签本身，保留内部展示文本（玩家可见面板，见《短标签字段协议》）
+    .replace(/<\/?(?:sp_|mfrs_)[a-z_]*\s*>/gi, '')
+    // 删除自闭合的 <mfrs_roll ... />（掷骰展示，无内部文本）
+    .replace(/<mfrs_roll\b[^>]*\/>/gi, '');
 
   // 如果清洗后有变化，更新 mes 并标记清洗时间
   if (cleanedMes !== originalMes) {
