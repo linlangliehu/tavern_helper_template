@@ -2398,6 +2398,7 @@
             const isAlreadyVisible = $('#acu-data-area').hasClass('visible');
 
             const actionBtns = {
+                'acu-btn-gacha': `<button class="acu-action-btn" id="acu-btn-gacha" title="抽卡系统"><i class="fa-solid fa-gift"></i></button>`,
                 'acu-btn-save-global': `<button class="acu-action-btn" id="acu-btn-save-global" title="保存所有修改"><i class="fa-solid fa-save"></i></button>`,
                 'acu-btn-open-native': `<button class="acu-action-btn" id="acu-btn-open-native" title="打开原生编辑器"><i class="fa-solid fa-external-link-alt"></i></button>`,
                 'acu-btn-manual-update': `<button class="acu-action-btn" id="acu-btn-manual-update" title="立即手动更新"><i class="fa-solid fa-bolt"></i></button>`,
@@ -3241,7 +3242,8 @@
         const toggleUI = () => { isCollapsed = !isCollapsed; localStorage.setItem(STORAGE_KEY_UI_COLLAPSE, isCollapsed); renderInterface(); };
         $('#acu-btn-toggle').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); });
         if (isCollapsed) { $('.acu-nav-container').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); }); }
-        
+
+        $('#acu-btn-gacha').off('click').on('click', (e) => { e.stopPropagation(); showGachaPanel(); });
         $('#acu-btn-settings').off('click').on('click', (e) => { e.stopPropagation(); if (isEditingOrder) { toggleOrderEditMode(); } else { showSettingsModal(); } });
         $('#acu-btn-cancel-mode').off('click').on('click', (e) => { e.stopPropagation(); isEditingOrder = false; renderInterface(); });
         $('#acu-btn-save-mode').off('click').on('click', (e) => { e.stopPropagation(); toggleOrderEditMode(); });
@@ -3944,6 +3946,1186 @@
         };
         loop();
     };
+    // ==================== 抽卡系统 ====================
+
+    // 稀有度枚举
+    const GACHA_RARITY = {
+        MYTHIC: { level: 6, name: '神话', stars: '★★★★★★', color: '#ff6b6b', probability: 0.005 },
+        LEGENDARY: { level: 5, name: '传说', stars: '★★★★★', color: '#ffd93d', probability: 0.02 },
+        EPIC: { level: 4, name: '史诗', stars: '★★★★', color: '#a855f7', probability: 0.05 },
+        RARE: { level: 3, name: '稀有', stars: '★★★', color: '#6bceff', probability: 0.15 },
+        COMMON: { level: 2, name: '普通', stars: '★★', color: '#95d5b2', probability: 0.30 },
+        BASIC: { level: 1, name: '常见', stars: '★', color: '#d4d4d4', probability: 0.475 }
+    };
+
+    // 物品类型
+    const GACHA_ITEM_TYPE = {
+        SUPERNATURAL: 'supernatural', // 灵异物品
+        CLUE: 'clue',                 // 线索（提升档案进度）
+        KNOWLEDGE: 'knowledge'        // 知识（提升规律进度）
+    };
+
+    // 灵异物品池（19种，符合神秘复苏原著设定）
+    const SUPERNATURAL_ITEMS = [
+        // ★★★★★★ 神话（0.5%）
+        {
+            id: 'item_mythic_1',
+            name: '源头碎片',
+            rarity: GACHA_RARITY.MYTHIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🔮',
+            description: '神秘复苏源头的碎片，蕴含改写规则的力量',
+            effect: '可改写厉鬼杀人规律',
+            effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失',
+            usageLimit: 1,
+            duration: '永久',
+            targetTable: 'sheet_supernatural_items'
+        },
+
+        // ★★★★★ 传说（2%）
+        {
+            id: 'item_legendary_1',
+            name: '鬼域',
+            rarity: GACHA_RARITY.LEGENDARY,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🌫️',
+            description: '厉鬼的杀人领域，可关押其他厉鬼',
+            effect: '可关押厉鬼',
+            effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人',
+            usageLimit: 'unlimited',
+            duration: '持续',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_legendary_2',
+            name: '鬼差制服',
+            rarity: GACHA_RARITY.LEGENDARY,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🧥',
+            description: '沾染了鬼差灵异的制服，拥有强大防护能力',
+            effect: '可抵御厉鬼袭击',
+            effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击',
+            usageLimit: 'unlimited',
+            duration: '持续',
+            targetTable: 'sheet_supernatural_items'
+        },
+
+        // ★★★★ 史诗（5%）
+        {
+            id: 'item_epic_1',
+            name: '黄金手掌',
+            rarity: GACHA_RARITY.EPIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '✋',
+            description: '沾染了灵异能力的黄金手掌，可击退厉鬼',
+            effect: '可击退厉鬼',
+            effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发',
+            usageLimit: 3,
+            duration: '每次使用持续数分钟',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_epic_2',
+            name: '饿死鬼的香烟',
+            rarity: GACHA_RARITY.EPIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🚬',
+            description: '饿死鬼遗留的香烟，可暂时压制厉鬼',
+            effect: '可暂时压制厉鬼',
+            effectDetail: '点燃后可以暂时压制厉鬼的杀人规律',
+            usageLimit: 7,
+            duration: '每支持续一段时间',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_epic_3',
+            name: '鬼邮件',
+            rarity: GACHA_RARITY.EPIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '✉️',
+            description: '可以传递信息的灵异邮件',
+            effect: '可传递信息',
+            effectDetail: '可以向任何地点的人传递信息，不受距离限制',
+            usageLimit: 5,
+            duration: '即时',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_epic_4',
+            name: '鬼奴隶',
+            rarity: GACHA_RARITY.EPIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '👤',
+            description: '被灵异力量控制的鬼奴隶，可执行简单任务',
+            effect: '可使役执行任务',
+            effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等',
+            usageLimit: 'unlimited',
+            duration: '持续',
+            targetTable: 'sheet_supernatural_items'
+        },
+
+        // ★★★ 稀有（15%）
+        {
+            id: 'item_rare_1',
+            name: '红色鬼烛',
+            rarity: GACHA_RARITY.RARE,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🕯️',
+            description: '红色的鬼烛，可以照亮鬼域',
+            effect: '照亮鬼域，驱散黑暗',
+            effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗',
+            usageLimit: 3,
+            duration: '每支持续数小时',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_rare_2',
+            name: '鬼钱',
+            rarity: GACHA_RARITY.RARE,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '💴',
+            description: '沾染了灵异的钞票，可用于交易',
+            effect: '购买灵异物品或服务',
+            effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助',
+            usageLimit: 'stack',
+            duration: '永久',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_rare_3',
+            name: '卫星定位手机',
+            rarity: GACHA_RARITY.RARE,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '📱',
+            description: '可以定位厉鬼的特殊手机',
+            effect: '定位厉鬼或驭鬼者',
+            effectDetail: '可以定位特定厉鬼或驭鬼者的位置',
+            usageLimit: 10,
+            duration: '每次使用即时',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_rare_4',
+            name: '压制类灵异物品',
+            rarity: GACHA_RARITY.RARE,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '⛓️',
+            description: '可以压制特定厉鬼的物品',
+            effect: '压制特定厉鬼',
+            effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力',
+            usageLimit: 5,
+            duration: '每次使用持续一段时间',
+            targetTable: 'sheet_supernatural_items'
+        },
+
+        // ★★ 普通（30%）- 5种基础灵异物品
+        {
+            id: 'item_common_1',
+            name: '灵异护符',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🎴',
+            description: '具有基础防护能力的护符',
+            effect: '基础防护',
+            effectDetail: '可以抵御低级灵异事件的侵袭',
+            usageLimit: 5,
+            duration: '每次使用持续短暂时间',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_common_2',
+            name: '追踪定位器',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '📍',
+            description: '可以追踪灵异气息的设备',
+            effect: '追踪灵异气息',
+            effectDetail: '可以追踪附近的灵异气息来源',
+            usageLimit: 8,
+            duration: '每次使用持续数分钟',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_common_3',
+            name: '临时鬼域碎片',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🧩',
+            description: '鬼域的微小碎片，可以短暂展开小范围鬼域',
+            effect: '展开小范围鬼域',
+            effectDetail: '可以短暂展开小范围鬼域用于防御或隔离',
+            usageLimit: 3,
+            duration: '每次持续几分钟',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_common_4',
+            name: '灵异侦测器',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '📡',
+            description: '可以侦测灵异强度的设备',
+            effect: '侦测灵异强度',
+            effectDetail: '可以测量附近灵异事件的强度等级',
+            usageLimit: 15,
+            duration: '即时',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_common_5',
+            name: '应急封印符',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '📜',
+            description: '可以短暂封印灵异的符咒',
+            effect: '短暂封印灵异',
+            effectDetail: '可以短暂封印低级灵异现象',
+            usageLimit: 4,
+            duration: '每次持续数分钟',
+            targetTable: 'sheet_supernatural_items'
+        },
+
+        // ★ 常见（47.5%）- 3种入门级灵异物品
+        {
+            id: 'item_basic_1',
+            name: '微弱鬼烛',
+            rarity: GACHA_RARITY.BASIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '🕯️',
+            description: '微弱的鬼烛，照明范围有限',
+            effect: '微弱照明',
+            effectDetail: '可以照亮小范围区域，驱散轻微黑暗',
+            usageLimit: 5,
+            duration: '每支持续短暂时间',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_basic_2',
+            name: '少量鬼钱',
+            rarity: GACHA_RARITY.BASIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '💵',
+            description: '少量的鬼钱',
+            effect: '小额交易',
+            effectDetail: '可以进行小额灵异物品交易',
+            usageLimit: 'stack',
+            duration: '永久',
+            targetTable: 'sheet_supernatural_items'
+        },
+        {
+            id: 'item_basic_3',
+            name: '灵异感知增强剂',
+            rarity: GACHA_RARITY.BASIC,
+            type: GACHA_ITEM_TYPE.SUPERNATURAL,
+            icon: '💊',
+            description: '可以暂时增强灵异感知的药剂',
+            effect: '增强灵异感知',
+            effectDetail: '暂时提升对灵异现象的感知能力',
+            usageLimit: 6,
+            duration: '每次持续数小时',
+            targetTable: 'sheet_supernatural_items'
+        }
+    ];
+
+    // 线索物品池（提升厉鬼档案进度）
+    const CLUE_ITEMS = [
+        {
+            id: 'clue_decisive',
+            name: '决定性线索',
+            rarity: GACHA_RARITY.EPIC,
+            type: GACHA_ITEM_TYPE.CLUE,
+            icon: '🔍',
+            description: '关键的决定性线索，大幅提升档案完成度',
+            effect: '档案进度 +50%',
+            effectDetail: '获得后立即提升指定厉鬼档案完成度50%',
+            progress: 0.5,
+            targetTable: 'sheet_clues'
+        },
+        {
+            id: 'clue_core',
+            name: '核心线索',
+            rarity: GACHA_RARITY.RARE,
+            type: GACHA_ITEM_TYPE.CLUE,
+            icon: '🔎',
+            description: '核心线索，显著提升档案完成度',
+            effect: '档案进度 +25%',
+            effectDetail: '获得后立即提升指定厉鬼档案完成度25%',
+            progress: 0.25,
+            targetTable: 'sheet_clues'
+        },
+        {
+            id: 'clue_important',
+            name: '重要线索',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.CLUE,
+            icon: '🔦',
+            description: '重要线索，提升档案完成度',
+            effect: '档案进度 +10%',
+            effectDetail: '获得后立即提升指定厉鬼档案完成度10%',
+            progress: 0.1,
+            targetTable: 'sheet_clues'
+        },
+        {
+            id: 'clue_common',
+            name: '普通线索',
+            rarity: GACHA_RARITY.BASIC,
+            type: GACHA_ITEM_TYPE.CLUE,
+            icon: '🔬',
+            description: '普通线索，少量提升档案完成度',
+            effect: '档案进度 +5%',
+            effectDetail: '获得后立即提升指定厉鬼档案完成度5%',
+            progress: 0.05,
+            targetTable: 'sheet_clues'
+        }
+    ];
+
+    // 知识物品池（提升厉鬼规律进度）
+    const KNOWLEDGE_ITEMS = [
+        {
+            id: 'knowledge_forbidden',
+            name: '禁忌知识',
+            rarity: GACHA_RARITY.EPIC,
+            type: GACHA_ITEM_TYPE.KNOWLEDGE,
+            icon: '📕',
+            description: '禁忌的知识，大幅揭示厉鬼规律',
+            effect: '规律进度 +50%',
+            effectDetail: '获得后立即提升指定厉鬼规律完成度50%',
+            progress: 0.5,
+            targetTable: 'sheet_collected_rules'
+        },
+        {
+            id: 'knowledge_core',
+            name: '核心知识',
+            rarity: GACHA_RARITY.RARE,
+            type: GACHA_ITEM_TYPE.KNOWLEDGE,
+            icon: '📗',
+            description: '核心知识，显著揭示厉鬼规律',
+            effect: '规律进度 +25%',
+            effectDetail: '获得后立即提升指定厉鬼规律完成度25%',
+            progress: 0.25,
+            targetTable: 'sheet_collected_rules'
+        },
+        {
+            id: 'knowledge_deep',
+            name: '深入知识',
+            rarity: GACHA_RARITY.COMMON,
+            type: GACHA_ITEM_TYPE.KNOWLEDGE,
+            icon: '📘',
+            description: '深入的知识，揭示部分规律',
+            effect: '规律进度 +10%',
+            effectDetail: '获得后立即提升指定厉鬼规律完成度10%',
+            progress: 0.1,
+            targetTable: 'sheet_collected_rules'
+        },
+        {
+            id: 'knowledge_basic',
+            name: '基础知识',
+            rarity: GACHA_RARITY.BASIC,
+            type: GACHA_ITEM_TYPE.KNOWLEDGE,
+            icon: '📙',
+            description: '基础知识，少量揭示规律',
+            effect: '规律进度 +5%',
+            effectDetail: '获得后立即提升指定厉鬼规律完成度5%',
+            progress: 0.05,
+            targetTable: 'sheet_collected_rules'
+        }
+    ];
+
+    // 抽卡货币系统
+    const GACHA_CURRENCY = {
+        name: '调查点',
+        key: 'investigation_points',
+        icon: '🔍',
+        earn: {
+            message: 1,      // 每条消息
+            clue: 5,         // 发现线索
+            event: 10,       // 完成事件
+            ghost: 15        // 对抗厉鬼
+        },
+        cost: {
+            single: 10,      // 单抽
+            ten: 90          // 十连（9折优惠）
+        }
+    };
+
+    // localStorage 键
+    const STORAGE_KEY_GACHA_CURRENCY = 'mfrs_gacha_currency';
+    const STORAGE_KEY_GACHA_PITY = 'mfrs_gacha_pity';
+    const STORAGE_KEY_GACHA_HISTORY = 'mfrs_gacha_history';
+
+    // 获取货币余额
+    const getGachaCurrency = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_GACHA_CURRENCY);
+            return stored ? parseInt(stored, 10) : 0;
+        } catch (e) {
+            return 0;
+        }
+    };
+
+    // 设置货币余额
+    const setGachaCurrency = (amount) => {
+        try {
+            localStorage.setItem(STORAGE_KEY_GACHA_CURRENCY, String(amount));
+        } catch (e) {
+            console.error('Failed to save currency:', e);
+        }
+    };
+
+    // 增加货币
+    const addGachaCurrency = (amount) => {
+        const current = getGachaCurrency();
+        setGachaCurrency(current + amount);
+        return current + amount;
+    };
+
+    // 扣除货币
+    const deductGachaCurrency = (amount) => {
+        const current = getGachaCurrency();
+        if (current < amount) return false;
+        setGachaCurrency(current - amount);
+        return true;
+    };
+
+    // 获取保底计数
+    const getGachaPity = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_GACHA_PITY);
+            return stored ? JSON.parse(stored) : { total: 0, rare: 0, epic: 0 };
+        } catch (e) {
+            return { total: 0, rare: 0, epic: 0 };
+        }
+    };
+
+    // 设置保底计数
+    const setGachaPity = (pity) => {
+        try {
+            localStorage.setItem(STORAGE_KEY_GACHA_PITY, JSON.stringify(pity));
+        } catch (e) {
+            console.error('Failed to save pity:', e);
+        }
+    };
+
+    // 增加保底计数
+    const incrementGachaPity = () => {
+        const pity = getGachaPity();
+        pity.total += 1;
+        pity.rare += 1;
+        pity.epic += 1;
+        setGachaPity(pity);
+        return pity;
+    };
+
+    // 四个物品池类型
+    const GACHA_POOL_TYPE = {
+        ALL: 'all',                    // 全物品池
+        ARCHIVE: 'archive',            // 厉鬼档案池（线索权重x2）
+        PATTERN: 'pattern',            // 厉鬼规律池（知识权重x2）
+        SUPERNATURAL: 'supernatural'   // 灵异物品池（仅灵异物品）
+    };
+
+    // 构建抽卡池
+    const buildGachaPool = (poolType) => {
+        const pool = [];
+
+        if (poolType === GACHA_POOL_TYPE.SUPERNATURAL) {
+            // 仅灵异物品
+            SUPERNATURAL_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability });
+            });
+        } else if (poolType === GACHA_POOL_TYPE.ARCHIVE) {
+            // 线索权重x2
+            SUPERNATURAL_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability * 0.5 });
+            });
+            CLUE_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability * 2 });
+            });
+            KNOWLEDGE_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability * 0.5 });
+            });
+        } else if (poolType === GACHA_POOL_TYPE.PATTERN) {
+            // 知识权重x2
+            SUPERNATURAL_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability * 0.5 });
+            });
+            CLUE_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability * 0.5 });
+            });
+            KNOWLEDGE_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability * 2 });
+            });
+        } else {
+            // 全物品池（均匀分布）
+            SUPERNATURAL_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability });
+            });
+            CLUE_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability });
+            });
+            KNOWLEDGE_ITEMS.forEach(item => {
+                pool.push({ item, weight: item.rarity.probability });
+            });
+        }
+
+        // 归一化权重
+        const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
+        pool.forEach(p => p.normalizedWeight = p.weight / totalWeight);
+
+        return pool;
+    };
+
+    // 单次抽卡逻辑
+    const performSingleGacha = (poolType, forcedRarity = null) => {
+        const pool = buildGachaPool(poolType);
+
+        if (forcedRarity) {
+            // 保底机制：强制指定稀有度
+            const filtered = pool.filter(p => p.item.rarity.level >= forcedRarity);
+            if (filtered.length === 0) return pool[0].item;
+
+            const totalWeight = filtered.reduce((sum, p) => sum + p.weight, 0);
+            const random = Math.random() * totalWeight;
+            let cumulative = 0;
+
+            for (const p of filtered) {
+                cumulative += p.weight;
+                if (random <= cumulative) return p.item;
+            }
+            return filtered[filtered.length - 1].item;
+        }
+
+        // 正常抽卡
+        const random = Math.random();
+        let cumulative = 0;
+
+        for (const p of pool) {
+            cumulative += p.normalizedWeight;
+            if (random <= cumulative) return p.item;
+        }
+
+        return pool[pool.length - 1].item;
+    };
+
+    // 十连抽卡逻辑
+    const performTenGacha = (poolType) => {
+        const results = [];
+        const pity = getGachaPity();
+
+        for (let i = 0; i < 10; i++) {
+            let forcedRarity = null;
+
+            // 第10抽保底★★★
+            if (i === 9) {
+                forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.RARE.level);
+            }
+
+            // 50抽保底★★★★
+            if (pity.epic >= 49) {
+                forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.EPIC.level);
+            }
+
+            // 100抽保底★★★★★★
+            if (pity.total >= 99) {
+                forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.MYTHIC.level);
+            }
+
+            const item = performSingleGacha(poolType, forcedRarity);
+            results.push(item);
+
+            // 更新保底计数
+            incrementGachaPity();
+
+            // 重置保底
+            if (item.rarity.level >= GACHA_RARITY.RARE.level) {
+                resetGachaPity('rare');
+            }
+            if (item.rarity.level >= GACHA_RARITY.EPIC.level) {
+                resetGachaPity('epic');
+            }
+            if (item.rarity.level >= GACHA_RARITY.MYTHIC.level) {
+                resetGachaPity('mythic');
+            }
+        }
+
+        return results;
+    };
+
+    // 单抽
+    const gachaSingle = (poolType = GACHA_POOL_TYPE.ALL) => {
+        const cost = GACHA_CURRENCY.cost.single;
+        if (!deductGachaCurrency(cost)) {
+            return { success: false, error: '调查点不足' };
+        }
+
+        const pity = getGachaPity();
+        let forcedRarity = null;
+
+        // 50抽保底★★★★
+        if (pity.epic >= 49) {
+            forcedRarity = GACHA_RARITY.EPIC.level;
+        }
+
+        // 100抽保底★★★★★★
+        if (pity.total >= 99) {
+            forcedRarity = GACHA_RARITY.MYTHIC.level;
+        }
+
+        const item = performSingleGacha(poolType, forcedRarity);
+
+        // 更新保底计数
+        incrementGachaPity();
+
+        // 重置保底
+        if (item.rarity.level >= GACHA_RARITY.RARE.level) {
+            resetGachaPity('rare');
+        }
+        if (item.rarity.level >= GACHA_RARITY.EPIC.level) {
+            resetGachaPity('epic');
+        }
+        if (item.rarity.level >= GACHA_RARITY.MYTHIC.level) {
+            resetGachaPity('mythic');
+        }
+
+        // 保存抽卡历史
+        saveGachaHistory([item]);
+
+        return { success: true, items: [item], currency: getGachaCurrency() };
+    };
+
+    // 十连
+    const gachaTen = (poolType = GACHA_POOL_TYPE.ALL) => {
+        const cost = GACHA_CURRENCY.cost.ten;
+        if (!deductGachaCurrency(cost)) {
+            return { success: false, error: '调查点不足' };
+        }
+
+        const items = performTenGacha(poolType);
+
+        // 保存抽卡历史
+        saveGachaHistory(items);
+
+        return { success: true, items, currency: getGachaCurrency() };
+    };
+
+    // 保存抽卡历史
+    const saveGachaHistory = (items) => {
+        try {
+            const history = getGachaHistory();
+            const timestamp = Date.now();
+            items.forEach(item => {
+                history.unshift({ item, timestamp });
+            });
+            // 只保留最近100次
+            if (history.length > 100) {
+                history.splice(100);
+            }
+            localStorage.setItem(STORAGE_KEY_GACHA_HISTORY, JSON.stringify(history));
+        } catch (e) {
+            console.error('Failed to save gacha history:', e);
+        }
+    };
+
+    // 获取抽卡历史
+    const getGachaHistory = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_GACHA_HISTORY);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            return [];
+        }
+    };
+
+    // 显示抽卡主面板
+    const showGachaPanel = () => {
+        const { $ } = getCore();
+        const config = getConfig();
+        const currency = getGachaCurrency();
+        const pity = getGachaPity();
+
+        const dialog = $(`
+            <div class="acu-edit-overlay">
+                <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 900px; max-height: 90vh; overflow: hidden;">
+                    <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>神秘复苏抽卡系统</span>
+                        <button id="gacha-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="acu-settings-content" style="flex:1; overflow-y:auto; padding:20px;">
+                        <!-- 货币显示 -->
+                        <div style="background:var(--acu-btn-bg); border-radius:12px; padding:20px; margin-bottom:20px; border:2px solid var(--acu-highlight);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="color:var(--acu-text-sub); font-size:13px; margin-bottom:8px;">当前余额</div>
+                                    <div style="color:var(--acu-highlight); font-size:32px; font-weight:bold; display:flex; align-items:center; gap:10px;">
+                                        <i class="fa-solid fa-search"></i>
+                                        <span id="gacha-currency-display">${currency}</span>
+                                        <span style="font-size:16px; color:var(--acu-text-main);">${GACHA_CURRENCY.name}</span>
+                                    </div>
+                                </div>
+                                <div style="text-align:right; color:var(--acu-text-sub); font-size:12px; line-height:1.8;">
+                                    <div>💬 消息 +1</div>
+                                    <div>🔍 线索 +5</div>
+                                    <div>📅 事件 +10</div>
+                                    <div>👻 对抗厉鬼 +15</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 保底进度 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
+                            <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">保底进度</div>
+                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; font-size:12px;">
+                                <div>
+                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
+                                    <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
+                                </div>
+                                <div>
+                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
+                                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - pity.epic)} 抽</div>
+                                </div>
+                                <div>
+                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
+                                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - pity.total)} 抽</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 抽卡池选择 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
+                            <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">选择抽卡池</div>
+                            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">
+                                <button class="gacha-pool-btn active" data-pool="all" style="background:var(--acu-btn-bg); border:2px solid var(--acu-highlight); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                    <div style="font-weight:bold; margin-bottom:5px;">全物品池</div>
+                                    <div style="font-size:11px; color:var(--acu-text-sub);">均匀分布</div>
+                                </button>
+                                <button class="gacha-pool-btn" data-pool="archive" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                    <div style="font-weight:bold; margin-bottom:5px;">厉鬼档案池</div>
+                                    <div style="font-size:11px; color:var(--acu-text-sub);">线索权重↑</div>
+                                </button>
+                                <button class="gacha-pool-btn" data-pool="pattern" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                    <div style="font-weight:bold; margin-bottom:5px;">厉鬼规律池</div>
+                                    <div style="font-size:11px; color:var(--acu-text-sub);">知识权重↑</div>
+                                </button>
+                                <button class="gacha-pool-btn" data-pool="supernatural" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                    <div style="font-weight:bold; margin-bottom:5px;">灵异物品池</div>
+                                    <div style="font-size:11px; color:var(--acu-text-sub);">仅灵异物品</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 抽卡按钮 -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                            <button id="gacha-single-btn" style="background:linear-gradient(135deg, var(--acu-highlight) 0%, var(--acu-highlight-bg) 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px var(--acu-highlight-bg);">
+                                <div style="margin-bottom:8px;">单抽</div>
+                                <div style="font-size:13px; opacity:0.9;">消耗 ${GACHA_CURRENCY.cost.single} 调查点</div>
+                            </button>
+                            <button id="gacha-ten-btn" style="background:linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px rgba(255, 107, 107, 0.3);">
+                                <div style="margin-bottom:8px;">十连抽</div>
+                                <div style="font-size:13px; opacity:0.9;">消耗 ${GACHA_CURRENCY.cost.ten} 调查点（9折）</div>
+                            </button>
+                        </div>
+
+                        <!-- 结果展示区 -->
+                        <div id="gacha-result-container" style="display:none; background:var(--acu-bg-panel); border-radius:12px; padding:20px; margin-bottom:20px;">
+                            <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:15px; font-size:14px; text-align:center;">抽卡结果</div>
+                            <div id="gacha-result-items" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;"></div>
+                        </div>
+
+                        <!-- 抽卡历史 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <div style="color:var(--acu-title-color); font-weight:bold; font-size:14px;">抽卡历史</div>
+                                <button id="gacha-history-toggle" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:12px;">
+                                    <i class="fa-solid fa-chevron-down"></i> 展开
+                                </button>
+                            </div>
+                            <div id="gacha-history-content" style="display:none; max-height:200px; overflow-y:auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        $('body').append(dialog);
+
+        // 当前选中的抽卡池
+        let selectedPool = GACHA_POOL_TYPE.ALL;
+
+        // 关闭对话框
+        const closeDialog = () => dialog.remove();
+        dialog.find('#gacha-close').click(closeDialog);
+        dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDialog(); });
+
+        // 抽卡池选择
+        dialog.find('.gacha-pool-btn').on('click', function() {
+            dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
+            $(this).addClass('active').css('border-color', 'var(--acu-highlight)');
+            selectedPool = $(this).data('pool');
+        });
+
+        // 按钮悬停效果
+        dialog.find('#gacha-single-btn, #gacha-ten-btn').on('mouseenter', function() {
+            $(this).css('transform', 'translateY(-3px) scale(1.02)');
+        }).on('mouseleave', function() {
+            $(this).css('transform', 'translateY(0) scale(1)');
+        });
+
+        // 显示抽卡结果
+        const showGachaResult = (items) => {
+            const $resultContainer = dialog.find('#gacha-result-container');
+            const $resultItems = dialog.find('#gacha-result-items');
+
+            $resultItems.empty();
+
+            items.forEach(item => {
+                const $card = $(`
+                    <div class="gacha-result-card" style="background:var(--acu-btn-bg); border:2px solid ${item.rarity.color}; border-radius:10px; padding:12px; text-align:center; position:relative; overflow:hidden; cursor:pointer; transition:transform 0.2s;">
+                        <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg, ${item.rarity.color}22 0%, transparent 100%); pointer-events:none;"></div>
+                        <div style="position:relative; z-index:1;">
+                            <div style="font-size:36px; margin-bottom:8px;">${item.icon}</div>
+                            <div style="color:${item.rarity.color}; font-size:11px; margin-bottom:5px;">${item.rarity.stars}</div>
+                            <div style="color:var(--acu-text-main); font-weight:bold; font-size:13px; margin-bottom:5px;">${item.name}</div>
+                            <div style="color:var(--acu-text-sub); font-size:11px;">${item.effect}</div>
+                        </div>
+                    </div>
+                `);
+
+                // 翻卡动画
+                $card.css({
+                    opacity: 0,
+                    transform: 'rotateY(90deg)'
+                });
+
+                setTimeout(() => {
+                    $card.css({
+                        opacity: 1,
+                        transform: 'rotateY(0deg)',
+                        transition: 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+                    });
+                }, Math.random() * 200);
+
+                // 悬停放大
+                $card.on('mouseenter', function() {
+                    $(this).css('transform', 'scale(1.05)');
+                }).on('mouseleave', function() {
+                    $(this).css('transform', 'scale(1)');
+                });
+
+                // 点击显示详情
+                $card.on('click', function() {
+                    showGachaItemDetail(item);
+                });
+
+                $resultItems.append($card);
+            });
+
+            $resultContainer.show();
+
+            // 滚动到结果区域
+            setTimeout(() => {
+                $resultContainer[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 600);
+        };
+
+        // 单抽
+        dialog.find('#gacha-single-btn').on('click', async function() {
+            const result = gachaSingle(selectedPool);
+
+            if (!result.success) {
+                if (window.toastr) window.toastr.error(result.error);
+                return;
+            }
+
+            // 更新货币显示
+            dialog.find('#gacha-currency-display').text(result.currency);
+
+            // 更新保底显示
+            const newPity = getGachaPity();
+            dialog.find('#gacha-result-container').siblings().eq(1).find('[style*="grid-template-columns"]').html(`
+                <div>
+                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
+                    <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
+                </div>
+                <div>
+                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
+                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - newPity.epic)} 抽</div>
+                </div>
+                <div>
+                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
+                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - newPity.total)} 抽</div>
+                </div>
+            `);
+
+            // 显示结果
+            showGachaResult(result.items);
+
+            // 同步到数据库
+            await syncGachaResultToDatabase(result.items);
+
+            if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
+        });
+
+        // 十连
+        dialog.find('#gacha-ten-btn').on('click', async function() {
+            const result = gachaTen(selectedPool);
+
+            if (!result.success) {
+                if (window.toastr) window.toastr.error(result.error);
+                return;
+            }
+
+            // 更新货币显示
+            dialog.find('#gacha-currency-display').text(result.currency);
+
+            // 更新保底显示
+            const newPity = getGachaPity();
+            dialog.find('#gacha-result-container').siblings().eq(1).find('[style*="grid-template-columns"]').html(`
+                <div>
+                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
+                    <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
+                </div>
+                <div>
+                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
+                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - newPity.epic)} 抽</div>
+                </div>
+                <div>
+                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
+                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - newPity.total)} 抽</div>
+                </div>
+            `);
+
+            // 显示结果
+            showGachaResult(result.items);
+
+            // 同步到数据库
+            await syncGachaResultToDatabase(result.items);
+
+            // 统计稀有度
+            const rarityCount = {};
+            result.items.forEach(item => {
+                const level = item.rarity.level;
+                rarityCount[level] = (rarityCount[level] || 0) + 1;
+            });
+
+            const highlights = [];
+            if (rarityCount[6]) highlights.push(`${rarityCount[6]}个神话`);
+            if (rarityCount[5]) highlights.push(`${rarityCount[5]}个传说`);
+            if (rarityCount[4]) highlights.push(`${rarityCount[4]}个史诗`);
+
+            if (highlights.length > 0) {
+                if (window.toastr) window.toastr.success(`十连完成！获得 ${highlights.join('、')}！`);
+            } else {
+                if (window.toastr) window.toastr.success('十连完成！');
+            }
+        });
+
+        // 历史记录折叠/展开
+        dialog.find('#gacha-history-toggle').on('click', function() {
+            const $content = dialog.find('#gacha-history-content');
+            const $icon = $(this).find('i');
+
+            if ($content.is(':visible')) {
+                $content.slideUp(200);
+                $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                $(this).html('<i class="fa-solid fa-chevron-down"></i> 展开');
+            } else {
+                // 加载历史记录
+                const history = getGachaHistory().slice(0, 20);
+                $content.empty();
+
+                if (history.length === 0) {
+                    $content.html('<div style="text-align:center; color:var(--acu-text-sub); padding:20px; font-size:12px;">暂无抽卡记录</div>');
+                } else {
+                    history.forEach(record => {
+                        const item = record.item;
+                        const time = new Date(record.timestamp).toLocaleString('zh-CN', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+
+                        $content.append(`
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--acu-btn-bg); border-radius:6px; margin-bottom:6px; font-size:12px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-size:20px;">${item.icon}</span>
+                                    <div>
+                                        <div style="color:var(--acu-text-main); font-weight:bold;">${item.name}</div>
+                                        <div style="color:${item.rarity.color}; font-size:11px;">${item.rarity.stars}</div>
+                                    </div>
+                                </div>
+                                <div style="color:var(--acu-text-sub); font-size:11px;">${time}</div>
+                            </div>
+                        `);
+                    });
+                }
+
+                $content.slideDown(200);
+                $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                $(this).html('<i class="fa-solid fa-chevron-up"></i> 收起');
+            }
+        });
+    };
+
+    // 显示物品详情
+    const showGachaItemDetail = (item) => {
+        const { $ } = getCore();
+        const config = getConfig();
+
+        const detailDialog = $(`
+            <div class="acu-edit-overlay">
+                <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 500px; max-height: 80vh;">
+                    <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>${item.name}</span>
+                        <button class="detail-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="acu-settings-content" style="padding:20px; overflow-y:auto;">
+                        <div style="text-align:center; margin-bottom:20px;">
+                            <div style="font-size:64px; margin-bottom:10px;">${item.icon}</div>
+                            <div style="color:${item.rarity.color}; font-size:14px; margin-bottom:10px;">${item.rarity.stars} ${item.rarity.name}</div>
+                        </div>
+
+                        <div style="background:var(--acu-table-head); border-radius:10px; padding:15px; margin-bottom:15px;">
+                            <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:10px; font-size:13px;">物品描述</div>
+                            <div style="color:var(--acu-text-main); font-size:13px; line-height:1.8;">${item.description}</div>
+                        </div>
+
+                        <div style="background:var(--acu-table-head); border-radius:10px; padding:15px; margin-bottom:15px;">
+                            <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:10px; font-size:13px;">效果</div>
+                            <div style="color:var(--acu-highlight); font-weight:bold; font-size:14px; margin-bottom:8px;">${item.effect}</div>
+                            <div style="color:var(--acu-text-sub); font-size:12px; line-height:1.8;">${item.effectDetail}</div>
+                        </div>
+
+                        ${item.usageLimit ? `
+                        <div style="background:var(--acu-table-head); border-radius:10px; padding:15px;">
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; font-size:12px;">
+                                <div>
+                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">使用次数</div>
+                                    <div style="color:var(--acu-text-main); font-weight:bold;">${item.usageLimit === 'unlimited' ? '无限' : item.usageLimit === 'stack' ? '可叠加' : item.usageLimit + ' 次'}</div>
+                                </div>
+                                <div>
+                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">持续时间</div>
+                                    <div style="color:var(--acu-text-main); font-weight:bold;">${item.duration}</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `);
+
+        $('body').append(detailDialog);
+
+        detailDialog.find('.detail-close').click(() => detailDialog.remove());
+        detailDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) detailDialog.remove(); });
+    };
+
+    // 将抽卡结果写入数据库
+    const syncGachaResultToDatabase = async (items) => {
+        const api = getCore().getDB();
+        if (!api) return;
+
+        for (const item of items) {
+            try {
+                if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
+                    // 写入灵异物品表
+                    const itemData = {
+                        row_id: '',
+                        物品名称: item.name,
+                        物品描述: item.description,
+                        物品效果: item.effect,
+                        稀有度: item.rarity.name,
+                        使用次数: item.usageLimit === 'unlimited' ? '无限' : item.usageLimit === 'stack' ? '可叠加' : String(item.usageLimit),
+                        持续时间: item.duration,
+                        获得途径: '抽卡',
+                        备注: item.effectDetail
+                    };
+
+                    // 尝试通过 CRUD 写入
+                    const crud = window.MfrsDatabase;
+                    if (crud && crud.insertRow) {
+                        await crud.insertRow('sheet_supernatural_items', itemData);
+                    } else if (api.executeMutation) {
+                        // fallback: 直接插入
+                        const headers = ['row_id', '物品名称', '物品描述', '物品效果', '稀有度', '使用次数', '持续时间', '获得途径', '备注'];
+                        const values = headers.map(h => itemData[h] || '');
+                        await api.executeMutation({
+                            type: 'insert',
+                            tableName: 'sheet_supernatural_items',
+                            data: { headers, rows: [values] }
+                        });
+                    }
+                } else if (item.type === GACHA_ITEM_TYPE.CLUE) {
+                    // 写入线索表，并更新档案进度
+                    const clueData = {
+                        row_id: '',
+                        线索编码: `CLUE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        线索描述: `${item.name}：${item.description}`,
+                        相关厉鬼: '待分配',
+                        重要程度: item.rarity.name,
+                        发现时间: new Date().toLocaleString('zh-CN'),
+                        获得途径: '抽卡',
+                        可见摘要: item.effect
+                    };
+
+                    const crud = window.MfrsDatabase;
+                    if (crud && crud.insertRow) {
+                        await crud.insertRow('sheet_clues', clueData);
+                    } else if (api.executeMutation) {
+                        const headers = ['row_id', '线索编码', '线索描述', '相关厉鬼', '重要程度', '发现时间', '获得途径', '可见摘要'];
+                        const values = headers.map(h => clueData[h] || '');
+                        await api.executeMutation({
+                            type: 'insert',
+                            tableName: 'sheet_clues',
+                            data: { headers, rows: [values] }
+                        });
+                    }
+
+                    // 更新档案进度（这里简化处理，实际应该找到对应的档案记录更新）
+                    // 由于不知道具体厉鬼，这里只记录线索，实际使用时玩家需要手动分配
+                } else if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
+                    // 写入知识到规律表（简化处理）
+                    const knowledgeData = {
+                        row_id: '',
+                        规律名称: item.name,
+                        规律描述: item.description,
+                        杀人规律: item.effectDetail,
+                        触发条件: '待研究',
+                        破解方法: '待研究',
+                        完成度: `+${Math.round(item.progress * 100)}%`,
+                        相关厉鬼: '待分配',
+                        可见摘要: item.effect
+                    };
+
+                    const crud = window.MfrsDatabase;
+                    if (crud && crud.insertRow) {
+                        await crud.insertRow('sheet_collected_rules', knowledgeData);
+                    } else if (api.executeMutation) {
+                        const headers = ['row_id', '规律名称', '规律描述', '杀人规律', '触发条件', '破解方法', '完成度', '相关厉鬼', '可见摘要'];
+                        const values = headers.map(h => knowledgeData[h] || '');
+                        await api.executeMutation({
+                            type: 'insert',
+                            tableName: 'sheet_collected_rules',
+                            data: { headers, rows: [values] }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to sync gacha result:', e);
+            }
+        }
+
+        // 刷新界面
+        renderInterface();
+    };
+
     const { $ } = getCore();
     if ($) $(document).ready(init); else window.addEventListener('load', init);
 })();
