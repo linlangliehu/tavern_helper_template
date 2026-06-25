@@ -1,5 +1,26 @@
 # Findings
 
+## 2026-06-25：row_id 问题彻底解决 - 14/14 表全部使用数字 row_id
+
+- **修复根因链路：**
+  1. **vendor row_id 自动分配**（commit `52b2e62`）：原生模式下 insertRow 函数检测 `headers[0] === 'row_id'` 且 `newRow[0]` 为空时，自动从现有行中找到 max row_id 并分配 max+1。
+  2. **fallback plan 字段名修复**（commit `aa50677`）：`buildMfrsClueFallbackPlan_ACU` 和 `buildMfrsChronicleFallbackPlan_ACU` 使用中文字段名（线索编号、纪要编号、时间跨度等）和 `row_id: 1` 初始值。
+  3. **CDN ref 更新**（commit `36082bc`）：`publish-card.mjs` 的 `CDN_REF` 从 `c087823` 更新到 `aa50677`。
+  4. **角色卡重新打包**：本地 `npm run build` + `npm run publish-card` 完整构建链路打包包含所有最新修复的角色卡。
+
+- **真页验证结果（2026-06-25）：** 14/14 表 row_id 全部为正常数字，零空字符串。
+  - sheet_clues: [1] ✅（之前是 [""]）
+  - sheet_chronicle: [1, 2] ✅（之前是 [""]，且只有 1 行）
+  - sheet_collected_archives: [1, 2] ✅（之前包含 ""）
+  - 其他 11 张表全部正常（已确认无回归）
+
+- **数据完整性提升：**
+  - chronicle 增加到 2 行（之前只有 1 行）
+  - collected_archives 增加到 2 行
+  - delta 模式稳定工作，无 checkpoint 退化警告
+
+- **检查方法：** 使用 Chrome DevTools MCP `mcp__chrome-devtools__evaluate_script` 直接读取 `MysteryDatabaseFrontend.exportCurrentData()` 结果。
+
 ## 2026-06-24：数据库实际已成功写入 13/14 表——getTableData() 不可靠，exportTableAsJson() 才是正确检查方法
 
 - **重大修正：** 之前用 `acu.getTableData(tableName)` 返回 null 判定"14/14 表为空"是错误的。`getTableData()` 读的是内存缓存（可能未刷新），实际数据存储在 IndexedDB (`auto-card-updater-db`, version 1) 中。

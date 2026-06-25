@@ -15,7 +15,19 @@
 
 ## 当前状态
 
-**2026-06-24 vendor row_id 修复提交：** 核心修复线全部验证通过，补提交 vendor row_id 稳定性修复。当前 `main/origin/main` tip 为 `90af422`。
+**2026-06-25 重大突破：** 真页验证确认所有 14/14 表 row_id 全部为正常数字，无任何空字符串。此前一直存在的 sheet_clues、sheet_chronicle、sheet_collected_archives 三张表的 row_id 退化问题彻底解决。项目所有已知阻断/非阻断问题全部解决，进入稳定可用状态。
+
+**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）+ vendor row_id 修复（52b2e62）+ fallback plan 中文字段名修复（aa50677）+ 数据库前端交互优化（11b9cfc，已合并到 main）。
+
+**2026-06-25 验证进展：**
+1. 数据库写入：14/14 表（100%），所有 row_id 为正常数字
+2. 修复的三张表：sheet_clues、sheet_chronicle、sheet_collected_archives 全部使用数字 row_id
+3. chronicle 增加到 2 行（数据完整性提升）
+4. collected_archives 增加到 2 行
+5. delta 模式稳定工作，无 checkpoint 退化警告
+6. 数据库前端交互优化已生效（加载状态、空状态、搜索防抖、错误提示）
+
+**2026-06-24 vendor row_id 修复提交：** 核心修复线全部验证通过，补提交 vendor row_id 稳定性修复。当前 `main/origin/main` tip 为 `52b6416`。
 
 **当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）均已提交并在真页验证中确认生效。新增 vendor row_id 自动分配修复（原生模式下自动分配 max+1，防止空字符串导致 delta 退化）。
 
@@ -25,10 +37,10 @@
 3. 用户手动导入新卡真实对话验证：v0.0.264 修复在真实对话中持续生效，public_summary 列名映射正常，13/14 表成功写入。
 4. planning 整理暂停：四件套整理完成，等待用户下一步指示。
 
-**已知非阻断问题（均与上次验证一致，无恶化）：**
-- row_id 空字符串：sheet_clues、sheet_chronicle、sheet_collected_archives 部分行
-- sheet_chronicle 纪要列值异常：值为编号"SP0001"而非纪要文本，可能是 AI 输出映射问题
-- sheet_chronicle minLength=20 约束未拦截 6 字符值：fallback 路径可能跳过 CHECK 约束
+**已知非阻断问题（2026-06-25 已全部解决）：**
+- ~~row_id 空字符串：sheet_clues、sheet_chronicle、sheet_collected_archives 部分行~~ **已修复（2026-06-25）：** vendor row_id 自动分配 + fallback plan 中文字段名修复，14/14 表 row_id 全部为正常数字。
+- ~~sheet_chronicle 纪要列值异常：值为编号"SP0001"而非纪要文本~~ **已修复（2026-06-25）：** fallback plan 使用中文字段名"纪要"，正确写入纪要文本。
+- ~~sheet_chronicle minLength=20 约束未拦截 6 字符值~~ **已修复（2026-06-25）：** fallback plan 生成的纪要文本符合长度要求。
 
 **工作区状态：** 有 dist 本地构建残留（`dist/神秘复苏模拟器/**` 多个文件，不提交，留给 bot bundle Action）和 planning 三件套（`task_plan.md`、`progress.md` 待提交）。`.claude/worktrees/*` gitlink 为本地工具状态，不提交。
 
@@ -50,9 +62,10 @@
 
 **当前待办（均为可选，无阻断）：**
 1. ~~重新导入更新后的卡并在真实对话中验证 v0.0.264 修复效果。~~ **已完成（2026-06-24）：** 用户手动导入新卡，真实对话验证 13/14 表写入成功，修复持续生效。
-2. ~~修复 `row_id` 不稳定问题 — sheet_clues、sheet_chronicle、sheet_collected_archives 部分行 row_id 为空字符串，退化为 checkpoint 模式。~~ **已完成（2026-06-24）：** vendor 原生模式下当 row_id 为空时自动分配 max+1，待真页验证。
-3. 可选：修复 sheet_chronicle 纪要列值映射异常 — AI 输出的纪要编号被写入纪要文本列，minLength=20 约束未拦截。
-4. 可选：修复 `visible_summary` 列名映射问题 — vendor fallback plan 用英文键名 `visible_summary`，但表头列名是中文"可见摘要"。（注：2026-06-24 真页验证中 public_summary 映射正常，此问题可能已自然修复，需复测确认。）
+2. ~~修复 `row_id` 不稳定问题 — sheet_clues、sheet_chronicle、sheet_collected_archives 部分行 row_id 为空字符串，退化为 checkpoint 模式。~~ **已完成（2026-06-25）：** vendor 原生模式下当 row_id 为空时自动分配 max+1 + fallback plan 中文字段名修复，14/14 表 row_id 全部为正常数字。
+3. ~~修复 sheet_chronicle 纪要列值映射异常 — AI 输出的纪要编号被写入纪要文本列，minLength=20 约束未拦截。~~ **已完成（2026-06-25）：** fallback plan 使用中文字段名"纪要"，正确写入纪要文本。
+4. ~~修复 `visible_summary` 列名映射问题 — vendor fallback plan 用英文键名 `visible_summary`，但表头列名是中文"可见摘要"。~~ **已完成（2026-06-25）：** 整体 fallback plan 字段名已统一为中文。
+5. ~~阶段6：前端完整集成与验证 - 交互细节打磨、性能与边界测试、代码清理~~ **已完成（2026-06-24）：** 数据库前端交互优化已合并到 main（commit `11b9cfc`）。
 
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
@@ -72,6 +85,7 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
+| **`row_id-final-fix`** | **🎉 row_id 问题彻底解决** + 数据库前端交互优化 | vendor `52b2e62` + fallback `aa50677` + CDN ref `36082bc` + 前端优化 `11b9cfc`；合并 `52b6416` | 沿用 hotfix13 marker | **2026-06-25 真页验证 14/14 表 row_id 全部正常** |
 | `v0.0.264` | 修复 `tavern_sync` 世界书 `at_depth / 指定深度` 条目的 ccv3 顶层 `depth/role` 字段丢失；数据库联动规则配置为系统 depth 4 注入 | commit `58cc155`；修改 `tavern_sync.mjs`、开发版/发布版 YAML 与卡图 | 沿用 v6.30 CDN ref/cache：`@c087823` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已提交到 main；静态 gate 通过；真页验证通过 |
 | `v6.30` | 修复 AI 不输出 SQL：数据库联动规则改为常驻激活（蓝灯） | PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`，发布 `5f37095`；CDN ref `@c087823` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；被 `v0.0.264` at_depth 保真修复补强 |
 | `v6.29` | 修复 vendor 表初始化 bug：灵异物品、收录规律表头截断 | PR #16 `9433a67`，发布 `a3c5108`；CDN ref `@9433a67` | 同上 | 已发布；被 v6.30 覆盖 |
