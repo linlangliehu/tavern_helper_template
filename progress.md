@@ -1,5 +1,182 @@
 # Progress Log
 
+## 2026-06-26 CST（✅ 任务9 完成：物品设计哲学评审 — cost/narrativeHook 字段）
+
+**状态：** 任务9 实施完成。为全部 26 个内置物品补充 `cost`（使用代价/风险）和 `narrativeHook`（剧情钩子）字段，符合原著"沾染灵异、拥有灵异能力必有代价"的设计哲学。
+
+**实现：**
+- `gacha-items.json`：26 个物品全部补充 cost + narrativeHook，version 升至 1.1.0
+- `BUILTIN_GACHA_ITEMS`（v10_2_visualizer.js）：同步内嵌 cost/narrativeHook 到所有物品定义
+- `showItemForm()`：新增「使用代价」和「剧情钩子」textarea 输入框（位于效果详述下方）
+- 保存逻辑：cost/narrativeHook 写入 itemDef 传递给 `addCustomGachaItem()`
+- AI 生成 Schema：baseProps 新增 cost/narrativeHook 字段定义 + baseRequired 增加这两个必填项
+- AI 系统提示词：新增设计要求"每件物品必须有明确的使用代价/风险 + 剧情钩子"
+
+**设计哲学（原著一致）：**
+- 高稀有度物品代价更严重（寿命/精神/人格异化）
+- 低稀有度物品代价较轻（时间消耗/虚假安全感）
+- narrativeHook 为 AI/GM 提供剧情推进锚点（旧案、身份、秘密、线索关联）
+
+**构建：** `npm run build` 通过，无错误。
+
+## 2026-06-26 CST（✅ 任务8 完成：AI 生成 agent prompt）
+
+**状态：** 任务8 实施完成。在自定义物品编辑器标题栏新增「AI生成」按钮，用 `generateRaw()` + `json_schema` 调用 AI 按神秘复苏原著风格生成物品。
+
+**实现：**
+- 编辑器标题栏新增粉色「AI生成」按钮（`#custom-ai-gen-btn`，🤖图标）
+- 点击后根据当前 Tab 类型（supernatural/clue/knowledge）构建对应 JSON Schema
+- 调用 `generateRaw({ should_silence: true, ordered_prompts, json_schema })` 静默生成
+- System prompt 包含神秘复苏世界观设定、物品设计要求、已有物品排除列表
+- 生成结果自动打开 `showItemForm()` 预填表单，用户可审查/修改后确认保存
+- 按钮生成期间显示 spinner 状态，失败时弹窗提示错误
+
+**代码位置：** `v10_2_visualizer.js` 第 5275-5277 行（按钮 HTML），第 5412-5513 行（AI 生成 handler）
+
+**构建：** `npm run build` 通过，无错误。
+
+**下一步：** 可继续任务9（物品设计哲学评审）。
+
+## 2026-06-26 CST（✅ 任务7 完成：目录导入/导出 JSON）
+
+**状态：** 任务7 实施完成。在自定义物品编辑器标题栏新增「导出」「导入」按钮。
+
+**实现：**
+- 导出：调用 `getAllGachaItemDefinitions()` 获取 builtin∪custom 合并全集，序列化为 JSON Blob，通过 hidden `<a download>` 触发浏览器下载（文件名含时间戳）
+- 导入：隐藏 `<input type="file" accept=".json">`，FileReader 读取 → JSON.parse 解析 → 遍历三类型，对每个物品调用 `addCustomGachaItem()` 写入 custom 层
+- 智能去重：如果导入物品与 builtin 完全相同（JSON 深比较排除 rarity 对象/targetTable），跳过不写入 custom 层，避免冗余覆盖
+- 导入后自动刷新物品列表 + toast 提示导入数量
+
+**代码位置：** `v10_2_visualizer.js` 第 5265-5267 行（按钮 HTML），第 5318-5369 行（导出/导入 handler）
+
+**构建：** `npm run build` 通过，无错误。
+
+**下一步：** 可继续任务8（AI 生成 agent prompt，已解除阻塞）或任务9（物品设计哲学评审）。
+
+## 2026-06-26 CST（✅ 任务6 完成：自定义物品 UI 编辑器）
+
+**状态：** 任务6 实施完成。在抽卡面板新增自定义物品编辑器入口，支持 3 类物品的浏览/新增/编辑/删除，写入 custom 层（localStorage）。构建验证通过。
+
+**实现内容：**
+- ✅ 抽卡面板标题栏新增"自定义"按钮（`#gacha-custom-editor-btn`），点击打开编辑器
+- ✅ `showCustomItemEditor()` 完整编辑器 UI（~320 行）：
+  - 三类型 Tab 切换（灵异物品/线索/知识）
+  - 物品列表区分内置（灰色徽章）、已覆盖（橙色徽章）、自定义（绿色徽章）
+  - 每行含编辑按钮（所有物品均可覆盖）和删除按钮（仅 custom 层）
+  - hover 高亮效果
+- ✅ `showItemForm(type, existingItem)` 编辑/新增表单：
+  - 通用字段：ID（编辑时只读）、名称、图标（emoji）、稀有度（下拉 6 档）、描述、效果、效果详述
+  - 灵异物品特有：使用次数、持续时间
+  - 线索/知识特有：进度（0-1）
+  - 必填验证（ID/名称/图标）
+  - 保存调用 `addCustomGachaItem()` 写入 localStorage
+- ✅ 删除调用 `removeCustomGachaItem()` 移除 custom 覆盖
+- ✅ 编辑器 z-index 分层：列表 overlay + 表单 overlay（z-index:100001）叠加
+- ✅ `npm run build` 构建通过
+
+**代码改动：**
+- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：
+  - 行 4759-4761：抽卡面板标题栏新增"自定义"按钮
+  - 行 4909-4913：按钮点击 handler 调用 `showCustomItemEditor()`
+  - 行 5192-5509：`showCustomItemEditor()` 完整实现（含 `buildItemList`、`bindItemActions`、`showItemForm`）
+
+**下一步：**
+- 可继续任务7（目录导入/导出 JSON）或任务9（物品设计哲学评审）
+
+## 2026-06-26 CST（✅ 任务5 完成：十连折扣 UI 标注）
+
+**状态：** 任务5 实施完成。十连抽按钮增加视觉折扣标注，构建验证通过。
+
+**实现内容：**
+- ✅ 十连按钮右上角新增红色"9折"徽章（`position:absolute` 浮动，带脉冲动画 `discountPulse`）
+- ✅ 价格显示改为删除线原价（~~100~~）+ 加粗折后价（90）的对比样式
+- ✅ 新增 `@keyframes discountPulse` 动画（缩放 1→1.1→1 循环，吸引注意力）
+- ✅ 按钮增加 `position:relative; overflow:visible` 以支持徽章溢出
+- ✅ `npm run build` 构建通过
+
+**代码改动：**
+- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：
+  - 行 995：新增 `@keyframes discountPulse` 动画定义
+  - 行 4848-4855：十连按钮 HTML 重写（徽章 + 删除线原价 + 折后价）
+
+**下一步：**
+- 可继续任务6（自定义物品 UI 编辑器）或任务7（目录导入/导出 JSON）
+
+## 2026-06-26 CST（✅ 任务4 完成：货币被动获取通道）
+
+**状态：** 任务4 实施完成。实现自动检测消息内容并奖励调查点，构建验证通过。
+
+**实现内容：**
+- ✅ `registerCurrencyListeners()` — 在 init 时注册 SillyTavern eventSource 事件监听
+- ✅ 监听 `MESSAGE_RECEIVED` 事件，每条 AI 消息自动 +1 调查点（基础奖励）
+- ✅ 内容关键词检测奖励：
+  - 线索相关（线索/发现/痕迹/证据）→ +5 调查点
+  - 事件相关（事件/异变/突发/爆发）→ +10 调查点
+  - 厉鬼对抗（厉鬼/鬼影/灵异/对抗/战斗）→ +15 调查点
+- ✅ 冷却机制：5秒内不重复奖励，防止消息刷屏farming
+- ✅ toast 通知反馈（显示获得调查点数量和原因）
+- ✅ 日志记录所有奖励事件（`[Gacha Currency]` 前缀）
+- ✅ 安全降级：eventSource 不可用时静默跳过，不影响其他功能
+- ✅ `npm run build` 构建通过
+
+**代码改动：**
+- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：
+  - 行 4027-4092：新增 `registerCurrencyListeners()` 函数（~65 行）
+  - init 函数中 `isInitialized = true` 后调用 `registerCurrencyListeners()`
+
+**下一步：**
+- 可继续任务5（十连折扣 UI 标注）或任务6（自定义物品 UI 编辑器）
+
+## 2026-06-26 CST（✅ 任务3 完成：碎片系统 — 重复物品 → 灵异残屑 → 兑换）
+
+**状态：** 任务3 实施完成。碎片系统核心逻辑 + 兑换商店 + UI 集成全部就绪，构建验证通过。
+
+**实现内容：**
+ - ✅ `FRAGMENT_CONFIG` — 稀有度→碎片转化率配置（BASIC:1, COMMON:2, RARE:5, EPIC:15, LEGENDARY:50, MYTHIC:200）
+ - ✅ `getFragments()` / `setFragments()` / `addFragments()` — localStorage 碎片余额持久化
+ - ✅ `getOwnedItems()` / `addOwnedItem()` / `hasOwnedItem()` — 已拥有物品追踪（用于重复检测）
+ - ✅ `processFragments(items)` — 核心重复检测逻辑：首次获得加入 owned 集合，重复获得按稀有度转化为灵异残屑
+ - ✅ `FRAGMENT_SHOP_ITEMS` — 兑换商店 8 件定价商品（30~500 残屑不等）
+ - ✅ `purchaseWithFragments(shopItemId)` — 扣减碎片 + 标记拥有 + 返回物品定义
+ - ✅ `showFragmentShop()` — 完整兑换商店 UI（物品列表、余额显示、购买确认、库存状态）
+ - ✅ 抽卡面板新增「灵异残屑」余额展示区 + 「碎片商店」按钮
+ - ✅ `gachaSingle` / `gachaTen` 集成 `processFragments()`，返回值含 `fragments` 字段
+ - ✅ 抽卡结果后 toast 提示碎片转化详情（"X件重复物品转化为 Y 灵异残屑"）+ 碎片余额实时刷新
+ - ✅ `npm run build` 构建通过
+
+**代码改动：**
+ - `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：新增碎片系统核心逻辑（~150 行）、修改 gachaSingle/gachaTen 集成碎片处理、面板 UI 新增碎片展示区+商店按钮+事件绑定
+
+**下一步：**
+ - 真机验证（抽到重复物品时确认碎片转化 toast、碎片商店购买流程）
+ - 可继续任务4（货币被动获取通道）或任务5（十连折扣 UI 标注）
+
+## 2026-06-26 CST（✅ 任务2 完成：写库前预校验约束）
+
+**状态：** 任务2 实施完成。`syncGachaResultToDatabase` 全面重写，修复列名映射 + 接入完整校验链路。构建验证通过。
+
+**问题根因：**
+ - 旧 `syncGachaResultToDatabase` 使用完全错误的列名（如"物品名称"应为"物品名"、"线索编码"应为"线索编号"、"重要程度"应为"可信度"等），导致写入时 100% 触发 COLUMN_NOT_FOUND
+ - 线索编号格式 `CLUE_${Date.now()}_...` 违反 DDL 的 `GLOB 'C[0-9][0-9][0-9][0-9]'` 约束
+ - 可信度值 `item.rarity.name`（如"稀有""史诗"）违反 `CHECK IN ('低','中','高','误导')` 约束
+ - 未经任何预校验直接写入，错误无法提前拦截
+
+**修复内容：**
+ - ✅ 重写 3 张表的列名映射，完全对齐 `神秘复苏表格SQL_v1.json` 的 `content[0]` 表头定义
+ - ✅ 新增 `getNextClueCode()` — 查询现有数据生成下一个合法 C0001 格式编号
+ - ✅ 新增 `validateAndInsertGachaRow()` — 优先走 `MysteryDatabaseFrontend.previewTableChangePlan`（dry-run 预校验）+ `applyTableChangePlan`（含内置验证），fallback 到 `MfrsDatabase.insertRow`
+ - ✅ CHECK 约束值全部硬编码为合法枚举值（可信度→'中'、验证状态→'未验证'、可见性→'玩家可见'）
+ - ✅ 长度限制通过 `.slice(0, N)` 预截断（效果≤160、副作用≤120、内容≤120 等）
+ - ✅ 添加写库结果汇总日志（成功/失败计数 + 错误详情）
+ - ✅ `npm run build` 构建通过
+
+**代码改动：**
+ - `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`（行 4835-5006）：删除旧 `syncGachaResultToDatabase`（~97 行），新增带预校验的完整实现（~171 行）
+
+**下一步：**
+ - 真机验证（导入开发版 → 抽卡 → 检查 3 张表写入是否成功、无 COLUMN_NOT_FOUND / CHECK_IN_VIOLATION）
+ - 通过后可继续任务3（碎片系统）或任务5（十连折扣 UI 标注）
+
 ## 2026-06-26 CST（✅ 任务1 完成：物品目录外置 + 双层合并架构 + resetGachaPity bug 修复）
 
 **状态：** 任务1 实施完成，包含物品目录架构重构、resetGachaPity 未定义 bug 修复、构建验证通过。待真机验证后可进入任务 2。

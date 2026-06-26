@@ -992,6 +992,7 @@
                 .acu-badge-pending { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); width: 80px; height: 80px; border: 4px solid #e74c3c; border-radius: 50%; color: #e74c3c; font-size: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center; z-index: 50; pointer-events: none; opacity: 0.6; box-shadow: inset 0 0 10px rgba(231, 76, 60, 0.2); background: rgba(255,255,255,0.1); }
                 @keyframes pulse-highlight { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
                 @keyframes acu-shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 50% { transform: rotate(0deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0deg); } }
+                @keyframes discountPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
                 .acu-save-alert { animation: acu-shake 0.4s ease-in-out infinite; color: #fff !important; background-color: #e74c3c !important; text-shadow: 0 0 5px rgba(231, 76, 60, 0.5); border-color: #c0392b !important; }
                 
                 .acu-menu-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: transparent; z-index: 2147483640; }
@@ -3941,6 +3942,8 @@
                      api.registerTableUpdateCallback(UpdateController.handleUpdate);
                      if (api.registerTableFillStartCallback) { api.registerTableFillStartCallback(() => { const c = api.exportTableAsJson(); if (c) saveSnapshot(c); }); }
                  }
+                 // 注册被动货币获取监听器
+                 registerCurrencyListeners();
                  isInitialized = true;
              } else setTimeout(loop, 1000);
         };
@@ -4024,6 +4027,177 @@
         return true;
     };
 
+    // ==================== 货币被动获取系统 ====================
+
+    const STORAGE_KEY_CURRENCY_LOG = 'mfrs_gacha_currency_log';
+
+    // 被动奖励配置
+    const PASSIVE_REWARD_CONFIG = {
+        // 基础：每条 AI 回复 +1
+        message: { amount: 1, label: '💬 消息奖励' },
+        // 内容检测奖励（从 AI 回复文本中匹配关键词）
+        clue: {
+            amount: 5, label: '🔍 发现线索',
+            patterns: [
+                /发现.*线索/i, /获得.*线索/i, /线索.*记录/i, /找到.*证据/i,
+                /注意到.*痕迹/i, /搜集.*信息/i, /掌握.*情报/i, /发现.*异常/i
+            ]
+        },
+        event: {
+            amount: 10, label: '📅 完成事件',
+            patterns: [
+                /事件.*完成/i, /任务.*完成/i, /成功.*解决/i, /危机.*化解/i,
+                /顺利.*脱险/i, /逃脱.*成功/i, /存活.*下来/i, /挺过.*了/i
+            ]
+        },
+        ghost: {
+            amount: 15, label: '👻 对抗厉鬼',
+            patterns: [
+                /厉鬼/i, /鬼影/i, /灵异.*出现/i, /诡异.*现象/i,
+                /恶灵/i, /亡魂/i, /邪祟/i, /鬼.*袭击/i,
+                /灵异.*爆发/i, /超自然.*力量/i
+            ]
+        },
+        // 冷却时间（ms），同类奖励在冷却内不重复发放
+        cooldown: 30000,  // 30秒
+        // 每条消息最多额外奖励类型数
+        maxBonusPerMessage: 2
+    };
+
+    // 获取奖励日志（用于冷却判断和统计）
+    const getCurrencyLog = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_CURRENCY_LOG);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) {
+            return [];
+        }
+    };
+
+    // 保存奖励日志（只保留最近 50 条）
+    const saveCurrencyLog = (log) => {
+        try {
+            if (log.length > 50) log.splice(50);
+            localStorage.setItem(STORAGE_KEY_CURRENCY_LOG, JSON.stringify(log));
+        } catch (e) {
+            console.error('[Gacha Currency] 保存日志失败:', e);
+        }
+    };
+
+    // 检查某类奖励是否在冷却中
+    const isRewardOnCooldown = (type) => {
+        const log = getCurrencyLog();
+        const now = Date.now();
+        const lastSameType = log.find(entry => entry.type === type);
+        return lastSameType && (now - lastSameType.timestamp) < PASSIVE_REWARD_CONFIG.cooldown;
+    };
+
+    // 分析消息内容，返回应发放的奖励列表
+    const analyzeMessageRewards = (messageText) => {
+        if (!messageText || typeof messageText !== 'string') return [];
+
+        const rewards = [];
+
+        // 基础消息奖励（始终发放，不受冷却影响）
+        rewards.push({ type: 'message', amount: PASSIVE_REWARD_CONFIG.message.amount, label: PASSIVE_REWARD_CONFIG.message.label });
+
+        // 内容检测奖励（受冷却限制）
+        let bonusCount = 0;
+        for (const [type, config] of Object.entries(PASSIVE_REWARD_CONFIG)) {
+            if (type === 'message' || type === 'cooldown' || type === 'maxBonusPerMessage') continue;
+            if (!config.patterns) continue;
+            if (bonusCount >= PASSIVE_REWARD_CONFIG.maxBonusPerMessage) break;
+            if (isRewardOnCooldown(type)) continue;
+
+            const matched = config.patterns.some(pattern => pattern.test(messageText));
+            if (matched) {
+                rewards.push({ type, amount: config.amount, label: config.label });
+                bonusCount++;
+            }
+        }
+
+        return rewards;
+    };
+
+    // 发放被动奖励并记录日志
+    const grantPassiveRewards = (rewards) => {
+        if (!rewards || rewards.length === 0) return 0;
+
+        let totalEarned = 0;
+        const log = getCurrencyLog();
+        const now = Date.now();
+
+        for (const reward of rewards) {
+            addGachaCurrency(reward.amount);
+            totalEarned += reward.amount;
+            log.unshift({ type: reward.type, amount: reward.amount, label: reward.label, timestamp: now });
+        }
+
+        saveCurrencyLog(log);
+        return totalEarned;
+    };
+
+    // 处理 AI 消息并发放奖励（供事件监听器调用）
+    const handleMessageForCurrency = (messageText) => {
+        const rewards = analyzeMessageRewards(messageText);
+        const totalEarned = grantPassiveRewards(rewards);
+
+        if (totalEarned > 0) {
+            const details = rewards.map(r => `${r.label} +${r.amount}`).join('、');
+            console.info(`[Gacha Currency] 被动奖励: +${totalEarned} 调查点 (${details})`);
+
+            // toast 提示（仅有额外奖励时才弹，避免每条消息都弹）
+            if (rewards.length > 1 && window.toastr) {
+                const bonusDetails = rewards.filter(r => r.type !== 'message').map(r => `${r.label} +${r.amount}`).join('、');
+                window.toastr.info(`${bonusDetails}`, '🔍 获得调查点', { timeOut: 3000 });
+            }
+        }
+
+        return totalEarned;
+    };
+
+    // 注册 SillyTavern 事件监听器（被动货币获取）
+    const registerCurrencyListeners = () => {
+        const host = getHost();
+        let eventSource = null;
+
+        // 获取 eventSource（与 hotfix 脚本相同逻辑）
+        try {
+            const context = host.SillyTavern?.getContext?.();
+            if (context?.eventSource) {
+                eventSource = context.eventSource;
+            } else if (host.eventSource) {
+                eventSource = host.eventSource;
+            }
+        } catch (e) {
+            console.warn('[Gacha Currency] 获取 eventSource 失败:', e);
+        }
+
+        if (!eventSource || typeof eventSource.on !== 'function') {
+            console.warn('[Gacha Currency] eventSource 不可用，被动货币获取未启用');
+            return false;
+        }
+
+        // 监听 MESSAGE_RECEIVED — AI 每次回复时触发
+        eventSource.on('MESSAGE_RECEIVED', () => {
+            try {
+                const context = host.SillyTavern?.getContext?.();
+                if (!context?.chat?.length) return;
+
+                // 取最后一条非用户消息
+                const lastMsg = [...context.chat].reverse().find(msg => !msg.is_user);
+                if (!lastMsg?.mes) return;
+
+                handleMessageForCurrency(lastMsg.mes);
+            } catch (e) {
+                console.error('[Gacha Currency] MESSAGE_RECEIVED 处理异常:', e);
+            }
+        });
+
+        console.info('[Gacha Currency] 被动货币获取监听器已注册');
+        return true;
+    };
+
     // 获取保底计数
     const getGachaPity = () => {
         try {
@@ -4082,41 +4256,41 @@
         items: {
             supernatural: [
                 // ★★★★★★ 神话（0.5%）
-                { id: 'item_mythic_1', name: '源头碎片', rarity: 'MYTHIC', type: 'supernatural', icon: '🔮', description: '神秘复苏源头的碎片，蕴含改写规则的力量', effect: '可改写厉鬼杀人规律', effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失', usageLimit: 1, duration: '永久' },
+                { id: 'item_mythic_1', name: '源头碎片', rarity: 'MYTHIC', type: 'supernatural', icon: '🔮', description: '神秘复苏源头的碎片，蕴含改写规则的力量', effect: '可改写厉鬼杀人规律', effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失', usageLimit: 1, duration: '永久', cost: '每次使用消耗持有者寿命十年，改写失败会被厉鬼反噬', narrativeHook: '源头碎片的来源指向更深层的复苏真相，持有它会引来各方势力觊觎' },
                 // ★★★★★ 传说（2%）
-                { id: 'item_legendary_1', name: '鬼域', rarity: 'LEGENDARY', type: 'supernatural', icon: '🌫️', description: '厉鬼的杀人领域，可关押其他厉鬼', effect: '可关押厉鬼', effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人', usageLimit: 'unlimited', duration: '持续' },
-                { id: 'item_legendary_2', name: '鬼差制服', rarity: 'LEGENDARY', type: 'supernatural', icon: '🧥', description: '沾染了鬼差灵异的制服，拥有强大防护能力', effect: '可抵御厉鬼袭击', effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击', usageLimit: 'unlimited', duration: '持续' },
+                { id: 'item_legendary_1', name: '鬼域', rarity: 'LEGENDARY', type: 'supernatural', icon: '🌫️', description: '厉鬼的杀人领域，可关押其他厉鬼', effect: '可关押厉鬼', effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人', usageLimit: 'unlimited', duration: '持续', cost: '维持鬼域需持续消耗精神力，关押过多厉鬼可能导致鬼域失控', narrativeHook: '鬼域中关押的厉鬼可能互相交流密谋，或透露出关键信息' },
+                { id: 'item_legendary_2', name: '鬼差制服', rarity: 'LEGENDARY', type: 'supernatural', icon: '🧥', description: '沾染了鬼差灵异的制服，拥有强大防护能力', effect: '可抵御厉鬼袭击', effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击', usageLimit: 'unlimited', duration: '持续', cost: '穿着制服会逐渐被鬼差灵异侵蚀，长期使用可能人格异化', narrativeHook: '真正的鬼差可能会来追索制服，穿着者可能被误认为鬼差' },
                 // ★★★★ 史诗（5%）
-                { id: 'item_epic_1', name: '黄金手掌', rarity: 'EPIC', type: 'supernatural', icon: '✋', description: '沾染了灵异能力的黄金手掌，可击退厉鬼', effect: '可击退厉鬼', effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发', usageLimit: 3, duration: '每次使用持续数分钟' },
-                { id: 'item_epic_2', name: '饿死鬼的香烟', rarity: 'EPIC', type: 'supernatural', icon: '🚬', description: '饿死鬼遗留的香烟，可暂时压制厉鬼', effect: '可暂时压制厉鬼', effectDetail: '点燃后可以暂时压制厉鬼的杀人规律', usageLimit: 7, duration: '每支持续一段时间' },
-                { id: 'item_epic_3', name: '鬼邮件', rarity: 'EPIC', type: 'supernatural', icon: '✉️', description: '可以传递信息的灵异邮件', effect: '可传递信息', effectDetail: '可以向任何地点的人传递信息，不受距离限制', usageLimit: 5, duration: '即时' },
-                { id: 'item_epic_4', name: '鬼奴隶', rarity: 'EPIC', type: 'supernatural', icon: '👤', description: '被灵异力量控制的鬼奴隶，可执行简单任务', effect: '可使役执行任务', effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等', usageLimit: 'unlimited', duration: '持续' },
+                { id: 'item_epic_1', name: '黄金手掌', rarity: 'EPIC', type: 'supernatural', icon: '✋', description: '沾染了灵异能力的黄金手掌，可击退厉鬼', effect: '可击退厉鬼', effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发', usageLimit: 3, duration: '每次使用持续数分钟', cost: '每次击退厉鬼后手掌温度骤降，连续使用会冻伤持有者', narrativeHook: '黄金手掌原属于某位失踪的驭鬼者，其来历可能牵出一桩旧案' },
+                { id: 'item_epic_2', name: '饿死鬼的香烟', rarity: 'EPIC', type: 'supernatural', icon: '🚬', description: '饿死鬼遗留的香烟，可暂时压制厉鬼', effect: '可暂时压制厉鬼', effectDetail: '点燃后可以暂时压制厉鬼的杀人规律', usageLimit: 7, duration: '每支持续一段时间', cost: '每吸一口会感受到饿死鬼的饥饿感，连续使用可能精神失常', narrativeHook: '香烟的烟雾中偶尔会显现饿死鬼生前的记忆画面' },
+                { id: 'item_epic_3', name: '鬼邮件', rarity: 'EPIC', type: 'supernatural', icon: '✉️', description: '可以传递信息的灵异邮件', effect: '可传递信息', effectDetail: '可以向任何地点的人传递信息，不受距离限制', usageLimit: 5, duration: '即时', cost: '每封邮件都会暴露发送者位置信息给途经的厉鬼', narrativeHook: '鬼邮件偶尔会自行投递给非指定收件人，内容可能泄露关键秘密' },
+                { id: 'item_epic_4', name: '鬼奴隶', rarity: 'EPIC', type: 'supernatural', icon: '👤', description: '被灵异力量控制的鬼奴隶，可执行简单任务', effect: '可使役执行任务', effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等', usageLimit: 'unlimited', duration: '持续', cost: '鬼奴隶有自我意识残留，长期使役可能反噬主人', narrativeHook: '鬼奴隶生前的身份可能与当前调查的案件有关联' },
                 // ★★★ 稀有（15%）
-                { id: 'item_rare_1', name: '红色鬼烛', rarity: 'RARE', type: 'supernatural', icon: '🕯️', description: '红色的鬼烛，可以照亮鬼域', effect: '照亮鬼域，驱散黑暗', effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗', usageLimit: 3, duration: '每支持续数小时' },
-                { id: 'item_rare_2', name: '鬼钱', rarity: 'RARE', type: 'supernatural', icon: '💴', description: '沾染了灵异的钞票，可用于交易', effect: '购买灵异物品或服务', effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助', usageLimit: 'stack', duration: '永久' },
-                { id: 'item_rare_3', name: '卫星定位手机', rarity: 'RARE', type: 'supernatural', icon: '📱', description: '可以定位厉鬼的特殊手机', effect: '定位厉鬼或驭鬼者', effectDetail: '可以定位特定厉鬼或驭鬼者的位置', usageLimit: 10, duration: '每次使用即时' },
-                { id: 'item_rare_4', name: '压制类灵异物品', rarity: 'RARE', type: 'supernatural', icon: '⛓️', description: '可以压制特定厉鬼的物品', effect: '压制特定厉鬼', effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力', usageLimit: 5, duration: '每次使用持续一段时间' },
+                { id: 'item_rare_1', name: '红色鬼烛', rarity: 'RARE', type: 'supernatural', icon: '🕯️', description: '红色的鬼烛，可以照亮鬼域', effect: '照亮鬼域，驱散黑暗', effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗', usageLimit: 3, duration: '每支持续数小时', cost: '燃烧时会吸引远处的厉鬼靠近光源，有暴露风险', narrativeHook: '鬼烛的火焰颜色变化可以预示附近厉鬼的强度等级' },
+                { id: 'item_rare_2', name: '鬼钱', rarity: 'RARE', type: 'supernatural', icon: '💴', description: '沾染了灵异的钞票，可用于交易', effect: '购买灵异物品或服务', effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助', usageLimit: 'stack', duration: '永久', cost: '鬼钱交易会在灵异网络中留下痕迹，可被追踪', narrativeHook: '每张鬼钱都记录了前任持有者的信息，可作为追查线索' },
+                { id: 'item_rare_3', name: '卫星定位手机', rarity: 'RARE', type: 'supernatural', icon: '📱', description: '可以定位厉鬼的特殊手机', effect: '定位厉鬼或驭鬼者', effectDetail: '可以定位特定厉鬼或驭鬼者的位置', usageLimit: 10, duration: '每次使用即时', cost: '定位过程中会短暂连接灵异频段，可能被目标厉鬼察觉', narrativeHook: '手机偶尔会收到来自已故驭鬼者的未读消息' },
+                { id: 'item_rare_4', name: '压制类灵异物品', rarity: 'RARE', type: 'supernatural', icon: '⛓️', description: '可以压制特定厉鬼的物品', effect: '压制特定厉鬼', effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力', usageLimit: 5, duration: '每次使用持续一段时间', cost: '压制效果解除时厉鬼会进入暴走状态，比正常更危险', narrativeHook: '压制物品的针对性暗示了制作者曾深入研究过该厉鬼' },
                 // ★★ 普通（30%）
-                { id: 'item_common_1', name: '灵异护符', rarity: 'COMMON', type: 'supernatural', icon: '🎴', description: '具有基础防护能力的护符', effect: '基础防护', effectDetail: '可以抵御低级灵异事件的侵袭', usageLimit: 5, duration: '每次使用持续短暂时间' },
-                { id: 'item_common_2', name: '追踪定位器', rarity: 'COMMON', type: 'supernatural', icon: '📡', description: '可以追踪灵异信号的定位器', effect: '追踪灵异信号', effectDetail: '可以追踪附近的灵异信号源', usageLimit: 10, duration: '每次持续数小时' },
-                { id: 'item_common_3', name: '鬼照片', rarity: 'COMMON', type: 'supernatural', icon: '📷', description: '拍摄了灵异现象的照片', effect: '记录灵异证据', effectDetail: '可以作为灵异事件的证据记录', usageLimit: 'stack', duration: '永久' },
-                { id: 'item_common_4', name: '普通护身符', rarity: 'COMMON', type: 'supernatural', icon: '🧿', description: '普通的护身符，微弱灵异防护', effect: '微弱防护', effectDetail: '提供微弱的灵异防护能力', usageLimit: 10, duration: '每次持续短暂时间' },
+                { id: 'item_common_1', name: '灵异护符', rarity: 'COMMON', type: 'supernatural', icon: '🎴', description: '具有基础防护能力的护符', effect: '基础防护', effectDetail: '可以抵御低级灵异事件的侵袭', usageLimit: 5, duration: '每次使用持续短暂时间', cost: '护符失效时会碎裂产生灵异波动，可能引来低级灵异', narrativeHook: '护符上的符文出自某个驭鬼者流派，可追溯其传承' },
+                { id: 'item_common_2', name: '追踪定位器', rarity: 'COMMON', type: 'supernatural', icon: '📡', description: '可以追踪灵异信号的定位器', effect: '追踪灵异信号', effectDetail: '可以追踪附近的灵异信号源', usageLimit: 10, duration: '每次持续数小时', cost: '频繁使用会让使用者对灵异信号过敏，产生幻听', narrativeHook: '定位器有时会追踪到异常强烈的信号源，指向未知灵异事件' },
+                { id: 'item_common_3', name: '鬼照片', rarity: 'COMMON', type: 'supernatural', icon: '📷', description: '拍摄了灵异现象的照片', effect: '记录灵异证据', effectDetail: '可以作为灵异事件的证据记录', usageLimit: 'stack', duration: '永久', cost: '保存过多鬼照片会让照片中的灵异逐渐渗出', narrativeHook: '对比不同时间拍摄的照片，可能发现厉鬼行为规律的变化' },
+                { id: 'item_common_4', name: '普通护身符', rarity: 'COMMON', type: 'supernatural', icon: '🧿', description: '普通的护身符，微弱灵异防护', effect: '微弱防护', effectDetail: '提供微弱的灵异防护能力', usageLimit: 10, duration: '每次持续短暂时间', cost: '防护能力有限，面对高级灵异时可能给予虚假安全感', narrativeHook: '护身符的微弱灵异波动可作为同行之间的身份识别信号' },
                 // ★ 常见（47.5%）
-                { id: 'item_basic_1', name: '灵异记录本', rarity: 'BASIC', type: 'supernatural', icon: '📒', description: '记录灵异事件的本子', effect: '记录灵异事件', effectDetail: '可以记录和整理灵异事件信息', usageLimit: 'unlimited', duration: '永久' },
-                { id: 'item_basic_2', name: '少量鬼钱', rarity: 'BASIC', type: 'supernatural', icon: '💵', description: '少量的鬼钱', effect: '小额交易', effectDetail: '可以进行小额灵异物品交易', usageLimit: 'stack', duration: '永久' },
-                { id: 'item_basic_3', name: '灵异感知增强剂', rarity: 'BASIC', type: 'supernatural', icon: '💊', description: '可以暂时增强灵异感知的药剂', effect: '增强灵异感知', effectDetail: '暂时提升对灵异现象的感知能力', usageLimit: 6, duration: '每次持续数小时' }
+                { id: 'item_basic_1', name: '灵异记录本', rarity: 'BASIC', type: 'supernatural', icon: '📒', description: '记录灵异事件的本子', effect: '记录灵异事件', effectDetail: '可以记录和整理灵异事件信息', usageLimit: 'unlimited', duration: '永久', cost: '记录内容过于详细可能被厉鬼感知并产生敌意', narrativeHook: '记录本中的内容整合后可能拼凑出厉鬼的完整规律' },
+                { id: 'item_basic_2', name: '少量鬼钱', rarity: 'BASIC', type: 'supernatural', icon: '💵', description: '少量的鬼钱', effect: '小额交易', effectDetail: '可以进行小额灵异物品交易', usageLimit: 'stack', duration: '永久', cost: '金额太少可能在驭鬼者黑市引来轻视或欺诈', narrativeHook: '即使少量鬼钱也能在关键时刻作为灵异交易的入场凭证' },
+                { id: 'item_basic_3', name: '灵异感知增强剂', rarity: 'BASIC', type: 'supernatural', icon: '💊', description: '可以暂时增强灵异感知的药剂', effect: '增强灵异感知', effectDetail: '暂时提升对灵异现象的感知能力', usageLimit: 6, duration: '每次持续数小时', cost: '感知增强期间会同时放大恐惧感，意志薄弱者可能崩溃', narrativeHook: '增强感知后可能察觉到平时忽略的细微灵异痕迹' }
             ],
             clue: [
-                { id: 'clue_decisive', name: '决定性线索', rarity: 'EPIC', type: 'clue', icon: '🔍', description: '关键的决定性线索，大幅提升档案完成度', effect: '档案进度 +50%', effectDetail: '获得后立即提升指定厉鬼档案完成度50%', progress: 0.5 },
-                { id: 'clue_core', name: '核心线索', rarity: 'RARE', type: 'clue', icon: '🔎', description: '核心线索，显著提升档案完成度', effect: '档案进度 +25%', effectDetail: '获得后立即提升指定厉鬼档案完成度25%', progress: 0.25 },
-                { id: 'clue_important', name: '重要线索', rarity: 'COMMON', type: 'clue', icon: '🔦', description: '重要线索，提升档案完成度', effect: '档案进度 +10%', effectDetail: '获得后立即提升指定厉鬼档案完成度10%', progress: 0.1 },
-                { id: 'clue_common', name: '普通线索', rarity: 'BASIC', type: 'clue', icon: '🔬', description: '普通线索，少量提升档案完成度', effect: '档案进度 +5%', effectDetail: '获得后立即提升指定厉鬼档案完成度5%', progress: 0.05 }
+                { id: 'clue_decisive', name: '决定性线索', rarity: 'EPIC', type: 'clue', icon: '🔍', description: '关键的决定性线索，大幅提升档案完成度', effect: '档案进度 +50%', effectDetail: '获得后立即提升指定厉鬼档案完成度50%', progress: 0.5, cost: '获取决定性线索往往意味着已深入厉鬼核心区域', narrativeHook: '决定性线索通常指向厉鬼的致命弱点或诞生真相' },
+                { id: 'clue_core', name: '核心线索', rarity: 'RARE', type: 'clue', icon: '🔎', description: '核心线索，显著提升档案完成度', effect: '档案进度 +25%', effectDetail: '获得后立即提升指定厉鬼档案完成度25%', progress: 0.25, cost: '核心线索的获取可能惊动厉鬼，使其提高警惕', narrativeHook: '核心线索往往关联多个灵异事件，是串联案件的关键节点' },
+                { id: 'clue_important', name: '重要线索', rarity: 'COMMON', type: 'clue', icon: '🔦', description: '重要线索，提升档案完成度', effect: '档案进度 +10%', effectDetail: '获得后立即提升指定厉鬼档案完成度10%', progress: 0.1, cost: '验证线索真伪需要实地调查，存在遭遇危险的可能', narrativeHook: '重要线索可能指向新的调查方向或需要回访的地点' },
+                { id: 'clue_common', name: '普通线索', rarity: 'BASIC', type: 'clue', icon: '🔬', description: '普通线索，少量提升档案完成度', effect: '档案进度 +5%', effectDetail: '获得后立即提升指定厉鬼档案完成度5%', progress: 0.05, cost: '线索可能是表象，需投入时间精力筛选有效信息', narrativeHook: '普通线索积累到一定数量时可能产生质变性的推断' }
             ],
             knowledge: [
-                { id: 'knowledge_forbidden', name: '禁忌知识', rarity: 'EPIC', type: 'knowledge', icon: '📕', description: '禁忌的知识，大幅揭示厉鬼规律', effect: '规律进度 +50%', effectDetail: '获得后立即提升指定厉鬼规律完成度50%', progress: 0.5 },
-                { id: 'knowledge_core', name: '核心知识', rarity: 'RARE', type: 'knowledge', icon: '📗', description: '核心知识，显著揭示厉鬼规律', effect: '规律进度 +25%', effectDetail: '获得后立即提升指定厉鬼规律完成度25%', progress: 0.25 },
-                { id: 'knowledge_deep', name: '深入知识', rarity: 'COMMON', type: 'knowledge', icon: '📘', description: '深入的知识，揭示部分规律', effect: '规律进度 +10%', effectDetail: '获得后立即提升指定厉鬼规律完成度10%', progress: 0.1 },
-                { id: 'knowledge_basic', name: '基础知识', rarity: 'BASIC', type: 'knowledge', icon: '📙', description: '基础知识，少量揭示规律', effect: '规律进度 +5%', effectDetail: '获得后立即提升指定厉鬼规律完成度5%', progress: 0.05 }
+                { id: 'knowledge_forbidden', name: '禁忌知识', rarity: 'EPIC', type: 'knowledge', icon: '📕', description: '禁忌的知识，大幅揭示厉鬼规律', effect: '规律进度 +50%', effectDetail: '获得后立即提升指定厉鬼规律完成度50%', progress: 0.5, cost: '知晓禁忌知识后精神污染风险大幅提升，可能产生噩梦', narrativeHook: '禁忌知识往往涉及厉鬼诞生的核心秘密，知道得越多越危险' },
+                { id: 'knowledge_core', name: '核心知识', rarity: 'RARE', type: 'knowledge', icon: '📗', description: '核心知识，显著揭示厉鬼规律', effect: '规律进度 +25%', effectDetail: '获得后立即提升指定厉鬼规律完成度25%', progress: 0.25, cost: '核心知识的传播可能引起厉鬼注意，知情者成为目标', narrativeHook: '核心知识通常来源于前人的惨痛经验，背后有血泪故事' },
+                { id: 'knowledge_deep', name: '深入知识', rarity: 'COMMON', type: 'knowledge', icon: '📘', description: '深入的知识，揭示部分规律', effect: '规律进度 +10%', effectDetail: '获得后立即提升指定厉鬼规律完成度10%', progress: 0.1, cost: '深入研究规律需要长时间接触灵异现象，有被污染风险', narrativeHook: '深入知识可能揭示厉鬼规律中的漏洞或可利用的间隙' },
+                { id: 'knowledge_basic', name: '基础知识', rarity: 'BASIC', type: 'knowledge', icon: '📙', description: '基础知识，少量揭示规律', effect: '规律进度 +5%', effectDetail: '获得后立即提升指定厉鬼规律完成度5%', progress: 0.05, cost: '基础知识可能包含过时或不完整的信息，盲信有风险', narrativeHook: '基础知识是驭鬼者入门的基石，可引导向更深层的研究方向' }
             ]
         }
     };
@@ -4217,6 +4391,128 @@
             custom[type] = custom[type].filter(c => c.id !== itemId);
             setCustomGachaItems(custom);
         }
+    };
+
+    // ═══════════════════ 碎片系统 ═══════════════════
+
+    // 碎片（灵异残屑）配置
+    const GACHA_FRAGMENT = {
+        name: '灵异残屑',
+        icon: '💎',
+        // 重复物品 → 获得碎片数量（按稀有度）
+        earn: {
+            MYTHIC: 100,
+            LEGENDARY: 50,
+            EPIC: 20,
+            RARE: 8,
+            COMMON: 3,
+            BASIC: 1,
+        },
+        // 兑换商店价格（碎片 → 物品）
+        cost: {
+            MYTHIC: 500,
+            LEGENDARY: 200,
+            EPIC: 80,
+            RARE: 30,
+            COMMON: 10,
+            BASIC: 5,
+        },
+    };
+
+    const STORAGE_KEY_GACHA_FRAGMENTS = 'mfrs_gacha_fragments';
+    const STORAGE_KEY_GACHA_OWNED = 'mfrs_gacha_owned_items';
+
+    // 碎片余额
+    const getGachaFragments = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_GACHA_FRAGMENTS);
+            return stored ? parseInt(stored, 10) : 0;
+        } catch (e) { return 0; }
+    };
+    const setGachaFragments = (amount) => {
+        try { localStorage.setItem(STORAGE_KEY_GACHA_FRAGMENTS, String(amount)); }
+        catch (e) { console.error('Failed to save fragments:', e); }
+    };
+    const addGachaFragments = (amount) => {
+        const next = getGachaFragments() + amount;
+        setGachaFragments(next);
+        return next;
+    };
+    const deductGachaFragments = (amount) => {
+        const current = getGachaFragments();
+        if (current < amount) return false;
+        setGachaFragments(current - amount);
+        return true;
+    };
+
+    // 已拥有物品 id 集合（用于判定重复）
+    const getOwnedItems = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_GACHA_OWNED);
+            return stored ? JSON.parse(stored) : [];
+        } catch (e) { return []; }
+    };
+    const setOwnedItems = (ids) => {
+        try { localStorage.setItem(STORAGE_KEY_GACHA_OWNED, JSON.stringify(ids)); }
+        catch (e) { console.error('Failed to save owned items:', e); }
+    };
+    const addOwnedItem = (itemId) => {
+        const owned = getOwnedItems();
+        if (!owned.includes(itemId)) {
+            owned.push(itemId);
+            setOwnedItems(owned);
+        }
+    };
+    const isItemOwned = (itemId) => getOwnedItems().includes(itemId);
+
+    /**
+     * 处理抽卡结果中的重复物品 → 转化为碎片。
+     * 对 items 数组做原地标记：重复项添加 .isDuplicate=true, .fragmentsEarned=N。
+     * 新物品则标记 .isDuplicate=false 并加入已拥有列表。
+     * @param {Array} items - 抽卡结果数组
+     * @returns {{ totalFragments: number, duplicateCount: number }}
+     */
+    const processFragments = (items) => {
+        let totalFragments = 0;
+        let duplicateCount = 0;
+
+        for (const item of items) {
+            if (isItemOwned(item.id)) {
+                // 重复物品 → 转化为碎片
+                const rarityKey = Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
+                const earned = GACHA_FRAGMENT.earn[rarityKey] || 1;
+                item.isDuplicate = true;
+                item.fragmentsEarned = earned;
+                totalFragments += earned;
+                duplicateCount++;
+            } else {
+                // 新物品 → 加入已拥有列表
+                item.isDuplicate = false;
+                item.fragmentsEarned = 0;
+                addOwnedItem(item.id);
+            }
+        }
+
+        if (totalFragments > 0) {
+            addGachaFragments(totalFragments);
+        }
+
+        return { totalFragments, duplicateCount };
+    };
+
+    /**
+     * 碎片兑换：用碎片兑换指定物品（加入已拥有列表，不写数据库）
+     * @param {object} item - 物品定义（需有 id, rarity）
+     * @returns {{ success: boolean, error?: string }}
+     */
+    const exchangeWithFragments = (item) => {
+        const rarityKey = Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
+        const cost = GACHA_FRAGMENT.cost[rarityKey] || 999;
+        if (!deductGachaFragments(cost)) {
+            return { success: false, error: `灵异残屑不足（需要 ${cost}）` };
+        }
+        addOwnedItem(item.id);
+        return { success: true, cost, item };
     };
 
     // 四个物品池类型
@@ -4395,7 +4691,10 @@
         // 保存抽卡历史
         saveGachaHistory([item]);
 
-        return { success: true, items: [item], currency: getGachaCurrency() };
+        // 碎片系统：检测重复物品并转化
+        const fragmentResult = processFragments([item]);
+
+        return { success: true, items: [item], currency: getGachaCurrency(), fragments: fragmentResult };
     };
 
     // 十连
@@ -4410,7 +4709,10 @@
         // 保存抽卡历史
         saveGachaHistory(items);
 
-        return { success: true, items, currency: getGachaCurrency() };
+        // 碎片系统：检测重复物品并转化
+        const fragmentResult = processFragments(items);
+
+        return { success: true, items, currency: getGachaCurrency(), fragments: fragmentResult };
     };
 
     // 保存抽卡历史
@@ -4453,9 +4755,14 @@
                 <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 900px; max-height: 90vh; overflow: hidden;">
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
                         <span>神秘复苏抽卡系统</span>
-                        <button id="gacha-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <button id="gacha-custom-editor-btn" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:12px; transition:all 0.2s;" title="自定义物品编辑器">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> 自定义
+                            </button>
+                            <button id="gacha-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="acu-settings-content" style="flex:1; overflow-y:auto; padding:20px;">
@@ -4477,6 +4784,23 @@
                                     <div>👻 对抗厉鬼 +15</div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- 灵异残屑 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-size:20px;">🔮</span>
+                                    <div>
+                                        <div style="color:var(--acu-text-sub); font-size:12px;">灵异残屑</div>
+                                        <div style="color:#a855f7; font-size:22px; font-weight:bold;" id="gacha-fragment-display">${getFragments()}</div>
+                                    </div>
+                                </div>
+                                <button id="gacha-shop-btn" style="background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%); border:none; border-radius:8px; padding:10px 18px; cursor:pointer; color:white; font-size:13px; font-weight:bold; transition:transform 0.2s;">
+                                    <i class="fa-solid fa-store"></i> 兑换商店
+                                </button>
+                            </div>
+                            <div style="color:var(--acu-text-sub); font-size:11px; margin-top:8px;">重复物品自动转化为灵异残屑，可在商店兑换指定物品</div>
                         </div>
 
                         <!-- 保底进度 -->
@@ -4527,9 +4851,13 @@
                                 <div style="margin-bottom:8px;">单抽</div>
                                 <div style="font-size:13px; opacity:0.9;">消耗 ${GACHA_CURRENCY.cost.single} 调查点</div>
                             </button>
-                            <button id="gacha-ten-btn" style="background:linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px rgba(255, 107, 107, 0.3);">
+                            <button id="gacha-ten-btn" style="background:linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px rgba(255, 107, 107, 0.3); position:relative; overflow:visible;">
+                                <span style="position:absolute; top:-8px; right:-8px; background:#ff4757; color:white; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(255,71,87,0.4); animation:discountPulse 2s ease-in-out infinite;">9折</span>
                                 <div style="margin-bottom:8px;">十连抽</div>
-                                <div style="font-size:13px; opacity:0.9;">消耗 ${GACHA_CURRENCY.cost.ten} 调查点（9折）</div>
+                                <div style="font-size:13px; opacity:0.9;">
+                                    <span style="text-decoration:line-through; opacity:0.6; margin-right:4px;">${GACHA_CURRENCY.cost.single * 10}</span>
+                                    <span style="font-size:15px; font-weight:bold; color:#fff;">${GACHA_CURRENCY.cost.ten}</span> 调查点
+                                </div>
                             </button>
                         </div>
 
@@ -4576,6 +4904,12 @@
             $(this).css('transform', 'translateY(-3px) scale(1.02)');
         }).on('mouseleave', function() {
             $(this).css('transform', 'translateY(0) scale(1)');
+        });
+
+        // 自定义物品编辑器
+        dialog.find('#gacha-custom-editor-btn').on('click', function() {
+            closeDialog();
+            showCustomItemEditor();
         });
 
         // 显示抽卡结果
@@ -4667,10 +5001,21 @@
             // 显示结果
             showGachaResult(result.items);
 
+            // 碎片转化提示
+            if (result.fragments && result.fragments.totalFragments > 0) {
+                dialog.find('#gacha-fragment-display').text(getFragments());
+                if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
+            }
+
             // 同步到数据库
             await syncGachaResultToDatabase(result.items);
 
             if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
+        });
+
+        // 碎片商店按钮
+        dialog.find('#gacha-shop-btn').on('click', function() {
+            showFragmentShop();
         });
 
         // 十连
@@ -4704,6 +5049,12 @@
 
             // 显示结果
             showGachaResult(result.items);
+
+            // 碎片转化提示
+            if (result.fragments && result.fragments.totalFragments > 0) {
+                dialog.find('#gacha-fragment-display').text(getFragments());
+                if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
+            }
 
             // 同步到数据库
             await syncGachaResultToDatabase(result.items);
@@ -4773,6 +5124,12 @@
                 $(this).html('<i class="fa-solid fa-chevron-up"></i> 收起');
             }
         });
+
+        // 碎片商店按钮
+        dialog.find('#gacha-fragment-shop-btn').on('click', function() {
+            closeDialog();
+            showFragmentShop();
+        });
     };
 
     // 显示物品详情
@@ -4832,103 +5189,716 @@
         detailDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) detailDialog.remove(); });
     };
 
-    // 将抽卡结果写入数据库
+    // ═══════════════════ 自定义物品编辑器 ═══════════════════
+
+    /**
+     * 显示自定义物品编辑器 — 列表 + 新增/编辑表单
+     * 支持 3 种物品类型的 tab 切换，区分 builtin（只读）与 custom（可编辑/删除）
+     */
+    const showCustomItemEditor = () => {
+        const { $ } = getCore();
+        const config = getConfig();
+
+        const RARITY_OPTIONS = Object.entries(GACHA_RARITY).map(([key, val]) =>
+            `<option value="${key}">${val.stars} ${val.name}</option>`
+        ).join('');
+
+        const TYPE_LABELS = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
+        const TYPE_ICONS = { supernatural: 'fa-ghost', clue: 'fa-magnifying-glass', knowledge: 'fa-book' };
+
+        // 构建物品列表 HTML
+        const buildItemList = (type) => {
+            const allItems = getAllGachaItemDefinitions();
+            const customRaw = getCustomGachaItems();
+            const customIds = new Set((customRaw[type] || []).map(c => c.id));
+            const builtinIds = new Set((BUILTIN_GACHA_ITEMS.items[type] || []).map(b => b.id));
+            const items = allItems[type] || [];
+
+            if (items.length === 0) {
+                return '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无物品</div>';
+            }
+
+            return items.map(item => {
+                const isBuiltin = builtinIds.has(item.id);
+                const isCustomOverride = isBuiltin && customIds.has(item.id);
+                const isPureCustom = !isBuiltin && customIds.has(item.id);
+
+                let badge = '';
+                if (isPureCustom) badge = '<span style="background:#10b981; color:white; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">自定义</span>';
+                else if (isCustomOverride) badge = '<span style="background:#f59e0b; color:white; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">已覆盖</span>';
+                else badge = '<span style="background:var(--acu-border); color:var(--acu-text-sub); font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">内置</span>';
+
+                const canEdit = isPureCustom || isCustomOverride || isBuiltin; // all can be edited (override)
+                const canDelete = isPureCustom || isCustomOverride; // only custom layer can be deleted
+
+                return `
+                    <div class="custom-item-row" data-id="${item.id}" data-type="${type}" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--acu-btn-bg); border-radius:8px; margin-bottom:8px; border:1px solid var(--acu-border); transition:border-color 0.2s;">
+                        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+                            <span style="font-size:24px; flex-shrink:0;">${item.icon}</span>
+                            <div style="min-width:0;">
+                                <div style="display:flex; align-items:center; flex-wrap:wrap;">
+                                    <span style="color:var(--acu-text-main); font-weight:bold; font-size:13px;">${item.name}</span>
+                                    ${badge}
+                                </div>
+                                <div style="color:${item.rarity.color}; font-size:11px; margin-top:2px;">${item.rarity.stars} ${item.rarity.name}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-shrink:0;">
+                            <button class="edit-item-btn" data-id="${item.id}" data-type="${type}" style="background:var(--acu-highlight); border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="编辑/覆盖">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            ${canDelete ? `
+                            <button class="delete-item-btn" data-id="${item.id}" data-type="${type}" style="background:#ef4444; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="删除自定义覆盖">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const editor = $(`
+            <div class="acu-edit-overlay">
+                <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 700px; max-height: 85vh; display:flex; flex-direction:column;">
+                    <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fa-solid fa-wand-magic-sparkles"></i> 自定义物品编辑器</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button id="custom-add-new-btn" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;">
+                                <i class="fa-solid fa-plus"></i> 新增物品
+                            </button>
+                            <button id="custom-export-btn" style="background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="导出全部物品目录为 JSON">
+                                <i class="fa-solid fa-download"></i> 导出
+                            </button>
+                            <button id="custom-import-btn" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="从 JSON 导入物品到自定义层">
+                                <i class="fa-solid fa-upload"></i> 导入
+                            </button>
+                            <button id="custom-ai-gen-btn" style="background:linear-gradient(135deg, #ec4899 0%, #be185d 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="用 AI 按神秘复苏风格生成物品">
+                                <i class="fa-solid fa-robot"></i> AI生成
+                            </button>
+                            <button id="custom-editor-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 类型 Tab -->
+                    <div style="display:flex; gap:0; border-bottom:1px solid var(--acu-border); padding:0 20px;">
+                        <button class="custom-type-tab active" data-type="supernatural" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-highlight); font-size:13px; font-weight:bold; cursor:pointer; border-bottom:2px solid var(--acu-highlight); transition:all 0.2s;">
+                            <i class="fa-solid fa-ghost"></i> 灵异物品
+                        </button>
+                        <button class="custom-type-tab" data-type="clue" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-text-sub); font-size:13px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;">
+                            <i class="fa-solid fa-magnifying-glass"></i> 线索
+                        </button>
+                        <button class="custom-type-tab" data-type="knowledge" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-text-sub); font-size:13px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;">
+                            <i class="fa-solid fa-book"></i> 知识
+                        </button>
+                    </div>
+
+                    <!-- 物品列表 -->
+                    <div id="custom-item-list" class="acu-settings-content" style="flex:1; overflow-y:auto; padding:15px 20px;">
+                        ${buildItemList('supernatural')}
+                    </div>
+                </div>
+            </div>
+        `);
+
+        let currentType = 'supernatural';
+
+        // 关闭编辑器
+        const closeEditor = () => editor.remove();
+        editor.find('#custom-editor-close').on('click', closeEditor);
+        editor.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeEditor(); });
+
+        // Tab 切换
+        editor.find('.custom-type-tab').on('click', function() {
+            editor.find('.custom-type-tab').removeClass('active')
+                .css({ color: 'var(--acu-text-sub)', 'border-bottom-color': 'transparent', 'font-weight': 'normal' });
+            $(this).addClass('active')
+                .css({ color: 'var(--acu-highlight)', 'border-bottom-color': 'var(--acu-highlight)', 'font-weight': 'bold' });
+            currentType = $(this).data('type');
+            editor.find('#custom-item-list').html(buildItemList(currentType));
+            bindItemActions();
+        });
+
+        // 新增物品按钮
+        editor.find('#custom-add-new-btn').on('click', () => {
+            showItemForm(currentType, null);
+        });
+
+        // 导出物品目录 JSON（builtin∪custom 全集）
+        editor.find('#custom-export-btn').on('click', () => {
+            try {
+                const allItems = getAllGachaItemDefinitions();
+                // 导出时将 rarity 对象还原为 key 字符串，方便导入
+                const exportData = { supernatural: [], clue: [], knowledge: [] };
+                for (const type of ['supernatural', 'clue', 'knowledge']) {
+                    exportData[type] = (allItems[type] || []).map(item => {
+                        const cleaned = { ...item };
+                        // rarity 对象 → key 字符串
+                        if (cleaned.rarity && typeof cleaned.rarity === 'object' && cleaned.rarity.level) {
+                            const found = Object.entries(GACHA_RARITY).find(([, v]) => v.level === cleaned.rarity.level);
+                            cleaned.rarity = found ? found[0] : 'COMMON';
+                        }
+                        // 移除运行时字段
+                        delete cleaned.targetTable;
+                        return cleaned;
+                    });
+                }
+                const json = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `gacha_items_catalog_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error('Export failed:', e);
+                alert('导出失败: ' + e.message);
+            }
+        });
+
+        // 导入物品 JSON → 覆盖/新增到 custom 层
+        editor.find('#custom-import-btn').on('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json';
+            fileInput.style.display = 'none';
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        // 验证格式
+                        const validTypes = ['supernatural', 'clue', 'knowledge'];
+                        const hasValidType = validTypes.some(t => Array.isArray(data[t]) && data[t].length > 0);
+                        if (!hasValidType) {
+                            alert('无效的物品目录格式。\n需要包含 supernatural / clue / knowledge 数组的 JSON 对象。');
+                            return;
+                        }
+                        let importCount = 0;
+                        for (const type of validTypes) {
+                            const items = data[type];
+                            if (!Array.isArray(items)) continue;
+                            for (const item of items) {
+                                if (!item.id || !item.name) continue; // 跳过无效项
+                                // 确保 type 字段存在
+                                const itemDef = { ...item, type };
+                                addCustomGachaItem(type, itemDef);
+                                importCount++;
+                            }
+                        }
+                        // 刷新列表
+                        editor.find('#custom-item-list').html(buildItemList(currentType));
+                        bindItemActions();
+                        alert(`导入成功！共导入 ${importCount} 个物品到自定义层。\n（内置物品将被覆盖为导入版本）`);
+                    } catch (parseErr) {
+                        console.error('Import parse failed:', parseErr);
+                        alert('JSON 解析失败: ' + parseErr.message);
+                    }
+                };
+                reader.readAsText(file);
+                document.body.removeChild(fileInput);
+            });
+            document.body.appendChild(fileInput);
+            fileInput.click();
+        });
+
+        // AI 生成物品（按神秘复苏原著风格）
+        editor.find('#custom-ai-gen-btn').on('click', async () => {
+            const TYPE_CN = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
+            const typeCn = TYPE_CN[currentType] || '灵异物品';
+
+            // 显示生成中状态
+            const btn = editor.find('#custom-ai-gen-btn');
+            const origHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> 生成中...');
+
+            // 构建 JSON Schema（按当前 tab 类型）
+            const baseProps = {
+                id: { type: 'string', description: '唯一标识，格式为 custom_<type>_<timestamp>' },
+                name: { type: 'string', description: '物品名称，2-6个中文字' },
+                icon: { type: 'string', description: '一个 emoji 表情作为图标' },
+                rarity: { type: 'string', enum: ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'], description: '稀有度' },
+                description: { type: 'string', description: '物品背景描述，20-50字' },
+                effect: { type: 'string', description: '效果简述，5-15字' },
+                effectDetail: { type: 'string', description: '效果详细说明，20-60字' }
+            };
+            const baseRequired = ['id', 'name', 'icon', 'rarity', 'description', 'effect', 'effectDetail', 'cost', 'narrativeHook'];
+
+            let itemSchema;
+            if (currentType === 'supernatural') {
+                itemSchema = {
+                    type: 'object',
+                    properties: {
+                        ...baseProps,
+                        cost: { type: 'string', description: '使用代价或风险，体现灵异物品的危险性（10-50字）' },
+                        narrativeHook: { type: 'string', description: '剧情钩子，可供 AI/GM 展开的故事线索（15-60字）' },
+                        usageLimit: { oneOf: [{ type: 'number' }, { type: 'string', enum: ['unlimited', 'stack'] }], description: '使用次数限制' },
+                        duration: { type: 'string', description: '持续时间描述' }
+                    },
+                    required: [...baseRequired, 'usageLimit', 'duration']
+                };
+            } else {
+                itemSchema = {
+                    type: 'object',
+                    properties: {
+                        ...baseProps,
+                        cost: { type: 'string', description: '获取或使用该信息的代价或风险（10-50字）' },
+                        narrativeHook: { type: 'string', description: '剧情钩子，可供 AI/GM 展开的故事线索（15-60字）' },
+                        progress: { type: 'number', minimum: 0.05, maximum: 0.5, description: '进度贡献值' }
+                    },
+                    required: [...baseRequired, 'progress']
+                };
+            }
+
+            const systemPrompt = `你是《神秘复苏》小说的灵异物品设计师。请根据小说世界观设计一个全新的${typeCn}。
+
+核心设定：
+- 世界正在"复苏"，厉鬼回归人间，驭鬼者利用灵异物品对抗或利用厉鬼
+- 灵异物品都"沾染了灵异"，拥有超自然能力，但往往伴随使用代价或风险
+- 物品来源：厉鬼遗留、驭鬼者炼制、灵异事件产物、特殊机构研发
+- 风格：克苏鲁式诡异+都市灵异+中国民俗元素
+
+设计要求：
+- 名称简洁有力（2-6字），体现灵异属性
+- 描述要有故事感和氛围感，暗示其来源或危险
+- 效果要具体可用，不能过于抽象
+- cost（使用代价）：必须体现灵异物品的危险性，代价与物品力量成正比，高稀有度物品代价更大（10-50字）
+- narrativeHook（剧情钩子）：为 AI/GM 提供可展开的故事线索，如物品来历暗示、使用后果伏笔、关联事件钩子等（15-60字）
+- 使用代价/限制要合理，高稀有度物品可以更强但代价更大
+- 不要与已有物品重复（源头碎片、鬼域、鬼差制服、黄金手掌、饿死鬼的香烟、鬼邮件、红色鬼烛、鬼钱等已存在）
+- emoji 图标要贴合物品主题
+
+${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（数字或 unlimited/stack）和 duration。' : currentType === 'clue' ? '线索类物品的 progress 表示对厉鬼档案的完成度贡献（0.05-0.5）。' : '知识类物品的 progress 表示对厉鬼规律的揭示程度（0.05-0.5）。'}
+
+请设计一个独特且符合世界观的${typeCn}，id 格式为 custom_${currentType}_${Date.now()}。`;
+
+            try {
+                const result = await generateRaw({
+                    should_silence: true,
+                    ordered_prompts: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: `请设计一个稀有度适中（RARE 或 EPIC）的${typeCn}。直接输出 JSON。` }
+                    ],
+                    json_schema: {
+                        name: 'gacha_item_generation',
+                        description: '神秘复苏风格灵异物品生成',
+                        value: itemSchema
+                    }
+                });
+
+                // 解析结果
+                let item;
+                if (typeof result === 'string') {
+                    item = JSON.parse(result);
+                } else {
+                    // tool_calls 结果不应出现（json_schema 与 tools 互斥）
+                    throw new Error('AI 返回了非预期的格式');
+                }
+
+                // 确保 id 唯一
+                if (!item.id || !item.id.startsWith('custom_')) {
+                    item.id = `custom_${currentType}_${Date.now()}`;
+                }
+                item.type = currentType;
+
+                // 打开预填表单让用户确认/修改
+                showItemForm(currentType, item);
+
+            } catch (err) {
+                console.error('AI generation failed:', err);
+                alert('AI 生成失败: ' + (err.message || '未知错误') + '\n\n请确认当前已连接 AI 代理且可用。');
+            } finally {
+                btn.prop('disabled', false).html(origHtml);
+            }
+        });
+
+        // 绑定列表行的编辑/删除按钮
+        const bindItemActions = () => {
+            editor.find('.edit-item-btn').off('click').on('click', function() {
+                const id = $(this).data('id');
+                const type = $(this).data('type');
+                // 获取当前合并后的完整物品数据
+                const allItems = getAllGachaItemDefinitions();
+                const item = (allItems[type] || []).find(i => i.id === id);
+                if (item) showItemForm(type, item);
+            });
+
+            editor.find('.delete-item-btn').off('click').on('click', function() {
+                const id = $(this).data('id');
+                const type = $(this).data('type');
+                if (confirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`)) {
+                    removeCustomGachaItem(type, id);
+                    editor.find('#custom-item-list').html(buildItemList(currentType));
+                    bindItemActions();
+                }
+            });
+
+            // hover 效果
+            editor.find('.custom-item-row').on('mouseenter', function() {
+                $(this).css('border-color', 'var(--acu-highlight)');
+            }).on('mouseleave', function() {
+                $(this).css('border-color', 'var(--acu-border)');
+            });
+        };
+
+        // 显示物品编辑/新增表单
+        const showItemForm = (type, existingItem) => {
+            const isEdit = !!existingItem;
+            const title = isEdit ? `编辑: ${existingItem.name}` : `新增${TYPE_LABELS[type]}`;
+
+            // 解析 rarity key（如果 existingItem.rarity 是对象，从 GACHA_RARITY 反查 key）
+            let rarityKey = 'COMMON';
+            if (existingItem) {
+                if (typeof existingItem.rarity === 'string') {
+                    rarityKey = existingItem.rarity;
+                } else if (existingItem.rarity && existingItem.rarity.level) {
+                    const found = Object.entries(GACHA_RARITY).find(([, v]) => v.level === existingItem.rarity.level);
+                    if (found) rarityKey = found[0];
+                }
+            }
+
+            const supFields = type === 'supernatural' ? `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div>
+                        <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">使用次数</label>
+                        <input id="form-usageLimit" type="text" value="${isEdit ? (existingItem.usageLimit || '') : ''}" placeholder="如: 3, unlimited, stack" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">持续时间</label>
+                        <input id="form-duration" type="text" value="${isEdit ? (existingItem.duration || '') : ''}" placeholder="如: 永久, 3回合" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                    </div>
+                </div>
+            ` : `
+                <div>
+                    <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">进度（0-1）</label>
+                    <input id="form-progress" type="number" min="0" max="1" step="0.1" value="${isEdit ? (existingItem.progress || 0) : 0}" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                </div>
+            `;
+
+            const formDialog = $(`
+                <div class="acu-edit-overlay" style="z-index:100001;">
+                    <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 550px; max-height: 85vh; display:flex; flex-direction:column;">
+                        <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fa-solid ${TYPE_ICONS[type]}"></i> ${title}</span>
+                            <button class="form-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                                <i class="fa-solid fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="acu-settings-content" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px;">
+                            <!-- ID -->
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">物品 ID（唯一标识，不可重复）</label>
+                                <input id="form-id" type="text" value="${isEdit ? existingItem.id : `custom_${type}_${Date.now()}`}" ${isEdit ? 'readonly style="width:100%; padding:8px 10px; background:var(--acu-table-head); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-sub); font-size:12px; box-sizing:border-box; cursor:not-allowed;"' : 'style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;"'}>
+                            </div>
+
+                            <!-- 名称 + 图标 -->
+                            <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px;">
+                                <div>
+                                    <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">物品名称</label>
+                                    <input id="form-name" type="text" value="${isEdit ? existingItem.name : ''}" placeholder="如: 鬼手手套" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                                </div>
+                                <div>
+                                    <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">图标（emoji）</label>
+                                    <input id="form-icon" type="text" value="${isEdit ? existingItem.icon : '🔮'}" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:16px; text-align:center; box-sizing:border-box;">
+                                </div>
+                            </div>
+
+                            <!-- 稀有度 -->
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">稀有度</label>
+                                <select id="form-rarity" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                                    ${RARITY_OPTIONS}
+                                </select>
+                            </div>
+
+                            <!-- 描述 -->
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">物品描述</label>
+                                <textarea id="form-description" rows="3" placeholder="物品的背景描述..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.description || '') : ''}</textarea>
+                            </div>
+
+                            <!-- 效果 -->
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">效果（简短）</label>
+                                <input id="form-effect" type="text" value="${isEdit ? (existingItem.effect || '') : ''}" placeholder="如: 触碰灵异实体" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">效果详述</label>
+                                <textarea id="form-effectDetail" rows="2" placeholder="效果的详细说明..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.effectDetail || '') : ''}</textarea>
+                            </div>
+
+                            <!-- 类型特有字段 -->
+                            ${supFields}
+
+                            <!-- 使用代价 -->
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">使用代价（cost）</label>
+                                <textarea id="form-cost" rows="2" placeholder="使用此物品的代价或风险..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.cost || '') : ''}</textarea>
+                            </div>
+
+                            <!-- 剧情钩子 -->
+                            <div>
+                                <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">剧情钩子（narrativeHook）</label>
+                                <textarea id="form-narrativeHook" rows="2" placeholder="此物品可引出的剧情线索或故事展开..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.narrativeHook || '') : ''}</textarea>
+                            </div>
+
+                            <!-- 保存按钮 -->
+                            <div style="padding-top:10px; display:flex; gap:10px;">
+                                <button id="form-save-btn" style="flex:1; padding:12px; background:linear-gradient(135deg, var(--acu-highlight) 0%, #7c3aed 100%); border:none; border-radius:8px; color:white; font-size:14px; font-weight:bold; cursor:pointer; transition:transform 0.2s;">
+                                    <i class="fa-solid fa-check"></i> ${isEdit ? '保存修改' : '添加物品'}
+                                </button>
+                                <button class="form-cancel-btn" style="padding:12px 20px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:8px; color:var(--acu-text-sub); font-size:14px; cursor:pointer;">
+                                    取消
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            // 设置稀有度下拉默认值
+            formDialog.find('#form-rarity').val(rarityKey);
+
+            // 关闭表单
+            const closeForm = () => formDialog.remove();
+            formDialog.find('.form-close, .form-cancel-btn').on('click', closeForm);
+            formDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeForm(); });
+
+            // 保存
+            formDialog.find('#form-save-btn').on('click', () => {
+                const id = formDialog.find('#form-id').val().trim();
+                const name = formDialog.find('#form-name').val().trim();
+                const icon = formDialog.find('#form-icon').val().trim();
+                const rarity = formDialog.find('#form-rarity').val();
+                const description = formDialog.find('#form-description').val().trim();
+                const effect = formDialog.find('#form-effect').val().trim();
+                const effectDetail = formDialog.find('#form-effectDetail').val().trim();
+
+                // 验证必填项
+                if (!id || !name || !icon) {
+                    alert('请填写物品 ID、名称和图标');
+                    return;
+                }
+
+                const itemDef = { id, name, icon, rarity, type, description, effect, effectDetail };
+
+                // 使用代价和剧情钩子
+                const cost = formDialog.find('#form-cost').val().trim();
+                const narrativeHook = formDialog.find('#form-narrativeHook').val().trim();
+                if (cost) itemDef.cost = cost;
+                if (narrativeHook) itemDef.narrativeHook = narrativeHook;
+
+                if (type === 'supernatural') {
+                    const usageLimit = formDialog.find('#form-usageLimit').val().trim();
+                    const duration = formDialog.find('#form-duration').val().trim();
+                    if (usageLimit) itemDef.usageLimit = isNaN(usageLimit) ? usageLimit : Number(usageLimit);
+                    if (duration) itemDef.duration = duration;
+                } else {
+                    const progress = parseFloat(formDialog.find('#form-progress').val()) || 0;
+                    itemDef.progress = Math.max(0, Math.min(1, progress));
+                }
+
+                addCustomGachaItem(type, itemDef);
+                closeForm();
+
+                // 刷新列表
+                editor.find('#custom-item-list').html(buildItemList(currentType));
+                bindItemActions();
+            });
+
+            // hover 效果
+            formDialog.find('#form-save-btn').on('mouseenter', function() {
+                $(this).css('transform', 'scale(1.02)');
+            }).on('mouseleave', function() {
+                $(this).css('transform', 'scale(1)');
+            });
+
+            $('body').append(formDialog);
+        };
+
+        // 初始绑定
+        bindItemActions();
+
+        $('body').append(editor);
+    };
+
+    // ═══════════════════ 抽卡写库预校验 ═══════════════════
+
+    /**
+     * 获取下一个可用的线索编号（GLOB 'C[0-9][0-9][0-9][0-9]' 格式）
+     */
+    const getNextClueCode = async () => {
+        try {
+            const frontend = getMysteryFrontendApi();
+            if (frontend && frontend.exportCurrentData) {
+                const data = await frontend.exportCurrentData();
+                const clueTable = data?.sheet_clues;
+                if (clueTable && clueTable.content && clueTable.content.length > 1) {
+                    const codeIdx = clueTable.content[0].indexOf('线索编号');
+                    if (codeIdx >= 0) {
+                        let maxNum = 0;
+                        for (let i = 1; i < clueTable.content.length; i++) {
+                            const code = clueTable.content[i][codeIdx];
+                            if (typeof code === 'string' && /^C\d{4}$/.test(code)) {
+                                maxNum = Math.max(maxNum, parseInt(code.slice(1), 10));
+                            }
+                        }
+                        return `C${String(maxNum + 1).padStart(4, '0')}`;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Gacha] 查询下一线索编号失败:', e);
+        }
+        // Fallback: 基于时间戳生成（仍符合 C[0-9]{4} 格式）
+        return `C${String((Date.now() % 9000) + 1000).padStart(4, '0')}`;
+    };
+
+    /**
+     * 预校验并写入一行数据。优先使用 MysteryDatabaseFrontend.applyTableChangePlan
+     * 走完整校验链路（列名解析 → CHECK 约束 → 长度限制），校验失败则不写入。
+     * @param {string} tableName - 目标表名
+     * @param {Record<string, string>} rowData - 列名→值映射（使用表头中文名）
+     * @returns {Promise<{ok: boolean, errors?: Array}>}
+     */
+    const validateAndInsertGachaRow = async (tableName, rowData) => {
+        const frontend = getMysteryFrontendApi();
+        if (frontend && frontend.applyTableChangePlan) {
+            const plan = { action: 'insertRow', table: tableName, data: rowData };
+
+            // Step 1: 预校验（dry-run，不写入）
+            if (frontend.previewTableChangePlan) {
+                try {
+                    const preview = await frontend.previewTableChangePlan(plan);
+                    if (!preview.ok) {
+                        console.error(`[Gacha 预校验失败] ${tableName}:`, preview.errors);
+                        return preview;
+                    }
+                } catch (e) {
+                    console.warn(`[Gacha] previewTableChangePlan 异常，跳过预校验:`, e);
+                }
+            }
+
+            // Step 2: 写入（含内置校验）
+            try {
+                const result = await frontend.applyTableChangePlan(plan);
+                if (!result.ok) {
+                    console.error(`[Gacha 写入失败] ${tableName}:`, result.errors);
+                } else {
+                    console.info(`[Gacha] 成功写入 ${tableName}`);
+                }
+                return result;
+            } catch (e) {
+                console.error(`[Gacha] applyTableChangePlan 异常:`, e);
+                return { ok: false, errors: [{ code: 'APPLY_EXCEPTION', message: String(e) }] };
+            }
+        }
+
+        // Fallback: 直接通过 MfrsDatabase 写入（无预校验）
+        const crud = window.MfrsDatabase;
+        if (crud && crud.insertRow) {
+            try {
+                await crud.insertRow(tableName, rowData);
+                console.info(`[Gacha] fallback 写入 ${tableName}（未经预校验）`);
+                return { ok: true, errors: [] };
+            } catch (e) {
+                console.error(`[Gacha] fallback 写入失败:`, e);
+                return { ok: false, errors: [{ code: 'FALLBACK_FAILED', message: String(e) }] };
+            }
+        }
+
+        console.warn('[Gacha] 无可用数据库 API，跳过写入');
+        return { ok: false, errors: [{ code: 'API_UNAVAILABLE', message: '无可用数据库 API' }] };
+    };
+
+    // ═══════════════════ 抽卡结果写库（带预校验） ═══════════════════
+
+    /**
+     * 将抽卡结果写入数据库，使用正确的 DDL 列名并经过完整预校验。
+     * 列名映射基于 神秘复苏表格SQL_v1.json 的 content[0] 表头定义。
+     */
     const syncGachaResultToDatabase = async (items) => {
-        const api = getCore().getDB();
-        if (!api) return;
+        const results = { success: 0, failed: 0, errors: [] };
 
         for (const item of items) {
             try {
+                let result;
                 if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
-                    // 写入灵异物品表
-                    const itemData = {
-                        row_id: '',
-                        物品名称: item.name,
-                        物品描述: item.description,
-                        物品效果: item.effect,
-                        稀有度: item.rarity.name,
-                        使用次数: item.usageLimit === 'unlimited' ? '无限' : item.usageLimit === 'stack' ? '可叠加' : String(item.usageLimit),
-                        持续时间: item.duration,
-                        获得途径: '抽卡',
-                        备注: item.effectDetail
+                    // 灵异物品表：物品名, 类型, 持有人, 所在地点, 数量或状态, 效果(≤160), 副作用(≤120), 使用限制(≤120)
+                    const rowData = {
+                        物品名: item.name,
+                        类型: '灵异物品',
+                        持有人: '{{user}}',
+                        所在地点: '随身',
+                        数量或状态: item.usageLimit === 'unlimited' ? '无限使用'
+                            : item.usageLimit === 'stack' ? '可叠加'
+                            : `${item.usageLimit}次`,
+                        效果: (item.effect || '').slice(0, 160),
+                        副作用: '无',
+                        使用限制: (item.duration || '无').slice(0, 120),
                     };
+                    result = await validateAndInsertGachaRow('sheet_supernatural_items', rowData);
 
-                    // 尝试通过 CRUD 写入
-                    const crud = window.MfrsDatabase;
-                    if (crud && crud.insertRow) {
-                        await crud.insertRow('sheet_supernatural_items', itemData);
-                    } else if (api.executeMutation) {
-                        // fallback: 直接插入
-                        const headers = ['row_id', '物品名称', '物品描述', '物品效果', '稀有度', '使用次数', '持续时间', '获得途径', '备注'];
-                        const values = headers.map(h => itemData[h] || '');
-                        await api.executeMutation({
-                            type: 'insert',
-                            tableName: 'sheet_supernatural_items',
-                            data: { headers, rows: [values] }
-                        });
-                    }
                 } else if (item.type === GACHA_ITEM_TYPE.CLUE) {
-                    // 写入线索表，并更新档案进度
-                    const clueData = {
-                        row_id: '',
-                        线索编码: `CLUE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        线索描述: `${item.name}：${item.description}`,
-                        相关厉鬼: '待分配',
-                        重要程度: item.rarity.name,
-                        发现时间: new Date().toLocaleString('zh-CN'),
-                        获得途径: '抽卡',
-                        可见摘要: item.effect
+                    // 线索表：线索编号(GLOB C[0-9]{4}), 关联事件, 来源, 内容(≤120), 可信度(IN 低/中/高/误导), 推断(≤160), 验证状态, 可见性
+                    const clueCode = await getNextClueCode();
+                    const rowData = {
+                        线索编号: clueCode,
+                        关联事件: '调查中',
+                        来源: '灵异抽卡',
+                        内容: `${item.name}：${item.description}`.slice(0, 120),
+                        可信度: '中',
+                        推断: (item.effectDetail || item.effect || '').slice(0, 160),
+                        验证状态: '未验证',
+                        可见性: '玩家可见',
                     };
+                    result = await validateAndInsertGachaRow('sheet_clues', rowData);
 
-                    const crud = window.MfrsDatabase;
-                    if (crud && crud.insertRow) {
-                        await crud.insertRow('sheet_clues', clueData);
-                    } else if (api.executeMutation) {
-                        const headers = ['row_id', '线索编码', '线索描述', '相关厉鬼', '重要程度', '发现时间', '获得途径', '可见摘要'];
-                        const values = headers.map(h => clueData[h] || '');
-                        await api.executeMutation({
-                            type: 'insert',
-                            tableName: 'sheet_clues',
-                            data: { headers, rows: [values] }
-                        });
-                    }
-
-                    // 更新档案进度（这里简化处理，实际应该找到对应的档案记录更新）
-                    // 由于不知道具体厉鬼，这里只记录线索，实际使用时玩家需要手动分配
                 } else if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
-                    // 写入知识到规律表（简化处理）
-                    const knowledgeData = {
-                        row_id: '',
-                        规律名称: item.name,
-                        规律描述: item.description,
-                        杀人规律: item.effectDetail,
-                        触发条件: '待研究',
-                        破解方法: '待研究',
-                        完成度: `+${Math.round(item.progress * 100)}%`,
-                        相关厉鬼: '待分配',
-                        可见摘要: item.effect
+                    // 收录规律表：来源厉鬼, 获取方式, 规律类型, 规律内容(≤180), 规律进阶, 规律分解, 完整度, 风险备注(≤160), 可见摘要(≤180)
+                    const rowData = {
+                        来源厉鬼: '待分配',
+                        获取方式: '灵异抽卡',
+                        规律类型: item.name,
+                        规律内容: (item.description || '').slice(0, 180),
+                        规律进阶: '待研究',
+                        规律分解: '待研究',
+                        完整度: `+${Math.round(item.progress * 100)}%`,
+                        风险备注: (item.effectDetail || '无').slice(0, 160),
+                        可见摘要: (item.effect || '').slice(0, 180),
                     };
+                    result = await validateAndInsertGachaRow('sheet_collected_rules', rowData);
+                }
 
-                    const crud = window.MfrsDatabase;
-                    if (crud && crud.insertRow) {
-                        await crud.insertRow('sheet_collected_rules', knowledgeData);
-                    } else if (api.executeMutation) {
-                        const headers = ['row_id', '规律名称', '规律描述', '杀人规律', '触发条件', '破解方法', '完成度', '相关厉鬼', '可见摘要'];
-                        const values = headers.map(h => knowledgeData[h] || '');
-                        await api.executeMutation({
-                            type: 'insert',
-                            tableName: 'sheet_collected_rules',
-                            data: { headers, rows: [values] }
-                        });
+                if (result) {
+                    if (result.ok) results.success++;
+                    else {
+                        results.failed++;
+                        results.errors.push({ item: item.name, errors: result.errors });
                     }
                 }
             } catch (e) {
-                console.error('Failed to sync gacha result:', e);
+                results.failed++;
+                results.errors.push({ item: item.name, errors: [{ code: 'EXCEPTION', message: String(e) }] });
+                console.error('[Gacha] 写库异常:', item.name, e);
             }
+        }
+
+        if (results.errors.length > 0) {
+            console.warn(`[Gacha 写库汇总] 成功 ${results.success}, 失败 ${results.failed}`, results.errors);
+        } else {
+            console.info(`[Gacha 写库汇总] 全部成功: ${results.success} 条`);
         }
 
         // 刷新界面
         renderInterface();
+        return results;
     };
 
     const { $ } = getCore();

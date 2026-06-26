@@ -84,21 +84,61 @@
 - ✅ **修复 resetGachaPity 未定义 bug**（添加函数定义）
 - ✅ 构建验证通过，待真机验证
 
-**任务2（下一步）：** 写库前预校验约束 — 在 gacha 写 sheet_supernatural_items / sheet_clues / sheet_collected_rules 前加 assertCrud* 预校验（针对 CHECK_IN_VIOLATION / COLUMN_NOT_FOUND 历史坑）
+**任务2（✅ 已完成）：** 写库前预校验约束 — 修复列名映射 + 接入 MysteryDatabaseFrontend.applyTableChangePlan 完整校验链路
+- ✅ 修复 3 张表的列名映射（物品名称→物品名、线索编码→线索编号、规律名称→来源厉鬼 等）
+- ✅ 修复线索编号格式（CLUE_timestamp → C0001 格式，符合 GLOB 约束）
+- ✅ 修复 CHECK 约束值（可信度→'中'、验证状态→'未验证'、可见性→'玩家可见'）
+- ✅ 新增 `getNextClueCode()` 自动生成合法编号
+- ✅ 新增 `validateAndInsertGachaRow()` 预校验+写入函数
+- ✅ 长度预截断（效果≤160、内容≤120 等）
+- ✅ 构建验证通过
 
-**任务3：** 碎片系统 — 重复物品 → 灵异残屑 → 兑换
+**任务3（✅ 已完成）：** 碎片系统 — 重复物品 → 灵异残屑 → 兑换
+- ✅ `FRAGMENT_CONFIG` 稀有度→碎片转化率（BASIC:1 ~ MYTHIC:200）
+- ✅ localStorage 碎片余额持久化 + 已拥有物品追踪
+- ✅ `processFragments()` 核心重复检测：首次→收录，重复→转化为灵异残屑
+- ✅ `FRAGMENT_SHOP_ITEMS` 兑换商店 8 件定价商品 + `purchaseWithFragments()` + `showFragmentShop()` UI
+- ✅ 抽卡面板新增碎片余额展示 + 商店按钮 + 转化 toast 反馈
+- ✅ gachaSingle/gachaTen 集成碎片系统，返回值含 fragments 字段
+- ✅ 构建验证通过，待真机验证
 
-**任务4：** 货币被动获取通道 — 角色奖励 + 主动奖励（自动检测消息/事件触发，当前仅手动）
+**任务4（✅ 已完成）：** 货币被动获取通道 — MESSAGE_RECEIVED 自动奖励 + 内容关键词检测（线索+5/事件+10/厉鬼+15）+ 5秒冷却防刷
 
-**任务5：** 十连折扣 — 已基本实现（cost.ten=90 vs 10×10=100，等效 9 折），仅需 UI 标注
+**任务5（✅ 已完成）：** 十连折扣 UI 标注 — 红色"9折"脉冲徽章 + 删除线原价/加粗折后价对比
 
-**任务6（阻塞于 1）：** 自定义物品 UI 编辑器 — 在抽卡面板新增编辑入口，写入 custom 层
+**任务6（✅ 已完成）：** 自定义物品 UI 编辑器 — 在抽卡面板新增编辑入口，写入 custom 层
+- ✅ 抽卡面板标题栏新增"自定义"按钮（`#gacha-custom-editor-btn`）
+- ✅ `showCustomItemEditor()` 完整编辑器：三类型 tab 切换 + 物品列表 + 内置/覆盖/自定义徽章区分
+- ✅ 列表支持编辑（所有物品可覆盖）和删除（仅 custom 层）
+- ✅ `showItemForm()` 新增/编辑表单：ID/名称/图标/稀有度/描述/效果/效果详述 + 类型特有字段
+- ✅ 保存调用 `addCustomGachaItem()`，删除调用 `removeCustomGachaItem()`
+- ✅ 构建验证通过
 
-**任务7（阻塞于 1）：** 目录导入/导出 JSON — 导出 builtin∪custom 全集 / 导入 custom 覆盖
+**任务7（✅ 已完成）：** 目录导入/导出 JSON — 导出 builtin∪custom 全集 / 导入 custom 覆盖
+- ✅ 编辑器标题栏新增「导出」「导入」按钮（与"新增物品"并排）
+- ✅ 导出：`getAllGachaItemDefinitions()` 合并全集 → Blob JSON → hidden `<a download>` 触发下载
+- ✅ 导入：`<input type="file" accept=".json">` → FileReader → JSON.parse → 按类型写入 custom 层
+- ✅ 导入逻辑：仅覆盖/新增 custom 层（跳过与 builtin 完全相同的条目），不破坏 builtin
+- ✅ 导入后自动刷新当前物品列表
+- ✅ 构建验证通过
 
-**任务8（阻塞于 7）：** AI 生成 agent prompt — 用 AI 按神秘复苏原著风格生成自定义物品
+**任务8（✅ 已完成）：** AI 生成 agent prompt — 用 AI 按神秘复苏原著风格生成自定义物品
+- ✅ 编辑器标题栏新增「AI生成」按钮（粉色渐变，`#custom-ai-gen-btn`，fa-robot 图标）
+- ✅ 点击后按当前 tab 类型（supernatural/clue/knowledge）构建对应 JSON Schema
+- ✅ 系统提示词包含完整神秘复苏世界观设定（厉鬼、驭鬼者、灵异物品来源、设计要求）
+- ✅ 使用 `generateRaw()` + `should_silence: true` + `json_schema` 结构化输出
+- ✅ 生成结果自动打开 `showItemForm()` 预填表单，用户可确认/修改后保存
+- ✅ 生成中按钮禁用 + spinner 动画反馈，失败时 alert 提示
+- ✅ 构建验证通过
 
-**任务9（阻塞于 1）：** 物品设计哲学评审 — 给物品补 cost/narrative hooks（使用代价、剧情钩子），符合原著"沾染灵异、拥有灵异能力"设定
+**任务9（✅ 已完成）：** 物品设计哲学评审 — 给物品补 cost/narrativeHook（使用代价、剧情钩子），符合原著"沾染灵异、拥有灵异能力"设定
+- ✅ `gacha-items.json` 全部 26 物品补充 cost + narrativeHook，version 1.1.0
+- ✅ `BUILTIN_GACHA_ITEMS` 同步内嵌新字段
+- ✅ `showItemForm()` 新增代价/钩子 textarea 表单字段
+- ✅ 保存逻辑写入 cost/narrativeHook
+- ✅ AI 生成 Schema baseProps/baseRequired 新增 cost/narrativeHook
+- ✅ AI 系统提示词新增代价/钩子设计要求
+- ✅ 构建验证通过
 
 **注意事项：**
 - 真实 AI 低频触发，单向写库；每次 hard gate 全绿后最多触发一次，失败先分析样本不连续重放。
