@@ -1,5 +1,55 @@
 # Progress Log
 
+## 2026-06-26 CST（✅ 任务1 完成：物品目录外置 + 双层合并架构 + resetGachaPity bug 修复）
+
+**状态：** 任务1 实施完成，包含物品目录架构重构、resetGachaPity 未定义 bug 修复、构建验证通过。待真机验证后可进入任务 2。
+
+**完成：**
+ - ✅ 创建 `src/神秘复苏模拟器/数据/gacha-items.json` 作为 source-of-truth（27 件物品定义）
+ - ✅ 在 `v10_2_visualizer.js` 中实现 `BUILTIN_GACHA_ITEMS` 对象字面量（因 CDN script-link 无法加载外部 JSON）
+ - ✅ 实现 `getAllGachaItemDefinitions()` 双层合并函数：builtin（只读）∪ custom（localStorage 覆盖/新增）
+ - ✅ 实现 `getCustomGachaItems()` / `setCustomGachaItems()` / `addCustomGachaItem()` / `removeCustomGachaItem()` 自定义物品管理 API
+ - ✅ 重构 `buildGachaPool()` 使用合并后的物品目录
+ - ✅ **修复 resetGachaPity 未定义 bug**：添加函数定义（'rare'→pity.rare=0，'epic'→pity.epic=0，'mythic'→全部重置）
+ - ✅ 删除旧的 SUPERNATURAL_ITEMS / CLUE_ITEMS / KNOWLEDGE_ITEMS 硬编码数组（~370 行），改为注释指向新架构
+ - ✅ 构建验证通过：`npm run build` 成功，visualizer 编译为 290 KB
+
+**代码改动：**
+ - `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：+~280 行（新架构 + API），-~370 行（旧硬编码）
+ - `src/神秘复苏模拟器/数据/gacha-items.json`：新增 JSON 目录文件
+
+**下一步：**
+ - 真机验证任务1（导入开发版 → 测试抽卡 → 检查保底重置）
+ - 通过后继续任务2（写库前预校验约束）
+
+## 2026-06-26 CST（抽卡系统优化任务清单建立 + 任务1 研究阶段完成，暂停实施）
+
+**状态：** 基于骰子商店（jerryzmtz/my-tavern-scripts，支持 builtin + custom 双层自定义物品）研究成果，建立抽卡系统 9 任务优化清单。任务1（物品目录外置 + 双层合并架构）研究阶段完成，**实施暂停待继续**。详见 task_plan.md「抽卡系统优化任务清单」与 findings.md「2026-06-26 抽卡系统架构研究」。
+
+**完成：**
+ - ✅ 研究骰子商店实现，确认其支持自定义物品（builtin 只读 + custom 覆盖/新增），作为抽卡系统优化架构参考
+ - ✅ 建立 9 任务优化清单（task_plan.md），任务1 为架构基础，阻塞任务 6/7/9
+ - ✅ 任务1 研究阶段完成（无需重复研究）：
+   - 完整映射抽卡数据结构：GACHA_RARITY（6 档稀有度）、SUPERNATURAL_ITEMS（19 件灵异物品）、CLUE_ITEMS（4 件线索）、KNOWLEDGE_ITEMS（4 件知识）、GACHA_POOL_TYPE（4 池）、GACHA_CURRENCY、保底计数器
+   - 定位 `v10_2_visualizer.js` 全部抽卡代码锚点（3949-5131 行，约 1183 行），含 GACHA_RARITY(3951-3959)、SUPERNATURAL_ITEMS(3969-4228)、CLUE_ITEMS(4231-4280)、KNOWLEDGE_ITEMS(4283-4332)、buildGachaPool(4428-4476)、单抽/十连(4478-4587)、syncGachaResultToDatabase(5030-5127)
+   - 确认 3 张目标表 DB 列头映射（sheet_supernatural_items / sheet_clues / sheet_collected_rules）
+
+**发现的 bug（待任务1 修复时一并处理）：**
+ - ⚠️ `resetGachaPity('rare'|'epic'|'mythic')` 被调用 6 次（行 4541/4544/4547/4581/4584/4587），但全文件**从未定义** → 每次抽到 ★★★ 及以上触发保底重置时抛 ReferenceError。详见 findings.md。
+
+**任务1 实施方案（下次新对话直接执行，无需重新研究）：**
+ 1. 创建 JSON 目录文件作为 source-of-truth（GACHA_RARITY + 27 件物品，每件含 targetTable/targetColumns，建模于 GachaItemDefinition schema）
+ 2. 因 visualizer 经 CDN script-link 加载（publish-card.mjs syncDirs 不含「脚本」目录），builtin 目录须以 **JS 对象字面量内嵌**进 visualizer（镜像 JSON 供人工编辑），不能作为独立 JSON 在 runtime 加载
+ 3. 实现内置只读层 + localStorage 自定义覆盖层 + `getAllGachaItemDefinitions()` 合并函数（custom 按 id 覆盖/新增 builtin，runtime = builtin ∪ custom）
+ 4. 将 buildGachaPool / SUPERNATURAL_ITEMS / CLUE_ITEMS / KNOWLEDGE_ITEMS 引用改为消费合并后的目录
+ 5. 实现缺失的 `resetGachaPity` 函数修复 ReferenceError（'rare'→pity.rare=0，'epic'→pity.epic=0，'mythic'→pity.total=0/pity.epic=0/pity.rare=0）
+
+**暂停点：** 任务1 研究完成，实施未开始。下次新对话读 task_plan.md「抽卡系统优化任务清单」+ 本条 progress 顶部即可继续。
+
+**下一步：**
+ - 继续任务1 实施（先改测开发版 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`，真页验证通过再同步发布版并推送）
+ - 遵循 feedback：本地 main 是停滞分叉分支，正式改动从 origin/main 切 worktree 落地再 push/PR；先改测开发版再同步发布版
+
 ## 2026-06-25 CST（🎉 抽卡系统部署完成 - CDN 版本修复与真机验证通过）
 
 **状态：** 抽卡系统已完整实现、打包、修复 CDN 版本问题并通过真机验证。抽卡按钮成功显示，功能完全可用。

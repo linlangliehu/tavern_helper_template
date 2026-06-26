@@ -15,6 +15,8 @@
 
 ## 当前状态
 
+**2026-06-26 抽卡系统优化任务清单建立（任务1 研究完成，实施暂停）：** 基于骰子商店研究建立 9 任务优化清单，任务1（物品目录外置 + 双层合并架构）研究阶段完成，实施暂停待继续。详见下方「抽卡系统优化任务清单」与 progress.md / findings.md 2026-06-26 条目。**下次新对话直接从任务1 实施方案执行，无需重新研究。**
+
 **2026-06-25 抽卡系统部署完成：** CDN 版本修复并重新打包，真机验证通过。抽卡按钮成功显示，功能完全可用。
 
 **当前版本：**
@@ -69,6 +71,35 @@
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
 
+## 抽卡系统优化任务清单（2026-06-26 建立）
+
+基于骰子商店（jerryzmtz/my-tavern-scripts，支持 builtin + custom 双层自定义物品）研究建立。任务1 为架构基础，阻塞 6/7/9。研究结论见 findings.md「2026-06-26 抽卡系统架构研究」。
+
+**任务1（✅ 已完成）：** 物品目录外置成 JSON + 内置/自定义双层合并 + resetGachaPity bug 修复
+- ✅ 创建 `src/神秘复苏模拟器/数据/gacha-items.json` 作为 source-of-truth
+- ✅ 实现 `BUILTIN_GACHA_ITEMS` 对象字面量内嵌（因 CDN script-link 无法加载外部 JSON）
+- ✅ 实现 `getAllGachaItemDefinitions()` 双层合并函数
+- ✅ 实现 `getCustomGachaItems()` / `addCustomGachaItem()` / `removeCustomGachaItem()` 自定义物品管理 API
+- ✅ 重构 `buildGachaPool()` 使用合并后的物品目录
+- ✅ **修复 resetGachaPity 未定义 bug**（添加函数定义）
+- ✅ 构建验证通过，待真机验证
+
+**任务2（下一步）：** 写库前预校验约束 — 在 gacha 写 sheet_supernatural_items / sheet_clues / sheet_collected_rules 前加 assertCrud* 预校验（针对 CHECK_IN_VIOLATION / COLUMN_NOT_FOUND 历史坑）
+
+**任务3：** 碎片系统 — 重复物品 → 灵异残屑 → 兑换
+
+**任务4：** 货币被动获取通道 — 角色奖励 + 主动奖励（自动检测消息/事件触发，当前仅手动）
+
+**任务5：** 十连折扣 — 已基本实现（cost.ten=90 vs 10×10=100，等效 9 折），仅需 UI 标注
+
+**任务6（阻塞于 1）：** 自定义物品 UI 编辑器 — 在抽卡面板新增编辑入口，写入 custom 层
+
+**任务7（阻塞于 1）：** 目录导入/导出 JSON — 导出 builtin∪custom 全集 / 导入 custom 覆盖
+
+**任务8（阻塞于 7）：** AI 生成 agent prompt — 用 AI 按神秘复苏原著风格生成自定义物品
+
+**任务9（阻塞于 1）：** 物品设计哲学评审 — 给物品补 cost/narrative hooks（使用代价、剧情钩子），符合原著"沾染灵异、拥有灵异能力"设定
+
 **注意事项：**
 - 真实 AI 低频触发，单向写库；每次 hard gate 全绿后最多触发一次，失败先分析样本不连续重放。
 - 不点"立即手动更新"、不调 `triggerUpdate()`，除非用户明确要求真实写库观察。
@@ -98,7 +129,7 @@
 
 ## 需要提交的文件
 
-**当前待提交：** planning 更新记录 — `task_plan.md`、`progress.md`（本轮已更新代码同步进度和抽卡系统完成状态）。`findings.md` 和 `PROJECT_FLOW.md` 本轮未变更。dist 本地构建残留已暂存，不提交（留给 bot bundle Action 在 CI 重建）。
+**当前待提交：** planning 更新记录 — `task_plan.md`、`progress.md`、`findings.md`（本轮已更新抽卡优化任务清单、任务1 研究结论与 resetGachaPity bug）。`PROJECT_FLOW.md` 本轮未变更（常驻流程文件已就绪）。dist 本地构建残留已暂存，不提交（留给 bot bundle Action 在 CI 重建）。`scripts/publish-card.mjs`（CDN ref 修复 `aa50677`→`55e6b71`）仍待提交。
 
 **按任务类型精确 staging 规则：**
 - 源码或世界书变更：只提交实际改动的 `src/**`、`util/**`、`@types/**`、`初始模板/**`、`示例/**` 等相关文件。

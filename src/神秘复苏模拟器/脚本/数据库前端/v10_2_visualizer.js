@@ -3965,371 +3965,8 @@
         KNOWLEDGE: 'knowledge'        // 知识（提升规律进度）
     };
 
-    // 灵异物品池（19种，符合神秘复苏原著设定）
-    const SUPERNATURAL_ITEMS = [
-        // ★★★★★★ 神话（0.5%）
-        {
-            id: 'item_mythic_1',
-            name: '源头碎片',
-            rarity: GACHA_RARITY.MYTHIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🔮',
-            description: '神秘复苏源头的碎片，蕴含改写规则的力量',
-            effect: '可改写厉鬼杀人规律',
-            effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失',
-            usageLimit: 1,
-            duration: '永久',
-            targetTable: 'sheet_supernatural_items'
-        },
-
-        // ★★★★★ 传说（2%）
-        {
-            id: 'item_legendary_1',
-            name: '鬼域',
-            rarity: GACHA_RARITY.LEGENDARY,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🌫️',
-            description: '厉鬼的杀人领域，可关押其他厉鬼',
-            effect: '可关押厉鬼',
-            effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人',
-            usageLimit: 'unlimited',
-            duration: '持续',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_legendary_2',
-            name: '鬼差制服',
-            rarity: GACHA_RARITY.LEGENDARY,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🧥',
-            description: '沾染了鬼差灵异的制服，拥有强大防护能力',
-            effect: '可抵御厉鬼袭击',
-            effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击',
-            usageLimit: 'unlimited',
-            duration: '持续',
-            targetTable: 'sheet_supernatural_items'
-        },
-
-        // ★★★★ 史诗（5%）
-        {
-            id: 'item_epic_1',
-            name: '黄金手掌',
-            rarity: GACHA_RARITY.EPIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '✋',
-            description: '沾染了灵异能力的黄金手掌，可击退厉鬼',
-            effect: '可击退厉鬼',
-            effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发',
-            usageLimit: 3,
-            duration: '每次使用持续数分钟',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_epic_2',
-            name: '饿死鬼的香烟',
-            rarity: GACHA_RARITY.EPIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🚬',
-            description: '饿死鬼遗留的香烟，可暂时压制厉鬼',
-            effect: '可暂时压制厉鬼',
-            effectDetail: '点燃后可以暂时压制厉鬼的杀人规律',
-            usageLimit: 7,
-            duration: '每支持续一段时间',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_epic_3',
-            name: '鬼邮件',
-            rarity: GACHA_RARITY.EPIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '✉️',
-            description: '可以传递信息的灵异邮件',
-            effect: '可传递信息',
-            effectDetail: '可以向任何地点的人传递信息，不受距离限制',
-            usageLimit: 5,
-            duration: '即时',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_epic_4',
-            name: '鬼奴隶',
-            rarity: GACHA_RARITY.EPIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '👤',
-            description: '被灵异力量控制的鬼奴隶，可执行简单任务',
-            effect: '可使役执行任务',
-            effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等',
-            usageLimit: 'unlimited',
-            duration: '持续',
-            targetTable: 'sheet_supernatural_items'
-        },
-
-        // ★★★ 稀有（15%）
-        {
-            id: 'item_rare_1',
-            name: '红色鬼烛',
-            rarity: GACHA_RARITY.RARE,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🕯️',
-            description: '红色的鬼烛，可以照亮鬼域',
-            effect: '照亮鬼域，驱散黑暗',
-            effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗',
-            usageLimit: 3,
-            duration: '每支持续数小时',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_rare_2',
-            name: '鬼钱',
-            rarity: GACHA_RARITY.RARE,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '💴',
-            description: '沾染了灵异的钞票，可用于交易',
-            effect: '购买灵异物品或服务',
-            effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助',
-            usageLimit: 'stack',
-            duration: '永久',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_rare_3',
-            name: '卫星定位手机',
-            rarity: GACHA_RARITY.RARE,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '📱',
-            description: '可以定位厉鬼的特殊手机',
-            effect: '定位厉鬼或驭鬼者',
-            effectDetail: '可以定位特定厉鬼或驭鬼者的位置',
-            usageLimit: 10,
-            duration: '每次使用即时',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_rare_4',
-            name: '压制类灵异物品',
-            rarity: GACHA_RARITY.RARE,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '⛓️',
-            description: '可以压制特定厉鬼的物品',
-            effect: '压制特定厉鬼',
-            effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力',
-            usageLimit: 5,
-            duration: '每次使用持续一段时间',
-            targetTable: 'sheet_supernatural_items'
-        },
-
-        // ★★ 普通（30%）- 5种基础灵异物品
-        {
-            id: 'item_common_1',
-            name: '灵异护符',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🎴',
-            description: '具有基础防护能力的护符',
-            effect: '基础防护',
-            effectDetail: '可以抵御低级灵异事件的侵袭',
-            usageLimit: 5,
-            duration: '每次使用持续短暂时间',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_common_2',
-            name: '追踪定位器',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '📍',
-            description: '可以追踪灵异气息的设备',
-            effect: '追踪灵异气息',
-            effectDetail: '可以追踪附近的灵异气息来源',
-            usageLimit: 8,
-            duration: '每次使用持续数分钟',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_common_3',
-            name: '临时鬼域碎片',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🧩',
-            description: '鬼域的微小碎片，可以短暂展开小范围鬼域',
-            effect: '展开小范围鬼域',
-            effectDetail: '可以短暂展开小范围鬼域用于防御或隔离',
-            usageLimit: 3,
-            duration: '每次持续几分钟',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_common_4',
-            name: '灵异侦测器',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '📡',
-            description: '可以侦测灵异强度的设备',
-            effect: '侦测灵异强度',
-            effectDetail: '可以测量附近灵异事件的强度等级',
-            usageLimit: 15,
-            duration: '即时',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_common_5',
-            name: '应急封印符',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '📜',
-            description: '可以短暂封印灵异的符咒',
-            effect: '短暂封印灵异',
-            effectDetail: '可以短暂封印低级灵异现象',
-            usageLimit: 4,
-            duration: '每次持续数分钟',
-            targetTable: 'sheet_supernatural_items'
-        },
-
-        // ★ 常见（47.5%）- 3种入门级灵异物品
-        {
-            id: 'item_basic_1',
-            name: '微弱鬼烛',
-            rarity: GACHA_RARITY.BASIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '🕯️',
-            description: '微弱的鬼烛，照明范围有限',
-            effect: '微弱照明',
-            effectDetail: '可以照亮小范围区域，驱散轻微黑暗',
-            usageLimit: 5,
-            duration: '每支持续短暂时间',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_basic_2',
-            name: '少量鬼钱',
-            rarity: GACHA_RARITY.BASIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '💵',
-            description: '少量的鬼钱',
-            effect: '小额交易',
-            effectDetail: '可以进行小额灵异物品交易',
-            usageLimit: 'stack',
-            duration: '永久',
-            targetTable: 'sheet_supernatural_items'
-        },
-        {
-            id: 'item_basic_3',
-            name: '灵异感知增强剂',
-            rarity: GACHA_RARITY.BASIC,
-            type: GACHA_ITEM_TYPE.SUPERNATURAL,
-            icon: '💊',
-            description: '可以暂时增强灵异感知的药剂',
-            effect: '增强灵异感知',
-            effectDetail: '暂时提升对灵异现象的感知能力',
-            usageLimit: 6,
-            duration: '每次持续数小时',
-            targetTable: 'sheet_supernatural_items'
-        }
-    ];
-
-    // 线索物品池（提升厉鬼档案进度）
-    const CLUE_ITEMS = [
-        {
-            id: 'clue_decisive',
-            name: '决定性线索',
-            rarity: GACHA_RARITY.EPIC,
-            type: GACHA_ITEM_TYPE.CLUE,
-            icon: '🔍',
-            description: '关键的决定性线索，大幅提升档案完成度',
-            effect: '档案进度 +50%',
-            effectDetail: '获得后立即提升指定厉鬼档案完成度50%',
-            progress: 0.5,
-            targetTable: 'sheet_clues'
-        },
-        {
-            id: 'clue_core',
-            name: '核心线索',
-            rarity: GACHA_RARITY.RARE,
-            type: GACHA_ITEM_TYPE.CLUE,
-            icon: '🔎',
-            description: '核心线索，显著提升档案完成度',
-            effect: '档案进度 +25%',
-            effectDetail: '获得后立即提升指定厉鬼档案完成度25%',
-            progress: 0.25,
-            targetTable: 'sheet_clues'
-        },
-        {
-            id: 'clue_important',
-            name: '重要线索',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.CLUE,
-            icon: '🔦',
-            description: '重要线索，提升档案完成度',
-            effect: '档案进度 +10%',
-            effectDetail: '获得后立即提升指定厉鬼档案完成度10%',
-            progress: 0.1,
-            targetTable: 'sheet_clues'
-        },
-        {
-            id: 'clue_common',
-            name: '普通线索',
-            rarity: GACHA_RARITY.BASIC,
-            type: GACHA_ITEM_TYPE.CLUE,
-            icon: '🔬',
-            description: '普通线索，少量提升档案完成度',
-            effect: '档案进度 +5%',
-            effectDetail: '获得后立即提升指定厉鬼档案完成度5%',
-            progress: 0.05,
-            targetTable: 'sheet_clues'
-        }
-    ];
-
-    // 知识物品池（提升厉鬼规律进度）
-    const KNOWLEDGE_ITEMS = [
-        {
-            id: 'knowledge_forbidden',
-            name: '禁忌知识',
-            rarity: GACHA_RARITY.EPIC,
-            type: GACHA_ITEM_TYPE.KNOWLEDGE,
-            icon: '📕',
-            description: '禁忌的知识，大幅揭示厉鬼规律',
-            effect: '规律进度 +50%',
-            effectDetail: '获得后立即提升指定厉鬼规律完成度50%',
-            progress: 0.5,
-            targetTable: 'sheet_collected_rules'
-        },
-        {
-            id: 'knowledge_core',
-            name: '核心知识',
-            rarity: GACHA_RARITY.RARE,
-            type: GACHA_ITEM_TYPE.KNOWLEDGE,
-            icon: '📗',
-            description: '核心知识，显著揭示厉鬼规律',
-            effect: '规律进度 +25%',
-            effectDetail: '获得后立即提升指定厉鬼规律完成度25%',
-            progress: 0.25,
-            targetTable: 'sheet_collected_rules'
-        },
-        {
-            id: 'knowledge_deep',
-            name: '深入知识',
-            rarity: GACHA_RARITY.COMMON,
-            type: GACHA_ITEM_TYPE.KNOWLEDGE,
-            icon: '📘',
-            description: '深入的知识，揭示部分规律',
-            effect: '规律进度 +10%',
-            effectDetail: '获得后立即提升指定厉鬼规律完成度10%',
-            progress: 0.1,
-            targetTable: 'sheet_collected_rules'
-        },
-        {
-            id: 'knowledge_basic',
-            name: '基础知识',
-            rarity: GACHA_RARITY.BASIC,
-            type: GACHA_ITEM_TYPE.KNOWLEDGE,
-            icon: '📙',
-            description: '基础知识，少量揭示规律',
-            effect: '规律进度 +5%',
-            effectDetail: '获得后立即提升指定厉鬼规律完成度5%',
-            progress: 0.05,
-            targetTable: 'sheet_collected_rules'
-        }
-    ];
+    // 注意：旧的 SUPERNATURAL_ITEMS / CLUE_ITEMS / KNOWLEDGE_ITEMS 已迁移到 BUILTIN_GACHA_ITEMS
+    // 通过 getAllGachaItemDefinitions() 获取合并后的完整物品列表
 
     // 抽卡货币系统
     const GACHA_CURRENCY = {
@@ -4416,6 +4053,172 @@
         return pity;
     };
 
+    // 重置保底计数（修复未定义 bug）
+    const resetGachaPity = (type) => {
+        const pity = getGachaPity();
+        if (type === 'rare') {
+            pity.rare = 0;
+        } else if (type === 'epic') {
+            pity.epic = 0;
+        } else if (type === 'mythic') {
+            pity.total = 0;
+            pity.epic = 0;
+            pity.rare = 0;
+        }
+        setGachaPity(pity);
+        return pity;
+    };
+
+    // ==================== 物品目录双层架构 ====================
+
+    // localStorage 键：自定义物品覆盖层
+    const STORAGE_KEY_CUSTOM_GACHA_ITEMS = 'mfrs_custom_gacha_items';
+
+    // 内置物品目录（只读，source-of-truth）
+    // 以 JS 对象字面量内嵌，因 visualizer 经 CDN script-link 加载无法加载外部 JSON
+    const BUILTIN_GACHA_ITEMS = {
+        rarity: GACHA_RARITY,
+        itemType: GACHA_ITEM_TYPE,
+        items: {
+            supernatural: [
+                // ★★★★★★ 神话（0.5%）
+                { id: 'item_mythic_1', name: '源头碎片', rarity: 'MYTHIC', type: 'supernatural', icon: '🔮', description: '神秘复苏源头的碎片，蕴含改写规则的力量', effect: '可改写厉鬼杀人规律', effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失', usageLimit: 1, duration: '永久' },
+                // ★★★★★ 传说（2%）
+                { id: 'item_legendary_1', name: '鬼域', rarity: 'LEGENDARY', type: 'supernatural', icon: '🌫️', description: '厉鬼的杀人领域，可关押其他厉鬼', effect: '可关押厉鬼', effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人', usageLimit: 'unlimited', duration: '持续' },
+                { id: 'item_legendary_2', name: '鬼差制服', rarity: 'LEGENDARY', type: 'supernatural', icon: '🧥', description: '沾染了鬼差灵异的制服，拥有强大防护能力', effect: '可抵御厉鬼袭击', effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击', usageLimit: 'unlimited', duration: '持续' },
+                // ★★★★ 史诗（5%）
+                { id: 'item_epic_1', name: '黄金手掌', rarity: 'EPIC', type: 'supernatural', icon: '✋', description: '沾染了灵异能力的黄金手掌，可击退厉鬼', effect: '可击退厉鬼', effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发', usageLimit: 3, duration: '每次使用持续数分钟' },
+                { id: 'item_epic_2', name: '饿死鬼的香烟', rarity: 'EPIC', type: 'supernatural', icon: '🚬', description: '饿死鬼遗留的香烟，可暂时压制厉鬼', effect: '可暂时压制厉鬼', effectDetail: '点燃后可以暂时压制厉鬼的杀人规律', usageLimit: 7, duration: '每支持续一段时间' },
+                { id: 'item_epic_3', name: '鬼邮件', rarity: 'EPIC', type: 'supernatural', icon: '✉️', description: '可以传递信息的灵异邮件', effect: '可传递信息', effectDetail: '可以向任何地点的人传递信息，不受距离限制', usageLimit: 5, duration: '即时' },
+                { id: 'item_epic_4', name: '鬼奴隶', rarity: 'EPIC', type: 'supernatural', icon: '👤', description: '被灵异力量控制的鬼奴隶，可执行简单任务', effect: '可使役执行任务', effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等', usageLimit: 'unlimited', duration: '持续' },
+                // ★★★ 稀有（15%）
+                { id: 'item_rare_1', name: '红色鬼烛', rarity: 'RARE', type: 'supernatural', icon: '🕯️', description: '红色的鬼烛，可以照亮鬼域', effect: '照亮鬼域，驱散黑暗', effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗', usageLimit: 3, duration: '每支持续数小时' },
+                { id: 'item_rare_2', name: '鬼钱', rarity: 'RARE', type: 'supernatural', icon: '💴', description: '沾染了灵异的钞票，可用于交易', effect: '购买灵异物品或服务', effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助', usageLimit: 'stack', duration: '永久' },
+                { id: 'item_rare_3', name: '卫星定位手机', rarity: 'RARE', type: 'supernatural', icon: '📱', description: '可以定位厉鬼的特殊手机', effect: '定位厉鬼或驭鬼者', effectDetail: '可以定位特定厉鬼或驭鬼者的位置', usageLimit: 10, duration: '每次使用即时' },
+                { id: 'item_rare_4', name: '压制类灵异物品', rarity: 'RARE', type: 'supernatural', icon: '⛓️', description: '可以压制特定厉鬼的物品', effect: '压制特定厉鬼', effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力', usageLimit: 5, duration: '每次使用持续一段时间' },
+                // ★★ 普通（30%）
+                { id: 'item_common_1', name: '灵异护符', rarity: 'COMMON', type: 'supernatural', icon: '🎴', description: '具有基础防护能力的护符', effect: '基础防护', effectDetail: '可以抵御低级灵异事件的侵袭', usageLimit: 5, duration: '每次使用持续短暂时间' },
+                { id: 'item_common_2', name: '追踪定位器', rarity: 'COMMON', type: 'supernatural', icon: '📡', description: '可以追踪灵异信号的定位器', effect: '追踪灵异信号', effectDetail: '可以追踪附近的灵异信号源', usageLimit: 10, duration: '每次持续数小时' },
+                { id: 'item_common_3', name: '鬼照片', rarity: 'COMMON', type: 'supernatural', icon: '📷', description: '拍摄了灵异现象的照片', effect: '记录灵异证据', effectDetail: '可以作为灵异事件的证据记录', usageLimit: 'stack', duration: '永久' },
+                { id: 'item_common_4', name: '普通护身符', rarity: 'COMMON', type: 'supernatural', icon: '🧿', description: '普通的护身符，微弱灵异防护', effect: '微弱防护', effectDetail: '提供微弱的灵异防护能力', usageLimit: 10, duration: '每次持续短暂时间' },
+                // ★ 常见（47.5%）
+                { id: 'item_basic_1', name: '灵异记录本', rarity: 'BASIC', type: 'supernatural', icon: '📒', description: '记录灵异事件的本子', effect: '记录灵异事件', effectDetail: '可以记录和整理灵异事件信息', usageLimit: 'unlimited', duration: '永久' },
+                { id: 'item_basic_2', name: '少量鬼钱', rarity: 'BASIC', type: 'supernatural', icon: '💵', description: '少量的鬼钱', effect: '小额交易', effectDetail: '可以进行小额灵异物品交易', usageLimit: 'stack', duration: '永久' },
+                { id: 'item_basic_3', name: '灵异感知增强剂', rarity: 'BASIC', type: 'supernatural', icon: '💊', description: '可以暂时增强灵异感知的药剂', effect: '增强灵异感知', effectDetail: '暂时提升对灵异现象的感知能力', usageLimit: 6, duration: '每次持续数小时' }
+            ],
+            clue: [
+                { id: 'clue_decisive', name: '决定性线索', rarity: 'EPIC', type: 'clue', icon: '🔍', description: '关键的决定性线索，大幅提升档案完成度', effect: '档案进度 +50%', effectDetail: '获得后立即提升指定厉鬼档案完成度50%', progress: 0.5 },
+                { id: 'clue_core', name: '核心线索', rarity: 'RARE', type: 'clue', icon: '🔎', description: '核心线索，显著提升档案完成度', effect: '档案进度 +25%', effectDetail: '获得后立即提升指定厉鬼档案完成度25%', progress: 0.25 },
+                { id: 'clue_important', name: '重要线索', rarity: 'COMMON', type: 'clue', icon: '🔦', description: '重要线索，提升档案完成度', effect: '档案进度 +10%', effectDetail: '获得后立即提升指定厉鬼档案完成度10%', progress: 0.1 },
+                { id: 'clue_common', name: '普通线索', rarity: 'BASIC', type: 'clue', icon: '🔬', description: '普通线索，少量提升档案完成度', effect: '档案进度 +5%', effectDetail: '获得后立即提升指定厉鬼档案完成度5%', progress: 0.05 }
+            ],
+            knowledge: [
+                { id: 'knowledge_forbidden', name: '禁忌知识', rarity: 'EPIC', type: 'knowledge', icon: '📕', description: '禁忌的知识，大幅揭示厉鬼规律', effect: '规律进度 +50%', effectDetail: '获得后立即提升指定厉鬼规律完成度50%', progress: 0.5 },
+                { id: 'knowledge_core', name: '核心知识', rarity: 'RARE', type: 'knowledge', icon: '📗', description: '核心知识，显著揭示厉鬼规律', effect: '规律进度 +25%', effectDetail: '获得后立即提升指定厉鬼规律完成度25%', progress: 0.25 },
+                { id: 'knowledge_deep', name: '深入知识', rarity: 'COMMON', type: 'knowledge', icon: '📘', description: '深入的知识，揭示部分规律', effect: '规律进度 +10%', effectDetail: '获得后立即提升指定厉鬼规律完成度10%', progress: 0.1 },
+                { id: 'knowledge_basic', name: '基础知识', rarity: 'BASIC', type: 'knowledge', icon: '📙', description: '基础知识，少量揭示规律', effect: '规律进度 +5%', effectDetail: '获得后立即提升指定厉鬼规律完成度5%', progress: 0.05 }
+            ]
+        }
+    };
+
+    // 获取自定义物品覆盖层（localStorage）
+    const getCustomGachaItems = () => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_GACHA_ITEMS);
+            return stored ? JSON.parse(stored) : { supernatural: [], clue: [], knowledge: [] };
+        } catch (e) {
+            console.error('Failed to load custom gacha items:', e);
+            return { supernatural: [], clue: [], knowledge: [] };
+        }
+    };
+
+    // 设置自定义物品覆盖层
+    const setCustomGachaItems = (customItems) => {
+        try {
+            localStorage.setItem(STORAGE_KEY_CUSTOM_GACHA_ITEMS, JSON.stringify(customItems));
+        } catch (e) {
+            console.error('Failed to save custom gacha items:', e);
+        }
+    };
+
+    // 合并物品定义：builtin（只读）∪ custom（覆盖/新增）
+    // 返回完整的物品对象数组，每项包含 rarity 对象而非字符串
+    const getAllGachaItemDefinitions = () => {
+        const custom = getCustomGachaItems();
+        const result = { supernatural: [], clue: [], knowledge: [] };
+
+        for (const type of ['supernatural', 'clue', 'knowledge']) {
+            // builtin 只读层
+            const builtinItems = BUILTIN_GACHA_ITEMS.items[type] || [];
+            // custom 覆盖层
+            const customItems = custom[type] || [];
+
+            // 先加入所有 builtin 物品
+            for (const item of builtinItems) {
+                // 将 rarity 字符串转换为完整的 rarity 对象
+                const fullItem = {
+                    ...item,
+                    rarity: BUILTIN_GACHA_ITEMS.rarity[item.rarity] || GACHA_RARITY[item.rarity],
+                    targetTable: type === 'supernatural' ? 'sheet_supernatural_items' :
+                                 type === 'clue' ? 'sheet_clues' : 'sheet_collected_rules'
+                };
+
+                // 检查是否有 custom 覆盖
+                const customOverride = customItems.find(c => c.id === item.id);
+                if (customOverride) {
+                    // custom 覆盖 builtin 字段（保留未覆盖的 builtin 字段）
+                    Object.assign(fullItem, customOverride);
+                    // 如果 custom 覆盖了 rarity 字符串，重新转换
+                    if (typeof customOverride.rarity === 'string') {
+                        fullItem.rarity = BUILTIN_GACHA_ITEMS.rarity[customOverride.rarity] || GACHA_RARITY[customOverride.rarity];
+                    }
+                }
+
+                result[type].push(fullItem);
+            }
+
+            // 新增 custom 物品（不在 builtin 中的）
+            for (const customItem of customItems) {
+                if (!builtinItems.find(b => b.id === customItem.id)) {
+                    const fullItem = {
+                        ...customItem,
+                        rarity: typeof customItem.rarity === 'string' ?
+                               (BUILTIN_GACHA_ITEMS.rarity[customItem.rarity] || GACHA_RARITY[customItem.rarity]) :
+                               customItem.rarity,
+                        targetTable: type === 'supernatural' ? 'sheet_supernatural_items' :
+                                     type === 'clue' ? 'sheet_clues' : 'sheet_collected_rules'
+                    };
+                    result[type].push(fullItem);
+                }
+            }
+        }
+
+        return result;
+    };
+
+    // 添加自定义物品
+    const addCustomGachaItem = (type, itemDef) => {
+        const custom = getCustomGachaItems();
+        if (!custom[type]) custom[type] = [];
+        // 检查是否已存在
+        const existingIdx = custom[type].findIndex(c => c.id === itemDef.id);
+        if (existingIdx >= 0) {
+            custom[type][existingIdx] = itemDef; // 覆盖
+        } else {
+            custom[type].push(itemDef); // 新增
+        }
+        setCustomGachaItems(custom);
+    };
+
+    // 删除自定义物品（仅删除 custom 层，不影响 builtin）
+    const removeCustomGachaItem = (type, itemId) => {
+        const custom = getCustomGachaItems();
+        if (custom[type]) {
+            custom[type] = custom[type].filter(c => c.id !== itemId);
+            setCustomGachaItems(custom);
+        }
+    };
+
     // 四个物品池类型
     const GACHA_POOL_TYPE = {
         ALL: 'all',                    // 全物品池
@@ -4425,45 +4228,47 @@
     };
 
     // 构建抽卡池
+    // 构建抽卡池（使用合并后的物品目录）
     const buildGachaPool = (poolType) => {
         const pool = [];
+        const allItems = getAllGachaItemDefinitions();
 
         if (poolType === GACHA_POOL_TYPE.SUPERNATURAL) {
             // 仅灵异物品
-            SUPERNATURAL_ITEMS.forEach(item => {
+            allItems.supernatural.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability });
             });
         } else if (poolType === GACHA_POOL_TYPE.ARCHIVE) {
             // 线索权重x2
-            SUPERNATURAL_ITEMS.forEach(item => {
+            allItems.supernatural.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability * 0.5 });
             });
-            CLUE_ITEMS.forEach(item => {
+            allItems.clue.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability * 2 });
             });
-            KNOWLEDGE_ITEMS.forEach(item => {
+            allItems.knowledge.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability * 0.5 });
             });
         } else if (poolType === GACHA_POOL_TYPE.PATTERN) {
             // 知识权重x2
-            SUPERNATURAL_ITEMS.forEach(item => {
+            allItems.supernatural.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability * 0.5 });
             });
-            CLUE_ITEMS.forEach(item => {
+            allItems.clue.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability * 0.5 });
             });
-            KNOWLEDGE_ITEMS.forEach(item => {
+            allItems.knowledge.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability * 2 });
             });
         } else {
             // 全物品池（均匀分布）
-            SUPERNATURAL_ITEMS.forEach(item => {
+            allItems.supernatural.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability });
             });
-            CLUE_ITEMS.forEach(item => {
+            allItems.clue.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability });
             });
-            KNOWLEDGE_ITEMS.forEach(item => {
+            allItems.knowledge.forEach(item => {
                 pool.push({ item, weight: item.rarity.probability });
             });
         }

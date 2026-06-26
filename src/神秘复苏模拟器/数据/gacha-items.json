@@ -1,0 +1,53 @@
+{
+  "$schema": "./gacha-items.schema.json",
+  "description": "神秘复苏模拟器抽卡系统物品目录 - Source of Truth",
+  "version": "1.0.0",
+  "lastUpdated": "2026-06-26",
+  "rarity": {
+    "MYTHIC": { "level": 6, "name": "神话", "stars": "★★★★★★", "color": "#ff6b6b", "probability": 0.005 },
+    "LEGENDARY": { "level": 5, "name": "传说", "stars": "★★★★★", "color": "#ffd93d", "probability": 0.02 },
+    "EPIC": { "level": 4, "name": "史诗", "stars": "★★★★", "color": "#a855f7", "probability": 0.05 },
+    "RARE": { "level": 3, "name": "稀有", "stars": "★★★", "color": "#6bceff", "probability": 0.15 },
+    "COMMON": { "level": 2, "name": "普通", "stars": "★★", "color": "#95d5b2", "probability": 0.30 },
+    "BASIC": { "level": 1, "name": "常见", "stars": "★", "color": "#d4d4d4", "probability": 0.475 }
+  },
+  "itemType": {
+    "SUPERNATURAL": "supernatural",
+    "CLUE": "clue",
+    "KNOWLEDGE": "knowledge"
+  },
+  "items": {
+    "supernatural": [
+      { "id": "item_mythic_1", "name": "源头碎片", "rarity": "MYTHIC", "icon": "🔮", "description": "神秘复苏源头的碎片，蕴含改写规则的力量", "effect": "可改写厉鬼杀人规律", "effectDetail": "能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失", "usageLimit": 1, "duration": "永久" },
+      { "id": "item_legendary_1", "name": "鬼域", "rarity": "LEGENDARY", "icon": "🌫️", "description": "厉鬼的杀人领域，可关押其他厉鬼", "effect": "可关押厉鬼", "effectDetail": "在鬼域内可以关押其他厉鬼，阻止其复苏和杀人", "usageLimit": "unlimited", "duration": "持续" },
+      { "id": "item_legendary_2", "name": "鬼差制服", "rarity": "LEGENDARY", "icon": "🧥", "description": "沾染了鬼差灵异的制服，拥有强大防护能力", "effect": "可抵御厉鬼袭击", "effectDetail": "穿着制服可以抵御大部分厉鬼的直接袭击", "usageLimit": "unlimited", "duration": "持续" },
+      { "id": "item_epic_1", "name": "黄金手掌", "rarity": "EPIC", "icon": "✋", "description": "沾染了灵异能力的黄金手掌，可击退厉鬼", "effect": "可击退厉鬼", "effectDetail": "使用时可以暂时击退厉鬼，阻止其杀人规律触发", "usageLimit": 3, "duration": "每次使用持续数分钟" },
+      { "id": "item_epic_2", "name": "饿死鬼的香烟", "rarity": "EPIC", "icon": "🚬", "description": "饿死鬼遗留的香烟，可暂时压制厉鬼", "effect": "可暂时压制厉鬼", "effectDetail": "点燃后可以暂时压制厉鬼的杀人规律", "usageLimit": 7, "duration": "每支持续一段时间" },
+      { "id": "item_epic_3", "name": "鬼邮件", "rarity": "EPIC", "icon": "✉️", "description": "可以传递信息的灵异邮件", "effect": "可传递信息", "effectDetail": "可以向任何地点的人传递信息，不受距离限制", "usageLimit": 5, "duration": "即时" },
+      { "id": "item_epic_4", "name": "鬼奴隶", "rarity": "EPIC", "icon": "👤", "description": "被灵异力量控制的鬼奴隶，可执行简单任务", "effect": "可使役执行任务", "effectDetail": "可以命令鬼奴隶执行简单任务，如侦查、传信等", "usageLimit": "unlimited", "duration": "持续" },
+      { "id": "item_rare_1", "name": "红色鬼烛", "rarity": "RARE", "icon": "🕯️", "description": "红色的鬼烛，可以照亮鬼域", "effect": "照亮鬼域，驱散黑暗", "effectDetail": "点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗", "usageLimit": 3, "duration": "每支持续数小时" },
+      { "id": "item_rare_2", "name": "鬼钱", "rarity": "RARE", "icon": "💴", "description": "沾染了灵异的钞票，可用于交易", "effect": "购买灵异物品或服务", "effectDetail": "可以在驭鬼者圈子中购买灵异物品或雇佣帮助", "usageLimit": "stack", "duration": "永久" },
+      { "id": "item_rare_3", "name": "卫星定位手机", "rarity": "RARE", "icon": "📱", "description": "可以定位厉鬼的特殊手机", "effect": "定位厉鬼或驭鬼者", "effectDetail": "可以定位特定厉鬼或驭鬼者的位置", "usageLimit": 10, "duration": "每次使用即时" },
+      { "id": "item_rare_4", "name": "压制类灵异物品", "rarity": "RARE", "icon": "⛓️", "description": "可以压制特定厉鬼的物品", "effect": "压制特定厉鬼", "effectDetail": "针对特定厉鬼的压制物品，可以暂时限制其能力", "usageLimit": 5, "duration": "每次使用持续一段时间" },
+      { "id": "item_common_1", "name": "灵异护符", "rarity": "COMMON", "icon": "🎴", "description": "具有基础防护能力的护符", "effect": "基础防护", "effectDetail": "可以抵御低级灵异事件的侵袭", "usageLimit": 5, "duration": "每次使用持续短暂时间" },
+      { "id": "item_common_2", "name": "追踪定位器", "rarity": "COMMON", "icon": "📡", "description": "可以追踪灵异信号的定位器", "effect": "追踪灵异信号", "effectDetail": "可以追踪附近的灵异信号源", "usageLimit": 10, "duration": "每次持续数小时" },
+      { "id": "item_common_3", "name": "鬼照片", "rarity": "COMMON", "icon": "📷", "description": "拍摄了灵异现象的照片", "effect": "记录灵异证据", "effectDetail": "可以作为灵异事件的证据记录", "usageLimit": "stack", "duration": "永久" },
+      { "id": "item_common_4", "name": "普通护身符", "rarity": "COMMON", "icon": "🧿", "description": "普通的护身符，微弱灵异防护", "effect": "微弱防护", "effectDetail": "提供微弱的灵异防护能力", "usageLimit": 10, "duration": "每次持续短暂时间" },
+      { "id": "item_basic_1", "name": "灵异记录本", "rarity": "BASIC", "icon": "📒", "description": "记录灵异事件的本子", "effect": "记录灵异事件", "effectDetail": "可以记录和整理灵异事件信息", "usageLimit": "unlimited", "duration": "永久" },
+      { "id": "item_basic_2", "name": "少量鬼钱", "rarity": "BASIC", "icon": "💵", "description": "少量的鬼钱", "effect": "小额交易", "effectDetail": "可以进行小额灵异物品交易", "usageLimit": "stack", "duration": "永久" },
+      { "id": "item_basic_3", "name": "灵异感知增强剂", "rarity": "BASIC", "icon": "💊", "description": "可以暂时增强灵异感知的药剂", "effect": "增强灵异感知", "effectDetail": "暂时提升对灵异现象的感知能力", "usageLimit": 6, "duration": "每次持续数小时" }
+    ],
+    "clue": [
+      { "id": "clue_decisive", "name": "决定性线索", "rarity": "EPIC", "icon": "🔍", "description": "关键的决定性线索，大幅提升档案完成度", "effect": "档案进度 +50%", "effectDetail": "获得后立即提升指定厉鬼档案完成度50%", "progress": 0.5 },
+      { "id": "clue_core", "name": "核心线索", "rarity": "RARE", "icon": "🔎", "description": "核心线索，显著提升档案完成度", "effect": "档案进度 +25%", "effectDetail": "获得后立即提升指定厉鬼档案完成度25%", "progress": 0.25 },
+      { "id": "clue_important", "name": "重要线索", "rarity": "COMMON", "icon": "🔦", "description": "重要线索，提升档案完成度", "effect": "档案进度 +10%", "effectDetail": "获得后立即提升指定厉鬼档案完成度10%", "progress": 0.1 },
+      { "id": "clue_common", "name": "普通线索", "rarity": "BASIC", "icon": "🔬", "description": "普通线索，少量提升档案完成度", "effect": "档案进度 +5%", "effectDetail": "获得后立即提升指定厉鬼档案完成度5%", "progress": 0.05 }
+    ],
+    "knowledge": [
+      { "id": "knowledge_forbidden", "name": "禁忌知识", "rarity": "EPIC", "icon": "📕", "description": "禁忌的知识，大幅揭示厉鬼规律", "effect": "规律进度 +50%", "effectDetail": "获得后立即提升指定厉鬼规律完成度50%", "progress": 0.5 },
+      { "id": "knowledge_core", "name": "核心知识", "rarity": "RARE", "icon": "📗", "description": "核心知识，显著揭示厉鬼规律", "effect": "规律进度 +25%", "effectDetail": "获得后立即提升指定厉鬼规律完成度25%", "progress": 0.25 },
+      { "id": "knowledge_deep", "name": "深入知识", "rarity": "COMMON", "icon": "📘", "description": "深入的知识，揭示部分规律", "effect": "规律进度 +10%", "effectDetail": "获得后立即提升指定厉鬼规律完成度10%", "progress": 0.1 },
+      { "id": "knowledge_basic", "name": "基础知识", "rarity": "BASIC", "icon": "📙", "description": "基础知识，少量揭示规律", "effect": "规律进度 +5%", "effectDetail": "获得后立即提升指定厉鬼规律完成度5%", "progress": 0.05 }
+    ]
+  }
+}
