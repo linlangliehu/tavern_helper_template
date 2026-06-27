@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = 'cc2db1f';  // bot bundle，含任务1 物品目录架构重构
+const CDN_REF = '5201ca2';  // bot bundle，含任务1~9 抽卡系统全功能（含 cost/narrativeHook 物品设计哲学）
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 const CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13';
 
@@ -55,7 +55,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '6.30',
+    releaseVersion: '7.0',
   },
 ];
 
