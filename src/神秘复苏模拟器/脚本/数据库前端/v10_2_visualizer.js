@@ -4515,6 +4515,102 @@
         return { success: true, cost, item };
     };
 
+    /**
+     * 碎片商店 — 用灵异残屑兑换物品（加入已拥有列表）。
+     * 全屏 overlay 弹窗，列出所有物品及按稀有度定价，实时刷新余额。
+     */
+    const showFragmentShop = () => {
+        const { $ } = getCore();
+
+        const allItems = getAllGachaItemDefinitions();
+        const items = [
+            ...(allItems.supernatural || []),
+            ...(allItems.clue || []),
+            ...(allItems.knowledge || []),
+        ];
+
+        const rarityKeyOf = (item) =>
+            Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
+        const costOf = (item) => GACHA_FRAGMENT.cost[rarityKeyOf(item)] || 999;
+
+        const renderRow = (item) => {
+            const cost = costOf(item);
+            const owned = isItemOwned(item.id);
+            const affordable = getGachaFragments() >= cost;
+            const btn = owned
+                ? '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:default; font-size:12px;">已拥有</button>'
+                : (affordable
+                    ? `<button class="frag-buy-btn" data-id="${item.id}" style="background:linear-gradient(135deg,#a855f7,#7c3aed); color:white; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:bold;">兑换</button>`
+                    : '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:not-allowed; font-size:12px;">残屑不足</button>');
+            return `
+                <div class="frag-row" data-id="${item.id}" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--acu-btn-bg); border-radius:8px; margin-bottom:8px; border:1px solid var(--acu-border);">
+                    <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
+                        <span style="font-size:24px; flex-shrink:0;">${item.icon}</span>
+                        <div style="min-width:0;">
+                            <div style="color:var(--acu-text-main); font-weight:bold; font-size:13px;">${item.name}</div>
+                            <div style="color:${item.rarity.color}; font-size:11px;">${item.rarity.stars} ${item.rarity.name}</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
+                        <span style="color:#a855f7; font-weight:bold; font-size:13px;">💎 ${cost}</span>
+                        ${btn}
+                    </div>
+                </div>
+            `;
+        };
+
+        const refresh = () => {
+            const balance = getGachaFragments();
+            shopDialog.find('#frag-balance').text(balance);
+            const listHtml = items.length
+                ? items.map(renderRow).join('')
+                : '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无可兑换物品</div>';
+            shopDialog.find('#frag-list').html(listHtml);
+
+            shopDialog.find('.frag-buy-btn[data-id]').off('click').on('click', function() {
+                const id = $(this).data('id');
+                const item = items.find(i => i.id === id);
+                if (!item) return;
+                const result = exchangeWithFragments(item);
+                if (result.success) {
+                    if (window.toastr) window.toastr.success(`兑换成功：${item.name}（消耗 ${result.cost} 灵异残屑）`);
+                    // 同步主面板余额显示
+                    $('#gacha-fragment-display').text(getGachaFragments());
+                    refresh();
+                } else {
+                    if (window.toastr) window.toastr.error(result.error || '兑换失败');
+                }
+            });
+        };
+
+        const shopDialog = $(`
+            <div class="acu-edit-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px;">
+                <div style="background:var(--acu-bg, #1a1a2e); border:1px solid var(--acu-border); border-radius:12px; width:100%; max-width:520px; max-height:85vh; display:flex; flex-direction:column;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--acu-border);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <i class="fa-solid fa-gem" style="color:#a855f7; font-size:20px;"></i>
+                            <span style="color:var(--acu-text-main); font-weight:bold; font-size:16px;">碎片商店</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <span style="color:var(--acu-text-sub); font-size:12px;">余额</span>
+                            <span style="color:#a855f7; font-weight:bold; font-size:18px;">💎 <span id="frag-balance">0</span></span>
+                            <button class="shop-close" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:14px;">✕</button>
+                        </div>
+                    </div>
+                    <div id="frag-list" style="padding:14px 20px; overflow-y:auto; flex:1;"></div>
+                    <div style="padding:12px 20px; border-top:1px solid var(--acu-border); color:var(--acu-text-sub); font-size:11px; text-align:center;">
+                        重复抽到的物品会自动转化为灵异残屑，按稀有度定价兑换
+                    </div>
+                </div>
+            </div>
+        `);
+
+        $('body').append(shopDialog);
+        shopDialog.find('.shop-close').click(() => shopDialog.remove());
+        shopDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) shopDialog.remove(); });
+        refresh();
+    };
+
     // 四个物品池类型
     const GACHA_POOL_TYPE = {
         ALL: 'all',                    // 全物品池
@@ -4793,7 +4889,7 @@
                                     <span style="font-size:20px;">🔮</span>
                                     <div>
                                         <div style="color:var(--acu-text-sub); font-size:12px;">灵异残屑</div>
-                                        <div style="color:#a855f7; font-size:22px; font-weight:bold;" id="gacha-fragment-display">${getFragments()}</div>
+                                        <div style="color:#a855f7; font-size:22px; font-weight:bold;" id="gacha-fragment-display">${getGachaFragments()}</div>
                                     </div>
                                 </div>
                                 <button id="gacha-shop-btn" style="background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%); border:none; border-radius:8px; padding:10px 18px; cursor:pointer; color:white; font-size:13px; font-weight:bold; transition:transform 0.2s;">
@@ -5003,7 +5099,7 @@
 
             // 碎片转化提示
             if (result.fragments && result.fragments.totalFragments > 0) {
-                dialog.find('#gacha-fragment-display').text(getFragments());
+                dialog.find('#gacha-fragment-display').text(getGachaFragments());
                 if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
             }
 
@@ -5052,7 +5148,7 @@
 
             // 碎片转化提示
             if (result.fragments && result.fragments.totalFragments > 0) {
-                dialog.find('#gacha-fragment-display').text(getFragments());
+                dialog.find('#gacha-fragment-display').text(getGachaFragments());
                 if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
             }
 
