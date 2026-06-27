@@ -1,5 +1,29 @@
 # Progress Log
 
+## 2026-06-27 CST（⚠️ 真机验收发现双 bug + 修复待合并 — 任务暂停）
+
+**状态：** 发布版 7.0（CDN `@5201ca2`）真机导入并完成数轮对话后，点击导航栏 🎁 抽卡按钮无反应。用 Chrome DevTools MCP 定位到两个“调用未定义函数”阻断 bug，已在 worktree 修复并通过 build，**未合并未发布**。任务暂停于整理 planning。
+
+**本轮完成：**
+ - ✅ 发布版 7.0 上线：`publish-card.mjs` `CDN_REF` `cc2db1f`→`5201ca2`、`releaseVersion` `6.30`→`7.0`，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，15 处链接替换 + PNG 重打包（7.4 MB，2026-06-27 22:50），提交 `669e6b2` 并 push origin/main。
+ - ✅ 用户真机导入发布版 7.0 PNG + 数轮真实对话。
+ - ✅ Chrome DevTools MCP 连接酒馆页面（`http://127.0.0.1:8000/`），定位 🎁 无反应根因：
+   - `ReferenceError: getFragments is not defined` —— 面板渲染碎片余额 `${getFragments()}` 即抛错，按钮点击 handler 内联报错被吞，UI 无反应。`getFragments` 从未定义，正确定义名是 `getGachaFragments`（L4426）。3 处调用：L4796 面板渲染、L5006/5055 单抽十连后刷新。
+   - `showFragmentShop()` 被调用 2 处（L5018/5131 碎片商店按钮）但从未定义 —— 商店按钮点击会抛 ReferenceError。任务3 碎片系统 UI 漏实现商店弹窗（原任务描述称有 `showFragmentShop()` UI，实际只有调用无定义）。
+ - ✅ 全量扫描抽卡块未定义符号，确认仅这两个（其余为 .method 链/CSS/jQuery 方法误判）。
+ - ✅ 修复（worktree `fix/gacha-getfragments-undefined`，基于 `669e6b2`，commit `fdb6a74`）：
+   - `getFragments` → `getGachaFragments`（3 处 replace_all）
+   - 补全 `showFragmentShop()` 碎片商店弹窗（`exchangeWithFragments` 后插入）：全物品按稀有度定价（`GACHA_FRAGMENT.cost` MYTHIC:500 ~ BASIC:5）、实时余额展示、兑换交互（调 `exchangeWithFragments`）、已拥有/残屑不足状态、兑换后同步主面板 `#gacha-fragment-display`、overlay+esc 风格与 `showCustomItemEditor` 一致。
+   - `pnpm install`（worktree 缺 node_modules）+ `pnpm build` 通过（webpack compiled successfully in 4798ms）。
+ - ✅ 验证：残留 `getFragments` 计数=0；`showFragmentShop` 定义 L4522 + 调用 2 处。
+
+**关键经验（详见 findings.md 2026-06-27）：**
+ - 抽卡系统存在一类“调用未定义函数”系统性 bug：实现时引用了某函数名，定义却用了另一个名或根本没写。已知三例：`resetGachaPity`（任务1 已修）、`getFragments`（本轮修）、`showFragmentShop`（本轮修）。**抽卡块每次改动后应跑一次未定义符号全量扫描**（node 脚本，排除 .method/CSS/内置/jQuery），别只靠 build 通过就判定无 bug——webpack 对未定义的运行时引用不报错（minify 后才暴露）。
+
+**暂停点：** 修复在 worktree `fix/gacha-getfragments-undefined`（`fdb6a74`）未合并未 push。发布版 7.0 PNG（`669e6b2`）仍含两 bug。主工作区 main 干净。下次继续直接执行 task_plan.md「下次继续」7 步。
+
+**下一步：** 见 task_plan.md「当前状态」→「下次继续」。核心：合并 worktree → push 触发 bot bundle → CDN_REF 推到新 commit + 版本 7.1 → 重打包发布版 → 真机复测。
+
 ## 2026-06-26 CST（✅ 任务9 完成：物品设计哲学评审 — cost/narrativeHook 字段）
 
 **状态：** 任务9 实施完成。为全部 26 个内置物品补充 `cost`（使用代价/风险）和 `narrativeHook`（剧情钩子）字段，符合原著"沾染灵异、拥有灵异能力必有代价"的设计哲学。

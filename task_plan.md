@@ -15,33 +15,39 @@
 
 ## 当前状态
 
-**2026-06-26 抽卡系统优化任务清单建立（任务1 研究完成，实施暂停）：** 基于骰子商店研究建立 9 任务优化清单，任务1（物品目录外置 + 双层合并架构）研究阶段完成，实施暂停待继续。详见下方「抽卡系统优化任务清单」与 progress.md / findings.md 2026-06-26 条目。**下次新对话直接从任务1 实施方案执行，无需重新研究。**
+**2026-06-27 真机验收发现两个阻断 bug，已修复待合并（任务暂停）：** 发布版 7.0（CDN `@5201ca2`）真机导入后，点击导航栏 🎁 抽卡按钮无反应。Chrome DevTools MCP 定位到两个“调用未定义函数”bug（与历史 `resetGachaPity` 同型）：
+1. `getFragments()` 未定义（正确定义名是 `getGachaFragments`）——面板渲染余额那行即抛 `ReferenceError: getFragments is not defined`，🎁 按钮点击毫无反应。共 3 处调用（面板渲染 + 单抽/十连后刷新）。
+2. `showFragmentShop()` 被调用 2 处但从未定义——碎片商店按钮点击会抛 ReferenceError（任务3 碎片系统 UI 漏实现商店弹窗）。
 
-**2026-06-25 抽卡系统部署完成：** CDN 版本修复并重新打包，真机验证通过。抽卡按钮成功显示，功能完全可用。
+**修复位置：** worktree `fix/gacha-getfragments-undefined`（基于 `669e6b2`，commit `fdb6a74`，**未合并未 push**）：
+- `getFragments` → `getGachaFragments`（3 处 replace_all）
+- 补全 `showFragmentShop()` 碎片商店弹窗（全物品按稀有度定价 MYTHIC:500 ~ BASIC:5、实时余额展示、兑换交互、已拥有/残屑不足状态、兑换后同步主面板余额）
+- `pnpm install` + `pnpm build` 通过（webpack compiled successfully）
+
+**下次继续（恢复后直接执行，无需重新研究）：**
+1. （可选，推荐）先用 CDP 在 worktree 就地验证 🎁 能打开 + 碎片商店能兑换——避免合上去发现还有问题。酒馆页面 `http://127.0.0.1:8000/` 已可被 Chrome DevTools MCP 连接。
+2. 合并 `fix/gacha-getfragments-undefined` → main（快速合并流程，见 PROJECT_FLOW.md「分支合并策略」）。
+3. `git push origin main` 触发 bot bundle Action 重建 dist（无需手动 build dist）。
+4. 等 `[bot] bundle` 提交落地后，改 `scripts/publish-card.mjs` 的 `CDN_REF` 为新 bot bundle commit、`releaseVersion` 7.0→7.1。
+5. 跑 `pnpm run publish-card -- 神秘复苏模拟器发布版` 重打包发布版 PNG。
+6. 提交 + push 发布版同步结果。
+7. 真机复测：🎁 打开、单抽/十连（含 ★★★+ 保底触发）、碎片商店兑换、自定义编辑器、导入导出、AI 生成、写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
+
+**2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
-- 本地最新提交：`5db924b` - planning 记录更新
-- 远程最新提交：`55e6b71` - bot bundle（自动构建 dist 产物）
-- 源码版本：`1ca3f84` - 抽卡系统完整实现（+1,182 行代码）
-- 发布版 PNG：7.5 MB（CDN ref `@55e6b71`，包含抽卡代码）
-- 待提交：`scripts/publish-card.mjs`（CDN ref 修复）
+- 本地 main = origin/main = `669e6b2`（发布版 7.0，CDN `@5201ca2`，含任务1~9 源码 + bot bundle）
+- 修复 worktree：`fix/gacha-getfragments-undefined`（`fdb6a74`，领先 main 1 commit，**未合并未 push**）
+- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（7.4 MB，版本 7.0，打包 2026-06-27 22:50）——**此 PNG 仍含两个 bug，修复合并后必须重打包**
+- 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
 
-**2026-06-25 抽卡系统部署进展：**
-1. **问题诊断**：发布版 PNG 使用 CDN ref `@aa50677`（抽卡之前的版本），导致运行时加载的 bundle 不含抽卡代码
-2. **根因分析**：`scripts/publish-card.mjs` 的 `CDN_REF = 'aa50677'`，而抽卡代码在 `1ca3f84`，bot bundle 在 `55e6b71`
-3. **修复方案**：更新 `CDN_REF = '55e6b71'`，重新打包发布版 PNG（2026-06-25 21:01）
-4. **真机验证**：控制台验证脚本确认所有组件加载成功，抽卡按钮存在（位于数据库前端导航栏，🎁 礼物图标）
-5. **功能验证**：抽卡按钮可见，19种灵异物品、4个抽卡池、保底机制、数据库同步全部就绪
+**当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 发布版 7.0（`669e6b2`）+ **抽卡面板 bug 修复（待合并 `fdb6a74`）**。
 
-**当前有效修复线：** v0.0.264（at_depth 保真修复）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头修复）+ vendor row_id 修复（52b2e62）+ fallback plan 中文字段名修复（aa50677）+ 数据库前端交互优化（11b9cfc）+ 抽卡系统（1ca3f84，+1,182 行）+ CDN 版本修复（publish-card.mjs，待提交）。
+**待修 bug（阻断抽卡面板，worktree 已修待合并）：**
+- ⚠️ `getFragments` 未定义 → 🎁 点击无反应（修复：3 处改 `getGachaFragments`）
+- ⚠️ `showFragmentShop` 未定义 → 碎片商店按钮炸（修复：补全商店弹窗）
 
-**已知非阻断问题（2026-06-25 已全部解决）：**
-- ~~row_id 空字符串：sheet_clues、sheet_chronicle、sheet_collected_archives 部分行~~ **已修复（2026-06-25）：** vendor row_id 自动分配 + fallback plan 中文字段名修复，14/14 表 row_id 全部为正常数字。
-- ~~sheet_chronicle 纪要列值异常：值为编号"SP0001"而非纪要文本~~ **已修复（2026-06-25）：** fallback plan 使用中文字段名"纪要"，正确写入纪要文本。
-- ~~sheet_chronicle minLength=20 约束未拦截 6 字符值~~ **已修复（2026-06-25）：** fallback plan 生成的纪要文本符合长度要求。
-- ~~抽卡按钮不显示~~ **已修复（2026-06-25）：** CDN ref 更新到 `@55e6b71`（包含抽卡代码），重新打包发布版，真机验证通过。
-
-**工作区状态：** 本地有 1 个提交领先 origin/main（`5db924b` planning 记录更新）。`scripts/publish-card.mjs` CDN ref 已修复（`aa50677` → `55e6b71`），待提交。发布版 PNG 已重新打包（2026-06-25 21:01，7.5 MB）。`.claude/worktrees/*` gitlink 为本地工具状态，不提交。
+**工作区状态：** 主工作区 main 干净（= `669e6b2`，无未提交改动）。worktree `fix/gacha-getfragments-undefined` 含修复 `fdb6a74`（领先 main 1 commit）。`.claude/worktrees/*` gitlink 为本地工具状态不提交。本地有若干无关 dirty 临时文件（`.tmp-*.png/txt`、`屏幕截图*.png`），非任务产物，保持原样。
 
 ## 当前任务清单
 
@@ -70,6 +76,12 @@
 
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
+
+**当前进行中（暂停于 2026-06-27）：抽卡系统真机验收 + 阻断 bug 修复**
+1. ⏳ **合并修复 worktree** `fix/gacha-getfragments-undefined`（`fdb6a74`）→ main → push → 触发 bot bundle。修复内容：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` 碎片商店弹窗。
+2. ⏳ **重打包发布版**：`publish-card.mjs` `CDN_REF` 推到新 bot bundle commit、`releaseVersion` 7.0→7.1，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，提交推送。
+3. ⏳ **真机复测**（9 任务功能验收，详见上方「下次继续」第 7 步）：🎁 打开 / 单抽十连（含保底）/ 碎片商店兑换 / 自定义编辑器增删改 / 导入导出 JSON / AI 生成 / 十连折扣徽章 / 写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
+4. ✅ 真机验收前置：用户已导入发布版 7.0 PNG 并完成数轮真实对话；🎁 按钮无反应 bug 已 CDP 定位并修复（待合并）。
 
 ## 抽卡系统优化任务清单（2026-06-26 建立）
 
@@ -101,6 +113,7 @@
 - ✅ 抽卡面板新增碎片余额展示 + 商店按钮 + 转化 toast 反馈
 - ✅ gachaSingle/gachaTen 集成碎片系统，返回值含 fragments 字段
 - ✅ 构建验证通过，待真机验证
+- ⚠️ **真机验收发现 bug（2026-06-27，待合并 `fdb6a74`）：** ① `getFragments()` 调用未定义（定义名 `getGachaFragments`），面板打开即炸、🎁 无反应；② `showFragmentShop()` 调用未定义，商店按钮炸。修复见 worktree `fix/gacha-getfragments-undefined`。原任务描述里的 `FRAGMENT_SHOP_ITEMS`/`purchaseWithFragments` 实际命名是 `GACHA_FRAGMENT.cost`/`exchangeWithFragments`，且商店弹窗此前根本未实现。
 
 **任务4（✅ 已完成）：** 货币被动获取通道 — MESSAGE_RECEIVED 自动奖励 + 内容关键词检测（线索+5/事件+10/厉鬼+15）+ 5秒冷却防刷
 
@@ -155,6 +168,9 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
+| **`gacha-panel-fix`（待合并）** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复** | worktree `fix/gacha-getfragments-undefined` `fdb6a74`（基于 `669e6b2`）：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` | 沿用 `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | **未合并未 push；build 通过；待合并→bot bundle→发布版 7.1** |
+| **`v7.0`** | 发布版 CDN ref 推到 `@5201ca2`（任务1~9 全功能）+ 版本号 6.30→7.0 | `publish-card.mjs` `CDN_REF=5201ca2`/`releaseVersion=7.0`；commit `669e6b2`；发布版 PNG 7.4 MB（2026-06-27 22:50） | `@5201ca2` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已 push origin/main；**真机验收发现 🎁 面板 bug，见上行** |
+| **`gacha-9tasks`** | 抽卡系统优化 9 任务全部实现（目录外置+双层合并/写库预校验/碎片/被动货币/十连折扣/自定义编辑器/导入导出/AI生成/设计哲学） | `329d143`（任务1）… `581996b`（任务9）+ bot bundle `5201ca2`；`v10_2_visualizer.js` 5906 行 | `@5201ca2` | 已合并 origin/main；构建通过；**真机验收未闭环** |
 | **`row_id-final-fix`** | **🎉 row_id 问题彻底解决** + 数据库前端交互优化 | vendor `52b2e62` + fallback `aa50677` + CDN ref `36082bc` + 前端优化 `11b9cfc`；合并 `52b6416` | 沿用 hotfix13 marker | **2026-06-25 真页验证 14/14 表 row_id 全部正常** |
 | `v0.0.264` | 修复 `tavern_sync` 世界书 `at_depth / 指定深度` 条目的 ccv3 顶层 `depth/role` 字段丢失；数据库联动规则配置为系统 depth 4 注入 | commit `58cc155`；修改 `tavern_sync.mjs`、开发版/发布版 YAML 与卡图 | 沿用 v6.30 CDN ref/cache：`@c087823` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已提交到 main；静态 gate 通过；真页验证通过 |
 | `v6.30` | 修复 AI 不输出 SQL：数据库联动规则改为常驻激活（蓝灯） | PR #17 `b288150`，合并 `c2cacc0`，bot bundle `c087823`，发布 `5f37095`；CDN ref `@c087823` | `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已发布；被 `v0.0.264` at_depth 保真修复补强 |
@@ -169,7 +185,9 @@
 
 ## 需要提交的文件
 
-**当前待提交：** planning 更新记录 — `task_plan.md`、`progress.md`、`findings.md`（本轮已更新抽卡优化任务清单、任务1 研究结论与 resetGachaPity bug）。`PROJECT_FLOW.md` 本轮未变更（常驻流程文件已就绪）。dist 本地构建残留已暂存，不提交（留给 bot bundle Action 在 CI 重建）。`scripts/publish-card.mjs`（CDN ref 修复 `aa50677`→`55e6b71`）仍待提交。
+**当前待提交（2026-06-27 planning 整理）：** `task_plan.md`、`progress.md`、`findings.md`——本轮更新当前状态（真机验收发现双 bug + 修复待合并）、任务清单（真机验收待办）、版本变更索引（v7.0 / gacha-panel-fix 待合并）、findings（getFragments/showFragmentShop 同型 bug 经验）。`PROJECT_FLOW.md` 常驻流程文件，本轮未变更。
+
+**注意：抽卡面板 bug 修复代码不在本次 planning 提交内**——修复在 worktree `fix/gacha-getfragments-undefined`（`fdb6a74`，改 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`），属独立 source 提交，待合并到 main 后由 bot bundle Action 重建 dist。本次 planning 提交只动根目录三个 md。
 
 **按任务类型精确 staging 规则：**
 - 源码或世界书变更：只提交实际改动的 `src/**`、`util/**`、`@types/**`、`初始模板/**`、`示例/**` 等相关文件。

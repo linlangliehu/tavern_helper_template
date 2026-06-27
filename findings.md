@@ -1,5 +1,18 @@
 # Findings
 
+## 2026-06-27：抽卡系统“调用未定义函数”系统性 bug（getFragments / showFragmentShop）
+
+**根因模式：** 抽卡系统（`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 抽卡块，约 3950-5450 行）在实现时多处引用了某函数名，但定义用了另一个名、或根本没写定义。webpack production build **不会报错**（未定义的运行时引用在 minify 后才暴露为 ReferenceError），所以“build 通过”不等于“无此 bug”。真机运行时这些 handler 多在 jQuery click 内联里，异常被吞，表现为**按钮点击毫无反应**而非明显报错——必须靠 Chrome DevTools MCP `evaluate_script` 主动 `jQuery('#x').trigger('click')` 捕获，或看 console。
+
+**已知三例（同型）：**
+1. `resetGachaPity('rare'|'epic'|'mythic')` — 任务1 已修（添加定义）。
+2. `getFragments()` — 正确定义名是 `getGachaFragments`（L4426），3 处调用（L4796 面板渲染 + L5006/5055 抽卡后刷新）。**🎁 面板打开即炸、按钮无反应的直接根因。** 本轮修复：3 处 replace_all 改名。
+3. `showFragmentShop()` — 2 处调用（L5018/5131 碎片商店按钮），从未定义。任务3 原描述称有此 UI，实际只有调用无实现。本轮修复：补全商店弹窗（调 `exchangeWithFragments`，按 `GACHA_FRAGMENT.cost` 定价）。
+
+**预防方法（每次改抽卡块后必跑）：** 用 node 脚本全量扫描抽卡块内“非点号前缀的裸函数调用”，与全文 `const/let/function` 定义词典比对，排除：CSS 函数（gradient/rgba/translateY...）、jQuery/数组方法（.find/.on/.push...）、JS 内置（Math/JSON/parseInt...）、关键字。输出“调用 N 次但定义行=❌未定义”的符号即为疑似。本轮扫描最终命中 getFragments / showFragmentShop 两个真 bug（其余 18 个疑似均为误判）。
+
+**排查动作模板：** 真机按钮无反应时 → `mcp__chrome-devtools__evaluate_script` 跑 `jQuery('#btnId').trigger('click')` 包 try/catch → 看 `e.message` + `e.stack`，stack 里的 bundle URL 行号即定位。比翻源码猜快得多。
+
 ## 2026-06-26：任务1 完成 - 物品目录双层架构 + resetGachaPity bug 修复
 
 - **任务1 实施完成：** 物品目录外置 + 双层合并架构 + resetGachaPity 未定义 bug 修复。
