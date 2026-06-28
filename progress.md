@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-06-28 CST（恢复对话 + 校正 planning 与 git 偏差）
+
+**状态：** 用户要求用 planning-with-files 恢复并核对任务进度。读取 task_plan/progress/findings + git 状态后发现 **planning 与 git 实际有偏差**：planning 写「修复待合并未 push」，但 git 显示修复已通过 merge commit `0ef4201` 合入**本地 main**，仅未 push。
+
+**git 实测核对：**
+ - `origin/main` = `6f1cd8f`（planning docs）；本地 main = `0ef4201`（merge 抽卡面板修复），领先 2 commit（`fdb6a74` fix + `0ef4201` merge）未 push。
+ - `publish-card.mjs`：`CDN_REF` 仍 = `5201ca2`（含 bug 的旧 bot bundle）、`releaseVersion` 仍 = `7.0`，**未** bump 到新 bot bundle / 7.1。
+ - 源码校验 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`（6002 行）：`getFragments(` 裸调用 = 0（全改 `getGachaFragments`，定义 L4426）；`showFragmentShop` 已定义 L4522（调用 L5114）；`resetGachaPity` L4231、`exchangeWithFragments` L4508 均在。修复确实落在 main 源码。
+ - 发布版 PNG（7.0，2026-06-27 22:50）仍含两 bug，未重打包。
+
+**已做：** 更新 task_plan.md「当前状态」「当前版本」「当前进行中」三处，把「未合并未 push」修正为「已合并本地 main（`0ef4201`）未 push」，并加 2026-06-28 恢复块。
+
+**当前停点：** 计划「下次继续」第 3 步——push origin main 触发 bot bundle。第 1-2 步（可选 CDP 验证、合并）已过（合并完成；CDP 验证因 fix 已合入 main、dist 未重建而跳过，源码已静态校验）。
+
+**下一步：** push 本地 main → 等 `[bot] bundle` → `CDN_REF` 推新 commit + 版本 7.1 → `pnpm run publish-card -- 神秘复苏模拟器发布版` → 提交 push 发布版 → 真机复测。push 为外发动作（触发 CI），恢复时向用户确认后再执行。
+
 ## 2026-06-27 CST（⚠️ 真机验收发现双 bug + 修复待合并 — 任务暂停）
 
 **状态：** 发布版 7.0（CDN `@5201ca2`）真机导入并完成数轮对话后，点击导航栏 🎁 抽卡按钮无反应。用 Chrome DevTools MCP 定位到两个“调用未定义函数”阻断 bug，已在 worktree 修复并通过 build，**未合并未发布**。任务暂停于整理 planning。

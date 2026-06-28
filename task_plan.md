@@ -15,11 +15,17 @@
 
 ## 当前状态
 
-**2026-06-27 真机验收发现两个阻断 bug，已修复待合并（任务暂停）：** 发布版 7.0（CDN `@5201ca2`）真机导入后，点击导航栏 🎁 抽卡按钮无反应。Chrome DevTools MCP 定位到两个“调用未定义函数”bug（与历史 `resetGachaPity` 同型）：
+**2026-06-28 恢复更新（修正 planning 与 git 的偏差）：** 上轮 planning 写「修复待合并未 push」，但 git 实际已合并到**本地 main**（merge commit `0ef4201`，把 fix 分支 `fdb6a74` 合入），**仅未 push 到 origin**。`origin/main` 停在 `6f1cd8f`（planning docs），本地 main 领先 2 commit（`fdb6a74` + `0ef4201`）。源码已校验：`v10_2_visualizer.js` 6002 行，`getFragments` 裸调用=0（全改 `getGachaFragments`）、`showFragmentShop` 已定义（L4522）、`resetGachaPity`/`exchangeWithFragments` 均在。**发布版未同步**：`publish-card.mjs` `CDN_REF` 仍=`5201ca2`（含 bug 的旧 bot bundle）、`releaseVersion` 仍=`7.0`，未触发新 bot bundle、未重打包、未真机复测。
+
+**当前停点 = 计划「下次继续」第 3 步：** ① 合并 ✅（`0ef4201` 本地）→ ② push origin main 触发 bot bundle ❌未做 → ③ CDN_REF 推新 bot bundle + 版本 7.1 ❌ → ④ 重打包发布版 ❌ → ⑤ 提交 push 发布版同步 ❌ → ⑥ 真机复测 ❌。
+
+---
+
+**2026-06-27 真机验收发现两个阻断 bug，已修复（已合并本地 main，未 push）：** 发布版 7.0（CDN `@5201ca2`）真机导入后，点击导航栏 🎁 抽卡按钮无反应。Chrome DevTools MCP 定位到两个“调用未定义函数”bug（与历史 `resetGachaPity` 同型）：
 1. `getFragments()` 未定义（正确定义名是 `getGachaFragments`）——面板渲染余额那行即抛 `ReferenceError: getFragments is not defined`，🎁 按钮点击毫无反应。共 3 处调用（面板渲染 + 单抽/十连后刷新）。
 2. `showFragmentShop()` 被调用 2 处但从未定义——碎片商店按钮点击会抛 ReferenceError（任务3 碎片系统 UI 漏实现商店弹窗）。
 
-**修复位置：** worktree `fix/gacha-getfragments-undefined`（基于 `669e6b2`，commit `fdb6a74`，**未合并未 push**）：
+**修复位置（已合并本地 main）：** fix 分支 `fix/gacha-getfragments-undefined`（基于 `669e6b2`，commit `fdb6a74`）已通过 merge commit `0ef4201` 合入本地 main（2026-06-28 校验）。源码校验通过（见上「2026-06-28 恢复更新」），原 worktree 仍保留在 `.claude/worktrees/fix-getfragments`：
 - `getFragments` → `getGachaFragments`（3 处 replace_all）
 - 补全 `showFragmentShop()` 碎片商店弹窗（全物品按稀有度定价 MYTHIC:500 ~ BASIC:5、实时余额展示、兑换交互、已拥有/残屑不足状态、兑换后同步主面板余额）
 - `pnpm install` + `pnpm build` 通过（webpack compiled successfully）
@@ -36,9 +42,9 @@
 **2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
-- 本地 main = origin/main = `669e6b2`（发布版 7.0，CDN `@5201ca2`，含任务1~9 源码 + bot bundle）
-- 修复 worktree：`fix/gacha-getfragments-undefined`（`fdb6a74`，领先 main 1 commit，**未合并未 push**）
-- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（7.4 MB，版本 7.0，打包 2026-06-27 22:50）——**此 PNG 仍含两个 bug，修复合并后必须重打包**
+- 本地 main = `0ef4201`（merge 抽卡面板修复）；origin/main = `6f1cd8f`（planning docs）——本地领先 2 commit 未 push
+- 修复已合入本地 main：`fdb6a74`（fix）+ `0ef4201`（merge）
+- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（7.4 MB，版本 7.0，打包 2026-06-27 22:50）——**此 PNG 仍含两个 bug，push+bot bundle 后必须重打包为 7.1**
 - 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
 
 **当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 发布版 7.0（`669e6b2`）+ **抽卡面板 bug 修复（待合并 `fdb6a74`）**。
@@ -77,11 +83,12 @@
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
 
-**当前进行中（暂停于 2026-06-27）：抽卡系统真机验收 + 阻断 bug 修复**
-1. ⏳ **合并修复 worktree** `fix/gacha-getfragments-undefined`（`fdb6a74`）→ main → push → 触发 bot bundle。修复内容：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` 碎片商店弹窗。
-2. ⏳ **重打包发布版**：`publish-card.mjs` `CDN_REF` 推到新 bot bundle commit、`releaseVersion` 7.0→7.1，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，提交推送。
-3. ⏳ **真机复测**（9 任务功能验收，详见上方「下次继续」第 7 步）：🎁 打开 / 单抽十连（含保底）/ 碎片商店兑换 / 自定义编辑器增删改 / 导入导出 JSON / AI 生成 / 十连折扣徽章 / 写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
-4. ✅ 真机验收前置：用户已导入发布版 7.0 PNG 并完成数轮真实对话；🎁 按钮无反应 bug 已 CDP 定位并修复（待合并）。
+**当前进行中（2026-06-28 恢复，停在 push 前）：抽卡系统真机验收收尾 + 阻断 bug 修复发布**
+1. ✅ **合并修复** `fix/gacha-getfragments-undefined`（`fdb6a74`）→ 本地 main（merge `0ef4201`）。修复内容：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` 碎片商店弹窗。源码校验通过。
+2. ⏳ **push origin main** 触发 bot bundle Action 重建 dist（本地领先 2 commit 未 push）。
+3. ⏳ **重打包发布版**：等 `[bot] bundle` 落地 → `publish-card.mjs` `CDN_REF` 推到新 bot bundle commit、`releaseVersion` 7.0→7.1，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，提交推送。
+4. ⏳ **真机复测**（9 任务功能验收，详见上方「下次继续」第 7 步）：🎁 打开 / 单抽十连（含保底）/ 碎片商店兑换 / 自定义编辑器增删改 / 导入导出 JSON / AI 生成 / 十连折扣徽章 / 写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
+5. ✅ 真机验收前置：用户已导入发布版 7.0 PNG 并完成数轮真实对话；🎁 按钮无反应 bug 已 CDP 定位并修复（已合并本地 main）。
 
 ## 抽卡系统优化任务清单（2026-06-26 建立）
 
