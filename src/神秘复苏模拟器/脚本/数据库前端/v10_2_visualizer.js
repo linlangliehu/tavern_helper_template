@@ -5605,10 +5605,41 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 // 解析结果（json_schema 模式下返回 JSON 字符串）
                 let item;
                 if (typeof result === 'string') {
+                    // 后端可能不支持 json_schema 结构化输出，会用 ```json 代码块包裹，
+                    // 或在 JSON 前后附带说明文字。这里做容错：剥离 markdown 代码块，
+                    // 提取首个 { ... } 平衡对象后再解析。
+                    const parseLoose = (raw) => {
+                        let s = String(raw).trim();
+                        // 剥离 ```json ... ``` 或 ``` ... ``` 代码块围栏
+                        const fence = s.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+                        if (fence) s = fence[1].trim();
+                        // 直接尝试
+                        try { return JSON.parse(s); } catch (_) { /* 继续 */ }
+                        // 提取首个平衡的 {...} 对象
+                        const start = s.indexOf('{');
+                        if (start !== -1) {
+                            let depth = 0, inStr = false, esc = false, end = -1;
+                            for (let i = start; i < s.length; i++) {
+                                const ch = s[i];
+                                if (inStr) {
+                                    if (esc) { esc = false; }
+                                    else if (ch === '\\') { esc = true; }
+                                    else if (ch === '"') { inStr = false; }
+                                } else {
+                                    if (ch === '"') inStr = true;
+                                    else if (ch === '{') depth++;
+                                    else if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
+                                }
+                            }
+                            if (end !== -1) {
+                                try { return JSON.parse(s.slice(start, end + 1)); } catch (_) { /* 失败 */ }
+                            }
+                        }
+                        throw new Error('无法提取有效 JSON');
+                    };
                     try {
-                        item = JSON.parse(result);
+                        item = parseLoose(result);
                     } catch (parseErr) {
-                        // 后端可能不支持结构化输出，返回了非 JSON 文本
                         console.error('AI generation JSON parse failed:', parseErr, 'raw:', result);
                         throw new Error('AI 返回的内容不是有效的 JSON（当前 AI 后端可能不支持结构化输出）');
                     }
