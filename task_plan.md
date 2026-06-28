@@ -15,6 +15,25 @@
 
 ## 当前状态
 
+**2026-06-28 发布版 7.4 已上线（CDN @db7e4ba，剩真机复测）：** 恢复对话发现 planning 滞后于 git（planning 停在 v7.1「待 bot bundle」，实际 git 已推到 v7.3）。用户选「先复查 AI生成字段补全修复」→ 复查通过（id 已被 L5651-5654 守护，无需补）→ 走完 v7.4 发布全链路并 push origin/main。**仅剩真机复测。**
+
+**v7.4 修复（AI 生成第三层容错 — 数据层）：** `v10_2_visualizer.js` L5657-5683，在 `showItemForm(currentType, item)` 调用前按 schema 补全 AI 返回 JSON 缺漏的必填字段：name→'未命名物品'、icon→'❓'、rarity 枚举校验降级 COMMON、description/effect/effectDetail/cost/narrativeHook 非字符串→''、supernatural usageLimit→1/duration→'短暂'、clue/knowledge progress 非数字→0.1 且 clamp [0.05,0.5]。保证预填表单始终可编辑。
+
+**AI 生成容错三层链路（v7.2~v7.4 串联）：**
+1. **v7.2 调用层**（`ca4895f`）：`generateRaw` 裸调 → `(window.parent||window).TavernHelper.generateRaw` + 接口不可用防御；同时修货币监听器事件名大小写（`MESSAGE_RECEIVED` 大写死键 → `(eventTypes&&eventTypes.MESSAGE_RECEIVED)||'message_received'` 动态取值）。
+2. **v7.3 解析层**（`a9e9425`）：后端在 json_schema 模式下仍用 ` ```json` 包裹输出 → 加 `parseLoose`：剥离围栏 + 提取首个平衡 `{...}` 对象容错解析。
+3. **v7.4 数据层**（`5f085b3`）：解析成功后字段可能缺漏 → 按 schema 填默认值。
+
+**发布链路（v7.4）：** src 修复 `5f085b3` → push origin main → bot bundle `db7e4ba`（CI rebuild dist）→ `publish-card.mjs` CDN_REF `24f51330`→`db7e4ba`、releaseVersion `7.3`→`7.4` → 重打包 PNG → commit `32b4baa` push origin/main。CDN 实测发布版 yaml `版本:'7.4'` + 7×`@db7e4ba`，无残留旧 ref。
+
+**下一步（真机复测，需用户酒馆导入发布版 7.4 PNG）：**
+1. CDP 连 `http://127.0.0.1:8000/`，导入发布版 7.4 PNG。
+2. 验收 AI 生成三层全打通：点自定义编辑器「AI生成」→ spinner → **预填表单完整可编辑**（name/icon 非空、rarity 选对、各字段有值）→ 用户确认保存成 custom 物品。
+3. 顺带验收货币监听器（MESSAGE_RECEIVED 后调查点 +1/条，关键词 +5/+10/+15）。
+4. 9 任务其余项（🎁 打开/单抽十连保底/碎片商店兑换/编辑器增删改/导入导出）若 v7.2 已隐式验收则跳过，否则补测。
+
+---
+
 **2026-06-28 真机复测发现双 bug + 已修复并推送 origin/main（待 bot bundle）：** 用户导入发布版 7.1 PNG 做真机复测，发现两个 bug。已用 Chrome DevTools MCP 定位根因并坐实，在 worktree `fix-currency-aigen` 修复，commit `ca4895f` 已 fast-forward 推送到 origin/main（`ee30eb4` → `ca4895f`），**正在等 GitHub Action bot 重建 dist**。
 
 1. **调查点（货币）永远不增长** —— `registerCurrencyListeners()`（L4182）写死 `eventSource.on('MESSAGE_RECEIVED', ...)`（大写字面量），但 ST 事件常量 `eventTypes.MESSAGE_RECEIVED` 的值是小写 `"message_received"`，emit 用的是常量值，`on()` 按精确键匹配 → 监听器挂在一个没人 emit 的死键上，21 条消息后 currencyLS="0"。CDP 铁证：eventSource internal keys 里同时有 `message_received`（正常工作）和 `MESSAGE_RECEIVED`（仅我们这个死键）。**修复**：改用 `(eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received'` 动态取值（与 hotfix 一致）。
@@ -58,12 +77,16 @@
 **2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
-- 本地 main = origin/main = `4af0d88`（发布版 7.1 同步抽卡面板修复），bot bundle `90065ab`，自动 tag `v0.0.287`
-- 修复链路：`fdb6a74`（fix）→ `0ef4201`（merge）→ `90065ab`（bot bundle）→ `4af0d88`（发布版 7.1 同步）
-- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（7.8 MB，版本 7.1，打包 2026-06-28 11:25）——含抽卡面板修复，CDN `@90065ab`
+- 本地 main = origin/main = `32b4baa`（发布版 7.4 同步 AI生成字段补全），bot bundle `db7e4ba`，自动 tag `v0.0.293`
+- v7.4 修复链路：`5f085b3`（fix 字段补全）→ `db7e4ba`（bot bundle）→ `32b4baa`（发布版 7.4 同步）
+- v7.3 链路：`a9e9425`（fix parseLoose）→ `24f5133`（bot bundle）→ `e0b60cb`（发布版 7.3 同步）
+- v7.2 链路：`ca4895f`（fix 货币监听器+AI引用）→ `1206e44`（bot bundle）→ `285502f`（发布版 7.2 同步）
+- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（版本 7.4，CDN `@db7e4ba`）
 - 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
 
-**当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 发布版 7.0（`669e6b2`）+ **抽卡面板 bug 修复（待合并 `fdb6a74`）**。
+**当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 抽卡面板 bug 修复（`0ef4201`）+ AI 生成容错三层（v7.2 调用层 `ca4895f` / v7.3 解析层 `a9e9425` / v7.4 数据层 `5f085b3`）。
+
+**待修 bug：无阻断项。** AI 生成三层容错已全部发布上线，仅剩真机复测闭环。
 
 **待修 bug（阻断抽卡面板，worktree 已修待合并）：**
 - ⚠️ `getFragments` 未定义 → 🎁 点击无反应（修复：3 处改 `getGachaFragments`）
@@ -99,12 +122,12 @@
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
 
-**当前进行中（2026-06-28，发布 7.1 已上线，剩真机复测）：抽卡系统真机验收收尾 + 阻断 bug 修复发布**
-1. ✅ **合并修复** `fix/gacha-getfragments-undefined`（`fdb6a74`）→ 本地 main（merge `0ef4201`）。修复内容：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` 碎片商店弹窗。源码校验通过。
-2. ✅ **push origin main** 触发 bot bundle Action 重建 dist → 新 bot bundle `90065ab`（CDN 实测含 `碎片商店`+`灵异残屑`，旧 `@5201ca2` 只有 `showFragmentShop` 裸调用无定义）。
-3. ✅ **重打包发布版**：`publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、`releaseVersion` `7.0`→`7.1`，`pnpm run publish-card` 替换 15 处链接 + 重打包 PNG（7.8 MB），commit `4af0d88` push origin/main。CDN 实测发布版 yaml `版本:'7.1'` + 7×`@90065ab`，bot 自动打 tag `v0.0.287`。
-4. ⏳ **真机复测**（9 任务功能验收，详见上方「下次继续」第 7 步）：🎁 打开 / 单抽十连（含保底）/ 碎片商店兑换 / 自定义编辑器增删改 / 导入导出 JSON / AI 生成 / 十连折扣徽章 / 写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
-5. ✅ 真机验收前置：用户已导入发布版 7.0 PNG 并完成数轮真实对话；🎁 按钮无反应 bug 已 CDP 定位并修复（已合并本地 main）。
+**当前进行中（2026-06-28，发布 7.4 已上线，剩真机复测）：AI 生成容错三层全部发布 + 真机验收收尾**
+1. ✅ **v7.1** 抽卡面板修复发布（`4af0d88`，CDN `@90065ab`）。
+2. ✅ **v7.2** 调用层修复发布（`285502f`，CDN `@1206e44`）：货币监听器事件名大小写 + AI 生成 `generateRaw` 改经 `window.TavernHelper` 调用。
+3. ✅ **v7.3** 解析层修复发布（`e0b60cb`，CDN `@24f5133`）：AI 生成 JSON 加 `parseLoose` 容错（剥离 markdown 代码块 + 提取首个平衡 `{...}`）。
+4. ✅ **v7.4** 数据层修复发布（`32b4baa`，CDN `@db7e4ba`）：AI 生成字段补全（缺漏必填字段填默认值，保证预填表单可编辑）。
+5. ⏳ **真机复测**（核心验收 AI 生成三层全打通）：点自定义编辑器「AI生成」→ 预填表单完整可编辑（name/icon 非空、rarity 选对、各字段有值）→ 保存成 custom 物品；顺带验收货币监听器（MESSAGE_RECEIVED 后调查点 +1/条）。其余 9 任务项（🎁/单抽十连保底/碎片商店/编辑器增删改/导入导出/写库）若已隐式验收则跳过。
 
 ## 抽卡系统优化任务清单（2026-06-26 建立）
 
@@ -191,7 +214,10 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
-| **`v7.1`** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复发布** | fix `fdb6a74` → merge `0ef4201` → bot bundle `90065ab` → 发布版同步 `4af0d88`；`publish-card.mjs` `CDN_REF=90065ab`/`releaseVersion=7.1`；发布版 PNG 7.8 MB（2026-06-28 11:25）；CDN 实测 yaml `版本:'7.1'`+7×`@90065ab`，bundle 含 `碎片商店`/`灵异残屑` | `@90065ab` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.287` | **已 push origin/main；仅剩真机复测** |
+| **`v7.4`** | **AI生成字段补全（数据层容错）发布** | fix `5f085b3` → bot bundle `db7e4ba` → 发布版同步 `32b4baa`；`publish-card.mjs` `CDN_REF=db7e4ba`/`releaseVersion=7.4`；CDN 实测 yaml `版本:'7.4'`+7×`@db7e4ba`，bundle 含 `未命名物品`/`'❓'`/`短暂` | `@db7e4ba` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.293` | **已 push origin/main；仅剩真机复测** |
+| **`v7.3`** | **AI生成JSON解析容错（解析层）发布** — 后端 json_schema 模式下用 ` ```json` 包裹输出，JSON.parse 失败 | fix `a9e9425` → bot bundle `24f5133` → 发布版同步 `e0b60cb`；`publish-card.mjs` `CDN_REF=24f51330`/`releaseVersion=7.3`；加 `parseLoose`（剥离围栏+提取首个平衡 `{...}`） | `@24f5133` / 同上 / tag `v0.0.292` | 已 push origin/main；被 v7.4 覆盖 |
+| **`v7.2`** | **货币监听器事件名大小写 + AI生成未取 TavernHelper 引用（调用层）发布** | fix `ca4895f` → bot bundle `1206e44` → 发布版同步 `285502f`；`publish-card.mjs` `CDN_REF=1206e44`/`releaseVersion=7.2`；货币改 `(eventTypes&&eventTypes.MESSAGE_RECEIVED)\|\|'message_received'` 动态取值；AI 改 `(window.parent\|\|window).TavernHelper.generateRaw` | `@1206e44` / 同上 / tag `v0.0.291` | 已 push origin/main；被 v7.3 覆盖 |
+| **`v7.1`** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复发布** | fix `fdb6a74` → merge `0ef4201` → bot bundle `90065ab` → 发布版同步 `4af0d88`；`publish-card.mjs` `CDN_REF=90065ab`/`releaseVersion=7.1`；发布版 PNG 7.8 MB（2026-06-28 11:25）；CDN 实测 yaml `版本:'7.1'`+7×`@90065ab`，bundle 含 `碎片商店`/`灵异残屑` | `@90065ab` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.287` | 已 push origin/main；被 v7.2 覆盖 |
 | **`gacha-panel-fix`（已合并）** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复** | worktree `fix/gacha-getfragments-undefined` `fdb6a74`（基于 `669e6b2`）：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` | 沿用 `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已合并 `0ef4201` → 已发布 v7.1（见上行） |
 | **`v7.0`** | 发布版 CDN ref 推到 `@5201ca2`（任务1~9 全功能）+ 版本号 6.30→7.0 | `publish-card.mjs` `CDN_REF=5201ca2`/`releaseVersion=7.0`；commit `669e6b2`；发布版 PNG 7.4 MB（2026-06-27 22:50） | `@5201ca2` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已 push origin/main；**真机验收发现 🎁 面板 bug，见上行** |
 | **`gacha-9tasks`** | 抽卡系统优化 9 任务全部实现（目录外置+双层合并/写库预校验/碎片/被动货币/十连折扣/自定义编辑器/导入导出/AI生成/设计哲学） | `329d143`（任务1）… `581996b`（任务9）+ bot bundle `5201ca2`；`v10_2_visualizer.js` 5906 行 | `@5201ca2` | 已合并 origin/main；构建通过；**真机验收未闭环** |

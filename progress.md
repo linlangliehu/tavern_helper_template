@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-06-28 CST（✅ 发布版 7.4 上线 — AI生成字段补全已发布，剩真机复测）
+
+**状态：** 恢复对话后发现 planning 滞后于 git（planning 停在 v7.1「待 bot bundle」，实际 git 已推到 v7.3）。用户选「先复查字段补全修复」。复查通过（发现 id 已被 L5651-5654 守护，无需补）。走完 v7.4 发布全链路：源码修复 → push → bot bundle `db7e4ba` → publish-card 同步 → push `32b4baa`。CDN 实测发布版 yaml `版本:'7.4'`+7×`@db7e4ba`。**仅剩真机复测。**
+
+**本轮完成（v7.4 链路）：**
+ - ✅ 复查未提交的字段补全修复（28 行，`v10_2_visualizer.js` L5657-5683）：方向正确，与 showItemForm 表单读取项（name/icon/rarity/description/effect/effectDetail/cost/narrativeHook + 类型特有 usageLimit/duration/progress）逐一吻合；RARITY_ENUM 与 GACHA_RARITY 6 个 key 一致；progress clamp `[0.05,0.5]` 与 schema 一致。**发现 id 已有守护**（L5651-5654 `!item.id || !startsWith('custom_')` → 重生成），无需补。
+ - ✅ `pnpm build` 通过；bundle grep 确认 `未命名物品`(1)+`'❓'`(1)+`短暂`(5) 落地。
+ - ✅ 仅提交 src（commit `5f085b3` fix(gacha): AI生成字段补全），discard 本地 dist 残留。
+ - ✅ push origin main → bot bundle `db7e4ba`（CI rebuild dist）。
+ - ✅ `publish-card.mjs` `CDN_REF` `24f51330`→`db7e4ba`、`releaseVersion` `7.3`→`7.4`，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，15 处链接替换 + PNG 重打包。
+ - ✅ commit `32b4baa` push origin/main。CDN 实测发布版 yaml（`@32b4baa`）：`版本:'7.4'` + 7×`@db7e4ba`，无残留 `24f51330`。
+
+**当前停点：** 真机复测。需要用户酒馆（`http://127.0.0.1:8000/`）导入发布版 7.4 PNG，用 CDP 验收 AI 生成链路三层全部打通：① generateRaw 走当前连接源（v7.2 修）→ ② JSON 容错解析剥离 markdown 代码块（v7.3 修）→ ③ 字段补全保证预填表单可编辑（v7.4 修）。理想：点 AI生成 → 表单预填出完整可编辑内容（name 非空、icon 非空、rarity 选对、各字段有值），用户确认后能保存成 custom 物品。
+
+**关键经验：**
+ - **planning 滞后恢复**：新对话恢复时不能只读 planning，必须对照 `git log` 校正——planning 停点可能落后实际进度多个版本。本次 planning 停在 v7.1「待 bot bundle」，实际已发布 v7.2/v7.3。
+ - **字段补全是 AI 生成第三层容错**：v7.2=调用层（TavernHelper 引用）、v7.3=解析层（markdown 剥离）、v7.4=数据层（字段缺漏兜底）。三层串联才完整。
+ - **id 守护早于字段补全**：复查时别急着加默认值，先看现有代码——L5651-5654 的 id 守护在字段补全块之前执行，已覆盖缺失/格式不对，补全块再加是死代码。
+
 ## 2026-06-28 CST（🔧 真机复测发现双 bug + 源码修复已 push，等 bot bundle → 发布版 7.2）
 
 **状态：** 用户导入发布版 7.1 PNG + 数轮真实对话后，CDP 定位到两个真机 bug，已在源码修复并 push origin/main（`ca4895f`）。**等 `[bot] bundle` → `CDN_REF` bump 到新 commit + 版本 7.2 → `pnpm run publish-card` 重打包发布版。**

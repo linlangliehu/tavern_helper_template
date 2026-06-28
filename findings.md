@@ -1,5 +1,16 @@
 # Findings
 
+## 2026-06-28：AI 生成容错三层链路（generateRaw → parseLoose → 字段补全）
+
+**背景：** 任务8 AI 生成自定义物品（`v10_2_visualizer.js` L5514-5693）在真机上连续暴露三层问题，分别由 v7.2/v7.3/v7.4 修复。三层串联才完整，单修任一层都不够。
+
+**三层根因 + 修复：**
+1. **调用层（v7.2 `ca4895f`）：** 裸调 `generateRaw({...})` 在 iframe/CDN-script-link 闭包顶层作用域不可达 → `ReferenceError`（被 catch 吞，弹"AI 生成失败: generateRaw is not defined"）。`generateRaw` 是酒馆助手接口（`@types/function/generate.d.ts`），**必须经 `window.TavernHelper.generateRaw`**（或 `parent.TavernHelper`）取引用；`getCore()` 只暴露 `$`/`getDB` 不含 generate 系列。修复：`const th = (window.parent||window).TavernHelper; if (!th||typeof th.generateRaw!=='function') throw...; await th.generateRaw({...})`。**同型经验：** 酒馆助手 `@types/function/*` 接口在 iframe 闭包里都不在顶层可达，一律走 `window.TavernHelper.*`。同时 v7.2 修了货币监听器事件名：`eventSource.on('MESSAGE_RECEIVED',...)` 大写死键永不触发——ST 的 `eventTypes.MESSAGE_RECEIVED` **值是小写** `"message_received"`，emit 用常量值、`on()` 按精确字符串匹配。监听器**永远**用 `eventTypes.XXX` 动态取值，别硬编码大写字面量。
+2. **解析层（v7.3 `a9e9425`）：** `generateRaw` 传了 `json_schema`，但后端不一定支持结构化输出，会用 ` ```json ... ``` ` 代码块包裹或在 JSON 前后附带说明文字 → `JSON.parse` 失败。修复：加 `parseLoose`——先剥离围栏正则 `^```(?:json)?\s*([\s\S]*?)\s*```$`，直接 parse 失败再手动扫描提取首个平衡 `{...}` 对象（处理字符串转义/嵌套）。**经验：** 不能假设后端尊重 `json_schema`，AI 输出永远要做宽松解析兜底。
+3. **数据层（v7.4 `5f085b3`）：** 解析成功的对象仍可能缺漏必填字段（后端不强制 schema 时 AI 可能漏字段）→ `showItemForm` 把 `existingItem` 当编辑模式渲染，name/icon/effect 三个字段没用 `||''` 兜底，**字面渲染 `undefined`**；rarity select 选错默认项。修复：调 `showItemForm` 前按 schema 补全默认值（name→'未命名物品'/icon→'❓'/rarity 枚举校验降级 COMMON/各文本字段非字符串→''/类型特有 usageLimit→1、duration→'短暂'、progress→0.1 clamp [0.05,0.5]）。**注意 id 已有守护**（L5651-5654 `!item.id || !startsWith('custom_')` → 重生成），补全块不必再加（会成死代码）。
+
+**经验总结：** AI 生成链路要按"调用→解析→数据"三层分别容错，每层独立兜底。真机复测时三层要一起验：点 AI生成 → spinner → **预填表单完整可编辑**（非空白/undefined）→ 保存成功。
+
 ## 2026-06-27：抽卡系统“调用未定义函数”系统性 bug（getFragments / showFragmentShop）
 
 **根因模式：** 抽卡系统（`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 抽卡块，约 3950-5450 行）在实现时多处引用了某函数名，但定义用了另一个名、或根本没写定义。webpack production build **不会报错**（未定义的运行时引用在 minify 后才暴露为 ReferenceError），所以“build 通过”不等于“无此 bug”。真机运行时这些 handler 多在 jQuery click 内联里，异常被吞，表现为**按钮点击毫无反应**而非明显报错——必须靠 Chrome DevTools MCP `evaluate_script` 主动 `jQuery('#x').trigger('click')` 捕获，或看 console。
