@@ -4160,12 +4160,14 @@
     const registerCurrencyListeners = () => {
         const host = getHost();
         let eventSource = null;
+        let eventTypes = null;
 
         // 获取 eventSource（与 hotfix 脚本相同逻辑）
         try {
             const context = host.SillyTavern?.getContext?.();
             if (context?.eventSource) {
                 eventSource = context.eventSource;
+                eventTypes = context.eventTypes;
             } else if (host.eventSource) {
                 eventSource = host.eventSource;
             }
@@ -4178,8 +4180,13 @@
             return false;
         }
 
+        // ST 的事件常量 eventTypes.MESSAGE_RECEIVED 的值是小写 "message_received"，
+        // 而非大写字面量。emit 用的是常量值，因此 on() 必须用同一键，否则永不触发。
+        const messageReceivedEvent =
+            (eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received';
+
         // 监听 MESSAGE_RECEIVED — AI 每次回复时触发
-        eventSource.on('MESSAGE_RECEIVED', () => {
+        eventSource.on(messageReceivedEvent, () => {
             try {
                 const context = host.SillyTavern?.getContext?.();
                 if (!context?.chat?.length) return;
@@ -5575,7 +5582,14 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 请设计一个独特且符合世界观的${typeCn}，id 格式为 custom_${currentType}_${Date.now()}。`;
 
             try {
-                const result = await generateRaw({
+                // generateRaw 是酒馆助手接口（@types/function/generate.d.ts），
+                // 必须经 window.TavernHelper 调用，不可裸调（裸调在 iframe 闭包里是未定义标识符）。
+                const th = (window.parent || window).TavernHelper;
+                if (!th || typeof th.generateRaw !== 'function') {
+                    throw new Error('酒馆助手 generateRaw 接口不可用');
+                }
+
+                const result = await th.generateRaw({
                     should_silence: true,
                     ordered_prompts: [
                         { role: 'system', content: systemPrompt },
@@ -5588,10 +5602,16 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                     }
                 });
 
-                // 解析结果
+                // 解析结果（json_schema 模式下返回 JSON 字符串）
                 let item;
                 if (typeof result === 'string') {
-                    item = JSON.parse(result);
+                    try {
+                        item = JSON.parse(result);
+                    } catch (parseErr) {
+                        // 后端可能不支持结构化输出，返回了非 JSON 文本
+                        console.error('AI generation JSON parse failed:', parseErr, 'raw:', result);
+                        throw new Error('AI 返回的内容不是有效的 JSON（当前 AI 后端可能不支持结构化输出）');
+                    }
                 } else {
                     // tool_calls 结果不应出现（json_schema 与 tools 互斥）
                     throw new Error('AI 返回了非预期的格式');
