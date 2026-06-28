@@ -1,5 +1,52 @@
 # Progress Log
 
+## 2026-06-28 CST（✅ AI生成真实闭环完成 + 根因定位 + 本地源码修复待发布）
+
+**状态：** 用户要求完成一次真实点击「AI生成」并确认预填表单可编辑、保存 custom 物品；若有问题则找根因。使用 `scripts/cdp-evaluate.mjs` 连接真页 `http://127.0.0.1:8000/`，当前角色仍为发布版 7.4。
+
+**执行与结果：**
+ - ✅ 真实 UI 点击路径已执行：`#acu-btn-gacha` → `#gacha-custom-editor-btn` → `#custom-ai-gen-btn`。
+ - ⚠️ 首次/二次原样点击均卡在「生成中...」：`TavernHelper.generateRaw:start` 已记录，但 2 分钟以上无 success/error，表单不出现。
+ - ✅ 分层定位：原生 `ctx.generateRaw` 最小非流式请求发到 `/api/backends/chat-completions/generate`，HTTP 200，但返回 `choices[0].message.content=""`、`finish_reason:"length"`，随后 `script.js:4088` 抛 `No message generated`。
+ - ✅ 根因确认：当前 ST API 源为 `chat_completion_source:"custom"`、`custom_url:"https://gcli.ggchan.dev/v1"`、模型 `假流式-gemini-3.1-pro-preview-search`；该源在非流式 quiet/json_schema 路径不可用。`TavernHelper.generateRaw({ should_stream:true, ... })` 最小测试成功返回 `测试成功`。
+ - ✅ 用运行态临时包装器强制 UI 调用加 `should_stream:true` 后，真实 AI生成成功：`generateRaw:success`，耗时 31.6s，返回 JSON 字符串。
+ - ✅ 表单验证：生成项 `血骨缝衣针`，`id=custom_supernatural_1782663030885`，`rarity=EPIC`，描述/效果/代价/剧情钩子/使用次数/持续时间均可编辑；无 `undefined`。AI 返回 `emoji` 而非 `icon`，且漏 `effectDetail`，因此保存前手动将 icon 改为 `🪡`，将 effectDetail 补为“缝合期间可借用被缝肢体的灵异力量，结束后伤口持续渗出尸水并可能吸引相关厉鬼。”
+ - ✅ 保存成功：`localStorage.mfrs_custom_gacha_items.supernatural` 从 0 条变为 1 条，保存 custom 物品 `血骨缝衣针`；表单关闭，编辑器仍可用。
+
+**本地源码修复：**
+ - `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：AI生成 `th.generateRaw(...)` 增加 `should_stream: true`。
+ - 同文件字段补全：接受 `emoji` 作为 `icon` 别名；`effectDetail` 缺失/空白时用 `effect` 回填。
+ - 验证：`node --check src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 通过；首次 `pnpm build` 在沙箱内 `spawn EPERM`，提权重跑后构建成功（仅既有 bundle size warnings）。
+
+**当前停点：** 真页闭环已完成，源码修复已本地落地但未提交/发布。若继续发布，需要走 source commit → push main → bot bundle → `CDN_REF`/`releaseVersion=7.5` → `publish-card` → 提交发布版同步。
+
+## 2026-06-28 CST（CDP 真页验证：发布版 7.4 当前角色卡导入与真实对话基础验证通过）
+
+**状态：** 用户已导入角色卡并进行了真实对话，要求用 Chrome DevTools MCP 验证当前角色卡是否成功。当前 Codex 会话未暴露 `mcp__chrome_devtools__*` 直接工具，按 `PROJECT_FLOW.md` 使用 `scripts/cdp-evaluate.mjs` 裸 CDP 连接 `http://127.0.0.1:9222`，目标页为 `http://127.0.0.1:8000/`。
+
+**验证结果：**
+ - ✅ 当前选中角色：`神秘复苏模拟器发布版`，`avatar=神秘复苏模拟器发布版.png`，`character_version=7.4`，creator=`琳琅`。
+ - ✅ 卡数据：`dataJsonLength=974905`，包含 `7.4`、7 处 `db7e4ba`、8 处 `phase164-4-0-final-baseline-6-28-p5-4-hotfix13`，worldbook entries=383，含 AI生成字段补全信号（`未命名物品`/`短暂`）。
+ - ✅ 运行态 API：`TavernHelper.generateRaw` 存在；`AutoCardUpdaterAPI` 存在；`MysteryDatabaseFrontend` 存在且暴露 `exportCurrentData`、`previewTableChangePlan`、`applyTableChangePlan`、`openDashboard` 等接口。
+ - ✅ 聊天状态：`chat.length=3`，包含首楼、用户消息、AI 回复；用户与 AI 消息均含神秘复苏/厉鬼语境。
+ - ✅ 货币监听器：`localStorage.mfrs_gacha_currency="17"`，说明真实 MESSAGE_RECEIVED 后调查点已增长；UI 抽卡面板显示余额 17、残屑 0。
+ - ✅ 数据库：`exportCurrentData()` 成功，15 个导出对象；`checkTemplateStatus()` 显示 templateLoaded=true、14 张模板表、missingNames=[]、mismatchNames=[]；真实对话后 12 张表已有数据。关键表列头正常：`sheet_supernatural_items` 1 行/9 列、`sheet_clues` 1 行/9 列、`sheet_chronicle` 1 行/6 列、`sheet_collected_rules` 0 行/10 列（空表为当前剧情状态）。
+ - ✅ UI smoke（不触发 AI、不消费抽卡）：点击 `#acu-btn-gacha` 成功打开抽卡面板；`#gacha-single-btn`、`#gacha-ten-btn`、`#gacha-shop-btn`、`#gacha-custom-editor-btn` 存在；点击自定义后 `#custom-ai-gen-btn`、导入、导出、列表和 3 个类型 tab 存在；无捕获到运行时错误；余额/残屑未变化。
+
+**未做/剩余：** 未点击「AI生成」触发真实 `generateRaw`，也未确认 AI 返回后预填表单完整可编辑并保存 custom 物品。因此 v7.4 当前角色卡导入、资源、真实对话、数据库、货币和 UI 基础验证已通过；AI生成三层链路仍需一次真实调用闭环才算完全验收。
+
+## 2026-06-28 CST（planning 自检：主体最新，清理旧残留）
+
+**状态：** 用户询问当前 `planning-with-files` 记录是否最新、是否需要更新。按恢复流程重读 planning skill、`task_plan.md` 关键段、`progress.md` 顶部、运行 `session-catchup.py` 与 `git status --short --branch`。结论：**主状态最新**，顶部 `当前状态` 和最新 progress 均正确指向“发布版 7.4 已上线，仅剩真机复测”；但 `task_plan.md` 中部仍有旧 v7.0/v7.1 残留，会误导后续恢复。
+
+**本轮整理：**
+ - ✅ 更新 `task_plan.md` 当前版本：本地 main/origin main 实际为 `3f511dd`（planning 补记），发布版 7.4 同步提交仍是 `32b4baa`，bot bundle 仍是 `db7e4ba`。
+ - ✅ 删除/改写旧“抽卡面板 bug worktree 待合并”残留，明确 `getFragments`、`showFragmentShop`、货币监听器、AI 生成调用/解析/字段补全均已通过 v7.1~v7.4 发布闭环。
+ - ✅ 更新工作区状态：`src/**`、`scripts/**`、planning 文件在自检前无未提交差异；本地仍有 `dist/**` 构建残留、`.claude/worktrees/*` 工具 gitlink、`.tmp-*` 和截图文件，非当前任务产物，不提交。
+ - ✅ 更新“需要提交的文件”口径：本轮若提交，只提交 `task_plan.md`、`progress.md`；不涉及源码、发布版 PNG、`scripts/publish-card.mjs` 或 `dist/**`。
+
+**当前停点不变：** 真机复测发布版 7.4。导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`，验证 AI 生成三层链路和调查点监听器。
+
 ## 2026-06-28 CST（✅ 发布版 7.4 上线 — AI生成字段补全已发布，剩真机复测）
 
 **状态：** 恢复对话后发现 planning 滞后于 git（planning 停在 v7.1「待 bot bundle」，实际 git 已推到 v7.3）。用户选「先复查字段补全修复」。复查通过（发现 id 已被 L5651-5654 守护，无需补）。走完 v7.4 发布全链路：源码修复 → push → bot bundle `db7e4ba` → publish-card 同步 → push `32b4baa`。CDN 实测发布版 yaml `版本:'7.4'`+7×`@db7e4ba`。**仅剩真机复测。**

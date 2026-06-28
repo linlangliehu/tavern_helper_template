@@ -5591,6 +5591,9 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
                 const result = await th.generateRaw({
                     should_silence: true,
+                    // 当前常用的“假流式”自定义 OpenAI 源在非流式 quiet 请求下会返回空 content；
+                    // 强制走流式路径，避免按钮长时间停在“生成中...”或最终 No message generated。
+                    should_stream: true,
                     ordered_prompts: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: `请设计一个稀有度适中（RARE 或 EPIC）的${typeCn}。直接输出 JSON。` }
@@ -5659,6 +5662,9 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 // 保证预填表单始终有可编辑内容，用户可在此基础上确认/修改。
                 const RARITY_ENUM = ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'];
                 if (typeof item.name !== 'string' || !item.name.trim()) item.name = '未命名物品';
+                if ((typeof item.icon !== 'string' || !item.icon.trim()) && typeof item.emoji === 'string' && item.emoji.trim()) {
+                    item.icon = item.emoji.trim();
+                }
                 if (typeof item.icon !== 'string' || !item.icon.trim()) item.icon = '❓';
                 // rarity：接受 enum 字符串或 {level} 对象；非法/缺失则默认 COMMON
                 if (typeof item.rarity === 'string' && RARITY_ENUM.includes(item.rarity.toUpperCase())) {
@@ -5670,7 +5676,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 }
                 if (typeof item.description !== 'string') item.description = '';
                 if (typeof item.effect !== 'string') item.effect = '';
-                if (typeof item.effectDetail !== 'string') item.effectDetail = '';
+                if (typeof item.effectDetail !== 'string' || !item.effectDetail.trim()) item.effectDetail = item.effect;
                 if (typeof item.cost !== 'string') item.cost = '';
                 if (typeof item.narrativeHook !== 'string') item.narrativeHook = '';
                 if (currentType === 'supernatural') {

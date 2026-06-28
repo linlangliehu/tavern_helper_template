@@ -1,5 +1,19 @@
 # Findings
 
+## 2026-06-28：AI生成在“假流式”自定义 OpenAI 源下必须显式 should_stream=true
+
+**现象：** 发布版 7.4 真页点击自定义编辑器「AI生成」后按钮长时间停在“生成中...”，表单不出现，`TavernHelper.generateRaw:start` 已触发但无 success/error。此前 v7.2 调用层、v7.3 parseLoose、v7.4 字段补全都已发布，问题不在裸调/解析/字段补全三层本身。
+
+**根因证据：**
+- 当前 ST API：`mainApi=openai`、`chat_completion_source=custom`、`custom_url=https://gcli.ggchan.dev/v1`、模型 `假流式-gemini-3.1-pro-preview-search`。
+- 原生 `ctx.generateRaw` 最小非流式请求发到 `/api/backends/chat-completions/generate`，HTTP 200，但响应为 `choices[0].message.content=""`、`finish_reason:"length"`、`completion_tokens:1`，随后 `script.js:4088` 抛 `No message generated`。
+- `TavernHelper.generateRaw` 默认把 `stream` 映射为 `e.should_stream ?? false`；原 AI生成代码没有传 `should_stream`，所以走非流式路径。
+- 同一当前 API 源用 `TavernHelper.generateRaw({ should_stream:true, ... })` 可成功返回文本；UI 路径临时强制 `should_stream:true` 后，真实 AI生成成功返回 JSON，表单出现并可保存。
+
+**修复策略：** AI生成按钮调用 `TavernHelper.generateRaw` 时显式传 `should_stream: true`。这与当前“假流式”源的实际能力一致，也避免非流式 quiet/json_schema 路径返回空 content 或悬挂。
+
+**附带字段兼容：** 真机 AI 返回了 `emoji:"🪡"` 而非 schema 里的 `icon`，且漏 `effectDetail`。v7.4 字段补全能防 undefined，但会显示 `❓` 和空 effectDetail。应在数据层补 `emoji→icon` 别名，并在 `effectDetail` 缺失/空白时用 `effect` 回填，保证预填表单更完整。
+
 ## 2026-06-28：AI 生成容错三层链路（generateRaw → parseLoose → 字段补全）
 
 **背景：** 任务8 AI 生成自定义物品（`v10_2_visualizer.js` L5514-5693）在真机上连续暴露三层问题，分别由 v7.2/v7.3/v7.4 修复。三层串联才完整，单修任一层都不够。
