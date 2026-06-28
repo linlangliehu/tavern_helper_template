@@ -5654,6 +5654,34 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 }
                 item.type = currentType;
 
+                // 字段补全（第三层问题）：AI 返回的 JSON 可能缺漏必填字段，
+                // 直接传给 showItemForm 会出现空白/undefined。这里按 schema 填入合理默认值，
+                // 保证预填表单始终有可编辑内容，用户可在此基础上确认/修改。
+                const RARITY_ENUM = ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'];
+                if (typeof item.name !== 'string' || !item.name.trim()) item.name = '未命名物品';
+                if (typeof item.icon !== 'string' || !item.icon.trim()) item.icon = '❓';
+                // rarity：接受 enum 字符串或 {level} 对象；非法/缺失则默认 COMMON
+                if (typeof item.rarity === 'string' && RARITY_ENUM.includes(item.rarity.toUpperCase())) {
+                    item.rarity = item.rarity.toUpperCase();
+                } else if (item.rarity && typeof item.rarity === 'object' && item.rarity.level) {
+                    // 保留 {level} 形式，showItemForm 会从 GACHA_RARITY 反查 key
+                } else {
+                    item.rarity = 'COMMON';
+                }
+                if (typeof item.description !== 'string') item.description = '';
+                if (typeof item.effect !== 'string') item.effect = '';
+                if (typeof item.effectDetail !== 'string') item.effectDetail = '';
+                if (typeof item.cost !== 'string') item.cost = '';
+                if (typeof item.narrativeHook !== 'string') item.narrativeHook = '';
+                if (currentType === 'supernatural') {
+                    if (item.usageLimit === undefined || item.usageLimit === null) item.usageLimit = 1;
+                    if (typeof item.duration !== 'string' || !item.duration.trim()) item.duration = '短暂';
+                } else {
+                    // progress 应为 0.05-0.5 的数字
+                    if (typeof item.progress !== 'number' || isNaN(item.progress)) item.progress = 0.1;
+                    else item.progress = Math.max(0.05, Math.min(0.5, item.progress));
+                }
+
                 // 打开预填表单让用户确认/修改
                 showItemForm(currentType, item);
 
