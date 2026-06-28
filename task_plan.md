@@ -15,7 +15,7 @@
 
 ## 当前状态
 
-**2026-06-28 发布版 7.4 已上线（CDN @db7e4ba，AI生成真实闭环已完成；本地 v7.5 源码修复待发布）：** 恢复对话发现 planning 滞后于 git（planning 停在 v7.1「待 bot bundle」，实际 git 已推到 v7.3）。用户选「先复查 AI生成字段补全修复」→ 复查通过（id 已被 L5651-5654 守护，无需补）→ 走完 v7.4 发布全链路并 push origin/main。用户已导入发布版 7.4 PNG 并真实对话；CDP 运行态确认当前选中 `神秘复苏模拟器发布版`，`character_version=7.4`，卡数据含 7×`@db7e4ba`，TavernHelper/AutoCardUpdater/MysteryDatabaseFrontend 均挂载，模板 14 表加载无缺失，真实对话后 12 表有数据，调查点为 17。真实点击「AI生成」发现当前 `假流式-gemini-3.1-pro-preview-search` 自定义源在非流式 quiet/json_schema 路径会挂起或返回空 content；临时强制 `should_stream:true` 后 UI 生成成功，表单可编辑，并已保存 custom 物品 `血骨缝衣针` 到 `mfrs_custom_gacha_items.supernatural`。本地源码已补 `should_stream:true`、`emoji→icon` 别名、`effectDetail←effect` 回填，`pnpm build` 通过；**尚未提交/发布为 7.5。**
+**2026-06-29 发布版 7.5 已完成发布同步（CDN @7ac8a28，AI生成流式路径修复）：** 用户已导入发布版 7.4 PNG 并真实对话；CDP 运行态确认当前选中 `神秘复苏模拟器发布版`，`character_version=7.4`，卡数据含 7×`@db7e4ba`，TavernHelper/AutoCardUpdater/MysteryDatabaseFrontend 均挂载，模板 14 表加载无缺失，真实对话后 12 表有数据，调查点为 17。真实点击「AI生成」发现当前 `假流式-gemini-3.1-pro-preview-search` 自定义源在非流式 quiet/json_schema 路径会挂起或返回空 content；临时强制 `should_stream:true` 后 UI 生成成功，表单可编辑，并已保存 custom 物品 `血骨缝衣针` 到 `mfrs_custom_gacha_items.supernatural`。源码修复 `511e86f` 已 push，bot bundle `7ac8a28` 已落地并确认 dist 含 `should_stream:!0`、`emoji`、`effectDetail` 逻辑；发布版 YAML/PNG 已同步到 `版本:'7.5'` + 7×`@7ac8a28`，无旧 `db7e4ba`。发布版同步提交为包含本记录的提交。
 
 **v7.4 修复（AI 生成第三层容错 — 数据层）：** `v10_2_visualizer.js` L5657-5683，在 `showItemForm(currentType, item)` 调用前按 schema 补全 AI 返回 JSON 缺漏的必填字段：name→'未命名物品'、icon→'❓'、rarity 枚举校验降级 COMMON、description/effect/effectDetail/cost/narrativeHook 非字符串→''、supernatural usageLimit→1/duration→'短暂'、clue/knowledge progress 非数字→0.1 且 clamp [0.05,0.5]。保证预填表单始终可编辑。
 
@@ -24,14 +24,14 @@
 2. **v7.3 解析层**（`a9e9425`）：后端在 json_schema 模式下仍用 ` ```json` 包裹输出 → 加 `parseLoose`：剥离围栏 + 提取首个平衡 `{...}` 对象容错解析。
 3. **v7.4 数据层**（`5f085b3`）：解析成功后字段可能缺漏 → 按 schema 填默认值。
 
-**发布链路（v7.4）：** src 修复 `5f085b3` → push origin main → bot bundle `db7e4ba`（CI rebuild dist）→ `publish-card.mjs` CDN_REF `24f51330`→`db7e4ba`、releaseVersion `7.3`→`7.4` → 重打包 PNG → commit `32b4baa` push origin/main。CDN 实测发布版 yaml `版本:'7.4'` + 7×`@db7e4ba`，无残留旧 ref。
+**发布链路（v7.5）：** src 修复 `511e86f` → push origin main → bot bundle `7ac8a28`（CI rebuild dist）→ `publish-card.mjs` CDN_REF `db7e4ba`→`7ac8a28`、releaseVersion `7.4`→`7.5` → 重打包 PNG → 发布同步提交 push origin/main。验证：dist bundle 含 `should_stream:!0`；发布版 YAML `版本:'7.5'` + 7×`@7ac8a28`；PNG `chara`/`ccv3` 元数据均为版本 7.5 + 7×`@7ac8a28`；`verify-worldbook-pollution-gate --expect-mfrs-runtime` 通过（383 entries / 33 disabled / max enabled 5851）。
 
-**下一步（若要发布 v7.5 修复）：**
+**下一步（v7.5 后续）：**
 1. ✅ CDP 连 `http://127.0.0.1:8000/`，确认发布版 7.4 PNG 已导入且当前选中。
 2. ✅ 基础运行态验证：卡版本/资源 ref/API/数据库模板/真实对话落盘/货币监听器/UI 面板均通过。
 3. ✅ 验收 AI 生成三层全打通：点自定义编辑器「AI生成」→ spinner → **预填表单完整可编辑** → 保存成 custom 物品（`血骨缝衣针`）。
-4. ⏳ 发布本地 v7.5 源码修复：提交 source → push main → 等 bot bundle → 更新 `CDN_REF`/`releaseVersion=7.5` → `publish-card` 重打包发布版 PNG → 提交 push。
-5. 可选补测：单抽/十连保底/碎片商店兑换/编辑器增删改/导入导出/写库。
+4. ✅ 发布 v7.5 源码修复：提交 source → push main → 等 bot bundle → 更新 `CDN_REF`/`releaseVersion=7.5` → `publish-card` 重打包发布版 PNG → 提交 push。
+5. 可选补测：重新导入 v7.5 PNG 后做一次 AI生成 smoke，或补测单抽/十连保底/碎片商店兑换/编辑器增删改/导入导出/写库。
 
 ---
 
@@ -78,7 +78,8 @@
 **2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
-- 本地 main = origin/main = `3f511dd`（v7.4 planning 补记；发布版 7.4 同步提交为 `32b4baa`），bot bundle `db7e4ba`，自动 tag `v0.0.293`
+- origin/main = 发布版 7.5 同步提交（AI生成流式修复），source fix `511e86f`，bot bundle `7ac8a28`，自动 tag `v0.0.296`
+- v7.5 修复链路：`511e86f`（fix should_stream + emoji/effectDetail 兼容）→ `7ac8a28`（bot bundle）→ 发布版 7.5 同步提交
 - v7.4 修复链路：`5f085b3`（fix 字段补全）→ `db7e4ba`（bot bundle）→ `32b4baa`（发布版 7.4 同步）
 - v7.3 链路：`a9e9425`（fix parseLoose）→ `24f5133`（bot bundle）→ `e0b60cb`（发布版 7.3 同步）
 - v7.2 链路：`ca4895f`（fix 货币监听器+AI引用）→ `1206e44`（bot bundle）→ `285502f`（发布版 7.2 同步）
@@ -87,7 +88,7 @@
 
 **当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 抽卡面板 bug 修复（`0ef4201`）+ AI 生成容错三层（v7.2 调用层 `ca4895f` / v7.3 解析层 `a9e9425` / v7.4 数据层 `5f085b3`）。
 
-**待修 bug：无阻断项。** AI 生成三层容错已发布上线，真实调用/保存闭环已完成；但发现当前自定义源需要流式生成，本地源码已修，待走 v7.5 发布链路。
+**待修 bug：无阻断项。** AI 生成三层容错已发布上线，真实调用/保存闭环已完成；当前自定义源需要流式生成的问题已通过 v7.5 发布链路修复。
 
 **已关闭的旧阻断项：** `getFragments` 未定义、`showFragmentShop` 未定义、货币监听器事件名大小写、AI 生成裸调 `generateRaw`、AI 生成 JSON 解析和字段缺漏均已分别通过 v7.1~v7.4 发布。不要从旧流水里的“待合并/待 bot bundle”描述恢复任务。
 
@@ -121,12 +122,13 @@
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
 
-**当前进行中（2026-06-28，发布 7.4 已上线，AI生成真实闭环完成，本地 v7.5 修复待发布）：AI 生成容错三层全部发布 + 真机验收收尾**
+**当前进行中（2026-06-29，发布 7.5 已同步）：AI 生成容错三层全部发布 + 流式路径修复已发布**
 1. ✅ **v7.1** 抽卡面板修复发布（`4af0d88`，CDN `@90065ab`）。
 2. ✅ **v7.2** 调用层修复发布（`285502f`，CDN `@1206e44`）：货币监听器事件名大小写 + AI 生成 `generateRaw` 改经 `window.TavernHelper` 调用。
 3. ✅ **v7.3** 解析层修复发布（`e0b60cb`，CDN `@24f5133`）：AI 生成 JSON 加 `parseLoose` 容错（剥离 markdown 代码块 + 提取首个平衡 `{...}`）。
 4. ✅ **v7.4** 数据层修复发布（`32b4baa`，CDN `@db7e4ba`）：AI 生成字段补全（缺漏必填字段填默认值，保证预填表单可编辑）。
 5. ✅ **真机复测收尾**：当前角色卡导入、真实对话、数据库模板/落盘、货币监听器、抽卡面板、自定义编辑器 UI smoke、AI生成真实调用和保存 custom 物品均已通过。发现并本地修复 `should_stream:true` / `emoji→icon` / `effectDetail` 回填问题，待发布为 v7.5。
+6. ✅ **v7.5** 流式路径修复发布（发布同步提交，CDN `@7ac8a28`）：AI生成显式 `should_stream:true`，兼容 `emoji→icon` 与 `effectDetail←effect`。
 
 ## 抽卡系统优化任务清单（2026-06-26 建立）
 
@@ -234,7 +236,7 @@
 
 ## 需要提交的文件
 
-**当前待提交（2026-06-29 v7.5 源码修复）：** 第一阶段提交 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`、`task_plan.md`、`progress.md`、`findings.md`，用于发布 AI生成流式路径与字段兼容修复。不要提交本地 `dist/**` 构建残留；等待 push 后由 bot bundle Action 重建。第二阶段等 bot bundle 落地后，再提交 `scripts/publish-card.mjs` 与发布版同步产物。
+**本轮发布同步提交范围（2026-06-29 v7.5）：** `scripts/publish-card.mjs`、`src/神秘复苏模拟器发布版/index.yaml`、`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`、`task_plan.md`、`progress.md`。源码修复已在 `511e86f`，dist 已由 bot bundle `7ac8a28` 重建；不要提交主工作区本地 `dist/**` 构建残留。
 
 **注意：抽卡面板 bug 修复代码已完成发布**——旧 worktree/旧流水里的 `fix/gacha-getfragments-undefined`、`fdb6a74`、`待合并` 描述均为历史信息；当前有效发布线以 v7.1~v7.4 版本变更索引和顶部 `当前状态` 为准。
 

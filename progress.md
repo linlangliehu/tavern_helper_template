@@ -1,5 +1,27 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ v7.5 发布链路完成：AI生成流式路径修复）
+
+**状态：** 用户要求继续完成 v7.5 发布链路。按 `planning-with-files` 恢复上下文后确认：真页发布版 7.4 AI生成闭环已完成，待发布的是本地 `should_stream:true`、`emoji→icon`、`effectDetail←effect` 源码修复。
+
+**执行与结果：**
+ - ✅ 复核工作区：当前主工作区有无关 dirty（本地 `dist/**` 构建残留、`.claude/worktrees/*` gitlink、`.tmp-*`、截图），未纳入提交。
+ - ✅ gate：`git diff --check` 通过；`node --check src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 通过。
+ - ✅ 精确提交 source + planning：`511e86f fix(gacha): AI生成强制流式并兼容字段别名`，提交文件为 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`、`task_plan.md`、`progress.md`、`findings.md`。
+ - ✅ push origin/main 后等待 bot bundle：`7ac8a28 [bot] bundle`，tag `v0.0.296`。验证 dist：`should_stream=1`、`should_stream:!0=1`、`emoji=6`、`effectDetail=38`。
+ - ✅ 为避免主工作区 dirty 干扰，创建干净 worktree `D:\project\tavern_helper_template_v75_publish` 基于 `origin/main` 做发布同步。
+ - ✅ 更新 `scripts/publish-card.mjs`：`CDN_REF db7e4ba → 7ac8a28`，`releaseVersion 7.4 → 7.5`。
+ - ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`：同步 15 处链接，打包发布版 PNG 成功。
+ - ✅ 发布验证：发布版 YAML `版本:'7.5'`，7 处 `@7ac8a28`，旧 `db7e4ba` 为 0；PNG `chara`/`ccv3` 元数据均为版本 7.5、7 处 `@7ac8a28`、旧 `db7e4ba` 为 0。
+ - ✅ `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png"` 通过：383 entries，33 disabled，max enabled 5851。
+
+**小错误与处理：**
+ - PNG 元数据自定义 Node 检查第一次把中文路径经 PowerShell stdin 传入，Node 侧读成 `??????????` 导致 `ENOENT`。已改用 PowerShell 环境变量传递 `PNG_PATH` 后重跑通过；结论只基于重跑后的正确路径。
+
+**发布提交：** 本发布同步提交 `fix(publish): 发布版 7.5 同步AI生成流式修复 (CDN @7ac8a28)`。
+
+**后续可选：** 用户重新导入 v7.5 PNG 后，可做一次低频 AI生成 smoke，确认当前自定义源在正式发布卡里不再卡在「生成中...」。
+
 ## 2026-06-28 CST（✅ AI生成真实闭环完成 + 根因定位 + 本地源码修复待发布）
 
 **状态：** 用户要求完成一次真实点击「AI生成」并确认预填表单可编辑、保存 custom 物品；若有问题则找根因。使用 `scripts/cdp-evaluate.mjs` 连接真页 `http://127.0.0.1:8000/`，当前角色仍为发布版 7.4。
