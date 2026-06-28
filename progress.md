@@ -1,5 +1,27 @@
 # Progress Log
 
+## 2026-06-28 CST（🔧 真机复测发现双 bug + 源码修复已 push，等 bot bundle → 发布版 7.2）
+
+**状态：** 用户导入发布版 7.1 PNG + 数轮真实对话后，CDP 定位到两个真机 bug，已在源码修复并 push origin/main（`ca4895f`）。**等 `[bot] bundle` → `CDN_REF` bump 到新 commit + 版本 7.2 → `pnpm run publish-card` 重打包发布版。**
+
+**两个 bug 根因（均已 CDP 坐实）：**
+ - 🔴 **Bug 1 调查点永不增长**：`registerCurrencyListeners()`（v10_2_visualizer.js L4182）硬编码 `eventSource.on('MESSAGE_RECEIVED', ...)` 用大写字面量。但 ST 的 `eventTypes.MESSAGE_RECEIVED` **值是小写** `"message_received"`，ST 内部 emit 用常量值，`on()` 按精确字符串匹配 → 挂在大写键上的监听器**永不触发**。铁证：eventSource internal keys 同时存在 `message_received`（正常工作的，hotfix 等）和 `MESSAGE_RECEIVED`（只有我们这一个无人 emit 的死键）。21 条消息后 `mfrs_gacha_currency="0"`、`mfrs_gacha_currency_log=null`。
+ - 🔴 **Bug 2 AI 生成无反应**：L5578 裸调 `generateRaw({...})`，但 `generateRaw` 是酒馆助手接口（`@types/function/generate.d.ts`），**必须经 `window.TavernHelper.generateRaw(...)` 取得**。visualizer 闭包既无 import 也无解构 `TavernHelper`，裸调 → ReferenceError（被 catch 吞后弹"AI 生成失败: generateRaw is not defined"）。`getCore()` 只暴露 `$`/`getDB`，不含 generate 系列。
+
+**修复（worktree `fix-currency-aigen`，commit `ca4895f`，已 ff push origin/main）：**
+ - ✅ Bug 1：`registerCurrencyListeners()` 改用 `const messageReceivedEvent = (eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received'` 动态取值，与 hotfix 范式一致。
+ - ✅ Bug 2：AI 生成 handler 先取 `const th = (window.parent || window).TavernHelper; if (!th || typeof th.generateRaw !== 'function') throw new Error('酒馆助手 generateRaw 接口不可用');` 再 `await th.generateRaw({...})`。
+ - ✅ `pnpm build` production 通过（webpack compiled successfully）。源码语法检查 OK。dist bundle grep 确认两处修复落地（`messageReceivedEvent` + `.TavernHelper`）。
+ - ✅ 仅提交源码（dist 留给 bot bundle 重建）。
+
+**AI 生成走哪个 API：** `generateRaw` 未传 `custom_api` → 用**当前 ST 连接源**（玩家酒馆里配的 API）。不自带独立 API，不绕过酒馆代理。
+
+**当前停点：** 等 GitHub Action 跑出 `[bot] bundle` commit。然后：`publish-card.mjs` `CDN_REF` 推到新 bot bundle commit + `releaseVersion` 7.1→7.2 → `pnpm run publish-card -- 神秘复苏模拟器发布版` → 提交 push → 真机复测（这次要真正触发 MESSAGE_RECEIVED 看调查点增长 + 真正点 AI 生成看能否出 JSON）。
+
+**关键经验：**
+ - ST 事件名：`eventTypes.MESSAGE_RECEIVED` 的**值**是小写 `"message_received"`，但其他常量（如 `generation_ended`）也全小写。监听器**永远**用 `eventTypes.XXX` 动态取值，不要硬编码大写字面量。
+ - 酒馆助手 `@types/function/*` 接口在 iframe/CDN-script-link 环境下**不在闭包顶层作用域直接可达**，必须经 `window.TavernHelper.<func>`（或 `parent.TavernHelper`）取引用。visualizer 的 `getCore()` 没暴露 generate 系列，这是已知缺口。
+
 ## 2026-06-28 CST（✅ 发布版 7.1 上线 — 抽卡面板修复已发布，剩真机复测）
 
 **状态：** 恢复对话后推进到发布。修复 `fdb6a74`（merge `0ef4201`）已 push origin/main → 触发新 bot bundle `90065ab` → 发布版同步 7.1（`4af0d88`）。CDN 实测确认修复落在发布版。**仅剩真机复测（计划「下次继续」第 7 步）未做。**

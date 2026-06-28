@@ -15,7 +15,23 @@
 
 ## 当前状态
 
-**2026-06-28 发布 7.1 已上线（剩真机复测）：** 上轮恢复后已推进到发布。push 本地 main（`0ef4201`）→ 触发新 bot bundle `90065ab`（CDN 实测含 `碎片商店`/`灵异残屑`，旧 `@5201ca2` 只有 `showFragmentShop` 裸调用无定义）→ `publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、版本 `7.0`→`7.1` → `pnpm run publish-card` 重打包 PNG（7.8 MB，15 处链接替换）→ commit `4af0d88` push origin/main。CDN 实测发布版 yaml `版本:'7.1'` + 7×`@90065ab`，bot 自动打 tag `v0.0.287`。**仅剩真机复测未做。**
+**2026-06-28 真机复测发现双 bug + 已修复并推送 origin/main（待 bot bundle）：** 用户导入发布版 7.1 PNG 做真机复测，发现两个 bug。已用 Chrome DevTools MCP 定位根因并坐实，在 worktree `fix-currency-aigen` 修复，commit `ca4895f` 已 fast-forward 推送到 origin/main（`ee30eb4` → `ca4895f`），**正在等 GitHub Action bot 重建 dist**。
+
+1. **调查点（货币）永远不增长** —— `registerCurrencyListeners()`（L4182）写死 `eventSource.on('MESSAGE_RECEIVED', ...)`（大写字面量），但 ST 事件常量 `eventTypes.MESSAGE_RECEIVED` 的值是小写 `"message_received"`，emit 用的是常量值，`on()` 按精确键匹配 → 监听器挂在一个没人 emit 的死键上，21 条消息后 currencyLS="0"。CDP 铁证：eventSource internal keys 里同时有 `message_received`（正常工作）和 `MESSAGE_RECEIVED`（仅我们这个死键）。**修复**：改用 `(eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received'` 动态取值（与 hotfix 一致）。
+2. **AI 生成按钮无反应** —— L5578 裸调 `generateRaw({...})`，但 `generateRaw` 是酒馆助手接口（`@types/function/generate.d.ts`），只能通过 `window.TavernHelper.generateRaw(...)` 调用，visualizer 闭包内未取引用 → ReferenceError 被 try/catch 吞掉弹"AI 生成失败: generateRaw is not defined"。CDP 铁证：`window.TavernHelper.generateRaw` 存在（在 genKeys 列表），但裸标识符不可达；`getCore()` 只暴露 `$`/`getDB`。**修复**：`const th = (window.parent||window).TavernHelper; th.generateRaw({...})` + 不可用防御。
+
+**两修复均属同一类系统性 bug（与 findings.md 记录的"抽卡系统调用未定义/未正确引用的函数"模式一致：构建通过 ≠ 运行时无 bug）。** 修复点：`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` L4163-4189（货币监听器）+ L5584-5589（AI 生成）。webpack production 构建通过，dist bundle 含两处修复（grep 确认）。
+
+**下一步（bot bundle 落地后执行）：**
+1. 等 origin/main 出现 `[bot] bundle` 提交。
+2. 改 `scripts/publish-card.mjs` 的 `CDN_REF` → 新 bot bundle commit、`releaseVersion` `7.1`→`7.2`。
+3. `pnpm run publish-card -- 神秘复苏模拟器发布版` 重打包发布版 PNG。
+4. 提交 + push 发布版同步。
+5. 真机复测：调查点随 AI 消息增长（+1/条，关键词额外 +5/+10/+15）、AI 生成能调通（走酒馆当前 API 源，不自带独立 API）。
+
+---
+
+**2026-06-28 发布 7.1 已上线（真机复测中）：** push 本地 main（`0ef4201`）→ 触发新 bot bundle `90065ab` → `publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、版本 `7.0`→`7.1` → 重打包 PNG（7.8 MB）→ commit `4af0d88` push origin/main。**真机复测发现上述双 bug，已在 `ca4895f` 修复。**
 
 **当前停点 = 计划「下次继续」第 7 步（真机复测）：** ① 合并 ✅（`0ef4201`）→ ② push+bot bundle ✅（`90065ab`）→ ③ CDN_REF+7.1 ✅ → ④ 重打包发布版 ✅（`4af0d88`）→ ⑤ 提交 push 发布版同步 ✅ → ⑥ 真机复测 ❌未做。
 
