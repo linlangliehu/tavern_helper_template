@@ -15,9 +15,9 @@
 
 ## 当前状态
 
-**2026-06-28 恢复更新（修正 planning 与 git 的偏差）：** 上轮 planning 写「修复待合并未 push」，但 git 实际已合并到**本地 main**（merge commit `0ef4201`，把 fix 分支 `fdb6a74` 合入），**仅未 push 到 origin**。`origin/main` 停在 `6f1cd8f`（planning docs），本地 main 领先 2 commit（`fdb6a74` + `0ef4201`）。源码已校验：`v10_2_visualizer.js` 6002 行，`getFragments` 裸调用=0（全改 `getGachaFragments`）、`showFragmentShop` 已定义（L4522）、`resetGachaPity`/`exchangeWithFragments` 均在。**发布版未同步**：`publish-card.mjs` `CDN_REF` 仍=`5201ca2`（含 bug 的旧 bot bundle）、`releaseVersion` 仍=`7.0`，未触发新 bot bundle、未重打包、未真机复测。
+**2026-06-28 发布 7.1 已上线（剩真机复测）：** 上轮恢复后已推进到发布。push 本地 main（`0ef4201`）→ 触发新 bot bundle `90065ab`（CDN 实测含 `碎片商店`/`灵异残屑`，旧 `@5201ca2` 只有 `showFragmentShop` 裸调用无定义）→ `publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、版本 `7.0`→`7.1` → `pnpm run publish-card` 重打包 PNG（7.8 MB，15 处链接替换）→ commit `4af0d88` push origin/main。CDN 实测发布版 yaml `版本:'7.1'` + 7×`@90065ab`，bot 自动打 tag `v0.0.287`。**仅剩真机复测未做。**
 
-**当前停点 = 计划「下次继续」第 3 步：** ① 合并 ✅（`0ef4201` 本地）→ ② push origin main 触发 bot bundle ❌未做 → ③ CDN_REF 推新 bot bundle + 版本 7.1 ❌ → ④ 重打包发布版 ❌ → ⑤ 提交 push 发布版同步 ❌ → ⑥ 真机复测 ❌。
+**当前停点 = 计划「下次继续」第 7 步（真机复测）：** ① 合并 ✅（`0ef4201`）→ ② push+bot bundle ✅（`90065ab`）→ ③ CDN_REF+7.1 ✅ → ④ 重打包发布版 ✅（`4af0d88`）→ ⑤ 提交 push 发布版同步 ✅ → ⑥ 真机复测 ❌未做。
 
 ---
 
@@ -42,9 +42,9 @@
 **2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
-- 本地 main = `0ef4201`（merge 抽卡面板修复）；origin/main = `6f1cd8f`（planning docs）——本地领先 2 commit 未 push
-- 修复已合入本地 main：`fdb6a74`（fix）+ `0ef4201`（merge）
-- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（7.4 MB，版本 7.0，打包 2026-06-27 22:50）——**此 PNG 仍含两个 bug，push+bot bundle 后必须重打包为 7.1**
+- 本地 main = origin/main = `4af0d88`（发布版 7.1 同步抽卡面板修复），bot bundle `90065ab`，自动 tag `v0.0.287`
+- 修复链路：`fdb6a74`（fix）→ `0ef4201`（merge）→ `90065ab`（bot bundle）→ `4af0d88`（发布版 7.1 同步）
+- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（7.8 MB，版本 7.1，打包 2026-06-28 11:25）——含抽卡面板修复，CDN `@90065ab`
 - 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
 
 **当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 发布版 7.0（`669e6b2`）+ **抽卡面板 bug 修复（待合并 `fdb6a74`）**。
@@ -83,10 +83,10 @@
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
 
-**当前进行中（2026-06-28 恢复，停在 push 前）：抽卡系统真机验收收尾 + 阻断 bug 修复发布**
+**当前进行中（2026-06-28，发布 7.1 已上线，剩真机复测）：抽卡系统真机验收收尾 + 阻断 bug 修复发布**
 1. ✅ **合并修复** `fix/gacha-getfragments-undefined`（`fdb6a74`）→ 本地 main（merge `0ef4201`）。修复内容：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` 碎片商店弹窗。源码校验通过。
-2. ⏳ **push origin main** 触发 bot bundle Action 重建 dist（本地领先 2 commit 未 push）。
-3. ⏳ **重打包发布版**：等 `[bot] bundle` 落地 → `publish-card.mjs` `CDN_REF` 推到新 bot bundle commit、`releaseVersion` 7.0→7.1，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，提交推送。
+2. ✅ **push origin main** 触发 bot bundle Action 重建 dist → 新 bot bundle `90065ab`（CDN 实测含 `碎片商店`+`灵异残屑`，旧 `@5201ca2` 只有 `showFragmentShop` 裸调用无定义）。
+3. ✅ **重打包发布版**：`publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、`releaseVersion` `7.0`→`7.1`，`pnpm run publish-card` 替换 15 处链接 + 重打包 PNG（7.8 MB），commit `4af0d88` push origin/main。CDN 实测发布版 yaml `版本:'7.1'` + 7×`@90065ab`，bot 自动打 tag `v0.0.287`。
 4. ⏳ **真机复测**（9 任务功能验收，详见上方「下次继续」第 7 步）：🎁 打开 / 单抽十连（含保底）/ 碎片商店兑换 / 自定义编辑器增删改 / 导入导出 JSON / AI 生成 / 十连折扣徽章 / 写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
 5. ✅ 真机验收前置：用户已导入发布版 7.0 PNG 并完成数轮真实对话；🎁 按钮无反应 bug 已 CDP 定位并修复（已合并本地 main）。
 
@@ -175,7 +175,8 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
-| **`gacha-panel-fix`（待合并）** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复** | worktree `fix/gacha-getfragments-undefined` `fdb6a74`（基于 `669e6b2`）：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` | 沿用 `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | **未合并未 push；build 通过；待合并→bot bundle→发布版 7.1** |
+| **`v7.1`** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复发布** | fix `fdb6a74` → merge `0ef4201` → bot bundle `90065ab` → 发布版同步 `4af0d88`；`publish-card.mjs` `CDN_REF=90065ab`/`releaseVersion=7.1`；发布版 PNG 7.8 MB（2026-06-28 11:25）；CDN 实测 yaml `版本:'7.1'`+7×`@90065ab`，bundle 含 `碎片商店`/`灵异残屑` | `@90065ab` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.287` | **已 push origin/main；仅剩真机复测** |
+| **`gacha-panel-fix`（已合并）** | **🎁 抽卡面板无法打开 + 碎片商店缺失修复** | worktree `fix/gacha-getfragments-undefined` `fdb6a74`（基于 `669e6b2`）：`getFragments`→`getGachaFragments`（3 处）+ 补全 `showFragmentShop()` | 沿用 `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已合并 `0ef4201` → 已发布 v7.1（见上行） |
 | **`v7.0`** | 发布版 CDN ref 推到 `@5201ca2`（任务1~9 全功能）+ 版本号 6.30→7.0 | `publish-card.mjs` `CDN_REF=5201ca2`/`releaseVersion=7.0`；commit `669e6b2`；发布版 PNG 7.4 MB（2026-06-27 22:50） | `@5201ca2` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` | 已 push origin/main；**真机验收发现 🎁 面板 bug，见上行** |
 | **`gacha-9tasks`** | 抽卡系统优化 9 任务全部实现（目录外置+双层合并/写库预校验/碎片/被动货币/十连折扣/自定义编辑器/导入导出/AI生成/设计哲学） | `329d143`（任务1）… `581996b`（任务9）+ bot bundle `5201ca2`；`v10_2_visualizer.js` 5906 行 | `@5201ca2` | 已合并 origin/main；构建通过；**真机验收未闭环** |
 | **`row_id-final-fix`** | **🎉 row_id 问题彻底解决** + 数据库前端交互优化 | vendor `52b2e62` + fallback `aa50677` + CDN ref `36082bc` + 前端优化 `11b9cfc`；合并 `52b6416` | 沿用 hotfix13 marker | **2026-06-25 真页验证 14/14 表 row_id 全部正常** |

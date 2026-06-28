@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-06-28 CST（✅ 发布版 7.1 上线 — 抽卡面板修复已发布，剩真机复测）
+
+**状态：** 恢复对话后推进到发布。修复 `fdb6a74`（merge `0ef4201`）已 push origin/main → 触发新 bot bundle `90065ab` → 发布版同步 7.1（`4af0d88`）。CDN 实测确认修复落在发布版。**仅剩真机复测（计划「下次继续」第 7 步）未做。**
+
+**本轮完成：**
+ - ✅ push 本地 main `0ef4201` → origin，触发 bot bundle Action → 新 bundle `90065ab`（构建 success，自动 tag `v0.0.287`）。
+ - ✅ CDN 实测对比新旧 bundle 确认修复落地：`@90065ab` 含 `碎片商店`(1)+`灵异残屑`(9)（showFragmentShop 弹窗已补全，minify 后标识符重命名故函数名 grep=0 属正常）；旧 `@5201ca2` 只有 `showFragmentShop`(2) 裸调用无定义（即炸的根因）+ `灵异残屑`(6)。
+ - ✅ `publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、`releaseVersion` `7.0`→`7.1`，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，15 处链接替换 + PNG 重打包（7.8 MB，2026-06-28 11:25）。
+ - ✅ rebase 吸收 bot bundle `90065ab`（discard 本地 dist 构建残留，bot bundle 才是 dist source-of-truth），stash pop 恢复发布版编辑，commit `4af0d88` push origin/main。
+ - ✅ CDN 实测发布版 yaml（`@4af0d88`）：`版本:'7.1'` + 7×`@90065ab`，无残留 `5201ca2`。
+ - ✅ 更新 task_plan.md：当前状态/当前版本/当前进行中/版本变更索引（新增 v7.1 行，gacha-panel-fix 标为已合并已发布）。
+
+**当前停点：** 计划「下次继续」第 7 步——真机复测。需要用户酒馆（`http://127.0.0.1:8000/`）导入发布版 7.1 PNG，用 Chrome DevTools MCP 验收：🎁 打开 / 单抽十连（含 ★★★+ 保底）/ 碎片商店兑换 / 自定义编辑器增删改 / 导入导出 JSON / AI 生成 / 十连折扣徽章 / 写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
+
+**关键经验：**
+ - jsdelivr 路径含中文必须 URL-encode（`urllib.parse.quote`），否则 HTTP 400 Bad Request；`testingcf.jsdelivr.net/gh/<repo>@<commit>/<encoded-path>` 可直接验证任一 commit 的 dist 内容。
+ - minified bundle 里函数名被重命名，验证修复是否落地应 grep **UI 文案字符串**（`碎片商店`/`灵异残屑`）或对比新旧 bundle 差异，而非 grep 源码函数名。
+ - bot bundle 重建 dist 后，本地 `dist/**` 改动是构建残留应 discard，让本地 dist 跟随 origin 的 bot bundle commit（rebase 前先 stash/discard 本地 dist）。
+
 ## 2026-06-28 CST（恢复对话 + 校正 planning 与 git 偏差）
 
 **状态：** 用户要求用 planning-with-files 恢复并核对任务进度。读取 task_plan/progress/findings + git 状态后发现 **planning 与 git 实际有偏差**：planning 写「修复待合并未 push」，但 git 显示修复已通过 merge commit `0ef4201` 合入**本地 main**，仅未 push。
