@@ -63,26 +63,19 @@
 - **任务1 实施完成：** 物品目录外置 + 双层合并架构 + resetGachaPity 未定义 bug 修复。
 - **新增文件：** `src/神秘复苏模拟器/数据/gacha-items.json` — 27 件物品定义的 source-of-truth。
 - **新增函数：**
-  - `resetGachaPity(type)` — 保底重置函数（'rare'→pity.rare=0，'epic'→pity.epic=0，'mythic'→全部重置）
+  - `resetGachaPity(type)` — 保底重置函数（rare→pity.rare=0，epic→pity.epic=0，mythic→全部重置）。修复前该函数被调用 6 次但全文件无定义，每次保底重置抛 ReferenceError。
   - `getAllGachaItemDefinitions()` — 合并 builtin（只读）∪ custom（localStorage）返回完整物品列表
   - `getCustomGachaItems()` / `setCustomGachaItems()` — localStorage 自定义物品层读写
   - `addCustomGachaItem(type, itemDef)` / `removeCustomGachaItem(type, itemId)` — 自定义物品 CRUD
-- **重构函数：** `buildGachaPool()` 改为消费 `getAllGachaItemDefinitions()` 合并后的目录，而非旧硬编码数组。
+- **重构函数：** `buildGachaPool()` 改为消费 `getAllGachaItemDefinitions()` 合并后的目录，而非旧硬编码数组。抽卡池权重：SUPERNATURAL 池纯灵异物品；ARCHIVE 池线索权重×2、其余×0.5；PATTERN 池知识权重×2、其余×0.5；ALL 池均匀（基础权重用 item.rarity.probability）。
+- **保底机制：** 十连保底必出 ★★★（pity.rare 到 10 重置）、50 抽保底必出 ★★★★（pity.epic 到 49/50 重置）、100 抽保底必出 ★★★★★★（pity.total 到 99/100 重置）。
 - **删除代码：** 旧的 SUPERNATURAL_ITEMS / CLUE_ITEMS / KNOWLEDGE_ITEMS 硬编码数组（~370 行），改为注释指向新架构。
-- **架构要点：** 因 visualizer 经 CDN script-link 加载无法加载外部 JSON，builtin 目录以 JS 对象字面量内嵌，同时维护镜像 JSON 供人工编辑。
-
-## 2026-06-26：抽卡系统架构研究 + resetGachaPity 未定义 bug（任务1 研究结论）
-
-- **resetGachaPity 未定义 bug：** `v10_2_visualizer.js` 中 `resetGachaPity('rare'|'epic'|'mythic')` 被调用 6 次（行 4541/4544/4547/4581/4584/4587），但全文件无定义。每次抽到 ★★★/★★★★/★★★★★★ 触发保底重置时抛 ReferenceError。修复方案：实现该函数——'rare'→`pity.rare=0`，'epic'→`pity.epic=0`，'mythic'→`pity.total=0` 且 `pity.epic=0`、`pity.rare=0`。
-- **抽卡代码定位（v10_2_visualizer.js，3949-5131 行，约 1183 行）：** GACHA_RARITY(3951-3959，6 档)、GACHA_ITEM_TYPE(3962-3966)、SUPERNATURAL_ITEMS(3969-4228，19 件)、CLUE_ITEMS(4231-4280，4 件)、KNOWLEDGE_ITEMS(4283-4332，4 件)、GACHA_CURRENCY(4335-4349)、货币/保底读写(4351-4417)、GACHA_POOL_TYPE(4420-4425)、buildGachaPool(4428-4476)、performSingleGacha(4478-4508)/performTenGacha(4510-4552)、syncGachaResultToDatabase(5030-5127)。
-- **visualizer 加载方式（决定 JSON 外置方案）：** `scripts/publish-card.mjs` 的 `syncDirs = ['第一条消息','系统提示词','对话示例','世界书','数据库']`，**不含「脚本」目录**。故 v10_2_visualizer.js 经角色卡 YAML 的 CDN script-link 加载，不走文件同步。外置 JSON 目录无法作为独立文件在 runtime 加载，**必须以 JS 对象字面量内嵌进 visualizer**（镜像 JSON 文件供人工编辑）。
-- **3 张目标表 DB 列头（JSON targetColumns 设计依据，syncGachaResultToDatabase 写入依据）：**
-  - sheet_supernatural_items: `['row_id','物品名称','物品描述','物品效果','稀有度','使用次数','持续时间','获得途径','备注']`
-  - sheet_clues: `['row_id','线索编码','线索描述','相关厉鬼','重要程度','发现时间','获得途径','可见摘要']`
-  - sheet_collected_rules: `['row_id','规律名称','规律描述','杀人规律','触发条件','破解方法','完成度','相关厉鬼','可见摘要']`
-- **双层合并架构（参考骰子商店 jerryzmtz/my-tavern-scripts）：** builtin（只读，内置 27 件物品）∪ custom（localStorage 持久化，按 id 覆盖 builtin 字段或新增自定义物品）。runtime = builtin ∪ custom，经 `getAllGachaItemDefinitions()` 提供。GachaItemDefinition schema：`{id,name,type,quality/rarity,description,icon,targetTable,targetColumns,customFields}`，灵异物品额外 `effect/effectDetail/usageLimit/duration`，线索/知识额外 `progress`。这是任务 6（自定义物品 UI 编辑器）、任务 7（目录导入导出）的架构基础。
-- **抽卡池权重逻辑（buildGachaPool）：** SUPERNATURAL 池=纯灵异物品；ARCHIVE 池=线索权重×2、其余×0.5；PATTERN 池=知识权重×2、其余×0.5；ALL 池=均匀。基础权重用 `item.rarity.probability`。
-- **保底机制（performSingleGacha/performTenGacha）：** 十连保底必出 ★★★（计数器 pity.rare，到 10 重置）、50 抽保底必出 ★★★★（pity.epic，到 49/50 重置）、100 抽保底必出 ★★★★★★（pity.total，到 99/100 重置）。GACHA_RARITY.X.level 用于判断档位。
+- **架构要点（决定 JSON 外置方案）：** visualizer 经角色卡 YAML 的 CDN script-link 加载，不走文件同步（publish-card.mjs syncDirs 不含「脚本」目录），故 builtin 目录必须以 JS 对象字面量内嵌，镜像 JSON 文件供人工编辑。
+- **双层合并架构（参考 jerryzmtz/my-tavern-scripts）：** builtin（只读，内置 27 件）∪ custom（localStorage，按 id 覆盖或新增）。GachaItemDefinition schema：`{id,name,type,quality/rarity,description,icon,targetTable,targetColumns,customFields}`，灵异物品额外 `effect/effectDetail/usageLimit/duration`，线索/知识额外 `progress`。任务 6（自定义物品 UI 编辑器）、任务 7（目录导入导出）的架构基础。
+- **3 张目标表 DB 列头（syncGachaResultToDatabase 写入依据）：**
+  - sheet_supernatural_items: `[row_id,物品名称,物品描述,物品效果,稀有度,使用次数,持续时间,获得途径,备注]`
+  - sheet_clues: `[row_id,线索编码,线索描述,相关厉鬼,重要程度,发现时间,获得途径,可见摘要]`
+  - sheet_collected_rules: `[row_id,规律名称,规律描述,杀人规律,触发条件,破解方法,完成度,相关厉鬼,可见摘要]`
 
 ## 2026-06-25：row_id 问题彻底解决 - 14/14 表全部使用数字 row_id
 

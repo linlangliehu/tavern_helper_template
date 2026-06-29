@@ -24,93 +24,14 @@
 - 第四优先（事件委托替代逐个绑定）：✅ v8.0 — 28 data-mfrs-action + 3 容器级委托 handler，.off('click').on('click') 降至 0
 
 **历史评估记录（保留追溯）：**
-
-**2026-06-29 源码核验 + 四优先级改进评估：** 逐项核验 v10_2_visualizer.js（6263 行）和 dist bundle，确认 v7.2~v7.7 修复全部落地。用户提出四优先级改进建议，当前完成度：
-
-四优先级改进全部完成并发布上线（v7.6~v8.0）。详细追踪见下方「四优先级改进追踪」表。
-
-下一步待用户决定继续做哪一项。
-下一步：发布第二优先级（source commit → push main → bot bundle → CDN_REF bump → publish-card → 发布版同步），或继续做第三/四优先级。
-
-**2026-06-29 发布版 7.5 已完成发布同步（CDN @7ac8a28，AI生成流式路径修复）：** 用户已导入发布版 7.4 PNG 并真实对话；CDP 运行态确认当前选中 `神秘复苏模拟器发布版`，`character_version=7.4`，卡数据含 7×`@db7e4ba`，TavernHelper/AutoCardUpdater/MysteryDatabaseFrontend 均挂载，模板 14 表加载无缺失，真实对话后 12 表有数据，调查点为 17。真实点击「AI生成」发现当前 `假流式-gemini-3.1-pro-preview-search` 自定义源在非流式 quiet/json_schema 路径会挂起或返回空 content；临时强制 `should_stream:true` 后 UI 生成成功，表单可编辑，并已保存 custom 物品 `血骨缝衣针` 到 `mfrs_custom_gacha_items.supernatural`。源码修复 `511e86f` 已 push，bot bundle `7ac8a28` 已落地并确认 dist 含 `should_stream:!0`、`emoji`、`effectDetail` 逻辑；发布版 YAML/PNG 已同步到 `版本:'7.5'` + 7×`@7ac8a28`，无旧 `db7e4ba`。发布版同步提交为包含本记录的提交。
-
-**v7.4 修复（AI 生成第三层容错 — 数据层）：** `v10_2_visualizer.js` L5657-5683，在 `showItemForm(currentType, item)` 调用前按 schema 补全 AI 返回 JSON 缺漏的必填字段：name→'未命名物品'、icon→'❓'、rarity 枚举校验降级 COMMON、description/effect/effectDetail/cost/narrativeHook 非字符串→''、supernatural usageLimit→1/duration→'短暂'、clue/knowledge progress 非数字→0.1 且 clamp [0.05,0.5]。保证预填表单始终可编辑。
-
-**AI 生成容错三层链路（v7.2~v7.4 串联）：**
-1. **v7.2 调用层**（`ca4895f`）：`generateRaw` 裸调 → `(window.parent||window).TavernHelper.generateRaw` + 接口不可用防御；同时修货币监听器事件名大小写（`MESSAGE_RECEIVED` 大写死键 → `(eventTypes&&eventTypes.MESSAGE_RECEIVED)||'message_received'` 动态取值）。
-2. **v7.3 解析层**（`a9e9425`）：后端在 json_schema 模式下仍用 ` ```json` 包裹输出 → 加 `parseLoose`：剥离围栏 + 提取首个平衡 `{...}` 对象容错解析。
-3. **v7.4 数据层**（`5f085b3`）：解析成功后字段可能缺漏 → 按 schema 填默认值。
-
-**发布链路（v7.5）：** src 修复 `511e86f` → push origin main → bot bundle `7ac8a28`（CI rebuild dist）→ `publish-card.mjs` CDN_REF `db7e4ba`→`7ac8a28`、releaseVersion `7.4`→`7.5` → 重打包 PNG → 发布同步提交 push origin/main。验证：dist bundle 含 `should_stream:!0`；发布版 YAML `版本:'7.5'` + 7×`@7ac8a28`；PNG `chara`/`ccv3` 元数据均为版本 7.5 + 7×`@7ac8a28`；`verify-worldbook-pollution-gate --expect-mfrs-runtime` 通过（383 entries / 33 disabled / max enabled 5851）。
-
-**下一步（v7.5 后续）：**
-1. ✅ CDP 连 `http://127.0.0.1:8000/`，确认发布版 7.4 PNG 已导入且当前选中。
-2. ✅ 基础运行态验证：卡版本/资源 ref/API/数据库模板/真实对话落盘/货币监听器/UI 面板均通过。
-3. ✅ 验收 AI 生成三层全打通：点自定义编辑器「AI生成」→ spinner → **预填表单完整可编辑** → 保存成 custom 物品（`血骨缝衣针`）。
-4. ✅ 发布 v7.5 源码修复：提交 source → push main → 等 bot bundle → 更新 `CDN_REF`/`releaseVersion=7.5` → `publish-card` 重打包发布版 PNG → 提交 push。
-5. 可选补测：重新导入 v7.5 PNG 后做一次 AI生成 smoke，或补测单抽/十连保底/碎片商店兑换/编辑器增删改/导入导出/写库。
-
 ---
-
-**2026-06-28 真机复测发现双 bug + 已修复并推送 origin/main（待 bot bundle）：** 用户导入发布版 7.1 PNG 做真机复测，发现两个 bug。已用 Chrome DevTools MCP 定位根因并坐实，在 worktree `fix-currency-aigen` 修复，commit `ca4895f` 已 fast-forward 推送到 origin/main（`ee30eb4` → `ca4895f`），**正在等 GitHub Action bot 重建 dist**。
-
-1. **调查点（货币）永远不增长** —— `registerCurrencyListeners()`（L4182）写死 `eventSource.on('MESSAGE_RECEIVED', ...)`（大写字面量），但 ST 事件常量 `eventTypes.MESSAGE_RECEIVED` 的值是小写 `"message_received"`，emit 用的是常量值，`on()` 按精确键匹配 → 监听器挂在一个没人 emit 的死键上，21 条消息后 currencyLS="0"。CDP 铁证：eventSource internal keys 里同时有 `message_received`（正常工作）和 `MESSAGE_RECEIVED`（仅我们这个死键）。**修复**：改用 `(eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received'` 动态取值（与 hotfix 一致）。
-2. **AI 生成按钮无反应** —— L5578 裸调 `generateRaw({...})`，但 `generateRaw` 是酒馆助手接口（`@types/function/generate.d.ts`），只能通过 `window.TavernHelper.generateRaw(...)` 调用，visualizer 闭包内未取引用 → ReferenceError 被 try/catch 吞掉弹"AI 生成失败: generateRaw is not defined"。CDP 铁证：`window.TavernHelper.generateRaw` 存在（在 genKeys 列表），但裸标识符不可达；`getCore()` 只暴露 `$`/`getDB`。**修复**：`const th = (window.parent||window).TavernHelper; th.generateRaw({...})` + 不可用防御。
-
-**两修复均属同一类系统性 bug（与 findings.md 记录的"抽卡系统调用未定义/未正确引用的函数"模式一致：构建通过 ≠ 运行时无 bug）。** 修复点：`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` L4163-4189（货币监听器）+ L5584-5589（AI 生成）。webpack production 构建通过，dist bundle 含两处修复（grep 确认）。
-
-**下一步（bot bundle 落地后执行）：**
-1. 等 origin/main 出现 `[bot] bundle` 提交。
-2. 改 `scripts/publish-card.mjs` 的 `CDN_REF` → 新 bot bundle commit、`releaseVersion` `7.1`→`7.2`。
-3. `pnpm run publish-card -- 神秘复苏模拟器发布版` 重打包发布版 PNG。
-4. 提交 + push 发布版同步。
-5. 真机复测：调查点随 AI 消息增长（+1/条，关键词额外 +5/+10/+15）、AI 生成能调通（走酒馆当前 API 源，不自带独立 API）。
-
----
-
-**2026-06-28 发布 7.1 已上线（真机复测中）：** push 本地 main（`0ef4201`）→ 触发新 bot bundle `90065ab` → `publish-card.mjs` `CDN_REF` `5201ca2`→`90065ab`、版本 `7.0`→`7.1` → 重打包 PNG（7.8 MB）→ commit `4af0d88` push origin/main。**真机复测发现上述双 bug，已在 `ca4895f` 修复。**
-
-**当前停点 = 计划「下次继续」第 7 步（真机复测）：** ① 合并 ✅（`0ef4201`）→ ② push+bot bundle ✅（`90065ab`）→ ③ CDN_REF+7.1 ✅ → ④ 重打包发布版 ✅（`4af0d88`）→ ⑤ 提交 push 发布版同步 ✅ → ⑥ 真机复测 ❌未做。
-
----
-
-**2026-06-27 真机验收发现两个阻断 bug，已修复（已合并本地 main，未 push）：** 发布版 7.0（CDN `@5201ca2`）真机导入后，点击导航栏 🎁 抽卡按钮无反应。Chrome DevTools MCP 定位到两个“调用未定义函数”bug（与历史 `resetGachaPity` 同型）：
-1. `getFragments()` 未定义（正确定义名是 `getGachaFragments`）——面板渲染余额那行即抛 `ReferenceError: getFragments is not defined`，🎁 按钮点击毫无反应。共 3 处调用（面板渲染 + 单抽/十连后刷新）。
-2. `showFragmentShop()` 被调用 2 处但从未定义——碎片商店按钮点击会抛 ReferenceError（任务3 碎片系统 UI 漏实现商店弹窗）。
-
-**修复位置（已合并本地 main）：** fix 分支 `fix/gacha-getfragments-undefined`（基于 `669e6b2`，commit `fdb6a74`）已通过 merge commit `0ef4201` 合入本地 main（2026-06-28 校验）。源码校验通过（见上「2026-06-28 恢复更新」），原 worktree 仍保留在 `.claude/worktrees/fix-getfragments`：
-- `getFragments` → `getGachaFragments`（3 处 replace_all）
-- 补全 `showFragmentShop()` 碎片商店弹窗（全物品按稀有度定价 MYTHIC:500 ~ BASIC:5、实时余额展示、兑换交互、已拥有/残屑不足状态、兑换后同步主面板余额）
-- `pnpm install` + `pnpm build` 通过（webpack compiled successfully）
-
-**下次继续（恢复后直接执行，无需重新研究）：**
-1. （可选，推荐）先用 CDP 在 worktree 就地验证 🎁 能打开 + 碎片商店能兑换——避免合上去发现还有问题。酒馆页面 `http://127.0.0.1:8000/` 已可被 Chrome DevTools MCP 连接。
-2. 合并 `fix/gacha-getfragments-undefined` → main（快速合并流程，见 PROJECT_FLOW.md「分支合并策略」）。
-3. `git push origin main` 触发 bot bundle Action 重建 dist（无需手动 build dist）。
-4. 等 `[bot] bundle` 提交落地后，改 `scripts/publish-card.mjs` 的 `CDN_REF` 为新 bot bundle commit、`releaseVersion` 7.0→7.1。
-5. 跑 `pnpm run publish-card -- 神秘复苏模拟器发布版` 重打包发布版 PNG。
-6. 提交 + push 发布版同步结果。
-7. 真机复测：🎁 打开、单抽/十连（含 ★★★+ 保底触发）、碎片商店兑换、自定义编辑器、导入导出、AI 生成、写库（`exportTableAsJson()` 查 sheet_supernatural_items）。
-
-**2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
 - origin/main = 发布版 8.0 同步提交（事件委托替代逐个绑定），source refactor `fcaab0f`，bot bundle `47df33c`，自动 tag `v0.0.307`，发布同步 `4218c64`
-- v8.0 重构链路：`fcaab0f`（refactor 事件委托 — 碎片商店/抽卡面板/自定义编辑器）→ `47df33c`（bot bundle）→ 发布版 8.0 同步提交 `4218c64`
-- origin/main = 发布版 7.9 同步提交（固定状态栏精简 8→4），source feat `52c56c1`，bot bundle `3a77e4c`，自动 tag `v0.0.305`
-- v7.9 修复链路：`52c56c1`（feat 状态栏精简）→ `3a77e4c`（bot bundle）→ 发布版 7.9 同步提交
-- origin/main = 发布版 7.8 同步提交（window.MFRS 公开抽卡 API），source feat `aa0b5ce`，bot bundle `911e163`，自动 tag `v0.0.303`
-- v7.8 修复链路：`aa0b5ce`（feat window.MFRS 公开 API）→ `911e163`（bot bundle）→ 发布版 7.8 同步提交
-- origin/main = 发布版 7.7 同步提交（AI生成可操作toast），source fix `a638fc0`，bot bundle `5757f05`，自动 tag `v0.0.301`
-- v7.7 修复链路：`a638fc0`（feat AI生成可操作toast，字段自动修复提示+查看高亮）→ `5757f05`（bot bundle）→ 发布版 7.7 同步提交
-- origin/main = 发布版 7.6 同步提交（MFRSDialog 替换原生 alert/confirm），source fix `1f0f4aa`，bot bundle `a85c968`，自动 tag `v0.0.298`
-- v7.6 修复链路：`1f0f4aa`（feat MFRSDialog 替换 alert/confirm）→ `a85c968`（bot bundle）→ 发布版 7.6 同步提交
-- v7.5 修复链路：`511e86f`（fix should_stream + emoji/effectDetail 兼容）→ `7ac8a28`（bot bundle）→ 发布版 7.5 同步提交
-- v7.4 修复链路：`5f085b3`（fix 字段补全）→ `db7e4ba`（bot bundle）→ `32b4baa`（发布版 7.4 同步）
-- v7.3 链路：`a9e9425`（fix parseLoose）→ `24f5133`（bot bundle）→ `e0b60cb`（发布版 7.3 同步）
-- v7.2 链路：`ca4895f`（fix 货币监听器+AI引用）→ `1206e44`（bot bundle）→ `285502f`（发布版 7.2 同步）
 - 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（版本 8.0，CDN `@47df33c`）
 - 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
+- 逐版本提交链路详见下方「版本变更索引」表
+
 
 **当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 抽卡面板 bug 修复（`0ef4201`）+ AI 生成容错三层（v7.2 调用层 `ca4895f` / v7.3 解析层 `a9e9425` / v7.4 数据层 `5f085b3`）+ v7.5 流式路径（`511e86f`）+ v7.6 MFRSDialog（`1f0f4aa`）+ v7.7 可操作toast（`a638fc0`）+ v7.8 window.MFRS API（`aa0b5ce`）+ v7.9 状态栏精简（`52c56c1`）+ v8.0 事件委托（`fcaab0f`）。
 

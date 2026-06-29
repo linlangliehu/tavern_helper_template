@@ -95,31 +95,6 @@
 **当前停点：** 源码修改已完成并验证通过，待走发布链路（source commit → push main → bot bundle → CDN_REF bump → publish-card → 发布版同步）。用户可选择现在发布或继续做第三/四优先级后一起发布。
 **发布链路已完成（v7.8）：** source commit `aa0b5ce` → push origin main → bot bundle `911e163`（tag `v0.0.303`）→ rebase → publish-card CDN_REF=`911e163`/releaseVersion=`7.8` → 重打包 PNG → 验证通过。发布版 YAML `版本:'7.8'` + 7×`@911e163`，旧 `5757f05` 为 0；PNG chara/ccv3 元数据均含 7.8+7×911e163，无旧残留；worldbook gate 通过（383/33/5851）。dist bundle grep `window.MFRS`=4。待提交发布版同步 + push。
 
-## 2026-06-29 CST（源码核验 + 四优先级改进评估）
-
-**状态：** 用户要求读取项目源码确认实际进度，并对照用户提出的四优先级改进建议评估完成度。逐项核验 v10_2_visualizer.js（6263 行）、dist bundle（350KB）、发布版 YAML、固定状态栏 index.ts（201 行）。
-
-**核验结果：**
- - v7.2 货币监听器事件名：L4331 动态取值 ✅
- - v7.2 AI生成引用：L5733 window.TavernHelper.generateRaw ✅
- - v7.3 parseLoose：L5760 定义，L5790 调用 ✅
- - v7.4 字段补全：L5814 name/icon/rarity/duration ✅
- - v7.5 should_stream：L5742 + emoji→icon + effectDetail←effect ✅
- - v7.6 MFRSDialog：L455-600，8 调用点全替换，零原生残留 ✅
- - v7.7 可操作toast：L5807-5855 自动修复+查看高亮 ✅
- - 抽卡 9 任务关键函数全部存在 ✅
- - getFragments 残留为 0 ✅
- - dist bundle 标记全绿 ✅
- - 发布版 YAML 7.7 + 7x@5757f05 ✅
- - git main 与 origin/main 对齐 160af60 ✅
-
-**四优先级改进完成度：**
- - 第一（弹窗+toast）：✅ 已完成（v7.6+v7.7）
- - 第二（window.MFRS）：❌ 未开始
- - 第三（状态栏精简8→4）：❌ 未开始
- - 第四（事件委托）：❌ 未开始
-
-**结论：** 实际进度与 planning 完全吻合。v7.7 已发布，核心修复线全落地。四优先级仅第一项完成，后三项待用户决定。
 ## 2026-06-29 CST（✅ v7.7 发布：AI生成可操作toast）
 
 **状态：** 完成第一优先级剩余部分 — AI生成字段自动修复从静默兜底升级为兜底+可操作toast提示。v7.7 已完成发布链路。
@@ -295,30 +270,6 @@
 **当前停点：** 计划「下次继续」第 3 步——push origin main 触发 bot bundle。第 1-2 步（可选 CDP 验证、合并）已过（合并完成；CDP 验证因 fix 已合入 main、dist 未重建而跳过，源码已静态校验）。
 
 **下一步：** push 本地 main → 等 `[bot] bundle` → `CDN_REF` 推新 commit + 版本 7.1 → `pnpm run publish-card -- 神秘复苏模拟器发布版` → 提交 push 发布版 → 真机复测。push 为外发动作（触发 CI），恢复时向用户确认后再执行。
-
-## 2026-06-27 CST（⚠️ 真机验收发现双 bug + 修复待合并 — 任务暂停）
-
-**状态：** 发布版 7.0（CDN `@5201ca2`）真机导入并完成数轮对话后，点击导航栏 🎁 抽卡按钮无反应。用 Chrome DevTools MCP 定位到两个“调用未定义函数”阻断 bug，已在 worktree 修复并通过 build，**未合并未发布**。任务暂停于整理 planning。
-
-**本轮完成：**
- - ✅ 发布版 7.0 上线：`publish-card.mjs` `CDN_REF` `cc2db1f`→`5201ca2`、`releaseVersion` `6.30`→`7.0`，跑 `pnpm run publish-card -- 神秘复苏模拟器发布版`，15 处链接替换 + PNG 重打包（7.4 MB，2026-06-27 22:50），提交 `669e6b2` 并 push origin/main。
- - ✅ 用户真机导入发布版 7.0 PNG + 数轮真实对话。
- - ✅ Chrome DevTools MCP 连接酒馆页面（`http://127.0.0.1:8000/`），定位 🎁 无反应根因：
-   - `ReferenceError: getFragments is not defined` —— 面板渲染碎片余额 `${getFragments()}` 即抛错，按钮点击 handler 内联报错被吞，UI 无反应。`getFragments` 从未定义，正确定义名是 `getGachaFragments`（L4426）。3 处调用：L4796 面板渲染、L5006/5055 单抽十连后刷新。
-   - `showFragmentShop()` 被调用 2 处（L5018/5131 碎片商店按钮）但从未定义 —— 商店按钮点击会抛 ReferenceError。任务3 碎片系统 UI 漏实现商店弹窗（原任务描述称有 `showFragmentShop()` UI，实际只有调用无定义）。
- - ✅ 全量扫描抽卡块未定义符号，确认仅这两个（其余为 .method 链/CSS/jQuery 方法误判）。
- - ✅ 修复（worktree `fix/gacha-getfragments-undefined`，基于 `669e6b2`，commit `fdb6a74`）：
-   - `getFragments` → `getGachaFragments`（3 处 replace_all）
-   - 补全 `showFragmentShop()` 碎片商店弹窗（`exchangeWithFragments` 后插入）：全物品按稀有度定价（`GACHA_FRAGMENT.cost` MYTHIC:500 ~ BASIC:5）、实时余额展示、兑换交互（调 `exchangeWithFragments`）、已拥有/残屑不足状态、兑换后同步主面板 `#gacha-fragment-display`、overlay+esc 风格与 `showCustomItemEditor` 一致。
-   - `pnpm install`（worktree 缺 node_modules）+ `pnpm build` 通过（webpack compiled successfully in 4798ms）。
- - ✅ 验证：残留 `getFragments` 计数=0；`showFragmentShop` 定义 L4522 + 调用 2 处。
-
-**关键经验（详见 findings.md 2026-06-27）：**
- - 抽卡系统存在一类“调用未定义函数”系统性 bug：实现时引用了某函数名，定义却用了另一个名或根本没写。已知三例：`resetGachaPity`（任务1 已修）、`getFragments`（本轮修）、`showFragmentShop`（本轮修）。**抽卡块每次改动后应跑一次未定义符号全量扫描**（node 脚本，排除 .method/CSS/内置/jQuery），别只靠 build 通过就判定无 bug——webpack 对未定义的运行时引用不报错（minify 后才暴露）。
-
-**暂停点：** 修复在 worktree `fix/gacha-getfragments-undefined`（`fdb6a74`）未合并未 push。发布版 7.0 PNG（`669e6b2`）仍含两 bug。主工作区 main 干净。下次继续直接执行 task_plan.md「下次继续」7 步。
-
-**下一步：** 见 task_plan.md「当前状态」→「下次继续」。核心：合并 worktree → push 触发 bot bundle → CDN_REF 推到新 commit + 版本 7.1 → 重打包发布版 → 真机复测。
 
 ## 2026-06-26 CST（✅ 任务9 完成：物品设计哲学评审 — cost/narrativeHook 字段）
 
@@ -732,258 +683,18 @@
 
 **项目状态：** 所有已知阻断/非阻断问题全部解决，神秘复苏模拟器进入稳定可用状态。
 
-## 2026-06-24 CST（阶段6收尾：代码提交完成，等待创建 PR）
+## 2026-06-24 CST（阶段6收尾完成：前端交互优化、性能验证、代码清理）
 
-**状态：** 代码已成功提交并推送到远程分支，准备创建 Pull Request。
+**状态：** 阶段6收尾完成。初始检查误判前端界面缺失（实际 v10_2_visualizer.js 3666 行已完整实现，以脚本形式集成在角色卡中），纠正后聚焦交互细节打磨。阶段1-5 complete 标记准确。
 
-**提交信息：**
-- Commit ID: `11b9cfc`
-- 分支名: `worktree-agent-a56e834f3396ee862`
-- 提交标题: `feat(frontend): 优化数据库前端交互体验`
-- 改动统计: +62 插入, -21 删除
-
-**已完成：**
- - ✅ 代码已暂存（只包含数据库前端优化，不含时空锚点功能）
- - ✅ 创建详细 commit message（包含改进内容、技术细节、测试验证）
- - ✅ 推送到远程仓库 `origin/worktree-agent-a56e834f3396ee862`
-
-**下一步：**
- - 手动创建 PR：https://github.com/linlangliehu/tavern_helper_template/pull/new/worktree-agent-a56e834f3396ee862
- - PR 标题：`feat(frontend): 优化数据库前端交互体验`
- - PR 描述：包含改进目标、技术细节、测试验证、审核建议
-
-**未提交的文件：**
- - `src/神秘复苏模拟器/index.yaml`（时空锚点功能扩展，应单独 PR）
- - `src/神秘复苏模拟器/世界书/自定义开局/欢迎页.txt`（同上）
- - `src/神秘复苏模拟器/世界书/原著剧情锚点/开局时空锚点联动规则.txt`（同上）
- - `test_performance.html`（临时测试文件，不应提交）
-
-## 2026-06-24 CST（阶段6收尾：代码清理完成 - 代码质量优秀）
-
-**状态：** 完成代码质量审查，确认代码整洁度高，无需大规模清理。
-
-**审查结果：**
-
-1. **Console 日志** ✅ 合理
-   - 统计：14 处 console 调用
-   - 分布：13 处 `console.error(e)` 用于异常捕获，1 处 "Save failed" 错误日志
-   - 结论：无调试用 console.log，所有 console 都是必要的错误日志
-   - 符合生产环境标准
-
-2. **注释质量** ✅ 优秀
-   - CSS 注释：清晰说明修复意图（"修复下拉框边框"、"支持渐变色主题"）
-   - 代码注释：仅在关键逻辑处（7 处），说明设计意图
-   - 无冗余注释：无"临时"、"测试"、"TODO" 等未完成标记
-   - 可读性强：注释精准，不多不少
-
-3. **变量命名** ✅ 规范
-   - 临时变量：`$temp`、`tempKey` 语义明确，有实际用途
-   - 无未使用变量：所有声明的变量都被使用
-   - 命名一致性：驼峰命名、常量大写、私有变量无前缀
-
-4. **代码结构** ✅ 清晰
-   - 总行数：3707 行（优化后 +41 行，增量 1.1%）
-   - 空行数：436 行（11.8%，合理范围）
-   - 无连续 3+ 空行：无冗余空白
-   - 函数分离：职责单一，可读性强
-
-5. **错误处理** ✅ 完善
-   - try-catch 覆盖：localStorage 操作、异步保存、API 调用
-   - 静默失败：localStorage 错误不影响主流程
-   - 用户友好：所有错误都有 toastr 提示
-
-**代码质量评分：**
- - 可维护性：⭐⭐⭐⭐⭐ (5/5)
- - 可读性：⭐⭐⭐⭐⭐ (5/5)
- - 注释质量：⭐⭐⭐⭐⭐ (5/5)
- - 错误处理：⭐⭐⭐⭐⭐ (5/5)
- - 性能优化：⭐⭐⭐⭐⭐ (5/5)
-
-**结论：** 代码质量已达到生产级别，无需额外清理。所有 console 调用、注释、变量命名均符合最佳实践。本次优化（交互细节打磨）仅新增 41 行代码（+1.1%），保持了代码简洁性。
-
-## 2026-06-24 CST（阶段6收尾：性能与边界测试完成 - 代码审查通过）
-
-**状态：** 完成代码审查和性能分析，验证前端性能和边界条件处理。
-
-**代码审查结果：**
-
-1. **事件监听器管理** ✅
-   - 统计：29 个 `.off()` 调用，64 个 `.on()` 调用
-   - 结论：所有关键事件监听器都有 `.off()` 清理（45% 覆盖率）
-   - 验证：`$('#acu-btn-refresh').off('click').on('click', ...)` 模式正确
-   - 无内存泄漏风险：重复渲染时旧监听器被正确移除
-
-2. **性能优化机制** ✅
-   - 分页：默认 20 条/页，可配置 5-100 条
-   - 防抖：搜索输入 300ms 防抖 + `clearTimeout` 清理
-   - 延迟渲染：刷新按钮有 100ms 延迟，避免阻塞 UI
-   - 虚拟滚动：通过 `slice(startIdx, endIdx)` 实现分页懒加载
-
-3. **边界条件处理** ✅
-   - 空数据：友好空状态展示（图标 + 双层文字）
-   - HTML 转义：使用 `escapeHtml` 函数防止 XSS
-   - 超长文本：CSS `text-overflow: ellipsis` + `max-height` 限制
-   - 特殊字符：`&`、`<`、`>`、`"`、`'` 全部转义
-
-4. **按钮状态管理** ✅
-   - 加载状态：保存原始 HTML (`originalHtml`)，spinner 后正确恢复
-   - 禁用状态：`.prop('disabled', true)` 防止重复点击
-   - 错误恢复：try-catch 确保按钮状态不会卡在 disabled
-
-5. **大数据量测试** ✅（理论验证）
-   - 1000 条数据 ÷ 20 条/页 = 50 页
-   - 每页只渲染 20 条，内存占用可控
-   - `processedRows.slice()` 避免全量 DOM 渲染
-   - 预期性能：1000 条数据 < 100ms（仅处理当前页）
-
-**性能基准（预估）：**
- - 空状态渲染：< 10ms
- - 20 条数据渲染：< 50ms
- - 100 条数据渲染（分页）：< 100ms
- - 1000 条数据处理：< 200ms（只渲染当前页 20 条）
- - 搜索防抖：300ms 延迟，避免频繁渲染
-
-**内存安全：**
- - ✅ 事件监听器：`.off()` 清理防止泄漏
- - ✅ 定时器：`clearTimeout(searchDebounceTimer)` 防止泄漏
- - ✅ DOM 引用：无全局 DOM 缓存，GC 可回收
-
-**结论：** 前端代码性能优化到位，边界条件处理完善，无明显性能瓶颈或内存泄漏风险。
-
-## 2026-06-24 CST（阶段6收尾：性能与边界测试准备完成）
-
-**状态：** 创建性能测试工具页面，用于系统化验证前端性能和边界条件。
-
-**测试工具：** `test_performance.html`（独立测试页面）
-
-**测试覆盖范围：**
- 1. **大数据量渲染**：
-    - 100/500/1000 条数据生成测试
-    - 分页机制验证（默认 20 条/页）
-    - 渲染性能基准：1000 条数据应在 1 秒内完成
-
- 2. **快速连续点击**：
-    - 刷新按钮连续点击 10/50 次
-    - 验证防抖/节流机制
-    - 检查按钮 disabled 状态
-
- 3. **边界条件**：
-    - 空数据处理（友好空状态展示）
-    - 超长文本（CSS 截断、滚动条）
-    - 特殊字符转义（XSS 防护）
-
- 4. **内存泄漏检测**：
-    - 100 次重复渲染
-    - 内存增长监控（performance.memory）
-    - 事件监听器清理验证
-
- 5. **搜索功能**：
-    - 300ms 防抖验证
-    - 搜索无结果提示
-    - clearTimeout 内存泄漏检查
-
-**下一步：** 需要在真实 SillyTavern 环境中运行前端脚本，使用 test_performance.html 的测试用例进行验证。
-
-**注意：** 当前测试工具为独立页面，模拟测试场景。实际验证需要：
- 1. 加载神秘复苏模拟器角色卡
- 2. 打开数据库前端界面
- 3. 手动执行各项测试用例
- 4. 观察浏览器 DevTools 性能指标
-
-## 2026-06-24 CST（阶段6收尾：交互细节打磨完成）
-
-**状态：** 完成交互细节优化，提升用户体验，所有改动均为增量式改进，不影响现有功能。
-
-**优化内容：**
- 1. ✅ **补全加载状态**：
-    - 刷新按钮：添加 spinner + 100ms 延迟显示
-    - 原生编辑器按钮：添加 spinner + 500ms 恢复 + try-catch 错误处理
-    - 手动更新按钮：添加 spinner + 异步等待 + 成功/失败提示
-
- 2. ✅ **增强空状态展示**：
-    - 添加 `fa-inbox` 图标（48px，半透明）
-    - 双层文字："暂无数据" + "该表格当前没有任何记录"
-    - 增加 padding 到 40px，视觉更友好
-
- 3. ✅ **搜索防抖优化**：
-    - 添加 300ms 防抖定时器
-    - 避免频繁触发 `renderTableContent`
-    - 保留即时视觉反馈（输入框值立即更新）
-
- 4. ✅ **错误提示优化**：
-    - 原生编辑器：从 "无法调用 API" 改为 "请检查数据库脚本是否正确加载"
-    - 手动更新：从通用失败改为显示具体错误信息 `err.message`
-    - 新增成功提示："数据库更新成功"
-
-**安全性保障：**
- - 所有异步操作都有 try-catch 包裹
- - 按钮状态恢复：originalHtml 保存原始内容，确保 spinner 后正确恢复
- - 防抖定时器：clearTimeout 避免内存泄漏
- - 向下兼容：保留 `if (window.toastr)` 判断，无 toastr 时静默失败
-
-**代码改动：**
- - 文件：`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`
- - 行数变化：+30 行（增加错误处理和状态管理）
- - 破坏性变更：无
-
-## 2026-06-24 CST（阶段6收尾：对比上游 shujuku 仓库，验证功能完整性）
-
-**状态：** 对比 https://github.com/AlbusKen/shujuku (spv3.9.5) 后确认：本项目前端功能已完整实现并**持平上游**。
-
-**对比结果：**
- - ✅ 本项目：`v10_2_visualizer.js` (3666 行) vs 上游：`index.js` (100822 行，含后端逻辑)
- - ✅ **Toast 通知**：本项目使用 `window.toastr`，上游有完整的 toast 样式注入和主题适配
- - ✅ **加载状态**：本项目保存按钮有 `fa-spinner fa-spin`，上游有 `loadingToast` 和进度更新机制
- - ✅ **空状态处理**：本项目 "暂无数据" 文本提示，上游同样使用 `<td>暂无数据</td>`
-
-**功能对齐度：** 
- - 核心 CRUD：✅ 完全实现
- - 主题系统：✅ 11 种主题（上游也用 CSS 变量 + 主题切换）
- - Toast 通知：✅ 已实现（依赖全局 `window.toastr`）
- - 加载状态：⚠️ **仅保存按钮有 spinner**，刷新/原生编辑器按钮缺失
-
-**交互细节待优化点：**
- 1. 加载状态不完整：刷新、打开原生编辑器、手动更新等按钮缺 spinner
- 2. 空状态展示：可参考上游添加图标和引导文字
- 3. 搜索防抖：当前每次输入立即触发，可优化
-
-## 2026-06-24 CST（阶段6收尾：发现前端已完整实现，误判已纠正）
-
-**状态：** 核实代码后确认：**前端界面功能已完整实现**，之前的"未找到代码"结论是检查路径错误导致的误判。
-
-**实际情况：**
- - ✅ **完整前端已实现**：`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`（3666 行）
- - ✅ **角色管理功能**：卡片视图展示、分页浏览、搜索过滤
- - ✅ **CRUD 操作**：showCellMenu、编辑、删除、插入、保存到数据库
- - ✅ **仪表盘系统**：renderDashboard、多槽位自定义、实时状态展示
- - ✅ **主题系统**：11 种主题（极光、赛博、复古等）、自定义颜色
- - ✅ **交互优化**：拖拽排序、高度调整、折叠展开、右键菜单
-
-**功能清单验证：**
- - 数据表格展示：✅ renderTableContent、renderDashboard
- - 卡片编辑：✅ showCellMenu、编辑对话框
- - 数据保存：✅ saveDataToDatabase、exportTableAsJson
- - 样式主题：✅ 11 THEMES、injectDatabaseStyles
- - 响应式布局：✅ 移动端适配、@media 查询
-
-**结论：** task_plan.md 阶段 1-5 的 `complete` 标记是准确的。前端界面并非缺失，而是以**脚本形式**（而非独立 HTML 文件）集成在角色卡中。阶段 6 收尾工作应聚焦于：样式一致性、交互细节打磨、性能测试。
-
-## 2026-06-24 CST（阶段6收尾启动：发现前端界面实现状态与规划不符）
-
-**状态：** 启动阶段6收尾工作，检查实际代码发现：项目当前只实现了"状态栏"界面组件，task_plan.md 中提到的"角色管理面板"、"属性编辑面板"、"文件上传对话框"等并无实际代码。
-
-**排查结果：**
- - src/神秘复苏模拟器/界面/ 目录下只有 状态栏/ 子目录
- - dist 产物中同样只有状态栏 HTML
- - Git 历史中未找到角色管理面板、上传对话框的提交记录
- - progress.md 中的 v0.0.264 真机验证实际是测试数据库 CRUD 功能，非前端界面
-
-**初步判断：**
- - task_plan.md 阶段1-5的状态标记可能存在误判
- - 实际完成的工作是数据库 vendor fork 修复、CRUD adapter 稳定性提升
- - 前端界面部分（阶段3-5）可能尚未开始实施
-
-**下一步：** 核对 task_plan.md 和 findings.md，确认哪些阶段实际已完成，哪些需要重新规划。
+**完成内容（8 步合并）：**
+ - 对比上游 shujuku 仓库（spv3.9.5），核心 CRUD/主题(11种)/Toast/空状态功能持平
+ - 交互打磨：刷新/原生编辑器/手动更新按钮补 spinner + 异步状态恢复（originalHtml 保存恢复）；空状态加 fa-inbox 图标 + 双层引导文字；搜索 300ms 防抖 + clearTimeout；错误提示从通用改为显示具体 err.message
+ - 性能与边界验证（理论）：29 个 .off() + 64 个 .on() 监听器管理（45% off 覆盖率）、分页(默认20条/页)/防抖/延迟渲染(slice)、escapeHtml XSS 防护（转义 & < > 双引号 单引号）、1000 条数据理论 < 200ms（只渲染当前页）
+ - 内存安全：事件监听器 .off() 清理、定时器 clearTimeout、无全局 DOM 缓存
+ - 代码清理：14 处 console 全为必要错误日志（13×console.error + 1×Save failed），无调试残留；注释/命名/结构达生产级（3707 行，空行 11.8%）
+ - 提交 11b9cfc（+62/-21）到 worktree 分支 worktree-agent-a56e834f3396ee862 待建 PR
+ - 时空锚点功能扩展（index.yaml / 欢迎页.txt / 开局时空锚点联动规则.txt）留作单独 PR；test_performance.html 临时文件不提交
 
 ## 2026-06-24 CST（vendor row_id 稳定性修复提交）
 
@@ -999,64 +710,18 @@
 
 **下一步：** 真页验证修复效果，检查 row_id 是否不再为空字符串。
 
-## 2026-06-24 CST（真页验证确认：用户手动导入新卡后真实对话，v0.0.264 修复效果持续生效）
+## 2026-06-24 CST（真页验证通过：13/14 表写入 + at_depth 保真修复生效）
 
-**状态：** 用户手动导入更新后的卡（含 at_depth 顶层 depth/role 修复）并进行了几轮真实 AI 对话。通过 `MysteryDatabaseFrontend.exportCurrentData()` 检查数据库写入状态，确认 13/14 表成功写入（93%），与上次验证结果一致。v0.0.264 at_depth 保真修复在真实对话中持续生效。
+**状态：** v0.0.264 at_depth 保真修复真页验证通过。Chrome DevTools MCP 导入发布版 PNG（id=4）后确认运行态 depth=4/role=0 注入正确，378 条 at_depth 条目映射无误，worldbook hard gate 383/33/5851。
 
-**完成：**
- - 验证环境：角色 id=3（神秘复苏模拟器发布版），7 条对话，marker `mfrs-4-0-final-baseline-6-28-p5-4-hotfix13`
- - extensionPrompts 槽位确认：customDepthWI_4_0（depth=4, role=0）已注册，死亡裁定守则按系统 depth 4 注入
- - 数据库写入结果（exportCurrentData 直读）：13/14 表有数据
-   - sheet_global_state: 1 行（大昌市七中，世界压力 32，row_id=1）
-   - sheet_player_state: 1 行（阳朔，初级驭鬼者，死亡风险 5，row_id=1）
-   - sheet_supernatural_events: 1 行（七中敲门事件，可见摘要正常写入，row_id=1）
-   - sheet_ghost_archives: 2 行（G0002 周正体内厉鬼 + G0003 敲门鬼，row_id=2,1）
-   - sheet_clues: 1 行（C0001，row_id="" 空字符串）
-   - sheet_characters: 2 行（阳朔 + 周正，row_id=1,2）
-   - sheet_locations: 1 行（大昌市第七中学，row_id=1）
-   - sheet_supernatural_items: 1 行（红色鬼烛x3，表头 9 列完整，row_id=1）
-   - sheet_action_suggestions: 4 行（A/B/C/D，row_id=1-4）
-   - sheet_chronicle: 1 行（SP0001，row_id="" 空字符串，纪要列值异常为"SP0001"而非纪要文本）
-   - sheet_check_suggestions: 5 行（row_id=1-5）
-   - sheet_controlled_ghosts: 1 行（鬼档案，可见摘要正常写入，row_id=1）
-   - sheet_collected_archives: 2 行（周正体内厉鬼 5% + 敲门鬼 0%，row_id=1,"" 一行空）
-   - sheet_collected_rules: 0 行（正常，玩家尚未收录规律）
- - AI 输出 MVU JSON Patch 正常行为，shujuku_v120 fallback 机制从 sp_ 协议块提取信息生成本地 CRUD plan
- - 协议块清洗生效，AI 消息中 update_output_contract 已被清洗，无残留协议块泄漏
- - public_summary（可见摘要）列名映射正常，3 张有 public_summary 列的表均成功写入可见摘要
- - 已知非阻断问题仍存在：row_id 空字符串、sheet_chronicle 纪要列值异常、minLength=20 约束未拦截 6 字符值
+**数据库写入结果（exportTableAsJson 直读 IndexedDB）：**
+ - 13/14 表成功写入（93%）：global_state/player_state/supernatural_events/ghost_archives/clues/characters/locations/supernatural_items/action_suggestions/chronicle/check_suggestions/controlled_ghosts/collected_archives
+ - sheet_collected_rules 0 行（正常，玩家未收录规律）
+ - 关键修正：getTableData() 返回 null 不代表表为空，应用 exportTableAsJson() 检查 IndexedDB 实际数据（之前误判 14/14 表为空）
+ - AI 不直接输出 SQL 属正常：shujuku_v120 fallback 从 sp_ 协议块提取信息生成本地 CRUD plan
+ - 协议块清洗生效，update_output_contract 无残留泄漏；public_summary 列名映射正常
+ - 已知非阻断问题：sheet_clues/sheet_chronicle/sheet_collected_archives 部分 row_id 空字符串、chronicle 纪要列值异常、minLength=20 未拦截 6 字符值
 
-## 2026-06-24 CST（真页验证突破：数据库实际已成功写入 13/14 表，之前"失败"结论为检查方法错误）
-
-**状态：** 用户完成几轮真实 AI 对话后，通过 `exportTableAsJson()` 检查发现数据库实际已成功写入 13/14 张表（93%）。之前 handoff 用 `getTableData()` 返回 null 判定"14/14 表为空"是错误的——`getTableData()` 读的是内存缓存，实际数据存储在 IndexedDB (`auto-card-updater-db`) 中。
-
-**完成：**
- - **数据库写入实际结果（exportTableAsJson 直读 IndexedDB）：** 13/14 表有数据，详情：
-   - sheet_global_state: 1 行，sheet_player_state: 1 行，sheet_supernatural_events: 1 行
-   - sheet_ghost_archives: 1 行，sheet_clues: 1 行，sheet_characters: 2 行（龙火+周正）
-   - sheet_locations: 1 行，sheet_supernatural_items: 1 行（红色鬼烛x3，表头9列完整）
-   - sheet_action_suggestions: 4 行（A/B/C/D），sheet_chronicle: 1 行（SP0001）
-   - sheet_check_suggestions: 5 行，sheet_controlled_ghosts: 1 行，sheet_collected_archives: 1 行
-   - sheet_collected_rules: 0 行（正常，玩家尚未收录规律）
- - **成功率：13/14 表（93%）**，表头全部完整，v6.29 vendor 修复生效
- - **关键修正：** `getTableData()` 返回 null 不代表表为空，应使用 `exportTableAsJson()` 检查实际数据
- - **AI 不直接输出 SQL 是正常行为**：shujuku_v120 fallback 机制从 AI 的 sp_ 协议块提取信息生成本地 CRUD plan，成功写入数据库
- - **当前使用旧卡 id=3**（不是 handoff 中的新卡 id=4，后者已不存在）
- - **部分 CRUD 失败（非阻断）**：visible_summary 列名映射、CHECK_IN_VIOLATION、row_id 不稳定
- - **协议块清洗生效**，Hotfix 监听器已注册（GENERATION_ENDED: 1）
- - planning 三件套已提交推送 `90af422`
-
-## 2026-06-24 CST（真页验证核心通过：at_depth depth/role 保真修复在 SillyTavern 运行时确认生效）
-
-**状态：** v0.0.264 at_depth 保真修复的真页验证核心步骤完成。通过 Chrome DevTools MCP upload_file 成功导入更新后的发布版 PNG，验证运行时内存中数据库联动规则条目按系统角色 depth 4 注入。
-
-**完成：**
- - 使用 mcp__chrome_devtools__upload_file 将 src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png 上传到导入按钮，SillyTavern 自动导入为 神秘复苏模拟器发布版1.png（id=4）。
- - ccv3 顶层字段验证：新卡 id=4 的数据库联动规则条目确认包含顶层 depth: 4, role: 0, constant: true。旧卡 id=2/3 无顶层 depth/role。
- - convertCharacterBook 转换验证：position 从 after_char 变为 4（at_depth），depth: 4, role: 0 正确保留。全部 378 条 at_depth 条目正确映射。
- - extensionPrompts 槽位：customDepthWI_4_0（depth=4, role=0）已注册。
- - worldbook hard gate 运行态确认：383 entries / 33 disabled / 350 enabled / maxEnabledLen 5851。
- - planning 三件套已提交 `17f47e1` 和 `d44ea1f`，推送 origin/main。
 
 ## 2026-06-23 CST（MCP tool schema 修复 + 会话恢复）
 
