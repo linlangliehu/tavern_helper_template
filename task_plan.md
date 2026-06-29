@@ -35,9 +35,18 @@
 
 **当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 抽卡面板 bug 修复（`0ef4201`）+ AI 生成容错三层（v7.2 调用层 `ca4895f` / v7.3 解析层 `a9e9425` / v7.4 数据层 `5f085b3`）+ v7.5 流式路径（`511e86f`）+ v7.6 MFRSDialog（`1f0f4aa`）+ v7.7 可操作toast（`a638fc0`）+ v7.8 window.MFRS API（`aa0b5ce`）+ v7.9 状态栏精简（`52c56c1`）+ v8.0 事件委托（`fcaab0f`）。
 
-**待修 bug：无阻断项。** AI 生成三层容错已发布上线，真实调用/保存闭环已完成；当前自定义源需要流式生成的问题已通过 v7.5 发布链路修复。四优先级改进（弹窗替换/抽卡API公开化/状态栏精简/事件委托）已全部完成并发布上线（v7.6~v8.0）。
+**待修 bug：** window.MFRS 挂载失败已修复并发布 v8.1（CDN @512542b）。根因是 webpack minifier 把 showGachaResult: showGachaResult 简写为 {showGachaResult}，但函数变量已被重命名为短名，导致 ReferenceError。修复方式：添加别名变量确保 key/value 不同名。详细排查见 progress.md 顶部条目。
 
-**已关闭的旧阻断项：** `getFragments` 未定义、`showFragmentShop` 未定义、货币监听器事件名大小写、AI 生成裸调 `generateRaw`、AI 生成 JSON 解析和字段缺漏均已分别通过 v7.1~v7.4 发布。不要从旧流水里的“待合并/待 bot bundle”描述恢复任务。
+**待验证（v8.1 发布后）：**
+- window.MFRS 是否成功挂载（需用户重新导入 v8.1 PNG）
+- MFRSDialog 是 IIFE 闭包内 const 变量，不需要挂到 window，之前检查 window.MFRSDialog 为 undefined 是预期行为不是 bug
+- 碎片商店无 frag-buy 按钮（可能因 window.MFRS 挂载失败导致连锁问题，v8.1 修复后需复查）
+- 自定义编辑器打开后无 data-mfrs-action 元素（同上，v8.1 修复后需复查）
+
+**已关闭的旧阻断项：**
+AI 生成三层容错已发布上线，真实调用/保存闭环已完成；当前自定义源需要流式生成的问题已通过 v7.5 发布链路修复。四优先级改进（弹窗替换/抽卡API公开化/状态栏精简/事件委托）已全部完成并发布上线（v7.6~v8.0）。`getFragments` 未定义、`showFragmentShop` 未定义、货币监听器事件名大小写、AI 生成裸调 `generateRaw`、AI 生成 JSON 解析和字段缺漏均已分别通过 v7.1~v7.4 发布。不要从旧流水里的“待合并/待 bot bundle”描述恢复任务。
+
+**下次恢复入口：** 读 progress.md 顶部“⏸️ 暂停：window.MFRS 未挂载 bug 深入排查”条目，继续排查挂载失败根因。优先确认 JS-Slash-Runner 执行上下文是否对 `window` 做了代理/包装。
 
 **工作区状态：** 主工作区 main 与 origin/main 对齐在 `4218c64`（v8.0 发布版同步提交）。`src/**`、`scripts/**`、planning 文件已全部提交；本地仍有 `dist/**` 构建残留、`.claude/worktrees/*` 工具 gitlink 变动、截图文件，这些不是当前任务产物，不要提交。
 

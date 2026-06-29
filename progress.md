@@ -1,5 +1,86 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ window.MFRS 挂载失败根因定位并修复 — v8.1 发布）
+
+**状态：** 接续暂停的排查任务，通过 Chrome DevTools MCP 真页实验定位到 window.MFRS 未挂载的根因并完成修复发布。
+
+**根因定位过程：**
+
+1. CDN bundle 确认包含 window.MFRS=Object.assign(...) 挂载块，代码结构完整。
+2. 在主 window 上下文 new Function(code)() eval 执行 CDN bundle，执行成功但 window.MFRS 仍为 undefined。
+3. 用 Object.defineProperty 在 window.MFRS 上设置 setter 陷阱，发现 setter 从未被调用——挂载块代码没有执行到 window.MFRS= 赋值。
+4. 注入 window.__preTestMarker__ 在 try{window.MFRS= 之前一行，marker 设置成功，但 window.MFRS 仍为 undefined。
+5. 在 catch 块中捕获错误：ReferenceError: showGachaResult is not defined。
+
+**根因：webpack minifier 简写优化 bug**
+
+源码 L6304：showGachaResult: showGachaResult,
+
+webpack minifier (terser) 把 key-value 同名的 showGachaResult: showGachaResult 优化为对象简写 {showGachaResult}。但 minifier 同时把 showGachaResult 函数的变量名重命名为短名（如 Me），导致简写中的 showGachaResult 引用了一个不存在的变量名。
+
+minified bundle 中的挂载块：showPanel:Oe,showFragmentShop:Ee,showCustomEditor:Re,showGachaResult,showItemDetail:ze
+注意 showGachaResult 是简写（没有 :变量名），其他属性都是 属性名:短变量名。简写的 showGachaResult 引用原始变量名，但该变量已被重命名为 Me，因此抛 ReferenceError。
+
+其他函数（如 getOwnedItems: getOwnedItems）没有这个问题，因为 minifier 给它们分配了短名（xe），key 和 value 不同名，不触发简写优化。
+
+**修复：** 在挂载块前添加别名变量 const _showGachaResult = showGachaResult;，然后在挂载对象中使用 showGachaResult: _showGachaResult，确保 key 和 value 不同名，避免 minifier 简写。
+
+**发布链路已完成（v8.1）：**
+- 源码 commit ac13cc8
+- push origin main, bot bundle 512542b (tag v0.0.311)
+- rebase 到 512542b
+- publish-card.mjs CDN_REF=512542b, releaseVersion=8.1
+- 打包成功，验证通过：dist bundle showGachaResult:Me（不再简写），PNG chara/ccv3 version=8.1 7x512542b 0x47df33c，worldbook gate 383/33/5851 PASS
+
+**当前停点：** v8.1 发布版同步待提交 + push。用户需重新导入发布版 PNG 验证 window.MFRS 是否成功挂载。
+
+## 2026-06-29 CST（⏸️ 暂停：window.MFRS 未挂载 bug 深入排查 — 上下文交接）
+
+**状态：** 用户要求暂停任务并更新 planning 记录。当前正在排查 v7.8 window.MFRS API 和 v7.6 MFRSDialog 在运行态未挂载的 bug。四优先级改进已全部发布上线（v7.6~v8.0），但真机验证发现两个关键功能在运行态不可用。
+
+**已完成的验证：**
+
+Chrome DevTools MCP 连接正常（`http://127.0.0.1:8000/`，SillyTavern 页面在线）。
+
+角色卡运行态基础验证通过：
+- 当前角色：`神秘复苏模拟器发布版`，charId=5，`character_version = 8.0` ✅
+- CDN ref：运行态卡数据 7 处 `@47df33c`，0 处旧 `3a77e4c` ✅
+- `MysteryAcuVisualizer` = object，`renderInterface` 存在 ✅
+- `__mfrsDatabaseScriptMarker__` = `mfrs-4-0-final-baseline-6-28-p5-4-hotfix13` ✅（主 window）
+- UI 正常渲染：`#acu-btn-gacha`、`#acu-data-area`、acu-nav 均存在 ✅
+- 货币 = 23，碎片 = 1（localStorage 确认）✅
+- `extensionPrompts` 含 `customDepthWI_4_0` slot ✅
+- Console 仅 1 条 error：`Uncaught (in promise)`（无详细信息）
+- CDN bundle（321729 字节）确认包含 `window.MFRS`(×4)、`MFRSDialog`(×1)、挂载成功/失败日志文案、`Object.assign` 挂载块 ✅
+
+**发现的核心 bug：window.MFRS 和 MFRSDialog 均未挂载**
+
+详细排查结果：
+1. 主 window：`window.MFRS = undefined`、`window.MFRSDialog = undefined`
+2. 全部 15 个 iframe：`window.MFRS = undefined`、`window.MFRSDialog = undefined`
+3. iframe 12（`TH-script--神秘复苏数据库前端`）：marker = undefined、MysteryAcuVisualizer = undefined
+   - iframe 12 中仅有 2 个 blob URL 脚本（jQuery/_ 别名设置，66 字节和 1430 字节）+ Vue/VueRouter 外部 CDN + JS-Slash-Runner log.js
+   - blob URL 不含 visualizer 代码
+4. 主 window 上 `MysteryAcuVisualizer` 存在且有 `renderInterface`，说明 visualizer IIFE 主体在某个上下文执行了
+5. 主 window 上 `GACHA_RARITY`、`getGachaCurrency`、`showGachaPanel` 等闭包变量均为 undefined（预期行为，闭包内变量不暴露）
+6. CDN bundle minified 后挂载块存在：`try{window.MFRS=Object.assign(window.MFRS||{},{RARITY:Dt,...})}catch(e){console.error(...)}`
+
+**根因分析方向（下次继续）：**
+
+visualizer 通过 JS-Slash-Runner 机制执行。JS-Slash-Runner 将脚本内容提取后在某个上下文执行（可能是主 window 或特殊沙箱），不是在 iframe 12 内直接执行。主 window 上有 `MysteryAcuVisualizer` 和 marker，说明 IIFE 主体执行了。但 `window.MFRS` 挂载块可能在执行时抛错被 try/catch 吞掉，或者 IIFE 在挂载块之前就中断了。
+
+需要继续排查：
+- 在主 window 注入错误捕获器，重新加载 visualizer 脚本，看挂载块是否抛错
+- 检查 JS-Slash-Runner 是否对 `window` 对象做了代理/包装，导致 `window.MFRS = ...` 赋值落到代理对象而非真实 window
+- 检查 IIFE 是否在挂载块之前就 return 或 throw（比如 `getCore()` 返回 null 导致提前退出）
+- 可能需要在挂载块的 try/catch 里加 `console.error` 明确输出错误对象，重新发布一次调试版本
+
+**其他待排查问题（上次会话发现，本轮未复查）：**
+- 碎片商店无 `frag-buy` 按钮（`shop-close` 存在但兑换物品未渲染）
+- 自定义编辑器打开后无 `data-mfrs-action` 元素（可能未打开或渲染失败）
+
+**当前停点：** 任务暂停，等待用户指示继续。下次恢复时从本条 progress 顶部读起，继续排查 window.MFRS 挂载失败根因。
+
 ## 2026-06-29 CST（✅ 第四优先级完成：事件委托替代逐个绑定 — v8.0 发布）
 
 **状态：** 用户要求继续完成第四优先级（事件委托替代逐个绑定）。在 `v10_2_visualizer.js` 中将碎片商店、抽卡面板、自定义编辑器三个区域的逐个 `.off('click').on('click')` 绑定重构为 `data-mfrs-action` 属性 + 容器级委托 handler。
