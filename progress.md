@@ -1,5 +1,26 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ v8.3 发布同步完成：MFRS API 父窗口挂载 + 自定义编辑器修复收口）
+
+**状态：** 接续 v8.2 后的真实导入卡验证结果，完成自定义编辑器渲染 bug 修复、MFRS API 父窗口挂载增强、bot bundle 和发布版 v8.3 同步。
+
+**真实根因收口：**
+- `window.MFRS` v8.2 在真实运行态已能挂载，但最初只在脚本 iframe 上可见；本轮将公开 API 同步挂到 `getHost()` 返回的父窗口，并在 iframe 内保留 `window.MFRS` 引用，方便主窗口控制台和外部脚本调用。
+- 碎片商店此前“无 frag-buy”不是渲染失败：按钮按碎片余额/已拥有状态渲染，余额不足时显示 disabled 的“残屑不足”，不会带 `data-mfrs-action="frag-buy"`。
+- 自定义编辑器此前无 `data-mfrs-action` 是真 bug：v8.0 事件委托重构删除了 `bindItemActions()` 函数，但 `showCustomItemEditor()` 里残留两处调用，打开编辑器时抛 `ReferenceError: bindItemActions is not defined`。已在 `dec01b9` 移除残留调用。
+
+**发布链路（v8.3）：**
+- `dec01b9`：移除遗留 `bindItemActions()` 调用，真页验证确认 iframe 5 的 `window.MFRS` 成功挂载、抽卡面板 action 正常、碎片商店 27 行正常。
+- `c7e5699`：`window.MFRS` 同步挂载到父窗口 `host.MFRS`，iframe 内回填 `window.MFRS = host.MFRS`。
+- bot bundle `3f71015`，tag `v0.0.315`。
+- `publish-card.mjs`：`CDN_REF=3f71015`，`releaseVersion=8.3`。
+- 发布版 YAML：版本 `8.3`，7 处 `@3f71015`，旧 `@6e40523`/`@ecf9706`/`@512542b` 为 0。
+- 发布版 PNG 元数据：`chara`/`ccv3` 均 version=8.3，均 7×`@3f71015`，旧 ref 为 0。
+- worldbook gate：383 entries / 33 disabled / max enabled 5851 PASS。
+- CDN smoke：数据库前端 bundle 和固定状态栏资源均 HTTP 200；数据库前端 bundle 含 `MFRS`，不含 `bindItemActions`。
+
+**当前停点：** v8.3 发布版同步已生成并验证，待本次精确提交 + push。用户后续重新导入 v8.3 PNG 即可验证主窗口 `window.MFRS`、碎片商店和自定义编辑器。
+
 ## 2026-06-29 CST（✅ window.MFRS 挂载失败最终修复 — v8.2 发布）
 
 **状态：** v8.1 的别名变量修复无效（Me=showGachaResult 仍然引用被重命名的变量），定位到真正根因并完成修复。

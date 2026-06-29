@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = '512542b';  // bot bundle，修复 window.MFRS 挂载失败 (showGachaResult 简写 bug)
+const CDN_REF = '3f71015';  // bot bundle，同步 window.MFRS API 到父窗口并修复自定义编辑器
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 const CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13';
 
@@ -55,7 +55,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.1',
+    releaseVersion: '8.3',
   },
 ];
 

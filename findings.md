@@ -1,5 +1,13 @@
 # Findings
 
+## 2026-06-29：碎片商店 / 自定义编辑器渲染问题根因
+
+**碎片商店无 `frag-buy`：** 后续验证确认不是渲染失败。`showFragmentShop()` 会渲染 27 行物品，但只有“未拥有且碎片余额足够”的商品按钮才带 `data-mfrs-action="frag-buy"`。余额不足时按钮是 disabled 的“残屑不足”，已拥有时是 disabled 的“已拥有”。因此检查商店是否正常渲染不能只数 `frag-buy`，还要数 `.frag-row`、`.frag-buy-btn` 和按钮文本状态。
+
+**自定义编辑器无 `data-mfrs-action`：** 这是事件委托重构留下的真 bug。v8.0 删除了 `bindItemActions()` 函数定义，但 `showCustomItemEditor()` 内还残留两处调用：表单保存后刷新列表、编辑器初始绑定。打开编辑器时抛 `ReferenceError: bindItemActions is not defined`，导致编辑器 DOM 后续未完整渲染，表现为 tab/新增/导出/导入/AI生成按钮和物品列表都缺失。修复方式是删除残留调用，依赖容器级 `editor.on('click', '[data-mfrs-action]', ...)` 委托处理动态列表。
+
+**MFRS API 暴露边界：** v8.2 修复后 API 在脚本执行 iframe 内可用，但主窗口控制台不一定能直接访问。v8.3 将挂载目标改为 `getHost()` 返回的父窗口，同时在 iframe 内回填 `window.MFRS = host.MFRS`，保证父窗口和脚本窗口都能访问同一 API 对象。
+
 ## 2026-06-29：事件委托替代逐个绑定 — jQuery .off().on() 重构模式
 
 **背景：** 第四优先级将碎片商店、抽卡面板、自定义编辑器中的 23 个 `.off('click').on('click')` 逐个绑定重构为 `data-mfrs-action` 属性 + 容器级委托 handler。
