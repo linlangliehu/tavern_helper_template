@@ -6258,7 +6258,8 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
     // 注意：挂载对象的 key 和 value 不能同名，否则 webpack minifier 会优化为简写
     // {showGachaResult}，但函数变量已被重命名为短名，导致 ReferenceError。
     try {
-        window.MFRS = Object.assign(window.MFRS || {}, {
+        const host = getHost();
+        host.MFRS = Object.assign(host.MFRS || {}, {
             // --- 常量 ---
             RARITY: GACHA_RARITY,
             POOL_TYPE: GACHA_POOL_TYPE,
@@ -6308,6 +6309,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             // --- 版本 ---
             version: '1.0',
         });
+        if (host !== window) window.MFRS = host.MFRS;
         console.info('[MFRS] window.MFRS API 已挂载，可用方法：getCurrency/single/ten/getAllItems/showPanel 等');
     } catch (e) {
         console.error('[MFRS] window.MFRS 挂载失败:', e);
