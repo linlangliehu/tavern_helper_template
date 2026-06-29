@@ -1,5 +1,17 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ MFRSDialog 替换所有原生 alert/confirm 调用）
+
+**状态：** 接续上一轮交接，完成 `v10_2_visualizer.js` 中全部原生 `alert()` / `confirm()` 调用替换为 `MFRSDialog` 模块。MFRSDialog 模块已在上一轮插入（L454 附近），本轮完成 8 个调用点的逐个替换 + 4 个外层回调改 async。
+
+**执行与结果：**
+ - ✅ 确认文件状态：BOM + CRLF，6234 行，`node --check` 通过。MFRSDialog 模块定义在 L500-540（showConfirm/showAlert/showToast 三个函数），复用 `acu-theme-*` CSS 变量，通过 `getConfig().theme` 动态适配主题。
+ - ✅ 精确定位 8 个原生调用点（用正则排除 MFRSDialog 方法定义）：2 个 confirm + 6 个 alert。
+ - ✅ 12 处精确替换（8 调用 + 4 回调签名），用 Node.js 脚本完成。
+ - ✅ 验证：`node --check` 通过；`pnpm build` webpack compiled successfully；BOM 保留、CRLF 一致；原生 alert/confirm 仅剩 2 个注释行。
+
+**当前停点：** 源码改动已在本地落地，未提交。
+
 ## 2026-06-29 CST（✅ v7.5 发布链路完成：AI生成流式路径修复）
 
 **状态：** 用户要求继续完成 v7.5 发布链路。按 `planning-with-files` 恢复上下文后确认：真页发布版 7.4 AI生成闭环已完成，待发布的是本地 `should_stream:true`、`emoji→icon`、`effectDetail←effect` 源码修复。

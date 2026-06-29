@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     'use strict';
     
     const SCRIPT_ID = 'acu_visualizer_ui_v20_pagination';
@@ -451,6 +451,152 @@
     const saveActionOrder = (list) => { try { localStorage.setItem(STORAGE_KEY_ACTION_ORDER, JSON.stringify(list)); } catch (e) { console.error(e); } };
     const getConfig = () => { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_UI_CONFIG)); return { ...DEFAULT_CONFIG, ...saved }; } catch (e) { return DEFAULT_CONFIG; } };
     const saveConfig = (newConfig) => { const current = getConfig(); const merged = { ...current, ...newConfig }; try { localStorage.setItem(STORAGE_KEY_UI_CONFIG, JSON.stringify(merged)); } catch (e) { console.error(e); } applyConfigStyles(merged); };
+
+// ── MFRSDialog：替换浏览器原生 alert / confirm 的通用弹窗 + 可操作 toast ──
+    // 复用现有 acu-theme CSS 变量体系，风格与数据库前端一致。
+    const MFRSDialog = (() => {
+        let toastContainer = null;
+        let dialogStylesInjected = false;
+
+        const ensureStyles = () => {
+            if (dialogStylesInjected) return;
+            dialogStylesInjected = true;
+            const styleId = 'mfrs-dialog-styles';
+            if (document.getElementById(styleId)) return;
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+.mfrs-confirm-overlay { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; background: var(--acu-overlay-bg, rgba(0,0,0,0.5)) !important; z-index: 2147483647 !important; display: flex !important; justify-content: center !important; align-items: center !important; backdrop-filter: blur(3px); opacity: 0; animation: mfrsDlgFadeIn 0.18s forwards; }
+.mfrs-confirm-dialog { background-color: var(--acu-bg-panel, #1a1a2e) !important; color: var(--acu-text-main, #eee) !important; border: 1px solid var(--acu-border, #555) !important; border-radius: 12px; width: 90%; max-width: 440px; max-height: 80vh; box-shadow: 0 15px 50px rgba(0,0,0,0.4); overflow: hidden; display: flex; flex-direction: column; transform: scale(0.92); animation: mfrsDlgPop 0.2s forwards; }
+.mfrs-confirm-title { font-size: 17px; font-weight: 700; padding: 18px 24px 0; color: var(--acu-text-main, #eee); text-align: center; }
+.mfrs-confirm-body { padding: 14px 24px 18px; font-size: 14px; line-height: 1.7; color: var(--acu-text-sub, #aaa); white-space: pre-wrap; word-break: break-word; overflow-y: auto; flex: 1; }
+.mfrs-confirm-btns { flex: 0 0 auto; display: flex; justify-content: center; gap: 16px; padding: 14px 24px 18px; border-top: 1px solid var(--acu-border, #555); }
+.mfrs-confirm-btn { background: var(--acu-btn-bg, #3a3a3a); color: var(--acu-text-sub, #aaa); border: 1px solid var(--acu-border, #555); border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; padding: 9px 28px; transition: all 0.18s; display: flex; align-items: center; gap: 6px; }
+.mfrs-confirm-btn:hover { background: var(--acu-btn-hover, #4a4a4a); color: var(--acu-text-main, #eee); }
+.mfrs-confirm-btn.mfrs-btn-primary { background: var(--acu-btn-active-bg, #6a5acd); color: var(--acu-btn-active-text, #fff); border-color: transparent; }
+.mfrs-confirm-btn.mfrs-btn-primary:hover { filter: brightness(1.12); }
+.mfrs-confirm-btn.mfrs-btn-danger { background: #c0392b; color: #fff; border-color: transparent; }
+.mfrs-confirm-btn.mfrs-btn-danger:hover { background: #e74c3c; filter: brightness(1.08); }
+@keyframes mfrsDlgFadeIn { to { opacity: 1; } }
+@keyframes mfrsDlgPop { to { transform: scale(1); } }
+.mfrs-toast-container { position: fixed; top: 16px; right: 16px; z-index: 2147483646; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 380px; }
+.mfrs-toast { pointer-events: auto; border-radius: 8px; padding: 12px 16px; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0,0,0,0.25); display: flex; align-items: flex-start; gap: 10px; opacity: 0; transform: translateX(100%); animation: mfrsToastIn 0.25s forwards; color: #fff; }
+.mfrs-toast.mfrs-toast-out { animation: mfrsToastOut 0.25s forwards; }
+.mfrs-toast.mfrs-toast-success { background: linear-gradient(135deg, #1a6b3a, #15803d); }
+.mfrs-toast.mfrs-toast-error { background: linear-gradient(135deg, #991b1b, #c0392b); }
+.mfrs-toast.mfrs-toast-warning { background: linear-gradient(135deg, #854d0e, #b45309); }
+.mfrs-toast.mfrs-toast-info { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
+.mfrs-toast-icon { flex: 0 0 auto; font-size: 16px; line-height: 1.4; }
+.mfrs-toast-content { flex: 1; min-width: 0; white-space: pre-wrap; word-break: break-word; }
+.mfrs-toast-action { flex: 0 0 auto; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; color: #fff; cursor: pointer; font-size: 12px; font-weight: 600; padding: 5px 12px; transition: background 0.15s; white-space: nowrap; }
+.mfrs-toast-action:hover { background: rgba(255,255,255,0.32); }
+@keyframes mfrsToastIn { to { opacity: 1; transform: translateX(0); } }
+@keyframes mfrsToastOut { to { opacity: 0; transform: translateX(120%); } }
+`;
+            (document.head || document.documentElement).appendChild(style);
+        };
+
+        const getThemeClass = () => {
+            try { return `acu-theme-${getConfig().theme}`; } catch (e) { return ''; }
+        };
+
+        // showConfirm：返回 Promise<boolean>，替代 confirm()
+        const showConfirm = (message, opts = {}) => {
+            ensureStyles();
+            const themeClass = getThemeClass();
+            const title = opts.title || '确认操作';
+            const confirmText = opts.confirmText || '确定';
+            const cancelText = opts.cancelText || '取消';
+            const danger = opts.danger ? 'mfrs-btn-danger' : 'mfrs-btn-primary';
+
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'mfrs-confirm-overlay';
+                overlay.innerHTML = `
+                    <div class="mfrs-confirm-dialog ${themeClass}">
+                        <div class="mfrs-confirm-title">${title}</div>
+                        <div class="mfrs-confirm-body">${message}</div>
+                        <div class="mfrs-confirm-btns">
+                            <button class="mfrs-confirm-btn" data-act="cancel"><i class="fa-solid fa-times"></i> ${cancelText}</button>
+                            <button class="mfrs-confirm-btn ${danger}" data-act="ok"><i class="fa-solid fa-check"></i> ${confirmText}</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(overlay);
+
+                const close = (val) => { overlay.remove(); resolve(val); };
+                overlay.querySelector('[data-act="ok"]').addEventListener('click', () => close(true));
+                overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => close(false));
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+                overlay.querySelector('[data-act="ok"]').focus();
+            });
+        };
+
+        // showAlert：返回 Promise<void>，替代 alert()
+        const showAlert = (message, opts = {}) => {
+            ensureStyles();
+            const themeClass = getThemeClass();
+            const title = opts.title || '提示';
+
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'mfrs-confirm-overlay';
+                overlay.innerHTML = `
+                    <div class="mfrs-confirm-dialog ${themeClass}">
+                        <div class="mfrs-confirm-title">${title}</div>
+                        <div class="mfrs-confirm-body">${message}</div>
+                        <div class="mfrs-confirm-btns">
+                            <button class="mfrs-confirm-btn mfrs-btn-primary" data-act="ok"><i class="fa-solid fa-check"></i> 确定</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(overlay);
+
+                const close = () => { overlay.remove(); resolve(); };
+                overlay.querySelector('[data-act="ok"]').addEventListener('click', close);
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+                overlay.querySelector('[data-act="ok"]').focus();
+            });
+        };
+
+        // showToast：非阻塞通知，可选操作按钮
+        const showToast = (message, type = 'info', opts = {}) => {
+            ensureStyles();
+            if (!toastContainer || !document.body.contains(toastContainer)) {
+                toastContainer = document.createElement('div');
+                toastContainer.className = 'mfrs-toast-container';
+                document.body.appendChild(toastContainer);
+            }
+            const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+            const duration = opts.duration || (type === 'error' ? 6000 : 3500);
+
+            const toast = document.createElement('div');
+            toast.className = `mfrs-toast mfrs-toast-${type}`;
+            let actionHtml = '';
+            if (opts.actionLabel && typeof opts.onAction === 'function') {
+                actionHtml = `<button class="mfrs-toast-action" data-act="action">${opts.actionLabel}</button>`;
+            }
+            toast.innerHTML = `<span class="mfrs-toast-icon">${icons[type] || icons.info}</span><span class="mfrs-toast-content">${message}</span>${actionHtml}`;
+            toastContainer.appendChild(toast);
+
+            const removeToast = (el) => {
+                if (!el || !el.parentNode) return;
+                el.classList.add('mfrs-toast-out');
+                setTimeout(() => el.remove(), 280);
+            };
+
+            if (opts.actionLabel && typeof opts.onAction === 'function') {
+                toast.querySelector('[data-act="action"]').addEventListener('click', () => {
+                    try { opts.onAction(); } catch (e) { console.error('[MFRSDialog] toast action error:', e); }
+                    removeToast(toast);
+                });
+            }
+
+            const timerId = setTimeout(() => removeToast(toast), duration);
+            toast.addEventListener('mouseenter', () => clearTimeout(timerId));
+            toast.addEventListener('mouseleave', () => setTimeout(() => removeToast(toast), 1500));
+        };
+
+        return { showConfirm, showAlert, showToast };
+    })();
     
     const getTableHeights = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_HEIGHTS)) || {}; } catch (e) { return {}; } };
     const saveTableHeights = (heights) => { try { localStorage.setItem(STORAGE_KEY_TABLE_HEIGHTS, JSON.stringify(heights)); } catch (e) { console.error(e); } };
@@ -3872,8 +4018,8 @@
         refreshOptions();
 
         const close = () => dialog.remove();
-        dialog.find('#dlg-slot-reset').click(() => {
-            if(confirm('确定要重置此卡槽吗？')) {
+        dialog.find('#dlg-slot-reset').click(async () => {
+            if(await MFRSDialog.showConfirm('确定要重置此卡槽吗？', { title: '重置卡槽', confirmText: '重置', danger: true })) {
                 currentDashCfg[slotId] = { isEmpty: true };
                 saveDashConfig(currentDashCfg);
                 renderInterface();
@@ -5429,7 +5575,7 @@
         });
 
         // 导出物品目录 JSON（builtin∪custom 全集）
-        editor.find('#custom-export-btn').on('click', () => {
+        editor.find('#custom-export-btn').on('click', async () => {
             try {
                 const allItems = getAllGachaItemDefinitions();
                 // 导出时将 rarity 对象还原为 key 字符串，方便导入
@@ -5459,7 +5605,7 @@
                 URL.revokeObjectURL(url);
             } catch (e) {
                 console.error('Export failed:', e);
-                alert('导出失败: ' + e.message);
+                await MFRSDialog.showAlert('导出失败: ' + e.message, { title: '导出错误' });
             }
         });
 
@@ -5473,14 +5619,14 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (ev) => {
+                reader.onload = async (ev) => {
                     try {
                         const data = JSON.parse(ev.target.result);
                         // 验证格式
                         const validTypes = ['supernatural', 'clue', 'knowledge'];
                         const hasValidType = validTypes.some(t => Array.isArray(data[t]) && data[t].length > 0);
                         if (!hasValidType) {
-                            alert('无效的物品目录格式。\n需要包含 supernatural / clue / knowledge 数组的 JSON 对象。');
+                            await MFRSDialog.showAlert('无效的物品目录格式。\n需要包含 supernatural / clue / knowledge 数组的 JSON 对象。', { title: '格式错误' });
                             return;
                         }
                         let importCount = 0;
@@ -5498,10 +5644,10 @@
                         // 刷新列表
                         editor.find('#custom-item-list').html(buildItemList(currentType));
                         bindItemActions();
-                        alert(`导入成功！共导入 ${importCount} 个物品到自定义层。\n（内置物品将被覆盖为导入版本）`);
+                        MFRSDialog.showToast(`导入成功！共导入 ${importCount} 个物品到自定义层`, 'success');
                     } catch (parseErr) {
                         console.error('Import parse failed:', parseErr);
-                        alert('JSON 解析失败: ' + parseErr.message);
+                        await MFRSDialog.showAlert('JSON 解析失败: ' + parseErr.message, { title: '解析错误' });
                     }
                 };
                 reader.readAsText(file);
@@ -5693,7 +5839,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
             } catch (err) {
                 console.error('AI generation failed:', err);
-                alert('AI 生成失败: ' + (err.message || '未知错误') + '\n\n请确认当前已连接 AI 代理且可用。');
+                MFRSDialog.showToast('AI 生成失败: ' + (err.message || '未知错误') + '\n\n请确认当前已连接 AI 代理且可用。', 'error', { duration: 6000 });
             } finally {
                 btn.prop('disabled', false).html(origHtml);
             }
@@ -5710,10 +5856,10 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 if (item) showItemForm(type, item);
             });
 
-            editor.find('.delete-item-btn').off('click').on('click', function() {
+            editor.find('.delete-item-btn').off('click').on('click', async function() {
                 const id = $(this).data('id');
                 const type = $(this).data('type');
-                if (confirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`)) {
+                if (await MFRSDialog.showConfirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`, { title: '删除确认', confirmText: '删除', danger: true })) {
                     removeCustomGachaItem(type, id);
                     editor.find('#custom-item-list').html(buildItemList(currentType));
                     bindItemActions();
@@ -5852,7 +5998,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             formDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeForm(); });
 
             // 保存
-            formDialog.find('#form-save-btn').on('click', () => {
+            formDialog.find('#form-save-btn').on('click', async () => {
                 const id = formDialog.find('#form-id').val().trim();
                 const name = formDialog.find('#form-name').val().trim();
                 const icon = formDialog.find('#form-icon').val().trim();
@@ -5863,7 +6009,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
                 // 验证必填项
                 if (!id || !name || !icon) {
-                    alert('请填写物品 ID、名称和图标');
+                    await MFRSDialog.showAlert('请填写物品 ID、名称和图标', { title: '必填项缺失' });
                     return;
                 }
 
