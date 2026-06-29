@@ -12,6 +12,7 @@ const statusAppPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62d
 const visualizerPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'v10_2_visualizer.js');
 const dbFrontendPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'index.ts');
 const themeScriptPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u754c\u9762\u7f8e\u5316', 'index.ts');
+const hotfixPath = join(repoRoot, 'src', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', 'hotfix-generation-ended-listeners', 'index.ts');
 const vendorPath = join(repoRoot, 'vendor', 'shujuku-sp-fork', 'index.js');
 
 const EXT = '\u6269\u5c55\u5b57\u6bb5';
@@ -343,6 +344,7 @@ const statusAppSource = readFileSync(statusAppPath, 'utf8');
 const visualizerSource = readFileSync(visualizerPath, 'utf8');
 const dbFrontendSource = readFileSync(dbFrontendPath, 'utf8');
 const themeScriptSource = readFileSync(themeScriptPath, 'utf8');
+const hotfixSource = readFileSync(hotfixPath, 'utf8');
 const vendorSource = readFileSync(vendorPath, 'utf8');
 const legacyPlaceholder = `StatusPlaceHolderI${'m'}pl`;
 
@@ -370,6 +372,15 @@ assert.equal(displayed.includes('Lin Che wakes up in a corridor'), false, 'Engli
 assert.equal(displayed.includes('tel\u00e9fono m\u00f3vil'), false, 'foreign-language draft should be hidden in display output');
 assert.equal(displayed.includes('<UpdateVariable>'), false, 'tagged variable update should be hidden in display output');
 assert.equal(displayed.includes('<JSONPatch>'), false, 'tagged JSONPatch should be hidden in display output');
+const openingDisplayed = applyDisplayFormatting('<sp_start>\nOPENING_START_TOKEN\n</sp_start>', displayRegexes);
+assert.ok(openingDisplayed.includes('mfrs-welcome-root'), 'opening custom character panel should render');
+assert.ok(openingDisplayed.includes('进入神秘复苏世界'), 'opening custom character submit button should remain visible');
+assert.equal(openingDisplayed.includes('<sp_start>'), false, 'opening panel tag should be consumed by its renderer');
+const inputPanelDisplayed = applyDisplayFormatting('<sp_input>\nDescribe a complex action.\n</sp_input>', displayRegexes);
+assert.ok(inputPanelDisplayed.includes('复杂行动输入面板'), 'sp_input should render as the complex action input panel');
+assert.ok(inputPanelDisplayed.includes('写入行动草稿'), 'sp_input action button should remain visible');
+assert.ok(inputPanelDisplayed.includes('Describe a complex action.'), 'sp_input seed text should remain visible');
+assert.equal(inputPanelDisplayed.includes('<sp_input>'), false, 'sp_input tag should be consumed by its renderer');
 assert.ok(statusAppSource.includes('<sp_status>'), 'status bar should parse <sp_status> fallback');
 assert.ok(statusAppSource.includes('spStatusKeyMap'), 'status bar should map English sp_status keys');
 assert.ok(statusAppSource.includes('displayLocation'), 'status bar should display MVU/sp_status location fallback');
@@ -394,6 +405,7 @@ assert.ok(themeScriptSource.includes('hideRawProtocolParagraphs'), 'theme script
 assert.ok(themeScriptSource.includes('/行动建议'), 'theme script should hide visible UpdateVariable action suggestion JSON paths');
 assert.ok(themeScriptSource.includes('MFRS_INLINE_PROTOCOL_TAG_PATTERN'), 'theme script should catch inline protocol tag names in natural-language paragraphs');
 assert.ok(themeScriptSource.includes('choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis'), 'theme script should hide natural-language mentions of internal protocol tag names');
+assert.ok(hotfixSource.includes('(?!(?:sp_start|sp_input)\\b)'), 'hotfix runtime cleanup should preserve opening and input panels');
 const inlineProtocolLeakSample = '行动建议：按 A/B/C/D 写入 4 行，风险与 <choices> 一致。';
 assert.ok(/<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i.test(inlineProtocolLeakSample), 'inline display guard should catch natural-language <choices> leaks');
 assert.ok(vendorSource.includes('sanitizeLatestAiMessageRawProtocol_ACU'), 'vendor should sanitize latest AI raw message before auto table update');

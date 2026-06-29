@@ -10,7 +10,7 @@
  * 3. 触发数据库自动更新逻辑
  * 4. 清洗 mes 字段：
  *    - 整段删除 <UpdateVariable> 和 <choices>（纯内部协议）
- *    - 整段删除 <sp_*> / <mfrs_*> 旧文本面板（正文只保留【本轮摘要】）
+ *    - 整段删除 <sp_*> / <mfrs_*> 旧文本面板（保留开局/输入交互面板）
  *    - 删除自闭合 <mfrs_roll ... />（无内部文本）
  */
 
@@ -94,8 +94,8 @@ async function cleanProtocolBlocks(messageIndex: number) {
   let cleanedMes = originalMes
     .replace(/<UpdateVariable>[\s\S]*?<\/UpdateVariable>/gi, '')
     .replace(/<choices>[\s\S]*?<\/choices>/gi, '')
-    // 删除旧 <sp_*> / <mfrs_*> 文本面板，避免重复占用聊天正文篇幅
-    .replace(/<((?:sp|mfrs)_[a-z_]+)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    // 删除旧 <sp_*> / <mfrs_*> 文本面板，保留可交互的开局/输入面板。
+    .replace(/<((?!(?:sp_start|sp_input)\b)(?:sp|mfrs)_[a-z_]+)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
     // 删除自闭合的 <mfrs_roll ... />（掷骰展示，无内部文本）
     .replace(/<mfrs_roll\b[^>]*\/>/gi, '');
 
