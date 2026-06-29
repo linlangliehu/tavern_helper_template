@@ -1,5 +1,41 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ v8.4.1 热修复发布：保留开局自定义角色面板）
+
+**状态：** v8.4.1 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。用户应重新导入 v8.4.1 发布版 PNG。
+
+**回归根因：**
+- v8.4 为减少正文 MUV/MVU 面板占用，新增 `[显示]隐藏旧 sp/mfrs 文本面板`，并在 `hotfix-generation-ended-listeners` 中整段删除旧 `<sp_*>/<mfrs_*>` 面板。
+- 该正则匹配所有 `<sp_*>`，而开局自定义角色入口使用 `<sp_start>...</sp_start>`；显示正则顺序中旧面板隐藏位于 `[显示]渲染神秘复苏开局页` 之前，导致 `<sp_start>` 先被清空，开局自定义表单消失。
+- `<sp_input>` 是同类可交互输入面板，也会被该广义清洗误伤。
+
+**修复内容：**
+- `src/神秘复苏模拟器/index.yaml`：旧面板隐藏正则改为排除 `sp_start` / `sp_input`。
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：运行态清洗同样排除 `sp_start` / `sp_input`。
+- `scripts/verify-output-cleaning-regressions.mjs`：新增回归断言，要求 `<sp_start>` 渲染为开局自定义表单、`<sp_input>` 渲染为复杂行动输入面板，同时旧 `<sp_status>/<sp_choices>` 继续隐藏。
+
+**发布链路：**
+- source commit：`6cb397f` — `fix(mfrs): preserve opening custom panels`
+- bot bundle：`a34b4d5`，tag `v0.0.321`
+- publish sync commit：`8b2d759` — `chore(release): publish mfrs v8.4.1`
+- `scripts/publish-card.mjs`：`CDN_REF=a34b4d5`，`releaseVersion=8.4.1`
+- `pnpm run publish-card -- 神秘复苏模拟器发布版` 成功，发布版 PNG 已生成。
+
+**验证：**
+- `git diff --check` ✅
+- `node --check "src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js"` ✅
+- `node scripts/verify-output-cleaning-regressions.mjs` ✅（主工作区）
+- `pnpm build` ✅（仅既有数据库前端 bundle 347 KiB 体积 warning）
+- 开发版 worldbook gate ✅：383 entries / 33 disabled / max enabled 5851
+- 发布版 worldbook gate ✅：383 entries / 33 disabled / max enabled 5851
+- 发布版 YAML ✅：version 8.4.1，7×`a34b4d5`，0×`065e519`，0×`6cb397f`
+- 发布版 PNG chara/ccv3 ✅：version 8.4.1，7×`a34b4d5`，0×旧 ref/source ref
+- CDN smoke ✅：hotfix、数据库前端、固定状态栏三个 `@a34b4d5` 资源均 HTTP 200
+
+**注意：** 发布 worktree 未安装 `node_modules`，在该 worktree 单跑 `verify-output-cleaning-regressions.mjs` 会因找不到 `yaml` 包失败；同一源码已在主工作区通过。
+
+**剩余：** 可选真页验证：重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`，确认开局自定义表单可见，“进入神秘复苏世界”能写入/发送开局设定，数据库前端“选择/使用”仍能填入输入框，AI 回复仍只显示剧情 + `【本轮摘要】`。
+
 ## 2026-06-29 CST（✅ v8.4 发布版同步完成并推送：正文摘要 + 数据库前端交互迁移）
 
 **状态：** v8.4 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。用户可重新导入 v8.4 发布版 PNG。
