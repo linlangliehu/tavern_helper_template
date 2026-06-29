@@ -15,6 +15,16 @@
 
 ## 当前状态
 
+**2026-06-29 四优先级改进全部完成并发布上线（v7.6~v8.0）：** 逐项核验源码和 dist bundle，完成四优先级重构并通过完整发布链路。
+
+四优先级改进追踪（完整发布链路）：
+- 第一优先（弹窗替换+可操作toast）：✅ v7.6+v7.7 — MFRSDialog 替换 8 个原生 alert/confirm；AI生成字段自动修复 toast 带「查看」高亮按钮
+- 第二优先（抽卡API公开化 window.MFRS）：✅ v7.8 — 33 函数 + 5 常量挂到 window.MFRS 命名空间
+- 第三优先（固定状态栏精简 8→4）：✅ v7.9 — 移除 event/place/archives/rules 4 字段 + 2 辅助函数，保留 death/revive/state/ghosts
+- 第四优先（事件委托替代逐个绑定）：✅ v8.0 — 28 data-mfrs-action + 3 容器级委托 handler，.off('click').on('click') 降至 0
+
+**历史评估记录（保留追溯）：**
+
 **2026-06-29 源码核验 + 四优先级改进评估：** 逐项核验 v10_2_visualizer.js（6263 行）和 dist bundle，确认 v7.2~v7.7 修复全部落地。用户提出四优先级改进建议，当前完成度：
 
 四优先级改进全部完成并发布上线（v7.6~v8.0）。详细追踪见下方「四优先级改进追踪」表。
@@ -85,6 +95,12 @@
 **2026-06-26 抽卡系统 9 任务全部实现并合并到 origin/main：** 任务1~9 代码 + bot bundle 已在 origin/main（`5201ca2`）。`v10_2_visualizer.js` 5906 行，全部功能符号实测存在。详见下方「抽卡系统优化任务清单」。**注意：9 任务只过构建验证，真机验收尚未闭环（除下述两 bug 外，碎片/编辑器/导入导出/AI生成/十连折扣/写库预校验均未在真页实测）。**
 
 **当前版本：**
+- origin/main = 发布版 8.0 同步提交（事件委托替代逐个绑定），source refactor `fcaab0f`，bot bundle `47df33c`，自动 tag `v0.0.307`，发布同步 `4218c64`
+- v8.0 重构链路：`fcaab0f`（refactor 事件委托 — 碎片商店/抽卡面板/自定义编辑器）→ `47df33c`（bot bundle）→ 发布版 8.0 同步提交 `4218c64`
+- origin/main = 发布版 7.9 同步提交（固定状态栏精简 8→4），source feat `52c56c1`，bot bundle `3a77e4c`，自动 tag `v0.0.305`
+- v7.9 修复链路：`52c56c1`（feat 状态栏精简）→ `3a77e4c`（bot bundle）→ 发布版 7.9 同步提交
+- origin/main = 发布版 7.8 同步提交（window.MFRS 公开抽卡 API），source feat `aa0b5ce`，bot bundle `911e163`，自动 tag `v0.0.303`
+- v7.8 修复链路：`aa0b5ce`（feat window.MFRS 公开 API）→ `911e163`（bot bundle）→ 发布版 7.8 同步提交
 - origin/main = 发布版 7.7 同步提交（AI生成可操作toast），source fix `a638fc0`，bot bundle `5757f05`，自动 tag `v0.0.301`
 - v7.7 修复链路：`a638fc0`（feat AI生成可操作toast，字段自动修复提示+查看高亮）→ `5757f05`（bot bundle）→ 发布版 7.7 同步提交
 - origin/main = 发布版 7.6 同步提交（MFRSDialog 替换原生 alert/confirm），source fix `1f0f4aa`，bot bundle `a85c968`，自动 tag `v0.0.298`
@@ -93,16 +109,16 @@
 - v7.4 修复链路：`5f085b3`（fix 字段补全）→ `db7e4ba`（bot bundle）→ `32b4baa`（发布版 7.4 同步）
 - v7.3 链路：`a9e9425`（fix parseLoose）→ `24f5133`（bot bundle）→ `e0b60cb`（发布版 7.3 同步）
 - v7.2 链路：`ca4895f`（fix 货币监听器+AI引用）→ `1206e44`（bot bundle）→ `285502f`（发布版 7.2 同步）
-- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（版本 7.4，CDN `@db7e4ba`）
+- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（版本 8.0，CDN `@47df33c`）
 - 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
 
-**当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 抽卡面板 bug 修复（`0ef4201`）+ AI 生成容错三层（v7.2 调用层 `ca4895f` / v7.3 解析层 `a9e9425` / v7.4 数据层 `5f085b3`）。
+**当前有效修复线：** v0.0.264（at_depth 保真）+ v6.30（蓝灯常驻）+ v6.29（vendor 表头）+ row_id 修复 + fallback 中文字段名 + 数据库前端交互优化 + 抽卡系统 9 任务（`5201ca2`）+ 抽卡面板 bug 修复（`0ef4201`）+ AI 生成容错三层（v7.2 调用层 `ca4895f` / v7.3 解析层 `a9e9425` / v7.4 数据层 `5f085b3`）+ v7.5 流式路径（`511e86f`）+ v7.6 MFRSDialog（`1f0f4aa`）+ v7.7 可操作toast（`a638fc0`）+ v7.8 window.MFRS API（`aa0b5ce`）+ v7.9 状态栏精简（`52c56c1`）+ v8.0 事件委托（`fcaab0f`）。
 
-**待修 bug：无阻断项。** AI 生成三层容错已发布上线，真实调用/保存闭环已完成；当前自定义源需要流式生成的问题已通过 v7.5 发布链路修复。
+**待修 bug：无阻断项。** AI 生成三层容错已发布上线，真实调用/保存闭环已完成；当前自定义源需要流式生成的问题已通过 v7.5 发布链路修复。四优先级改进（弹窗替换/抽卡API公开化/状态栏精简/事件委托）已全部完成并发布上线（v7.6~v8.0）。
 
 **已关闭的旧阻断项：** `getFragments` 未定义、`showFragmentShop` 未定义、货币监听器事件名大小写、AI 生成裸调 `generateRaw`、AI 生成 JSON 解析和字段缺漏均已分别通过 v7.1~v7.4 发布。不要从旧流水里的“待合并/待 bot bundle”描述恢复任务。
 
-**工作区状态：** 主工作区 main 与 origin/main 对齐在 `3f511dd`。`src/**`、`scripts/**`、planning 文件在本次自检前无未提交差异；本地仍有 `dist/**` 构建残留、`.claude/worktrees/*` 工具 gitlink 变动、`.tmp-*` 和截图文件，这些不是当前任务产物，除非另有明确要求不要提交。
+**工作区状态：** 主工作区 main 与 origin/main 对齐在 `4218c64`（v8.0 发布版同步提交）。`src/**`、`scripts/**`、planning 文件已全部提交；本地仍有 `dist/**` 构建残留、`.claude/worktrees/*` 工具 gitlink 变动、截图文件，这些不是当前任务产物，不要提交。
 
 ## 当前任务清单
 
@@ -137,13 +153,8 @@
 | 优先级 | 状态 | 发布版本 | 说明 |
 |---|---|---|---|
 | 第一：弹窗替换 + 可操作 toast | ✅ 已完成 | v7.6 + v7.7 | MFRSDialog 替换 8 个原生 alert/confirm；AI生成字段自动修复 toast 带「查看」高亮按钮 |
-| 第二：抽卡 API 公开化 window.MFRS | ❌ 未开始 | — | 把抽卡/碎片函数挂到 window.MFRS，工作量小风险低 |
-| 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成源码 | 待发布 | 33 函数 + 5 常量挂到 window.MFRS，dist bundle 已含挂载 |
 | 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成 | v7.8 | 33 函数 + 5 常量挂到 window.MFRS，已发布 CDN @911e163 |
-| 第三：固定状态栏精简 8→4 | ❌ 未开始 | — | 砍到4核心字段（死亡/复苏/状态/驾驭），纯减法 |
-| 第三：固定状态栏精简 8→4 | ✅ 已完成源码 | 待发布 | 移除 event/place/archives/rules 4 字段 + 2 辅助函数，保留 death/revive/state/ghosts |
 | 第三：固定状态栏精简 8→4 | ✅ 已完成 | v7.9 | 移除 4 字段 + 2 辅助函数，CDN @3a77e4c |
-| 第四：事件委托替代逐个绑定 | ❌ 未开始 | — | data-mfrs-action + 容器委托，先试点抽卡/编辑器，需真机回归 |
 | 第四：事件委托替代逐个绑定 | ✅ 已完成 | v8.0 | 28 个 data-mfrs-action（源码）/25（dist）+ 3 容器级委托 handler，.off('click').on('click') 降至 0，CDN @47df33c |
 
 **已完成的 v7.1~v7.7 发布链路（勿重做）：**
