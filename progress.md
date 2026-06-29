@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ v8.4 发布版同步完成：正文摘要 + 数据库前端交互迁移）
+
+**状态：** v8.4 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步并验证。当前停点是发布同步文件待提交并 push；完成后用户可重新导入 v8.4 发布版 PNG。
+
+**发布链路：**
+- source commit：`fb5127a` — `feat(mfrs): compact turn summary and database interactions`
+- bot bundle：`065e519`，tag `v0.0.318`
+- `scripts/publish-card.mjs`：`CDN_REF=065e519`，`releaseVersion=8.4`
+- `pnpm run publish-card -- 神秘复苏模拟器发布版` 成功，镜像目录：第一条消息/系统提示词/对话示例/世界书/数据库，发布版 PNG 已生成。
+
+**发布验证：**
+- 发布版 worldbook gate ✅：383 entries / 33 disabled / max enabled 5851
+- 发布版 YAML ✅：version 8.4，7×`065e519`，0×`3f71015`，0×`fb5127a`
+- 发布版 PNG chara ✅：version 8.4，7×`065e519`，0×旧 ref/source ref
+- 发布版 PNG ccv3 ✅：version 8.4，7×`065e519`，0×旧 ref/source ref
+- CDN smoke ✅：数据库前端、界面美化、hotfix-generation-ended-listeners 三个 `@065e519` 资源均 HTTP 200
+
+**剩余：** 精确提交 `scripts/publish-card.mjs`、发布版 `index.yaml`、发布版 PNG 和同步后的发布版世界书/提示词/对话示例，然后 push origin/main。可选真页验证仍未做。
+
 ## 2026-06-29 CST（✅ v8.4 候选开发版完成：正文摘要 + 数据库前端交互迁移）
 
 **状态：** 按用户要求把 MUV/MVU 可见内容压缩到正文中的 `【本轮摘要】`，交互迁移到神秘复苏数据库前端。开发版源码、开发版 PNG 和回归脚本已更新并验证通过；发布版尚未同步，远程尚未提交/推送本轮改动。
