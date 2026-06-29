@@ -1,5 +1,25 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ 第三优先级完成源码：固定状态栏精简 8→4）
+
+**状态：** 用户要求继续完成第三优先级（固定状态栏精简 8→4 字段）。在 `src/神秘复苏模拟器/脚本/固定状态栏/index.ts` 中移除 4 个非核心字段，保留死亡/复苏/状态/驾驭 4 核心字段。
+
+**执行与结果：**
+ - ✅ 移除 `archivedGhostSummary()` 和 `collectedRuleSummary()` 两个辅助函数（仅服务于被移除的 archives/rules 字段）。
+ - ✅ 精简 `buildSummaryText()` 返回对象：移除 event/place/archives/rules，保留 death/revive/state/ghosts。
+ - ✅ 精简 `renderSummary()`：移除 4 行 querySelector/textContent 赋值。
+ - ✅ 精简 `innerHTML` 模板：移除 4 个 `<span>` 标签，保留 4 个 + 完整状态按钮。
+ - ✅ 验证：`pnpm build` webpack compiled successfully；dist bundle grep 确认 4 旧字段（event/place/archives/rules）= 0，4 保留字段（death/revive/state/ghosts）各 = 2。
+ - ✅ 源码 201 → ~170 行（-31 行，纯减法）。
+
+**设计决策：**
+ - 保留 `controlledGhostSummary()` 函数（仍服务于 ghosts 字段）。
+ - `valueText()` 和 `riskText()` 仍被保留字段使用，不移除。
+ - `joinLimited()` 仍被 `controlledGhostSummary()` 使用，不移除。
+ - CSS 样式（span flex、strong 颜色等）保持不变，4 个字段自动适配宽度。
+
+**当前停点：** 源码修改已完成并验证通过，待走发布链路。用户可选择现在发布或继续做第四优先级后一起发布。
+
 ## 2026-06-29 CST（✅ 第二优先级完成源码：window.MFRS 公开 API）
 
 **状态：** 用户要求继续完成第二优先级（抽卡API公开化 window.MFRS）。在 `v10_2_visualizer.js` IIFE 闭包末尾插入 `window.MFRS` 挂载块，把闭包内函数公开到全局命名空间。

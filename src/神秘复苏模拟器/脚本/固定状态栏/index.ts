@@ -48,26 +48,13 @@ function controlledGhostSummary(data: StatusData) {
   return joinLimited(source.map(ghost => ghost.代号 ?? ghost.厉鬼名称), '无');
 }
 
-function archivedGhostSummary(data: StatusData) {
-  return joinLimited(arrayItems(data.收录档案).map(archive => archive.档案厉鬼名称), '无');
-}
-
-function collectedRuleSummary(data: StatusData) {
-  return joinLimited(arrayItems(data.收录规律).map(rule => rule.规律内容 ?? rule.规律类型), '无');
-}
-
 function buildSummaryText(data: StatusData) {
-  const event = data.当前灵异事件 ?? {};
   const ghostState = data.驭鬼者状态 ?? {};
   return {
-    event: valueText(event.事件代号, '未立案'),
-    place: valueText(data.所在位置 || event.发生地点, '未知地点'),
     death: riskText(data.风险值, '/100'),
     revive: riskText(ghostState.总复苏风险 ?? data.厉鬼复苏程度, '%'),
     state: valueText(data.状态, '健康'),
     ghosts: controlledGhostSummary(data),
-    archives: archivedGhostSummary(data),
-    rules: collectedRuleSummary(data),
   };
 }
 
@@ -87,14 +74,10 @@ function renderSummary(host: HTMLDivElement) {
   const summaryEl = host.querySelector(`#${statusSummaryId}`) as HTMLDivElement | null;
   if (!summaryEl) return;
 
-  summaryEl.querySelector<HTMLElement>('[data-field="event"]')!.textContent = summary.event;
-  summaryEl.querySelector<HTMLElement>('[data-field="place"]')!.textContent = summary.place;
   summaryEl.querySelector<HTMLElement>('[data-field="death"]')!.textContent = summary.death;
   summaryEl.querySelector<HTMLElement>('[data-field="revive"]')!.textContent = summary.revive;
   summaryEl.querySelector<HTMLElement>('[data-field="state"]')!.textContent = summary.state;
   summaryEl.querySelector<HTMLElement>('[data-field="ghosts"]')!.textContent = summary.ghosts;
-  summaryEl.querySelector<HTMLElement>('[data-field="archives"]')!.textContent = summary.archives;
-  summaryEl.querySelector<HTMLElement>('[data-field="rules"]')!.textContent = summary.rules;
 }
 
 function ensureFixedStatusBar() {
@@ -130,15 +113,11 @@ function ensureFixedStatusBar() {
     summaryEl.style.color = '#d4c6bb';
     summaryEl.style.fontSize = '12px';
     summaryEl.style.lineHeight = '1.35';
-    summaryEl.innerHTML = `
-      <span title="当前事件">档案：<strong data-field="event"></strong></span>
-      <span title="所在位置">位置：<strong data-field="place"></strong></span>
+   summaryEl.innerHTML = `
       <span title="死亡风险">死亡：<strong data-field="death"></strong></span>
       <span title="复苏风险">复苏：<strong data-field="revive"></strong></span>
       <span title="状态">状态：<strong data-field="state"></strong></span>
       <span title="当前驾驭厉鬼">驾驭：<strong data-field="ghosts"></strong></span>
-      <span title="鬼档案收录">档案：<strong data-field="archives"></strong></span>
-      <span title="拓印或窃取的规律">规律：<strong data-field="rules"></strong></span>
       <button type="button" data-action="open-status" title="打开 v10.2 前端里的完整状态">完整状态</button>
     `;
     summaryEl.querySelectorAll('strong').forEach(el => {

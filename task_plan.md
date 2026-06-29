@@ -145,6 +145,7 @@
 | 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成源码 | 待发布 | 33 函数 + 5 常量挂到 window.MFRS，dist bundle 已含挂载 |
 | 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成 | v7.8 | 33 函数 + 5 常量挂到 window.MFRS，已发布 CDN @911e163 |
 | 第三：固定状态栏精简 8→4 | ❌ 未开始 | — | 砍到4核心字段（死亡/复苏/状态/驾驭），纯减法 |
+| 第三：固定状态栏精简 8→4 | ✅ 已完成源码 | 待发布 | 移除 event/place/archives/rules 4 字段 + 2 辅助函数，保留 death/revive/state/ghosts |
 | 第四：事件委托替代逐个绑定 | ❌ 未开始 | — | data-mfrs-action + 容器委托，先试点抽卡/编辑器，需真机回归 |
 
 **已完成的 v7.1~v7.7 发布链路（勿重做）：**
