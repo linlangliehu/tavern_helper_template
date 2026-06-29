@@ -1,4 +1,4 @@
-# Task Plan: 神秘复苏模拟器角色卡优化
+﻿# Task Plan: 神秘复苏模拟器角色卡优化
 
 ## 常驻恢复入口 - 新对话必读
 
@@ -143,6 +143,7 @@
 | 第一：弹窗替换 + 可操作 toast | ✅ 已完成 | v7.6 + v7.7 | MFRSDialog 替换 8 个原生 alert/confirm；AI生成字段自动修复 toast 带「查看」高亮按钮 |
 | 第二：抽卡 API 公开化 window.MFRS | ❌ 未开始 | — | 把抽卡/碎片函数挂到 window.MFRS，工作量小风险低 |
 | 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成源码 | 待发布 | 33 函数 + 5 常量挂到 window.MFRS，dist bundle 已含挂载 |
+| 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成 | v7.8 | 33 函数 + 5 常量挂到 window.MFRS，已发布 CDN @911e163 |
 | 第三：固定状态栏精简 8→4 | ❌ 未开始 | — | 砍到4核心字段（死亡/复苏/状态/驾驭），纯减法 |
 | 第四：事件委托替代逐个绑定 | ❌ 未开始 | — | data-mfrs-action + 容器委托，先试点抽卡/编辑器，需真机回归 |
 
@@ -239,6 +240,7 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
+| **`v7.8`** | **window.MFRS 公开抽卡 API 发布（第二优先级）** — 33 函数 + 5 常量挂到 window.MFRS 命名空间 | feat a0b5ce → bot bundle 911e163 → 发布版同步；publish-card.mjs CDN_REF=911e163/eleaseVersion=7.8；CDN 实测 yaml 版本:'7.8'+7×@911e163，PNG chara/ccv3 均含 7.8+7×911e163 | @911e163 / phase164-4-0-final-baseline-6-28-p5-4-hotfix13 / tag 0.0.303 | **已 push origin/main** |
 | **`v7.7`** | **AI生成可操作toast发布** — 字段自动修复从静默兜底升级为兜底+可操作提示 | feat `a638fc0` → bot bundle `5757f05` → 发布版同步；`publish-card.mjs` `CDN_REF=5757f05`/`releaseVersion=7.7`；CDN 实测 yaml `版本:'7.7'`+7×`@5757f05` | `@5757f05` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.301` | **已 push origin/main** |
 | **`v7.6`** | **MFRSDialog 替换原生 alert/confirm 发布** — 全部 8 个原生 alert/confirm 调用替换为主题感知的 MFRSDialog 模块 | feat `1f0f4aa` → bot bundle `a85c968` → 发布版同步；`publish-card.mjs` `CDN_REF=a85c968`/`releaseVersion=7.6`；CDN 实测 yaml `版本:'7.6'`+7×`@a85c968` | `@a85c968` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.298` | **已 push origin/main** |
 | **`v7.4`** | **AI生成字段补全（数据层容错）发布** | fix `5f085b3` → bot bundle `db7e4ba` → 发布版同步 `32b4baa`；`publish-card.mjs` `CDN_REF=db7e4ba`/`releaseVersion=7.4`；CDN 实测 yaml `版本:'7.4'`+7×`@db7e4ba`，bundle 含 `未命名物品`/`'❓'`/`短暂` | `@db7e4ba` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.293` | **已 push origin/main；仅剩真机复测** |

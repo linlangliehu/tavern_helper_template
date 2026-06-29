@@ -28,6 +28,7 @@
  - 用 try/catch 包裹，挂载失败不影响 visualizer 正常初始化。
 
 **当前停点：** 源码修改已完成并验证通过，待走发布链路（source commit → push main → bot bundle → CDN_REF bump → publish-card → 发布版同步）。用户可选择现在发布或继续做第三/四优先级后一起发布。
+**发布链路已完成（v7.8）：** source commit `aa0b5ce` → push origin main → bot bundle `911e163`（tag `v0.0.303`）→ rebase → publish-card CDN_REF=`911e163`/releaseVersion=`7.8` → 重打包 PNG → 验证通过。发布版 YAML `版本:'7.8'` + 7×`@911e163`，旧 `5757f05` 为 0；PNG chara/ccv3 元数据均含 7.8+7×911e163，无旧残留；worldbook gate 通过（383/33/5851）。dist bundle grep `window.MFRS`=4。待提交发布版同步 + push。
 
 ## 2026-06-29 CST（源码核验 + 四优先级改进评估）
 
