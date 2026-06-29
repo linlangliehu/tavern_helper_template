@@ -15,6 +15,8 @@
 
 ## 当前状态
 
+**2026-06-29 v8.4 候选（开发版已完成，发布版待同步）：** 按用户要求将聊天正文从“剧情 + 大量 MUV/MVU 面板/选项块”改为“剧情 + `【本轮摘要】`”，正文摘要最多 6 行；`<choices>` 与 `<UpdateVariable>` 保留为后台协议并由显示/清洗链路隐藏。神秘复苏数据库前端新增交互按钮：行动建议行可点“选择”填入酒馆输入框，灵异物品行可点“使用”填入使用物品行动文本；旧 `<sp_*>/<mfrs_*>` 文本面板在输出契约、显示正则和生成后清洗三层停用。开发版验证已通过：`git diff --check`、`node --check v10_2_visualizer.js`、`node scripts/verify-output-cleaning-regressions.mjs`、`node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime src/神秘复苏模拟器/神秘复苏模拟器.png`、`pnpm build`。仅有既有数据库前端 bundle 347 KiB 体积 warning。当前尚未提交、尚未推送、尚未同步发布版。
+
 **2026-06-29 四优先级改进全部完成并发布上线（v7.6~v8.0）+ window.MFRS / 自定义编辑器收口（v8.1→v8.3）：** 逐项核验源码和 dist bundle，完成四优先级重构并通过完整发布链路。v7.8 发布后真机验证发现 window.MFRS 挂载失败，经 v8.1（别名变量，无效）、v8.2（移除 showGachaResult，iframe 挂载成功）和 v8.3（父窗口同步挂载 + bindItemActions 残留修复发布）收口。发布版 v8.3 已生成并验证：CDN @3f71015，PNG chara/ccv3 均 version=8.3、7×@3f71015、旧 ref=0，worldbook gate 383/33/5851 PASS。
 
 四优先级改进追踪（完整发布链路）：
@@ -29,7 +31,7 @@
 **当前版本：**
 - origin/main = v8.3 发布同步提交 `15936d1`（tag `v0.0.316`），source fix `c7e5699`，bot bundle `3f71015`（tag `v0.0.315`）
 - 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（版本 8.3，CDN `@3f71015`）
-- 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）
+- 开发版源码版本：`2.0`（开发版 yaml 版本号，与发布版独立）；当前工作区有 v8.4 候选开发版改动，尚未发布。
 - 逐版本提交链路详见下方「版本变更索引」表
 
 
@@ -47,13 +49,30 @@
 **已关闭的旧阻断项：**
 AI 生成三层容错已发布上线，真实调用/保存闭环已完成；当前自定义源需要流式生成的问题已通过 v7.5 发布链路修复。四优先级改进（弹窗替换/抽卡API公开化/状态栏精简/事件委托）已全部完成并发布上线（v7.6~v8.0）。`getFragments` 未定义、`showFragmentShop` 未定义、货币监听器事件名大小写、AI 生成裸调 `generateRaw`、AI 生成 JSON 解析和字段缺漏均已分别通过 v7.1~v7.4 发布。不要从旧流水里的“待合并/待 bot bundle”描述恢复任务。
 
-**下次恢复入口：** 读 progress.md 顶部 "v8.3 发布同步完成：MFRS API 父窗口挂载 + 自定义编辑器修复收口" 条目。v8.3 发布版已生成并验证，待用户重新导入 v8.3 PNG 做终端体验确认。
+**下次恢复入口：** 读 progress.md 顶部 "v8.4 候选开发版完成：正文摘要 + 数据库前端交互迁移" 条目。若继续发布，按 source commit → push → 等 bot bundle → 回填 `scripts/publish-card.mjs` CDN_REF/releaseVersion=8.4 → `pnpm run publish-card -- 神秘复苏模拟器发布版` → 验证发布版 PNG → 提交并 push 的流程执行。
 
-**工作区状态：** 主工作区 main HEAD 与 origin/main 在 `15936d1`（v8.3 发布同步），仅剩无关 dirty：`.claude/worktrees/*` — 不要提交。
+**工作区状态：** 主工作区 main HEAD 与 origin/main 在 `15936d1`（v8.3 发布同步）。当前有 v8.4 候选源码/开发版 PNG/回归脚本改动，以及本地构建产生的 `dist/神秘复苏模拟器/**` 变更；无关 dirty：`.claude/worktrees/*`、`.tmp-jerryzmtz-my-tavern-scripts/` — 不要提交。
 
 ## 当前任务清单
 
-**核心修复线已全部验证通过，无阻断项。**
+**当前进行中：v8.4 正文摘要 + 数据库前端交互迁移。开发版已完成，发布版待同步。**
+
+**v8.4 已完成：**
+- ✅ 输出契约改为“正文剧情 → `【本轮摘要】` → `<choices>` → `<UpdateVariable>`”，摘要最多 6 行。
+- ✅ 停用旧可见大面板：`<sp_status>`、`<sp_choices>`、`<sp_clue_deduce>`、`<sp_ghost_encounter>`、`<sp_item_use>`、【状态面板】、【推演选项：】。
+- ✅ 新增显示正则 `[显示]隐藏旧 sp/mfrs 文本面板`，生成后清洗也整段删除旧 `<sp_*>/<mfrs_*>` 面板。
+- ✅ 数据库前端行动建议行新增“选择”按钮，灵异物品行新增“使用”按钮，点击填入 `#send_textarea`，并替换上一次数据库前端插入内容。
+- ✅ `行动建议` 表作为选项面板来源，替代正文 A/B/C/D 大块。
+- ✅ 开发版构建与 gate 通过；尚未真页点击验证、尚未发布版同步。
+
+**v8.4 剩余：**
+1. 提交并推送 v8.4 source 改动。
+2. 等待 bot bundle 生成新版 dist/CDN commit。
+3. 回填发布版 CDN ref 与版本号 8.4，运行 publish-card。
+4. 验证发布版 PNG 元数据与 worldbook gate 后提交并推送。
+5. 可选真页验证：点击数据库前端“选择/使用”是否填入输入框，AI 回复显示是否只剩剧情 + `【本轮摘要】`。
+
+**核心 v8.3 修复线已全部验证通过，无阻断项。**
 
 **已完成任务（勿重做）：**
 - ✅ `tavern_sync` at_depth 顶层字段修复：`58cc155`（v0.0.264），修复 ccv3 顶层 `depth/role` 丢失

@@ -101,6 +101,117 @@
         return text || fallback;
     };
 
+    const findHeaderIndex = (headers, names) => {
+        const wanted = names.map(name => String(name).trim());
+        return headers.findIndex(header => {
+            const text = String(header ?? '').trim();
+            return wanted.some(name => text === name || text.includes(name));
+        });
+    };
+
+    const getRowValueByHeader = (headers, row, names, fallback = '') => {
+        const idx = findHeaderIndex(headers, names);
+        if (idx < 0) return fallback;
+        return textValue(row[idx], fallback);
+    };
+
+    const isActionSuggestionsTable = (tableName, tableData) => {
+        const key = String(tableData?.key || '');
+        const name = String(tableName || tableData?.name || '');
+        return key === 'sheet_action_suggestions' || name.includes('行动建议');
+    };
+
+    const isSupernaturalItemsTable = (tableName, tableData) => {
+        const key = String(tableData?.key || '');
+        const name = String(tableName || tableData?.name || '');
+        return key === 'sheet_supernatural_items' || name.includes('灵异物品');
+    };
+
+    const isOptionPanelTable = (tableName, tableData) => {
+        return String(tableName || '').includes('选项') || isActionSuggestionsTable(tableName, tableData);
+    };
+
+    const normalizePromptText = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+    const buildActionSuggestionLabel = (headers, row) => {
+        const optionKey = getRowValueByHeader(headers, row, ['选项'], '');
+        const idea = getRowValueByHeader(headers, row, ['思路'], '');
+        return normalizePromptText(`${optionKey ? optionKey + '. ' : ''}${idea || '自定义行动'}`);
+    };
+
+    const buildActionSuggestionPrompt = (headers, row) => {
+        const optionKey = getRowValueByHeader(headers, row, ['选项'], '');
+        const idea = getRowValueByHeader(headers, row, ['思路'], '自定义行动');
+        return normalizePromptText(`我选择${optionKey ? optionKey + '：' : '：'}${idea}`);
+    };
+
+    const buildSupernaturalItemPrompt = (headers, row) => {
+        const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '该灵异物品');
+        const effect = getRowValueByHeader(headers, row, ['效果'], '');
+        const sideEffect = getRowValueByHeader(headers, row, ['副作用'], '');
+        const usageLimit = getRowValueByHeader(headers, row, ['使用限制'], '');
+        const parts = [`我使用灵异物品【${itemName}】。`];
+        if (effect) parts.push(`效果：${effect}。`);
+        if (sideEffect) parts.push(`我会承担副作用：${sideEffect}。`);
+        if (usageLimit) parts.push(`使用限制：${usageLimit}。`);
+        return normalizePromptText(parts.join(''));
+    };
+
+    const buildRowInteractionHtml = (tableName, tableData, row) => {
+        const headers = tableData.headers || [];
+        if (isActionSuggestionsTable(tableName, tableData)) {
+            const label = buildActionSuggestionLabel(headers, row);
+            const prompt = buildActionSuggestionPrompt(headers, row);
+            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入输入框"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>选择</span></button><span>${escapeHtml(label)}</span></div>`;
+        }
+        if (isSupernaturalItemsTable(tableName, tableData)) {
+            const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '灵异物品');
+            const prompt = buildSupernaturalItemPrompt(headers, row);
+            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-hand-sparkles"></i><span>使用</span></button><span>${escapeHtml(itemName)}</span></div>`;
+        }
+        return '';
+    };
+
+    const fillChatInput = (promptText, options = {}) => {
+        const prompt = String(promptText ?? '').trim();
+        if (!prompt) return false;
+        const host = getHost();
+        const parentDoc = host.document || document;
+        const ta = parentDoc.getElementById('send_textarea') || document.getElementById('send_textarea');
+        if (!ta) {
+            if (window.toastr) window.toastr.error('未找到酒馆输入框');
+            return false;
+        }
+
+        const { $ } = getCore();
+        const $ta = $ ? $(ta) : null;
+        const previousPrompt = String(ta._mfrsDbInsertedPrompt || ($ta && $ta.data('mfrs-db-inserted-prompt')) || '').trim();
+        const currentText = String(ta.value || '');
+        let nextText = prompt;
+        if (currentText.trim()) {
+            nextText = previousPrompt && currentText.includes(previousPrompt)
+                ? currentText.replace(previousPrompt, prompt)
+                : `${currentText.trimEnd()}\n${prompt}`;
+        }
+
+        ta.value = nextText;
+        ta._mfrsDbInsertedPrompt = prompt;
+        if ($ta) $ta.data('mfrs-db-inserted-prompt', prompt);
+
+        const eventWindow = ta.ownerDocument?.defaultView || host || window;
+        ta.dispatchEvent(new eventWindow.Event('input', { bubbles: true }));
+        ta.dispatchEvent(new eventWindow.Event('change', { bubbles: true }));
+
+        if (options.autoSend) {
+            const sendBtn = parentDoc.getElementById('send_but');
+            if (sendBtn) sendBtn.click();
+        } else {
+            ta.focus();
+        }
+        if (window.toastr && options.toast !== false) window.toastr.info('已填入输入框');
+        return true;
+    };
+
     const riskValue = (value, suffix) => {
         const text = textValue(value, '0');
         return text.includes('/') || text.includes('%') ? text : `${text}${suffix}`;
@@ -1115,6 +1226,10 @@
                 .acu-editable-title:hover { background: var(--acu-table-hover); color: var(--acu-highlight); }
                 .acu-card-index { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--acu-text-sub); font-weight: normal; background: var(--acu-badge-bg); padding: 1px 6px; border-radius: 8px; opacity: 0.8; }
                 .acu-card-body { padding: 0; display: flex; flex-direction: column; gap: 0; font-size: var(--acu-font-size, 13px); }
+                .acu-row-actions { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-top: 1px dashed var(--acu-border); background: var(--acu-table-head); color: var(--acu-text-sub); font-size: 12px; line-height: 1.35; }
+                .acu-row-actions > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .acu-row-action-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 5px 9px; border: 1px solid var(--acu-border); border-radius: 6px; background: var(--acu-btn-active-bg); color: var(--acu-btn-active-text); cursor: pointer; font-size: 12px; font-weight: 700; transition: all 0.2s; }
+                .acu-row-action-btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 2px 8px var(--acu-shadow); }
                 .acu-card-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
                 .acu-grid-item { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; border-radius: 6px; cursor: pointer; overflow: hidden; border: 1px solid var(--acu-border); background: rgba(0,0,0,0.02); }
                 .acu-grid-item:hover { background: var(--acu-table-hover); }
@@ -1511,7 +1626,7 @@
         for (const sheetId in json) {
             if (json[sheetId]?.name) {
                  const sheet = json[sheetId];
-                tables[sheet.name] = { key: sheetId, headers: sheet.content[0] || [], rows: sheet.content.slice(1) };
+                tables[sheet.name] = { key: sheetId, name: sheet.name, headers: sheet.content[0] || [], rows: sheet.content.slice(1) };
             }
         }
         return Object.keys(tables).length > 0 ? tables : null;
@@ -1889,7 +2004,7 @@
                                         <button class="acu-step-btn plus" data-key="itemsPerPage" data-step="5" data-min="5" data-max="100"><i class="fa-solid fa-plus"></i></button>
                                     </div>
                                 </div>
-                            </div></div></div><div class="acu-section-header" data-target="sec-actions"><div class="acu-section-title"><i class="fa-solid fa-list-check"></i> 选项面板 ${!allTableNames.some(n => n.includes('选项')) ? '<span class="acu-section-desc" style="color:#e74c3c !important;">未检测到选项表</span>' : ''}</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-actions"><div class="acu-settings-group">
+                            </div></div></div><div class="acu-section-header" data-target="sec-actions"><div class="acu-section-title"><i class="fa-solid fa-list-check"></i> 选项面板 ${!allTableNames.some(n => n.includes('选项') || n.includes('行动建议')) ? '<span class="acu-section-desc" style="color:#e74c3c !important;">未检测到选项表</span>' : ''}</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-actions"><div class="acu-settings-group">
 <div class="acu-control-row" >
                                 <div class="acu-label-col"><span class="acu-label-main">选项面板开关</span></div>
                                 <div class="acu-input-col">
@@ -2458,15 +2573,17 @@
 
             if(allTables) {
                  Object.keys(allTables).forEach(k => {
-                     if (k.includes('选项')) {
-                         if (config.showOptionPanel !== false) {
-                             optionTables.push(allTables[k]);
-                         }
-                     } else {
-                         tables[k] = allTables[k];
-                     }
-                 });
-            }
+                     const tableData = allTables[k];
+                     if (isOptionPanelTable(k, tableData)) {
+                          if (config.showOptionPanel !== false) {
+                              optionTables.push(tableData);
+                          }
+                      }
+                      if (!k.includes('选项')) {
+                          tables[k] = tableData;
+                      }
+                  });
+             }
 
             const consistencyWarnings = new Set();
             if (config.checkConsistency !== false) {
@@ -2583,16 +2700,23 @@
                 let hasBtns = false;
                 optionTables.forEach(table => {
                     if(table.rows) {
-                         table.rows.forEach(row => {
+                          table.rows.forEach(row => {
+                              if (isActionSuggestionsTable(table.name, table)) {
+                                  const label = buildActionSuggestionLabel(table.headers || [], row);
+                                  const prompt = buildActionSuggestionPrompt(table.headers || [], row);
+                                  buttonsHtml += `<button class="acu-opt-btn" data-val="${escapeHtml(encodeURIComponent(prompt))}">${escapeHtml(label)}</button>`;
+                                  hasBtns = true; optBtnCount++;
+                                  return;
+                              }
                               row.forEach((cell, idx) => {
                                    if(idx > 0 && cell) {
-                                       buttonsHtml += `<button class="acu-opt-btn" data-val="${encodeURIComponent(cell)}">${cell}</button>`;
+                                       buttonsHtml += `<button class="acu-opt-btn" data-val="${escapeHtml(encodeURIComponent(cell))}">${escapeHtml(cell)}</button>`;
                                        hasBtns = true; optBtnCount++;
                                    }
                               });
-                         });
-                    }
-                });
+                          });
+                     }
+                 });
                 if (hasBtns) {
                     optionBtnContent = buttonsHtml;
                 }
@@ -3121,6 +3245,8 @@
             });
             if (gridHtml) html += `<div class="acu-card-main-grid">${gridHtml}</div>`;
             if (fullHtml) html += `<div class="acu-card-full-area">${fullHtml}</div>`;
+            const rowActionHtml = buildRowInteractionHtml(tableName, tableData, row);
+            if (rowActionHtml) html += rowActionHtml;
             html += `   </div></div>`;
         });
         html += `</div></div>`;
@@ -3213,6 +3339,12 @@
         });
         
         const bindDynamicContentEvents = () => {
+            $('.acu-row-action-btn').off('click').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const prompt = decodeURIComponent($(this).attr('data-prompt') || '');
+                fillChatInput(prompt, { autoSend: false });
+            });
             $('.acu-cell').off('click').on('click', function(e) { e.stopPropagation(); showCellMenu(e, this); });
              $('.acu-dash-interactive').off('click').on('click', function(e) {
                 e.stopPropagation();
@@ -3455,27 +3587,12 @@
         $('.acu-opt-btn').on('click', function(e) {
              e.preventDefault(); e.stopPropagation();
              $(this).blur();
-             const val = decodeURIComponent($(this).data('val'));
+             const val = decodeURIComponent($(this).attr('data-val') || $(this).data('val') || '');
              const config = getConfig();
-             
-             let win = window.parent || window;
-             let parentDoc = win.document;
-             let ta = parentDoc.getElementById('send_textarea');
-
-             if(ta) {
-                 ta.value = (ta.value || '') + val;
-                 ta.dispatchEvent(new Event('input', { bubbles: true }));
-                 ta.dispatchEvent(new Event('change', { bubbles: true }));
-                 if (!config.clickOptionToAutoSend) ta.focus();
-                 
-                 if (config.clickOptionToAutoSend) {
-                     hideOptionsUntilUpdate = true;
-                     $('.acu-embedded-options-container').hide();
-                 
-
-                     const sendBtn = parentDoc.getElementById('send_but');
-                     if(sendBtn) sendBtn.click();
-                 }
+             const inserted = fillChatInput(val, { autoSend: config.clickOptionToAutoSend, toast: !config.clickOptionToAutoSend });
+             if(inserted && config.clickOptionToAutoSend) {
+                 hideOptionsUntilUpdate = true;
+                 $('.acu-embedded-options-container').hide();
              }
         });
 

@@ -1031,7 +1031,7 @@ body {
     }
   };
 
-  const MFRS_INLINE_PROTOCOL_TAG_PATTERN = /<\/?\s*(?:choices|sp_choices|UpdateVariable|JSONPatch|Analysis)\b/i;
+  const MFRS_INLINE_PROTOCOL_TAG_PATTERN = /<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i;
 
   const hideRawProtocolParagraphs = () => {
     const protocolPattern = /<UpdateVariable|<\/UpdateVariable|<JSONPatch|<\/JSONPatch|StatusPlaceHolderImpl|myactivity\.google\.com\/product\/gemini|No\.7 High School setting locked|"\s*op\s*"\s*:\s*"\s*replace\s*"|\/行动建议|\/当前灵异事件|\/最近行动判定/;

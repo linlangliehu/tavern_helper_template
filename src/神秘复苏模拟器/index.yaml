@@ -13,7 +13,7 @@
 
   核心原则：鬼无法被杀死，能对付鬼的只有鬼，洞察规律才可能活下去。
   运行边界：世界观、规则、变量、原著锚点、数据库和正文 UI 均由世界书、系统提示词、MVU 与正则脚本承载；主体字段只保留入口定位。
-  交互目标：引导{{user}}自定义开局，并在每轮推演中输出剧情、短标签 UI、推演选项、状态摘要和变量更新。
+  交互目标：引导{{user}}自定义开局，并在每轮推演中输出剧情、本轮摘要、后台行动建议和变量更新；具体交互由神秘复苏数据库前端承接。
 
 锚点:
   - &世界书常驻规则
@@ -248,14 +248,14 @@
     激活策略: { 类型: 绿灯, 关键字: [同名条目, 条目冲突, 冲突处理, 世界书冲突, 重名条目, 条目覆盖] }
     文件: 世界书/规则/同名条目冲突处理规则
 
-  - 名称: 必须输出推演选项
+  - 名称: 本轮摘要与后台行动建议
     <<: *世界书常驻规则
-    激活策略: { 类型: 绿灯, 关键字: [推演选项, 行动建议, choices, sp_choices, 选项格式, 自定义行动, 风险选项] }
+    激活策略: { 类型: 绿灯, 关键字: [本轮摘要, 行动建议, choices, 后台选项, 自定义行动, 风险选项, 数据库前端] }
     文件: 世界书/规则/必须输出推演选项
 
-  - 名称: 短标签字段协议
+  - 名称: 正文摘要字段协议
     <<: *世界书常驻规则
-    激活策略: { 类型: 绿灯, 关键字: [短标签, 字段协议, sp_status, sp_choices, sp_ghost_encounter, sp_ghost_suppress, sp_location_explore, sp_input, 状态栏] }
+    激活策略: { 类型: 绿灯, 关键字: [本轮摘要, 摘要字段, 当前回合, 状态摘要, choices, 数据库前端] }
     文件: 世界书/规则/短标签字段协议
 
   - 名称: 死亡裁定守则
@@ -5305,6 +5305,20 @@
       仅格式显示: true
       仅格式提示词: false
 
+  - 正则名称: '[显示]隐藏旧 sp/mfrs 文本面板'
+    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2025
+    启用: true
+    查找表达式: "/<((?:sp|mfrs)_[a-z_]+)\\b[^>]*>[\\s\\S]*?<\\/\\1>/gi"
+    替换为: ""
+    来源:
+      用户输入: false
+      AI输出: true
+      快捷命令: false
+      世界信息: false
+    作用于:
+      仅格式显示: true
+      仅格式提示词: false
+
   - 正则名称: '[显示]隐藏裸 choices JSON（由正文 sp 面板替代）'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2014
     启用: true
@@ -6309,7 +6323,7 @@
 
   - 正则名称: '[显示]渲染神秘复苏短标签面板'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2002
-    启用: true
+    启用: false
     查找表达式: "/<(?:sp_|mfrs_)(import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use|medium|domain|ghost_slave|use_ghost|suppress|deduce|item|custom_ghost)>\\s*([\\s\\S]*?)\\s*<\\/(?:sp_|mfrs_)\\1>/gi"
     替换为: |-
       <style>
@@ -6542,7 +6556,7 @@
 
   - 正则名称: '[显示]神秘复苏短标签生成中'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2003
-    启用: true
+    启用: false
     查找表达式: "/<(?:sp_|mfrs_)(input|import|status|event|ghost|check|choices|archive|clue|database|ghost_encounter|ghost_suppress|puzzle_solve|location_explore|clue_deduce|item_use|medium|domain|ghost_slave|use_ghost|suppress|deduce|item|custom_ghost)>(?![\\s\\S]*?<\\/(?:sp_|mfrs_)\\1>)([\\s\\S]*)$/gi"
     替换为: |-
       <details open>

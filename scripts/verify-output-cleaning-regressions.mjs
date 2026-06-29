@@ -176,6 +176,13 @@ function parseUpdateVariableActionSuggestionSample(text) {
 const storyToken = 'MFRS_OUTPUT_CLEAN_STORY_TOKEN';
 const sample = [
   `${storyToken}: corridor narration stays visible.`,
+  '【本轮摘要】',
+  '位置：旧住宅走廊',
+  '事件：敲门异常；观察中；鬼域未确认',
+  '状态：存活；死亡风险低；复苏风险0',
+  '线索：敲门声仍是唯一可见媒介',
+  '资源：手电筒可用',
+  '下一步：keep distance and verify the sound interval',
   '<sp_choices>',
   'Title: choices',
   'A: hold position <risk death="5" revive="0" source="sound">',
@@ -340,15 +347,18 @@ const vendorSource = readFileSync(vendorPath, 'utf8');
 const legacyPlaceholder = `StatusPlaceHolderI${'m'}pl`;
 
 assert.ok(displayed.includes(storyToken), 'normal narration should remain visible');
-assert.ok(displayed.includes('sp-panel-choices'), 'sp_choices panel should still render');
-assert.ok(displayed.includes('sp-panel-status'), 'sp_status panel should still render');
+assert.ok(displayed.includes('【本轮摘要】'), 'current-turn summary should remain visible');
+assert.equal(displayed.includes('sp-panel-choices'), false, 'legacy sp_choices panel should not render');
+assert.equal(displayed.includes('sp-panel-status'), false, 'legacy sp_status panel should not render');
+assert.equal(displayed.includes('<sp_choices>'), false, 'legacy sp_choices tag should be hidden in display output');
+assert.equal(displayed.includes('<sp_status>'), false, 'legacy sp_status tag should be hidden in display output');
 assert.equal(displayed.includes('Title: choices'), false, 'internal sp_choices title should be hidden');
 assert.equal(displayed.includes('Name: Lin Che'), false, 'English Name label should be localized');
 assert.equal(displayed.includes('Status: alive'), false, 'English Status label should be localized');
 assert.equal(displayed.includes('Location: old residential corridor'), false, 'English Location label should be localized');
-assert.ok(displayed.includes('姓名：Lin Che'), 'localized Name field should remain visible');
-assert.ok(displayed.includes('状态：alive'), 'localized Status field should remain visible');
-assert.ok(displayed.includes('所在位置：old residential corridor'), 'localized Location field should remain visible');
+assert.equal(displayed.includes('姓名：Lin Che'), false, 'legacy localized sp_status field should not remain visible');
+assert.equal(displayed.includes('状态：alive'), false, 'legacy localized sp_status field should not remain visible');
+assert.equal(displayed.includes('所在位置：old residential corridor'), false, 'legacy localized sp_status field should not remain visible');
 assert.equal(displayed.includes('<choices>'), false, 'tagged choices block should be hidden in display output');
 assert.equal(displayed.includes('risk.death'), false, 'naked choices JSON should be hidden in display output');
 assert.equal(displayed.includes('"op": "replace"'), false, 'naked JSON Patch should be hidden in display output');
@@ -383,9 +393,9 @@ assert.ok(dbFrontendSource.includes('hostWindow.AutoCardUpdaterAPI = apiBeforeCl
 assert.ok(themeScriptSource.includes('hideRawProtocolParagraphs'), 'theme script should hide raw protocol paragraphs after SillyTavern renders stripped tags');
 assert.ok(themeScriptSource.includes('/行动建议'), 'theme script should hide visible UpdateVariable action suggestion JSON paths');
 assert.ok(themeScriptSource.includes('MFRS_INLINE_PROTOCOL_TAG_PATTERN'), 'theme script should catch inline protocol tag names in natural-language paragraphs');
-assert.ok(themeScriptSource.includes('choices|sp_choices|UpdateVariable|JSONPatch|Analysis'), 'theme script should hide natural-language mentions of internal protocol tag names');
+assert.ok(themeScriptSource.includes('choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis'), 'theme script should hide natural-language mentions of internal protocol tag names');
 const inlineProtocolLeakSample = '行动建议：按 A/B/C/D 写入 4 行，风险与 <choices> 一致。';
-assert.ok(/<\/?\s*(?:choices|sp_choices|UpdateVariable|JSONPatch|Analysis)\b/i.test(inlineProtocolLeakSample), 'inline display guard should catch natural-language <choices> leaks');
+assert.ok(/<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i.test(inlineProtocolLeakSample), 'inline display guard should catch natural-language <choices> leaks');
 assert.ok(vendorSource.includes('sanitizeLatestAiMessageRawProtocol_ACU'), 'vendor should sanitize latest AI raw message before auto table update');
 assert.ok(vendorSource.includes('sanitizeMfrsRawProtocolMessage_ACU'), 'vendor should expose raw protocol sanitizer');
 assert.ok(vendorSource.includes('stripMfrsThinkingBlocks_ACU'), 'vendor should strip model thinking blocks before protocol parsing');

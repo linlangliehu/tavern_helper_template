@@ -1,5 +1,33 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ v8.4 候选开发版完成：正文摘要 + 数据库前端交互迁移）
+
+**状态：** 按用户要求把 MUV/MVU 可见内容压缩到正文中的 `【本轮摘要】`，交互迁移到神秘复苏数据库前端。开发版源码、开发版 PNG 和回归脚本已更新并验证通过；发布版尚未同步，远程尚未提交/推送本轮改动。
+
+**完成内容：**
+- 输出契约改为：正文剧情（首段 350 字以内） → `【本轮摘要】` → `<choices>` → `<UpdateVariable>`。
+- `【本轮摘要】` 固定最多 6 行：位置、事件、状态、线索、资源、下一步；禁止完整变量档案和隐藏真相。
+- 停用旧可见大面板：`<sp_status>`、`<sp_choices>`、`<sp_clue_deduce>`、`<sp_ghost_encounter>`、`<sp_item_use>`、【状态面板】、【推演选项：】。
+- `hotfix-generation-ended-listeners` 改为整段删除旧 `<sp_*>/<mfrs_*>` 文本面板，并加固为支持带属性的同名闭合标签。
+- `界面美化` 的内联协议检测扩展到全部 `sp_*` / `mfrs_*`，`index.yaml` 新增 `[显示]隐藏旧 sp/mfrs 文本面板` 正则，避免旧面板在显示层残留。
+- 数据库前端新增行动建议/灵异物品行交互：`行动建议` 表按钮“选择”填入 `我选择A：...`，`灵异物品` 表按钮“使用”填入 `我使用灵异物品【物品名】...`；后续点击会替换上一次数据库前端插入内容，避免无限堆叠。
+- `行动建议` 表现在也是选项面板来源，不再依赖正文可见 A/B/C/D 大块。
+- `verify-output-cleaning-regressions.mjs` 更新为新契约：旧 sp 面板应隐藏，`【本轮摘要】` 应保留。
+
+**验证：**
+- `git diff --check` ✅
+- `node --check "src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js"` ✅
+- `node scripts/verify-output-cleaning-regressions.mjs` ✅
+- `pnpm build` ✅（仅既有数据库前端 bundle 347 KiB 体积 warning）
+- `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神秘复苏模拟器/神秘复苏模拟器.png"` ✅（383 entries / 33 disabled / max enabled 5851）
+
+**注意：**
+- `node --check` 不能直接检查 `.ts` 文件；Node 会把 TypeScript 类型当语法错误。TS 语法由 `pnpm build` 覆盖。
+- PNG 元数据仍会出现旧 `<sp_*>` / `【推演选项：】` 字符串命中，来源是负向规则、兼容正则、禁用旧渲染模板或开场 `<sp_start>`，不代表输出契约仍要求旧面板。
+- 当前 dirty 包含 v8.4 源码/开发版 PNG/回归脚本和本地 dist 构建产物；`.claude/worktrees/*` 与 `.tmp-jerryzmtz-my-tavern-scripts/` 不提交。
+
+**下一步：** 若继续发布，先精确提交 source 改动并 push，等待 bot bundle；拿到新版 bundle commit 后回填 `scripts/publish-card.mjs` 的 CDN_REF 和 `releaseVersion=8.4`，运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，验证发布版 PNG 后再提交推送。
+
 ## 2026-06-29 CST（✅ v8.3 发布同步完成：MFRS API 父窗口挂载 + 自定义编辑器修复收口）
 
 **状态：** 接续 v8.2 后的真实导入卡验证结果，完成自定义编辑器渲染 bug 修复、MFRS API 父窗口挂载增强、bot bundle 和发布版 v8.3 同步。
