@@ -19,7 +19,7 @@
 - worldbook gate：383 entries / 33 disabled / max enabled 5851 PASS。
 - CDN smoke：数据库前端 bundle 和固定状态栏资源均 HTTP 200；数据库前端 bundle 含 `MFRS`，不含 `bindItemActions`。
 
-**当前停点：** v8.3 发布版同步已生成并验证，待本次精确提交 + push。用户后续重新导入 v8.3 PNG 即可验证主窗口 `window.MFRS`、碎片商店和自定义编辑器。
+**当前停点：** v8.3 发布版同步已提交并 push 到 origin/main：`15936d1`（tag `v0.0.316`）。用户后续重新导入 v8.3 PNG 即可验证主窗口 `window.MFRS`、碎片商店和自定义编辑器。
 
 ## 2026-06-29 CST（✅ window.MFRS 挂载失败最终修复 — v8.2 发布）
 
