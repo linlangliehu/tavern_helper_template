@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ window.MFRS 挂载失败最终修复 — v8.2 发布）
+
+**状态：** v8.1 的别名变量修复无效（Me=showGachaResult 仍然引用被重命名的变量），定位到真正根因并完成修复。
+
+**根因修正：** showGachaResult 是 showGachaPanel 函数内部的局部变量（L5153，嵌套在 L4998 的 showGachaPanel 内），IIFE 顶层作用域（L6264 挂载块）无法引用它。这不是 minifier 简写 bug，而是作用域错误——showGachaResult 在挂载块的作用域链中不可达。v7.8 发布时只 grep 了 dist bundle 中有 window.MFRS 字符串，没有真机验证实际挂载结果。
+
+**修复：** 从 window.MFRS 挂载块中移除 showGachaResult。它是 UI 内部函数，不需要作为公开 API。同时移除无效的别名变量 _showGachaResult。
+
+**真页验证（eval CDN @ecf9706）：** window.MFRS 成功挂载，37 个 key，31 个方法，version=1.0，getCurrency/single/showPanel 均为 function，无错误。
+
+**发布链路已完成（v8.2）：**
+- 源码 commit be1f52d
+- bot bundle ecf9706 (tag v0.0.313)
+- publish-card CDN_REF=ecf9706, releaseVersion=8.2
+- PNG chara/ccv3 version=8.2, 7xecf9706, 0 旧 ref
+- worldbook gate 383/33/5851 PASS
+
+**当前停点：** v8.2 发布版同步待提交 + push。用户需重新导入 v8.2 PNG 验证 window.MFRS 和碎片商店/编辑器功能。
+
 ## 2026-06-29 CST（✅ window.MFRS 挂载失败根因定位并修复 — v8.1 发布）
 
 **状态：** 接续暂停的排查任务，通过 Chrome DevTools MCP 真页实验定位到 window.MFRS 未挂载的根因并完成修复发布。

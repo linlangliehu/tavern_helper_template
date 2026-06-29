@@ -6063,7 +6063,6 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
                 // 刷新列表
                 editor.find('#custom-item-list').html(buildItemList(currentType));
-                bindItemActions();
             });
 
             // hover 效果
@@ -6075,9 +6074,6 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
             $('body').append(formDialog);
         };
-
-        // 初始绑定
-        bindItemActions();
 
         $('body').append(editor);
     };
