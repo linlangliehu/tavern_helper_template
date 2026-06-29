@@ -19,6 +19,7 @@
  - CSS 样式（span flex、strong 颜色等）保持不变，4 个字段自动适配宽度。
 
 **当前停点：** 源码修改已完成并验证通过，待走发布链路。用户可选择现在发布或继续做第四优先级后一起发布。
+**发布链路已完成（v7.9）：** source commit `52c56c1` → push origin main → bot bundle `3a77e4c`（tag `v0.0.305`）→ rebase → publish-card CDN_REF=`3a77e4c`/releaseVersion=`7.9` → 重打包 PNG → 验证通过。发布版 YAML `版本:'7.9'` + 7×`@3a77e4c`，旧 `911e163` 为 0；PNG chara/ccv3 元数据均含 7.9+7×3a77e4c，无旧残留；worldbook gate 通过（383/33/5851）。dist bundle 确认 4 旧字段=0、4 保留字段各=2。待提交发布版同步 + push。
 
 ## 2026-06-29 CST（✅ 第二优先级完成源码：window.MFRS 公开 API）
 
