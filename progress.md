@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ v7.7 发布：AI生成可操作toast）
+
+**状态：** 完成第一优先级剩余部分 — AI生成字段自动修复从静默兜底升级为兜底+可操作toast提示。v7.7 已完成发布链路。
+
+**执行与结果：**
+ - ✅ 在 `v10_2_visualizer.js` L5806-5808 插入原始值捕获（`_origIcon`/`_origEffectDetail`），在 L5841-5865 插入自动修复检测+toast通知块。
+ - ✅ 检测逻辑：icon 缺失且有 emoji → push '图标'；effectDetail 缺失且回填自 effect → push '效果详述'。
+ - ✅ toast 行为：`MFRSDialog.showToast('AI 返回的XX字段缺失，已自动补全', 'warning', { duration: 6000, actionLabel: '查看', onAction: 高亮表单字段 })`
+ - ✅ '查看'操作按钮点击后滚动到对应表单字段并高亮 2.5 秒（紫色边框）。
+ - ✅ 验证：`node --check` 通过；`pnpm build` webpack compiled successfully；BOM 保留、CRLF 一致；dist bundle 含 `已自动补全`(1)、`form-icon`(3)、`form-effectDetail`(3)、`box-shadow 0 0 0 2px`(1)。
+ - ✅ 发布链路：source `a638fc0` → push → bot bundle `5757f05`（tag `v0.0.301`）→ rebase → publish-card CDN_REF=`5757f05`/releaseVersion=`7.7` → 重打包 PNG → 发布同步提交。
+ - ✅ 发布验证：YAML `版本:'7.7'` + 7×`@5757f05`，旧 `a85c968` 为 0；worldbook gate 通过（383/33/5851）。
+
+**第一优先级完成情况：**
+ - ✅ 弹窗替换：全部 8 个原生 alert/confirm 已替换为 MFRSDialog（v7.6）
+ - ✅ toast 基础设施：showAlert/showConfirm/showToast 三函数已实现（v7.6）
+ - ✅ 可操作toast接入：AI生成字段自动修复 toast + '查看'高亮按钮已实现（v7.7）
+ - **第一优先级全部完成。**
+
 ## 2026-06-29 CST（✅ MFRSDialog 替换所有原生 alert/confirm 调用）
 
 **状态：** 接续上一轮交接，完成 `v10_2_visualizer.js` 中全部原生 `alert()` / `confirm()` 调用替换为 `MFRSDialog` 模块。MFRSDialog 模块已在上一轮插入（L454 附近），本轮完成 8 个调用点的逐个替换 + 4 个外层回调改 async。
