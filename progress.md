@@ -10,7 +10,7 @@
  - ✅ 12 处精确替换（8 调用 + 4 回调签名），用 Node.js 脚本完成。
  - ✅ 验证：`node --check` 通过；`pnpm build` webpack compiled successfully；BOM 保留、CRLF 一致；原生 alert/confirm 仅剩 2 个注释行。
 
-**当前停点：** 源码改动已在本地落地，未提交。
+**发布链路已完成（v7.6）：** source commit `1f0f4aa` -> push -> bot bundle `a85c968`（tag `v0.0.298`）-> rebase -> publish-card CDN_REF=`a85c968`/releaseVersion=`7.6` -> 重打包 PNG -> 发布同步提交 `fc80ad3` push origin/main。验证：YAML `版本:'7.6'` + 7×`@a85c968`，worldbook gate 通过（383/33/5851）。
 
 ## 2026-06-29 CST（✅ v7.5 发布链路完成：AI生成流式路径修复）
 
