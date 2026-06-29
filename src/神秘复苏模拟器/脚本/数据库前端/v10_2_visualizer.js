@@ -6261,7 +6261,6 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
     // UI 类函数（showPanel 等）依赖 jQuery/DOM，需在页面加载后调用。
     // 注意：挂载对象的 key 和 value 不能同名，否则 webpack minifier 会优化为简写
     // {showGachaResult}，但函数变量已被重命名为短名，导致 ReferenceError。
-    const _showGachaResult = showGachaResult;
     try {
         window.MFRS = Object.assign(window.MFRS || {}, {
             // --- 常量 ---
@@ -6305,8 +6304,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             showPanel: showGachaPanel,
             showFragmentShop: showFragmentShop,
             showCustomEditor: showCustomItemEditor,
-            // showGachaResult 的 key 与 value 必须不同名，避免 minifier 简写导致 ReferenceError
-            showGachaResult: _showGachaResult,
+            // showGachaResult 是 showGachaPanel 内部局部变量，IIFE 顶层无法引用，已从公开 API 移除
             showItemDetail: showGachaItemDetail,
             // --- 写库 ---
             syncToDatabase: syncGachaResultToDatabase,
