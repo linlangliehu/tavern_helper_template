@@ -1,5 +1,49 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ 第四优先级完成：事件委托替代逐个绑定 — v8.0 发布）
+
+**状态：** 用户要求继续完成第四优先级（事件委托替代逐个绑定）。在 `v10_2_visualizer.js` 中将碎片商店、抽卡面板、自定义编辑器三个区域的逐个 `.off('click').on('click')` 绑定重构为 `data-mfrs-action` 属性 + 容器级委托 handler。
+
+**三阶段重构执行与结果：**
+
+**阶段 1 — 碎片商店（`showFragmentShop`）：**
+ - ✅ 新增 2 个 data-mfrs-action：`frag-buy` + `shop-close`
+ - ✅ 单个 `shopDialog.on('click', '[data-mfrs-action]', ...)` 委托替代逐个绑定
+
+**阶段 2 — 抽卡面板（`showGachaPanel`）：**
+ - ✅ 7 个 data-mfrs-action：`gacha-close`、`gacha-custom-editor`、`gacha-shop`、`gacha-pool-select`(4x)、`gacha-single`、`gacha-ten`、`gacha-history-toggle`
+ - ✅ 提取 `doSinglePull`、`doTenPull`、`toggleHistory` 为命名函数
+ - ✅ 单个 `dialog.on('click', '[data-mfrs-action]', async ...)` 委托
+ - ✅ `$(this)` 在 toggleHistory 中重写为 `dialog.find('#gacha-history-toggle')`
+ - ✅ 移除死代码 `#gacha-fragment-shop-btn` handler
+ - ✅ 保留 `showGachaResult` 中的卡片 `$card.on('click')` 和 hover（动态元素，非 data-mfrs-action 按钮）
+
+**阶段 3 — 自定义编辑器（`showCustomItemEditor`）：**
+ - ✅ 8 个 data-mfrs-action：`editor-close`、`editor-tab-switch`(3x)、`editor-add-new`、`editor-export`、`editor-import`、`editor-ai-gen`、`editor-edit-item`、`editor-delete-item`
+ - ✅ 提取 `doExport`、`doImport`、`doAIGen` 为命名函数
+ - ✅ 移除 `bindItemActions()` 函数及其所有调用（tab 切换后、导入后、删除后）
+ - ✅ 容器级 hover 委托 `editor.on('mouseenter', '.custom-item-row', ...)` 替代逐行 hover
+
+**重构统计：**
+ - .off('click').on('click') 从 23 降至 **0**
+ - data-mfrs-action 从 0 增至 **28**（源码）/ **25**（dist minified）
+ - 3 个容器级委托 handler
+
+**发布链路已完成（v8.0）：**
+ - ✅ 源码 commit `fcaab0f` — `refactor(gacha): 事件委托替代逐个绑定`
+ - ✅ push origin main → bot bundle `47df33c`（tag `v0.0.307`）
+ - ✅ rebase 到 `47df33c`
+ - ✅ publish-card.mjs 更新：CDN_REF=`47df33c`、releaseVersion=`8.0`
+ - ✅ `node scripts/publish-card.mjs "神秘复苏模拟器发布版"` 打包成功
+ - ✅ 验证全部通过：
+   - YAML：`版本:'8.0'` + 7×`@47df33c`，旧 `3a77e4c`=0
+   - PNG chara：version=8.0，7×47df33c，0×3a77e4c
+   - PNG ccv3：version=8.0，7×47df33c，0×3a77e4c
+   - worldbook gate：383 entries / 33 disabled / max enabled 5851 — PASS
+   - dist bundle：data-mfrs-action=25，.off('click').on('click')=0，delegated handlers=3
+
+**当前停点：** v8.0 发布版同步待提交 + push。四优先级改进全部完成并发布上线。
+
 ## 2026-06-29 CST（✅ 第三优先级完成源码：固定状态栏精简 8→4）
 
 **状态：** 用户要求继续完成第三优先级（固定状态栏精简 8→4 字段）。在 `src/神秘复苏模拟器/脚本/固定状态栏/index.ts` 中移除 4 个非核心字段，保留死亡/复苏/状态/驾驭 4 核心字段。

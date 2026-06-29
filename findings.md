@@ -1,5 +1,25 @@
 # Findings
 
+## 2026-06-29：事件委托替代逐个绑定 — jQuery .off().on() 重构模式
+
+**背景：** 第四优先级将碎片商店、抽卡面板、自定义编辑器中的 23 个 `.off('click').on('click')` 逐个绑定重构为 `data-mfrs-action` 属性 + 容器级委托 handler。
+
+**重构模式：**
+1. **按钮标记：** 给每个可点击按钮加 `data-mfrs-action="action-name"` 属性，替代 id 选择器绑定。
+2. **容器委托：** 在弹层容器上挂单个 `container.on('click', '[data-mfrs-action]', handler)`，handler 内用 `$(e.currentTarget).data('mfrs-action')` 或 `e.target` 分发到命名函数。
+3. **命名函数提取：** 把内联匿名回调提取为 `doSinglePull`/`doTenPull`/`toggleHistory`/`doExport`/`doImport`/`doAIGen` 等命名函数，委托 handler 只做分发。
+4. **`$(this)` 陷阱：** 委托 handler 内 `this` 是匹配的委托元素（非 e.currentTarget），用 `dialog.find('#id')` 显式查找更安全。
+5. **动态元素例外：** `showGachaResult` 中的卡片 `$card.on('click')` 和 hover 是每次抽卡后动态创建的元素，不适用 data-mfrs-action（无固定容器），保留为即时绑定。
+6. **hover 委托：** 逐行 `$('.custom-item-row').on('mouseenter', ...)` 改为 `editor.on('mouseenter', '.custom-item-row', ...)`，避免每次 tab 切换/导入后重新绑定。
+7. **死代码清理：** 重构时移除了 `bindItemActions()` 函数及其所有调用点（tab 切换后、导入后、删除后），以及从未触发的 `#gacha-fragment-shop-btn` handler。
+
+**验证方法：**
+- 源码：grep `data-mfrs-action` = 28，grep `.off('click').on('click')` = 0
+- dist bundle（minified）：grep `data-mfrs-action` = 25（3 个因 minification 合并），grep `.off('click').on('click')` = 0，grep 委托 handler = 3
+- 构建通过 ≠ 运行时正确，事件委托重构后仍需真机回归（点击每个按钮确认分发正确）
+
+**经验：** 事件委托减少绑定数量和内存，但 `$(this)` 语义变化是最容易出错的地方。重构后必须验证每个 action 的分发路径，特别是依赖 `$(this)` 做 DOM 查找的回调。
+
 ## 2026-06-28：AI生成在“假流式”自定义 OpenAI 源下必须显式 should_stream=true
 
 **现象：** 发布版 7.4 真页点击自定义编辑器「AI生成」后按钮长时间停在“生成中...”，表单不出现，`TavernHelper.generateRaw:start` 已触发但无 success/error。此前 v7.2 调用层、v7.3 parseLoose、v7.4 字段补全都已发布，问题不在裸调/解析/字段补全三层本身。

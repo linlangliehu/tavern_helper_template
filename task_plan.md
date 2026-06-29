@@ -17,11 +17,7 @@
 
 **2026-06-29 源码核验 + 四优先级改进评估：** 逐项核验 v10_2_visualizer.js（6263 行）和 dist bundle，确认 v7.2~v7.7 修复全部落地。用户提出四优先级改进建议，当前完成度：
 
-- **第一优先（弹窗替换+可操作toast）：✅ 已完成** — v7.6 MFRSDialog 替换全部 8 个原生 alert/confirm（L455-600，showConfirm/showAlert/showToast，复用 acu-theme-* CSS 变量）；v7.7 AI生成字段自动修复 toast 带「查看」高亮按钮（L5850，form-icon/form-effectDetail 紫色高亮 2.5s）。源码零原生 alert/confirm 残留。
-- **第二优先（抽卡API公开化 window.MFRS）：❌ 未开始** — 源码无 window.MFRS 命名空间，抽卡函数全在闭包内。唯一 window 挂载是 window.MfrsDatabase（L6161 数据库CRUD）。工作量小，风险低。
- - **第二优先（抽卡API公开化 window.MFRS）：✅ 已完成源码** — 在 v10_2_visualizer.js L6261-6319 插入 window.MFRS 公开 API 挂载块（33 函数 + 5 常量：RARITY/POOL_TYPE/ITEM_TYPE/CURRENCY/FRAGMENT + 货币/保底/碎片/物品目录/抽卡/UI/写库）。`node --check` + `pnpm build` 通过，dist bundle 含 window.MFRS。待发布。
-- **第三优先（固定状态栏精简 8→4 字段）：❌ 未开始** — 固定状态栏/index.ts L134-141 仍为 8 字段（含两个重复“档案”标签）。用户建议砍到 4 核心（死亡/复苏/状态/驾驭），纯减法。
-- **第四优先（事件委托替代逐个绑定）：❌ 未开始** — 0 处 data-mfrs-action，23 个 .off("click").on("click") 逐个绑定。建议先试点抽卡面板和自定义编辑器，需真机回归，留大版本。
+四优先级改进全部完成并发布上线（v7.6~v8.0）。详细追踪见下方「四优先级改进追踪」表。
 
 下一步待用户决定继续做哪一项。
 下一步：发布第二优先级（source commit → push main → bot bundle → CDN_REF bump → publish-card → 发布版同步），或继续做第三/四优先级。
@@ -148,6 +144,7 @@
 | 第三：固定状态栏精简 8→4 | ✅ 已完成源码 | 待发布 | 移除 event/place/archives/rules 4 字段 + 2 辅助函数，保留 death/revive/state/ghosts |
 | 第三：固定状态栏精简 8→4 | ✅ 已完成 | v7.9 | 移除 4 字段 + 2 辅助函数，CDN @3a77e4c |
 | 第四：事件委托替代逐个绑定 | ❌ 未开始 | — | data-mfrs-action + 容器委托，先试点抽卡/编辑器，需真机回归 |
+| 第四：事件委托替代逐个绑定 | ✅ 已完成 | v8.0 | 28 个 data-mfrs-action（源码）/25（dist）+ 3 容器级委托 handler，.off('click').on('click') 降至 0，CDN @47df33c |
 
 **已完成的 v7.1~v7.7 发布链路（勿重做）：**
 1. ✅ v7.1 抽卡面板修复（getFragments→getGachaFragments + showFragmentShop）
@@ -242,6 +239,7 @@
 
 | 版本 | 主题 | 关键提交/资源 | marker/cache | 状态 |
 |---|---|---|---|---|
+| **`v8.0`** | **事件委托替代逐个绑定发布（第四优先级）** — 碎片商店/抽卡面板/自定义编辑器三阶段重构，28 data-mfrs-action + 3 容器级委托 | refactor `fcaab0f` → bot bundle `47df33c` → 发布版同步；publish-card.mjs CDN_REF=`47df33c`/`releaseVersion=8.0`；CDN 实测 yaml `版本:'8.0'`+7×`@47df33c`，PNG chara/ccv3 均含 8.0+7×47df33c；dist data-mfrs-action=25、.off('click').on('click')=0、delegated handlers=3 | `@47df33c` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.307` | **已 push origin/main** |
 | **`v7.9`** | **固定状态栏精简 8→4 发布（第三优先级）** — 移除 event/place/archives/rules 4 字段 + 2 辅助函数 | feat 52c56c1 → bot bundle 3a77e4c → 发布版同步；publish-card.mjs CDN_REF=3a77e4c/eleaseVersion=7.9；CDN 实测 yaml 版本:'7.9'+7×@3a77e4c，PNG chara/ccv3 均含 7.9+7×3a77e4c | @3a77e4c / phase164-4-0-final-baseline-6-28-p5-4-hotfix13 / tag 0.0.305 | **已 push origin/main** |
 | **`v7.8`** | **window.MFRS 公开抽卡 API 发布（第二优先级）** — 33 函数 + 5 常量挂到 window.MFRS 命名空间 | feat a0b5ce → bot bundle 911e163 → 发布版同步；publish-card.mjs CDN_REF=911e163/eleaseVersion=7.8；CDN 实测 yaml 版本:'7.8'+7×@911e163，PNG chara/ccv3 均含 7.8+7×911e163 | @911e163 / phase164-4-0-final-baseline-6-28-p5-4-hotfix13 / tag 0.0.303 | **已 push origin/main** |
 | **`v7.7`** | **AI生成可操作toast发布** — 字段自动修复从静默兜底升级为兜底+可操作提示 | feat `a638fc0` → bot bundle `5757f05` → 发布版同步；`publish-card.mjs` `CDN_REF=5757f05`/`releaseVersion=7.7`；CDN 实测 yaml `版本:'7.7'`+7×`@5757f05` | `@5757f05` / `phase164-4-0-final-baseline-6-28-p5-4-hotfix13` / tag `v0.0.301` | **已 push origin/main** |
@@ -267,7 +265,7 @@
 
 ## 需要提交的文件
 
-**本轮发布同步提交范围（2026-06-29 v7.5）：** `scripts/publish-card.mjs`、`src/神秘复苏模拟器发布版/index.yaml`、`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`、`task_plan.md`、`progress.md`。源码修复已在 `511e86f`，dist 已由 bot bundle `7ac8a28` 重建；不要提交主工作区本地 `dist/**` 构建残留。
+**本轮发布同步提交范围（2026-06-29 v8.0）：** `scripts/publish-card.mjs`、`src/神秘复苏模拟器发布版/index.yaml`、`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`、`task_plan.md`、`progress.md`、`findings.md`。源码重构已在 `fcaab0f`，dist 已由 bot bundle `47df33c` 重建；不要提交主工作区本地 `dist/**` 构建残留。
 
 **注意：抽卡面板 bug 修复代码已完成发布**——旧 worktree/旧流水里的 `fix/gacha-getfragments-undefined`、`fdb6a74`、`待合并` 描述均为历史信息；当前有效发布线以 v7.1~v7.4 版本变更索引和顶部 `当前状态` 为准。
 
