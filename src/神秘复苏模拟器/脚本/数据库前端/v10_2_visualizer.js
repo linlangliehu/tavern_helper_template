@@ -4693,7 +4693,7 @@
             const btn = owned
                 ? '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:default; font-size:12px;">已拥有</button>'
                 : (affordable
-                    ? `<button class="frag-buy-btn" data-id="${item.id}" style="background:linear-gradient(135deg,#a855f7,#7c3aed); color:white; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:bold;">兑换</button>`
+                    ? `<button class="frag-buy-btn" data-mfrs-action="frag-buy" data-id="${item.id}" style="background:linear-gradient(135deg,#a855f7,#7c3aed); color:white; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:bold;">兑换</button>`
                     : '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:not-allowed; font-size:12px;">残屑不足</button>');
             return `
                 <div class="frag-row" data-id="${item.id}" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--acu-btn-bg); border-radius:8px; margin-bottom:8px; border:1px solid var(--acu-border);">
@@ -4719,21 +4719,7 @@
                 ? items.map(renderRow).join('')
                 : '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无可兑换物品</div>';
             shopDialog.find('#frag-list').html(listHtml);
-
-            shopDialog.find('.frag-buy-btn[data-id]').off('click').on('click', function() {
-                const id = $(this).data('id');
-                const item = items.find(i => i.id === id);
-                if (!item) return;
-                const result = exchangeWithFragments(item);
-                if (result.success) {
-                    if (window.toastr) window.toastr.success(`兑换成功：${item.name}（消耗 ${result.cost} 灵异残屑）`);
-                    // 同步主面板余额显示
-                    $('#gacha-fragment-display').text(getGachaFragments());
-                    refresh();
-                } else {
-                    if (window.toastr) window.toastr.error(result.error || '兑换失败');
-                }
-            });
+            // 兑换按钮由容器委托处理，无需逐个绑定
         };
 
         const shopDialog = $(`
@@ -4747,7 +4733,7 @@
                         <div style="display:flex; align-items:center; gap:14px;">
                             <span style="color:var(--acu-text-sub); font-size:12px;">余额</span>
                             <span style="color:#a855f7; font-weight:bold; font-size:18px;">💎 <span id="frag-balance">0</span></span>
-                            <button class="shop-close" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:14px;">✕</button>
+                            <button class="shop-close" data-mfrs-action="shop-close" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:14px;">✕</button>
                         </div>
                     </div>
                     <div id="frag-list" style="padding:14px 20px; overflow-y:auto; flex:1;"></div>
@@ -4759,8 +4745,25 @@
         `);
 
         $('body').append(shopDialog);
-        shopDialog.find('.shop-close').click(() => shopDialog.remove());
         shopDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) shopDialog.remove(); });
+        // 事件委托：统一处理商店内 data-mfrs-action 点击
+        shopDialog.on('click', '[data-mfrs-action]', function() {
+            const action = $(this).data('mfrs-action');
+            if (action === 'shop-close') { shopDialog.remove(); return; }
+            if (action === 'frag-buy') {
+                const id = $(this).data('id');
+                const item = items.find(i => i.id === id);
+                if (!item) return;
+                const result = exchangeWithFragments(item);
+                if (result.success) {
+                    if (window.toastr) window.toastr.success(`兑换成功：${item.name}（消耗 ${result.cost} 灵异残屑）`);
+                    $('#gacha-fragment-display').text(getGachaFragments());
+                    refresh();
+                } else {
+                    if (window.toastr) window.toastr.error(result.error || '兑换失败');
+                }
+            }
+        });
         refresh();
     };
 
@@ -5005,10 +5008,10 @@
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
                         <span>神秘复苏抽卡系统</span>
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <button id="gacha-custom-editor-btn" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:12px; transition:all 0.2s;" title="自定义物品编辑器">
+                            <button id="gacha-custom-editor-btn" data-mfrs-action="gacha-custom-editor" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:12px; transition:all 0.2s;" title="自定义物品编辑器">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> 自定义
                             </button>
-                            <button id="gacha-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                            <button id="gacha-close" data-mfrs-action="gacha-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
                                 <i class="fa-solid fa-times"></i>
                             </button>
                         </div>
@@ -5045,7 +5048,7 @@
                                         <div style="color:#a855f7; font-size:22px; font-weight:bold;" id="gacha-fragment-display">${getGachaFragments()}</div>
                                     </div>
                                 </div>
-                                <button id="gacha-shop-btn" style="background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%); border:none; border-radius:8px; padding:10px 18px; cursor:pointer; color:white; font-size:13px; font-weight:bold; transition:transform 0.2s;">
+                                <button id="gacha-shop-btn" data-mfrs-action="gacha-shop" style="background:linear-gradient(135deg, #a855f7 0%, #6366f1 100%); border:none; border-radius:8px; padding:10px 18px; cursor:pointer; color:white; font-size:13px; font-weight:bold; transition:transform 0.2s;">
                                     <i class="fa-solid fa-store"></i> 兑换商店
                                 </button>
                             </div>
@@ -5075,19 +5078,19 @@
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
                             <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">选择抽卡池</div>
                             <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">
-                                <button class="gacha-pool-btn active" data-pool="all" style="background:var(--acu-btn-bg); border:2px solid var(--acu-highlight); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                <button data-mfrs-action="gacha-pool-select" class="gacha-pool-btn active" data-pool="all" style="background:var(--acu-btn-bg); border:2px solid var(--acu-highlight); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
                                     <div style="font-weight:bold; margin-bottom:5px;">全物品池</div>
                                     <div style="font-size:11px; color:var(--acu-text-sub);">均匀分布</div>
                                 </button>
-                                <button class="gacha-pool-btn" data-pool="archive" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                <button data-mfrs-action="gacha-pool-select" class="gacha-pool-btn" data-pool="archive" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
                                     <div style="font-weight:bold; margin-bottom:5px;">厉鬼档案池</div>
                                     <div style="font-size:11px; color:var(--acu-text-sub);">线索权重↑</div>
                                 </button>
-                                <button class="gacha-pool-btn" data-pool="pattern" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                <button data-mfrs-action="gacha-pool-select" class="gacha-pool-btn" data-pool="pattern" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
                                     <div style="font-weight:bold; margin-bottom:5px;">厉鬼规律池</div>
                                     <div style="font-size:11px; color:var(--acu-text-sub);">知识权重↑</div>
                                 </button>
-                                <button class="gacha-pool-btn" data-pool="supernatural" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
+                                <button data-mfrs-action="gacha-pool-select" class="gacha-pool-btn" data-pool="supernatural" style="background:var(--acu-btn-bg); border:2px solid var(--acu-border); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
                                     <div style="font-weight:bold; margin-bottom:5px;">灵异物品池</div>
                                     <div style="font-size:11px; color:var(--acu-text-sub);">仅灵异物品</div>
                                 </button>
@@ -5096,11 +5099,11 @@
 
                         <!-- 抽卡按钮 -->
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
-                            <button id="gacha-single-btn" style="background:linear-gradient(135deg, var(--acu-highlight) 0%, var(--acu-highlight-bg) 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px var(--acu-highlight-bg);">
+                            <button id="gacha-single-btn" data-mfrs-action="gacha-single" style="background:linear-gradient(135deg, var(--acu-highlight) 0%, var(--acu-highlight-bg) 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px var(--acu-highlight-bg);">
                                 <div style="margin-bottom:8px;">单抽</div>
                                 <div style="font-size:13px; opacity:0.9;">消耗 ${GACHA_CURRENCY.cost.single} 调查点</div>
                             </button>
-                            <button id="gacha-ten-btn" style="background:linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px rgba(255, 107, 107, 0.3); position:relative; overflow:visible;">
+                            <button id="gacha-ten-btn" data-mfrs-action="gacha-ten" style="background:linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px rgba(255, 107, 107, 0.3); position:relative; overflow:visible;">
                                 <span style="position:absolute; top:-8px; right:-8px; background:#ff4757; color:white; font-size:11px; font-weight:bold; padding:2px 8px; border-radius:10px; box-shadow:0 2px 6px rgba(255,71,87,0.4); animation:discountPulse 2s ease-in-out infinite;">9折</span>
                                 <div style="margin-bottom:8px;">十连抽</div>
                                 <div style="font-size:13px; opacity:0.9;">
@@ -5120,7 +5123,7 @@
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                                 <div style="color:var(--acu-title-color); font-weight:bold; font-size:14px;">抽卡历史</div>
-                                <button id="gacha-history-toggle" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:12px;">
+                                <button id="gacha-history-toggle" data-mfrs-action="gacha-history-toggle" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:12px;">
                                     <i class="fa-solid fa-chevron-down"></i> 展开
                                 </button>
                             </div>
@@ -5138,27 +5141,13 @@
 
         // 关闭对话框
         const closeDialog = () => dialog.remove();
-        dialog.find('#gacha-close').click(closeDialog);
         dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDialog(); });
-
-        // 抽卡池选择
-        dialog.find('.gacha-pool-btn').on('click', function() {
-            dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
-            $(this).addClass('active').css('border-color', 'var(--acu-highlight)');
-            selectedPool = $(this).data('pool');
-        });
 
         // 按钮悬停效果
         dialog.find('#gacha-single-btn, #gacha-ten-btn').on('mouseenter', function() {
             $(this).css('transform', 'translateY(-3px) scale(1.02)');
         }).on('mouseleave', function() {
             $(this).css('transform', 'translateY(0) scale(1)');
-        });
-
-        // 自定义物品编辑器
-        dialog.find('#gacha-custom-editor-btn').on('click', function() {
-            closeDialog();
-            showCustomItemEditor();
         });
 
         // 显示抽卡结果
@@ -5219,7 +5208,7 @@
         };
 
         // 单抽
-        dialog.find('#gacha-single-btn').on('click', async function() {
+        const doSinglePull = async () => {
             const result = gachaSingle(selectedPool);
 
             if (!result.success) {
@@ -5260,15 +5249,10 @@
             await syncGachaResultToDatabase(result.items);
 
             if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
-        });
-
-        // 碎片商店按钮
-        dialog.find('#gacha-shop-btn').on('click', function() {
-            showFragmentShop();
-        });
+        };
 
         // 十连
-        dialog.find('#gacha-ten-btn').on('click', async function() {
+        const doTenPull = async () => {
             const result = gachaTen(selectedPool);
 
             if (!result.success) {
@@ -5325,17 +5309,17 @@
             } else {
                 if (window.toastr) window.toastr.success('十连完成！');
             }
-        });
+        };
 
         // 历史记录折叠/展开
-        dialog.find('#gacha-history-toggle').on('click', function() {
+        const toggleHistory = () => {
             const $content = dialog.find('#gacha-history-content');
-            const $icon = $(this).find('i');
+            const $icon = dialog.find('#gacha-history-toggle').find('i');
 
             if ($content.is(':visible')) {
                 $content.slideUp(200);
                 $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-                $(this).html('<i class="fa-solid fa-chevron-down"></i> 展开');
+                dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
             } else {
                 // 加载历史记录
                 const history = getGachaHistory().slice(0, 20);
@@ -5370,18 +5354,29 @@
 
                 $content.slideDown(200);
                 $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-                $(this).html('<i class="fa-solid fa-chevron-up"></i> 收起');
+                dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-up"></i> 收起');
+            }
+        };
+
+        // 事件委托：统一处理面板内所有 data-mfrs-action 点击
+        dialog.on('click', '[data-mfrs-action]', async function(e) {
+            e.stopPropagation();
+            const action = $(this).data('mfrs-action');
+            switch (action) {
+                case 'gacha-close': closeDialog(); break;
+                case 'gacha-custom-editor': closeDialog(); showCustomItemEditor(); break;
+                case 'gacha-pool-select':
+                    dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
+                    $(this).addClass('active').css('border-color', 'var(--acu-highlight)');
+                    selectedPool = $(this).data('pool');
+                    break;
+                case 'gacha-single': await doSinglePull(); break;
+                case 'gacha-ten': await doTenPull(); break;
+                case 'gacha-shop': showFragmentShop(); break;
+                case 'gacha-history-toggle': toggleHistory(); break;
             }
         });
-
-        // 碎片商店按钮
-        dialog.find('#gacha-fragment-shop-btn').on('click', function() {
-            closeDialog();
-            showFragmentShop();
-        });
-    };
-
-    // 显示物品详情
+    };    // 显示物品详情
     const showGachaItemDetail = (item) => {
         const { $ } = getCore();
         const config = getConfig();
@@ -5493,11 +5488,11 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:6px; flex-shrink:0;">
-                            <button class="edit-item-btn" data-id="${item.id}" data-type="${type}" style="background:var(--acu-highlight); border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="编辑/覆盖">
+                            <button class="edit-item-btn" data-mfrs-action="editor-edit-item" data-id="${item.id}" data-type="${type}" style="background:var(--acu-highlight); border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="编辑/覆盖">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
                             ${canDelete ? `
-                            <button class="delete-item-btn" data-id="${item.id}" data-type="${type}" style="background:#ef4444; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="删除自定义覆盖">
+                            <button class="delete-item-btn" data-mfrs-action="editor-delete-item" data-id="${item.id}" data-type="${type}" style="background:#ef4444; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="删除自定义覆盖">
                                 <i class="fa-solid fa-trash"></i>
                             </button>` : ''}
                         </div>
@@ -5512,19 +5507,19 @@
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
                         <span><i class="fa-solid fa-wand-magic-sparkles"></i> 自定义物品编辑器</span>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <button id="custom-add-new-btn" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;">
+                            <button id="custom-add-new-btn" data-mfrs-action="editor-add-new" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;">
                                 <i class="fa-solid fa-plus"></i> 新增物品
                             </button>
-                            <button id="custom-export-btn" style="background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="导出全部物品目录为 JSON">
+                            <button id="custom-export-btn" data-mfrs-action="editor-export" style="background:linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="导出全部物品目录为 JSON">
                                 <i class="fa-solid fa-download"></i> 导出
                             </button>
-                            <button id="custom-import-btn" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="从 JSON 导入物品到自定义层">
+                            <button id="custom-import-btn" data-mfrs-action="editor-import" style="background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="从 JSON 导入物品到自定义层">
                                 <i class="fa-solid fa-upload"></i> 导入
                             </button>
-                            <button id="custom-ai-gen-btn" style="background:linear-gradient(135deg, #ec4899 0%, #be185d 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="用 AI 按神秘复苏风格生成物品">
+                            <button id="custom-ai-gen-btn" data-mfrs-action="editor-ai-gen" style="background:linear-gradient(135deg, #ec4899 0%, #be185d 100%); border:none; border-radius:6px; padding:5px 12px; cursor:pointer; color:white; font-size:12px; font-weight:bold;" title="用 AI 按神秘复苏风格生成物品">
                                 <i class="fa-solid fa-robot"></i> AI生成
                             </button>
-                            <button id="custom-editor-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
+                            <button id="custom-editor-close" data-mfrs-action="editor-close" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:20px;">
                                 <i class="fa-solid fa-times"></i>
                             </button>
                         </div>
@@ -5532,13 +5527,13 @@
 
                     <!-- 类型 Tab -->
                     <div style="display:flex; gap:0; border-bottom:1px solid var(--acu-border); padding:0 20px;">
-                        <button class="custom-type-tab active" data-type="supernatural" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-highlight); font-size:13px; font-weight:bold; cursor:pointer; border-bottom:2px solid var(--acu-highlight); transition:all 0.2s;">
+                        <button data-mfrs-action="editor-tab-switch" class="custom-type-tab active" data-type="supernatural" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-highlight); font-size:13px; font-weight:bold; cursor:pointer; border-bottom:2px solid var(--acu-highlight); transition:all 0.2s;">
                             <i class="fa-solid fa-ghost"></i> 灵异物品
                         </button>
-                        <button class="custom-type-tab" data-type="clue" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-text-sub); font-size:13px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;">
+                        <button data-mfrs-action="editor-tab-switch" class="custom-type-tab" data-type="clue" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-text-sub); font-size:13px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;">
                             <i class="fa-solid fa-magnifying-glass"></i> 线索
                         </button>
-                        <button class="custom-type-tab" data-type="knowledge" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-text-sub); font-size:13px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;">
+                        <button data-mfrs-action="editor-tab-switch" class="custom-type-tab" data-type="knowledge" style="flex:1; padding:10px; border:none; background:transparent; color:var(--acu-text-sub); font-size:13px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s;">
                             <i class="fa-solid fa-book"></i> 知识
                         </button>
                     </div>
@@ -5555,27 +5550,14 @@
 
         // 关闭编辑器
         const closeEditor = () => editor.remove();
-        editor.find('#custom-editor-close').on('click', closeEditor);
         editor.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeEditor(); });
 
-        // Tab 切换
-        editor.find('.custom-type-tab').on('click', function() {
-            editor.find('.custom-type-tab').removeClass('active')
-                .css({ color: 'var(--acu-text-sub)', 'border-bottom-color': 'transparent', 'font-weight': 'normal' });
-            $(this).addClass('active')
-                .css({ color: 'var(--acu-highlight)', 'border-bottom-color': 'var(--acu-highlight)', 'font-weight': 'bold' });
-            currentType = $(this).data('type');
-            editor.find('#custom-item-list').html(buildItemList(currentType));
-            bindItemActions();
-        });
+        // Tab 切换由容器委托处理
 
-        // 新增物品按钮
-        editor.find('#custom-add-new-btn').on('click', () => {
-            showItemForm(currentType, null);
-        });
+        // 新增物品由容器委托处理
 
         // 导出物品目录 JSON（builtin∪custom 全集）
-        editor.find('#custom-export-btn').on('click', async () => {
+        const doExport = async () => {
             try {
                 const allItems = getAllGachaItemDefinitions();
                 // 导出时将 rarity 对象还原为 key 字符串，方便导入
@@ -5607,10 +5589,10 @@
                 console.error('Export failed:', e);
                 await MFRSDialog.showAlert('导出失败: ' + e.message, { title: '导出错误' });
             }
-        });
+        };
 
         // 导入物品 JSON → 覆盖/新增到 custom 层
-        editor.find('#custom-import-btn').on('click', () => {
+        const doImport = () => {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = '.json';
@@ -5643,7 +5625,6 @@
                         }
                         // 刷新列表
                         editor.find('#custom-item-list').html(buildItemList(currentType));
-                        bindItemActions();
                         MFRSDialog.showToast(`导入成功！共导入 ${importCount} 个物品到自定义层`, 'success');
                     } catch (parseErr) {
                         console.error('Import parse failed:', parseErr);
@@ -5655,10 +5636,10 @@
             });
             document.body.appendChild(fileInput);
             fileInput.click();
-        });
+        };
 
         // AI 生成物品（按神秘复苏原著风格）
-        editor.find('#custom-ai-gen-btn').on('click', async () => {
+        const doAIGen = async () => {
             const TYPE_CN = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
             const typeCn = TYPE_CN[currentType] || '灵异物品';
 
@@ -5873,36 +5854,52 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             } finally {
                 btn.prop('disabled', false).html(origHtml);
             }
+        };
+
+        // 列表行 hover 效果（委托绑定，无需逐行重新绑定）
+        editor.on('mouseenter', '.custom-item-row', function() {
+            $(this).css('border-color', 'var(--acu-highlight)');
+        }).on('mouseleave', '.custom-item-row', function() {
+            $(this).css('border-color', 'var(--acu-border)');
         });
 
-        // 绑定列表行的编辑/删除按钮
-        const bindItemActions = () => {
-            editor.find('.edit-item-btn').off('click').on('click', function() {
-                const id = $(this).data('id');
-                const type = $(this).data('type');
-                // 获取当前合并后的完整物品数据
-                const allItems = getAllGachaItemDefinitions();
-                const item = (allItems[type] || []).find(i => i.id === id);
-                if (item) showItemForm(type, item);
-            });
-
-            editor.find('.delete-item-btn').off('click').on('click', async function() {
-                const id = $(this).data('id');
-                const type = $(this).data('type');
-                if (await MFRSDialog.showConfirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`, { title: '删除确认', confirmText: '删除', danger: true })) {
-                    removeCustomGachaItem(type, id);
+        // 事件委托：统一处理编辑器内所有 data-mfrs-action 点击
+        editor.on('click', '[data-mfrs-action]', async function(e) {
+            e.stopPropagation();
+            const action = $(this).data('mfrs-action');
+            switch (action) {
+                case 'editor-close': closeEditor(); break;
+                case 'editor-tab-switch':
+                    editor.find('.custom-type-tab').removeClass('active')
+                        .css({ color: 'var(--acu-text-sub)', 'border-bottom-color': 'transparent', 'font-weight': 'normal' });
+                    $(this).addClass('active')
+                        .css({ color: 'var(--acu-highlight)', 'border-bottom-color': 'var(--acu-highlight)', 'font-weight': 'bold' });
+                    currentType = $(this).data('type');
                     editor.find('#custom-item-list').html(buildItemList(currentType));
-                    bindItemActions();
+                    break;
+                case 'editor-add-new': showItemForm(currentType, null); break;
+                case 'editor-export': await doExport(); break;
+                case 'editor-import': doImport(); break;
+                case 'editor-ai-gen': await doAIGen(); break;
+                case 'editor-edit-item': {
+                    const id = $(this).data('id');
+                    const type = $(this).data('type');
+                    const allItems = getAllGachaItemDefinitions();
+                    const item = (allItems[type] || []).find(i => i.id === id);
+                    if (item) showItemForm(type, item);
+                    break;
                 }
-            });
-
-            // hover 效果
-            editor.find('.custom-item-row').on('mouseenter', function() {
-                $(this).css('border-color', 'var(--acu-highlight)');
-            }).on('mouseleave', function() {
-                $(this).css('border-color', 'var(--acu-border)');
-            });
-        };
+                case 'editor-delete-item': {
+                    const id = $(this).data('id');
+                    const type = $(this).data('type');
+                    if (await MFRSDialog.showConfirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`, { title: '删除确认', confirmText: '删除', danger: true })) {
+                        removeCustomGachaItem(type, id);
+                        editor.find('#custom-item-list').html(buildItemList(currentType));
+                    }
+                    break;
+                }
+            }
+        });
 
         // 显示物品编辑/新增表单
         const showItemForm = (type, existingItem) => {
