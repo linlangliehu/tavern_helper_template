@@ -5803,6 +5803,10 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 }
                 item.type = currentType;
 
+                // 保存原始值用于检测自动修复
+                const _origIcon = item.icon;
+                const _origEffectDetail = item.effectDetail;
+
                 // 字段补全（第三层问题）：AI 返回的 JSON 可能缺漏必填字段，
                 // 直接传给 showItemForm 会出现空白/undefined。这里按 schema 填入合理默认值，
                 // 保证预填表单始终有可编辑内容，用户可在此基础上确认/修改。
@@ -5832,6 +5836,32 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                     // progress 应为 0.05-0.5 的数字
                     if (typeof item.progress !== 'number' || isNaN(item.progress)) item.progress = 0.1;
                     else item.progress = Math.max(0.05, Math.min(0.5, item.progress));
+                }
+
+                // 检测自动修复的字段，用可操作 toast 提示用户
+                const _autoFixes = [];
+                if ((typeof _origIcon !== "string" || !_origIcon.trim()) && typeof item.emoji === "string" && item.emoji.trim()) {
+                    _autoFixes.push("图标");
+                }
+                if ((typeof _origEffectDetail !== "string" || !_origEffectDetail.trim()) && item.effectDetail === item.effect) {
+                    _autoFixes.push("效果详述");
+                }
+                if (_autoFixes.length > 0) {
+                    MFRSDialog.showToast("AI 返回的" + _autoFixes.join("、") + "字段缺失，已自动补全", "warning", {
+                        duration: 6000,
+                        actionLabel: "查看",
+                        onAction: function() {
+                            _autoFixes.forEach(function(field) {
+                                var el = field === "图标" ? document.getElementById("form-icon") : document.getElementById("form-effectDetail");
+                                if (el) {
+                                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                                    el.style.transition = "box-shadow 0.3s";
+                                    el.style.boxShadow = "0 0 0 2px var(--acu-highlight, #7c3aed)";
+                                    setTimeout(function() { el.style.boxShadow = ""; }, 2500);
+                                }
+                            });
+                        }
+                    });
                 }
 
                 // 打开预填表单让用户确认/修改
