@@ -1,5 +1,59 @@
 # Progress Log
 
+## 2026-06-29 CST（✅ 第二优先级完成源码：window.MFRS 公开 API）
+
+**状态：** 用户要求继续完成第二优先级（抽卡API公开化 window.MFRS）。在 `v10_2_visualizer.js` IIFE 闭包末尾插入 `window.MFRS` 挂载块，把闭包内函数公开到全局命名空间。
+
+**执行与结果：**
+ - ✅ 定位插入点：IIFE 末尾 `const { $ } = getCore();` 之前（L6260 之后），在 `syncGachaResultToDatabase` 定义结束之后。
+ - ✅ 插入 60 行挂载块（L6261-6319）：`window.MFRS = Object.assign(window.MFRS || {}, {...})` + try/catch + console.info。
+ - ✅ 公开 33 个函数 + 5 个常量：
+   - 常量：RARITY / POOL_TYPE / ITEM_TYPE / CURRENCY / FRAGMENT
+   - 货币：getCurrency / setCurrency / addCurrency / deductCurrency
+   - 保底：getPity / setPity / resetPity
+   - 碎片：getFragments / setFragments / addFragments / deductFragments / processFragments / exchange
+   - 已拥有物品：getOwnedItems / setOwnedItems / isItemOwned
+   - 物品目录：getAllItems / getCustomItems / setCustomItems / addCustomItem / removeCustomItem
+   - 抽卡操作：buildPool / single / ten / getHistory
+   - UI 入口：showPanel / showFragmentShop / showCustomEditor / showGachaResult / showItemDetail
+   - 写库：syncToDatabase / validateAndInsert
+   - 版本：version: '1.0'
+ - ✅ 验证：`node --check` 通过；`pnpm build` webpack compiled successfully（提权运行，沙箱 spawn EPERM 已知问题）；dist bundle grep 确认 `window.MFRS`(4) + 全部方法名落地。
+ - ✅ 源码 6263 → 6323 行（+60）。
+
+**设计决策：**
+ - 使用 `Object.assign(window.MFRS || {}, {...})` 而非直接 `window.MFRS = {...}`，避免覆盖可能已存在的 `window.MFRS`（如其他脚本先挂载）。
+ - 所有函数均为闭包内原始引用（箭头函数变量），调用 `window.MFRS.single()` 等价于内部 `gachaSingle()`。
+ - UI 类函数（showPanel 等）依赖 jQuery/DOM，注释标明需在页面加载后调用。
+ - 用 try/catch 包裹，挂载失败不影响 visualizer 正常初始化。
+
+**当前停点：** 源码修改已完成并验证通过，待走发布链路（source commit → push main → bot bundle → CDN_REF bump → publish-card → 发布版同步）。用户可选择现在发布或继续做第三/四优先级后一起发布。
+
+## 2026-06-29 CST（源码核验 + 四优先级改进评估）
+
+**状态：** 用户要求读取项目源码确认实际进度，并对照用户提出的四优先级改进建议评估完成度。逐项核验 v10_2_visualizer.js（6263 行）、dist bundle（350KB）、发布版 YAML、固定状态栏 index.ts（201 行）。
+
+**核验结果：**
+ - v7.2 货币监听器事件名：L4331 动态取值 ✅
+ - v7.2 AI生成引用：L5733 window.TavernHelper.generateRaw ✅
+ - v7.3 parseLoose：L5760 定义，L5790 调用 ✅
+ - v7.4 字段补全：L5814 name/icon/rarity/duration ✅
+ - v7.5 should_stream：L5742 + emoji→icon + effectDetail←effect ✅
+ - v7.6 MFRSDialog：L455-600，8 调用点全替换，零原生残留 ✅
+ - v7.7 可操作toast：L5807-5855 自动修复+查看高亮 ✅
+ - 抽卡 9 任务关键函数全部存在 ✅
+ - getFragments 残留为 0 ✅
+ - dist bundle 标记全绿 ✅
+ - 发布版 YAML 7.7 + 7x@5757f05 ✅
+ - git main 与 origin/main 对齐 160af60 ✅
+
+**四优先级改进完成度：**
+ - 第一（弹窗+toast）：✅ 已完成（v7.6+v7.7）
+ - 第二（window.MFRS）：❌ 未开始
+ - 第三（状态栏精简8→4）：❌ 未开始
+ - 第四（事件委托）：❌ 未开始
+
+**结论：** 实际进度与 planning 完全吻合。v7.7 已发布，核心修复线全落地。四优先级仅第一项完成，后三项待用户决定。
 ## 2026-06-29 CST（✅ v7.7 发布：AI生成可操作toast）
 
 **状态：** 完成第一优先级剩余部分 — AI生成字段自动修复从静默兜底升级为兜底+可操作toast提示。v7.7 已完成发布链路。

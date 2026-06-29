@@ -6258,6 +6258,66 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
         return results;
     };
 
+    // ==================== window.MFRS 公开 API ====================
+    // 把抽卡/碎片/自定义物品核心函数挂到 window.MFRS，供外部脚本或控制台调用。
+    // 所有函数均为闭包内定义的原始引用，调用等价于内部直接调用。
+    // UI 类函数（showPanel 等）依赖 jQuery/DOM，需在页面加载后调用。
+    try {
+        window.MFRS = Object.assign(window.MFRS || {}, {
+            // --- 常量 ---
+            RARITY: GACHA_RARITY,
+            POOL_TYPE: GACHA_POOL_TYPE,
+            ITEM_TYPE: GACHA_ITEM_TYPE,
+            CURRENCY: GACHA_CURRENCY,
+            FRAGMENT: GACHA_FRAGMENT,
+            // --- 货币（调查点）---
+            getCurrency: getGachaCurrency,
+            setCurrency: setGachaCurrency,
+            addCurrency: addGachaCurrency,
+            deductCurrency: deductGachaCurrency,
+            // --- 保底 ---
+            getPity: getGachaPity,
+            setPity: setGachaPity,
+            resetPity: resetGachaPity,
+            // --- 碎片（灵异残屑）---
+            getFragments: getGachaFragments,
+            setFragments: setGachaFragments,
+            addFragments: addGachaFragments,
+            deductFragments: deductGachaFragments,
+            processFragments: processFragments,
+            exchange: exchangeWithFragments,
+            // --- 已拥有物品 ---
+            getOwnedItems: getOwnedItems,
+            setOwnedItems: setOwnedItems,
+            isItemOwned: isItemOwned,
+            // --- 物品目录 ---
+            getAllItems: getAllGachaItemDefinitions,
+            getCustomItems: getCustomGachaItems,
+            setCustomItems: setCustomGachaItems,
+            addCustomItem: addCustomGachaItem,
+            removeCustomItem: removeCustomGachaItem,
+            // --- 抽卡操作 ---
+            buildPool: buildGachaPool,
+            single: gachaSingle,
+            ten: gachaTen,
+            getHistory: getGachaHistory,
+            // --- UI 入口（需 jQuery/DOM）---
+            showPanel: showGachaPanel,
+            showFragmentShop: showFragmentShop,
+            showCustomEditor: showCustomItemEditor,
+            showGachaResult: showGachaResult,
+            showItemDetail: showGachaItemDetail,
+            // --- 写库 ---
+            syncToDatabase: syncGachaResultToDatabase,
+            validateAndInsert: validateAndInsertGachaRow,
+            // --- 版本 ---
+            version: '1.0',
+        });
+        console.info('[MFRS] window.MFRS API 已挂载，可用方法：getCurrency/single/ten/getAllItems/showPanel 等');
+    } catch (e) {
+        console.error('[MFRS] window.MFRS 挂载失败:', e);
+    }
+
     const { $ } = getCore();
     if ($) $(document).ready(init); else window.addEventListener('load', init);
 })();

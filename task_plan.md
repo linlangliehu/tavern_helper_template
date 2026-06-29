@@ -15,6 +15,17 @@
 
 ## 当前状态
 
+**2026-06-29 源码核验 + 四优先级改进评估：** 逐项核验 v10_2_visualizer.js（6263 行）和 dist bundle，确认 v7.2~v7.7 修复全部落地。用户提出四优先级改进建议，当前完成度：
+
+- **第一优先（弹窗替换+可操作toast）：✅ 已完成** — v7.6 MFRSDialog 替换全部 8 个原生 alert/confirm（L455-600，showConfirm/showAlert/showToast，复用 acu-theme-* CSS 变量）；v7.7 AI生成字段自动修复 toast 带「查看」高亮按钮（L5850，form-icon/form-effectDetail 紫色高亮 2.5s）。源码零原生 alert/confirm 残留。
+- **第二优先（抽卡API公开化 window.MFRS）：❌ 未开始** — 源码无 window.MFRS 命名空间，抽卡函数全在闭包内。唯一 window 挂载是 window.MfrsDatabase（L6161 数据库CRUD）。工作量小，风险低。
+ - **第二优先（抽卡API公开化 window.MFRS）：✅ 已完成源码** — 在 v10_2_visualizer.js L6261-6319 插入 window.MFRS 公开 API 挂载块（33 函数 + 5 常量：RARITY/POOL_TYPE/ITEM_TYPE/CURRENCY/FRAGMENT + 货币/保底/碎片/物品目录/抽卡/UI/写库）。`node --check` + `pnpm build` 通过，dist bundle 含 window.MFRS。待发布。
+- **第三优先（固定状态栏精简 8→4 字段）：❌ 未开始** — 固定状态栏/index.ts L134-141 仍为 8 字段（含两个重复“档案”标签）。用户建议砍到 4 核心（死亡/复苏/状态/驾驭），纯减法。
+- **第四优先（事件委托替代逐个绑定）：❌ 未开始** — 0 处 data-mfrs-action，23 个 .off("click").on("click") 逐个绑定。建议先试点抽卡面板和自定义编辑器，需真机回归，留大版本。
+
+下一步待用户决定继续做哪一项。
+下一步：发布第二优先级（source commit → push main → bot bundle → CDN_REF bump → publish-card → 发布版同步），或继续做第三/四优先级。
+
 **2026-06-29 发布版 7.5 已完成发布同步（CDN @7ac8a28，AI生成流式路径修复）：** 用户已导入发布版 7.4 PNG 并真实对话；CDP 运行态确认当前选中 `神秘复苏模拟器发布版`，`character_version=7.4`，卡数据含 7×`@db7e4ba`，TavernHelper/AutoCardUpdater/MysteryDatabaseFrontend 均挂载，模板 14 表加载无缺失，真实对话后 12 表有数据，调查点为 17。真实点击「AI生成」发现当前 `假流式-gemini-3.1-pro-preview-search` 自定义源在非流式 quiet/json_schema 路径会挂起或返回空 content；临时强制 `should_stream:true` 后 UI 生成成功，表单可编辑，并已保存 custom 物品 `血骨缝衣针` 到 `mfrs_custom_gacha_items.supernatural`。源码修复 `511e86f` 已 push，bot bundle `7ac8a28` 已落地并确认 dist 含 `should_stream:!0`、`emoji`、`effectDetail` 逻辑；发布版 YAML/PNG 已同步到 `版本:'7.5'` + 7×`@7ac8a28`，无旧 `db7e4ba`。发布版同步提交为包含本记录的提交。
 
 **v7.4 修复（AI 生成第三层容错 — 数据层）：** `v10_2_visualizer.js` L5657-5683，在 `showItemForm(currentType, item)` 调用前按 schema 补全 AI 返回 JSON 缺漏的必填字段：name→'未命名物品'、icon→'❓'、rarity 枚举校验降级 COMMON、description/effect/effectDetail/cost/narrativeHook 非字符串→''、supernatural usageLimit→1/duration→'短暂'、clue/knowledge progress 非数字→0.1 且 clamp [0.05,0.5]。保证预填表单始终可编辑。
@@ -125,14 +136,24 @@
 **可选长期任务：**
 - 任务 E 阶段 2：追查 vendor 表 content 数组变空数组的上游根因（阶段 1 已防御性修复，非阻断）
 
-**当前进行中（2026-06-29，发布 7.5 已同步）：AI 生成容错三层全部发布 + 流式路径修复已发布**
-1. ✅ **v7.1** 抽卡面板修复发布（`4af0d88`，CDN `@90065ab`）。
-2. ✅ **v7.2** 调用层修复发布（`285502f`，CDN `@1206e44`）：货币监听器事件名大小写 + AI 生成 `generateRaw` 改经 `window.TavernHelper` 调用。
-3. ✅ **v7.3** 解析层修复发布（`e0b60cb`，CDN `@24f5133`）：AI 生成 JSON 加 `parseLoose` 容错（剥离 markdown 代码块 + 提取首个平衡 `{...}`）。
-4. ✅ **v7.4** 数据层修复发布（`32b4baa`，CDN `@db7e4ba`）：AI 生成字段补全（缺漏必填字段填默认值，保证预填表单可编辑）。
-5. ✅ **真机复测收尾**：当前角色卡导入、真实对话、数据库模板/落盘、货币监听器、抽卡面板、自定义编辑器 UI smoke、AI生成真实调用和保存 custom 物品均已通过。发现并本地修复 `should_stream:true` / `emoji→icon` / `effectDetail` 回填问题，待发布为 v7.5。
-6. ✅ **v7.5** 流式路径修复发布（发布同步提交，CDN `@7ac8a28`）：AI生成显式 `should_stream:true`，兼容 `emoji→icon` 与 `effectDetail←effect`。
+**四优先级改进追踪（2026-06-29 建立）：**
 
+| 优先级 | 状态 | 发布版本 | 说明 |
+|---|---|---|---|
+| 第一：弹窗替换 + 可操作 toast | ✅ 已完成 | v7.6 + v7.7 | MFRSDialog 替换 8 个原生 alert/confirm；AI生成字段自动修复 toast 带「查看」高亮按钮 |
+| 第二：抽卡 API 公开化 window.MFRS | ❌ 未开始 | — | 把抽卡/碎片函数挂到 window.MFRS，工作量小风险低 |
+| 第二：抽卡 API 公开化 window.MFRS | ✅ 已完成源码 | 待发布 | 33 函数 + 5 常量挂到 window.MFRS，dist bundle 已含挂载 |
+| 第三：固定状态栏精简 8→4 | ❌ 未开始 | — | 砍到4核心字段（死亡/复苏/状态/驾驭），纯减法 |
+| 第四：事件委托替代逐个绑定 | ❌ 未开始 | — | data-mfrs-action + 容器委托，先试点抽卡/编辑器，需真机回归 |
+
+**已完成的 v7.1~v7.7 发布链路（勿重做）：**
+1. ✅ v7.1 抽卡面板修复（getFragments→getGachaFragments + showFragmentShop）
+2. ✅ v7.2 调用层（货币监听器事件名 + TavernHelper.generateRaw 引用）
+3. ✅ v7.3 解析层（parseLoose 剥离 markdown + 提取平衡 JSON）
+4. ✅ v7.4 数据层（字段补全默认值）
+5. ✅ v7.5 流式路径（should_stream:true + emoji→icon + effectDetail←effect）
+6. ✅ v7.6 MFRSDialog 替换全部 8 个原生 alert/confirm
+7. ✅ v7.7 AI生成可操作 toast（字段自动修复提示 + 查看高亮）
 ## 抽卡系统优化任务清单（2026-06-26 建立）
 
 基于骰子商店（jerryzmtz/my-tavern-scripts，支持 builtin + custom 双层自定义物品）研究建立。任务1 为架构基础，阻塞 6/7/9。研究结论见 findings.md「2026-06-26 抽卡系统架构研究」。
