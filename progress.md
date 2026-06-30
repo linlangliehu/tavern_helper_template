@@ -1,5 +1,34 @@
 # Progress Log
 
+## 2026-06-30 CST（✅ v8.4.4 发布：新建聊天 CHAT_CHANGED 轮询等待数据切换）
+
+**状态：** v8.4.4 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。修复新建/切换聊天时 `CHAT_CHANGED` 触发过早导致新聊天不重新导入神秘复苏 14 表模板的竞态。本条目对应的改动在 v8.4.3 发布后曾以未提交 WIP 形式挂在工作区（仅改 src TS、未构建/提交/记录），本次恢复对话时确认并完整推进发布。
+
+**根因：**
+- 新建聊天时酒馆的 `CHAT_CHANGED` 事件在数据库数据切换完成之前就触发了。
+- 此时数据库可能仍在服务旧聊天的 14 表数据，`readTemplateStatus(api)` 返回 `templateLoaded=true`（误判），`runMysteryTemplateAutofix` 直接 `rerenderAcu` 返回，新聊天不会重新导入模板，停在库默认 8 表。
+
+**修复内容（`src/神秘复苏模拟器/脚本/数据库前端/index.ts`）：**
+- `runMysteryTemplateAutofix(hostWindow, force = false)` 新增 `force` 参数；`ensureMysteryTemplate(force)` 透传给它（两个 CHAT_CHANGED 监听分支——酒馆助手 `eventOn` 与 v8.4.3 的 SillyTavern 原生 `eventSource.on`——都已传 `force=true`）。
+- `force=true` 且首次 `status.templateLoaded` 为 true 时，轮询最多 8×500ms（共 4s）重读 `readTemplateStatus`，一旦 `templateLoaded` 变 false（数据切到新聊天默认 8 表）立即跳出，继续走后续导入逻辑。
+- 净改动 13 insert / 3 delete，逻辑自洽（复用既有 `wait`/`readTemplateStatus`），无新增字符串。
+
+**发布链路：**
+- source commit：`491fe43` — `fix(mfrs): poll for chat data switch on CHAT_CHANGED to avoid stale 14-table false positive`（经分支 `fix/mfrs-newchat-race` → merge `548e9f0`）
+- bot bundle：`6ee50a7`（tag `v0.0.330`）— CI 重建 dist，确认 minified 含轮询 `t<8`
+- publish sync commit：`92b32bd` — `chore(release): publish mfrs v8.4.4`
+- `scripts/publish-card.mjs`：`CDN_REF=6ee50a7`，`releaseVersion=8.4.4`
+- `pnpm run publish-card -- 神秘复苏模拟器发布版` 成功，发布版 PNG 已生成（7.4 MB）。
+
+**验证：**
+- 本地 `pnpm build` ✅ + CI bot bundle dist 均确认轮询 `t<8` 进 bundle
+- CDN smoke ✅：`@6ee50a7` 数据库前端 index.js HTTP 200，357703 字节
+- 发布版 YAML ✅：version 8.4.4，7×`6ee50a7`，0×旧 ref（`99f92ff`），0× localhost/127.0.0.1
+- 发布版 PNG chara/ccv3 ✅：各 7×`6ee50a7`、0×旧 ref
+- worldbook pollution gate ✅：383 entries / 33 disabled / max enabled 5851
+
+**剩余（可选）：** 真页验证。当前 9222 页面跑的是发布版 CDN @99f92ff（v8.4.3，不含本轮询），即时验证需替换运行态脚本有多注入风险，按 v8.4.3 同类先例列为发布后可选。重新导入 v8.4.4 PNG 后，在数据库前端已有 14 表的聊天里新建一个聊天，确认数据库前端不会停在默认 8 表而是自动重新导入神秘复苏 14 表模板。
+
 ## 2026-06-30 CST（✅ v8.4.3 发布：CHAT_CHANGED 原生事件回退）
 
 **状态：** v8.4.3 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。修复数据库前端在酒馆助手注入不可用环境下无法注册 CHAT_CHANGED 监听器的问题。规划文件（task_plan.md / progress.md）同步更新。
