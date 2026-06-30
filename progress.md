@@ -1,4 +1,30 @@
-﻿# Progress Log
+# Progress Log
+
+## 2026-06-30 CST（✅ v8.4.2 发布：线索表/规律表新增使用按钮）
+
+**状态：** v8.4.2 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。用户重新导入 v8.4.2 发布版 PNG 后，抽卡系统档案池抽取的线索和规律池抽取的知识也能在数据库前端点击"使用"填入输入框。
+
+**改动内容：**
+- 新增 `isClueTable()` / `isRulesTable()` 检测函数，识别 `sheet_clues` 和 `sheet_collected_rules` 表。
+- 新增 `buildCluePrompt()` / `buildRulePrompt()` 构建使用指令：线索→`我使用线索【线索编号】。内容：...推断：...可信度：...`，规律→`我运用知识【规律类型】。规律内容：...完整度：...风险：...`。
+- `buildRowInteractionHtml()` 中为线索表和规律表行渲染"使用"按钮（图标 fa-magnifying-glass / fa-book-open），与灵异物品表一致的 `acu-row-action-btn` + `data-prompt` 机制。
+- 46 行新增代码，无删除。
+
+**发布链路：**
+- source commit：`6133076` — `fix(mfrs): add use buttons for clue and rules tables`
+- bot bundle：`7e2cc0b`，tag `v0.0.324`
+- publish sync commit：`5760112` — `chore(release): publish mfrs v8.4.2`
+- `scripts/publish-card.mjs`：`CDN_REF=7e2cc0b`，`releaseVersion=8.4.2`
+- `pnpm run publish-card -- 神秘复苏模拟器发布版` 成功，发布版 PNG 已生成（7.4 MB）。
+
+**验证：**
+- `node --check v10_2_visualizer.js` ✅
+- `node scripts/verify-output-cleaning-regressions.mjs` ✅
+- `node scripts/verify-worldbook-pollution-gate.mjs` 发布版 PNG ✅（383 entries / 33 disabled / max enabled 5851）
+- 发布版 YAML ✅：version 8.4.2
+- CDN smoke ✅：`@7e2cc0b` dist 数据库前端 index.js HTTP 200，326548 字节
+
+**剩余：** 可选真页验证：重新导入 v8.4.2 PNG 后，从档案池/规律池抽卡获得线索/知识物品，确认线索表和规律表出现"使用"按钮并正确填入输入框。当前真页线索表/规律表无数据，无法直接验证。
 
 ## 2026-06-30 CST（✅ v8.4.1 真页验证通过：开局面板 + 数据库前端交互 + 正文摘要三层全绿）
 
