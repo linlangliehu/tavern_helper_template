@@ -25,7 +25,7 @@ async function findTarget(urlFilter) {
   return pages[0];
 }
 
-function cdpEval(wsUrl, expression, awaitPromise = true, timeoutMs = 15000) {
+function cdpEval(wsUrl, expression, awaitPromise = true, timeoutMs = 60000) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     const id = 1;
