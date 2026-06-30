@@ -1,5 +1,34 @@
 # Progress Log
 
+## 2026-06-30 CST（✅ v8.4.3 发布：CHAT_CHANGED 原生事件回退）
+
+**状态：** v8.4.3 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。修复数据库前端在酒馆助手注入不可用环境下无法注册 CHAT_CHANGED 监听器的问题。规划文件（task_plan.md / progress.md）同步更新。
+
+**根因：**
+- 数据库前端 `installCompatibilityApi()` 原先只通过酒馆助手 `eventOn(tavern_events.CHAT_CHANGED, ...)` 注册切换聊天监听。
+- 当脚本运行在主 window 且酒馆助手注入环境不可用时（`eventOn` / `tavern_events` 未定义），该监听器无法注册，切换聊天后模板不会自动刷新。
+
+**修复内容：**
+- `src/神秘复苏模拟器/脚本/数据库前端/index.ts`：`eventOn` 分支后新增 `else` 回退路径，通过 `SillyTavern.getContext().eventSource.on(event_types.CHAT_CHANGED)` 注册原生事件监听。
+- `HostWindow.SillyTavern.getContext` 返回类型扩展，新增 `eventSource`（兼容 EventEmitter `.on`/`.off`）和 `event_types`（事件名常量表）字段。
+- 回退成功时 `console.info` 提示，完全不可用时 `console.warn` 提示用户手动刷新。
+- 附带 `scripts/cdp-evaluate.mjs` 超时从 15s 提升到 60s，适配数据库前端/抽卡面板等重页首加载。
+
+**发布链路：**
+- source commit：`294cc1a` — `fix(mfrs): fallback CHAT_CHANGED listener via SillyTavern native event system`
+- 工具 commit：`2c5e19a` — `chore(tools): increase cdp-evaluate timeout to 60s`
+- bot bundle：`99f92ff`
+- publish sync commit：`feeaa18` — `chore(release): publish mfrs v8.4.3`
+- `scripts/publish-card.mjs`：`CDN_REF=99f92ff`，`releaseVersion=8.4.3`
+- `pnpm run publish-card -- 神秘复苏模拟器发布版` 成功，发布版 PNG 已生成。
+
+**验证：**
+- 发布版 YAML ✅：version 8.4.3，7×`99f92ff`，0×旧 ref
+- 发布版 PNG 已生成（7.4 MB）
+- 规划文件同步：task_plan.md 当前状态/版本索引/修复线/恢复入口均已更新到 v8.4.3
+
+**剩余：** 可选真页验证：重新导入 v8.4.3 PNG 后，在酒馆助手注入不可用的环境下切换聊天，确认数据库前端模板自动刷新（控制台应出现 `[神秘复苏数据库前端] 已通过 SillyTavern 原生事件系统注册 CHAT_CHANGED 监听。`）。
+
 ## 2026-06-30 CST（✅ v8.4.2 发布：线索表/规律表新增使用按钮）
 
 **状态：** v8.4.2 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。用户重新导入 v8.4.2 发布版 PNG 后，抽卡系统档案池抽取的线索和规律池抽取的知识也能在数据库前端点击"使用"填入输入框。
