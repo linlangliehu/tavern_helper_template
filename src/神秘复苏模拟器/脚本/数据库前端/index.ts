@@ -48,6 +48,10 @@ type HostWindow = Window & {
       characterId?: string | number;
       characters?: Array<{ name?: string; avatar?: string }> | Record<string, { name?: string; avatar?: string }>;
       saveChat?: unknown;
+      // SillyTavern 原生事件系统：eventSource 兼容 EventEmitter（.on/.off/.emit），
+      // event_types 是事件名常量表（如 CHAT_CHANGED）。酒馆助手注入环境不可用时的回退监听通道。
+      eventSource?: { on?: (event: unknown, listener: (...args: unknown[]) => void) => void; off?: (event: unknown, listener: (...args: unknown[]) => void) => void };
+      event_types?: Record<string, unknown> & { CHAT_CHANGED?: unknown };
     };
   };
   MysteryDatabaseFrontend?: {
@@ -623,6 +627,19 @@ function installCompatibilityApi() {
     eventOn(tavern_events.CHAT_CHANGED, () => {
       void ensureMysteryTemplate(hostWindow, true);
     });
+  } else {
+    // 酒馆助手注入环境不可用（脚本在主 window 运行）时，回退到 SillyTavern 原生事件系统。
+    const stContext = getSillyTavernContext(hostWindow);
+    const eventSource = stContext?.eventSource;
+    const eventTypes = stContext?.event_types;
+    if (eventSource && typeof eventSource.on === 'function' && eventTypes?.CHAT_CHANGED) {
+      eventSource.on(eventTypes.CHAT_CHANGED, () => {
+        void ensureMysteryTemplate(hostWindow, true);
+      });
+      console.info('[神秘复苏数据库前端] 已通过 SillyTavern 原生事件系统注册 CHAT_CHANGED 监听。');
+    } else {
+      console.warn('[神秘复苏数据库前端] 无法注册 CHAT_CHANGED 事件监听，切换聊天后可能需要手动刷新模板。');
+    }
   }
 }
 
