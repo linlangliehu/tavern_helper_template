@@ -418,7 +418,7 @@ function rerenderAcu(hostWindow: HostWindow) {
   window.setTimeout(() => hostWindow.MysteryAcuVisualizer?.renderInterface?.(), 500);
 }
 
-async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
+async function runMysteryTemplateAutofix(hostWindow: HostWindow, force = false) {
   if (!isMysteryRevivalCardActive(hostWindow)) {
     templateAutofixPromise = null;
     return;
@@ -438,7 +438,17 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow) {
     console.info('[神秘复苏数据库前端] 检测到数据库 API marker 不匹配，继续使用当前已加载 API。');
   }
 
-  const status = await readTemplateStatus(api);
+  let status = await readTemplateStatus(api);
+  // force=true 表示由 CHAT_CHANGED 触发。新聊天创建时，数据库可能仍在服务旧聊天的
+  // 14 表数据，CHAT_CHANGED 事件在数据切换完成之前就触发了。轮询检测数据是否从
+  // 旧聊天的 14 表切换到新聊天的默认 8 表，一旦发现 templateLoaded 变 false 就继续导入。
+  if (force && status.templateLoaded) {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await wait(500);
+      status = await readTemplateStatus(api);
+      if (!status.templateLoaded) break;
+    }
+  }
   if (status.templateLoaded) {
     rerenderAcu(hostWindow);
     return;
@@ -505,7 +515,7 @@ function ensureMysteryTemplate(hostWindow: HostWindow, force = false) {
 
   // force=true 用于切换聊天后强制重新校正：清掉上一轮单例 promise，重跑 autofix。
   if (force) templateAutofixPromise = null;
-  templateAutofixPromise ??= runMysteryTemplateAutofix(hostWindow).finally(() => {
+  templateAutofixPromise ??= runMysteryTemplateAutofix(hostWindow, force).finally(() => {
     templateAutofixPromise = null;
   });
   return templateAutofixPromise;
