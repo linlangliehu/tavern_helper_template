@@ -12,8 +12,12 @@ type HostWindow = Window & {
   };
 };
 
+// 酒馆助手「脚本」运行在 JS-Slash-Runner 的 TH-script iframe 中，该 iframe 的 document
+// 不含主窗口的 #send_form；必须用父窗口(主文档)挂载状态栏并查询输入区，否则 retryMount 永远失败。
+const doc: Document = window.parent && window.parent.document ? window.parent.document : document;
+
 function getSendForm() {
-  return document.querySelector('#send_form') ?? document.querySelector('#form_sheld');
+  return doc.querySelector('#send_form') ?? doc.querySelector('#form_sheld');
 }
 
 function readLatestStatus(): StatusData {
@@ -325,9 +329,9 @@ function ensureFixedStatusBar() {
     return false;
   }
 
-  let host = document.querySelector(`#${statusContainerId}`) as HTMLDivElement | null;
+  let host = doc.querySelector(`#${statusContainerId}`) as HTMLDivElement | null;
   if (!host) {
-    host = document.createElement('div');
+    host = doc.createElement('div');
     host.id = statusContainerId;
     host.style.width = '100%';
     host.style.margin = '0 auto 6px';
@@ -341,7 +345,7 @@ function ensureFixedStatusBar() {
 
   let summaryEl = host.querySelector(`#${statusSummaryId}`) as HTMLDivElement | null;
   if (!summaryEl) {
-    summaryEl = document.createElement('div');
+    summaryEl = doc.createElement('div');
     summaryEl.id = statusSummaryId;
     summaryEl.innerHTML = summaryInnerHtml();
     styleSummary(summaryEl);
@@ -355,7 +359,7 @@ function ensureFixedStatusBar() {
 
   let detailEl = host.querySelector(`#${statusDetailId}`) as HTMLDivElement | null;
   if (!detailEl) {
-    detailEl = document.createElement('div');
+    detailEl = doc.createElement('div');
     detailEl.id = statusDetailId;
     detailEl.innerHTML = detailInnerHtml();
     styleDetail(detailEl);
@@ -368,7 +372,7 @@ function ensureFixedStatusBar() {
 }
 
 function refreshFixedStatusBar() {
-  const host = document.querySelector(`#${statusContainerId}`) as HTMLDivElement | null;
+  const host = doc.querySelector(`#${statusContainerId}`) as HTMLDivElement | null;
   if (host) renderStatus(host);
   else ensureFixedStatusBar();
 }
@@ -394,5 +398,5 @@ for (const eventName of refreshEvents) {
 }
 
 $(window).on('pagehide', () => {
-  document.querySelector(`#${statusContainerId}`)?.remove();
+  doc.querySelector(`#${statusContainerId}`)?.remove();
 });
