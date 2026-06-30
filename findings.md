@@ -1,5 +1,21 @@
 # Findings
 
+## 2026-06-30：神秘复苏状态栏美化是"命令式 getVariables"，不是"声明式正则+宏"（v8.4.6 踩坑）
+
+**结论（可复用，避免重复踩坑）：** 神秘复苏的酒馆助手运行环境**没有注册 `get_message_variable` / `format_message_variable` 宏**。这类 `{{get_message_variable::stat_data.xxx}}` 宏写进显示层正则的 replaceString 后**不会被解析**，会原样显示成 `{{...}}` 文本。
+
+**验证方式（CDP 真页）：** `TavernHelper.formatAsDisplayedMessage(text, {message_id})` 是显示层完整管线；用它测试，注入 stat_data 数据后两个宏仍原样返回；连 `TavernHelper.registerMacroLike(/.../,fn)` 注册后 `formatAsDisplayedMessage` 也不解析（macro_like 解析时机与 markdownOnly 正则替换对不上）。**核心 `substituteParamsExtended` 不含酒馆助手宏，不能用来判断宏是否可用，必须用 `formatAsDisplayedMessage`。**
+
+**两条技术路线对比：**
+- **声明式（正则+宏）**：正则把占位符 `<StatusPlaceHolderImpl/>` 换成"HTML+宏"模板，靠酒馆助手宏引擎填值。轻量、改字段只改正则文本，但**前置依赖宏已注册**。借鉴卡 Science_Worship 用这套且能工作，因为它的 `tavern_helper.scripts` 自带注册宏的脚本（MVU-ZOD/悬浮状态栏）。
+- **命令式（脚本 getVariables）**：脚本 `getVariables({type:'message'}).stat_data` 读值 + DOM/iframe 渲染 + 事件刷新。神秘复苏的 `固定状态栏` 脚本和 `数据库前端` iframe 都走这套。只依赖 `getVariables`（始终可用），可控、能渲染复杂数据，但要写并维护脚本。
+
+**给神秘复苏的判断：** 状态栏/变量可视化只能走命令式 getVariables。要做"消息内折叠状态面板"，正确做法是正则把占位符换成空容器（带 data 属性）+ 脚本用 getVariables 命令式填值（复用固定状态栏渲染逻辑），**不能照搬借鉴卡的正则+宏**。
+
+**纯文字正文美化（关键词高亮、协议块隐藏、sp_start/sp_input 渲染）两卡原理相同**：都是显示层正则（markdownOnly）做静态文本→HTML 替换，不读变量，这部分可以借鉴。区别只在"状态数据可视化"这一层。
+
+**附带发现：** 真页测试时该轮对话 `stat_data` 全空（各 type 的 message/chat/global 变量 statFields=0），AI 输出了 `<UpdateVariable>` 但变量没生效——独立于状态栏的 MVU 数据流问题，需另查。
+
 ## 2026-06-29：v8.4.1 开局自定义面板被隐藏根因
 
 **根因：** v8.4 的旧面板清洗规则写成了“删除所有 `<sp_*>/<mfrs_*>` 闭合块”。开局自定义角色入口本身是第一条消息中的 `<sp_start>...</sp_start>`，显示层又是先运行 `[显示]隐藏旧 sp/mfrs 文本面板`，再运行 `[显示]渲染神秘复苏开局页`，所以 `<sp_start>` 会先被隐藏规则删掉，后续开局页渲染正则没有机会执行。

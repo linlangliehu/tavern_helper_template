@@ -1,6 +1,6 @@
 # Progress Log
 
-## 2026-06-30 CST（✅ v8.4.6 发布：状态栏正则改为轻量纯文字折叠面板）
+## 2026-06-30 CST（⚠️ v8.4.6 已发布但真页验证失败：状态栏正则宏不解析，待决策回滚/重做）
 
 **状态：** v8.4.6 source + 发布同步已提交并 push 到 origin/main（merge `0976f15`）。借鉴第三方卡（Science_Worship，科学超电磁炮）的纯文字状态栏做法，把神秘复苏开发版的 `[界面]状态栏` 正则从「注入 CDN iframe」改为「纯 HTML `<details>` 折叠面板 + MVU 宏」，与输入框上方的 DOM 固定状态栏并存。
 
@@ -27,7 +27,13 @@
 - worldbook pollution gate ✅：383/33/5851
 - 占位符机制 ✅：CDP 确认 AI 消息含 `<StatusPlaceHolderImpl/>`（anyPlaceholder=true）
 
-**剩余（真页验证渲染）：** 需用户重新导入 v8.4.6 发布版 PNG（当前真页仍 v8.4.5）。导入后看 AI 消息末尾是否渲染出两个折叠状态面板、宏是否取到值（开场白聊天应显示 schema 默认值：死亡风险 0/100、状态 健康、当前事件 未立案灵异事件）。markdownOnly 显示层改动，最坏情况仅显示问题、不影响数据/逻辑。
+**⚠️ 真页验证失败（2026-06-30，v8.4.6 实际不工作，待决策）：** 用户导入 v8.4.6 后 CDP 真页验证发现：正则替换工作（开场白 `<StatusPlaceHolderImpl/>` 被替换、渲染出 details 面板），**但 `format_message_variable` 宏不被解析**——面板里显示一堆原始 `{{format_message_variable::stat_data.风险值}}` 文本。
+- 决定性测试：注入测试数据后用 `TavernHelper.formatAsDisplayedMessage(text,{message_id:0})` 渲染，`get_message_variable` 和 `format_message_variable` **两个宏都原样返回**；甚至用 `registerMacroLike` 注册 `get_message_variable` 宏后，`formatAsDisplayedMessage` 仍不解析（macro_like 宏的解析时机与 markdownOnly 正则替换对不上）。
+- 根因：这两个宏在神秘复苏的酒馆助手环境**根本没注册**。神秘复苏一直用 `getVariables()` JS API + DOM 状态栏（命令式），从不用宏；借鉴卡 Science_Worship 能用是它自带注册宏的脚本（tavern_helper.scripts 里有 MVU-ZOD/悬浮状态栏等）。直接照搬"正则+宏"声明式方案到没宏的神秘复苏环境，宏这一环断了。
+- 附带发现：测试时这轮对话 `stat_data` 全空（AI 输出 `<UpdateVariable>` 但变量没生效），是独立于状态栏的 MVU 数据流问题。
+- **当前 origin/main 上的 v8.4.6 是坏的**——用户导入后开场白会显示原始 `{{...}}` 文本，比改之前更难看。
+
+**待决策（下一步必做）：** 三选一——① **回滚 v8.4.6**（恢复 `[界面]状态栏` 正则到禁用的 iframe 版原状，止血）；② **方案 B 重做**（不用宏：正则把占位符换成空容器 + 脚本用 `getVariables` 命令式填值，复用固定状态栏渲染逻辑）；③ 放弃消息内面板。**已分析结论：对神秘复苏（无宏环境）推荐命令式方案 B；声明式正则+宏只在原生有宏的环境才轻量。** 用户尚未拍板，新对话先问用户选哪个再动手。
 
 ## 2026-06-30 CST（✅ v8.4.5 发布：货币监听器跳过开场白/静默生成，修复开局误发调查点）
 
