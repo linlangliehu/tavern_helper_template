@@ -33,7 +33,7 @@
 - 发布版 PNG chara/ccv3 ✅：各 7×`ec3a312`、0×旧 ref、0×`8.4.4` 残留
 - worldbook pollution gate ✅：383 entries / 33 disabled / max enabled 5851
 
-**剩余（真页验证修复）：** 需用户重新导入 v8.4.5 发布版 PNG（当前 9222 页面仍是 v8.4.4 @6ee50a7 旧货币监听器）。导入后新建聊天，确认：① 不再弹"获得调查点"toast；② `mfrs_gacha_currency_log` 不再新增开场白触发的 message/ghost 条目；③ 玩家真实发言后 AI 回复仍正常计奖励。被误刷高的 `mfrs_gacha_currency` 余额（357）属历史数据，可由用户自行决定是否清零。
+**真页验证（2026-06-30 ✅ 通过）：** 用户重新导入 v8.4.5 发布版 PNG（卡内 14×@ec3a312、0×旧 ref）后手动验证开局不再误发调查点，问题已解决。CDP 旁证：导入后从欢迎页 `selectCharacterById(5)` 加载神秘复苏开场白（chatLen=1、开场白正文含"厉鬼"命中旧 ghost 规则），`mfrs_gacha_currency` 保持 373 未变、`mfrs_gacha_currency_log` 无新增条目——与用户手动验证一致，修复生效。（被误刷高的历史余额 373 属旧数据，用户可自行决定是否清零。）
 
 ## 2026-06-30 CST（✅ v8.4.4 发布：新建聊天 CHAT_CHANGED 轮询等待数据切换）
 
