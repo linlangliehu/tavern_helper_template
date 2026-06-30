@@ -1,5 +1,29 @@
 # Findings
 
+## 2026-06-30：酒馆助手「脚本」跑在 TH-script iframe 里——操作主窗口 DOM 必须用 `window.parent.document`
+
+**根因（CDP 实锤）：** JS-Slash-Runner 把每个酒馆助手「类型:脚本」的脚本运行在独立 iframe `TH-script--<名>--<id>` 中。这些 iframe：
+- `contentWindow` 里有脚本全局 `tavern_events`(object)、`getVariables`(function)、`eventOn` 等；
+- 但 `contentDocument` **没有**主窗口的 `#send_form`/`#chat` 等 DOM；
+- 主窗口(top) 反而**没有** `getVariables`/`eventOn`/`tavern_events`（只有 `_`/`jQuery`/`TavernHelper`）。
+
+所以脚本里**裸 `document.querySelector('#send_form')` 永远返回 null**——它查的是 iframe 自己的空 document。`固定状态栏/index.ts` 的 `getSendForm()`/`createElement`/挂载/清理全用裸 `document`，导致 `retryMount` 20 次全失败、固定状态栏**从未挂载**（pre-existing bug，v8.4.7 美化前就存在，只是历来只验过 dist grep 没验过真页 DOM）。
+
+**修复（v8.4.8）：** 脚本顶层取 `const doc = window.parent?.document ?? document`，所有主窗口 DOM 访问（查 `#send_form`、`createElement`、挂载/清理 host）改用 `doc`；事件/变量全局（`eventOn`/`getVariables`/`tavern_events`）仍用脚本上下文（iframe 里可用）。CDP 验证：从 `TH-script--mvu` iframe `window.parent.document.querySelector('#send_form')` = 命中（`parentDocSendForm:true`）。
+
+**对照证据：** v8.4.6 的 `[界面]状态栏` iframe 版正则脚本早就写了 `const doc = window.parent?.document || document;`——它懂这个坑；固定状态栏脚本当初漏了。**以后任何要操作主窗口 DOM 的酒馆助手「脚本」，一律先取 `window.parent.document`，不要用裸 `document`。** 验证脚本是否挂载只能真页查主窗口 DOM，dist grep / 构建通过都不能证明它在 iframe 上下文能挂上。
+
+## 2026-06-30：拆 Science_Worship 卡实锤——它的状态栏美化是「悬浮脚本命令式渲染」，借鉴卡的"纯文字+宏"正则本就是禁用的废案
+
+**直接拆 `Science_Worship_20260628.png`（ccv3 tEXt）得到的硬证据，彻底推翻 v8.4.6 借鉴前提：**
+
+1. **它的两个"显示状态栏"正则都是 `disabled=true`：** `regex[2] 显示状态栏(前端)`（315KB iframe 模板）和 `regex[3] 显示状态栏(纯文字)`（1043 字，`{{get_message_variable::stat_data.xxx}}` 宏）**都禁用**。v8.4.6 照抄的纯文字版正是作者**放弃禁用**的废案。
+2. **真正上线的状态栏 = 第 5 个酒馆助手脚本「悬浮状态栏」（281KB webpack 应用，enabled=true）：** 命令式读 MVU 变量 + 独立悬浮窗 iframe 渲染。Science_Worship 的美化效果靠这个，不是正则+宏。
+3. **`get_message_variable`/`format_message_variable` 不是 MVU 框架的宏：** 抓 `MagicalAstrogy/MagVarUpdate/artifact/bundle.js`（161KB）grep 实测——这俩宏 0 命中；MagVarUpdate 只 `registerMacro('lastUserMessage',...)`。两卡都 `import` 同一个 MagVarUpdate bundle（神秘复苏 `脚本/MVU/index.ts:1`、`index.yaml:6578`），所以宏不是它给的。
+4. **这俩宏是酒馆助手的「提示词侧」宏：** 神秘复苏只在世界书注入场景用过（`世界书/变量/变量列表.txt:33`、`status_current_variable` 条目的 ejs 模板里 `{{format_message_variable::stat_data}}`），都是注入给 AI 的 prompt 内容，由提示词管线解析。**从未在显示层（markdownOnly 正则）用过**，v8.4.6 第一次放进显示层就翻车，与真页"原样返回"一致。
+
+**复刻 Science_Worship 效果的正确路径 = 命令式脚本渲染（不是正则+宏）。** 神秘复苏已具备两套命令式渲染设施可复用：①「固定状态栏」脚本（输入框上方 DOM）②「数据库前端」iframe。消息内折叠状态面板应走：正则把 `<StatusPlaceHolderImpl/>` 换成空容器（带 data 属性、无宏）+ 脚本 `getVariables({type:'message',message_id})` 读 stat_data 命令式填值。详见下方 v8.4.6 踩坑条目。
+
 ## 2026-06-30：神秘复苏状态栏美化是"命令式 getVariables"，不是"声明式正则+宏"（v8.4.6 踩坑）
 
 **结论（可复用，避免重复踩坑）：** 神秘复苏的酒馆助手运行环境**没有注册 `get_message_variable` / `format_message_variable` 宏**。这类 `{{get_message_variable::stat_data.xxx}}` 宏写进显示层正则的 replaceString 后**不会被解析**，会原样显示成 `{{...}}` 文本。

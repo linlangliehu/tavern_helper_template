@@ -1,5 +1,32 @@
 # Progress Log
 
+## 2026-06-30 CST（✅ v8.4.7+v8.4.8 完成：止血 v8.4.6 + 固定状态栏可展开两层美化 + parent.document 挂载修复，真页验证全通过）
+
+**背景：** 用户问"如果要实现 Science_Worship 卡那样的状态栏美化效果该怎么做"。直接拆 `Science_Worship_20260628.png`（ccv3）取得硬证据，彻底推翻 v8.4.6 借鉴前提（详见 findings.md 顶部条目）：
+- 它的两个「显示状态栏」正则（iframe 版 + 纯文字宏版）**都 disabled**；v8.4.6 照抄的纯文字版是它放弃的废案。
+- 真正上线的状态栏 = 第 5 个酒馆助手脚本「悬浮状态栏」（281KB webpack，enabled），命令式读 MVU 变量渲染。
+- `get_message_variable`/`format_message_variable` 不是 MVU(MagVarUpdate) 的宏（实测 bundle 只注册 `lastUserMessage`），是酒馆助手提示词侧宏，显示层 markdownOnly 不解析。
+- 结论：复刻 SW 效果 = 命令式脚本渲染。神秘复苏已有命令式「输入框上方固定状态栏」脚本。
+
+**用户决策（AskUserQuestion）：** 形态选「美化现有固定状态栏」+「可展开两层」。
+
+**v8.4.7（止血 + 美化）已发布：**
+- 止血：`src/神秘复苏模拟器/index.yaml` 的 `[界面]状态栏` 正则用 `git checkout f5cf6f4~1` 回滚到 v8.4.6 前（启用:false + 禁用 iframe）；全文件 `format_message_variable` 归零。
+- 美化：`脚本/固定状态栏/index.ts` 重写为可展开两层——收起态紧凑摘要行(🩸死亡/☠️复苏/❤️状态/👻驾驭数)，点 ▾ 展开三分区折叠详情(生存状态含死亡/复苏进度条+状态+位置+阶段 / 当前灵异事件5字段 / 驾驭厉鬼列表)；新增 `riskColor`(红≥70/橙≥40/绿)、`toNumber`、`clampPercent`、`buildStatusView`；展开态 localStorage 记忆。全程命令式 `getVariables`，不引入宏。
+- 发布链路：source `d99a5ca` → bot bundle `63cf0c2` → publish sync `5cb15b7`；CDN_REF=63cf0c2/releaseVersion=8.4.7。
+- **止血真页确认**：用户导入 v8.4.7 + reload 后 CDP 实测 `rawMacroInBody` 从 5→**0**（消息内不再显示原始 `{{...}}` 文本）。
+
+**v8.4.8（挂载修复）已发布 + 真页验证通过：**
+- 真页验证 v8.4.7 时发现固定状态栏**从未挂载**（domHost=false）。CDP 定位根因：酒馆助手「脚本」跑在 JS-Slash-Runner 的 `TH-script--*` iframe 里，该 iframe 的 document **无主窗口 #send_form**；固定状态栏脚本用裸 `document.querySelector('#send_form')` 永远找不到、retryMount 20 次全失败（pre-existing bug，历来只验 dist grep 没验真页 DOM）。详见 findings.md 顶部条目。
+- 修复：`脚本/固定状态栏/index.ts` 顶层取 `const doc = window.parent?.document ?? document`，所有主窗口 DOM 访问改用 `doc`（与 v8.4.6 iframe 版正则一致）；事件/变量全局仍用脚本上下文。
+- 发布链路：source `302016e` → bot bundle `bfef412` → publish sync `dd01cb6`；CDN_REF=bfef412/releaseVersion=8.4.8。
+- **端到端真页验证通过**（CDP 在 TH-script iframe 上下文 import @bfef412 固定状态栏）：`mountedInMainWindow=true`✅、收起摘要行 `🩸0/100 ☠️0% ❤️健康 👻0 ▾ 完整状态`✅、点 ▾ 展开 display:block 箭头▴✅、3 分区(生存/事件/驾驭)✅、2 进度条✅、死亡风险 0→绿色 rgb(70,192,160)(riskColor 正确)✅、命令式 getVariables 空时默认值✅、测试注入已清理✅。
+
+**完整验证矩阵：** 开发版/发布版 yaml(版本 8.4.8、状态栏正则禁用、0 宏) + 发布版 PNG(chara/ccv3 version 8.4.8、7×@bfef412、0 旧 ref) + CDN @bfef412(HTTP 200、parent×5、data-bar×4) + worldbook gate 383/33/5851 + 真页挂载/展开/变色全绿。PNG 里 1 个 format_message_variable 来自 `世界书/变量/变量列表.txt`(prompt 侧既有合法用法，非状态栏)。
+
+**当前状态：** 全部完成并 push origin/main(HEAD `dd01cb6`)。**待用户操作**：重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`(v8.4.8) 即可获得——消息内不再有坏宏文本 + 输入框上方精美可展开固定状态栏(收起紧凑/展开三分区/风险变色/进度条)。
+
+
 ## 2026-06-30 CST（⚠️ v8.4.6 已发布但真页验证失败：状态栏正则宏不解析，待决策回滚/重做）
 
 **状态：** v8.4.6 source + 发布同步已提交并 push 到 origin/main（merge `0976f15`）。借鉴第三方卡（Science_Worship，科学超电磁炮）的纯文字状态栏做法，把神秘复苏开发版的 `[界面]状态栏` 正则从「注入 CDN iframe」改为「纯 HTML `<details>` 折叠面板 + MVU 宏」，与输入框上方的 DOM 固定状态栏并存。
