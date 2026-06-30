@@ -1,5 +1,34 @@
 # Progress Log
 
+## 2026-06-30 CST（✅ v8.4.6 发布：状态栏正则改为轻量纯文字折叠面板）
+
+**状态：** v8.4.6 source + 发布同步已提交并 push 到 origin/main（merge `0976f15`）。借鉴第三方卡（Science_Worship，科学超电磁炮）的纯文字状态栏做法，把神秘复苏开发版的 `[界面]状态栏` 正则从「注入 CDN iframe」改为「纯 HTML `<details>` 折叠面板 + MVU 宏」，与输入框上方的 DOM 固定状态栏并存。
+
+**需求来源：** 用户提供 Science_Worship 角色卡 PNG，问其前端纯文字/状态栏美化如何实现、能否借鉴。分析得知该卡用 4 条 regex_scripts：①去除变量更新 ②去除占位符 ③显示状态栏(前端，315KB webpack Vue iframe) ④显示状态栏(纯文字，`<details>`+inline CSS+`{{get_message_variable::stat_data.xxx}}` 宏)。用户要求借鉴纯文字版改进。
+
+**改造内容（`src/神秘复苏模拟器/index.yaml` 的 `[界面]状态栏` 正则）：**
+- 查找表达式不变：`/<StatusPlaceHolderImpl\/>/g`（MVU 框架自动注入到 AI 消息的占位符，神秘复苏本就有）。
+- 替换内容从旧的 iframe 注入脚本（加载 CDN `@47a5fe5 状态栏/index.html`）改为纯 HTML：两个 `<details>` 折叠区（🩸 生存状态 / 👻 当前灵异事件），inline CSS 暗红主题，10 个 `format_message_variable` 宏读 stat_data。
+- `启用: true`、`仅格式显示: true`（markdownOnly，不污染发给 AI 的上下文）。
+- 净改动 23 insert / 55 delete（删掉 iframe 脚本）。
+
+**关键修正（避免照搬踩坑）：** 借鉴卡用 `{{get_message_variable::}}` 宏，但 CDP 实测该宏在神秘复苏环境**不被解析**（`substituteParamsExtended` 原样返回）。改用项目已验证的 **`{{format_message_variable::stat_data.路径}}`**——神秘复苏世界书 `变量列表.txt` 和官方示例卡 `示例/角色卡示例/index.yaml:252`（`{{format_message_variable::stat_data.白娅.依存度}}` 取单字段）都在用。
+
+**字段映射（对照 schema.ts，全标量叶子）：** 生存状态区=风险值/厉鬼复苏程度/状态/所在位置/主线进度.当前阶段；事件区=当前灵异事件.{事件代号,危害等级,发生地点,鬼域状态,处理状态}。stat_data 空时宏取 schema 默认值（风险 0、状态 健康、事件 未立案灵异事件）。
+
+**发布链路（卡本体改动，无 dist 变更，故不需 bot bundle，CDN_REF 不变）：**
+- source commit：`f5cf6f4` — `feat(mfrs): replace iframe status-bar regex with lightweight text details panel`
+- publish sync commit：`5dbcd6e` — `chore(release): publish mfrs v8.4.6`（merge `0976f15`）
+- `scripts/publish-card.mjs`：`CDN_REF=ec3a312`（不变），`releaseVersion=8.4.6`
+
+**验证：**
+- 开发版/发布版 yaml 解析 ✅：启用 true、仅格式显示 true、10 宏 format_message_variable、0 残留 get_message_variable、无 iframe/47a5fe5、2 个 details
+- 发布版 YAML version 8.4.6；PNG chara/ccv3 各含 8.4.6、11×format_message_variable、0×旧 iframe ref
+- worldbook pollution gate ✅：383/33/5851
+- 占位符机制 ✅：CDP 确认 AI 消息含 `<StatusPlaceHolderImpl/>`（anyPlaceholder=true）
+
+**剩余（真页验证渲染）：** 需用户重新导入 v8.4.6 发布版 PNG（当前真页仍 v8.4.5）。导入后看 AI 消息末尾是否渲染出两个折叠状态面板、宏是否取到值（开场白聊天应显示 schema 默认值：死亡风险 0/100、状态 健康、当前事件 未立案灵异事件）。markdownOnly 显示层改动，最坏情况仅显示问题、不影响数据/逻辑。
+
 ## 2026-06-30 CST（✅ v8.4.5 发布：货币监听器跳过开场白/静默生成，修复开局误发调查点）
 
 **状态：** v8.4.5 source 已提交并 push，bot bundle `ec3a312`（tag `v0.0.334`）已生成，发布版 PNG 已同步、验证并通过发布同步提交 `005d4ec` 推送到 origin/main。修复"打开角色卡开始聊天、一句话未发就弹『🔍 获得调查点 👻 对抗厉鬼 +15』"的 bug。
