@@ -27,7 +27,7 @@
 - 发布版 PNG chara/ccv3 ✅：各 7×`6ee50a7`、0×旧 ref
 - worldbook pollution gate ✅：383 entries / 33 disabled / max enabled 5851
 
-**剩余（可选）：** 真页验证。当前 9222 页面跑的是发布版 CDN @99f92ff（v8.4.3，不含本轮询），即时验证需替换运行态脚本有多注入风险，按 v8.4.3 同类先例列为发布后可选。重新导入 v8.4.4 PNG 后，在数据库前端已有 14 表的聊天里新建一个聊天，确认数据库前端不会停在默认 8 表而是自动重新导入神秘复苏 14 表模板。
+**真页验证（2026-06-30 ✅ 通过）：** 用户已导入 v8.4.4 发布版 PNG（卡内 14×@6ee50a7、version 8.4.4，数据库前端 iframe `...3002` 已加载）。通过 Chrome DevTools MCP 在 `http://127.0.0.1:8000/` 确认：切换前聊天 `MysteryDatabaseFrontend.checkTemplateStatus()` 返回 `templateLoaded=true` / 14 表（触发竞态的前置条件）；用户手动多次点击"开始新聊天"后，新聊天（chatId 时间戳 18h35m09s）`checkTemplateStatus()` 仍为 `templateLoaded=true` / 14 表完整（全局状态…收录规律），未停在库默认 8 表。修复生效，新建聊天后神秘复苏 14 表模板自动恢复。
 
 ## 2026-06-30 CST（✅ v8.4.3 发布：CHAT_CHANGED 原生事件回退）
 
