@@ -4495,16 +4495,27 @@
             (eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received';
 
         // 监听 MESSAGE_RECEIVED — AI 每次回复时触发
-        eventSource.on(messageReceivedEvent, () => {
+        // SillyTavern 回调签名为 (messageId, type)：
+        //  - 开场白（first_mes）在新建/加载聊天时作为第 0 条消息载入也会触发本事件，
+        //    其正文常含"厉鬼"等关键词，若按 AI 新回复处理会误发"获得调查点 +15"。故跳过 messageId 0。
+        //  - type==='quiet' 是后台静默生成（如抽卡「AI 生成物品」），非玩家推进剧情，跳过。
+        eventSource.on(messageReceivedEvent, (messageId, type) => {
             try {
+                if (type === 'quiet') return;
                 const context = host.SillyTavern?.getContext?.();
                 if (!context?.chat?.length) return;
 
-                // 取最后一条非用户消息
-                const lastMsg = [...context.chat].reverse().find(msg => !msg.is_user);
-                if (!lastMsg?.mes) return;
+                // 开场白永远是第 0 条消息，加载时不应发放奖励
+                const id = Number(messageId);
+                if (!Number.isNaN(id) && id <= 0) return;
 
-                handleMessageForCurrency(lastMsg.mes);
+                // 用 messageId 精确定位该条消息；无效时回退到最后一条非用户消息
+                const msg = (!Number.isNaN(id) && context.chat[id])
+                    ? context.chat[id]
+                    : [...context.chat].reverse().find(m => !m.is_user);
+                if (!msg || msg.is_user || !msg.mes) return;
+
+                handleMessageForCurrency(msg.mes);
             } catch (e) {
                 console.error('[Gacha Currency] MESSAGE_RECEIVED 处理异常:', e);
             }
