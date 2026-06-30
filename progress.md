@@ -1,4 +1,70 @@
-# Progress Log
+﻿# Progress Log
+
+## 2026-06-30 CST（✅ v8.4.1 真页验证通过：开局面板 + 数据库前端交互 + 正文摘要三层全绿）
+
+**状态：** 使用 `scripts/cdp-evaluate.mjs`（裸 CDP via 9222 page target）在真实酒馆页面 `http://127.0.0.1:8000/` 完成 v8.4.1 三个核心验证点，全部通过。
+
+**验证环境：**
+- Chrome 149.0.7827.199，CDP 端口 9222 开放，酒馆 HTTP 200
+- 当前角色：idx=5"神秘复苏模拟器发布版"，CDN ref `a34b4d5`（与 v8.4.1 发布版一致），383 entries
+- 当前对话：5 条消息（2 轮真实对话已完成），chatId 含 2026-06-30 时间戳
+- `window.MFRS` 成功挂载：37 keys，version 1.0（v8.3 父窗口挂载修复生效）
+- `window.MysteryDatabaseFrontend` ACU 实例可用，14 张表名含"行动建议"和"灵异物品"
+- 替代路径：当前会话未暴露 Chrome DevTools MCP，按 PROJECT_FLOW.md 使用 `scripts/cdp-evaluate.mjs`
+
+**验证点 1：开局自定义角色面板（`<sp_start>`）— ✅ 通过**
+- 第 0 条 AI 消息 raw 含 `<sp_start>` 块，内容"请设定你的姓名、性别、年龄..."
+- 渲染后显示完整开局自定义表单：18 个表单元素全部就位（姓名/年龄性别/身份选择/厉鬼增删/特殊能力/剧情节点/初始资源/提交按钮"进入神秘复苏世界"）
+- v8.4.1 修复确认生效：`<sp_start>` 未被旧面板清洗正则误删
+
+**验证点 2：数据库前端"选择/使用"交互按钮 — ✅ 通过**
+- ACU.openVisualizer() 展开面板 → "行动建议"标签 → 4 个"选择"按钮（A/B/C/D），点击填入 `我选择A：向周正摊牌民间驭鬼者身份，表明无恶意` ✅
+- "灵异物品"标签 → 8 个"使用"按钮，点击填入 `我使用灵异物品【红色鬼烛】。效果：...使用限制：...` ✅
+- 按钮用 `class="acu-row-action-btn"` + `data-prompt`，`bindDynamicContentEvents` 委托绑定
+
+**验证点 3：AI 回复只显示剧情 + `【本轮摘要】` — ✅ 通过**
+- raw 含 `【本轮摘要】` ✅ + 后台协议块 `<sp_status>`/`<sp_choices>`/`<choices>`/`<UpdateVariable>`（预期保留）
+- 显示层 DOM：所有协议块不可见 ✅，仅剧情 + `【本轮摘要】`（6 行）✅
+- v8.4 显示正则和 hotfix 清洗链路生效
+
+**结论：** v8.4.1 三个核心验证点全部通过，发布版与真页运行态一致。无阻断项。
+
+**注意：** L3342 仍有 1 处 `.acu-row-action-btn').off('click').on('click')` 逐个绑定（在 `bindDynamicContentEvents` 中），不在 v8.0 事件委托重构范围内（针对 `data-mfrs-action` 抽卡面板按钮）。数据库前端表格行交互按钮用独立 class 选择器绑定，功能正常，非 bug。
+
+
+## 2026-06-30 CST（✅ Codex 更新后日志防护复检 + 项目进度确认）
+
+**状态：** 用户更新 codex 后复检 TRACE 日志高频写盘防护措施，确认触发器仍生效；使用 planning-with-files 恢复上下文，逐项核对源码和发布版元数据，全部与 task_plan.md 声称一致。
+
+**Codex 日志防护复检（详细）：**
+- codex-cli 版本：`0.142.4`（npm `@openai/codex@0.142.4`，npm registry 最新版同为 0.142.4，无新版本发布）
+- 用户"更新 codex"后版本仍为 0.142.4，说明当前已是最新版，无新版修复 TRACE 高频写盘问题
+- `~/.codex/logs_2.sqlite` 的 `block_log_inserts` 触发器仍存在且生效：`BEFORE INSERT ON logs BEGIN SELECT RAISE(IGNORE); END`
+- logs 表无新写入：最后一条日志时间 `2026-06-27 17:59:01`（3 天前），当前日期 2026-06-30，确认触发器持续拦截
+- 行数冻结在 19,404 行；AUTOINCREMENT 计数器已推进到 14,646,256，意味着约 1,460 万次 INSERT 尝试被触发器静默拦截
+- 数据库 journal_mode=WAL，query_only=0（非 pragma 级只读）；OS 文件属性 IsReadOnly=False
+- 新版本（0.142.4）仍无原生日志级别配置：`codex debug` 子命令无 log/trace/verbose 选项，`config.toml` 无 log-level 字段
+- **结论：SQLite 触发器防护仍是最有效手段，0.142.4 未修复 TRACE 高频写盘问题，触发器需保留**
+
+## 2026-06-30 CST（✅ 会话恢复核对：v8.4.1 发布态一致 + Codex 日志防护确认）
+
+**状态：** 使用 planning-with-files 恢复上下文，逐项核对源码、发布版元数据、回归脚本和 Codex 日志防护，全部与 task_plan.md 声称一致，无漂移。
+
+**Codex 日志防护检查：**
+- codex-cli 版本：`0.142.4`（未变，无新版本修复 TRACE 高频写盘问题）
+- `~/.codex/logs_2.sqlite` 的 `block_log_inserts` 触发器仍存在且生效：`BEFORE INSERT ON logs BEGIN SELECT RAISE(IGNORE); END`
+- logs 表无新写入（触发器持续拦截所有 INSERT，包括 TRACE 级别）
+- 新版本（0.142.4）无原生日志级别配置，触发器防护仍是有效手段
+
+**项目进度核对：**
+- git HEAD = `5f17c72`，与 origin/main 同步；dirty 仅为 `dist/**`（构建残留）+ `.claude/worktrees/*` + `.tmp-jerryzmtz-my-tavern-scripts/`，均为已知无关项
+- `scripts/publish-card.mjs`：`CDN_REF=a34b4d5`、`releaseVersion=8.4.1` ✅
+- 发布版 `src/神秘复苏模拟器发布版/index.yaml`：version 8.4.1，7×`a34b4d5`，0×旧 ref ✅
+- 源码 hotfix 正则含负向先行 `sp_start|sp_input` ✅；开发版 yaml 显示正则同含 ✅
+- `verify-output-cleaning-regressions.mjs` passed ✅
+- `verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime` 开发版 PNG 383/33/5851 PASS ✅
+
+**结论：** v8.4.1 发布态与源码完全一致，无阻断项。剩余均为可选任务。
 
 ## 2026-06-29 CST（✅ v8.4.1 热修复发布：保留开局自定义角色面板）
 

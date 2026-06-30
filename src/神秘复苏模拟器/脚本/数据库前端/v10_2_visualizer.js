@@ -127,6 +127,18 @@
         return key === 'sheet_supernatural_items' || name.includes('灵异物品');
     };
 
+    const isClueTable = (tableName, tableData) => {
+        const key = String(tableData?.key || '');
+        const name = String(tableName || tableData?.name || '');
+        return key === 'sheet_clues' || name.includes('线索');
+    };
+
+    const isRulesTable = (tableName, tableData) => {
+        const key = String(tableData?.key || '');
+        const name = String(tableName || tableData?.name || '');
+        return key === 'sheet_collected_rules' || name.includes('收录规律');
+    };
+
     const isOptionPanelTable = (tableName, tableData) => {
         return String(tableName || '').includes('选项') || isActionSuggestionsTable(tableName, tableData);
     };
@@ -157,6 +169,30 @@
         return normalizePromptText(parts.join(''));
     };
 
+    const buildCluePrompt = (headers, row) => {
+        const clueCode = getRowValueByHeader(headers, row, ['线索编号', '线索编码'], '');
+        const content = getRowValueByHeader(headers, row, ['内容', '线索描述'], '');
+        const inference = getRowValueByHeader(headers, row, ['推断', '推断结论'], '');
+        const credibility = getRowValueByHeader(headers, row, ['可信度', '重要程度'], '');
+        const parts = [`我使用线索【${clueCode || content || '线索'}】。`];
+        if (content) parts.push(`内容：${content}。`);
+        if (inference) parts.push(`推断：${inference}。`);
+        if (credibility) parts.push(`可信度：${credibility}。`);
+        return normalizePromptText(parts.join(''));
+    };
+
+    const buildRulePrompt = (headers, row) => {
+        const ruleType = getRowValueByHeader(headers, row, ['规律类型', '规律名称'], '');
+        const ruleContent = getRowValueByHeader(headers, row, ['规律内容', '规律描述'], '');
+        const completeness = getRowValueByHeader(headers, row, ['完整度', '完成度'], '');
+        const risk = getRowValueByHeader(headers, row, ['风险备注', '风险'], '');
+        const parts = [`我运用知识【${ruleType || ruleContent || '规律知识'}】。`];
+        if (ruleContent) parts.push(`规律内容：${ruleContent}。`);
+        if (completeness) parts.push(`完整度：${completeness}。`);
+        if (risk) parts.push(`风险：${risk}。`);
+        return normalizePromptText(parts.join(''));
+    };
+
     const buildRowInteractionHtml = (tableName, tableData, row) => {
         const headers = tableData.headers || [];
         if (isActionSuggestionsTable(tableName, tableData)) {
@@ -168,6 +204,16 @@
             const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '灵异物品');
             const prompt = buildSupernaturalItemPrompt(headers, row);
             return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-hand-sparkles"></i><span>使用</span></button><span>${escapeHtml(itemName)}</span></div>`;
+        }
+        if (isClueTable(tableName, tableData)) {
+            const label = getRowValueByHeader(headers, row, ['线索编号', '内容', '线索描述'], '线索');
+            const prompt = buildCluePrompt(headers, row);
+            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-magnifying-glass"></i><span>使用</span></button><span>${escapeHtml(label)}</span></div>`;
+        }
+        if (isRulesTable(tableName, tableData)) {
+            const label = getRowValueByHeader(headers, row, ['规律类型', '规律名称', '规律内容'], '规律');
+            const prompt = buildRulePrompt(headers, row);
+            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-book-open"></i><span>使用</span></button><span>${escapeHtml(label)}</span></div>`;
         }
         return '';
     };
