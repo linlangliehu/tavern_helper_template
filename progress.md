@@ -1,5 +1,40 @@
 # Progress Log
 
+## 2026-06-30 CST（✅ v8.4.5 发布：货币监听器跳过开场白/静默生成，修复开局误发调查点）
+
+**状态：** v8.4.5 source 已提交并 push，bot bundle `ec3a312`（tag `v0.0.334`）已生成，发布版 PNG 已同步、验证并通过发布同步提交 `005d4ec` 推送到 origin/main。修复"打开角色卡开始聊天、一句话未发就弹『🔍 获得调查点 👻 对抗厉鬼 +15』"的 bug。
+
+**用户报告现象：** 点开角色卡开始聊天时（未发送任何消息）就显示"获得调查点 👻 对抗厉鬼 +15"。
+
+**根因（`v10_2_visualizer.js` 货币被动获取系统 L4344-4511）：**
+- 抽卡系统监听 `MESSAGE_RECEIVED`，把 AI 回复文本匹配关键词发"调查点"，`ghost` 规则 pattern 首条即 `/厉鬼/i`（+15）。
+- 角色卡开场白正文含"厉鬼复苏…对抗厉鬼…"，命中 ghost 规则。
+- 打开角色卡新建/加载聊天时，开场白（first_mes）作为第 0 条 AI 消息载入会触发一次 `MESSAGE_RECEIVED`；旧监听器是无参回调，只取"最后一条非用户消息"= 开场白，无法区分"开场白加载"和"AI 真实新回复"，于是误发 message+1 与 ghost+15 并弹 toast。
+
+**真页 bug 复现（CDP 铁证，v8.4.4 旧版页面）：** 当前聊天 `chatLen=1`（仅开场白、玩家未发言），`localStorage.mfrs_gacha_currency_log` 却有 19 条 `ghost +15` 记录、余额被刷到 357；开场白片段"（…厉鬼复苏，人间如狱。）"命中 `/厉鬼/`。每次新建聊天即误发一次 message+ghost，证实根因。
+
+**修复内容（`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`）：**
+- 监听器改用 SillyTavern 回调签名 `(messageId, type)`。
+- 跳过 `messageId === 0`（开场白永远是第 0 条消息）。
+- 跳过 `type === 'quiet'`（后台静默生成，如抽卡「AI 生成物品」，同样会误发，顺手堵上）。
+- 用 `messageId` 精确定位该条消息（无效时回退到最后一条非用户消息），替代旧的"取最后一条非用户消息"。
+- 净改动 16 insert / 5 delete。
+
+**发布链路：**
+- source commit：`73b77aa` — `fix(gacha): skip opening message & quiet generation in passive currency listener`（分支 `fix/gacha-currency-opening` → merge `bb5c5fb`）
+- bot bundle：`ec3a312`（tag `v0.0.334`）— CI 重建 dist，确认 minified 含 `'quiet'===a` 排除
+- publish sync commit：`005d4ec` — `chore(release): publish mfrs v8.4.5`
+- `scripts/publish-card.mjs`：`CDN_REF=ec3a312`，`releaseVersion=8.4.5`
+
+**验证：**
+- `node --check v10_2_visualizer.js` ✅ + 本地 build + CI bot bundle dist 均确认 `'quiet'===a` 进 bundle
+- CDN smoke ✅：`@ec3a312` 数据库前端 index.js HTTP 200，357831 字节
+- 发布版 YAML ✅：version 8.4.5，7×`ec3a312`，0×旧 ref（`6ee50a7`），0× localhost
+- 发布版 PNG chara/ccv3 ✅：各 7×`ec3a312`、0×旧 ref、0×`8.4.4` 残留
+- worldbook pollution gate ✅：383 entries / 33 disabled / max enabled 5851
+
+**剩余（真页验证修复）：** 需用户重新导入 v8.4.5 发布版 PNG（当前 9222 页面仍是 v8.4.4 @6ee50a7 旧货币监听器）。导入后新建聊天，确认：① 不再弹"获得调查点"toast；② `mfrs_gacha_currency_log` 不再新增开场白触发的 message/ghost 条目；③ 玩家真实发言后 AI 回复仍正常计奖励。被误刷高的 `mfrs_gacha_currency` 余额（357）属历史数据，可由用户自行决定是否清零。
+
 ## 2026-06-30 CST（✅ v8.4.4 发布：新建聊天 CHAT_CHANGED 轮询等待数据切换）
 
 **状态：** v8.4.4 source 已提交并 push，bot bundle 已生成，发布版 PNG 已同步、验证并通过发布同步提交推送到 origin/main。修复新建/切换聊天时 `CHAT_CHANGED` 触发过早导致新聊天不重新导入神秘复苏 14 表模板的竞态。本条目对应的改动在 v8.4.3 发布后曾以未提交 WIP 形式挂在工作区（仅改 src TS、未构建/提交/记录），本次恢复对话时确认并完整推进发布。
