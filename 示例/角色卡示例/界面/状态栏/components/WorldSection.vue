@@ -37,9 +37,15 @@ const formatted_time = computed(() => {
 
 <style lang="scss" scoped>
 .world-section {
+<<<<<<< HEAD
   border-bottom: 1px solid var(--c-gold-dim);
   padding: 10px;
   background-color: var(--c-charcoal);
+=======
+  border-bottom: 3px solid var(--c-granite);
+  padding: 10px;
+  background-color: var(--c-mint-cream);
+>>>>>>> 92bc9ed4a5ff1e65a494b9644780983031cdb1df
 }
 
 .meta-row {
@@ -48,6 +54,7 @@ const formatted_time = computed(() => {
   margin-bottom: 6px;
   font-weight: bold;
   font-size: 0.9rem;
+<<<<<<< HEAD
   font-family: var(--font-title);
   color: var(--c-gold-light);
   letter-spacing: 1px;
@@ -56,6 +63,12 @@ const formatted_time = computed(() => {
   flex-wrap: wrap;
   gap: 6px;
   text-shadow: 0 0 4px var(--c-gold-glow);
+=======
+  border-bottom: 1.5px dashed var(--c-grey-olive);
+  padding-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 6px;
+>>>>>>> 92bc9ed4a5ff1e65a494b9644780983031cdb1df
 }
 
 .event-list {
@@ -65,8 +78,13 @@ const formatted_time = computed(() => {
 }
 
 .event-badge {
+<<<<<<< HEAD
   background: var(--c-dark-surface);
   border: 1px solid var(--c-gold-dark);
+=======
+  background: #fff;
+  border: 1.5px solid var(--c-granite);
+>>>>>>> 92bc9ed4a5ff1e65a494b9644780983031cdb1df
   padding: 6px 8px;
   min-width: 130px;
   flex: 1;
@@ -79,23 +97,37 @@ const formatted_time = computed(() => {
   left: 0;
   top: 0;
   bottom: 0;
+<<<<<<< HEAD
   width: 3px;
   background: linear-gradient(180deg, var(--c-gold), var(--c-gold-dark));
+=======
+  width: 4px;
+  background-color: var(--c-celadon);
+>>>>>>> 92bc9ed4a5ff1e65a494b9644780983031cdb1df
 }
 
 .event-title {
   display: block;
   font-weight: bold;
   margin-bottom: 2px;
+<<<<<<< HEAD
   padding-left: 8px;
   color: var(--c-white);
+=======
+  padding-left: 6px;
+>>>>>>> 92bc9ed4a5ff1e65a494b9644780983031cdb1df
 }
 
 .event-desc {
   display: block;
   font-size: 0.75rem;
+<<<<<<< HEAD
   color: var(--c-ghost);
   padding-left: 8px;
+=======
+  color: var(--c-grey-olive);
+  padding-left: 6px;
+>>>>>>> 92bc9ed4a5ff1e65a494b9644780983031cdb1df
 }
 
 @media (max-width: 600px) {
