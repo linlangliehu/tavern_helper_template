@@ -1,5 +1,27 @@
 # Progress Log
 
+## 2026-07-01 CST（✅ v8.4.9 完成：消息内面板注册接线 + 两列美化对齐参考卡 + last_mes/mesid 修复，真页验证通过）
+
+**背景：** 用户拿 `屏幕截图 2026-07-01 094922.png`（Science_Worship 参考卡效果：顶部信息栏 + 发光叙事卡 + `状态面板/关系网络` 双 tab + 两列分区 + emoji/着色）问"纯文字美化和 MVU 状态栏美化能否做成这效果"。结论：图里效果 = 前端命令式渲染（不是纯文字宏，v8.4.6 已证宏不解析），而这正是上轮未归档的新提交 `de1b350`「消息内面板」的方向。
+
+**恢复对话时发现 `de1b350` 状态：** 只加了 `src/神秘复苏模拟器/脚本/消息内面板/index.ts`（每条 AI 消息注入面板 + 叙事包装，命令式 `getVariables` 读 stat_data），但 **① 从未注册进 `index.yaml` 脚本列表（真页从未激活）② 有 bug ③ 未发布**。
+
+**本轮四类改动（`消息内面板/index.ts`）：**
+- **修 last_mes bug**：原 `if(...contains('last_mes'))return` 永久排除最新楼层 → 用户正在读的当前楼层永远没面板。刷新事件均在生成完成后触发（无流式中途注入），去掉排除即可，去重守卫 + swipe/update 自愈。
+- **加 mesid 守卫**：跳过无有效 mesid 的隐藏 `.mes` 模板（真页 CDP 发现 `#chat` 外有个 mesid="" 的隐藏模板被挂了空面板）。
+- **修事件委托**：行动按钮加序号徽章 `<span>` 后，点子元素会让 `target.classList` 判断落空 → tab/action 改 `closest()`。
+- **美化对齐参考卡**：顶部浓缩信息栏（🎬阶段·📍位置·🩸死亡风险变色）+ 左右两列（左身份/能力/生存，右事件/驾驭厉鬼）+ 居中胶囊 tab + emoji 分区标题 + NPC 名字橙色着色+描述（解析「名-描述」）+ 双风险进度条。配色保持神秘复苏暗红（不照抄参考卡青色）。
+
+**真页验证（CDP，把编译产物 eval 进 MVU 的 TH-script iframe 上下文，等价真实注册加载）：** ①读取路径 `getVariables({type:'message',message_id})`→`_.get(v,'stat_data')` 字段全可读（开局默认值）✅ ②面板挂进真实 `.mes`（parent.document）✅ ③**最新楼层有面板**（last_mes 修复）✅ ④加 mesid 守卫后 panelCount 2→1，跳过隐藏模板 ✅ ⑤两列/tab/进度条/emoji 全渲染 ✅ ⑥tab 切换事件委托 closest() 工作 ✅ ⑦固定状态栏/数据库前端未受影响，仍在输入框上方 ✅。真页实图确认消息内面板与固定状态栏正确并存。
+
+**发布链路（worktree 从 origin/main 落地）：**
+- source commit `3617a1c`（`index.yaml` 注册 消息内面板 id ...3003 + `消息内面板/index.ts` 美化+修复）→ push origin/main
+- bot bundle `c547fac`（含新版 消息内面板 dist：mfrs-msg-columns/header/npc-name、closest、last_mes=0）
+- publish sync `44c80e5`：`publish-card.mjs` CDN_REF=`c547fac`/releaseVersion=`8.4.9`；发布版 index.yaml 17 处链接换 @c547fac（含新 消息内面板 条目）；发布版 PNG 重打包
+- 验证：发布版 yaml 版本 8.4.9 + 8×@c547fac + 0 旧 ref + 消息内面板已注册；PNG chara/ccv3 version 8.4.9×2 + @c547fac×16 + 0 旧 ref + 消息内面板×6；worldbook gate 383/33/5851；CDN smoke @c547fac 消息内面板 HTTP 200/15198
+
+**当前状态：** 全部完成并 push origin/main（HEAD `44c80e5`）。**待用户操作**：重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`(v8.4.9) 即可获得——每条 AI 消息内嵌入精美两列状态面板（顶部信息栏 + 双 tab + 进度条 + NPC 着色 + 行动建议按钮，命令式读 stat_data），与固定状态栏并存。无未决任务。
+
 ## 2026-06-30 CST（✅ v8.4.7+v8.4.8 完成：止血 v8.4.6 + 固定状态栏可展开两层美化 + parent.document 挂载修复，真页验证全通过）
 
 **背景：** 用户问"如果要实现 Science_Worship 卡那样的状态栏美化效果该怎么做"。直接拆 `Science_Worship_20260628.png`（ccv3）取得硬证据，彻底推翻 v8.4.6 借鉴前提（详见 findings.md 顶部条目）：
