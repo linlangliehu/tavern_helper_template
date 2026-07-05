@@ -1,5 +1,28 @@
 # Progress Log
 
+## 2026-07-05 CST（✅ v8.5.1 完成：抽卡调查点按聊天隔离 + 远端 CDN 发布）
+
+**目标：** 继续完成用户要求的两个后续：①把“调查点按聊天隔离”最新变更写入 planning；②走正式远端发布链路，生成新的 CDN bundle hash，而不是只依赖本地内联 PNG。
+
+**完成内容：**
+- ✅ 使用干净 worktree `.codex-mfrs-gacha-scope` 从 `origin/main` 切出发布分支，避免主工作区旧 dirty、临时文件、依赖降级和 `tavern_sync.mjs` 换行噪声进入提交。
+- ✅ source commit `5266dc5`：提交 3 个源文件，包含：
+  - `src/神秘复苏模拟器/index.yaml`：删除旧固定状态栏脚本和旧 `[界面]状态栏` 正则残留。
+  - `src/神秘复苏模拟器/脚本/数据库前端/index.ts`：默认 `dashboardPosition/frontendPosition` 改为 `fixed_status`。
+  - `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：数据库前端和仪表盘移动到输入框上方同一 host；抽卡调查点/保底/历史/奖励日志/残屑/已拥有物品按聊天 scope 存储；无 chatId 时使用 `unsaved-*` 临时 scope；抽卡结果写库双重去重。
+- ✅ GitHub bundle workflow 成功：run `28744734525`，bot bundle `88fd7f1`，tag `v0.0.354`。
+- ✅ 发布同步 commit `8a777c2`：`scripts/publish-card.mjs` 回填 `CDN_REF=88fd7f1`、`releaseVersion=8.5.1`，运行 `pnpm publish-card 神秘复苏模拟器发布版`，生成 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。发布同步已 push 到 `origin/main`，tag `v0.0.355`。
+- ✅ 发布验证：
+  - `git diff --check` 通过。
+  - `node --check src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 通过。
+  - `pnpm build` 通过，仅既有数据库前端 bundle 355 KiB performance warning。
+  - `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 通过（383 entries / 33 disabled / max enabled 5851）。
+  - 发布版 YAML version `8.5.1`，脚本链接指向 `@88fd7f1`，无旧 `@787f113`/`@c547fac`。
+  - PNG `chara`/`ccv3` 均为 version `8.5.1`，含 `@88fd7f1`，无旧固定状态栏正则/iframe 残留。
+  - CDN smoke：`@88fd7f1` 六个脚本均 HTTP 200；数据库前端 bundle 200/332675 bytes，含 `fixed_status`、`getStorageScope`、`mfrs_gacha_currency`、`unsaved-*` 和 scoped key 模板。
+
+**当前状态：** `origin/main` = `8a777c2 chore(release): publish mfrs v8.5.1`；source = `5266dc5`；bot bundle = `88fd7f1`。用户重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 即可获得 v8.5.1。新聊天调查点从 0 开始；同一聊天刷新/重进保留本聊天自己的调查点；不同聊天的调查点、保底、历史、残屑、已拥有物品和奖励日志互相隔离；自定义卡池仍全局共享。
+
 ## 2026-07-05 CST（✅ 任务7完成：发布后真页导入 v8.5.0 + EJS 渲染验证，无 AI/无写库）
 
 **目标：** 完成任务 7：重新导入 v8.5.0 发布版后，在酒馆真页验证 AI 可见的 `stat_data` 注入不再是旧宏，而是 EJS 渲染后的完整 JSON。
