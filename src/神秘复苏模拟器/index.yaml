@@ -5195,74 +5195,6 @@
       仅格式显示: true
       仅格式提示词: false
 
-  - 正则名称: '[界面]状态栏'
-    id: b50d0bed-ff40-4a25-9ada-14feb4283324
-    启用: false
-    查找表达式: /<StatusPlaceHolderI[m]pl\/>/g
-    内容: |-
-      ```
-      <body>
-      <script>
-      (() => {
-        const statusUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@47a5fe5016577cadd153c44e788793aa7edea038/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E7%95%8C%E9%9D%A2/%E7%8A%B6%E6%80%81%E6%A0%8F/index.html?v=phase163-4-0-final-baseline-6-28-p5-4-hotfix13';
-        const doc = window.parent?.document || document;
-        const hostId = 'mfrs-fixed-status-host';
-        const frameId = 'mfrs-fixed-status-frame';
-
-        const mount = () => {
-          const sendForm = doc.querySelector('#send_form') || doc.querySelector('#form_sheld');
-          if (!sendForm) return false;
-
-          let host = doc.querySelector(`#${hostId}`);
-          if (!host) {
-            host = doc.createElement('div');
-            host.id = hostId;
-            host.style.width = '100%';
-            host.style.maxHeight = '42vh';
-            host.style.overflow = 'hidden auto';
-            host.style.margin = '0 auto 8px';
-            host.style.border = '1px solid rgba(90, 18, 18, 0.65)';
-            host.style.borderRadius = '8px';
-            host.style.background = 'rgba(5, 2, 2, 0.96)';
-            host.style.boxShadow = '0 0 18px rgba(0, 0, 0, 0.65)';
-            sendForm.parentElement?.insertBefore(host, sendForm);
-          }
-
-          let frame = doc.querySelector(`#${frameId}`);
-          if (!frame) {
-            frame = doc.createElement('iframe');
-            frame.id = frameId;
-            frame.title = '神秘复苏固定状态栏';
-            frame.style.display = 'block';
-            frame.style.width = '100%';
-            frame.style.height = '360px';
-            frame.style.border = '0';
-            frame.style.background = 'transparent';
-            host.replaceChildren(frame);
-          }
-          frame.src = `${statusUrl}?t=${Date.now()}`;
-          return true;
-        };
-
-        const retry = (attempt = 1) => {
-          if (mount()) return;
-          if (attempt < 20) setTimeout(() => retry(attempt + 1), 500);
-        };
-
-        retry();
-      })();
-      </script>
-      </body>
-      ```
-    来源:
-      用户输入: false
-      AI输出: true
-      快捷命令: false
-      世界信息: false
-    作用于:
-      仅格式显示: true
-      仅格式提示词: false
-
   - 正则名称: '[显示]隐藏推演选项与状态面板（由正文 sp 面板替代）'
     id: a1b2c3d4-0007-4000-8000-000000000007
     启用: true
@@ -6672,28 +6604,6 @@
         };
 
         loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@47a5fe5016577cadd153c44e788793aa7edea038/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=phase163-4-0-final-baseline-6-28-p5-4-hotfix13');
-
-    - 名称: 固定状态栏
-      id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001
-      启用: true
-      类型: 脚本
-      内容: |-
-        const loadLocalModule = async (label, url) => {
-          const maxAttempts = 20;
-          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-              await import(`${url}?t=${Date.now()}`);
-              console.info(`[${label}] 本地资源已加载`);
-              return;
-            } catch (error) {
-              console.warn(`[${label}] 本地资源加载失败 (${attempt}/${maxAttempts})`, error);
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          }
-          console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和固定状态栏脚本入口可用`);
-        };
-
-        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@47a5fe5016577cadd153c44e788793aa7edea038/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=phase163-4-0-final-baseline-6-28-p5-4-hotfix13');
 
     - 名称: spv3.9.5·数据库
       id: 93648737-21db-406c-8aab-3ef8f3af1238

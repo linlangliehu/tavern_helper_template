@@ -13,6 +13,10 @@
     const STORAGE_KEY_HIDDEN_TABLES = 'acu_hidden_tables';
     const STORAGE_KEY_TABLE_STYLES = 'acu_table_styles';
     const STORAGE_KEY_MFRS_CRUD_MIGRATION = 'acu_mfrs_visualizer_crud_migration';
+    const FIXED_DASHBOARD_HOST_ID = 'mfrs-fixed-status-host';
+    const FIXED_DASHBOARD_SLOT_ID = 'mfrs-fixed-dashboard-slot';
+    const FIXED_FRONTEND_SLOT_ID = 'mfrs-fixed-frontend-slot';
+    const FIXED_STATUS_SLOT_ID = 'mfrs-fixed-status-slot';
     
     const TAB_DASHBOARD = 'acu_tab_dashboard_home';
     const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
@@ -448,8 +452,8 @@
         clickOptionToAutoSend: false,
         collapseStyle: 'bar',
         collapsePosition: 'center',
-        frontendPosition: 'bottom',
-        dashboardPosition: 'embedded',
+        frontendPosition: 'fixed_status',
+        dashboardPosition: 'fixed_status',
         dbTheme: 'default',
         dbTransparentMap: {}
     };
@@ -524,6 +528,82 @@
             $: window.jQuery || w.jQuery,
             getDB: () => w.AutoCardUpdaterAPI || window.AutoCardUpdaterAPI
         };
+    };
+
+    const getHostDocument = () => {
+        try {
+            return (window.parent || window).document || document;
+        } catch (e) {
+            return document;
+        }
+    };
+
+    const isFixedDashboardPosition = () => getConfig().dashboardPosition === 'fixed_status';
+    const isFixedFrontendPosition = () => {
+        const config = getConfig();
+        return config.frontendPosition === 'fixed_status' || config.dashboardPosition === 'fixed_status';
+    };
+
+    const ensureFixedDashboardHost = () => {
+        const hostDocument = getHostDocument();
+        const sendForm = hostDocument.querySelector('#send_form') || hostDocument.querySelector('#form_sheld');
+        if (!sendForm || !sendForm.parentElement) return null;
+
+        let host = hostDocument.getElementById(FIXED_DASHBOARD_HOST_ID);
+        if (!host) {
+            host = hostDocument.createElement('div');
+            host.id = FIXED_DASHBOARD_HOST_ID;
+            sendForm.parentElement.insertBefore(host, sendForm);
+        }
+
+        host.style.width = '100%';
+        host.style.margin = '0 auto 6px';
+        host.style.border = '0';
+        host.style.borderRadius = '0';
+        host.style.background = 'transparent';
+        host.style.boxShadow = 'none';
+        host.style.overflow = 'visible';
+        host.style.maxHeight = 'none';
+        host.style.clear = 'both';
+        host.style.display = 'flex';
+        host.style.flexDirection = 'column';
+        host.style.gap = '6px';
+
+        const ensureSlot = (id, order) => {
+            let slot = host.querySelector(`#${id}`);
+            if (!slot) {
+                slot = hostDocument.createElement('div');
+                slot.id = id;
+            }
+            slot.style.width = '100%';
+            slot.style.minWidth = '0';
+            slot.style.order = order;
+            return slot;
+        };
+
+        const dashboardSlot = ensureSlot(FIXED_DASHBOARD_SLOT_ID, '10');
+        const frontendSlot = ensureSlot(FIXED_FRONTEND_SLOT_ID, '20');
+        const statusSlot = ensureSlot(FIXED_STATUS_SLOT_ID, '30');
+
+        Array.from(host.children).forEach(child => {
+            if (child === dashboardSlot || child === frontendSlot || child === statusSlot) return;
+            if (child.classList.contains('acu-embedded-dashboard-container')) dashboardSlot.appendChild(child);
+            else if (child.classList.contains('acu-wrapper')) frontendSlot.appendChild(child);
+            else if (child.id === 'mfrs-fixed-status-summary' || child.id === 'mfrs-fixed-status-detail') statusSlot.appendChild(child);
+        });
+
+        host.append(dashboardSlot, frontendSlot, statusSlot);
+        return host;
+    };
+
+    const getFixedDashboardSlot = () => {
+        const host = ensureFixedDashboardHost();
+        return host ? host.querySelector(`#${FIXED_DASHBOARD_SLOT_ID}`) : null;
+    };
+
+    const getFixedFrontendSlot = () => {
+        const host = ensureFixedDashboardHost();
+        return host ? host.querySelector(`#${FIXED_FRONTEND_SLOT_ID}`) : null;
     };
 
     const getMysteryFrontendApi = () => {
@@ -2014,6 +2094,7 @@
                                 <div class="acu-label-col"><span class="acu-label-main">前端位置</span></div>
                                 <div class="acu-input-col">
                                     <select id="cfg-frontend-pos" class="acu-nice-select">
+                                        <option value="fixed_status" ${config.frontendPosition === 'fixed_status' ? 'selected' : ''}>输入框上方</option>
                                         <option value="bottom" ${config.frontendPosition === 'bottom' ? 'selected' : ''}>上下文底部</option>
                                         <option value="message" ${config.frontendPosition === 'message' ? 'selected' : ''}>最新消息内</option>
                                     </select>
@@ -2094,6 +2175,7 @@
                                 <div class="acu-label-col"><span class="acu-label-main">仪表盘位置</span></div>
                                 <div class="acu-input-col">
                                     <select id="cfg-dash-pos" class="acu-nice-select">
+                                        <option value="fixed_status" ${config.dashboardPosition === 'fixed_status' ? 'selected' : ''}>输入框上方</option>
                                         <option value="embedded" ${config.dashboardPosition === 'embedded' ? 'selected' : ''}>最新消息内</option>
                                         <option value="panel" ${config.dashboardPosition === 'panel' ? 'selected' : ''}>导航悬浮窗</option>
                                     </select>
@@ -2352,6 +2434,10 @@
         }
 
         const getTargetContainer = () => {
+            if (isFixedDashboardPosition()) {
+                return getFixedDashboardSlot();
+            }
+
             const $allMes = $('#chat .mes');
             const $aiMes = $allMes.filter(function() {
                 const $this = $(this);
@@ -2366,9 +2452,20 @@
             return $targetBlock.length ? $targetBlock : $targetMes;
         };
 
-        const $target = getTargetContainer();
+        const rawTarget = getTargetContainer();
+        const $target = rawTarget && rawTarget.jquery ? rawTarget : (rawTarget ? $(rawTarget) : null);
         if ($target && $target.length) {
             const $existing = $('.acu-embedded-dashboard-container');
+            const isFixedDashboard = isFixedDashboardPosition();
+            const containerBaseStyle = isFixedDashboard
+                ? 'margin: 0; width: 100%; clear: both;'
+                : 'margin-top: 6px; width: 100%; clear: both;';
+            const expandedContentCss = isFixedDashboard
+                ? { height: 'auto', maxHeight: 'min(52vh, 520px)', opacity: '1', padding: '0', overflow: 'auto' }
+                : { height: (window.innerWidth <= 768 ? 'auto' : '500px'), maxHeight: '', opacity: '1', padding: '0', overflow: 'hidden' };
+            const expandedContentStyle = isFixedDashboard
+                ? 'height: auto; max-height: min(52vh, 520px); opacity: 1; padding: 0; overflow: auto;'
+                : (window.innerWidth <= 768 ? 'height: auto; opacity: 1; padding: 0; overflow: hidden;' : 'height: 500px; opacity: 1; padding: 0; overflow: hidden;');
             let shouldUpdate = false;
             // 检查是否存在且在正确的位置
             if ($existing.length && $existing.parent()[0] === $target[0]) {
@@ -2382,7 +2479,10 @@
                 const $container = $('.acu-embedded-dashboard-container');
                 $container.removeClass().addClass(`acu-embedded-dashboard-container ${themeClass}`);
                 // 保留基本样式并更新变量
-                $container.attr('style', 'margin-top: 6px; width: 100%; clear: both; ' + cssVars);
+                $container.attr('style', containerBaseStyle + ' ' + cssVars);
+                if (isFixedDashboard) {
+                    $target.prepend($container);
+                }
 
                 const $wrapper = $container.find('.acu-dash-content-wrapper');
                 $wrapper.html(htmlContent);
@@ -2395,7 +2495,7 @@
                 if (isDashEditing) {
                     // 编辑模式强制展开
                     if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
-                        $wrapper.css({ 'height': (window.innerWidth <= 768 ? 'auto' : '500px'), 'opacity': '1', 'padding': '0' });
+                        $wrapper.css(expandedContentCss);
                         $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
                     }
                     $editBtn.css('display', 'inline-flex');
@@ -2411,10 +2511,10 @@
                 }
             } else {
                 // 首次创建或位置变更
-                let isCollapsed = true; 
+                let isCollapsed = !isFixedDashboard;
                 if (isDashEditing) isCollapsed = false;
 
-                const $container = $('<div class="acu-embedded-dashboard-container" style="margin-top: 6px; width: 100%; clear: both;"></div>');
+                const $container = $(`<div class="acu-embedded-dashboard-container" style="${containerBaseStyle}"></div>`);
                 $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
 
                 const headerHtml = `
@@ -2442,7 +2542,7 @@
                     </div>
                 `;
 
-                const contentStyle = isCollapsed ? 'height: 0; opacity: 0; padding: 0; overflow: hidden;' : (window.innerWidth <= 768 ? 'height: auto; opacity: 1; padding: 0; overflow: hidden;' : 'height: 500px; opacity: 1; padding: 0; overflow: hidden;');
+                const contentStyle = isCollapsed ? 'height: 0; opacity: 0; padding: 0; overflow: hidden;' : expandedContentStyle;
                 const contentWrapperHtml = `
                     <div class="acu-dash-content-wrapper" style="
                         overflow: hidden;
@@ -2472,18 +2572,22 @@
                     const isCurrentlyCollapsed = (currentOpacity === '0' || $wrapper.css('height') === '0px');
 
                     if (isCurrentlyCollapsed) {
-                        $wrapper.css({ 'height': (window.innerWidth <= 768 ? 'auto' : '500px'), 'opacity': '1', 'padding': '0' });
+                        $wrapper.css(expandedContentCss);
                         $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
                         $container.find('#acu-btn-dash-edit-emb').css('display', 'inline-flex');
                     } else {
-                        $wrapper.css({ 'height': '0', 'opacity': '0', 'padding': '0' });
+                        $wrapper.css({ 'height': '0', 'max-height': '', 'opacity': '0', 'padding': '0', 'overflow': 'hidden' });
                         $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
                         $container.find('#acu-btn-dash-edit-emb').hide();
                     }
                 });
 
-                const $opts = $target.find('.acu-embedded-options-container');
-                if ($opts.length) { $opts.before($container); } else { $target.append($container); }
+                if (isFixedDashboard) {
+                    $target.prepend($container);
+                } else {
+                    const $opts = $target.find('.acu-embedded-options-container');
+                    if ($opts.length) { $opts.before($container); } else { $target.append($container); }
+                }
             }
         } else {
             $('.acu-embedded-dashboard-container').remove();
@@ -2813,7 +2917,7 @@
                 </div>`;
             insertHtmlToPage(html); 
 
-            if (showDash && config.dashboardPosition === 'embedded') {
+            if (showDash && (config.dashboardPosition === 'embedded' || config.dashboardPosition === 'fixed_status')) {
                  const dashHtml = renderDashboard(tables, true);
                  injectEmbeddedDashboard(dashHtml, `acu-theme-${config.theme}`, cssVars);
             } else {
@@ -3103,12 +3207,22 @@
         const { $ } = getCore();
         const $chat = $('#chat');
         const config = getConfig();
+        const useFixedHost = isFixedFrontendPosition();
         
         $('.acu-wrapper').remove();
         
         const $newContent = $(html);
         
-        if (config.frontendPosition === 'message') {
+        if (useFixedHost) {
+            const fixedFrontendSlot = getFixedFrontendSlot();
+            if (fixedFrontendSlot) {
+                $(fixedFrontendSlot).append($newContent);
+            } else if ($chat.length) {
+                $chat.append($newContent);
+            } else {
+                $('body').append($newContent);
+            }
+        } else if (config.frontendPosition === 'message') {
              const $lastMes = $chat.find('.mes').last();
              if ($lastMes.length) {
                  const $targetBlock = $lastMes.find('.mes_block').length ? $lastMes.find('.mes_block') : $lastMes;
@@ -3121,6 +3235,7 @@
         }
 
         if (observer) observer.disconnect();
+        if (useFixedHost) return;
         observer = new MutationObserver((mutations) => {
             const currentConfig = getConfig();
             const $chatNode = $('#chat');
@@ -4302,10 +4417,104 @@
     const STORAGE_KEY_GACHA_PITY = 'mfrs_gacha_pity';
     const STORAGE_KEY_GACHA_HISTORY = 'mfrs_gacha_history';
 
+    const getSillyTavernContext = () => {
+        const host = getHost();
+        for (const candidate of [host.SillyTavern, window.SillyTavern]) {
+            try {
+                const context = candidate?.getContext?.();
+                if (context) return context;
+            } catch (e) {
+                // Ignore unavailable cross-frame context.
+            }
+        }
+        return null;
+    };
+
+    const hashGachaStorageScope = (value) => {
+        const text = String(value ?? '');
+        let hash = 5381;
+        for (let i = 0; i < text.length; i++) {
+            hash = ((hash << 5) + hash) ^ text.charCodeAt(i);
+        }
+        return (hash >>> 0).toString(36);
+    };
+
+    const gachaUnsavedChatScopes = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+    let gachaUnsavedScopeSeq = 0;
+    let gachaNoChatRefScope = null;
+    const getUnsavedGachaChatScope = (context, characterId, groupId) => {
+        const chatRef = Array.isArray(context?.chat) ? context.chat : null;
+        const makeScope = () => {
+            gachaUnsavedScopeSeq += 1;
+            return `unsaved-${hashGachaStorageScope([
+                characterId,
+                groupId,
+                Date.now(),
+                gachaUnsavedScopeSeq,
+                Math.random(),
+            ].join('|'))}`;
+        };
+
+        // 空的新聊天可能还没有 chatId/chatFile，不能退回到角色级共享调查点。
+        if (chatRef && gachaUnsavedChatScopes) {
+            let scope = gachaUnsavedChatScopes.get(chatRef);
+            if (!scope) {
+                scope = makeScope();
+                gachaUnsavedChatScopes.set(chatRef, scope);
+            }
+            return scope;
+        }
+
+        if (!gachaNoChatRefScope) gachaNoChatRefScope = makeScope();
+        return gachaNoChatRefScope;
+    };
+
+    const getActiveGachaChatScope = () => {
+        const context = getSillyTavernContext();
+        if (!context || typeof context !== 'object') return 'global';
+
+        const firstMessage = Array.isArray(context.chat) ? context.chat[0] : null;
+        const characterId = context.characterId ?? context.this_chid ?? context.chid ?? 'unknown_character';
+        const groupId = context.groupId ?? context.group_id ?? '';
+        const chatMetadata = context.chatMetadata ?? context.chat_metadata ?? {};
+        let currentChatId = null;
+        try {
+            currentChatId = typeof context.getCurrentChatId === 'function' ? context.getCurrentChatId() : null;
+            if (currentChatId && typeof currentChatId.then === 'function') currentChatId = null;
+        } catch (e) {
+            currentChatId = null;
+        }
+        const candidates = [
+            currentChatId,
+            context.chatId,
+            context.chat_id,
+            context.chatFile,
+            context.chatfile,
+            context.currentChatId,
+            chatMetadata.chatId,
+            chatMetadata.chat_id,
+            firstMessage?.send_date,
+            firstMessage?.sendDate,
+            firstMessage?.extra?.send_date,
+            firstMessage?.extra?.gen_id,
+            context.chatName,
+            context.chat_name,
+            chatMetadata.file_name,
+            chatMetadata.filename,
+            chatMetadata.name,
+        ];
+        const chatIdentity = candidates.map(value => String(value ?? '').trim()).find(Boolean);
+        if (!chatIdentity) return getUnsavedGachaChatScope(context, characterId, groupId);
+
+        return hashGachaStorageScope([characterId, groupId, chatIdentity].join('|'));
+    };
+
+    const getGachaScopedStorageKey = (baseKey) => `${baseKey}::${getActiveGachaChatScope()}`;
+
     // 获取货币余额
     const getGachaCurrency = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY_GACHA_CURRENCY);
+            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_CURRENCY));
             return stored ? parseInt(stored, 10) : 0;
         } catch (e) {
             return 0;
@@ -4315,7 +4524,7 @@
     // 设置货币余额
     const setGachaCurrency = (amount) => {
         try {
-            localStorage.setItem(STORAGE_KEY_GACHA_CURRENCY, String(amount));
+            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_CURRENCY), String(amount));
         } catch (e) {
             console.error('Failed to save currency:', e);
         }
@@ -4376,7 +4585,7 @@
     // 获取奖励日志（用于冷却判断和统计）
     const getCurrencyLog = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY_CURRENCY_LOG);
+            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_CURRENCY_LOG));
             return stored ? JSON.parse(stored) : [];
         } catch (e) {
             return [];
@@ -4387,7 +4596,7 @@
     const saveCurrencyLog = (log) => {
         try {
             if (log.length > 50) log.splice(50);
-            localStorage.setItem(STORAGE_KEY_CURRENCY_LOG, JSON.stringify(log));
+            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_CURRENCY_LOG), JSON.stringify(log));
         } catch (e) {
             console.error('[Gacha Currency] 保存日志失败:', e);
         }
@@ -4528,7 +4737,7 @@
     // 获取保底计数
     const getGachaPity = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY_GACHA_PITY);
+            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_PITY));
             return stored ? JSON.parse(stored) : { total: 0, rare: 0, epic: 0 };
         } catch (e) {
             return { total: 0, rare: 0, epic: 0 };
@@ -4538,7 +4747,7 @@
     // 设置保底计数
     const setGachaPity = (pity) => {
         try {
-            localStorage.setItem(STORAGE_KEY_GACHA_PITY, JSON.stringify(pity));
+            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_PITY), JSON.stringify(pity));
         } catch (e) {
             console.error('Failed to save pity:', e);
         }
@@ -4752,12 +4961,12 @@
     // 碎片余额
     const getGachaFragments = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY_GACHA_FRAGMENTS);
+            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_FRAGMENTS));
             return stored ? parseInt(stored, 10) : 0;
         } catch (e) { return 0; }
     };
     const setGachaFragments = (amount) => {
-        try { localStorage.setItem(STORAGE_KEY_GACHA_FRAGMENTS, String(amount)); }
+        try { localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_FRAGMENTS), String(amount)); }
         catch (e) { console.error('Failed to save fragments:', e); }
     };
     const addGachaFragments = (amount) => {
@@ -4775,12 +4984,12 @@
     // 已拥有物品 id 集合（用于判定重复）
     const getOwnedItems = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY_GACHA_OWNED);
+            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_OWNED));
             return stored ? JSON.parse(stored) : [];
         } catch (e) { return []; }
     };
     const setOwnedItems = (ids) => {
-        try { localStorage.setItem(STORAGE_KEY_GACHA_OWNED, JSON.stringify(ids)); }
+        try { localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_OWNED), JSON.stringify(ids)); }
         catch (e) { console.error('Failed to save owned items:', e); }
     };
     const addOwnedItem = (itemId) => {
@@ -5002,6 +5211,11 @@
         return pool;
     };
 
+    const cloneGachaItem = (item) => ({
+        ...item,
+        rarity: item.rarity && typeof item.rarity === 'object' ? { ...item.rarity } : item.rarity,
+    });
+
     // 单次抽卡逻辑
     const performSingleGacha = (poolType, forcedRarity = null) => {
         const pool = buildGachaPool(poolType);
@@ -5009,7 +5223,7 @@
         if (forcedRarity) {
             // 保底机制：强制指定稀有度
             const filtered = pool.filter(p => p.item.rarity.level >= forcedRarity);
-            if (filtered.length === 0) return pool[0].item;
+            if (filtered.length === 0) return cloneGachaItem(pool[0].item);
 
             const totalWeight = filtered.reduce((sum, p) => sum + p.weight, 0);
             const random = Math.random() * totalWeight;
@@ -5017,9 +5231,9 @@
 
             for (const p of filtered) {
                 cumulative += p.weight;
-                if (random <= cumulative) return p.item;
+                if (random <= cumulative) return cloneGachaItem(p.item);
             }
-            return filtered[filtered.length - 1].item;
+            return cloneGachaItem(filtered[filtered.length - 1].item);
         }
 
         // 正常抽卡
@@ -5028,10 +5242,10 @@
 
         for (const p of pool) {
             cumulative += p.normalizedWeight;
-            if (random <= cumulative) return p.item;
+            if (random <= cumulative) return cloneGachaItem(p.item);
         }
 
-        return pool[pool.length - 1].item;
+        return cloneGachaItem(pool[pool.length - 1].item);
     };
 
     // 十连抽卡逻辑
@@ -5153,7 +5367,7 @@
             if (history.length > 100) {
                 history.splice(100);
             }
-            localStorage.setItem(STORAGE_KEY_GACHA_HISTORY, JSON.stringify(history));
+            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_HISTORY), JSON.stringify(history));
         } catch (e) {
             console.error('Failed to save gacha history:', e);
         }
@@ -5162,7 +5376,7 @@
     // 获取抽卡历史
     const getGachaHistory = () => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY_GACHA_HISTORY);
+            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_HISTORY));
             return stored ? JSON.parse(stored) : [];
         } catch (e) {
             return [];
@@ -5419,8 +5633,8 @@
                 if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
             }
 
-            // 同步到数据库
-            await syncGachaResultToDatabase(result.items);
+            // 同步到数据库：重复项已转为灵异残屑，不再写入表格
+            await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
 
             if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
         };
@@ -5463,8 +5677,8 @@
                 if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
             }
 
-            // 同步到数据库
-            await syncGachaResultToDatabase(result.items);
+            // 同步到数据库：重复项已转为灵异残屑，不再写入表格
+            await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
 
             // 统计稀有度
             const rarityCount = {};
@@ -6284,6 +6498,100 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
         return `C${String((Date.now() % 9000) + 1000).padStart(4, '0')}`;
     };
 
+    const normalizeGachaDedupText = (value) => String(value ?? '').trim().replace(/\s+/g, ' ');
+
+    const getCurrentGachaDatabaseData = async () => {
+        const frontend = getMysteryFrontendApi();
+        if (frontend && typeof frontend.exportCurrentData === 'function') {
+            try {
+                return await frontend.exportCurrentData();
+            } catch (e) {
+                console.warn('[Gacha 去重] 读取 MysteryDatabaseFrontend 数据失败，尝试可视化器快照。', e);
+            }
+        }
+
+        try {
+            const data = getTableData();
+            return data && typeof data.then === 'function' ? await data : data;
+        } catch (e) {
+            console.warn('[Gacha 去重] 读取当前数据库快照失败。', e);
+            return null;
+        }
+    };
+
+    const getGachaSheetSnapshot = (databaseData, sheetKey, sheetName) => {
+        if (!databaseData || typeof databaseData !== 'object') return null;
+        const sheets = databaseData.sheets && typeof databaseData.sheets === 'object'
+            ? databaseData.sheets
+            : databaseData;
+        const sheet = sheets[sheetKey] || Object.values(sheets).find(candidate =>
+            candidate && typeof candidate === 'object'
+            && (candidate.uid === sheetKey || candidate.key === sheetKey || candidate.name === sheetName)
+        );
+        if (!sheet || typeof sheet !== 'object') return null;
+        if (Array.isArray(sheet.content)) {
+            return {
+                headers: Array.isArray(sheet.content[0]) ? sheet.content[0] : [],
+                rows: sheet.content.slice(1).filter(row => Array.isArray(row)),
+            };
+        }
+        if (Array.isArray(sheet.headers) && Array.isArray(sheet.rows)) {
+            return { headers: sheet.headers, rows: sheet.rows.filter(row => Array.isArray(row)) };
+        }
+        return null;
+    };
+
+    const getGachaSnapshotCell = (snapshot, row, names) => {
+        const idx = findHeaderIndex(snapshot?.headers || [], names);
+        if (idx < 0) return '';
+        return normalizeGachaDedupText(row[idx]);
+    };
+
+    const getGachaDatabaseDedupKey = (item) => {
+        const name = normalizeGachaDedupText(item?.name);
+        if (!name) return '';
+        return `${item.type || 'unknown'}:${name}`;
+    };
+
+    const isGachaItemAlreadyInDatabase = (item, databaseData) => {
+        const name = normalizeGachaDedupText(item?.name);
+        if (!name) return false;
+
+        if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
+            const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_supernatural_items', '灵异物品');
+            return Boolean(snapshot?.rows.some(row =>
+                getGachaSnapshotCell(snapshot, row, ['物品名', '物品名称']) === name
+            ));
+        }
+
+        if (item.type === GACHA_ITEM_TYPE.CLUE) {
+            const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_clues', '线索');
+            const prefix = `${name}：`;
+            return Boolean(snapshot?.rows.some(row => {
+                const source = getGachaSnapshotCell(snapshot, row, ['来源']);
+                const content = getGachaSnapshotCell(snapshot, row, ['内容', '线索描述']);
+                return source === '灵异抽卡' && (content === name || content.startsWith(prefix));
+            }));
+        }
+
+        if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
+            const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_collected_rules', '收录规律');
+            return Boolean(snapshot?.rows.some(row => {
+                const source = getGachaSnapshotCell(snapshot, row, ['获取方式']);
+                const ruleType = getGachaSnapshotCell(snapshot, row, ['规律类型', '规律名称']);
+                return source === '灵异抽卡' && ruleType === name;
+            }));
+        }
+
+        return false;
+    };
+
+    const recordGachaSyncSkip = (results, item, reason) => {
+        results.skipped++;
+        results.skippedItems.push({ item: item?.name || '未知物品', reason });
+        console.info(`[Gacha 写库跳过] ${item?.name || '未知物品'}：${reason}`);
+    };
+
     /**
      * 预校验并写入一行数据。优先使用 MysteryDatabaseFrontend.applyTableChangePlan
      * 走完整校验链路（列名解析 → CHECK 约束 → 长度限制），校验失败则不写入。
@@ -6348,10 +6656,30 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
      * 列名映射基于 神秘复苏表格SQL_v1.json 的 content[0] 表头定义。
      */
     const syncGachaResultToDatabase = async (items) => {
-        const results = { success: 0, failed: 0, errors: [] };
+        const results = { success: 0, failed: 0, skipped: 0, errors: [], skippedItems: [] };
+        const databaseData = await getCurrentGachaDatabaseData();
+        const batchDedupKeys = new Set();
 
         for (const item of items) {
             try {
+                if (item.isDuplicate) {
+                    recordGachaSyncSkip(results, item, '已由抽卡层判定为重复并转化为灵异残屑');
+                    continue;
+                }
+
+                const dedupKey = getGachaDatabaseDedupKey(item);
+                if (dedupKey && batchDedupKeys.has(dedupKey)) {
+                    recordGachaSyncSkip(results, item, '本次抽卡批次内已写入同名结果');
+                    continue;
+                }
+
+                if (isGachaItemAlreadyInDatabase(item, databaseData)) {
+                    recordGachaSyncSkip(results, item, '数据库中已存在同名抽卡结果');
+                    continue;
+                }
+
+                if (dedupKey) batchDedupKeys.add(dedupKey);
+
                 let result;
                 if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
                     // 灵异物品表：物品名, 类型, 持有人, 所在地点, 数量或状态, 效果(≤160), 副作用(≤120), 使用限制(≤120)
@@ -6415,10 +6743,11 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
         }
 
         if (results.errors.length > 0) {
-            console.warn(`[Gacha 写库汇总] 成功 ${results.success}, 失败 ${results.failed}`, results.errors);
+            console.warn(`[Gacha 写库汇总] 成功 ${results.success}, 跳过 ${results.skipped}, 失败 ${results.failed}`, results.errors);
         } else {
-            console.info(`[Gacha 写库汇总] 全部成功: ${results.success} 条`);
+            console.info(`[Gacha 写库汇总] 成功 ${results.success} 条，跳过 ${results.skipped} 条`);
         }
+        if (results.skipped > 0) console.info('[Gacha 写库去重明细]', results.skippedItems);
 
         // 刷新界面
         renderInterface();
@@ -6440,6 +6769,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             ITEM_TYPE: GACHA_ITEM_TYPE,
             CURRENCY: GACHA_CURRENCY,
             FRAGMENT: GACHA_FRAGMENT,
+            getStorageScope: getActiveGachaChatScope,
             // --- 货币（调查点）---
             getCurrency: getGachaCurrency,
             setCurrency: setGachaCurrency,

@@ -82,8 +82,8 @@ type HostWindow = Window & {
   };
 };
 
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@9954c98557502f6d579b86f051195eab0fe4f1b2/vendor/shujuku-sp-fork/index.js?v=phase163-4-0-final-baseline-6-28-p5-4-hotfix13';
-const databaseScriptMarker = 'mfrs-4-0-final-baseline-6-28-p5-4-hotfix13';
+const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@52b2e62/vendor/shujuku-sp-fork/index.js?v=phase163-4-0-final-baseline-6-28-p5-4-hotfix13-rowid';
+const databaseScriptMarker = 'mfrs-4-0-final-baseline-6-28-p5-4-hotfix13-rowid';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
@@ -360,8 +360,8 @@ function keepAcuConfigEmbedded(hostWindow: HostWindow) {
       titleColor: 'red',
       customTitleColor: false,
       showDashboard: true,
-      dashboardPosition: 'embedded',
-      frontendPosition: 'bottom',
+      dashboardPosition: 'fixed_status',
+      frontendPosition: 'fixed_status',
     };
     hostWindow.localStorage.setItem(ACU_UI_CONFIG_KEY, JSON.stringify(next));
   } catch (error) {
