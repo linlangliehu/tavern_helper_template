@@ -24,6 +24,8 @@ _%>
 
 **注意：** 旧记录里“stat_data 全空”的判断已被后续真页验证修正；运行时 `getVariables({type:'message', message_id})` 可以拿到完整 `stat_data`，问题是提示词没有给 AI 完整字段路径，而不是 MVU 数据不存在。
 
+**任务7补充（发布后真页）：** v8.5.0 正式导入后，当前页面的 `ctx.worldInfo.entries` 返回 0，不适合作为本轮 worldbook 运行态来源；应从当前角色 `ctx.characters[ctx.characterId].data.character_book.entries` 验证卡体，结果为 383 entries / 33 disabled / max enabled 5851。`EjsTemplate.evalTemplate(变量列表.content)` 是无 AI 副作用地验证提示词侧 EJS 的最小闭环。
+
 ## 2026-06-30：酒馆助手「脚本」跑在 TH-script iframe 里——操作主窗口 DOM 必须用 `window.parent.document`
 
 **根因（CDP 实锤）：** JS-Slash-Runner 把每个酒馆助手「类型:脚本」的脚本运行在独立 iframe `TH-script--<名>--<id>` 中。这些 iframe：

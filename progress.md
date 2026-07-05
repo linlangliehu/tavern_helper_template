@@ -1,5 +1,18 @@
 # Progress Log
 
+## 2026-07-05 CST（✅ 任务7完成：发布后真页导入 v8.5.0 + EJS 渲染验证，无 AI/无写库）
+
+**目标：** 完成任务 7：重新导入 v8.5.0 发布版后，在酒馆真页验证 AI 可见的 `stat_data` 注入不再是旧宏，而是 EJS 渲染后的完整 JSON。
+
+**执行与结果：**
+- ✅ 用 SillyTavern UI 的“更多 → 替换 / 更新 → 从文件替换”正式上传 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。
+- ✅ 导入后运行态当前角色：`神秘复苏模拟器发布版`，version `8.5.0`，含 `787f113`，旧 `c547fac` 为 0，旧宏 `format_message_variable::stat_data` 为 0，EJS 模板存在。
+- ✅ 运行态卡体 gate：内嵌 `character_book.entries` = 383，disabled = 33，max enabled length = 5851，最大启用条目为“鬼奴与衍生物规则”。
+- ✅ 脚本链路：`TH-script--固定状态栏`、`TH-script--消息内面板` 均加载；脚本链接 `@787f113` 7 次、旧 `@c547fac` 0 次；固定状态栏按钮显示“神秘复苏14表”；消息内面板数量 3。
+- ✅ EJS 渲染验证：取当前卡“变量列表”世界书条目调用 `EjsTemplate.evalTemplate(content)`，渲染结果无旧宏、无残留 EJS 标签；`<stat_data>` JSON 长度 1583，可 parse，含 `风险值`、`驭鬼者状态`、`当前灵异事件`，且无冗余 `stat_data.stat_data` 嵌套。
+
+**备注：** 未发送聊天消息、未触发真实 AI、未点击“立即手动更新”、未调用 `triggerUpdate()`，因此没有新增 AI/数据库写入副作用。`ctx.worldInfo.entries` 在当前页面返回 0，不作为本轮 worldbook 运行态来源；使用当前角色内嵌 `character_book.entries` 验证。
+
 ## 2026-07-05 CST（✅ v8.5.0 完成：EJS 注入完整 stat_data，source → bot bundle → 发布同步全链路已 push）
 
 **背景：** 继续完成任务清单 5-6。前序已确认 `{{format_message_variable::stat_data}}` 宏在提示词侧不解析，正确方案是把 `变量列表.txt` 里的旧宏替换为 EJS，直接把运行时 `variables.stat_data` 序列化给 AI；同时保留两个小修复：固定状态栏优先打开 `openVisualizer`，消息内面板刷新时移除旧面板后重渲染。
