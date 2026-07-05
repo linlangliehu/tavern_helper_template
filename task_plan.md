@@ -41,7 +41,7 @@
 ---
 
 **当前版本：**
-- origin/main = v8.5.1 发布同步提交 `8a777c2`（tag `v0.0.355`），source `5266dc5`（抽卡调查点/保底/历史/残屑/已拥有/奖励日志按聊天 scope 隔离 + 数据库前端固定位置 + 双重去重），bot bundle `88fd7f1`（tag `v0.0.354`）；CDN_REF=`88fd7f1`/releaseVersion=8.5.1。
+- 最新 v8.5.1 发布同步提交为 `8a777c2`（tag `v0.0.355`），source `5266dc5`（抽卡调查点/保底/历史/残屑/已拥有/奖励日志按聊天 scope 隔离 + 数据库前端固定位置 + 双重去重），bot bundle `88fd7f1`（tag `v0.0.354`）；CDN_REF=`88fd7f1`/releaseVersion=8.5.1。其后可能只有 planning 记录提交，不改变发布资源。
 - origin/main = v8.5.0 发布同步提交 `31b144b`，source `36615f3`（EJS 注入完整 stat_data JSON + 固定状态栏入口 + 消息内面板重渲染），bot bundle `787f113`；CDN_REF=`787f113`/releaseVersion=8.5.0；tag `v0.0.351` 指向发布同步。
 - origin/main = v8.4.9 发布同步提交 `44c80e5`，source `3617a1c`（消息内面板注册接线 + 两列美化 + last_mes/mesid 修复），bot bundle `c547fac`；CDN_REF=`c547fac`/releaseVersion=8.4.9
 - origin/main = v8.4.2 发布同步提交 `5760112`，source fix `6133076`，bot bundle `7e2cc0b`（tag `v0.0.324`）

@@ -21,7 +21,7 @@
   - PNG `chara`/`ccv3` 均为 version `8.5.1`，含 `@88fd7f1`，无旧固定状态栏正则/iframe 残留。
   - CDN smoke：`@88fd7f1` 六个脚本均 HTTP 200；数据库前端 bundle 200/332675 bytes，含 `fixed_status`、`getStorageScope`、`mfrs_gacha_currency`、`unsaved-*` 和 scoped key 模板。
 
-**当前状态：** `origin/main` = `8a777c2 chore(release): publish mfrs v8.5.1`；source = `5266dc5`；bot bundle = `88fd7f1`。用户重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 即可获得 v8.5.1。新聊天调查点从 0 开始；同一聊天刷新/重进保留本聊天自己的调查点；不同聊天的调查点、保底、历史、残屑、已拥有物品和奖励日志互相隔离；自定义卡池仍全局共享。
+**当前状态：** 最新发布同步提交 = `8a777c2 chore(release): publish mfrs v8.5.1`；source = `5266dc5`；bot bundle = `88fd7f1`。其后的 planning 记录提交不改变发布资源。用户重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 即可获得 v8.5.1。新聊天调查点从 0 开始；同一聊天刷新/重进保留本聊天自己的调查点；不同聊天的调查点、保底、历史、残屑、已拥有物品和奖励日志互相隔离；自定义卡池仍全局共享。
 
 ## 2026-07-05 CST（✅ 任务7完成：发布后真页导入 v8.5.0 + EJS 渲染验证，无 AI/无写库）
 
