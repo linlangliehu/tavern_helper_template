@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-07-05 CST（✅ v8.5.0 完成：EJS 注入完整 stat_data，source → bot bundle → 发布同步全链路已 push）
+
+**背景：** 继续完成任务清单 5-6。前序已确认 `{{format_message_variable::stat_data}}` 宏在提示词侧不解析，正确方案是把 `变量列表.txt` 里的旧宏替换为 EJS，直接把运行时 `variables.stat_data` 序列化给 AI；同时保留两个小修复：固定状态栏优先打开 `openVisualizer`，消息内面板刷新时移除旧面板后重渲染。
+
+**完成内容：**
+- ✅ 发布前验证：`pnpm build` 通过（仅既有数据库前端 349 KiB performance warning）；`git diff --check` 通过；`verify-worldbook-pollution-gate --expect-mfrs-runtime` 对开发版/发布版 PNG 均通过（383 entries / 33 disabled / max enabled 5851）。
+- ✅ source commit `36615f3`：只提交 4 个目标文件（两份 `变量列表.txt`、`固定状态栏/index.ts`、`消息内面板/index.ts`），排除本地 build 生成的 `dist/**` 和 PNG 噪声。
+- ✅ bot bundle `787f113`（tag `v0.0.350`）：自动重建 `dist` 和两张卡 PNG；CDN smoke 通过：固定状态栏 200/8468 且含 `openVisualizer`/`神秘复苏14表`，消息内面板 200/15210 且含 `mfrs-msg-panel`，开发版 PNG 200/7752438。
+- ✅ 发布同步 commit `31b144b`（tag `v0.0.351`）：`scripts/publish-card.mjs` 回填 `CDN_REF=787f113`、`releaseVersion=8.5.0`，运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，发布版 YAML 替换 17 处链接并生成 PNG。
+- ✅ 发布验证：发布版 YAML version `8.5.0` 且链接指向 `@787f113`；PNG `chara`/`ccv3` 均为 version `8.5.0`，各含 `787f113` 8 次、旧 `c547fac` 0 次、旧宏 `format_message_variable::stat_data` 0 次、EJS `JSON.stringify(cleanStatData)` 1 次；发布版 worldbook gate 383/33/5851 PASS；CDN `@31b144b` 发布 YAML/PNG 均 HTTP 200，YAML 无旧 `8.4.9`/`c547fac`。
+
+**操作备注：** `gh` 未安装，Action 状态改用 `git fetch origin` 轮询；PowerShell 中未加引号的 `stash@{0}` 会被解析干扰，已用 `'stash@{0}'` 成功清理临时 build stash。
+
+**当前状态：** `origin/main` = `31b144b chore(release): publish mfrs v8.5.0`，前序 bot bundle = `787f113`，source = `36615f3`。任务清单 5-6 已完成。用户重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 可获得 v8.5.0。
+
 ## 2026-07-01 CST（✅ v8.4.9 完成：消息内面板注册接线 + 两列美化对齐参考卡 + last_mes/mesid 修复，真页验证通过）
 
 **背景：** 用户拿 `屏幕截图 2026-07-01 094922.png`（Science_Worship 参考卡效果：顶部信息栏 + 发光叙事卡 + `状态面板/关系网络` 双 tab + 两列分区 + emoji/着色）问"纯文字美化和 MVU 状态栏美化能否做成这效果"。结论：图里效果 = 前端命令式渲染（不是纯文字宏，v8.4.6 已证宏不解析），而这正是上轮未归档的新提交 `de1b350`「消息内面板」的方向。

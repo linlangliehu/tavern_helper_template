@@ -1,5 +1,29 @@
 # Findings
 
+## 2026-07-05：EJS stat_data 注入是当前提示词侧正确方案，旧 `format_message_variable::stat_data` 宏不可用
+
+**结论：** `变量列表.txt` 的 stat_data 提示词注入不能依赖 `{{format_message_variable::stat_data}}` 或 `registerMacroLike`。真页验证显示 `extensionPrompts.customDepthWI_0_0.value` 保留的是模板原文；实际发送前应由 ST-Prompt-Template 的 `EjsTemplate.evalTemplate()` 渲染。当前 v8.5.0 方案用 EJS 从 `variables.stat_data` 取值，剔除冗余嵌套 `stat_data.stat_data` 后输出 JSON。
+
+**当前代码模板（开发版+发布版一致）：**
+```ejs
+<%_
+var rawStatData = _.get(variables, 'stat_data', {});
+var cleanStatData = (rawStatData && typeof rawStatData === 'object')
+  ? _.omit(rawStatData, 'stat_data')
+  : {};
+_%>
+<stat_data>
+<%- JSON.stringify(cleanStatData, null, 2) %>
+</stat_data>
+```
+
+**验证口径：**
+- 不要只看 `extensionPrompts` 判断 EJS 是否生效；那里看到 EJS 标签原样属于正常。要用 `EjsTemplate.evalTemplate(content)` 或实际请求体验证渲染结果。
+- v8.5.0 真页片段验证：渲染后无旧宏、无残留 `<%- JSON.stringify... %>`，`<stat_data>` 内 JSON 可 parse，包含 `姓名`、`风险值`、`驭鬼者状态`、`当前灵异事件`，且无冗余 `stat_data.stat_data`。
+- v8.5.0 PNG 元数据验证：`chara`/`ccv3` 均 version `8.5.0`，旧 `c547fac` 0 次，旧宏 0 次，EJS `JSON.stringify(cleanStatData)` 1 次。
+
+**注意：** 旧记录里“stat_data 全空”的判断已被后续真页验证修正；运行时 `getVariables({type:'message', message_id})` 可以拿到完整 `stat_data`，问题是提示词没有给 AI 完整字段路径，而不是 MVU 数据不存在。
+
 ## 2026-06-30：酒馆助手「脚本」跑在 TH-script iframe 里——操作主窗口 DOM 必须用 `window.parent.document`
 
 **根因（CDP 实锤）：** JS-Slash-Runner 把每个酒馆助手「类型:脚本」的脚本运行在独立 iframe `TH-script--<名>--<id>` 中。这些 iframe：
@@ -20,7 +44,7 @@
 1. **它的两个"显示状态栏"正则都是 `disabled=true`：** `regex[2] 显示状态栏(前端)`（315KB iframe 模板）和 `regex[3] 显示状态栏(纯文字)`（1043 字，`{{get_message_variable::stat_data.xxx}}` 宏）**都禁用**。v8.4.6 照抄的纯文字版正是作者**放弃禁用**的废案。
 2. **真正上线的状态栏 = 第 5 个酒馆助手脚本「悬浮状态栏」（281KB webpack 应用，enabled=true）：** 命令式读 MVU 变量 + 独立悬浮窗 iframe 渲染。Science_Worship 的美化效果靠这个，不是正则+宏。
 3. **`get_message_variable`/`format_message_variable` 不是 MVU 框架的宏：** 抓 `MagicalAstrogy/MagVarUpdate/artifact/bundle.js`（161KB）grep 实测——这俩宏 0 命中；MagVarUpdate 只 `registerMacro('lastUserMessage',...)`。两卡都 `import` 同一个 MagVarUpdate bundle（神秘复苏 `脚本/MVU/index.ts:1`、`index.yaml:6578`），所以宏不是它给的。
-4. **这俩宏是酒馆助手的「提示词侧」宏：** 神秘复苏只在世界书注入场景用过（`世界书/变量/变量列表.txt:33`、`status_current_variable` 条目的 ejs 模板里 `{{format_message_variable::stat_data}}`），都是注入给 AI 的 prompt 内容，由提示词管线解析。**从未在显示层（markdownOnly 正则）用过**，v8.4.6 第一次放进显示层就翻车，与真页"原样返回"一致。
+4. **早期曾误判这俩宏是“提示词侧宏”：** 神秘复苏只在世界书注入场景用过（`世界书/变量/变量列表.txt:33`、`status_current_variable` 条目的 ejs 模板里 `{{format_message_variable::stat_data}}`），但后续 v8.5.0 验证确认它们在提示词侧也不解析；真正可用的是 EJS 模板渲染。
 
 **复刻 Science_Worship 效果的正确路径 = 命令式脚本渲染（不是正则+宏）。** 神秘复苏已具备两套命令式渲染设施可复用：①「固定状态栏」脚本（输入框上方 DOM）②「数据库前端」iframe。消息内折叠状态面板应走：正则把 `<StatusPlaceHolderImpl/>` 换成空容器（带 data 属性、无宏）+ 脚本 `getVariables({type:'message',message_id})` 读 stat_data 命令式填值。详见下方 v8.4.6 踩坑条目。
 
@@ -38,7 +62,7 @@
 
 **纯文字正文美化（关键词高亮、协议块隐藏、sp_start/sp_input 渲染）两卡原理相同**：都是显示层正则（markdownOnly）做静态文本→HTML 替换，不读变量，这部分可以借鉴。区别只在"状态数据可视化"这一层。
 
-**附带发现：** 真页测试时该轮对话 `stat_data` 全空（各 type 的 message/chat/global 变量 statFields=0），AI 输出了 `<UpdateVariable>` 但变量没生效——独立于状态栏的 MVU 数据流问题，需另查。
+**附带修正：** 旧记录里“stat_data 全空”是误判；后续真页验证确认 `getVariables({type:'message', message_id})` 可取得完整 `stat_data`。当 AI 看不到字段路径时，优先查提示词注入是否给出完整 JSON，而不是先怀疑 MVU 数据不存在。
 
 ## 2026-06-29：v8.4.1 开局自定义面板被隐藏根因
 
