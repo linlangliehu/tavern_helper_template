@@ -30,7 +30,15 @@ _%>
 <%_ } _%>
 </runtime_state_summary>
 
-{{format_message_variable::stat_data}}
+<%_
+var rawStatData = _.get(variables, 'stat_data', {});
+var cleanStatData = (rawStatData && typeof rawStatData === 'object')
+  ? _.omit(rawStatData, 'stat_data')
+  : {};
+_%>
+<stat_data>
+<%- JSON.stringify(cleanStatData, null, 2) %>
+</stat_data>
 
 Variable reading notes: use Chinese schema paths. Hidden files are for consistency only. 原著阶段/剧情锚点 are background canon indexes, not forced plot rails. 当前灵异事件 tracks local case facts; 规律推理记录 tracks visible deductions; 主线进度 tracks world-scale canon drift; 世界线记录 tracks facts that affect later causality.
 </status_current_variable>

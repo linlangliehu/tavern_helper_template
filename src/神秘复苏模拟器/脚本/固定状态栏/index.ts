@@ -6,6 +6,7 @@ const expandedStorageKey = 'mfrs_fixed_status_expanded';
 type StatusData = Record<string, any>;
 type HostWindow = Window & {
   MysteryDatabaseFrontend?: {
+    openVisualizer?: () => unknown | Promise<unknown>;
     openStatus?: () => unknown | Promise<unknown>;
     openDashboard?: () => unknown | Promise<unknown>;
     openPanel?: () => unknown | Promise<unknown>;
@@ -119,12 +120,12 @@ function buildStatusView(data: StatusData): StatusView {
 function openFullStatus() {
   const hostWindow = (window.parent ?? window) as HostWindow;
   const frontend = hostWindow.MysteryDatabaseFrontend ?? (window as HostWindow).MysteryDatabaseFrontend;
-  const open = frontend?.openStatus ?? frontend?.openDashboard ?? frontend?.openPanel;
+  const open = frontend?.openVisualizer ?? frontend?.openStatus ?? frontend?.openDashboard ?? frontend?.openPanel;
   if (open) {
     void open.call(frontend);
     return;
   }
-  console.warn('[MFRS Fixed Status] 数据库前端入口尚未加载，无法打开完整状态。');
+  console.warn('[MFRS Fixed Status] 数据库前端入口尚未加载，无法打开神秘复苏 14 表。');
 }
 
 function isExpanded(): boolean {
@@ -151,7 +152,7 @@ function summaryInnerHtml() {
     <span title="状态">❤️<strong data-field="state"></strong></span>
     <span title="当前驾驭厉鬼">👻<strong data-field="ghostCount"></strong></span>
     <button type="button" data-action="toggle" title="展开/收起详细状态">▾</button>
-    <button type="button" data-action="open-status" title="打开 v10.2 前端里的完整状态">完整状态</button>
+    <button type="button" data-action="open-status" title="打开神秘复苏 14 表数据库前端">神秘复苏14表</button>
   `;
 }
 

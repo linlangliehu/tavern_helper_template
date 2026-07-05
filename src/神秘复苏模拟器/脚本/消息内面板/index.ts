@@ -212,11 +212,14 @@ function injectPanelForMessage(mesElement: Element) {
   const mesid = mesElement.getAttribute('mesid');
   if (mesid === null || mesid === '' || isNaN(parseInt(mesid, 10))) return;
 
-  // 避免重复注入
-  if (mesElement.querySelector('.mfrs-msg-panel')) return;
-
   const mesText = mesElement.querySelector('.mes_text');
   if (!mesText) return;
+
+  // 如果已有面板，先移除（以便用最新 stat_data 重新渲染）
+  const existingPanel = mesText.querySelector('.mfrs-msg-panel');
+  if (existingPanel) {
+    existingPanel.remove();
+  }
 
   const data = readStatusForMessage(mesElement);
   const panelHtml = buildPanelHtml(data);
