@@ -1,6 +1,6 @@
 # Progress Log
 
-## 2026-07-06 CST（🔧 固定状态栏截图内容移除：开发版验证通过，待发布）
+## 2026-07-06 CST（✅ v8.5.6 发布同步：固定状态栏截图内容已移除）
 
 **目标：** 按用户截图反馈，移除输入框上方固定状态栏展开/收起 UI 中的内容：死亡风险、复苏程度、状态、位置、阶段、当前灵异事件、驾驭厉鬼，以及“神秘复苏14表”按钮。
 
@@ -16,7 +16,17 @@
 - ✅ `git diff --check` 通过。
 - ✅ 真页运行态注入本地固定状态栏 bundle 后：`#mfrs-fixed-status-summary=false`、`#mfrs-fixed-status-detail=false`、`#mfrs-fixed-status-slot=false`，dashboard/frontend 两槽仍各有内容。未发送消息、未触发真实 AI、未调用 `manualUpdate()` / `triggerUpdate()`。
 
-**下一步：** 精确 source commit/push，等待 bot bundle，再回填 `publish-card` 生成 v8.5.6 发布版 PNG；本地 `dist/**` 构建产物和截图文件不提交。
+**发布同步：**
+- ✅ source commit `def6576 feat(mfrs): remove fixed status panel` 已 push。
+- ✅ bot bundle `573807b [bot] bundle` 已生成，tag `v0.0.369`。
+- ✅ bot dist 验证：固定状态栏 bundle 1437 bytes，`神秘复苏14表` / `生存状态` / `summaryInnerHtml` / `detailInnerHtml` 均为 0；数据库前端仍含 `acu_tab_mfrs_global_search` / `acu_tab_mfrs_recall` / `acu_tab_mfrs_consistency`。
+- ✅ `scripts/publish-card.mjs` 已回填 `CDN_REF=573807b`、`releaseVersion=8.5.6`，`publish-card` 已生成发布版 YAML/PNG。
+- ✅ 发布版 worldbook gate 通过：383 entries / 33 disabled / max enabled 5851。
+- ✅ 发布版 YAML：version 8.5.6×1，`573807b`×7，旧 `843db59`×0，旧 8.5.5×0，localhost/127.0.0.1×0，`神秘复苏14表`×0，`生存状态`×0。
+- ✅ 发布版 PNG `chara`/`ccv3`：version 8.5.6，entries 383，disabled 33，`573807b`×7，旧 `843db59`/8.5.5/local 均为 0，`神秘复苏14表`/`生存状态` 均为 0。
+- ✅ CDN smoke `@573807b`：固定状态栏 200 / 1437 bytes 且无截图 UI marker；数据库前端 200 / 413308 bytes，仍含总览/召回/一致性 marker。
+
+**边界：** 未发送消息，未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`；截图文件 `屏幕截图 2026-07-06 235029.png` 不提交。
 
 ## 2026-07-06 CST（✅ v8.5.5 发布同步：P1/P2/P3 数据库前端增强进入发布版 PNG）
 
