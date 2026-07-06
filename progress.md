@@ -1,5 +1,25 @@
 # Progress Log
 
+## 2026-07-06 CST（✅ v8.5.4 发布同步：P1 召回面板进入发布版 PNG）
+
+**目标：** 在 P1 开发版完成后，等待 bot bundle，并把发布版卡回填到包含召回面板的 CDN 资源。
+
+**完成内容：**
+- ✅ P1 source commit `0acda89 feat(mfrs): add recall panel to database frontend` 已 push 到 `origin/main`。
+- ✅ bot bundle 已生成：`eef6274 [bot] bundle`，tag `v0.0.363`；确认 `dist/神秘复苏模拟器/脚本/数据库前端/index.js` 含 `acu_tab_mfrs_recall` / 召回代码。
+- ✅ 回填 `scripts/publish-card.mjs`：`CDN_REF=eef6274`，`releaseVersion=8.5.4`；顺手移除该脚本文件头既有 UTF-8 BOM，使 `node --check scripts/publish-card.mjs` 不再被 shebang 前 BOM 阻断。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`：发布版 YAML 替换 15 处链接，同步发布版目录头像源文件，并重新生成 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。
+
+**验证：**
+- ✅ `git diff --check` 通过。
+- ✅ `node --check scripts/publish-card.mjs` 与 `node --check src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 通过。
+- ✅ `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 通过（383 entries / 33 disabled / max enabled 5851）。
+- ✅ 发布版 YAML：version `8.5.4`，链接指向 `@eef6274`。
+- ✅ PNG `chara`/`ccv3`：version `8.5.4`，各含 `eef6274` 7 次，旧 `80b09a8` 0，旧 `8.5.3` 0。
+- ✅ CDN smoke：`@eef6274` 数据库前端 `200/382475` 且含召回 marker；固定状态栏 `200/9552`。
+
+**副作用边界：** 未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。本地构建 dist 残留已在快进 bot bundle 前暂存到 `stash@{0}`，发布同步提交不应包含本地 `dist/**` 噪声或 `.claude/worktrees/**`。
+
 ## 2026-07-06 CST（✅ P1 完成：剧情/记忆召回前端化开发版实现 + 非 AI 真页 smoke）
 
 **目标：** 继续完成 P1：把已有剧情/记忆召回能力做成 `神秘复苏数据库前端` 可见、可搜索、可手动操作、可健康检查的前端 tab。
