@@ -1,5 +1,26 @@
 # Progress Log
 
+## 2026-07-06 CST（✅ v8.5.5 发布同步：P1/P2/P3 数据库前端增强进入发布版 PNG）
+
+**目标：** 完成用户要求的任务 1-5：真页非 AI smoke → source commit/push → 等 bot bundle → 发布同步 → 发布验证。
+
+**完成内容：**
+- ✅ source commit `df48367 feat(mfrs): enhance database frontend panels` 已 push 到 `origin/main`。
+- ✅ GitHub bot bundle `843db59 [bot] bundle` 已生成，tag `v0.0.367`。
+- ✅ bot dist blob 验证通过：`dist/神秘复苏模拟器/脚本/数据库前端/index.js` 含 `acu_tab_mfrs_global_search`、`acu_tab_mfrs_recall`、`acu_tab_mfrs_consistency`、`exportChatData`、`importChatData`、`resetChatData`、`validateCatalog`、`getEconomySummary`、`MFRS_DATABASE_FRONTEND_CONFIG`。
+- ✅ `scripts/publish-card.mjs` 已回填 `CDN_REF=843db59`、`releaseVersion=8.5.5`。
+- ✅ 已运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，生成发布版 YAML/PNG；同步日志显示替换 15 处链接，保留版本 8.5.5。
+
+**验证：**
+- ✅ `node --check scripts/publish-card.mjs` 通过。
+- ✅ `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png"` 通过：383 entries / 33 disabled / max enabled 5851。
+- ✅ `git diff --check` 通过。
+- ✅ 发布版 YAML：version 8.5.5×1，`843db59`×7，`eef6274`×0，8.5.4×0，localhost/127.0.0.1×0。
+- ✅ 发布版 PNG `chara` 与 `ccv3`：version 8.5.5，entries 383，disabled 33，`843db59`×7，`eef6274`×0，8.5.4×0，localhost/127.0.0.1×0。
+- ✅ CDN smoke `@843db59`：数据库前端 200 / 413325 bytes，含总览/一致性/MFRS API marker；固定状态栏 200 / 9552 bytes。
+
+**边界：** 未触发真实 AI，未调用 `manualUpdate()` / `triggerUpdate()`。本地 `dist/**` 构建噪声在 fast-forward 到 bot commit 前已保存到 stash `temp local dist before bot ff`，未纳入提交；`.claude/worktrees/agent-aedb9d9f392ecb036` 仍是无关 dirty。
+
 ## 2026-07-06 CST（✅ 真页非 AI smoke 完成：P1/P2/P3 数据库前端开发版）
 
 **目标：** 完成当前剩余收口第 1 项，在不触发真实 AI、不写库、不发送消息的前提下验证 P1/P2/P3 数据库前端开发版。
