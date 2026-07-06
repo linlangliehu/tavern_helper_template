@@ -1,5 +1,82 @@
 # Progress Log
 
+## 2026-07-06 CST（✅ 真页非 AI smoke 完成：P1/P2/P3 数据库前端开发版）
+
+**目标：** 完成当前剩余收口第 1 项，在不触发真实 AI、不写库、不发送消息的前提下验证 P1/P2/P3 数据库前端开发版。
+
+**执行方式：**
+- ✅ 当前 SillyTavern 页为 `http://127.0.0.1:8000/`，角色 `神秘复苏模拟器发布版`，版本 `8.5.4`。
+- ✅ 由于当前发布卡仍指向 v8.5.4 CDN，本轮用 Chrome DevTools MCP 将本地 `http://localhost:5500/dist/神秘复苏模拟器/脚本/数据库前端/index.js` 注入 `TH-script--神秘复苏数据库前端--...3002` iframe，只替换当前页面运行态，不改卡体。
+- ✅ 本地静态服务 `localhost:5500` 可读取最新 bundle，长度 413315 字节；bundle 含 `总览`、`召回`、`一致性`、`exportChatData` 和配置拆分 marker。
+
+**验证结果：**
+- ✅ 基础加载：`.acu-wrapper` 重新挂载，导航含 `总览 / 召回 / 一致性` 和 14 张表。
+- ✅ 总览：表状态总览显示 14/14、总行数 21、空表 1、异常表 1；搜索 `鬼` 得到结果；复制/填入按钮存在，填入输入框成功；`原表` 按钮可跳转到对应真实表 tab。
+- ✅ 召回：健康检查显示 `AutoCardUpdaterAPI=可用`、`14表模板=14/14`、`事件纪要=1 行`、`召回索引表=10 张`、剧情召回/向量召回状态；搜索 `鬼` 后召回结果可见；固定、填入全部固定召回、清空固定召回均通过。
+- ✅ 一致性：6 域摘要可见（玩家状态、当前事件、驾驭厉鬼、灵异物品、线索、事件纪要）；JSON 快照导出已触发（application/json，约 10.7 KiB）；刷新前端、重载快照、重建索引、重载模板入口可用。
+- ✅ 抽卡增强：抽卡面板显示当前聊天 scope `1tno18h`、经济摘要、卡池校验 `26 件 / 0 错误 / 0 警告`；`window.MFRS.exportChatData/importChatData/validateCatalog/getEconomySummary` 可用；同快照导入不删除全局 `mfrs_custom_gacha_items`。
+- ✅ 固定状态栏：`mfrs-fixed-status-host` 三槽存在，order 为 dashboard 10 / frontend 20 / status 30；`pagehide` 后 dashboard/frontend 保留。
+
+**边界：** 未发送消息，未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`；输入框已恢复。重置当前聊天抽卡数据属于破坏性操作，本轮只确认入口存在，未执行。
+
+**下一步：** 精确提交 source/planning，排除 `dist/**` 和 `.claude/worktrees/**` 噪声；push 后等待 bot bundle。
+
+## 2026-07-06 CST（🧭 PROJECT_FLOW 校正：只保留既有本地服务路径）
+
+**目标：** 按用户要求，把可能多余的浏览器工具和额外自建本地服务步骤从默认项目流程中去掉，并补全更准确的运行流程。
+
+**完成内容：**
+- ✅ 更新 `PROJECT_FLOW.md`：明确真页默认入口是 Chrome DevTools MCP；MCP 不可用且只需 evaluate 时用 `scripts/cdp-evaluate.mjs`；其它浏览器自动化工具不再作为默认 fallback。
+- ✅ 更新 `PROJECT_FLOW.md`：本地真页验证使用 VSCode `Fn+F5` / `pnpm watch` / Live Server 或既有本地静态服务加载 `dist/**`；删除额外自建最小 HTTP 服务步骤。
+- ✅ 更新 `PROJECT_FLOW.md`：正式发布链路明确为 source 精确提交推送 → 等 `[bot] bundle` commit/tag → 验证 bot dist marker → 回填 `publish-card` → 发布版 YAML/PNG 验证与提交。
+- ✅ 更新 `mfrs-database-frontend-smoke.md`：把旧 CDN 场景下的本地 bundle 验证改为普通项目 dev path，不再写入自建服务 fallback 或相关清理项。
+
+**边界：** 本条只整理流程文档；未继续真页 smoke、未改源码、未提交、未 push、未发布、未触发真实 AI。
+
+## 2026-07-06 CST（✅ P3 完成：工程拆分 + 静态验证 + 真页 smoke 清单）
+
+**目标：** 按用户要求先完成 P3 工程维护，把真页非 AI smoke、source 提交、bot bundle 和发布同步留到最后阶段。
+
+**完成内容：**
+- ✅ 从 `v10_2_visualizer.js` 拆出静态配置模块 `src/神秘复苏模拟器/脚本/数据库前端/frontend-config.js`，包含仪表盘槽位、旧仪表盘关键词、召回 10 表规则和一致性 6 域规则。
+- ✅ 调整 `src/神秘复苏模拟器/脚本/数据库前端/index.ts`，先加载 `frontend-config.js` 再加载 `v10_2_visualizer.js`，保证运行时配置先挂载。
+- ✅ `v10_2_visualizer.js` 改为从 `MFRS_DATABASE_FRONTEND_CONFIG` 读取 `MFRS_DASHBOARD_SLOTS`、`MFRS_RECALL_TABLE_RULES`、`MFRS_CONSISTENCY_RULES`，主文件不再内联这些静态规则。
+- ✅ 新增静态验证脚本 `scripts/verify-mfrs-database-frontend-p3.mjs`，覆盖配置拆分、虚拟 tab 守卫、召回/总览/一致性锚点、抽卡 scoped key、全局自定义卡池、固定三槽布局和 smoke 清单覆盖。
+- ✅ 新增 `package.json` 脚本 `verify:mfrs-frontend`。
+- ✅ 新增真页非 AI smoke 清单 `mfrs-database-frontend-smoke.md`，覆盖总览、召回、一致性、抽卡、固定状态栏、清理和最后发布阶段边界。
+
+**验证：**
+- ✅ `node --check "src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js"` 通过。
+- ✅ `node --check "src/神秘复苏模拟器/脚本/数据库前端/frontend-config.js"` 通过。
+- ✅ `node --check "scripts/verify-mfrs-database-frontend-p3.mjs"` 通过。
+- ✅ `pnpm verify:mfrs-frontend` 通过。
+- ✅ `git diff --check` 通过。
+- ✅ `pnpm build` 通过；数据库前端 bundle 为 404 KiB，仅 webpack performance warning。
+
+**边界：** 本轮未做真页非 AI smoke、未提交、未 push、未等待 bot bundle、未运行 `publish-card`。这些按用户要求留到最后阶段。
+
+## 2026-07-06 CST（✅ P1/P2 开发版完成：总览/一致性/抽卡增强）
+
+**目标：** 继续完成当前清单里的 P1 数据库前端体验增强、P2 MVU/数据库一致性和 P2 抽卡系统增强，并把恢复状态写回 planning。
+
+**完成内容：**
+- ✅ 修改开发版源码 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`，新增“总览”虚拟 tab（`TAB_GLOBAL`）：14 表全局搜索、表状态总览、行详情预览、复制/填入/打开原表操作。
+- ✅ 新增“一致性”虚拟 tab（`TAB_CONSISTENCY`）：对比 `stat_data` 与数据库关键表，提示状态栏有但数据库无、数据库有但状态栏缺失的差异；支持当前状态快照导出和低风险前端修复操作。
+- ✅ 统一表行操作：普通表行新增“复制 / 填入”，行动建议、灵异物品、线索、收录规律保留既有“选择 / 使用”语义并补齐复制/填入能力。
+- ✅ 增强抽卡面板：显示当前聊天 scope；支持当前聊天抽卡数据导出 / 导入 / 重置；新增卡池校验（缺字段、概率异常、重复名称、目标表不可用）；新增经济摘要（收入日志、估算消耗、拥有数量、历史数量、稀有度统计）。
+- ✅ 扩展 `window.MFRS` API：`exportChatData`、`importChatData`、`resetChatData`、`validateCatalog`、`getEconomySummary`。
+
+**验证：**
+- ✅ `node --check "src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js"` 通过。
+- ✅ `git diff --check` 通过。
+- ✅ `pnpm build` 通过；仅数据库前端 bundle 体积 warning（403 KiB）为本轮功能增长后的 webpack performance warning。
+
+**当前工作树与下一步：**
+- 当前目标 source 变更：`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`。
+- 本地构建生成物：`dist/神秘复苏模拟器/脚本/数据库前端/index.js`、`dist/神秘复苏模拟器/界面/状态栏/index.html`；按项目规则默认不纳入 source 提交，交给 bot bundle Action 重建。
+- 既有无关 dirty：`.claude/worktrees/agent-aedb9d9f392ecb036`，不要提交或 revert。
+- 剩余收口：真页非 AI smoke（总览/一致性/抽卡增强）、source commit/push、等待 bot bundle、如需发布再回填 `publish-card` 并同步发布版 PNG。
+
 ## 2026-07-06 CST（🧭 新对话恢复快照：v8.5.4 已发布，下一步进入 P1 体验增强）
 
 **当前有效状态：**
@@ -59,7 +136,7 @@
 - ✅ 真页非 AI smoke：当前页面为 SillyTavern `http://127.0.0.1:8000/`，临时用本地 CORS 静态服务加载当前构建的 `dist/神秘复苏模拟器/脚本/数据库前端/index.js` 到 `TH-script--神秘复苏数据库前端--...3002` iframe；未改卡、未写库。
 - ✅ smoke 结果：导航出现“召回”；健康检查显示 `AutoCardUpdaterAPI=可用`、`14表模板=14/14`、`事件纪要=1行`、`召回索引表=10张`；打开面板初始 10 条，搜索“鬼”后 8 条；固定/清空固定通过；单条填入输入框通过；固定集合填入输入框通过。
 
-**副作用边界：** 未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`，未发送聊天消息，未触发真实 AI；测试后已关闭面板、恢复 `send_textarea`、清理 `acu_mfrs_recall_query_v1` 与 `acu_mfrs_recall_pins_v1`，并停止/删除临时 CORS server。`dist/**` 为本地构建残留，不纳入本轮 source 提交。
+**副作用边界：** 未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`，未发送聊天消息，未触发真实 AI；测试后已关闭面板、恢复 `send_textarea`、清理 `acu_mfrs_recall_query_v1` 与 `acu_mfrs_recall_pins_v1`，并清理本地 bundle 验证痕迹。`dist/**` 为本地构建残留，不纳入本轮 source 提交。
 
 ## 2026-07-06 CST（✅ P0 完成：v8.5.3 固定状态栏注册热修复 + 真页收口验证）
 

@@ -19,7 +19,7 @@
 3. 读取 `progress.md` 顶部最近 2-3 条，确认上次实际执行到哪里。
 4. 需要背景时读取 `findings.md` 顶部相关经验；旧长流水按版本号回查，不凭记忆补细节。
 5. 如果任务涉及旧版体验退化、发布后可玩性、正文面板、MVU、状态栏或数据库展示，读取 `4.0功能基线回归清单.md`。
-6. 如果要操控酒馆真页，确认当前 Codex 会话工具列表已经暴露 Chrome DevTools MCP 的 page/browser 操作工具；若未暴露，重启/恢复 Codex 会话加载 MCP 后再继续。无 MCP 时可用 `scripts/cdp-evaluate.mjs`（裸 CDP via Node 内置 WebSocket 连 9222 page target 发 `Runtime.evaluate`，等价 evaluate_script）替代，但 navigate/click/snapshot 需扩展裸 CDP。
+6. 如果要操控酒馆真页，确认当前 Codex 会话工具列表已经暴露 Chrome DevTools MCP 的 page/browser 操作工具；若未暴露，优先重启/恢复 Codex 会话加载 MCP。仅需读取运行态数据时，可用 `scripts/cdp-evaluate.mjs`（裸 CDP via Node 内置 WebSocket 连 9222 page target 发 `Runtime.evaluate`）做最小替代；不要默认引入其它浏览器自动化工具。
 7. 运行 `git status --short --branch`，先区分当前任务文件和既有无关 dirty。
 8. 如果 `session-catchup.py` 报旧 v6.21 中段残片，按 `task_plan.md` 当前状态处理：默认已被 v6.25/v6.27/v6.28 P5 线覆盖，除非用户要求回查历史。
 9. 新对话只需默认读取 `progress.md` 和 `findings.md` 顶部最近条目；旧长流水按版本号回查，避免重复扫描历史。
@@ -58,7 +58,7 @@
 - 启动调试配置：`编译代码并调试酒馆网页 (Chrome)`。
 - `.vscode/launch.json` 的 `preLaunchTask: 开始任务` 会先运行 `pnpm watch`，再运行 `.vscode/start-chrome-debug.cmd`。
 - Chrome 使用 `--remote-debugging-port=9222` 打开 `http://127.0.0.1:8000/`。
-- 默认浏览器调试入口是 Chrome DevTools MCP；`npx agent-browser --cdp 9222` 只是当前 Codex CLI 可用的替代 CDP 工具。
+- 默认浏览器调试入口是 Chrome DevTools MCP。其它浏览器自动化工具不属于项目默认流程，除非用户明确要求或 MCP/CDP 路径确实不可用。
 
 ## Chrome DevTools MCP
 
@@ -66,7 +66,7 @@
 - 本机 Codex 全局 MCP 可用 `codex mcp list` / `codex mcp get chrome-devtools` / `codex doctor` 检查；`doctor` 为 ok 只代表配置正确，不代表当前已运行会话已经加载工具。
 - 当前已知正确全局口径：`chrome-devtools-mcp@latest --browserUrl http://127.0.0.1:9222`，`cwd` 指向 `D:\project\tavern_helper_template`。
 - Codex 运行中的旧会话不会动态暴露新 MCP tool schema；如果工具列表没有 Chrome DevTools MCP 的 browser/page 操作入口，需要重启或恢复会话。
-- 真页阶段验证默认使用 Chrome DevTools MCP 查看页面、Console、Network、DOM 和交互；只有用户明确允许时，才把 `npx agent-browser --cdp 9222` 作为 fallback，并在 `progress.md` 标明是替代路径。
+- 真页阶段验证默认使用 Chrome DevTools MCP 查看页面、Console、Network、DOM 和交互。MCP 不可用且只需 evaluate 时，用 `scripts/cdp-evaluate.mjs`；需要导航、点击、截图但 MCP 不可用时，先向用户说明替代方案，不自行切换到额外浏览器工具。
 
 ## 协作顺序
 
@@ -82,8 +82,9 @@
 2. 在 VSCode 中按 `Fn+F5` 启动调试配置。
 3. `pnpm watch` 持续监听并编译源码。
 4. Chrome 调试窗口打开酒馆页面 `http://127.0.0.1:8000/`。
-5. 优先使用 Chrome DevTools MCP 检查页面、Console、Network 和交互；`npx agent-browser --cdp 9222` 只作为明确标注的 fallback。
-6. `localhost:5500` / Live Server 只用于本地静态资源或临时 import 验证，不等同于发布卡实际资源链路。
+5. 优先使用 Chrome DevTools MCP 检查页面、Console、Network、DOM 和交互。
+6. 若酒馆卡当前仍指向旧 CDN，而本轮改动需要验证最新本地 bundle，使用 VSCode Live Server / 既有本地静态服务（通常是 `http://localhost:5500/`）加载 `dist/**` 产物，配合酒馆助手实时监听或显式本地 import 验证。
+7. 本地 `localhost:5500` / Live Server / 本地 import 只用于开发真页验证，不等同于发布卡实际 CDN 资源链路。
 
 ## 正式构建与发布链路
 
@@ -96,9 +97,9 @@
    - `node --check ...`
    - `node scripts\verify-sql-debug-regressions.mjs`
    - 按变更范围补跑相关验证脚本，例如 `node scripts\verify-table-change-adapter.mjs`
-4. 跑 `pnpm build`，生成 production `dist/**` 与角色卡 PNG。
-5. 需要发布 CDN 资源时，先提交并推送资源提交，等待 GitHub/jsdelivr 能访问新版 `dist` / vendor。
-6. 回填 loader 的资源 hash、cache 与 marker，再 `pnpm build`，提交并推送 loader 回填提交。
+4. 按风险跑 `pnpm build` 做本地生产构建验证；本地生成的 `dist/**` 默认不进入 source commit，交给 GitHub bundle Action 在 CI 环境重建。
+5. 精确提交并推送 source 变更，只提交源码、脚本、测试、必要 planning；不要用 `git add .`，不要混入本地 `dist/**` 或无关 dirty。
+6. 等待 GitHub bundle Action 生成 `[bot] bundle` commit 和 tag；用 `git show <bot-bundle-commit>:dist/<path>` 或 CDN smoke 验证 dist 包含目标 marker。
 7. 更新 `scripts/publish-card.mjs` 的 `CDN_REF`、`CDN_CACHE_VERSION`、必要时 `releaseVersion`。脚本会把 `localhost` / `127.0.0.1` 和已有项目 jsdelivr 旧 hash/cache 归一化到当前 CDN；仍要人工确认这三个配置值本身正确。
 8. 执行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，将开发版镜像到发布版。
 9. 验证发布版 YAML 与 PNG `chara` / `ccv3` 元数据包含新版本、hash、cache，且旧 hash/cache 或本地链接无残留；即使 `publish-card` 已自动归一化旧 jsdelivr 链接，也必须保留这一步人工/脚本复核。

@@ -1,4 +1,5 @@
 import templateData from '../../数据库/神秘复苏表格SQL_v1.json';
+import './frontend-config.js';
 import './v10_2_visualizer.js';
 import {
   applyTableChangePlan,

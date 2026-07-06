@@ -19,122 +19,26 @@
     const FIXED_STATUS_SLOT_ID = 'mfrs-fixed-status-slot';
     
     const TAB_DASHBOARD = 'acu_tab_dashboard_home';
+    const TAB_GLOBAL = 'acu_tab_mfrs_global_search';
     const TAB_RECALL = 'acu_tab_mfrs_recall';
+    const TAB_CONSISTENCY = 'acu_tab_mfrs_consistency';
     const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
+    const STORAGE_KEY_GLOBAL_QUERY = 'acu_mfrs_global_query_v1';
     const STORAGE_KEY_RECALL_QUERY = 'acu_mfrs_recall_query_v1';
     const STORAGE_KEY_RECALL_PINS = 'acu_mfrs_recall_pins_v1';
-    const MFRS_DASHBOARD_SLOTS = [
-        { id: 'slot_2_1', kw: '玩家状态', title: '玩家状态', rule: 'kv' },
-        { id: 'slot_3_1', kw: '全局状态', title: '全局状态', rule: 'kv' },
-        { id: 'slot_4_1', kw: '人物', title: '人物', rule: 'capsule', col: 1 },
-        { id: 'slot_5_1', kw: '灵异物品', title: '灵异物品', rule: 'capsule', col: 1 },
-        { id: 'slot_5_2', kw: '厉鬼档案', title: '厉鬼档案', rule: 'capsule', col: 1 },
-        { id: 'slot_6_1', kw: '灵异事件', title: '灵异事件', rule: 'capsule', col: 1, capCols: 2 },
-        { id: 'slot_6_2', kw: '地点', title: '地点', rule: 'capsule', col: 1, capCols: 2 }
-    ];
-    const MFRS_LEGACY_DASHBOARD_KEYWORDS = ['主角信息', '全局数据', '全局数据表', '重要人物', '重要人物表', '背包', '背包物品', '背包物品表', '技能', '主角任务栏', '任务'];
-    const MFRS_RECALL_TABLE_RULES = [
-        {
-            key: 'sheet_chronicle',
-            names: ['事件纪要', '纪要'],
-            kind: '记忆',
-            icon: 'fa-clock-rotate-left',
-            titleHeaders: ['纪要编号', '概览', '关联事件'],
-            summaryHeaders: ['纪要', '概览'],
-            tagHeaders: ['时间跨度', '关联事件'],
-            injected: true,
-        },
-        {
-            key: 'sheet_clues',
-            names: ['线索'],
-            kind: '剧情',
-            icon: 'fa-magnifying-glass',
-            titleHeaders: ['线索编号', '内容', '关联事件'],
-            summaryHeaders: ['内容', '推断', '验证状态'],
-            tagHeaders: ['关联事件', '来源', '可信度', '可见性'],
-            injected: true,
-        },
-        {
-            key: 'sheet_characters',
-            names: ['人物'],
-            kind: '剧情',
-            icon: 'fa-address-book',
-            titleHeaders: ['姓名', '身份'],
-            summaryHeaders: ['已知情报', '关系', '灵异能力'],
-            tagHeaders: ['阵营', '所在地点', '在场状态', '生死状态'],
-            injected: true,
-        },
-        {
-            key: 'sheet_locations',
-            names: ['地点'],
-            kind: '剧情',
-            icon: 'fa-map-location-dot',
-            titleHeaders: ['地点名', '城市'],
-            summaryHeaders: ['关键描述', '可交互内容', '相关事件'],
-            tagHeaders: ['城市', '地点类型', '灵异状态', '封锁状态'],
-            injected: true,
-        },
-        {
-            key: 'sheet_supernatural_events',
-            names: ['灵异事件'],
-            kind: '剧情',
-            icon: 'fa-triangle-exclamation',
-            titleHeaders: ['事件代号', '可见摘要'],
-            summaryHeaders: ['可见摘要', '已知杀人规律', '猜测杀人规律'],
-            tagHeaders: ['危害等级', '发生地点', '处理状态', '扩散趋势'],
-            injected: true,
-        },
-        {
-            key: 'sheet_ghost_archives',
-            names: ['厉鬼档案'],
-            kind: '剧情',
-            icon: 'fa-ghost',
-            titleHeaders: ['档案编号', '厉鬼称呼'],
-            summaryHeaders: ['表现', '已知规律', '危险备注'],
-            tagHeaders: ['关联事件', '关押状态', '拼图关系'],
-            injected: true,
-        },
-        {
-            key: 'sheet_supernatural_items',
-            names: ['灵异物品'],
-            kind: '资源',
-            icon: 'fa-briefcase',
-            titleHeaders: ['物品名', '类型'],
-            summaryHeaders: ['效果', '副作用', '使用限制'],
-            tagHeaders: ['类型', '持有人', '所在地点', '数量或状态'],
-            injected: true,
-        },
-        {
-            key: 'sheet_collected_archives',
-            names: ['收录档案'],
-            kind: '档案',
-            icon: 'fa-folder-open',
-            titleHeaders: ['档案厉鬼名称', '收录状态'],
-            summaryHeaders: ['可见摘要', '厉鬼信息', '已知规律'],
-            tagHeaders: ['收录状态', '收录进度', '档案完整度', '可调用范围'],
-            injected: true,
-        },
-        {
-            key: 'sheet_collected_rules',
-            names: ['收录规律'],
-            kind: '档案',
-            icon: 'fa-book-open',
-            titleHeaders: ['来源厉鬼', '规律类型'],
-            summaryHeaders: ['规律内容', '规律进阶', '可见摘要'],
-            tagHeaders: ['获取方式', '完整度', '风险备注'],
-            injected: true,
-        },
-        {
-            key: 'sheet_controlled_ghosts',
-            names: ['驾驭厉鬼'],
-            kind: '状态',
-            icon: 'fa-skull',
-            titleHeaders: ['厉鬼代号', '恐怖程度'],
-            summaryHeaders: ['可见摘要', '可用能力', '杀人规律'],
-            tagHeaders: ['恐怖程度', '死机状态', '复苏进度'],
-            injected: true,
-        },
-    ];
+    const isVirtualTab = (tableName) => [TAB_DASHBOARD, TAB_GLOBAL, TAB_RECALL, TAB_CONSISTENCY].includes(tableName);
+    const getFrontendConfig = () => {
+        try {
+            const host = window.parent || window;
+            return host.MFRS_DATABASE_FRONTEND_CONFIG || window.MFRS_DATABASE_FRONTEND_CONFIG || {};
+        } catch (e) {
+            return window.MFRS_DATABASE_FRONTEND_CONFIG || {};
+        }
+    };
+    const MFRS_FRONTEND_CONFIG = getFrontendConfig();
+    const MFRS_DASHBOARD_SLOTS = MFRS_FRONTEND_CONFIG.dashboardSlots || [];
+    const MFRS_LEGACY_DASHBOARD_KEYWORDS = MFRS_FRONTEND_CONFIG.legacyDashboardKeywords || [];
+    const MFRS_RECALL_TABLE_RULES = MFRS_FRONTEND_CONFIG.recallTableRules || [];
     let isDashEditing = false;
 
 
@@ -148,8 +52,11 @@
     let globalScrollTop = 0;
     let currentPage = 1;
     let currentSearchTerm = '';
+    let globalSearchTerm = localStorage.getItem(STORAGE_KEY_GLOBAL_QUERY) || '';
     let recallSearchTerm = localStorage.getItem(STORAGE_KEY_RECALL_QUERY) || '';
     let lastRecallItemMap = {};
+    let lastGlobalItemMap = {};
+    let lastTableDataError = '';
     
     let hideOptionsUntilUpdate = false;
     let lastOptionDataCheck = '';
@@ -304,29 +211,61 @@
         return normalizePromptText(parts.join(''));
     };
 
+    const buildGenericRowText = (tableName, tableData, row, limit = 10) => {
+        const headers = tableData.headers || [];
+        const parts = [];
+        row.forEach((cell, idx) => {
+            if (idx === 0) return;
+            const value = normalizePromptText(cell);
+            if (!value || value === 'auto_merged') return;
+            const header = normalizePromptText(headers[idx] || `字段${idx}`);
+            parts.push(`${header}：${value}`);
+        });
+        return [`【数据库记录】${tableName}`, ...parts.slice(0, limit)].join('\n');
+    };
+
+    const getGenericRowTitle = (tableName, tableData, row) => {
+        const headers = tableData.headers || [];
+        const preferred = ['名称', '姓名', '事件代号', '地点名', '物品名', '线索编号', '档案编号', '规律类型', '纪要编号'];
+        const value = getRowValueByHeader(headers, row, preferred, '');
+        if (value) return value;
+        return normalizePromptText(row.find((cell, idx) => idx > 0 && normalizePromptText(cell)) || tableName);
+    };
+
+    const buildRowActionButtons = ({ fillLabel = '填入', fillIcon = 'fa-arrow-up-right-from-square', fillPrompt, copyText }) => {
+        const encodedFill = escapeHtml(encodeURIComponent(fillPrompt || copyText || ''));
+        const encodedCopy = escapeHtml(encodeURIComponent(copyText || fillPrompt || ''));
+        return `
+            <button type="button" class="acu-row-action-btn" data-row-action="copy" data-copy="${encodedCopy}" title="复制记录"><i class="fa-solid fa-copy"></i><span>复制</span></button>
+            <button type="button" class="acu-row-action-btn" data-row-action="fill" data-prompt="${encodedFill}" title="填入输入框"><i class="fa-solid ${fillIcon}"></i><span>${escapeHtml(fillLabel)}</span></button>
+        `;
+    };
+
     const buildRowInteractionHtml = (tableName, tableData, row) => {
         const headers = tableData.headers || [];
+        const copyText = buildGenericRowText(tableName, tableData, row);
         if (isActionSuggestionsTable(tableName, tableData)) {
             const label = buildActionSuggestionLabel(headers, row);
             const prompt = buildActionSuggestionPrompt(headers, row);
-            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入输入框"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>选择</span></button><span>${escapeHtml(label)}</span></div>`;
+            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '选择', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
         }
         if (isSupernaturalItemsTable(tableName, tableData)) {
             const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '灵异物品');
             const prompt = buildSupernaturalItemPrompt(headers, row);
-            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-hand-sparkles"></i><span>使用</span></button><span>${escapeHtml(itemName)}</span></div>`;
+            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-hand-sparkles', fillPrompt: prompt, copyText })}<span>${escapeHtml(itemName)}</span></div>`;
         }
         if (isClueTable(tableName, tableData)) {
             const label = getRowValueByHeader(headers, row, ['线索编号', '内容', '线索描述'], '线索');
             const prompt = buildCluePrompt(headers, row);
-            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-magnifying-glass"></i><span>使用</span></button><span>${escapeHtml(label)}</span></div>`;
+            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-magnifying-glass', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
         }
         if (isRulesTable(tableName, tableData)) {
             const label = getRowValueByHeader(headers, row, ['规律类型', '规律名称', '规律内容'], '规律');
             const prompt = buildRulePrompt(headers, row);
-            return `<div class="acu-row-actions"><button type="button" class="acu-row-action-btn" data-prompt="${escapeHtml(encodeURIComponent(prompt))}" title="填入使用指令"><i class="fa-solid fa-book-open"></i><span>使用</span></button><span>${escapeHtml(label)}</span></div>`;
+            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-book-open', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
         }
-        return '';
+        const label = getGenericRowTitle(tableName, tableData, row);
+        return `<div class="acu-row-actions">${buildRowActionButtons({ fillPrompt: copyText, copyText })}<span>${escapeHtml(label)}</span></div>`;
     };
 
     const fillChatInput = (promptText, options = {}) => {
@@ -494,6 +433,24 @@
         }
     };
 
+    const downloadJsonFile = (data, filename) => {
+        const doc = getHostDocument();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = doc.createElement('a');
+        a.href = url;
+        a.download = filename;
+        doc.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
+    const getFrontendBridge = () => {
+        const host = getHost();
+        return host.MysteryDatabaseFrontend || window.MysteryDatabaseFrontend || null;
+    };
+
     const readAcuStoredConfig = () => {
         const parse = (storage, key) => {
             try {
@@ -621,6 +578,187 @@
                 status: vectorEnabled ? 'ok' : 'warn',
             },
         ];
+    };
+
+    const getTableDisplayText = (tableName, tableData) => {
+        const headers = tableData?.headers || [];
+        const rows = tableData?.rows || [];
+        return rows.map(row => buildGenericRowText(tableName, tableData, row, headers.length)).join('\n');
+    };
+
+    const getTableLatestMarker = (tableData) => {
+        const headers = tableData?.headers || [];
+        const rows = tableData?.rows || [];
+        const timeIdx = headers.findIndex(header => /时间|日期|更新|发现|记录/.test(String(header || '')));
+        if (timeIdx < 0) return '无时间字段';
+        for (let i = rows.length - 1; i >= 0; i--) {
+            const value = normalizePromptText(rows[i]?.[timeIdx]);
+            if (value) return value;
+        }
+        return '未填写';
+    };
+
+    const getTableIssues = (tableData) => {
+        const headers = tableData?.headers || [];
+        const rows = tableData?.rows || [];
+        const issues = [];
+        if (!headers.length) issues.push('缺少表头');
+        if (!rows.length) issues.push('空表');
+        const rowIdIdx = findHeaderIndex(headers, ['row_id']);
+        if (rowIdIdx >= 0) {
+            const missing = rows.filter(row => !normalizePromptText(row?.[rowIdIdx])).length;
+            if (missing) issues.push(`${missing} 行 row_id 为空`);
+        }
+        const mismatch = rows.filter(row => Array.isArray(row) && row.length !== headers.length).length;
+        if (mismatch) issues.push(`${mismatch} 行列数异常`);
+        return issues;
+    };
+
+    const buildTableOverview = (tables) => Object.keys(tables || {}).map(tableName => {
+        const table = tables[tableName] || {};
+        const issues = getTableIssues(table);
+        return {
+            tableName,
+            key: table.key,
+            rowCount: Array.isArray(table.rows) ? table.rows.length : 0,
+            colCount: Array.isArray(table.headers) ? table.headers.length : 0,
+            latest: getTableLatestMarker(table),
+            issues,
+            status: issues.some(item => item.includes('缺少') || item.includes('异常')) ? 'error' : (issues.length ? 'warn' : 'ok'),
+        };
+    }).sort((a, b) => {
+        const rank = { error: 0, warn: 1, ok: 2 };
+        return rank[a.status] - rank[b.status] || a.tableName.localeCompare(b.tableName, 'zh-CN');
+    });
+
+    const collectGlobalSearchItems = (tables, query = '') => {
+        const q = normalizePromptText(query).toLowerCase();
+        const items = [];
+        Object.keys(tables || {}).forEach(tableName => {
+            const table = tables[tableName];
+            if (!Array.isArray(table?.rows)) return;
+            const headers = table.headers || [];
+            table.rows.forEach((row, rowIndex) => {
+                if (!Array.isArray(row)) return;
+                const rowText = row.map(cell => normalizePromptText(cell)).filter(Boolean).join(' ');
+                const searchable = `${tableName} ${headers.join(' ')} ${rowText}`.toLowerCase();
+                if (q && !searchable.includes(q)) return;
+                const rowLabel = getRecallFieldValue(headers, row, ['row_id'], '') || String(rowIndex + 1);
+                const title = compactRecallText(getGenericRowTitle(tableName, table, row), 90);
+                const summary = compactRecallText(rowText, 240);
+                let score = 0;
+                if (q) {
+                    if (String(title).toLowerCase().includes(q)) score += 12;
+                    if (tableName.toLowerCase().includes(q)) score += 8;
+                    if (summary.toLowerCase().includes(q)) score += 4;
+                }
+                items.push({
+                    id: `${table.key || tableName}:${rowIndex}`,
+                    tableName,
+                    tableKey: table.key,
+                    rowIndex,
+                    rowLabel,
+                    title,
+                    summary,
+                    text: buildGenericRowText(tableName, table, row, headers.length),
+                    score,
+                    headers,
+                    row,
+                });
+            });
+        });
+        return items.sort((a, b) => b.score - a.score || a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex).slice(0, 120);
+    };
+
+    const flattenStatValues = (value, path = '') => {
+        if (value === null || value === undefined) return [];
+        if (Array.isArray(value)) {
+            return value.flatMap((item, index) => flattenStatValues(item, `${path}[${index}]`));
+        }
+        if (typeof value === 'object') {
+            return Object.entries(value).flatMap(([key, nested]) => flattenStatValues(nested, path ? `${path}.${key}` : key));
+        }
+        const text = normalizePromptText(value);
+        return text ? [{ path, text }] : [];
+    };
+
+    const getStatPathValue = (stat, path) => {
+        try {
+            return String(path).split('.').reduce((obj, key) => obj && obj[key] !== undefined ? obj[key] : undefined, stat);
+        } catch (e) {
+            return undefined;
+        }
+    };
+
+    const extractStatRuleValues = (stat, paths) => {
+        const values = [];
+        (paths || []).forEach(path => {
+            flattenStatValues(getStatPathValue(stat, path), path).forEach(item => {
+                if (item.text.length <= 1) return;
+                values.push(item);
+            });
+        });
+        const seen = new Set();
+        return values.filter(item => {
+            const key = `${item.path}:${item.text}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).slice(0, 12);
+    };
+
+    const MFRS_CONSISTENCY_RULES = MFRS_FRONTEND_CONFIG.consistencyRules || [];
+
+    const getTablesByNames = (tables, names) => Object.keys(tables || {})
+        .filter(tableName => names.some(name => tableName.includes(name) || String(tables[tableName]?.name || '').includes(name)))
+        .map(tableName => ({ tableName, table: tables[tableName] }));
+
+    const collectMfrsConsistencyIssues = (tables) => {
+        const stat = readMfrsState();
+        const issues = [];
+        const summaries = [];
+        MFRS_CONSISTENCY_RULES.forEach(rule => {
+            const matchedTables = getTablesByNames(tables, rule.tableNames);
+            const dbText = matchedTables.map(({ tableName, table }) => getTableDisplayText(tableName, table)).join('\n');
+            const dbRows = matchedTables.reduce((sum, item) => sum + (item.table?.rows?.length || 0), 0);
+            const statValues = stat ? extractStatRuleValues(stat, rule.statPaths) : [];
+            const statOnly = [];
+            statValues.forEach(item => {
+                if (item.text.length > 80) return;
+                if (dbText && dbText.includes(item.text)) return;
+                statOnly.push(item);
+            });
+            if (statValues.length && !dbRows) {
+                issues.push({ type: 'stat-only', label: rule.label, message: '状态栏有内容，但数据库关键表没有对应记录。', values: statValues.slice(0, 5), tables: rule.tableNames });
+            } else {
+                statOnly.slice(0, 5).forEach(item => {
+                    issues.push({ type: 'stat-only', label: rule.label, message: '状态栏字段未在数据库中找到直接匹配。', values: [item], tables: rule.tableNames });
+                });
+            }
+            if (dbRows > 0 && !statValues.length) {
+                issues.push({ type: 'db-only', label: rule.label, message: '数据库有记录，但状态栏未读到对应字段。', values: [], tables: matchedTables.map(item => item.tableName) });
+            }
+            summaries.push({
+                label: rule.label,
+                statCount: statValues.length,
+                dbRows,
+                status: (!stat && dbRows) || (statValues.length && !dbRows) || statOnly.length ? 'warn' : 'ok',
+            });
+        });
+        return { stat, summaries, issues: issues.slice(0, 40) };
+    };
+
+    const buildMfrsStateSnapshot = (tables) => {
+        const consistency = collectMfrsConsistencyIssues(tables);
+        return {
+            exportedAt: new Date().toISOString(),
+            stat_data: consistency.stat,
+            tableOverview: buildTableOverview(tables),
+            consistency: {
+                summaries: consistency.summaries,
+                issues: consistency.issues,
+            },
+        };
     };
 
     const riskValue = (value, suffix) => {
@@ -1741,6 +1879,26 @@
                 .acu-recall-action-btn { min-width:0; display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid var(--acu-border); border-radius:6px; background:var(--acu-btn-bg); color:var(--acu-text-main); cursor:pointer; font-size:12px; padding:6px 8px; }
                 .acu-recall-action-btn:hover { background:var(--acu-btn-hover); color:var(--acu-highlight); border-color:var(--acu-highlight); }
                 .acu-recall-empty { padding:32px 12px; text-align:center; color:var(--acu-text-sub); font-size:13px; }
+                .acu-insight-panel { display:flex; flex-direction:column; gap:12px; padding:12px; }
+                .acu-insight-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; }
+                .acu-insight-search { width:100%; min-height:34px; box-sizing:border-box; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-input-bg); color:var(--acu-text-main); padding:8px 10px; font-size:13px; }
+                .acu-insight-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px; }
+                .acu-insight-card { min-width:0; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-card-bg); padding:11px; color:var(--acu-text-main); }
+                .acu-insight-card.ok { border-color:rgba(39,174,96,0.45); }
+                .acu-insight-card.warn { border-color:rgba(245,158,11,0.55); }
+                .acu-insight-card.error { border-color:rgba(239,68,68,0.65); }
+                .acu-insight-card strong { display:block; font-size:13px; color:var(--acu-title-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                .acu-insight-card span, .acu-insight-card p { color:var(--acu-text-sub); font-size:12px; line-height:1.6; word-break:break-word; }
+                .acu-insight-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap:10px; }
+                .acu-insight-result { min-width:0; display:flex; flex-direction:column; gap:8px; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-card-bg); padding:11px; }
+                .acu-insight-meta { display:flex; flex-wrap:wrap; gap:6px; }
+                .acu-insight-pill { display:inline-flex; align-items:center; min-width:0; max-width:100%; padding:2px 7px; border-radius:999px; background:var(--acu-badge-bg); color:var(--acu-text-sub); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                .acu-insight-summary { color:var(--acu-text-main); font-size:12px; line-height:1.65; white-space:pre-wrap; word-break:break-word; }
+                .acu-insight-detail { border-top:1px dashed var(--acu-border); padding-top:7px; color:var(--acu-text-sub); font-size:12px; line-height:1.65; }
+                .acu-insight-detail summary { cursor:pointer; color:var(--acu-title-color); font-weight:600; }
+                .acu-insight-actions { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-top:auto; }
+                .acu-insight-action-btn { min-width:0; min-height:30px; display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-btn-bg); color:var(--acu-text-main); cursor:pointer; font-size:12px; padding:5px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                .acu-insight-action-btn:hover { border-color:var(--acu-highlight); background:var(--acu-btn-hover); color:var(--acu-title-color); }
                 .acu-card-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
                 .acu-grid-item { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; border-radius: 6px; cursor: pointer; overflow: hidden; border: 1px solid var(--acu-border); background: rgba(0,0,0,0.02); }
                 .acu-grid-item:hover { background: var(--acu-table-hover); }
@@ -1903,7 +2061,23 @@
         $('head').append(styles);
     };
 
-    const getTableData = () => { const api = getCore().getDB(); return api && api.exportTableAsJson ? api.exportTableAsJson() : null; };
+    const getTableData = () => {
+        try {
+            const api = getCore().getDB();
+            if (!api || typeof api.exportTableAsJson !== 'function') {
+                lastTableDataError = '数据库 API 不可用或缺少 exportTableAsJson';
+                return null;
+            }
+            const data = api.exportTableAsJson();
+            if (!data) lastTableDataError = '数据库导出为空';
+            else lastTableDataError = '';
+            return data || null;
+        } catch (e) {
+            lastTableDataError = e?.message || String(e);
+            console.error('[MFRS Visualizer] 数据库导出失败:', e);
+            return null;
+        }
+    };
     
     const updateSaveBtnState = () => {
         const { $ } = getCore();
@@ -3171,7 +3345,7 @@
             if (isEditingOrder) currentTabName = null;
 
             if (currentTabName === TAB_DASHBOARD && config.dashboardPosition !== 'panel') currentTabName = null;
-            if (currentTabName && currentTabName !== TAB_DASHBOARD && currentTabName !== TAB_RECALL && !tables[currentTabName]) currentTabName = null;
+            if (currentTabName && !isVirtualTab(currentTabName) && !tables[currentTabName]) currentTabName = null;
 
             let colorVal = HIGHLIGHT_COLORS[config.highlightColor];
         if (!colorVal && config.highlightColor && String(config.highlightColor).startsWith('#')) {
@@ -3191,7 +3365,7 @@
             const tableHeights = getTableHeights();
             let styleHeight = 'height:auto; max-height:500px;';
 
-            if (currentTabName && (tables[currentTabName] || currentTabName === TAB_DASHBOARD || currentTabName === TAB_RECALL)) {
+            if (currentTabName && (tables[currentTabName] || isVirtualTab(currentTabName))) {
                 const h = tableHeights[currentTabName];
                 styleHeight = h ? `height:${h}px; max-height:95vh;` : `height:60vh; max-height:95vh;`;
             }
@@ -3225,8 +3399,12 @@
             let contentHtml = '';
             if (currentTabName === TAB_DASHBOARD) {
                 contentHtml = renderDashboard(tables);
+            } else if (currentTabName === TAB_GLOBAL) {
+                contentHtml = renderGlobalPanel(tables);
             } else if (currentTabName === TAB_RECALL) {
                 contentHtml = renderRecallPanel(tables);
+            } else if (currentTabName === TAB_CONSISTENCY) {
+                contentHtml = renderConsistencyPanel(tables);
             } else if (currentTabName && tables[currentTabName]) {
                 contentHtml = renderTableContent(tables[currentTabName], currentTabName);
             }
@@ -3284,7 +3462,9 @@
                         ${orderControlsHtml}
                         <div class="acu-nav-tabs-area">
                             ${(showDash && config.dashboardPosition === 'panel') ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-tachometer-alt"></i><span>仪表盘</span></button>` : ''}
+                            <button class="acu-nav-btn ${currentTabName === TAB_GLOBAL ? 'active' : ''}" data-table="${TAB_GLOBAL}"><i class="fa-solid fa-layer-group"></i><span>总览</span></button>
                             <button class="acu-nav-btn ${currentTabName === TAB_RECALL ? 'active' : ''}" data-table="${TAB_RECALL}"><i class="fa-solid fa-magnifying-glass"></i><span>召回</span></button>
+                            <button class="acu-nav-btn ${currentTabName === TAB_CONSISTENCY ? 'active' : ''}" data-table="${TAB_CONSISTENCY}"><i class="fa-solid fa-scale-balanced"></i><span>一致性</span></button>
             `;
             orderedNames.forEach(name => {
                 if (hiddenTables.includes(name)) return;
@@ -3754,6 +3934,156 @@
         `;
     };
 
+    const renderGlobalPanel = (tables) => {
+        lastGlobalItemMap = {};
+        const query = String(globalSearchTerm || '').trim();
+        const overview = buildTableOverview(tables);
+        const items = collectGlobalSearchItems(tables, query);
+        const totalRows = overview.reduce((sum, item) => sum + item.rowCount, 0);
+        const emptyCount = overview.filter(item => item.rowCount === 0).length;
+        const issueCount = overview.filter(item => item.issues.length).length;
+        const overviewCards = [
+            { label: '数据库 API', value: lastTableDataError ? lastTableDataError : '可用', status: lastTableDataError ? 'error' : 'ok' },
+            { label: '表数量', value: `${overview.length}/14`, status: overview.length >= 14 ? 'ok' : 'warn' },
+            { label: '总行数', value: `${totalRows} 行`, status: totalRows > 0 ? 'ok' : 'warn' },
+            { label: '空表', value: `${emptyCount} 张`, status: emptyCount ? 'warn' : 'ok' },
+            { label: '异常表', value: `${issueCount} 张`, status: issueCount ? 'warn' : 'ok' },
+        ].map(item => `
+            <div class="acu-insight-card ${escapeHtml(item.status)}">
+                <strong>${escapeHtml(item.label)}</strong>
+                <span>${escapeHtml(item.value)}</span>
+            </div>
+        `).join('');
+
+        const tableCards = overview.map(item => `
+            <div class="acu-insight-card ${escapeHtml(item.status)}">
+                <strong>${escapeHtml(item.tableName)}</strong>
+                <span>${escapeHtml(item.rowCount)} 行 / ${escapeHtml(item.colCount)} 列</span>
+                <p>最近：${escapeHtml(item.latest)}</p>
+                <p>${item.issues.length ? escapeHtml(item.issues.join('；')) : '状态正常'}</p>
+            </div>
+        `).join('');
+
+        const resultHtml = items.length ? `<div class="acu-insight-list">${items.map(item => {
+            lastGlobalItemMap[item.id] = item;
+            const detailRows = item.headers.map((header, idx) => {
+                if (idx === 0) return '';
+                const value = normalizePromptText(item.row[idx]);
+                if (!value || value === 'auto_merged') return '';
+                return `<div><strong>${escapeHtml(header || `字段${idx}`)}：</strong>${escapeHtml(value)}</div>`;
+            }).filter(Boolean).join('');
+            return `
+                <div class="acu-insight-result">
+                    <div style="display:flex; align-items:flex-start; gap:8px;">
+                        <span class="acu-recall-card-icon"><i class="fa-solid ${escapeHtml(getIconForTableName(item.tableName))}"></i></span>
+                        <div style="min-width:0; flex:1;">
+                            <div class="acu-recall-card-title">${escapeHtml(item.title || '未命名')}</div>
+                            <div class="acu-insight-meta">
+                                <span class="acu-insight-pill">${escapeHtml(item.tableName)} #${escapeHtml(item.rowLabel)}</span>
+                                <span class="acu-insight-pill">${escapeHtml(item.tableKey || 'sheet')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="acu-insight-summary">${escapeHtml(item.summary || '无摘要')}</div>
+                    <details class="acu-insight-detail">
+                        <summary>详情预览</summary>
+                        ${detailRows || '<div>无可预览字段</div>'}
+                    </details>
+                    <div class="acu-insight-actions">
+                        <button type="button" class="acu-insight-action-btn" data-global-action="copy" data-global-id="${escapeHtml(item.id)}" title="复制记录"><i class="fa-solid fa-copy"></i><span>复制</span></button>
+                        <button type="button" class="acu-insight-action-btn" data-global-action="fill" data-global-id="${escapeHtml(item.id)}" title="填入输入框"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>填入</span></button>
+                        <button type="button" class="acu-insight-action-btn" data-global-action="open-table" data-table="${escapeHtml(item.tableName)}" title="打开原表"><i class="fa-solid fa-table"></i><span>原表</span></button>
+                    </div>
+                </div>
+            `;
+        }).join('')}</div>` : `<div class="acu-recall-empty">${query ? '未找到匹配记录' : '输入关键词可快速筛选全部表记录'}</div>`;
+
+        return `
+            <div class="acu-panel-header">
+                <div class="acu-panel-title"><i class="fa-solid fa-layer-group"></i> 全局搜索 / 表状态 <span style="color:var(--acu-text-sub);font-weight:normal;">${items.length}</span></div>
+                <div class="acu-header-actions">
+                    <div class="acu-header-btn-group" style="display:flex; gap:6px; align-items:center;">
+                        <button class="acu-header-btn acu-height-drag-handle" data-table="${TAB_GLOBAL}" title="按住拖动调整高度"><i class="fa-solid fa-arrows-up-down"></i></button>
+                        <button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="acu-panel-content">
+                <div class="acu-insight-panel">
+                    <div class="acu-insight-toolbar">
+                        <input id="acu-global-search-input" class="acu-insight-search" type="text" value="${escapeHtml(query)}" placeholder="搜索全部 14 表..." spellcheck="false" />
+                        <button type="button" class="acu-insight-action-btn" data-global-action="clear-query" title="清空搜索"><i class="fa-solid fa-eraser"></i><span>清空</span></button>
+                    </div>
+                    <div class="acu-insight-grid">${overviewCards}</div>
+                    <div class="acu-recall-section-title"><span><i class="fa-solid fa-table-list"></i> 表状态总览</span><span style="color:var(--acu-text-sub);font-weight:normal;">行数 / 时间 / 异常字段</span></div>
+                    <div class="acu-insight-grid">${tableCards || '<div class="acu-recall-empty">暂无表格数据</div>'}</div>
+                    <div class="acu-recall-section-title"><span><i class="fa-solid fa-magnifying-glass"></i> ${query ? '搜索结果' : '全部记录预览'}</span><span style="color:var(--acu-text-sub);font-weight:normal;">最多 120 条</span></div>
+                    ${resultHtml}
+                </div>
+            </div>
+        `;
+    };
+
+    const renderConsistencyPanel = (tables) => {
+        const snapshot = buildMfrsStateSnapshot(tables);
+        const summaries = snapshot.consistency.summaries || [];
+        const issues = snapshot.consistency.issues || [];
+        const statAvailable = !!snapshot.stat_data;
+        const summaryCards = [
+            { label: 'stat_data', value: statAvailable ? '可读取' : '未读取到', status: statAvailable ? 'ok' : 'warn' },
+            { label: '差异项', value: `${issues.length} 条`, status: issues.length ? 'warn' : 'ok' },
+            ...summaries.map(item => ({
+                label: item.label,
+                value: `状态字段 ${item.statCount} / 数据库 ${item.dbRows}`,
+                status: item.status,
+            })),
+        ].map(item => `
+            <div class="acu-insight-card ${escapeHtml(item.status)}">
+                <strong>${escapeHtml(item.label)}</strong>
+                <span>${escapeHtml(item.value)}</span>
+            </div>
+        `).join('');
+
+        const issueHtml = issues.length ? `<div class="acu-insight-list">${issues.map(item => `
+            <div class="acu-insight-result">
+                <div class="acu-insight-meta">
+                    <span class="acu-insight-pill">${item.type === 'stat-only' ? '状态栏有 / 数据库缺' : '数据库有 / 状态栏缺'}</span>
+                    <span class="acu-insight-pill">${escapeHtml(item.label)}</span>
+                    <span class="acu-insight-pill">${escapeHtml((item.tables || []).join(' / '))}</span>
+                </div>
+                <div class="acu-insight-summary">${escapeHtml(item.message)}</div>
+                ${(item.values || []).length ? `<div class="acu-insight-detail">${item.values.map(value => `<div><strong>${escapeHtml(value.path || '字段')}：</strong>${escapeHtml(value.text)}</div>`).join('')}</div>` : ''}
+            </div>
+        `).join('')}</div>` : '<div class="acu-recall-empty">未发现明显差异</div>';
+
+        return `
+            <div class="acu-panel-header">
+                <div class="acu-panel-title"><i class="fa-solid fa-scale-balanced"></i> MVU / 数据库一致性 <span style="color:var(--acu-text-sub);font-weight:normal;">${issues.length}</span></div>
+                <div class="acu-header-actions">
+                    <div class="acu-header-btn-group" style="display:flex; gap:6px; align-items:center;">
+                        <button class="acu-header-btn" data-consistency-action="export-snapshot" title="导出当前状态快照"><i class="fa-solid fa-download"></i></button>
+                        <button class="acu-header-btn acu-height-drag-handle" data-table="${TAB_CONSISTENCY}" title="按住拖动调整高度"><i class="fa-solid fa-arrows-up-down"></i></button>
+                        <button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="acu-panel-content">
+                <div class="acu-insight-panel">
+                    <div class="acu-insight-grid">${summaryCards}</div>
+                    <div class="acu-recall-section-title"><span><i class="fa-solid fa-wrench"></i> 低风险修复</span><span style="color:var(--acu-text-sub);font-weight:normal;">不触发 AI / 不手动更新</span></div>
+                    <div class="acu-insight-grid">
+                        <button type="button" class="acu-insight-action-btn" data-consistency-action="refresh-ui"><i class="fa-solid fa-rotate"></i><span>刷新前端</span></button>
+                        <button type="button" class="acu-insight-action-btn" data-consistency-action="reload-snapshot"><i class="fa-solid fa-clock-rotate-left"></i><span>重载快照</span></button>
+                        <button type="button" class="acu-insight-action-btn" data-consistency-action="rebuild-index"><i class="fa-solid fa-layer-group"></i><span>重建索引</span></button>
+                        <button type="button" class="acu-insight-action-btn" data-consistency-action="reload-template"><i class="fa-solid fa-table-cells"></i><span>重载模板</span></button>
+                    </div>
+                    <div class="acu-recall-section-title"><span><i class="fa-solid fa-triangle-exclamation"></i> 差异提示</span><span style="color:var(--acu-text-sub);font-weight:normal;">玩家 / 事件 / 厉鬼 / 物品 / 线索 / 纪要</span></div>
+                    ${issueHtml}
+                </div>
+            </div>
+        `;
+    };
+
     const renderTableContent = (tableData, tableName) => {
         if (!tableData || !tableData.rows.length) return `<div class="acu-panel-header"><div class="acu-panel-title">${tableName} ${(tableData && tableData._missingInfo) ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : ((tableData && tableData._hasWarning) ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">0</span>')}</div><div class="acu-header-actions"><button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button></div></div><div class="acu-panel-content"><div style="text-align:center;color:var(--acu-text-sub);padding:40px 20px;"><i class="fa-solid fa-inbox" style="font-size:48px;opacity:0.3;margin-bottom:15px;"></i><div style="font-size:16px;margin-bottom:8px;">暂无数据</div><div style="font-size:12px;opacity:0.7;">该表格当前没有任何记录</div></div></div>`;
 
@@ -3970,6 +4300,30 @@
             }
         };
 
+        const renderGlobalArea = (options = {}) => {
+            const $area = $('#acu-data-area');
+            const scrollTop = options.keepScroll ? ($area.find('.acu-panel-content').scrollTop() || 0) : 0;
+            $area.html(renderGlobalPanel(tables)).addClass('visible');
+            bindDataAreaEvents();
+            if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
+            if (options.focusSearch) {
+                const input = $('#acu-global-search-input')[0];
+                if (input) {
+                    input.focus();
+                    const len = input.value.length;
+                    try { input.setSelectionRange(len, len); } catch (e) {}
+                }
+            }
+        };
+
+        const renderConsistencyArea = (options = {}) => {
+            const $area = $('#acu-data-area');
+            const scrollTop = options.keepScroll ? ($area.find('.acu-panel-content').scrollTop() || 0) : 0;
+            $area.html(renderConsistencyPanel(tables)).addClass('visible');
+            bindDataAreaEvents();
+            if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
+        };
+
         const switchTab = (tableName) => {
             currentPage = 1;
             currentSearchTerm = '';
@@ -3980,9 +4334,19 @@
                 const h = getTableHeights()[TAB_DASHBOARD];
                 $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
                 bindDataAreaEvents();
+            } else if (tableName === TAB_GLOBAL) {
+                $('#acu-data-area').html(renderGlobalPanel(tables)).addClass('visible');
+                const h = getTableHeights()[TAB_GLOBAL];
+                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
+                bindDataAreaEvents();
             } else if (tableName === TAB_RECALL) {
                 $('#acu-data-area').html(renderRecallPanel(tables)).addClass('visible');
                 const h = getTableHeights()[TAB_RECALL];
+                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
+                bindDataAreaEvents();
+            } else if (tableName === TAB_CONSISTENCY) {
+                $('#acu-data-area').html(renderConsistencyPanel(tables)).addClass('visible');
+                const h = getTableHeights()[TAB_CONSISTENCY];
                 $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
                 bindDataAreaEvents();
             } else if (tables[tableName]) {
@@ -4005,9 +4369,16 @@
         });
         
         const bindDynamicContentEvents = () => {
-            $('.acu-row-action-btn').off('click').on('click', function(e) {
+            $('.acu-row-action-btn').off('click').on('click', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                const action = $(this).data('row-action') || 'fill';
+                if (action === 'copy') {
+                    const text = decodeURIComponent($(this).attr('data-copy') || '');
+                    const ok = await copyTextToClipboard(text);
+                    if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制记录' : '复制失败');
+                    return;
+                }
                 const prompt = decodeURIComponent($(this).attr('data-prompt') || '');
                 fillChatInput(prompt, { autoSend: false });
             });
@@ -4087,6 +4458,101 @@
                         bindDynamicContentEvents(); bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
                     }
                 }, 300);
+            });
+
+            let globalSearchDebounceTimer = null;
+            $('#acu-global-search-input').off('input').on('input', function(e) {
+                e.stopPropagation();
+                const inputValue = $(this).val();
+                clearTimeout(globalSearchDebounceTimer);
+                globalSearchDebounceTimer = setTimeout(() => {
+                    globalSearchTerm = String(inputValue || '');
+                    try { localStorage.setItem(STORAGE_KEY_GLOBAL_QUERY, globalSearchTerm); } catch (err) {}
+                    renderGlobalArea({ focusSearch: true });
+                }, 250);
+            });
+
+            $('[data-global-action]').off('click').on('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const action = $(this).data('global-action');
+                const id = $(this).attr('data-global-id');
+                const item = id ? lastGlobalItemMap[id] : null;
+                if (action === 'clear-query') {
+                    globalSearchTerm = '';
+                    try { localStorage.removeItem(STORAGE_KEY_GLOBAL_QUERY); } catch (err) {}
+                    renderGlobalArea({ focusSearch: true });
+                    return;
+                }
+                if (action === 'open-table') {
+                    const tableName = $(this).attr('data-table');
+                    if (tableName && tables[tableName]) switchTab(tableName);
+                    return;
+                }
+                if (!item) {
+                    if (window.toastr) window.toastr.warning('记录已刷新，请重新选择');
+                    return;
+                }
+                if (action === 'copy') {
+                    const ok = await copyTextToClipboard(item.text);
+                    if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制记录' : '复制失败');
+                    return;
+                }
+                if (action === 'fill') {
+                    fillChatInput(item.text, { autoSend: false });
+                }
+            });
+
+            $('[data-consistency-action]').off('click').on('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const action = $(this).data('consistency-action');
+                if (action === 'export-snapshot') {
+                    downloadJsonFile(buildMfrsStateSnapshot(tables), `mfrs_state_snapshot_${new Date().toISOString().slice(0, 10)}.json`);
+                    if (window.toastr) window.toastr.success('已导出当前状态快照');
+                    return;
+                }
+                if (action === 'refresh-ui') {
+                    renderInterface();
+                    if (window.toastr) window.toastr.info('已刷新数据库前端');
+                    return;
+                }
+                if (action === 'reload-snapshot') {
+                    const current = getTableData();
+                    if (current) {
+                        saveSnapshot(current);
+                        renderConsistencyArea({ keepScroll: true });
+                        if (window.toastr) window.toastr.success('已重载前端快照');
+                    } else if (window.toastr) {
+                        window.toastr.error(lastTableDataError || '当前无可保存快照');
+                    }
+                    return;
+                }
+                if (action === 'rebuild-index') {
+                    lastRecallItemMap = {};
+                    lastGlobalItemMap = {};
+                    renderConsistencyArea({ keepScroll: true });
+                    if (window.toastr) window.toastr.success('已重建前端索引');
+                    return;
+                }
+                if (action === 'reload-template') {
+                    const bridge = getFrontendBridge();
+                    if (!bridge || typeof bridge.importMysteryTemplate !== 'function') {
+                        if (window.toastr) window.toastr.warning('当前运行态没有安全模板重载 API');
+                        return;
+                    }
+                    const ok = await MFRSDialog.showConfirm('仅重载神秘复苏 14 表模板，不触发 AI、不调用手动更新。继续？', {
+                        title: '重载模板',
+                        confirmText: '重载',
+                    });
+                    if (!ok) return;
+                    try {
+                        await bridge.importMysteryTemplate();
+                        renderInterface();
+                    } catch (err) {
+                        if (window.toastr) window.toastr.error('模板重载失败：' + (err.message || '未知错误'));
+                    }
+                }
             });
 
             let recallSearchDebounceTimer = null;
@@ -4395,7 +4861,7 @@
         if (isEditingOrder) {
             const { $ } = getCore();
             const newOrder = []; 
-            $('.acu-nav-tabs-area .acu-nav-btn').each(function() { const t = $(this).data('table'); if(t && t!==TAB_DASHBOARD && t!==TAB_RECALL) newOrder.push(t); });
+            $('.acu-nav-tabs-area .acu-nav-btn').each(function() { const t = $(this).data('table'); if(t && !isVirtualTab(t)) newOrder.push(t); });
             saveTableOrder(newOrder);
             const newActionOrder = [];
             $('.acu-nav-actions-area .acu-action-btn').each(function() { if(this.id) newActionOrder.push(this.id); });
@@ -4416,7 +4882,7 @@
              if (options.skipVirtualTabs) {
                 $items = $items.filter(function() {
                     const tableName = $(this).data('table');
-                    return tableName !== TAB_DASHBOARD && tableName !== TAB_RECALL;
+                    return !isVirtualTab(tableName);
                 });
              }
 
@@ -5967,12 +6433,159 @@
         }
     };
 
+    const getGachaScopedSnapshot = () => ({
+        type: 'mfrs_gacha_chat_data',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        scope: getActiveGachaChatScope(),
+        currency: getGachaCurrency(),
+        pity: getGachaPity(),
+        history: getGachaHistory(),
+        currencyLog: getCurrencyLog(),
+        fragments: getGachaFragments(),
+        ownedItems: getOwnedItems(),
+    });
+
+    const importGachaScopedSnapshot = (snapshot) => {
+        if (!snapshot || typeof snapshot !== 'object') throw new Error('无效的抽卡数据');
+        if (snapshot.type !== 'mfrs_gacha_chat_data') throw new Error('不是神秘复苏抽卡聊天数据');
+        const scopeKey = (baseKey) => getGachaScopedStorageKey(baseKey);
+        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_CURRENCY), String(Math.max(0, Number(snapshot.currency) || 0)));
+        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_PITY), JSON.stringify(snapshot.pity && typeof snapshot.pity === 'object' ? snapshot.pity : { total: 0, rare: 0, epic: 0 }));
+        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_HISTORY), JSON.stringify(Array.isArray(snapshot.history) ? snapshot.history.slice(0, 100) : []));
+        localStorage.setItem(scopeKey(STORAGE_KEY_CURRENCY_LOG), JSON.stringify(Array.isArray(snapshot.currencyLog) ? snapshot.currencyLog.slice(0, 50) : []));
+        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_FRAGMENTS), String(Math.max(0, Number(snapshot.fragments) || 0)));
+        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_OWNED), JSON.stringify(Array.isArray(snapshot.ownedItems) ? snapshot.ownedItems : []));
+    };
+
+    const resetGachaScopedData = () => {
+        [
+            STORAGE_KEY_GACHA_CURRENCY,
+            STORAGE_KEY_GACHA_PITY,
+            STORAGE_KEY_GACHA_HISTORY,
+            STORAGE_KEY_CURRENCY_LOG,
+            STORAGE_KEY_GACHA_FRAGMENTS,
+            STORAGE_KEY_GACHA_OWNED,
+        ].forEach(key => localStorage.removeItem(getGachaScopedStorageKey(key)));
+    };
+
+    const importGachaSnapshotFromFile = () => {
+        const doc = getHostDocument();
+        const input = doc.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.style.display = 'none';
+        doc.body.appendChild(input);
+        input.addEventListener('change', () => {
+            const file = input.files && input.files[0];
+            input.remove();
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const snapshot = JSON.parse(String(ev.target?.result || ''));
+                    importGachaScopedSnapshot(snapshot);
+                    const { $ } = getCore();
+                    if ($) $('.acu-edit-overlay').remove();
+                    if (window.toastr) window.toastr.success('当前聊天抽卡数据已导入');
+                    showGachaPanel();
+                } catch (err) {
+                    if (window.toastr) window.toastr.error('抽卡数据导入失败：' + (err.message || '未知错误'));
+                }
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+        input.click();
+    };
+
+    const validateGachaCatalog = () => {
+        const allItems = getAllGachaItemDefinitions();
+        const flat = [
+            ...(allItems.supernatural || []),
+            ...(allItems.clue || []),
+            ...(allItems.knowledge || []),
+        ];
+        const issues = [];
+        const names = new Map();
+        const rawData = getTableData();
+        const tables = rawData ? processJsonData(rawData) : {};
+        const targetExists = (item) => {
+            if (!item.targetTable) return false;
+            if (rawData && rawData[item.targetTable]) return true;
+            return Object.values(tables || {}).some(table => table?.key === item.targetTable || String(table?.name || '').includes(item.targetTable));
+        };
+        flat.forEach(item => {
+            if (!item.id) issues.push({ level: 'error', item: item.name || '未命名', message: '缺少 id' });
+            if (!item.name) issues.push({ level: 'error', item: item.id || '未知', message: '缺少名称' });
+            if (!item.type || !Object.values(GACHA_ITEM_TYPE).includes(item.type)) issues.push({ level: 'error', item: item.name || item.id, message: '类型无效' });
+            if (!item.rarity || typeof item.rarity.probability !== 'number' || item.rarity.probability <= 0) issues.push({ level: 'error', item: item.name || item.id, message: '稀有度概率无效' });
+            if (!item.effect && !item.description) issues.push({ level: 'warn', item: item.name || item.id, message: '缺少效果或描述' });
+            if (!targetExists(item)) issues.push({ level: 'warn', item: item.name || item.id, message: `目标表不可用：${item.targetTable || '未指定'}` });
+            const nameKey = normalizePromptText(item.name);
+            if (nameKey) {
+                const current = names.get(nameKey) || [];
+                current.push(item.id);
+                names.set(nameKey, current);
+            }
+        });
+        names.forEach((ids, name) => {
+            if (ids.length > 1) issues.push({ level: 'warn', item: name, message: `重复名称：${ids.join(' / ')}` });
+        });
+        return {
+            total: flat.length,
+            issues,
+            errors: issues.filter(item => item.level === 'error').length,
+            warnings: issues.filter(item => item.level !== 'error').length,
+        };
+    };
+
+    const buildGachaEconomySummary = () => {
+        const log = getCurrencyLog();
+        const history = getGachaHistory();
+        const owned = getOwnedItems();
+        const incomeByType = log.reduce((acc, entry) => {
+            const type = entry.type || 'unknown';
+            acc[type] = (acc[type] || 0) + (Number(entry.amount) || 0);
+            return acc;
+        }, {});
+        const rarityCounts = history.reduce((acc, entry) => {
+            const name = entry?.item?.rarity?.name || '未知';
+            acc[name] = (acc[name] || 0) + 1;
+            return acc;
+        }, {});
+        return {
+            scope: getActiveGachaChatScope(),
+            currency: getGachaCurrency(),
+            fragments: getGachaFragments(),
+            pity: getGachaPity(),
+            historyCount: history.length,
+            ownedCount: owned.length,
+            incomeTotal: Object.values(incomeByType).reduce((sum, value) => sum + value, 0),
+            incomeByType,
+            rarityCounts,
+            estimatedSpend: history.length * GACHA_CURRENCY.cost.single,
+        };
+    };
+
     // 显示抽卡主面板
     const showGachaPanel = () => {
         const { $ } = getCore();
         const config = getConfig();
         const currency = getGachaCurrency();
         const pity = getGachaPity();
+        const economy = buildGachaEconomySummary();
+        const catalogReport = validateGachaCatalog();
+        const scopeText = economy.scope || 'global';
+        const scopeShort = scopeText.length > 18 ? `${scopeText.slice(0, 8)}...${scopeText.slice(-6)}` : scopeText;
+        const incomeText = Object.entries(economy.incomeByType || {})
+            .map(([type, value]) => `${type}:${value}`)
+            .join(' / ') || '暂无收入日志';
+        const rarityText = Object.entries(economy.rarityCounts || {})
+            .map(([name, value]) => `${name}:${value}`)
+            .join(' / ') || '暂无抽卡历史';
+        const catalogIssueHtml = catalogReport.issues.length
+            ? catalogReport.issues.slice(0, 5).map(issue => `<div style="color:${issue.level === 'error' ? '#ef4444' : 'var(--acu-text-sub)'}; font-size:11px; line-height:1.5;">${escapeHtml(issue.item)}：${escapeHtml(issue.message)}</div>`).join('')
+            : '<div style="color:var(--acu-text-sub); font-size:11px;">卡池校验正常</div>';
 
         const dialog = $(`
             <div class="acu-edit-overlay">
@@ -6010,6 +6623,21 @@
                             </div>
                         </div>
 
+                        <!-- 当前聊天数据 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                                <div style="min-width:0;">
+                                    <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:5px; font-size:14px;">当前聊天抽卡数据</div>
+                                    <div style="color:var(--acu-text-sub); font-size:12px;">scope <span title="${escapeHtml(scopeText)}" style="color:var(--acu-text-main); font-family:monospace;">${escapeHtml(scopeShort)}</span></div>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button data-mfrs-action="gacha-export" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:7px 11px; cursor:pointer; color:var(--acu-text-main); font-size:12px;"><i class="fa-solid fa-download"></i> 导出</button>
+                                    <button data-mfrs-action="gacha-import" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:7px 11px; cursor:pointer; color:var(--acu-text-main); font-size:12px;"><i class="fa-solid fa-upload"></i> 导入</button>
+                                    <button data-mfrs-action="gacha-reset-data" style="background:#7f1d1d; border:1px solid #ef4444; border-radius:6px; padding:7px 11px; cursor:pointer; color:white; font-size:12px;"><i class="fa-solid fa-trash"></i> 重置</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 灵异残屑 -->
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -6025,6 +6653,18 @@
                                 </button>
                             </div>
                             <div style="color:var(--acu-text-sub); font-size:11px; margin-top:8px;">重复物品自动转化为灵异残屑，可在商店兑换指定物品</div>
+                        </div>
+
+                        <!-- 经济平衡 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
+                            <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">经济平衡</div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:12px; font-size:12px;">
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">日志收入</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.incomeTotal}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">估算消耗</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.estimatedSpend}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">已拥有</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.ownedCount}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">历史</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.historyCount}</div></div>
+                            </div>
+                            <div style="color:var(--acu-text-sub); font-size:11px; margin-top:10px; line-height:1.6;">收入：${escapeHtml(incomeText)}<br>稀有度：${escapeHtml(rarityText)}</div>
                         </div>
 
                         <!-- 保底进度 -->
@@ -6044,6 +6684,15 @@
                                     <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - pity.total)} 抽</div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- 卡池校验 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div style="color:var(--acu-title-color); font-weight:bold; font-size:14px;">卡池校验</div>
+                                <div style="color:${catalogReport.errors ? '#ef4444' : (catalogReport.warnings ? '#f59e0b' : 'var(--acu-text-sub)')}; font-size:12px;">${catalogReport.total} 件 / ${catalogReport.errors} 错误 / ${catalogReport.warnings} 警告</div>
+                            </div>
+                            ${catalogIssueHtml}
                         </div>
 
                         <!-- 抽卡池选择 -->
@@ -6337,6 +6986,26 @@
             switch (action) {
                 case 'gacha-close': closeDialog(); break;
                 case 'gacha-custom-editor': closeDialog(); showCustomItemEditor(); break;
+                case 'gacha-export':
+                    downloadJsonFile(getGachaScopedSnapshot(), `mfrs_gacha_${getActiveGachaChatScope()}_${new Date().toISOString().slice(0, 10)}.json`);
+                    if (window.toastr) window.toastr.success('已导出当前聊天抽卡数据');
+                    break;
+                case 'gacha-import':
+                    importGachaSnapshotFromFile();
+                    break;
+                case 'gacha-reset-data': {
+                    const ok = await MFRSDialog.showConfirm('只重置当前聊天 scope 下的调查点、保底、历史、奖励日志、残屑和已拥有物品。自定义卡池不会被删除。继续？', {
+                        title: '重置当前聊天抽卡数据',
+                        confirmText: '重置',
+                        danger: true,
+                    });
+                    if (!ok) break;
+                    resetGachaScopedData();
+                    if (window.toastr) window.toastr.success('已重置当前聊天抽卡数据');
+                    closeDialog();
+                    showGachaPanel();
+                    break;
+                }
                 case 'gacha-pool-select':
                     dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
                     $(this).addClass('active').css('border-color', 'var(--acu-highlight)');
@@ -7385,6 +8054,11 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             single: gachaSingle,
             ten: gachaTen,
             getHistory: getGachaHistory,
+            exportChatData: getGachaScopedSnapshot,
+            importChatData: importGachaScopedSnapshot,
+            resetChatData: resetGachaScopedData,
+            validateCatalog: validateGachaCatalog,
+            getEconomySummary: buildGachaEconomySummary,
             // --- UI 入口（需 jQuery/DOM）---
             showPanel: showGachaPanel,
             showFragmentShop: showFragmentShop,
