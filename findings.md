@@ -1,5 +1,17 @@
 # Findings
 
+## 2026-07-06：固定状态栏 slot 30 为空时，先查 `固定状态栏` 脚本是否注册
+
+**结论：** v8.5.2 的三槽布局源码本身可用，但发布卡一度缺少 `固定状态栏` 脚本注册条目，导致真页只有数据库仪表盘和 14 表前端，`mfrs-fixed-status-slot` 存在但为空。不要只看 `mfrs-fixed-status-host` / 三个 slot 是否存在；必须同时确认 `TH-script--固定状态栏--d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001` 已加载，且 `#mfrs-fixed-status-summary` / `#mfrs-fixed-status-detail` 在 slot 30 内。
+
+**根因：** v8.5.1 清理旧固定状态栏残留时删除了 `src/神秘复苏模拟器/index.yaml` 的 `固定状态栏` 脚本条目；v8.5.2 只修改了 `src/神秘复苏模拟器/脚本/固定状态栏/index.ts` 的三槽逻辑，没有重新接回脚本入口。v8.5.3 恢复脚本注册，继续使用已存在且验证通过的 `@80b09a8` 固定状态栏 dist。
+
+**真页验收口径：**
+- 当前角色 `character_version` 应为 `8.5.3` 或更高，卡体包含 `固定状态栏` 脚本条目。
+- frame 列表应有 `TH-script--固定状态栏--...3001`、`TH-script--神秘复苏数据库前端--...3002`、`TH-script--消息内面板--...3003`。
+- DOM 顺序应为 `mfrs-fixed-dashboard-slot(order 10)` → `mfrs-fixed-frontend-slot(order 20)` → `mfrs-fixed-status-slot(order 30)`；前两槽各有 1 个子节点，状态槽有 summary/detail 两个子节点。
+- `pagehide` 后状态槽被清理是预期行为；关键是 dashboard/frontend 两槽仍保留，刷新/重选角色后状态槽自然重挂。
+
 ## 2026-07-05：EJS stat_data 注入是当前提示词侧正确方案，旧 `format_message_variable::stat_data` 宏不可用
 
 **结论：** `变量列表.txt` 的 stat_data 提示词注入不能依赖 `{{format_message_variable::stat_data}}` 或 `registerMacroLike`。真页验证显示 `extensionPrompts.customDepthWI_0_0.value` 保留的是模板原文；实际发送前应由 ST-Prompt-Template 的 `EjsTemplate.evalTemplate()` 渲染。当前 v8.5.0 方案用 EJS 从 `variables.stat_data` 取值，剔除冗余嵌套 `stat_data.stat_data` 后输出 JSON。

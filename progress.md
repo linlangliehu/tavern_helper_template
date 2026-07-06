@@ -1,5 +1,35 @@
 # Progress Log
 
+## 2026-07-06 CST（✅ P0 完成：v8.5.3 固定状态栏注册热修复 + 真页收口验证）
+
+**目标：** 执行 P0 收口验证：确认 v8.5.2/v8.5.3 发布版真页版本、输入框上方三槽顺序、`pagehide` 保全，以及 v8.5.1 抽卡聊天隔离未回归。
+
+**执行与结果：**
+- ✅ 初始真页验证确认当前角色为 `神秘复苏模拟器发布版`，卡体已是 v8.5.2，含 `@80b09a8`，无旧 `@88fd7f1/@787f113`。
+- ⚠️ P0 发现 v8.5.2 发布卡缺少 `固定状态栏` 脚本注册：DOM 有 `mfrs-fixed-dashboard-slot` 与 `mfrs-fixed-frontend-slot`，但 `mfrs-fixed-status-slot` 为空；卡内脚本 frame 也没有 `TH-script--固定状态栏--...3001`。根因是 v8.5.1 清理旧状态栏时删除了注册条目，v8.5.2 只改了 `脚本/固定状态栏/index.ts`，没有把脚本重新接回 `index.yaml`。
+- ✅ 已恢复开发版 `src/神秘复苏模拟器/index.yaml` 中 `固定状态栏` 脚本条目（id `d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001`），`scripts/publish-card.mjs` 发布版本提升为 `8.5.3`，CDN_REF 继续使用已验证的 `80b09a8`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版` 重新生成发布版 YAML/PNG；发布版 YAML 版本为 `8.5.3`，包含 `固定状态栏 @80b09a8`。
+- ✅ 验证通过：`git diff --check`；发布版 worldbook gate `383 entries / 33 disabled / max enabled 5851`；PNG `chara`/`ccv3` 均为 version `8.5.3`，各含 `@80b09a8` 7 次，旧 `@88fd7f1`/`8.5.2` 为 0；CDN smoke：固定状态栏脚本 `200/9552`，数据库前端脚本 `200/363770`。
+- ✅ 真页最终验证：刷新后重新选择角色，运行态自然加载 `TH-script--固定状态栏--d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001`；输入框上方 host 顺序为 `dashboardSlot(order 10)` → `frontendSlot(order 20)` → `statusSlot(order 30)`，状态栏摘要显示 `🩸0/100 / ☠️0% / ❤️健康 / 👻0 / 神秘复苏14表`。
+- ✅ `pagehide` 保全验证：触发 `pagehide` 后只移除状态槽/状态栏摘要，`dashboardSlot` 与 `frontendSlot` 均继续保留各自子节点；随后刷新并重新选择角色，页面恢复为 v8.5.3 正常运行态。
+- ✅ 抽卡聊天隔离验证：通过 mock 两个 chatId，`getStorageScope()` 得到不同 scope（`zz51pr` / `zz52lo`），调查点、保底、历史、奖励日志、残屑、已拥有物品均读写各自 `baseKey::scope`；无 scope 旧 base key 未变化，测试 key 已清理。
+
+**副作用边界：** 未发送聊天消息，未触发真实 AI，未点击“立即手动更新”，未调用 `triggerUpdate()`；抽卡验证只写入并清理临时 localStorage scoped key。
+
+## 2026-07-06 CST（🧭 下一阶段改进任务清单已写入 planning）
+
+**目标：** 根据当前角色卡功能盘点与召回能力结论，把下一阶段改进任务清单写入 `planning-with-files`，确保新开对话可直接恢复任务。
+
+**完成内容：**
+- ✅ 恢复规划上下文：按 `planning-with-files-zh` 读取 `task_plan.md`、`progress.md`、`findings.md`，运行 `session-catchup.py`，并确认当前 `git status` 只有 `.claude/worktrees/agent-aedb9d9f392ecb036` 无关 dirty。
+- ✅ 更新 `task_plan.md` 当前状态：新增“下一阶段规划已建立”，明确主线从 v8.5.2 发布收口切到“真页收口验证 → 剧情/记忆召回前端化 → 数据库前端体验增强 → MVU/数据库一致性检查 → 抽卡系统增强 → 工程拆分与回归脚本”。
+- ✅ 更新 `task_plan.md` 当前任务清单：新增 P0/P1/P2/P3 分级任务，其中 P0 是 v8.5.2 真页收口验证，P1 第一主线是把 `spv3.9.5·数据库` 已有剧情/记忆召回后端做成 `神秘复苏数据库前端` 可见、可控、可验证的召回面板。
+- ✅ 更新恢复入口与提交边界：新对话优先读本条进度和 `task_plan.md` 当前任务清单；若提交本轮 planning 更新，只提交 `task_plan.md`、`progress.md`，不要提交 `.claude/worktrees/**`、源码、发布版 PNG、`scripts/publish-card.mjs` 或 `dist/**`。
+
+**下一步建议：**
+1. 若只收口发布体验，先执行 P0：导入 v8.5.2 发布版 PNG 后真页验证三槽顺序、`pagehide` 保全和抽卡聊天隔离。
+2. 若进入功能开发，先执行 P1：在 `src/神秘复苏模拟器/脚本/数据库前端/` 为剧情/记忆召回增加前端面板与健康检查。
+
 ## 2026-07-06 CST（✅ v8.5.2 完成：固定状态栏三槽布局 + 发布同步）
 
 **目标：** 接续用户给出的发布清单，从“等待 bot bundle Action 重建 dist + 打新 tag”开始，完成 v8.5.2 发布版回填、打包、验证、提交推送，并更新 planning。
