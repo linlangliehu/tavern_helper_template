@@ -1,4 +1,7 @@
 const statusContainerId = 'mfrs-fixed-status-host';
+const dashboardSlotId = 'mfrs-fixed-dashboard-slot';
+const frontendSlotId = 'mfrs-fixed-frontend-slot';
+const statusSlotId = 'mfrs-fixed-status-slot';
 const statusSummaryId = 'mfrs-fixed-status-summary';
 const statusDetailId = 'mfrs-fixed-status-detail';
 const expandedStorageKey = 'mfrs_fixed_status_expanded';
@@ -120,7 +123,7 @@ function buildStatusView(data: StatusData): StatusView {
 function openFullStatus() {
   const hostWindow = (window.parent ?? window) as HostWindow;
   const frontend = hostWindow.MysteryDatabaseFrontend ?? (window as HostWindow).MysteryDatabaseFrontend;
-  const open = frontend?.openVisualizer ?? frontend?.openStatus ?? frontend?.openDashboard ?? frontend?.openPanel;
+  const open = frontend?.openStatus ?? frontend?.openDashboard ?? frontend?.openPanel ?? frontend?.openVisualizer;
   if (open) {
     void open.call(frontend);
     return;
@@ -323,6 +326,65 @@ function applyExpanded(host: HTMLDivElement) {
   if (toggleBtn) toggleBtn.textContent = expanded ? '▴' : '▾';
 }
 
+function styleFixedHost(host: HTMLDivElement) {
+  host.style.width = '100%';
+  host.style.margin = '0 auto 6px';
+  host.style.border = '0';
+  host.style.borderRadius = '0';
+  host.style.background = 'transparent';
+  host.style.boxShadow = 'none';
+  host.style.overflow = 'visible';
+  host.style.maxHeight = 'none';
+  host.style.clear = 'both';
+  host.style.display = 'flex';
+  host.style.flexDirection = 'column';
+  host.style.gap = '6px';
+}
+
+function styleFixedSlot(slot: HTMLDivElement, order: string) {
+  slot.style.width = '100%';
+  slot.style.minWidth = '0';
+  slot.style.order = order;
+}
+
+function styleStatusSlot(slot: HTMLDivElement) {
+  styleFixedSlot(slot, '30');
+  slot.style.border = '1px solid rgba(115, 24, 24, 0.68)';
+  slot.style.borderRadius = '6px';
+  slot.style.background = 'linear-gradient(180deg, rgba(18, 14, 13, 0.96), rgba(6, 5, 5, 0.98))';
+  slot.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.55)';
+  slot.style.overflow = 'hidden';
+}
+
+function ensureFixedSlot(host: HTMLDivElement, id: string, order: string) {
+  let slot = host.querySelector(`#${id}`) as HTMLDivElement | null;
+  if (!slot) {
+    slot = doc.createElement('div');
+    slot.id = id;
+  }
+  styleFixedSlot(slot, order);
+  return slot;
+}
+
+function ensureFixedStatusLayout(host: HTMLDivElement) {
+  styleFixedHost(host);
+
+  const dashboardSlot = ensureFixedSlot(host, dashboardSlotId, '10');
+  const frontendSlot = ensureFixedSlot(host, frontendSlotId, '20');
+  const statusSlot = ensureFixedSlot(host, statusSlotId, '30');
+  styleStatusSlot(statusSlot);
+
+  Array.from(host.children).forEach(child => {
+    if (child === dashboardSlot || child === frontendSlot || child === statusSlot) return;
+    if (child.classList.contains('acu-embedded-dashboard-container')) dashboardSlot.append(child);
+    else if (child.classList.contains('acu-wrapper')) frontendSlot.append(child);
+    else if (child.id === statusSummaryId || child.id === statusDetailId) statusSlot.append(child);
+  });
+
+  host.append(dashboardSlot, frontendSlot, statusSlot);
+  return { dashboardSlot, frontendSlot, statusSlot };
+}
+
 function ensureFixedStatusBar() {
   const sendForm = getSendForm();
   if (!sendForm) {
@@ -334,17 +396,12 @@ function ensureFixedStatusBar() {
   if (!host) {
     host = doc.createElement('div');
     host.id = statusContainerId;
-    host.style.width = '100%';
-    host.style.margin = '0 auto 6px';
-    host.style.border = '1px solid rgba(115, 24, 24, 0.68)';
-    host.style.borderRadius = '6px';
-    host.style.background = 'linear-gradient(180deg, rgba(18, 14, 13, 0.96), rgba(6, 5, 5, 0.98))';
-    host.style.boxShadow = '0 0 12px rgba(0, 0, 0, 0.55)';
-    host.style.overflow = 'hidden';
     sendForm.parentElement?.insertBefore(host, sendForm);
   }
 
-  let summaryEl = host.querySelector(`#${statusSummaryId}`) as HTMLDivElement | null;
+  const { statusSlot } = ensureFixedStatusLayout(host);
+
+  let summaryEl = statusSlot.querySelector(`#${statusSummaryId}`) as HTMLDivElement | null;
   if (!summaryEl) {
     summaryEl = doc.createElement('div');
     summaryEl.id = statusSummaryId;
@@ -355,16 +412,16 @@ function ensureFixedStatusBar() {
       setExpanded(!isExpanded());
       applyExpanded(host!);
     });
-    host.append(summaryEl);
+    statusSlot.append(summaryEl);
   }
 
-  let detailEl = host.querySelector(`#${statusDetailId}`) as HTMLDivElement | null;
+  let detailEl = statusSlot.querySelector(`#${statusDetailId}`) as HTMLDivElement | null;
   if (!detailEl) {
     detailEl = doc.createElement('div');
     detailEl.id = statusDetailId;
     detailEl.innerHTML = detailInnerHtml();
     styleDetail(detailEl);
-    host.append(detailEl);
+    statusSlot.append(detailEl);
   }
 
   renderStatus(host);
@@ -399,5 +456,10 @@ for (const eventName of refreshEvents) {
 }
 
 $(window).on('pagehide', () => {
-  doc.querySelector(`#${statusContainerId}`)?.remove();
+  const host = doc.querySelector(`#${statusContainerId}`) as HTMLDivElement | null;
+  if (!host) return;
+  host.querySelector(`#${statusSlotId}`)?.remove();
+  const hasDashboard = Boolean(host.querySelector(`#${dashboardSlotId}`)?.children.length);
+  const hasFrontend = Boolean(host.querySelector(`#${frontendSlotId}`)?.children.length);
+  if (!hasDashboard && !hasFrontend) host.remove();
 });
