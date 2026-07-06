@@ -13,6 +13,7 @@
 - ✅ 真页最终验证：刷新后重新选择角色，运行态自然加载 `TH-script--固定状态栏--d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001`；输入框上方 host 顺序为 `dashboardSlot(order 10)` → `frontendSlot(order 20)` → `statusSlot(order 30)`，状态栏摘要显示 `🩸0/100 / ☠️0% / ❤️健康 / 👻0 / 神秘复苏14表`。
 - ✅ `pagehide` 保全验证：触发 `pagehide` 后只移除状态槽/状态栏摘要，`dashboardSlot` 与 `frontendSlot` 均继续保留各自子节点；随后刷新并重新选择角色，页面恢复为 v8.5.3 正常运行态。
 - ✅ 抽卡聊天隔离验证：通过 mock 两个 chatId，`getStorageScope()` 得到不同 scope（`zz51pr` / `zz52lo`），调查点、保底、历史、奖励日志、残屑、已拥有物品均读写各自 `baseKey::scope`；无 scope 旧 base key 未变化，测试 key 已清理。
+- ✅ 提交推送：代码/发布包提交 `669d79a fix(mfrs): restore fixed status script registration` 已 push 到 `origin/main`；随后补充本条 planning 收口记录。
 
 **副作用边界：** 未发送聊天消息，未触发真实 AI，未点击“立即手动更新”，未调用 `triggerUpdate()`；抽卡验证只写入并清理临时 localStorage scoped key。
 
