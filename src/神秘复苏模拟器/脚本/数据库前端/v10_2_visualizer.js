@@ -19,7 +19,10 @@
     const FIXED_STATUS_SLOT_ID = 'mfrs-fixed-status-slot';
     
     const TAB_DASHBOARD = 'acu_tab_dashboard_home';
+    const TAB_RECALL = 'acu_tab_mfrs_recall';
     const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
+    const STORAGE_KEY_RECALL_QUERY = 'acu_mfrs_recall_query_v1';
+    const STORAGE_KEY_RECALL_PINS = 'acu_mfrs_recall_pins_v1';
     const MFRS_DASHBOARD_SLOTS = [
         { id: 'slot_2_1', kw: '玩家状态', title: '玩家状态', rule: 'kv' },
         { id: 'slot_3_1', kw: '全局状态', title: '全局状态', rule: 'kv' },
@@ -30,6 +33,108 @@
         { id: 'slot_6_2', kw: '地点', title: '地点', rule: 'capsule', col: 1, capCols: 2 }
     ];
     const MFRS_LEGACY_DASHBOARD_KEYWORDS = ['主角信息', '全局数据', '全局数据表', '重要人物', '重要人物表', '背包', '背包物品', '背包物品表', '技能', '主角任务栏', '任务'];
+    const MFRS_RECALL_TABLE_RULES = [
+        {
+            key: 'sheet_chronicle',
+            names: ['事件纪要', '纪要'],
+            kind: '记忆',
+            icon: 'fa-clock-rotate-left',
+            titleHeaders: ['纪要编号', '概览', '关联事件'],
+            summaryHeaders: ['纪要', '概览'],
+            tagHeaders: ['时间跨度', '关联事件'],
+            injected: true,
+        },
+        {
+            key: 'sheet_clues',
+            names: ['线索'],
+            kind: '剧情',
+            icon: 'fa-magnifying-glass',
+            titleHeaders: ['线索编号', '内容', '关联事件'],
+            summaryHeaders: ['内容', '推断', '验证状态'],
+            tagHeaders: ['关联事件', '来源', '可信度', '可见性'],
+            injected: true,
+        },
+        {
+            key: 'sheet_characters',
+            names: ['人物'],
+            kind: '剧情',
+            icon: 'fa-address-book',
+            titleHeaders: ['姓名', '身份'],
+            summaryHeaders: ['已知情报', '关系', '灵异能力'],
+            tagHeaders: ['阵营', '所在地点', '在场状态', '生死状态'],
+            injected: true,
+        },
+        {
+            key: 'sheet_locations',
+            names: ['地点'],
+            kind: '剧情',
+            icon: 'fa-map-location-dot',
+            titleHeaders: ['地点名', '城市'],
+            summaryHeaders: ['关键描述', '可交互内容', '相关事件'],
+            tagHeaders: ['城市', '地点类型', '灵异状态', '封锁状态'],
+            injected: true,
+        },
+        {
+            key: 'sheet_supernatural_events',
+            names: ['灵异事件'],
+            kind: '剧情',
+            icon: 'fa-triangle-exclamation',
+            titleHeaders: ['事件代号', '可见摘要'],
+            summaryHeaders: ['可见摘要', '已知杀人规律', '猜测杀人规律'],
+            tagHeaders: ['危害等级', '发生地点', '处理状态', '扩散趋势'],
+            injected: true,
+        },
+        {
+            key: 'sheet_ghost_archives',
+            names: ['厉鬼档案'],
+            kind: '剧情',
+            icon: 'fa-ghost',
+            titleHeaders: ['档案编号', '厉鬼称呼'],
+            summaryHeaders: ['表现', '已知规律', '危险备注'],
+            tagHeaders: ['关联事件', '关押状态', '拼图关系'],
+            injected: true,
+        },
+        {
+            key: 'sheet_supernatural_items',
+            names: ['灵异物品'],
+            kind: '资源',
+            icon: 'fa-briefcase',
+            titleHeaders: ['物品名', '类型'],
+            summaryHeaders: ['效果', '副作用', '使用限制'],
+            tagHeaders: ['类型', '持有人', '所在地点', '数量或状态'],
+            injected: true,
+        },
+        {
+            key: 'sheet_collected_archives',
+            names: ['收录档案'],
+            kind: '档案',
+            icon: 'fa-folder-open',
+            titleHeaders: ['档案厉鬼名称', '收录状态'],
+            summaryHeaders: ['可见摘要', '厉鬼信息', '已知规律'],
+            tagHeaders: ['收录状态', '收录进度', '档案完整度', '可调用范围'],
+            injected: true,
+        },
+        {
+            key: 'sheet_collected_rules',
+            names: ['收录规律'],
+            kind: '档案',
+            icon: 'fa-book-open',
+            titleHeaders: ['来源厉鬼', '规律类型'],
+            summaryHeaders: ['规律内容', '规律进阶', '可见摘要'],
+            tagHeaders: ['获取方式', '完整度', '风险备注'],
+            injected: true,
+        },
+        {
+            key: 'sheet_controlled_ghosts',
+            names: ['驾驭厉鬼'],
+            kind: '状态',
+            icon: 'fa-skull',
+            titleHeaders: ['厉鬼代号', '恐怖程度'],
+            summaryHeaders: ['可见摘要', '可用能力', '杀人规律'],
+            tagHeaders: ['恐怖程度', '死机状态', '复苏进度'],
+            injected: true,
+        },
+    ];
     let isDashEditing = false;
 
 
@@ -43,6 +148,8 @@
     let globalScrollTop = 0;
     let currentPage = 1;
     let currentSearchTerm = '';
+    let recallSearchTerm = localStorage.getItem(STORAGE_KEY_RECALL_QUERY) || '';
+    let lastRecallItemMap = {};
     
     let hideOptionsUntilUpdate = false;
     let lastOptionDataCheck = '';
@@ -260,6 +367,260 @@
         }
         if (window.toastr && options.toast !== false) window.toastr.info('已填入输入框');
         return true;
+    };
+
+    const getRecallTableRule = (tableName, tableData = {}) => {
+        const key = String(tableData.key || tableData.source?.uid || '').trim();
+        const name = String(tableName || tableData.name || '').trim();
+        return MFRS_RECALL_TABLE_RULES.find(rule => rule.key === key || rule.names.some(n => name.includes(n))) || null;
+    };
+
+    const getRecallFieldValue = (headers, row, names, fallback = '') => {
+        const value = getRowValueByHeader(headers, row, names, fallback);
+        return value === fallback ? '' : value;
+    };
+
+    const compactRecallText = (value, limit = 180) => {
+        const text = normalizePromptText(value);
+        if (text.length <= limit) return text;
+        return `${text.slice(0, limit - 1)}…`;
+    };
+
+    const uniqRecallParts = (parts) => {
+        const seen = new Set();
+        return parts
+            .map(part => normalizePromptText(part))
+            .filter(part => {
+                if (!part || seen.has(part)) return false;
+                seen.add(part);
+                return true;
+            });
+    };
+
+    const getRecallInjectionState = (tableData, rule) => {
+        const cfg = tableData?.source?.exportConfig || tableData?.source || {};
+        if (typeof cfg.extraIndexEnabled === 'boolean') return cfg.extraIndexEnabled;
+        if (typeof tableData?.extraIndexEnabled === 'boolean') return tableData.extraIndexEnabled;
+        return !!rule?.injected;
+    };
+
+    const buildRecallItemText = (item) => {
+        const parts = [
+            `【${item.kind}召回】${item.tableName}#${item.rowLabel} ${item.title}`,
+            item.summary ? `摘要：${item.summary}` : '',
+            item.tags.length ? `标签：${item.tags.join(' / ')}` : '',
+            `提示词注入：${item.injected ? '是' : '否'}`,
+        ];
+        return parts.filter(Boolean).join('\n');
+    };
+
+    const buildPinnedRecallPrompt = (items) => {
+        const list = (items || []).filter(Boolean).slice(0, 8);
+        if (!list.length) return '';
+        return [
+            '【本轮固定召回】',
+            '请在本轮回复中优先参考以下已固定的剧情/记忆信息，不要把未发生内容当成事实。',
+            ...list.map((item, index) => `${index + 1}. ${buildRecallItemText(item).replace(/\n/g, '；')}`),
+        ].join('\n');
+    };
+
+    const getPinnedRecallItems = () => {
+        try {
+            const items = JSON.parse(localStorage.getItem(STORAGE_KEY_RECALL_PINS) || '[]');
+            return Array.isArray(items) ? items.filter(item => item && item.id) : [];
+        } catch (e) {
+            return [];
+        }
+    };
+
+    const savePinnedRecallItems = (items) => {
+        try {
+            localStorage.setItem(STORAGE_KEY_RECALL_PINS, JSON.stringify((items || []).slice(0, 8)));
+        } catch (e) {
+            console.warn('[MFRS Recall] 保存固定召回失败:', e);
+        }
+    };
+
+    const pinRecallItem = (item) => {
+        if (!item || !item.id) return getPinnedRecallItems();
+        const current = getPinnedRecallItems().filter(old => old.id !== item.id);
+        const clean = {
+            id: item.id,
+            tableName: item.tableName,
+            rowLabel: item.rowLabel,
+            kind: item.kind,
+            title: item.title,
+            summary: item.summary,
+            tags: item.tags || [],
+            injected: !!item.injected,
+        };
+        const next = [clean, ...current].slice(0, 8);
+        savePinnedRecallItems(next);
+        return next;
+    };
+
+    const unpinRecallItem = (id) => {
+        const next = getPinnedRecallItems().filter(item => item.id !== id);
+        savePinnedRecallItems(next);
+        return next;
+    };
+
+    const copyTextToClipboard = async (text) => {
+        const value = String(text || '');
+        if (!value) return false;
+        try {
+            const nav = getHost().navigator || navigator;
+            if (nav?.clipboard?.writeText) {
+                await nav.clipboard.writeText(value);
+                return true;
+            }
+        } catch (e) {
+            console.warn('[MFRS Recall] Clipboard API 不可用，尝试 fallback。', e);
+        }
+        try {
+            const doc = getHostDocument();
+            const ta = doc.createElement('textarea');
+            ta.value = value;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            doc.body.appendChild(ta);
+            ta.select();
+            const ok = doc.execCommand('copy');
+            ta.remove();
+            return ok;
+        } catch (e) {
+            console.warn('[MFRS Recall] fallback 复制失败:', e);
+            return false;
+        }
+    };
+
+    const readAcuStoredConfig = () => {
+        const parse = (storage, key) => {
+            try {
+                const raw = storage?.getItem?.(key);
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) {
+                return null;
+            }
+        };
+        try {
+            const storage = getHost().localStorage || localStorage;
+            const globalMeta = parse(storage, 'shujuku_v120_globalMeta_v1') || parse(storage, 'shujuku_v34_globalMeta_v1') || {};
+            const candidates = [
+                parse(storage, 'shujuku_v120_allSettings_v2'),
+                parse(storage, 'shujuku_v34_allSettings_v2'),
+            ].filter(Boolean);
+            for (let i = 0; i < storage.length; i++) {
+                const key = storage.key(i);
+                if (key && key.includes('_profile_v1') && key.endsWith('__settings')) {
+                    const value = parse(storage, key);
+                    if (value) candidates.push(value);
+                }
+            }
+            const settings = candidates.find(item => item?.plotSettings || item?.summaryVectorIndexModeDefault !== undefined) || candidates[0] || {};
+            return { settings, globalMeta };
+        } catch (e) {
+            return { settings: {}, globalMeta: {} };
+        }
+    };
+
+    const collectRecallItems = (tables, query = '') => {
+        const q = normalizePromptText(query).toLowerCase();
+        const items = [];
+        Object.keys(tables || {}).forEach(tableName => {
+            const table = tables[tableName];
+            const rule = getRecallTableRule(tableName, table);
+            if (!rule || !Array.isArray(table?.rows)) return;
+            const headers = table.headers || [];
+            const injected = getRecallInjectionState(table, rule);
+            table.rows.forEach((row, rowIndex) => {
+                if (!Array.isArray(row)) return;
+                const rowText = row.map(cell => normalizePromptText(cell)).filter(Boolean).join(' ');
+                if (q && !rowText.toLowerCase().includes(q) && !tableName.toLowerCase().includes(q)) return;
+                const rowLabel = getRecallFieldValue(headers, row, ['row_id'], '') || String(rowIndex + 1);
+                const title = getRecallFieldValue(headers, row, rule.titleHeaders, '') || `${tableName} ${rowLabel}`;
+                const summaryParts = uniqRecallParts(rule.summaryHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
+                const tagParts = uniqRecallParts(rule.tagHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
+                const summary = compactRecallText(summaryParts.join('；') || rowText, 220);
+                let score = 0;
+                if (q) {
+                    const titleLower = title.toLowerCase();
+                    const summaryLower = summary.toLowerCase();
+                    if (titleLower.includes(q)) score += 10;
+                    if (summaryLower.includes(q)) score += 5;
+                    if (tagParts.join(' ').toLowerCase().includes(q)) score += 3;
+                }
+                items.push({
+                    id: `${table.key || tableName}:${rowIndex}`,
+                    tableName,
+                    tableKey: table.key,
+                    rowIndex,
+                    rowLabel,
+                    kind: rule.kind,
+                    icon: rule.icon,
+                    title: compactRecallText(title, 80),
+                    summary,
+                    tags: tagParts.slice(0, 5),
+                    injected,
+                    score,
+                });
+            });
+        });
+        return items
+            .sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                if (a.tableKey === 'sheet_chronicle' && b.tableKey === 'sheet_chronicle') return b.rowIndex - a.rowIndex;
+                if (a.tableKey === 'sheet_chronicle') return -1;
+                if (b.tableKey === 'sheet_chronicle') return 1;
+                return a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex;
+            })
+            .slice(0, 80);
+    };
+
+    const buildRecallHealthChecks = (tables) => {
+        const api = getCore().getDB();
+        const tableNames = Object.keys(tables || {});
+        const settingsSnapshot = readAcuStoredConfig();
+        const settings = settingsSnapshot.settings || {};
+        const globalMeta = settingsSnapshot.globalMeta || {};
+        const chronicle = tableNames.map(name => tables[name]).find(table => table?.key === 'sheet_chronicle' || String(table?.name || '').includes('事件纪要'));
+        const matchedRecallTables = tableNames.filter(name => getRecallTableRule(name, tables[name]));
+        const plotEnabled = settings?.plotSettings?.enabled === true || (api?.getPlotPresetNames && api.getPlotPresetNames().length > 0);
+        const vectorEnabled = settings?.summaryVectorIndexModeDefault === true
+            || settings?.summaryVectorIndexModeEnabled === true
+            || globalMeta?.summaryVectorIndexModeGlobal === true;
+        return [
+            {
+                label: 'AutoCardUpdaterAPI',
+                value: api?.exportTableAsJson ? '可用' : '不可用',
+                status: api?.exportTableAsJson ? 'ok' : 'error',
+            },
+            {
+                label: '14表模板',
+                value: `${tableNames.length}/14`,
+                status: tableNames.length >= 14 ? 'ok' : 'warn',
+            },
+            {
+                label: '事件纪要',
+                value: `${chronicle?.rows?.length || 0} 行`,
+                status: (chronicle?.rows?.length || 0) > 0 ? 'ok' : 'warn',
+            },
+            {
+                label: '召回索引表',
+                value: `${matchedRecallTables.length} 张`,
+                status: matchedRecallTables.length >= 6 ? 'ok' : 'warn',
+            },
+            {
+                label: '剧情召回',
+                value: plotEnabled ? '已启用/有预设' : '未确认',
+                status: plotEnabled ? 'ok' : 'warn',
+            },
+            {
+                label: '向量召回',
+                value: vectorEnabled ? '已启用' : '未启用',
+                status: vectorEnabled ? 'ok' : 'warn',
+            },
+        ];
     };
 
     const riskValue = (value, suffix) => {
@@ -1356,6 +1717,30 @@
                 .acu-row-actions > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .acu-row-action-btn { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; min-height: 28px; padding: 5px 9px; border: 1px solid var(--acu-border); border-radius: 6px; background: var(--acu-btn-active-bg); color: var(--acu-btn-active-text); cursor: pointer; font-size: 12px; font-weight: 700; transition: all 0.2s; }
                 .acu-row-action-btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 2px 8px var(--acu-shadow); }
+                .acu-recall-panel { display:flex; flex-direction:column; gap:12px; padding:12px; }
+                .acu-recall-toolbar { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:8px; align-items:center; }
+                .acu-recall-search { width:100%; min-height:34px; box-sizing:border-box; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-input-bg); color:var(--acu-text-main); padding:8px 10px; font-size:13px; }
+                .acu-recall-health { display:grid; grid-template-columns:repeat(auto-fit, minmax(132px, 1fr)); gap:8px; }
+                .acu-recall-health-item { min-width:0; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-btn-bg); padding:8px 10px; }
+                .acu-recall-health-item strong { display:block; color:var(--acu-text-main); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                .acu-recall-health-item span { display:block; margin-top:4px; color:var(--acu-text-sub); font-size:12px; }
+                .acu-recall-health-item.ok { border-color:rgba(39,174,96,0.45); }
+                .acu-recall-health-item.warn { border-color:rgba(245,158,11,0.55); }
+                .acu-recall-health-item.error { border-color:rgba(239,68,68,0.65); }
+                .acu-recall-section-title { display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--acu-highlight); font-size:13px; font-weight:700; }
+                .acu-recall-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:10px; }
+                .acu-recall-card { min-width:0; display:flex; flex-direction:column; gap:8px; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-card-bg); padding:11px; }
+                .acu-recall-card-header { display:flex; align-items:flex-start; gap:8px; }
+                .acu-recall-card-icon { flex:0 0 24px; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; border-radius:6px; background:var(--acu-highlight-bg); color:var(--acu-highlight); }
+                .acu-recall-card-title { min-width:0; flex:1; color:var(--acu-text-main); font-weight:700; font-size:13px; line-height:1.35; word-break:break-word; }
+                .acu-recall-card-meta { display:flex; flex-wrap:wrap; gap:5px; color:var(--acu-text-sub); font-size:11px; }
+                .acu-recall-pill { display:inline-flex; align-items:center; max-width:100%; padding:2px 6px; border-radius:999px; background:var(--acu-badge-bg); color:var(--acu-text-sub); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+                .acu-recall-pill.injected { color:var(--acu-highlight); background:var(--acu-highlight-bg); }
+                .acu-recall-summary { color:var(--acu-text-main); font-size:12px; line-height:1.55; word-break:break-word; }
+                .acu-recall-actions { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-top:auto; }
+                .acu-recall-action-btn { min-width:0; display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid var(--acu-border); border-radius:6px; background:var(--acu-btn-bg); color:var(--acu-text-main); cursor:pointer; font-size:12px; padding:6px 8px; }
+                .acu-recall-action-btn:hover { background:var(--acu-btn-hover); color:var(--acu-highlight); border-color:var(--acu-highlight); }
+                .acu-recall-empty { padding:32px 12px; text-align:center; color:var(--acu-text-sub); font-size:13px; }
                 .acu-card-main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
                 .acu-grid-item { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px; border-radius: 6px; cursor: pointer; overflow: hidden; border: 1px solid var(--acu-border); background: rgba(0,0,0,0.02); }
                 .acu-grid-item:hover { background: var(--acu-table-hover); }
@@ -1752,7 +2137,13 @@
         for (const sheetId in json) {
             if (json[sheetId]?.name) {
                  const sheet = json[sheetId];
-                tables[sheet.name] = { key: sheetId, name: sheet.name, headers: sheet.content[0] || [], rows: sheet.content.slice(1) };
+                tables[sheet.name] = {
+                    key: sheetId,
+                    name: sheet.name,
+                    headers: sheet.content[0] || [],
+                    rows: sheet.content.slice(1),
+                    source: sheet,
+                };
             }
         }
         return Object.keys(tables).length > 0 ? tables : null;
@@ -2780,7 +3171,7 @@
             if (isEditingOrder) currentTabName = null;
 
             if (currentTabName === TAB_DASHBOARD && config.dashboardPosition !== 'panel') currentTabName = null;
-            if (currentTabName && currentTabName !== TAB_DASHBOARD && !tables[currentTabName]) currentTabName = null;
+            if (currentTabName && currentTabName !== TAB_DASHBOARD && currentTabName !== TAB_RECALL && !tables[currentTabName]) currentTabName = null;
 
             let colorVal = HIGHLIGHT_COLORS[config.highlightColor];
         if (!colorVal && config.highlightColor && String(config.highlightColor).startsWith('#')) {
@@ -2800,7 +3191,7 @@
             const tableHeights = getTableHeights();
             let styleHeight = 'height:auto; max-height:500px;';
 
-            if (currentTabName && (tables[currentTabName] || currentTabName === TAB_DASHBOARD)) {
+            if (currentTabName && (tables[currentTabName] || currentTabName === TAB_DASHBOARD || currentTabName === TAB_RECALL)) {
                 const h = tableHeights[currentTabName];
                 styleHeight = h ? `height:${h}px; max-height:95vh;` : `height:60vh; max-height:95vh;`;
             }
@@ -2834,6 +3225,8 @@
             let contentHtml = '';
             if (currentTabName === TAB_DASHBOARD) {
                 contentHtml = renderDashboard(tables);
+            } else if (currentTabName === TAB_RECALL) {
+                contentHtml = renderRecallPanel(tables);
             } else if (currentTabName && tables[currentTabName]) {
                 contentHtml = renderTableContent(tables[currentTabName], currentTabName);
             }
@@ -2891,6 +3284,7 @@
                         ${orderControlsHtml}
                         <div class="acu-nav-tabs-area">
                             ${(showDash && config.dashboardPosition === 'panel') ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-tachometer-alt"></i><span>仪表盘</span></button>` : ''}
+                            <button class="acu-nav-btn ${currentTabName === TAB_RECALL ? 'active' : ''}" data-table="${TAB_RECALL}"><i class="fa-solid fa-magnifying-glass"></i><span>召回</span></button>
             `;
             orderedNames.forEach(name => {
                 if (hiddenTables.includes(name)) return;
@@ -3270,6 +3664,96 @@
         }
     };
 
+    const renderRecallCardList = (items, options = {}) => {
+        const list = (items || []).filter(Boolean);
+        if (!list.length) {
+            return `<div class="acu-recall-empty">${escapeHtml(options.emptyText || '暂无召回结果')}</div>`;
+        }
+        return `<div class="acu-recall-list">${list.map(item => {
+            lastRecallItemMap[item.id] = item;
+            const tags = (item.tags || []).map(tag => `<span class="acu-recall-pill">${escapeHtml(tag)}</span>`).join('');
+            const action = options.pinned
+                ? `<button type="button" class="acu-recall-action-btn" data-recall-action="unpin" data-recall-id="${escapeHtml(item.id)}" title="取消固定"><i class="fa-solid fa-xmark"></i><span>移除</span></button>`
+                : `<button type="button" class="acu-recall-action-btn" data-recall-action="pin" data-recall-id="${escapeHtml(item.id)}" title="固定到本轮提示词"><i class="fa-solid fa-thumbtack"></i><span>固定</span></button>`;
+            return `
+                <div class="acu-recall-card">
+                    <div class="acu-recall-card-header">
+                        <span class="acu-recall-card-icon"><i class="fa-solid ${escapeHtml(item.icon || 'fa-magnifying-glass')}"></i></span>
+                        <div class="acu-recall-card-title">${escapeHtml(item.title || '未命名')}</div>
+                    </div>
+                    <div class="acu-recall-card-meta">
+                        <span class="acu-recall-pill">${escapeHtml(item.kind || '召回')}</span>
+                        <span class="acu-recall-pill">${escapeHtml(item.tableName)} #${escapeHtml(item.rowLabel)}</span>
+                        <span class="acu-recall-pill ${item.injected ? 'injected' : ''}">${item.injected ? '参与注入' : '未注入'}</span>
+                        ${tags}
+                    </div>
+                    <div class="acu-recall-summary">${escapeHtml(item.summary || '无摘要')}</div>
+                    <div class="acu-recall-actions">
+                        <button type="button" class="acu-recall-action-btn" data-recall-action="copy" data-recall-id="${escapeHtml(item.id)}" title="复制召回文本"><i class="fa-solid fa-copy"></i><span>复制</span></button>
+                        <button type="button" class="acu-recall-action-btn" data-recall-action="fill" data-recall-id="${escapeHtml(item.id)}" title="填入输入框"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>填入</span></button>
+                        ${action}
+                    </div>
+                </div>
+            `;
+        }).join('')}</div>`;
+    };
+
+    const renderRecallPanel = (tables) => {
+        lastRecallItemMap = {};
+        const healthChecks = buildRecallHealthChecks(tables);
+        const query = String(recallSearchTerm || '').trim();
+        const items = collectRecallItems(tables, query);
+        const pinned = getPinnedRecallItems();
+        pinned.forEach(item => { if (item?.id) lastRecallItemMap[item.id] = item; });
+        const healthHtml = healthChecks.map(item => `
+            <div class="acu-recall-health-item ${escapeHtml(item.status)}">
+                <strong>${escapeHtml(item.label)}</strong>
+                <span>${escapeHtml(item.value)}</span>
+            </div>
+        `).join('');
+        const pinnedHtml = pinned.length ? `
+            <div class="acu-recall-section-title">
+                <span><i class="fa-solid fa-thumbtack"></i> 已固定到本轮</span>
+                <span style="display:flex; gap:6px;">
+                    <button type="button" class="acu-recall-action-btn" data-recall-action="fill-pinned" title="填入全部固定召回"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>填入全部</span></button>
+                    <button type="button" class="acu-recall-action-btn" data-recall-action="clear-pinned" title="清空固定召回"><i class="fa-solid fa-trash"></i><span>清空</span></button>
+                </span>
+            </div>
+            ${renderRecallCardList(pinned, { pinned: true, emptyText: '尚未固定召回' })}
+        ` : '';
+
+        return `
+            <div class="acu-panel-header">
+                <div class="acu-panel-title"><i class="fa-solid fa-magnifying-glass"></i> 剧情召回 / 记忆召回 <span style="color:var(--acu-text-sub);font-weight:normal;">${items.length}</span></div>
+                <div class="acu-header-actions">
+                    <div class="acu-header-btn-group" style="display:flex; gap:6px; align-items:center;">
+                        <button class="acu-header-btn acu-height-drag-handle" data-table="${TAB_RECALL}" title="按住拖动调整高度">
+                            <i class="fa-solid fa-arrows-up-down"></i>
+                        </button>
+                        <button class="acu-header-btn" id="acu-btn-close" title="关闭">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="acu-panel-content">
+                <div class="acu-recall-panel">
+                    <div class="acu-recall-toolbar">
+                        <input id="acu-recall-search-input" class="acu-recall-search" type="text" value="${escapeHtml(query)}" placeholder="搜索事件、线索、人物、地点、厉鬼、物品..." spellcheck="false" />
+                        <button type="button" class="acu-recall-action-btn" data-recall-action="clear-query" title="清空搜索"><i class="fa-solid fa-eraser"></i><span>清空</span></button>
+                    </div>
+                    <div class="acu-recall-health">${healthHtml}</div>
+                    ${pinnedHtml}
+                    <div class="acu-recall-section-title">
+                        <span><i class="fa-solid fa-list-check"></i> ${query ? '搜索结果' : '最近与高优先级召回候选'}</span>
+                        <span style="color:var(--acu-text-sub);font-weight:normal;">最多显示 80 条</span>
+                    </div>
+                    ${renderRecallCardList(items, { emptyText: query ? '未找到匹配的召回内容' : '当前关键召回表没有可显示记录' })}
+                </div>
+            </div>
+        `;
+    };
+
     const renderTableContent = (tableData, tableName) => {
         if (!tableData || !tableData.rows.length) return `<div class="acu-panel-header"><div class="acu-panel-title">${tableName} ${(tableData && tableData._missingInfo) ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : ((tableData && tableData._hasWarning) ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">0</span>')}</div><div class="acu-header-actions"><button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button></div></div><div class="acu-panel-content"><div style="text-align:center;color:var(--acu-text-sub);padding:40px 20px;"><i class="fa-solid fa-inbox" style="font-size:48px;opacity:0.3;margin-bottom:15px;"></i><div style="font-size:16px;margin-bottom:8px;">暂无数据</div><div style="font-size:12px;opacity:0.7;">该表格当前没有任何记录</div></div></div>`;
 
@@ -3470,6 +3954,22 @@
             closePanel();
         });
 
+        const renderRecallArea = (options = {}) => {
+            const $area = $('#acu-data-area');
+            const scrollTop = options.keepScroll ? ($area.find('.acu-panel-content').scrollTop() || 0) : 0;
+            $area.html(renderRecallPanel(tables)).addClass('visible');
+            bindDataAreaEvents();
+            if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
+            if (options.focusSearch) {
+                const input = $('#acu-recall-search-input')[0];
+                if (input) {
+                    input.focus();
+                    const len = input.value.length;
+                    try { input.setSelectionRange(len, len); } catch (e) {}
+                }
+            }
+        };
+
         const switchTab = (tableName) => {
             currentPage = 1;
             currentSearchTerm = '';
@@ -3478,6 +3978,11 @@
             if (tableName === TAB_DASHBOARD) {
                 $('#acu-data-area').html(renderDashboard(tables)).addClass('visible');
                 const h = getTableHeights()[TAB_DASHBOARD];
+                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
+                bindDataAreaEvents();
+            } else if (tableName === TAB_RECALL) {
+                $('#acu-data-area').html(renderRecallPanel(tables)).addClass('visible');
+                const h = getTableHeights()[TAB_RECALL];
                 $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
                 bindDataAreaEvents();
             } else if (tables[tableName]) {
@@ -3582,6 +4087,79 @@
                         bindDynamicContentEvents(); bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
                     }
                 }, 300);
+            });
+
+            let recallSearchDebounceTimer = null;
+            $('#acu-recall-search-input').off('input').on('input', function(e) {
+                e.stopPropagation();
+                const inputValue = $(this).val();
+                clearTimeout(recallSearchDebounceTimer);
+                recallSearchDebounceTimer = setTimeout(() => {
+                    recallSearchTerm = String(inputValue || '');
+                    try { localStorage.setItem(STORAGE_KEY_RECALL_QUERY, recallSearchTerm); } catch (err) {}
+                    renderRecallArea({ focusSearch: true });
+                }, 250);
+            });
+
+            $('[data-recall-action]').off('click').on('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const action = $(this).data('recall-action');
+                const id = $(this).attr('data-recall-id');
+                const item = id ? lastRecallItemMap[id] : null;
+
+                if (action === 'clear-query') {
+                    recallSearchTerm = '';
+                    try { localStorage.removeItem(STORAGE_KEY_RECALL_QUERY); } catch (err) {}
+                    renderRecallArea({ focusSearch: true });
+                    return;
+                }
+
+                if (action === 'clear-pinned') {
+                    savePinnedRecallItems([]);
+                    if (window.toastr) window.toastr.info('已清空固定召回');
+                    renderRecallArea({ keepScroll: true });
+                    return;
+                }
+
+                if (action === 'fill-pinned') {
+                    const prompt = buildPinnedRecallPrompt(getPinnedRecallItems());
+                    if (!prompt) {
+                        if (window.toastr) window.toastr.warning('尚未固定召回内容');
+                        return;
+                    }
+                    fillChatInput(prompt, { autoSend: false });
+                    return;
+                }
+
+                if (!item) {
+                    if (window.toastr) window.toastr.warning('召回内容已刷新，请重新选择');
+                    return;
+                }
+
+                if (action === 'copy') {
+                    const ok = await copyTextToClipboard(buildRecallItemText(item));
+                    if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制召回内容' : '复制失败，请手动选择文本');
+                    return;
+                }
+
+                if (action === 'fill') {
+                    fillChatInput(buildRecallItemText(item), { autoSend: false });
+                    return;
+                }
+
+                if (action === 'pin') {
+                    pinRecallItem(item);
+                    if (window.toastr) window.toastr.info('已固定到本轮召回');
+                    renderRecallArea({ keepScroll: true });
+                    return;
+                }
+
+                if (action === 'unpin') {
+                    unpinRecallItem(id);
+                    if (window.toastr) window.toastr.info('已取消固定');
+                    renderRecallArea({ keepScroll: true });
+                }
             });
 
             $('.acu-height-drag-handle').off('pointerdown').on('pointerdown', function(e) {
@@ -3817,7 +4395,7 @@
         if (isEditingOrder) {
             const { $ } = getCore();
             const newOrder = []; 
-            $('.acu-nav-tabs-area .acu-nav-btn').each(function() { const t = $(this).data('table'); if(t && t!==TAB_DASHBOARD) newOrder.push(t); });
+            $('.acu-nav-tabs-area .acu-nav-btn').each(function() { const t = $(this).data('table'); if(t && t!==TAB_DASHBOARD && t!==TAB_RECALL) newOrder.push(t); });
             saveTableOrder(newOrder);
             const newActionOrder = [];
             $('.acu-nav-actions-area .acu-action-btn').each(function() { if(this.id) newActionOrder.push(this.id); });
@@ -3833,8 +4411,14 @@
         const { $ } = getCore();
         let selectedEl = null;
 
-        const setup = (selector) => {
-             const $items = $(selector);
+        const setup = (selector, options = {}) => {
+             let $items = $(selector);
+             if (options.skipVirtualTabs) {
+                $items = $items.filter(function() {
+                    const tableName = $(this).data('table');
+                    return tableName !== TAB_DASHBOARD && tableName !== TAB_RECALL;
+                });
+             }
 
              $items.attr('draggable', false);
              $items.css('cursor', 'pointer');
@@ -3880,7 +4464,7 @@
              });
         };
 
-        setup('.acu-nav-tabs-area .acu-nav-btn');
+        setup('.acu-nav-tabs-area .acu-nav-btn', { skipVirtualTabs: true });
         setup('.acu-nav-actions-area .acu-action-btn');
     };
 
