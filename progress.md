@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-07-06 CST（🧭 新对话恢复快照：v8.5.4 已发布，下一步进入 P1 体验增强）
+
+**当前有效状态：**
+- ✅ 最新发布版为 `v8.5.4`，发布同步提交 `7a997c2 chore(release): publish mfrs v8.5.4` 已 push；planning 收口提交 `a219bf7 docs(planning): record mfrs v8.5.4 push` 已 push，当前 `origin/main` 指向 `a219bf7`。
+- ✅ P1 剧情/记忆召回前端化已完成并进入发布版：source `0acda89` → bot bundle `eef6274` / tag `v0.0.363` → publish sync `7a997c2`；发布版 PNG 为 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。
+- ✅ 已验证：`node --check`、`git diff --check`、`pnpm build`、worldbook gate `383/33/5851`、PNG `chara/ccv3` version `8.5.4` + `eef6274`×7、CDN 数据库前端 200 且含召回 marker、真页非 AI smoke（召回 tab/搜索/固定/填入）。
+- ✅ 当前工作树只剩既有无关 dirty：`.claude/worktrees/agent-aedb9d9f392ecb036`。不要提交或 revert 它。
+
+**新对话恢复步骤：**
+1. 读 `task_plan.md` 顶部“当前状态 / 当前任务清单 / 版本变更索引 / 需要提交的文件”。
+2. 读 `PROJECT_FLOW.md`，确认开发入口、真页验证边界、发布流程和“不要触发真实 AI / 不要点立即手动更新”的规则。
+3. 读本条 `progress.md` 顶部快照；需要 P1 召回验证细节时读 `findings.md` 顶部“P1 召回面板 smoke”。
+4. 运行 `git status --short --branch`，预期只看到 `.claude/worktrees/agent-aedb9d9f392ecb036` 无关 dirty。
+
+**下一步任务入口：**
+- 若用户要验收发布版：导入/替换 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`，确认角色版本 `8.5.4`、数据库前端有“召回”tab、14 表和固定状态栏仍正常。默认不发送消息、不触发真实 AI。
+- 若用户要继续开发：从 `task_plan.md` 的 **P1 数据库前端体验增强** 开始，优先做 14 表全局搜索、表状态总览、关键表详情预览、统一“选择/使用/复制/填入输入框”交互和错误提示增强。
+- 若要继续发布链路：严格遵循 `PROJECT_FLOW.md`，先改开发版、真页 smoke，再 source commit → bot bundle → `publish-card` 发布同步。
+
 ## 2026-07-06 CST（✅ v8.5.4 发布同步：P1 召回面板进入发布版 PNG）
 
 **目标：** 在 P1 开发版完成后，等待 bot bundle，并把发布版卡回填到包含召回面板的 CDN 资源。
