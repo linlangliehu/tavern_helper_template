@@ -66,12 +66,12 @@ This checklist verifies the database frontend after P1/P2/P3 changes. It is inte
 7. Reset current chat gacha data only in a disposable test chat.
 8. Confirm custom gacha catalog remains global and is not deleted by chat data reset.
 
-## 固定状态栏
+## 固定状态栏 / 输入框上方槽位
 
 1. Confirm `mfrs-fixed-status-host` exists above the send form.
-2. Confirm slot order is dashboard 10, frontend 20, status 30.
-3. Confirm database dashboard and 14-table frontend remain mounted after opening/closing the status panel.
-4. Confirm `pagehide` only clears status content and does not remove dashboard/frontend slots.
+2. Confirm only the database dashboard slot and 14-table frontend slot are used: dashboard order 10, frontend order 20.
+3. Confirm `mfrs-fixed-status-summary`, `mfrs-fixed-status-detail`, and the old `神秘复苏14表` fixed-status button are absent.
+4. Confirm database dashboard and 14-table frontend remain mounted after chat reload or frontend refresh.
 
 ## Cleanup
 

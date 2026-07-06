@@ -1082,16 +1082,20 @@
 
         const dashboardSlot = ensureSlot(FIXED_DASHBOARD_SLOT_ID, '10');
         const frontendSlot = ensureSlot(FIXED_FRONTEND_SLOT_ID, '20');
-        const statusSlot = ensureSlot(FIXED_STATUS_SLOT_ID, '30');
-
         Array.from(host.children).forEach(child => {
-            if (child === dashboardSlot || child === frontendSlot || child === statusSlot) return;
+            if (child === dashboardSlot || child === frontendSlot) return;
             if (child.classList.contains('acu-embedded-dashboard-container')) dashboardSlot.appendChild(child);
             else if (child.classList.contains('acu-wrapper')) frontendSlot.appendChild(child);
-            else if (child.id === 'mfrs-fixed-status-summary' || child.id === 'mfrs-fixed-status-detail') statusSlot.appendChild(child);
+            else if (
+                child.id === FIXED_STATUS_SLOT_ID ||
+                child.id === 'mfrs-fixed-status-summary' ||
+                child.id === 'mfrs-fixed-status-detail'
+            ) {
+                child.remove();
+            }
         });
 
-        host.append(dashboardSlot, frontendSlot, statusSlot);
+        host.append(dashboardSlot, frontendSlot);
         return host;
     };
 

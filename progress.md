@@ -1,5 +1,23 @@
 # Progress Log
 
+## 2026-07-06 CST（🔧 固定状态栏截图内容移除：开发版验证通过，待发布）
+
+**目标：** 按用户截图反馈，移除输入框上方固定状态栏展开/收起 UI 中的内容：死亡风险、复苏程度、状态、位置、阶段、当前灵异事件、驾驭厉鬼，以及“神秘复苏14表”按钮。
+
+**完成内容：**
+- ✅ `src/神秘复苏模拟器/脚本/固定状态栏/index.ts` 已精简为只维护 `mfrs-fixed-status-host`、`mfrs-fixed-dashboard-slot`、`mfrs-fixed-frontend-slot`，不再读取 `stat_data`、不再渲染 summary/detail、不开固定状态栏按钮。
+- ✅ `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 的固定 host 维护逻辑同步改为只保留 dashboard/frontend 两槽，并删除旧 `mfrs-fixed-status-slot`、`mfrs-fixed-status-summary`、`mfrs-fixed-status-detail`。
+- ✅ `scripts/verify-mfrs-database-frontend-p3.mjs` 增加防回归：固定状态栏脚本不得再包含 `summaryInnerHtml`、`detailInnerHtml`、`open-status`、`神秘复苏14表`、`生存状态`。
+- ✅ `mfrs-database-frontend-smoke.md` 更新为新验收口径：确认固定状态栏 UI 不存在，数据库仪表盘和 14 表前端仍保留。
+
+**验证：**
+- ✅ `pnpm build` 通过；数据库前端仍只有既有 404 KiB webpack performance warning，固定状态栏 bundle 为 1.4 KiB。
+- ✅ `pnpm verify:mfrs-frontend` 通过。
+- ✅ `git diff --check` 通过。
+- ✅ 真页运行态注入本地固定状态栏 bundle 后：`#mfrs-fixed-status-summary=false`、`#mfrs-fixed-status-detail=false`、`#mfrs-fixed-status-slot=false`，dashboard/frontend 两槽仍各有内容。未发送消息、未触发真实 AI、未调用 `manualUpdate()` / `triggerUpdate()`。
+
+**下一步：** 精确 source commit/push，等待 bot bundle，再回填 `publish-card` 生成 v8.5.6 发布版 PNG；本地 `dist/**` 构建产物和截图文件不提交。
+
 ## 2026-07-06 CST（✅ v8.5.5 发布同步：P1/P2/P3 数据库前端增强进入发布版 PNG）
 
 **目标：** 完成用户要求的任务 1-5：真页非 AI smoke → source commit/push → 等 bot bundle → 发布同步 → 发布验证。

@@ -1,5 +1,15 @@
 # Findings
 
+## 2026-07-06：固定状态栏截图内容应移除，保留数据库槽位即可
+
+**结论：** 用户截图中的内容来自 `脚本/固定状态栏/index.ts` 生成的固定状态栏 summary/detail：死亡风险、复苏程度、健康、当前灵异事件、驾驭厉鬼和“神秘复苏14表”按钮。当前角色卡不需要这块 UI；应移除状态栏内容，但保留输入框上方 host 及 dashboard/frontend 两个槽位，避免破坏数据库仪表盘和 14 表前端。
+
+**实现边界：**
+- 固定状态栏脚本只维护 `mfrs-fixed-status-host`、`mfrs-fixed-dashboard-slot`、`mfrs-fixed-frontend-slot`。
+- 不再读取 `stat_data`，不再注册消息刷新事件，不再渲染 `mfrs-fixed-status-summary` / `mfrs-fixed-status-detail`。
+- 数据库前端 host 维护逻辑也应删除旧 `mfrs-fixed-status-slot` / summary / detail，防止旧运行态残留。
+- 验收时允许数据库仪表盘自身仍显示风险、事件等摘要；那不是截图里的固定状态栏 UI。
+
 ## 2026-07-06：P1/P2/P3 真页 smoke 可通过本地 bundle 注入当前发布版运行态
 
 **结论：** 当前发布版角色仍是 v8.5.4 CDN 时，可以在 `TH-script--神秘复苏数据库前端--...3002` iframe 中用普通项目 dev path 注入 `http://localhost:5500/dist/神秘复苏模拟器/脚本/数据库前端/index.js`，验证本地 P1/P2/P3 开发版 UI。该方式只替换当前页面运行态，不改卡体、不触发 AI、不发送消息。

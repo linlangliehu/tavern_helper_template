@@ -14,11 +14,20 @@ const frontendDir = join(
   '\u811a\u672c',
   '\u6570\u636e\u5e93\u524d\u7aef',
 );
+const fixedStatusPath = join(
+  repoRoot,
+  'src',
+  '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668',
+  '\u811a\u672c',
+  '\u56fa\u5b9a\u72b6\u6001\u680f',
+  'index.ts',
+);
 const indexPath = join(frontendDir, 'index.ts');
 const configPath = join(frontendDir, 'frontend-config.js');
 const visualizerPath = join(frontendDir, 'v10_2_visualizer.js');
 const smokePath = join(repoRoot, 'mfrs-database-frontend-smoke.md');
 
+const fixedStatusSource = readFileSync(fixedStatusPath, 'utf8');
 const indexSource = readFileSync(indexPath, 'utf8');
 const configSource = readFileSync(configPath, 'utf8');
 const visualizerSource = readFileSync(visualizerPath, 'utf8');
@@ -122,10 +131,28 @@ for (const marker of [
   "const FIXED_STATUS_SLOT_ID = 'mfrs-fixed-status-slot'",
   "const dashboardSlot = ensureSlot(FIXED_DASHBOARD_SLOT_ID, '10');",
   "const frontendSlot = ensureSlot(FIXED_FRONTEND_SLOT_ID, '20');",
-  "const statusSlot = ensureSlot(FIXED_STATUS_SLOT_ID, '30');",
-  'host.append(dashboardSlot, frontendSlot, statusSlot);',
+  'child.id === FIXED_STATUS_SLOT_ID',
+  'host.append(dashboardSlot, frontendSlot);',
 ]) {
-  assertContains(visualizerSource, marker, 'fixed three-slot layout guard');
+  assertContains(visualizerSource, marker, 'fixed dashboard/frontend layout guard');
+}
+
+for (const marker of [
+  "const dashboardSlotId = 'mfrs-fixed-dashboard-slot';",
+  "const frontendSlotId = 'mfrs-fixed-frontend-slot';",
+  'function removeStatusUi',
+  'host.append(dashboardSlot, frontendSlot);',
+]) {
+  assertContains(fixedStatusSource, marker, 'fixed status UI removal guard');
+}
+for (const removedMarker of [
+  'function summaryInnerHtml',
+  'function detailInnerHtml',
+  'data-action="open-status"',
+  '\u795e\u79d8\u590d\u82cf14\u8868',
+  '\u751f\u5b58\u72b6\u6001',
+]) {
+  assert.ok(!fixedStatusSource.includes(removedMarker), `fixed status UI should not return: ${removedMarker}`);
 }
 
 for (const marker of [
