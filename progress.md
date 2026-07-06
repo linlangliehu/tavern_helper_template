@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-07-06 CST（✅ v8.5.2 完成：固定状态栏三槽布局 + 发布同步）
+
+**目标：** 接续用户给出的发布清单，从“等待 bot bundle Action 重建 dist + 打新 tag”开始，完成 v8.5.2 发布版回填、打包、验证、提交推送，并更新 planning。
+
+**完成内容：**
+- ✅ 确认远端 bot bundle 已完成：source `4f38920 feat(mfrs): split fixed status host into dashboard/frontend/status slots` 之后生成 bot bundle `80b09a8`，tag `v0.0.358`。
+- ✅ 为避免本地 `pnpm build` 生成的 tracked `dist/**` 阻塞快进，先将 3 个本地生成物暂存到 `stash@{0}`（`temp-before-release-sync-v8.5.2-generated`），随后 `git pull --ff-only` 到 `80b09a8`；保留无关 dirty `.claude/worktrees/agent-aedb9d9f392ecb036`。
+- ✅ 回填 `scripts/publish-card.mjs`：`CDN_REF=80b09a8`，`releaseVersion=8.5.2`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`：同步发布版 YAML 并替换 13 处链接，生成 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。
+- ✅ 发布验证通过：`git diff --check`；`node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（383 entries / 33 disabled / max enabled 5851）；PNG `chara`/`ccv3` 均为 `data.character_version=8.5.2`、@80b09a8×6、旧 @88fd7f1=0、旧 8.5.1=0；CDN smoke @80b09a8 6 个脚本均 HTTP 200。
+- ✅ 发布同步提交 `b568870 chore(release): publish mfrs v8.5.2` 已 push 到 `origin/main`，远端 tag `v0.0.359` 指向该提交。
+
+**验证备注：** 第一次 PNG 元数据脚本误按通用 `version` 路径读取，`chara version=None` 后已确认正确字段是 `data.character_version`，重新验证通过；这不是资源问题。
+
+**当前状态：** v8.5.2 发布资源已在 origin/main。用户重新导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 可获得 v8.5.2。建议可选真页验证输入框上方固定区域顺序为“数据库仪表盘 → 14 表前端 → 状态栏”，并确认 v8.5.1 的抽卡按聊天隔离未回归。
+
 ## 2026-07-05 CST（✅ v8.5.1 完成：抽卡调查点按聊天隔离 + 远端 CDN 发布）
 
 **目标：** 继续完成用户要求的两个后续：①把“调查点按聊天隔离”最新变更写入 planning；②走正式远端发布链路，生成新的 CDN bundle hash，而不是只依赖本地内联 PNG。
