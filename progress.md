@@ -17,6 +17,7 @@
 - ✅ 发布版 YAML：version `8.5.4`，链接指向 `@eef6274`。
 - ✅ PNG `chara`/`ccv3`：version `8.5.4`，各含 `eef6274` 7 次，旧 `80b09a8` 0，旧 `8.5.3` 0。
 - ✅ CDN smoke：`@eef6274` 数据库前端 `200/382475` 且含召回 marker；固定状态栏 `200/9552`。
+- ✅ 发布同步提交 `7a997c2 chore(release): publish mfrs v8.5.4` 已 push 到 `origin/main`；`cdn.jsdelivr.net` 可读取该提交的发布版 YAML，含 `8.5.4` 与 `eef6274`×7。
 
 **副作用边界：** 未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。本地构建 dist 残留已在快进 bot bundle 前暂存到 `stash@{0}`，发布同步提交不应包含本地 `dist/**` 噪声或 `.claude/worktrees/**`。
 
