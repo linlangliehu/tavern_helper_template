@@ -1,5 +1,26 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ v8.5.10 发布同步完成：verified writeback + persistence）
+
+**执行内容：**
+- ✅ source commit 已推送：`1a3c660 fix(mfrs): persist verified mvu writeback`。
+- ✅ GitHub bot bundle 已生成并拉取：`c576add [bot] bundle`，tag `v0.0.381`；bot dist 仅更新 `dist/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.js`。
+- ✅ 验证 bot dist 命中 `TavernHelper`、`saveChat`、`persisted`、direct `chat.variables[...]` 写回逻辑。
+- ✅ 回填 `scripts/publish-card.mjs`：`CDN_REF=c576add`，`CDN_CACHE_VERSION=phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v8510`，`releaseVersion=8.5.10`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，重新生成发布版 YAML/PNG。
+
+**发布验证：**
+- ✅ `node --check scripts\publish-card.mjs`
+- ✅ `node scripts\verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src\神秘复苏模拟器发布版\神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ 发布版 YAML：`8.5.10`×1、`c576add`×7、`mvu-v8510`×8；旧 `8.5.9`、`e36f8aa`、`mvu-v859`、localhost、127.0.0.1、`@main`、`@52b2e62` 均未命中。
+- ✅ 发布版 PNG：`chara` 与 `ccv3` 各含 `8.5.10`×1、`c576add`×7、`mvu-v8510`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 均为 0。
+- ✅ CDN smoke `@c576add`：hotfix、数据库 loader、数据库前端、消息内面板均 HTTP 200；hotfix 含 `TavernHelper/saveChat/persisted`，loader/前端含 `__mfrsScriptResourceUrls__`，消息内面板含 `MysteryMessagePanel/refreshMessage`，均无 stale ref。
+
+**边界：**
+- 未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+- `.tmp-mfrs-regex-backup-20260707.json` 与截图仍是本地参考文件，不提交。
+- 本条随 v8.5.10 发布同步提交。
+
 ## 2026-07-07 CST（🔧 v8.5.10 写回补强：TavernHelper fallback + saveChat 持久化）
 
 **执行内容：**
