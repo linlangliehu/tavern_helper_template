@@ -42,10 +42,13 @@ This checklist verifies the database frontend after P1/P2/P3 changes. It is inte
 
 1. Open `召回`.
 2. Confirm recall health checks are visible.
-3. Confirm the recall index covers 10 key tables.
-4. Search `鬼` and confirm results update.
-5. Pin one recall item, fill all pinned recall, then clear pins.
-6. Restore `#send_textarea` after the test.
+3. Confirm `自动召回状态` is visible and has separate `剧情召回` / `记忆召回` toggles.
+4. Confirm `本轮自动召回` shows only relevant matched items or a clear empty state.
+5. Confirm the recall index covers 10 key tables.
+6. Search `鬼` and confirm results update.
+7. Pin one recall item, fill all pinned recall, then clear pins.
+8. Optional no-AI probe: call `MysteryAcuVisualizer.getAutoRecallPreview()` and confirm it returns items/prompt metadata without sending a message.
+9. Restore `#send_textarea` after the test.
 
 ## 一致性
 

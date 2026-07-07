@@ -1,5 +1,106 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ 任务 5 收口：自动召回 source commit/push）
+
+**执行内容：**
+- ✅ 按 `planning-with-files-zh` 恢复上下文，已读取 `task_plan.md`、`progress.md`、`findings.md` 和 `PROJECT_FLOW.md`。
+- ✅ `session-catchup.py` 只报告 2026-07-04 EJS 旧残片，已由 v8.5.0-v8.5.6 与本轮自动召回记录覆盖，不作为当前停点。
+- ✅ 最终确认 dirty 边界：只提交 `v10_2_visualizer.js`、`scripts/verify-mfrs-database-frontend-p3.mjs`、`mfrs-database-frontend-smoke.md`、`task_plan.md`、`progress.md`、`findings.md`；未跟踪截图 `屏幕截图 2026-07-06 235029.png` 不提交，`dist/**` 无 dirty。
+- ⚠️ 首次 `git push origin main` 被拒，因为远端先前进到 `8e4e817 [bot] Bump deps`（只改 `package.json` / `pnpm-lock.yaml`）；已 `git fetch origin` 后 `git rebase origin/main`，无冲突。
+- ✅ rebase 后发现 `dist/神秘复苏模拟器/界面/状态栏/index.html` 又出现本地 dev build dirty；已确认是压缩产物变为开发构建的噪声，并恢复到 HEAD，不提交 `dist/**`。
+
+**提交前验证：**
+- ✅ `node --check src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`
+- ✅ `node --check src/神秘复苏模拟器/脚本/数据库前端/frontend-config.js`
+- ✅ `node --check scripts/verify-mfrs-database-frontend-p3.mjs`
+- ✅ `pnpm verify:mfrs-frontend`
+- ✅ `git diff --check`
+- ✅ `git diff --stat`
+- ✅ `git status --short --branch`
+- ✅ rebase 后重新跑 `pnpm verify:mfrs-frontend`、`git diff --check`、`git diff --stat origin/main..HEAD`、`git status --short --branch`
+
+**边界：** 本轮只做 source commit/push，不提交 `dist/**`，不提交截图，不运行 `publish-card`，不触发真实 AI，不发送消息，不点击“立即手动更新”，不调用 `manualUpdate()` / `triggerUpdate()`。
+
+**下一步：** 任务 6，等待 GitHub bot bundle 并验证新 `dist/神秘复苏模拟器/脚本/数据库前端/index.js` 含 `mfrs_auto_plot_memory_recall`、`自动剧情记忆召回`、`toggle-auto-plot`、`toggle-auto-memory` marker。
+
+## 2026-07-07 CST（✅ 任务 4 完成：自动召回真页非 AI smoke）
+
+**执行方式：**
+- ✅ 重新运行 `pnpm build` 生成本地数据库前端 bundle；仅数据库前端既有体积 warning。
+- ✅ 启动临时 `python -m http.server 5500 --bind 127.0.0.1`，确认本地 bundle `HTTP 200 length=424061` 且含 `mfrs_auto_plot_memory_recall` / `toggle-auto-plot` marker。
+- ✅ 用 Chrome DevTools MCP 在真页 `http://127.0.0.1:8000/` 的 `TH-script--神秘复苏数据库前端--...3002` iframe 临时注入本地 bundle。
+
+**通过项：**
+- ✅ 注入后 `MysteryAcuVisualizer` 暴露 `renderInterface`、`getAutoRecallPreview`、`buildAutoRecallPrompt`。
+- ✅ 召回 tab 显示“自动召回状态”、`剧情召回` / `记忆召回` 双开关和“本轮自动召回”列表。
+- ✅ `getAutoRecallPreview()` 返回 `enabled=true`、`itemCount=1`、`promptLength=447`；本轮自动召回命中 `事件纪要 #1 / SP0001`，prompt 含 `<自动剧情记忆召回>...</自动剧情记忆召回>`。
+- ✅ 开关联动正常：关闭剧情召回后记忆召回仍保留 1 条；再关闭记忆召回后 `enabled=false`、`itemCount=0`、`promptLength=0`，UI 显示“自动召回已关闭”；恢复开关后配置回到原始状态。
+- ✅ 边界确认：chat 长度 3 未变化，输入框保持空；未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`；smoke 期间无 console error/warn。
+
+**清理：**
+- ✅ 刷新 SillyTavern 页面以移除本地临时脚本和 `GENERATION_AFTER_COMMANDS` 监听器。
+- ✅ 刷新后重新选中 `神秘复苏模拟器发布版`，确认 `characterId=4`、脚本 iframe 恢复、发布版 `MysteryAcuVisualizer` 仅有 `renderInterface`，本地自动召回 API 不再残留。
+- ✅ 停止临时 5500 静态服务，删除 `.tmp-*` smoke 文件，精确还原 `dist/神秘复苏模拟器/界面/状态栏/index.html` 与 `dist/神秘复苏模拟器/脚本/数据库前端/index.js`。
+- ✅ 最终检查：`git diff --check` 通过，`pnpm verify:mfrs-frontend` 通过；`git status` 只剩本轮 6 个 tracked 文件 + 未跟踪截图，`dist/**` 无 dirty，5500 端口已停止。
+
+**当前停点：** 任务 4 已完成。下一步为任务 5：精确 source commit/push；候选文件仍为 `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`、`scripts/verify-mfrs-database-frontend-p3.mjs`、`mfrs-database-frontend-smoke.md`、planning 三件套；不要提交 `dist/**` 或截图文件。
+
+## 2026-07-07 CST（✅ 自动剧情/记忆召回开发版实现 + 静态验证）
+
+**完成内容：**
+- ✅ `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js` 已实现自动剧情/记忆召回：从最近聊天与当前输入框抽取上下文关键词，按召回 10 表标题/标签/摘要/全文相关性筛选，不全量注入。
+- ✅ 生成前监听 `GENERATION_AFTER_COMMANDS`，调用 `injectPrompts([...], { once: true })` 注入 `<自动剧情记忆召回>` 系统提示词；prompt id 为 `mfrs_auto_plot_memory_recall`，位置为 `in_chat`、`system`、depth 4。
+- ✅ 召回页新增“自动召回状态”、`剧情召回` / `记忆召回` 双开关和“本轮自动召回”列表；开关写入数据库前端配置，可控制对应类型是否自动注入。
+- ✅ 新增非 AI 调试入口：`MysteryAcuVisualizer.getAutoRecallPreview()` 和 `MysteryAcuVisualizer.buildAutoRecallPrompt()`。
+- ✅ 更新 `scripts/verify-mfrs-database-frontend-p3.mjs` marker 检查和 `mfrs-database-frontend-smoke.md` 的召回 smoke 清单。
+
+**验证：**
+- ✅ `node --check src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`
+- ✅ `node --check src/神秘复苏模拟器/脚本/数据库前端/frontend-config.js`
+- ✅ `node --check scripts/verify-mfrs-database-frontend-p3.mjs`
+- ✅ `pnpm verify:mfrs-frontend`
+- ✅ `git diff --check`
+- ✅ `pnpm build` 通过；仅数据库前端既有体积 warning，构建产生的 `dist/**` dirty 已精确还原。
+
+**边界与停点：**
+- 未触发真实 AI，未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- 当前待提交候选：`v10_2_visualizer.js`、`scripts/verify-mfrs-database-frontend-p3.mjs`、`mfrs-database-frontend-smoke.md`、planning 三件套。
+- 未跟踪截图 `屏幕截图 2026-07-06 235029.png` 不提交；`dist/**` 不提交。
+- 下一步：真页非 AI smoke，重点检查召回页自动状态、双开关、本轮自动召回和 `MysteryAcuVisualizer.getAutoRecallPreview()` / `buildAutoRecallPrompt()`；仍然不发送消息、不触发真实 AI。
+
+**本轮收口补记：**
+- ✅ 已更新 `task_plan.md` 当前状态/任务清单/提交边界，恢复入口现在指向“自动召回开发版已完成，待真页非 AI smoke / source commit / bot bundle / 发布同步”。
+- ✅ 已更新 `findings.md`，记录自动召回实现细节和反全量召回原则：不因 `item.injected` 为真就给所有候选加分。
+- ✅ 最终确认：`git status --short --branch` 只显示本轮 6 个 tracked 文件 + 未跟踪截图；`git diff --stat` 为 6 files / 483 insertions / 17 deletions；`git diff --check` 通过；`node --check` 两个数据库前端脚本与验证脚本通过；`pnpm verify:mfrs-frontend` 通过。
+
+## 2026-07-07 CST（🚧 新任务启动：自动剧情/记忆召回）
+
+**用户要求：** 前端“剧情召回/记忆召回”完全自动化，同时召回页可见本轮自动召回内容，并可在召回页开启/关闭剧情召回与记忆召回。召回不是全量注入，而是根据当前对话中出现的角色、灵异物品、厉鬼、杀人规律等关键词召回相关历史信息，核心目标是防止 AI 高楼层失忆。
+
+**执行边界：**
+- 不自动发送消息，不改写用户输入框。
+- 不点击“立即手动更新”，不调用 `manualUpdate()` / `triggerUpdate()`。
+- 优先使用生成前一次性提示词注入；召回页只负责配置、预览和手动补救。
+
+**初始核对：**
+- 当前 `main...origin/main`，业务源码无 dirty。
+- 既有 dirty 为 planning 三件套；未跟踪截图 `屏幕截图 2026-07-06 235029.png` 不提交。
+- `session-catchup.py` 检出 2026-07-04 EJS 旧摘要，已被 v8.5.0-v8.5.6 记录覆盖，不作为当前停点。
+
+## 2026-07-07 CST（🧭 新对话恢复快照：v8.5.6 已发布，dist 噪声已清理）
+
+**当前有效状态：**
+- ✅ 最新发布版为 `v8.5.6`，发布同步提交 `4f2202f chore(release): publish mfrs v8.5.6` 已在 `origin/main`，tag `v0.0.370`。
+- ✅ 用户应导入的角色卡是 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。
+- ✅ 当前角色卡数据已验证：version `8.5.6`，CDN ref `573807b`，worldbook `383 entries / 33 disabled / max enabled 5851`，无旧 `843db59` / `8.5.5` / localhost / 127.0.0.1 残留。
+- ✅ 截图 `屏幕截图 2026-07-06 235029.png` 中的固定状态栏 summary/detail 内容已移除：不再渲染死亡风险、复苏程度、健康、事件、驾驭厉鬼和“神秘复苏14表”按钮；数据库仪表盘和 14 表前端槽位仍保留。
+- ✅ 已核对并清理 `dist/神秘复苏模拟器/**` 本地 dev build 噪声；这些文件一度变为含 `eval(`/`sourceURL` 的开发构建产物，已还原为 HEAD/bot bundle 状态。当前业务文件干净；工作区剩余为 planning 三件套记录和未跟踪截图 `屏幕截图 2026-07-06 235029.png`。不要提交该截图，除非用户明确要求。
+
+**恢复注意：**
+- `session-catchup.py` 报告了一段旧的 2026-07-04 EJS 未同步摘要；该内容已被 v8.5.0-v8.5.6 后续记录覆盖，不是当前任务停点。
+- 新对话继续时先读 `task_plan.md` 顶部“当前状态 / 当前任务清单 / 需要提交的文件”，再读本条。
+- 若用户要验收发布版，默认只做真页只读/非 AI 检查：确认版本 `8.5.6`、CDN `573807b`、截图中的固定状态栏 UI 不存在、dashboard/frontend 仍可用；不要发送消息，不要点击“立即手动更新”，不要调用 `manualUpdate()` / `triggerUpdate()`。
+
 ## 2026-07-06 CST（✅ v8.5.6 发布同步：固定状态栏截图内容已移除）
 
 **目标：** 按用户截图反馈，移除输入框上方固定状态栏展开/收起 UI 中的内容：死亡风险、复苏程度、状态、位置、阶段、当前灵异事件、驾驭厉鬼，以及“神秘复苏14表”按钮。

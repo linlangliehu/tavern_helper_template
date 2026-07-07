@@ -81,6 +81,21 @@ for (const marker of [
 ]) {
   assertContains(visualizerSource, marker, 'P1/P2 frontend surface');
 }
+for (const marker of [
+  'buildAutoRecallResult',
+  'buildAutoRecallPrompt',
+  'registerAutoRecallInjection',
+  'GENERATION_AFTER_COMMANDS',
+  'injectPrompts',
+  'autoPlotRecallEnabled',
+  'autoMemoryRecallEnabled',
+  'data-recall-action="toggle-auto-plot"',
+  'data-recall-action="toggle-auto-memory"',
+  '本轮自动召回',
+  '<自动剧情记忆召回>',
+]) {
+  assertContains(visualizerSource, marker, 'automatic recall injection surface');
+}
 assertPattern(
   visualizerSource,
   /isVirtualTab[\s\S]{0,180}TAB_DASHBOARD[\s\S]{0,180}TAB_GLOBAL[\s\S]{0,180}TAB_RECALL[\s\S]{0,180}TAB_CONSISTENCY/,

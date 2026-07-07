@@ -26,6 +26,7 @@
     const STORAGE_KEY_GLOBAL_QUERY = 'acu_mfrs_global_query_v1';
     const STORAGE_KEY_RECALL_QUERY = 'acu_mfrs_recall_query_v1';
     const STORAGE_KEY_RECALL_PINS = 'acu_mfrs_recall_pins_v1';
+    const AUTO_RECALL_PROMPT_ID = 'mfrs_auto_plot_memory_recall';
     const isVirtualTab = (tableName) => [TAB_DASHBOARD, TAB_GLOBAL, TAB_RECALL, TAB_CONSISTENCY].includes(tableName);
     const getFrontendConfig = () => {
         try {
@@ -55,6 +56,8 @@
     let globalSearchTerm = localStorage.getItem(STORAGE_KEY_GLOBAL_QUERY) || '';
     let recallSearchTerm = localStorage.getItem(STORAGE_KEY_RECALL_QUERY) || '';
     let lastRecallItemMap = {};
+    let lastAutoRecallResult = null;
+    let autoRecallListenerRegistered = false;
     let lastGlobalItemMap = {};
     let lastTableDataError = '';
     
@@ -519,6 +522,7 @@
                     summary,
                     tags: tagParts.slice(0, 5),
                     injected,
+                    searchText: `${tableName} ${title} ${summary} ${tagParts.join(' ')} ${rowText}`,
                     score,
                 });
             });
@@ -532,6 +536,282 @@
                 return a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex;
             })
             .slice(0, 80);
+    };
+
+    const AUTO_RECALL_STOPWORDS = new Set([
+        '当前', '现在', '刚才', '然后', '继续', '需要', '应该', '可以', '这个', '那个', '什么', '怎么', '为什么',
+        '玩家', '用户', '助手', '回复', '剧情', '记忆', '召回', '信息', '内容', '数据', '状态', '进行', '没有',
+    ]);
+
+    const clampRecallNumber = (value, min, max, fallback) => {
+        const num = Number(value);
+        if (!Number.isFinite(num)) return fallback;
+        return Math.max(min, Math.min(max, Math.round(num)));
+    };
+
+    const getAutoRecallConfig = () => {
+        const config = getConfig();
+        return {
+            plotEnabled: config.autoPlotRecallEnabled !== false,
+            memoryEnabled: config.autoMemoryRecallEnabled !== false,
+            maxItems: clampRecallNumber(config.autoRecallMaxItems, 2, 16, 8),
+            maxChars: clampRecallNumber(config.autoRecallMaxChars, 800, 6000, 2400),
+            recentMessages: clampRecallNumber(config.autoRecallRecentMessages, 2, 20, 8),
+        };
+    };
+
+    const getAutoRecallBucket = (item) => String(item?.kind || '') === '记忆' ? 'memory' : 'plot';
+
+    const isAutoRecallKindEnabled = (item, config = getAutoRecallConfig()) => {
+        const bucket = getAutoRecallBucket(item);
+        return bucket === 'memory' ? config.memoryEnabled : config.plotEnabled;
+    };
+
+    const getCurrentInputText = () => {
+        try {
+            const doc = getHostDocument();
+            const ta = doc.getElementById('send_textarea') || document.getElementById('send_textarea');
+            return normalizePromptText(ta?.value || '');
+        } catch (e) {
+            return '';
+        }
+    };
+
+    const readRecentChatTexts = (limit = 8) => {
+        const out = [];
+        try {
+            const context = getSillyTavernContext();
+            const chat = Array.isArray(context?.chat) ? context.chat : [];
+            chat.slice(-limit).forEach(msg => {
+                const text = normalizePromptText(msg?.mes || msg?.message || msg?.text || '');
+                if (text) out.push(`${msg?.is_user ? '用户' : 'AI'}：${text}`);
+            });
+        } catch (e) {}
+        if (out.length) return out;
+        try {
+            const doc = getHostDocument();
+            Array.from(doc.querySelectorAll('#chat .mes')).slice(-limit).forEach(node => {
+                const text = normalizePromptText(node.textContent || '');
+                if (text) out.push(text);
+            });
+        } catch (e) {}
+        return out;
+    };
+
+    const buildAutoRecallContextText = (config = getAutoRecallConfig()) => {
+        const parts = [...readRecentChatTexts(config.recentMessages), getCurrentInputText()];
+        return normalizePromptText(parts.filter(Boolean).join('\n')).slice(-12000);
+    };
+
+    const addAutoRecallKeyword = (set, value) => {
+        const text = normalizePromptText(value)
+            .replace(/^[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+|[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+$/g, '');
+        if (!text || text.length < 2 || text.length > 24) return;
+        if (/^\d+$/.test(text) || AUTO_RECALL_STOPWORDS.has(text)) return;
+        set.add(text);
+    };
+
+    const extractAutoRecallKeywords = (contextText, items = []) => {
+        const keywords = new Set();
+        const text = normalizePromptText(contextText);
+        const lower = text.toLowerCase();
+        const domainPatterns = [
+            /[\u4e00-\u9fa5A-Za-z0-9_]{0,8}(?:厉鬼|鬼域|鬼奴|鬼差|鬼眼|鬼烛|鬼镜|鬼|杀人规律|规律|灵异物品|线索|档案|事件|地点|驭鬼者|总部)[\u4e00-\u9fa5A-Za-z0-9_]{0,8}/g,
+            /[A-Za-z][A-Za-z0-9_-]{1,31}/g,
+        ];
+        domainPatterns.forEach(pattern => {
+            for (const match of text.matchAll(pattern)) addAutoRecallKeyword(keywords, match[0]);
+        });
+        text.split(/[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+/)
+            .forEach(part => addAutoRecallKeyword(keywords, part));
+        items.forEach(item => {
+            [item.title, ...(item.tags || [])].forEach(term => {
+                const clean = normalizePromptText(term);
+                if (clean.length >= 2 && lower.includes(clean.toLowerCase())) addAutoRecallKeyword(keywords, clean);
+            });
+        });
+        return Array.from(keywords).sort((a, b) => b.length - a.length).slice(0, 24);
+    };
+
+    const mergePinnedRecallCandidates = (items) => {
+        const byId = new Map();
+        (items || []).forEach(item => {
+            if (item?.id) byId.set(item.id, item);
+        });
+        getPinnedRecallItems().forEach(item => {
+            if (!item?.id || byId.has(item.id)) return;
+            byId.set(item.id, {
+                ...item,
+                tags: item.tags || [],
+                icon: item.icon || 'fa-thumbtack',
+                tableKey: item.tableKey || '',
+                rowIndex: Number.isFinite(item.rowIndex) ? item.rowIndex : 0,
+                searchText: `${item.tableName || ''} ${item.title || ''} ${item.summary || ''} ${(item.tags || []).join(' ')}`,
+            });
+        });
+        return Array.from(byId.values());
+    };
+
+    const scoreAutoRecallItem = (item, keywords, pinnedIds) => {
+        let score = pinnedIds.has(item.id) ? 80 : 0;
+        const hits = pinnedIds.has(item.id) ? ['固定'] : [];
+        const title = normalizePromptText(item.title).toLowerCase();
+        const tags = normalizePromptText((item.tags || []).join(' ')).toLowerCase();
+        const summary = normalizePromptText(item.summary).toLowerCase();
+        const haystack = normalizePromptText(item.searchText || `${item.tableName} ${item.kind} ${item.title} ${item.summary} ${(item.tags || []).join(' ')}`).toLowerCase();
+        keywords.forEach(keyword => {
+            const k = String(keyword || '').toLowerCase();
+            if (!k || k.length < 2) return;
+            let matched = false;
+            if (title.includes(k)) { score += 18; matched = true; }
+            else if (tags.includes(k)) { score += 12; matched = true; }
+            else if (summary.includes(k)) { score += 7; matched = true; }
+            else if (haystack.includes(k)) { score += 4; matched = true; }
+            if (matched && !hits.includes(keyword)) hits.push(keyword);
+        });
+        return { score, hits: hits.slice(0, 5) };
+    };
+
+    const fitAutoRecallBudget = (items, config) => {
+        const selected = [];
+        let used = 0;
+        for (const item of items) {
+            if (selected.length >= config.maxItems) break;
+            const text = buildRecallItemText(item).replace(/\n/g, '；');
+            const nextUsed = used + text.length + 8;
+            if (selected.length && nextUsed > config.maxChars) continue;
+            selected.push(item);
+            used = nextUsed;
+        }
+        return selected;
+    };
+
+    const buildAutoRecallPrompt = (result) => {
+        const items = (result?.items || []).filter(Boolean);
+        if (!items.length) return '';
+        const keywords = (result.keywords || []).slice(0, 10).join(' / ') || '无显式关键词';
+        return [
+            '<自动剧情记忆召回>',
+            '以下内容由神秘复苏数据库前端按当前对话自动筛选，用于防止高楼层遗忘。只参考已记录事实；若与最新对话或当前 MVU 状态冲突，以最新上下文为准。',
+            `命中关键词：${keywords}`,
+            ...items.map((item, index) => `${index + 1}. ${buildRecallItemText(item).replace(/\n/g, '；')}`),
+            '</自动剧情记忆召回>',
+        ].join('\n');
+    };
+
+    const buildAutoRecallResult = (tables) => {
+        const config = getAutoRecallConfig();
+        const enabled = config.plotEnabled || config.memoryEnabled;
+        const baseItems = collectRecallItems(tables || {}, '');
+        const candidates = mergePinnedRecallCandidates(baseItems).filter(item => isAutoRecallKindEnabled(item, config));
+        const pinnedIds = new Set(getPinnedRecallItems().map(item => item.id));
+        const contextText = buildAutoRecallContextText(config);
+        const keywords = extractAutoRecallKeywords(contextText, candidates);
+        if (!enabled) {
+            return { config, enabled, contextText, keywords, items: [], prompt: '', updatedAt: Date.now(), injected: false };
+        }
+        const scored = candidates.map(item => {
+            const { score, hits } = scoreAutoRecallItem(item, keywords, pinnedIds);
+            const tags = uniqRecallParts([...(item.tags || []), ...hits.map(hit => `命中:${hit}`)]).slice(0, 6);
+            return { ...item, tags, autoInjected: true, injected: true, autoScore: score, autoMatchedKeywords: hits };
+        });
+        const selectedByScore = scored
+            .filter(item => item.autoScore > 0)
+            .sort((a, b) => {
+                if (b.autoScore !== a.autoScore) return b.autoScore - a.autoScore;
+                if ((b.rowIndex || 0) !== (a.rowIndex || 0)) return (b.rowIndex || 0) - (a.rowIndex || 0);
+                return String(a.tableName || '').localeCompare(String(b.tableName || ''), 'zh-CN');
+            });
+        const selectedIds = new Set(selectedByScore.map(item => item.id));
+        const fallbackChronicle = config.memoryEnabled
+            ? scored
+                .filter(item => item.tableKey === 'sheet_chronicle' && !selectedIds.has(item.id))
+                .sort((a, b) => (b.rowIndex || 0) - (a.rowIndex || 0))
+                .slice(0, 2)
+            : [];
+        const items = fitAutoRecallBudget([...selectedByScore, ...fallbackChronicle], config);
+        const result = { config, enabled, contextText, keywords, items, updatedAt: Date.now(), injected: false };
+        result.prompt = buildAutoRecallPrompt(result);
+        return result;
+    };
+
+    const buildAutoRecallResultFromCurrentData = () => {
+        const rawData = getTableData();
+        const tables = rawData ? (processJsonData(rawData) || {}) : {};
+        return buildAutoRecallResult(tables);
+    };
+
+    const getPromptInjectionApi = () => {
+        const host = getHost();
+        const th = host.TavernHelper || window.TavernHelper || {};
+        return {
+            injectPrompts: th.injectPrompts || (typeof injectPrompts === 'function' ? injectPrompts : null) || host.injectPrompts || window.injectPrompts,
+            uninjectPrompts: th.uninjectPrompts || (typeof uninjectPrompts === 'function' ? uninjectPrompts : null) || host.uninjectPrompts || window.uninjectPrompts,
+        };
+    };
+
+    const injectAutoRecallPrompt = (result) => {
+        const prompt = result?.prompt || buildAutoRecallPrompt(result);
+        if (!prompt) return false;
+        const api = getPromptInjectionApi();
+        if (typeof api.injectPrompts !== 'function') {
+            console.warn('[MFRS Auto Recall] injectPrompts 不可用，自动召回未注入。');
+            return false;
+        }
+        try {
+            if (typeof api.uninjectPrompts === 'function') api.uninjectPrompts([AUTO_RECALL_PROMPT_ID]);
+        } catch (e) {}
+        api.injectPrompts([{
+            id: AUTO_RECALL_PROMPT_ID,
+            position: 'in_chat',
+            depth: 4,
+            role: 'system',
+            content: prompt,
+            should_scan: true,
+        }], { once: true });
+        return true;
+    };
+
+    const handleAutoRecallGeneration = () => {
+        const result = buildAutoRecallResultFromCurrentData();
+        const injected = injectAutoRecallPrompt(result);
+        lastAutoRecallResult = { ...result, injected, updatedAt: Date.now() };
+        if (injected) {
+            console.info(`[MFRS Auto Recall] 已注入自动剧情/记忆召回：${result.items.length} 条。`);
+        }
+        return injected;
+    };
+
+    const registerAutoRecallInjection = () => {
+        if (autoRecallListenerRegistered) return true;
+        const host = getHost();
+        const localEventOn = (typeof eventOn === 'function' ? eventOn : null) || host.eventOn || window.eventOn;
+        const localTavernEvents = (typeof tavern_events !== 'undefined' ? tavern_events : null) || host.tavern_events || window.tavern_events || {};
+        const eventName = localTavernEvents.GENERATION_AFTER_COMMANDS || 'GENERATION_AFTER_COMMANDS';
+        const listener = (_type, _option, dryRun) => {
+            if (dryRun) return;
+            handleAutoRecallGeneration();
+        };
+        if (typeof localEventOn === 'function') {
+            localEventOn(eventName, listener);
+            autoRecallListenerRegistered = true;
+            return true;
+        }
+        try {
+            const context = getSillyTavernContext();
+            const eventSource = context?.eventSource || host.eventSource;
+            const eventTypes = context?.eventTypes || context?.event_types || host.event_types || {};
+            const nativeEventName = eventTypes.GENERATION_AFTER_COMMANDS || eventName;
+            if (eventSource && typeof eventSource.on === 'function') {
+                eventSource.on(nativeEventName, listener);
+                autoRecallListenerRegistered = true;
+                return true;
+            }
+        } catch (e) {
+            console.warn('[MFRS Auto Recall] 注册生成前召回监听失败:', e);
+        }
+        console.warn('[MFRS Auto Recall] 未找到 GENERATION_AFTER_COMMANDS 事件通道，自动召回暂不可用。');
+        return false;
     };
 
     const buildRecallHealthChecks = (tables) => {
@@ -953,6 +1233,11 @@
         collapsePosition: 'center',
         frontendPosition: 'fixed_status',
         dashboardPosition: 'fixed_status',
+        autoPlotRecallEnabled: true,
+        autoMemoryRecallEnabled: true,
+        autoRecallMaxItems: 8,
+        autoRecallMaxChars: 2400,
+        autoRecallRecentMessages: 8,
         dbTheme: 'default',
         dbTransparentMap: {}
     };
@@ -1869,6 +2154,14 @@
                 .acu-recall-health-item.ok { border-color:rgba(39,174,96,0.45); }
                 .acu-recall-health-item.warn { border-color:rgba(245,158,11,0.55); }
                 .acu-recall-health-item.error { border-color:rgba(239,68,68,0.65); }
+                .acu-auto-recall-box { display:flex; flex-direction:column; gap:9px; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-card-bg); padding:10px; }
+                .acu-auto-recall-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+                .acu-auto-recall-switches { display:flex; flex-wrap:wrap; gap:7px; }
+                .acu-auto-recall-toggle { min-width:118px; min-height:32px; display:inline-flex; align-items:center; justify-content:center; gap:6px; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-btn-bg); color:var(--acu-text-sub); cursor:pointer; font-size:12px; font-weight:700; padding:6px 9px; }
+                .acu-auto-recall-toggle.active { color:var(--acu-btn-active-text); background:var(--acu-btn-active-bg); border-color:transparent; }
+                .acu-auto-recall-toggle:hover { filter:brightness(1.05); border-color:var(--acu-highlight); }
+                .acu-auto-recall-meta { display:flex; flex-wrap:wrap; gap:6px; color:var(--acu-text-sub); font-size:11px; }
+                .acu-auto-recall-note { color:var(--acu-text-sub); font-size:12px; line-height:1.55; }
                 .acu-recall-section-title { display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--acu-highlight); font-size:13px; font-weight:700; }
                 .acu-recall-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap:10px; }
                 .acu-recall-card { min-width:0; display:flex; flex-direction:column; gap:8px; border:1px solid var(--acu-border); border-radius:8px; background:var(--acu-card-bg); padding:11px; }
@@ -3882,11 +4175,52 @@
         }).join('')}</div>`;
     };
 
+    const renderAutoRecallStatus = (autoResult) => {
+        const config = autoResult.config || getAutoRecallConfig();
+        const plotClass = config.plotEnabled ? 'active' : '';
+        const memoryClass = config.memoryEnabled ? 'active' : '';
+        const keywords = (autoResult.keywords || []).slice(0, 8);
+        const keywordText = keywords.length ? keywords.join(' / ') : '无显式关键词';
+        const lastText = lastAutoRecallResult?.injected
+            ? `上次已注入 ${lastAutoRecallResult.items?.length || 0} 条`
+            : '等待下一轮生成';
+        const promptState = (!config.plotEnabled && !config.memoryEnabled)
+            ? '自动召回已关闭'
+            : (autoResult.items || []).length
+                ? '生成前自动注入'
+                : '暂无相关命中';
+        return `
+            <div class="acu-auto-recall-box">
+                <div class="acu-auto-recall-head">
+                    <div class="acu-recall-section-title" style="margin:0;">
+                        <span><i class="fa-solid fa-wand-magic-sparkles"></i> 自动召回状态</span>
+                    </div>
+                    <div class="acu-auto-recall-switches">
+                        <button type="button" class="acu-auto-recall-toggle ${plotClass}" data-recall-action="toggle-auto-plot" title="开启或关闭剧情召回自动注入">
+                            <i class="fa-solid ${config.plotEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}"></i><span>剧情召回</span>
+                        </button>
+                        <button type="button" class="acu-auto-recall-toggle ${memoryClass}" data-recall-action="toggle-auto-memory" title="开启或关闭记忆召回自动注入">
+                            <i class="fa-solid ${config.memoryEnabled ? 'fa-toggle-on' : 'fa-toggle-off'}"></i><span>记忆召回</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="acu-auto-recall-meta">
+                    <span class="acu-recall-pill injected">${escapeHtml(promptState)}</span>
+                    <span class="acu-recall-pill">条数 ${escapeHtml((autoResult.items || []).length)}/${escapeHtml(config.maxItems)}</span>
+                    <span class="acu-recall-pill">预算 ${escapeHtml(config.maxChars)} 字</span>
+                    <span class="acu-recall-pill">${escapeHtml(lastText)}</span>
+                </div>
+                <div class="acu-auto-recall-note">命中关键词：${escapeHtml(keywordText)}</div>
+            </div>
+        `;
+    };
+
     const renderRecallPanel = (tables) => {
         lastRecallItemMap = {};
         const healthChecks = buildRecallHealthChecks(tables);
         const query = String(recallSearchTerm || '').trim();
         const items = collectRecallItems(tables, query);
+        const autoResult = buildAutoRecallResult(tables);
         const pinned = getPinnedRecallItems();
         pinned.forEach(item => { if (item?.id) lastRecallItemMap[item.id] = item; });
         const healthHtml = healthChecks.map(item => `
@@ -3927,6 +4261,12 @@
                         <button type="button" class="acu-recall-action-btn" data-recall-action="clear-query" title="清空搜索"><i class="fa-solid fa-eraser"></i><span>清空</span></button>
                     </div>
                     <div class="acu-recall-health">${healthHtml}</div>
+                    ${renderAutoRecallStatus(autoResult)}
+                    <div class="acu-recall-section-title">
+                        <span><i class="fa-solid fa-bolt"></i> 本轮自动召回</span>
+                        <span style="color:var(--acu-text-sub);font-weight:normal;">生成前一次性注入</span>
+                    </div>
+                    ${renderRecallCardList(autoResult.items, { emptyText: '当前对话没有命中可自动召回的剧情/记忆内容' })}
                     ${pinnedHtml}
                     <div class="acu-recall-section-title">
                         <span><i class="fa-solid fa-list-check"></i> ${query ? '搜索结果' : '最近与高优先级召回候选'}</span>
@@ -4599,6 +4939,22 @@
                         return;
                     }
                     fillChatInput(prompt, { autoSend: false });
+                    return;
+                }
+
+                if (action === 'toggle-auto-plot') {
+                    const config = getAutoRecallConfig();
+                    saveConfig({ autoPlotRecallEnabled: !config.plotEnabled });
+                    if (window.toastr) window.toastr.info(`自动剧情召回已${config.plotEnabled ? '关闭' : '开启'}`);
+                    renderRecallArea({ keepScroll: true });
+                    return;
+                }
+
+                if (action === 'toggle-auto-memory') {
+                    const config = getAutoRecallConfig();
+                    saveConfig({ autoMemoryRecallEnabled: !config.memoryEnabled });
+                    if (window.toastr) window.toastr.info(`自动记忆召回已${config.memoryEnabled ? '关闭' : '开启'}`);
+                    renderRecallArea({ keepScroll: true });
                     return;
                 }
 
@@ -5414,6 +5770,8 @@
                  host.MysteryAcuVisualizer = {
                      ...(host.MysteryAcuVisualizer || {}),
                      renderInterface,
+                     getAutoRecallPreview: buildAutoRecallResultFromCurrentData,
+                     buildAutoRecallPrompt: () => buildAutoRecallResultFromCurrentData().prompt,
                  };
                  const api = getCore().getDB();
                  if (api.registerTableUpdateCallback) {
@@ -5422,6 +5780,7 @@
                  }
                  // 注册被动货币获取监听器
                  registerCurrencyListeners();
+                 registerAutoRecallInjection();
                  isInitialized = true;
              } else setTimeout(loop, 1000);
         };
