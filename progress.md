@@ -1,5 +1,19 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ v8.5.12 远端发布 smoke 完成）
+
+**执行内容：**
+- ✅ 发布同步提交已推送：`0eafa0e chore(release): publish mfrs v8.5.12`。
+- ✅ 远端 `@0eafa0e` 发布版 YAML HTTP 200，长度 168556，含 `8.5.12`×1、`8b3ea67`×7、`mvu-v8512`×8；旧 `8.5.11/15c2feb/mvu-v8511`、localhost、127.0.0.1、`@main`、`@52b2e62` 均 0。
+- ✅ 远端 `@0eafa0e` 发布版 PNG HTTP 200，大小 7,752,534 bytes。
+- ✅ 远端 PNG worldbook gate 通过：383 entries / 33 disabled / max enabled 5851。
+- ✅ 远端 PNG `chara` 与 `ccv3` 各含 `8.5.12`×1、`8b3ea67`×7、`mvu-v8512`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 均 0。
+- ✅ 清理临时远端检查文件 `.tmp-remote-v8512.png`。
+
+**当前状态：**
+- v8.5.12 已完成 source → bot bundle → publish-card → 发布同步 push → 远端 YAML/PNG smoke。
+- 本轮没有触发真实 AI、没有发送消息、没有点击“立即手动更新”、没有调用 `manualUpdate()` / `triggerUpdate()`。
+
 ## 2026-07-07 CST（✅ v8.5.12 发布同步：消息内面板最终渲染兜底）
 
 **执行内容：**
