@@ -1,5 +1,25 @@
 # Progress Log
 
+## 2026-07-07 CST（🔎 真页验证 v8.5.10 + 修复“未知行动”显示）
+
+**执行内容：**
+- ✅ 使用 Chrome DevTools MCP 只读验证当前 SillyTavern 页；未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ 当前角色为 `神秘复苏模拟器发布版`，脚本资源为 `@c576add ... mvu-v8510`。
+- ✅ 最新 AI 楼层 #2 的 `chat[2].variables[0].stat_data` 已写入，`Mvu.getMvuData({ type:'message', message_id:2 })` 读到同样摘要：`姓名=次卧室`、`身份=初级驭鬼者`、`所在位置=大昌市第七中学教室`、`事件代号=七中灵异事件`、`行动建议.length=4`。
+- ✅ 确认“未知行动”不是 MVU 写回失败：当前变量 `行动建议` 有中文字段 `选项/思路/主要风险/预期收益/死亡风险/复苏风险`；当前发布的消息内面板按钮仍显示 `A/B/C/D 未知行动`。
+- ✅ 修复 `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：行动建议按钮优先读取 `选项/思路`，并显示风险/收益/死亡/复苏摘要；点击按钮填入 `思路`。
+- ✅ `scripts/verify-mfrs-mvu-hotfix-regressions.mjs` 加静态 gate，防止消息内面板再退回只读 `label/text`。
+
+**验证：**
+- ✅ `node --check scripts\verify-mfrs-mvu-hotfix-regressions.mjs`
+- ✅ `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `git diff --check`
+- ✅ `pnpm build` 通过，仅数据库前端 416 KiB 既有 warning。
+
+**当前停点：**
+- v8.5.10 写回修复已验证成功。
+- “未知行动”显示修复是新的 source 候选，待 source commit/push → bot bundle → 发布同步，建议版本 v8.5.11。
+
 ## 2026-07-07 CST（✅ v8.5.10 远端发布 smoke 完成）
 
 **执行内容：**

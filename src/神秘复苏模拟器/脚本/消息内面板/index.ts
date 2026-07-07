@@ -84,13 +84,21 @@ function buildStatusTabHtml(data: StatusData): string {
     ? ghostList.map((g: any) => `<div class="mfrs-msg-ghost-item">${_.escape(valueText(g.代号 || g.厉鬼名称, '未命名厉鬼'))}</div>`).join('')
     : '<div class="mfrs-msg-empty">暂无驾驭厉鬼</div>';
 
-  const suggestions = data.行动建议 || [];
+  const suggestions = Array.isArray(data.行动建议) ? data.行动建议 : [];
   const suggestionsHtml = suggestions.length
     ? suggestions
-        .map(
-          (s: any, i: number) =>
-            `<button class="mfrs-msg-action-btn" data-action="${_.escape(s.text || s.label || '')}"><span class="mfrs-msg-action-key">${String.fromCharCode(65 + i)}</span><span class="mfrs-msg-action-label">${_.escape(s.label || s.text || '未知行动')}</span></button>`,
-        )
+        .map((s: any, i: number) => {
+          const optionKey = valueText(s.选项 ?? s.option ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
+          const actionText = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '未知行动');
+          const metaParts = [
+            valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
+            valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
+            valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
+            valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
+          ].filter(Boolean);
+          const actionValue = actionText === '未知行动' ? '' : actionText;
+          return `<button class="mfrs-msg-action-btn" data-action="${_.escape(actionValue)}"><span class="mfrs-msg-action-key">${_.escape(optionKey)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(actionText)}</span>${metaParts.length ? `<span class="mfrs-msg-action-meta">${_.escape(metaParts.join('｜'))}</span>` : ''}</span></button>`;
+        })
         .join('')
     : '<div class="mfrs-msg-empty">暂无行动建议</div>';
 
@@ -587,7 +595,24 @@ $(() => {
   flex: 0 0 auto;
 }
 
-.mfrs-msg-action-label { flex: 1 1 auto; }
+.mfrs-msg-action-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mfrs-msg-action-label {
+  color: #f0d0a0;
+  line-height: 1.45;
+}
+
+.mfrs-msg-action-meta {
+  color: #a8b0c2;
+  font-size: 12px;
+  line-height: 1.45;
+}
 
 .mfrs-msg-action-btn:hover {
   background: linear-gradient(180deg, rgba(78,52,32,0.85), rgba(68,42,22,0.92));

@@ -203,6 +203,9 @@ assert.ok(hotfixSource.includes('persisted: writeResult.persisted'), 'hotfix log
 const messagePanelSource = readText(messagePanelPath);
 assert.ok(messagePanelSource.includes('MysteryMessagePanel'), 'message panel should expose a refresh API');
 assert.ok(messagePanelSource.includes('refreshMessage: processOneMessage'), 'message panel should expose per-message refresh');
+assert.ok(messagePanelSource.includes('s.思路'), 'message panel action buttons should render Chinese MVU suggestion text');
+assert.ok(messagePanelSource.includes('s.选项'), 'message panel action buttons should render Chinese MVU suggestion option keys');
+assert.ok(messagePanelSource.includes('mfrs-msg-action-meta'), 'message panel action buttons should show suggestion risk/gain metadata');
 
 for (const root of [mfrsRoot, releaseRoot]) {
   const variableOutput = readText(join(root, '\u4e16\u754c\u4e66', '\u53d8\u91cf', '\u53d8\u91cf\u8f93\u51fa\u683c\u5f0f.yaml'));
