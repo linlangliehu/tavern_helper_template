@@ -1,5 +1,16 @@
 # Findings
 
+## 2026-07-07：PowerShell here-string 管道给 Node 时中文路径可能变成 `????`
+
+**结论：** 在本机 PowerShell 中用 `@' ... '@ | node -` 运行内联 Node 脚本时，脚本里的中文路径或中文 URL 可能被管道编码成 `????`。这会造成 PNG 读取 `ENOENT`，或 CDN URL 变成错误路径返回 403。不要据此判断中文文件或 CDN 资源损坏。
+
+**规避方式：**
+- 内联 Node 脚本里用 Unicode escape 构造中文路径/URL，例如 `\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668`。
+- CDN 中文路径继续在 Node 中用 `encodeURI(url)` 发请求。
+- 若首次输出出现 `????`、中文路径丢失或 CDN 403，先按编码规则重跑验证，再做结论。
+
+**本次影响：** v8.5.7 发布同步验证中，首次 PNG 元数据脚本和 CDN smoke 脚本因 `????` 失败；改用 Unicode escape 后确认发布版 PNG 正常，CDN `@bbbe6c7` 数据库前端 200 且含自动召回 marker。
+
 ## 2026-07-07：自动召回真页 smoke 可用本地 bundle 临时注入，验证后要刷新页面清理监听器
 
 **结论：** 自动召回的真页非 AI smoke 已通过。当前发布版 v8.5.6 尚不含自动召回，验证开发版时可先 `pnpm build`，再用本地静态服务提供 `dist/神秘复苏模拟器/脚本/数据库前端/index.js`，把该脚本临时注入 `TH-script--神秘复苏数据库前端--...3002` iframe。验证完成后必须刷新页面，清理本地脚本和 `GENERATION_AFTER_COMMANDS` 监听器，避免影响用户下一次真实发送。

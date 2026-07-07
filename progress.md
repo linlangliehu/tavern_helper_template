@@ -1,5 +1,28 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ 任务 7 完成：v8.5.7 发布同步）
+
+**执行内容：**
+- ✅ 本地 `main` 已快进到 `bbbe6c7 [bot] bundle`，tag `v0.0.371`；该 bot bundle 位于 source commit `f67c780 feat(mfrs): add automatic plot memory recall` 之后。
+- ✅ 验证 bot dist：`dist/神秘复苏模拟器/脚本/数据库前端/index.js` 含 `mfrs_auto_plot_memory_recall`、`自动剧情记忆召回`、`toggle-auto-plot`、`toggle-auto-memory`。
+- ✅ 修改 `scripts/publish-card.mjs`：`CDN_REF=bbbe6c7`，`releaseVersion=8.5.7`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，同步发布版 YAML/PNG；日志显示镜像世界书 386 个文件、替换 15 处链接，保留版本 8.5.7。
+
+**验证：**
+- ✅ `node --check scripts/publish-card.mjs`
+- ✅ `git diff --check`
+- ✅ `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ 发布版 YAML：version 8.5.7，`bbbe6c7` 7 处；旧 `573807b` / 8.5.6 / localhost / 127.0.0.1 均未命中。
+- ✅ 发布版 PNG `chara` / `ccv3`：各含 `bbbe6c7` 7 处、8.5.7 1 处；旧 `573807b` / 8.5.6 / localhost / 127.0.0.1 均为 0。
+- ✅ CDN smoke `@bbbe6c7`：数据库前端 200 / 388800 bytes，含自动召回四个 marker；固定状态栏 200 / 1411 bytes。
+
+**注意：**
+- ⚠️ 首次用 PowerShell here-string 管道给 Node 的验证脚本时，中文路径/URL 被转成 `????`，导致 PNG ENOENT 和 CDN 403；已改用 Unicode escape 构造中文路径/URL 后验证通过。
+- ✅ 未触发真实 AI，未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ 未跟踪截图 `屏幕截图 2026-07-06 235029.png` 不提交。
+
+**下一步：** 精确提交发布同步结果并 push。
+
 ## 2026-07-07 CST（✅ 任务 5 收口：自动召回 source commit/push）
 
 **执行内容：**
