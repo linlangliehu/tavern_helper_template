@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ v8.5.10 远端发布 smoke 完成）
+
+**执行内容：**
+- ✅ 发布同步提交已推送：`00ac021 chore(release): publish mfrs v8.5.10`。
+- ✅ 远端 `@00ac021` 发布版 YAML HTTP 200，长度 168556，含 `8.5.10`×1、`c576add`×7、`mvu-v8510`×8；旧 `8.5.9/e36f8aa/mvu-v859`、localhost、127.0.0.1、`@main`、`@52b2e62` 均 0。
+- ✅ 远端 `@00ac021` 发布版 PNG HTTP 200，大小 7,752,534 bytes。
+- ✅ 远端 PNG worldbook gate 通过：383 entries / 33 disabled / max enabled 5851。
+- ✅ 远端 PNG `chara` 与 `ccv3` 各含 `8.5.10`×1、`c576add`×7、`mvu-v8510`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 均 0。
+- ✅ 清理临时远端检查文件 `.tmp-png-marker-check.js` 与 `.tmp-remote-v8510.png`。
+
+**当前状态：**
+- v8.5.10 已完成 source → bot bundle → publish-card → 发布同步 push → 远端 YAML/PNG smoke。
+- 仍未触发真实 AI、未发送消息、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+- 本地仅剩 `.tmp-mfrs-regex-backup-20260707.json` 与截图为不提交参考文件。
+
 ## 2026-07-07 CST（✅ v8.5.10 发布同步完成：verified writeback + persistence）
 
 **执行内容：**
