@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ v8.5.11 远端发布 smoke 完成）
+
+**执行内容：**
+- ✅ 发布同步提交已推送：`93fe875 chore(release): publish mfrs v8.5.11`。
+- ✅ 远端 `@93fe875` 发布版 YAML HTTP 200，长度 168556，含 `8.5.11`×1、`15c2feb`×7、`mvu-v8511`×8；旧 `8.5.10/c576add/mvu-v8510`、localhost、127.0.0.1、`@main`、`@52b2e62` 均 0。
+- ✅ 远端 `@93fe875` 发布版 PNG HTTP 200，大小 7,752,534 bytes。
+- ✅ 远端 PNG worldbook gate 通过：383 entries / 33 disabled / max enabled 5851。
+- ✅ 远端 PNG `chara` 与 `ccv3` 各含 `8.5.11`×1、`15c2feb`×7、`mvu-v8511`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 均 0。
+- ✅ 清理临时远端检查文件 `.tmp-remote-v8511.png`。
+
+**当前状态：**
+- v8.5.11 已完成 source → bot bundle → publish-card → 发布同步 push → 远端 YAML/PNG smoke。
+- Chrome DevTools MCP 已验证当前导入卡的行动建议不再显示 `未知行动`。
+- 仍未触发真实 AI、未发送消息、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+
 ## 2026-07-07 CST（✅ DevTools 真页验证 v8.5.11 当前导入卡）
 
 **执行内容：**
