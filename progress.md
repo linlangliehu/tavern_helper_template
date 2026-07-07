@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ v8.5.12 发布同步：消息内面板最终渲染兜底）
+
+**执行内容：**
+- ✅ source commit `6b77048 fix(mfrs): refresh message panel after final render` 已推送。
+- ✅ bot bundle `8b3ea67 [bot] bundle` / tag `v0.0.387` 已生成；dist 更新 `dist/神秘复苏模拟器/脚本/消息内面板/index.js`。
+- ✅ bot dist 已验证包含 `MutationObserver`、`GENERATION_ENDED`、`mfrs-msg-action-meta`。
+- ✅ 回填 `scripts/publish-card.mjs`：`CDN_REF=8b3ea67`、`CDN_CACHE_VERSION=phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v8512`、`releaseVersion=8.5.12`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，生成发布版 YAML/PNG。
+
+**验证：**
+- ✅ `node --check scripts\publish-card.mjs`
+- ✅ `node scripts\verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src\神秘复苏模拟器发布版\神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ 发布版 YAML：`8.5.12`×1、`8b3ea67`×7、`mvu-v8512`×8；旧 `8.5.11/15c2feb/mvu-v8511`、localhost、127.0.0.1、`@main`、`@52b2e62` 均未命中。
+- ✅ 发布版 PNG `chara/ccv3`：各 `8.5.12`×1、`8b3ea67`×7、`mvu-v8512`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 均 0。
+- ✅ CDN smoke `@8b3ea67`：消息内面板含 `MutationObserver/GENERATION_ENDED/mfrs-msg-action-meta`；hotfix 与数据库 loader HTTP 200。数据库 loader 中唯一 `@main` 是“拒绝回退到 @main”的错误提示文本，不是 fallback URL。
+
+**边界：**
+- 未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+
 ## 2026-07-07 CST（🔧 v8.5.12 source 候选：修复第二轮缺消息内状态面板）
 
 **执行内容：**
