@@ -1,5 +1,23 @@
 # Progress Log
 
+## 2026-07-07 CST（🔧 v8.5.12 source 候选：修复第二轮缺消息内状态面板）
+
+**执行内容：**
+- ✅ 使用 Chrome DevTools MCP 只读定位当前聊天：AI 楼层 #0/#2 有状态面板，#4 无 `.mfrs-msg-panel`。
+- ✅ 确认 #4 的 `chat[4].variables[0].stat_data` 与 `Mvu.getMvuData({ type:'message', message_id:4 })` 一致，行动建议长度为 4；因此不是 MVU/EJS/字段映射失败。
+- ✅ 手动调用 `MysteryMessagePanel.refreshMessage(4)` 后，#4 状态面板立即出现，行动建议显示正常；因此缺口是自动补渲染没有可靠触发。
+- ✅ 修复 `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：新增 `scheduleBurstRefresh()` 多段延迟刷新，监听 `GENERATION_ENDED/GENERATION_STOPPED`，并用 `MutationObserver` 在 SillyTavern 最终替换 `.mes/.mes_text` 后补跑渲染。
+- ✅ `scripts/verify-mfrs-mvu-hotfix-regressions.mjs` 增加静态 gate，要求保留 DOM observer、生成结束刷新和延迟重试。
+
+**验证：**
+- ✅ `node --check scripts\verify-mfrs-mvu-hotfix-regressions.mjs`
+- ✅ `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `git diff --check`
+- ✅ `pnpm build` 通过，仅数据库前端 416 KiB 既有 warning。
+
+**当前停点：**
+- v8.5.12 source 候选已完成；下一步精确 source commit/push，等待 bot bundle 后发布同步。
+
 ## 2026-07-07 CST（✅ v8.5.11 远端发布 smoke 完成）
 
 **执行内容：**

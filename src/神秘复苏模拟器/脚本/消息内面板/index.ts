@@ -298,6 +298,39 @@ function processOneMessage(messageId: number | string) {
   wrapNarrativeText(target);
 }
 
+const refreshTimers = new Set<number>();
+let idleRefreshTimer: number | undefined;
+
+function scheduleProcessAllMessages(delay = 200) {
+  const timer = hostWindow.setTimeout(() => {
+    refreshTimers.delete(timer);
+    processAllMessages();
+  }, delay);
+  refreshTimers.add(timer);
+}
+
+function scheduleBurstRefresh() {
+  [200, 800, 2000, 4000].forEach(scheduleProcessAllMessages);
+}
+
+function scheduleIdleRefresh(delay = 800) {
+  if (idleRefreshTimer !== undefined) {
+    hostWindow.clearTimeout(idleRefreshTimer);
+  }
+  idleRefreshTimer = hostWindow.setTimeout(() => {
+    idleRefreshTimer = undefined;
+    processAllMessages();
+  }, delay);
+}
+
+function mutationTouchesChatMessage(mutation: MutationRecord) {
+  const target = mutation.target;
+  if (target instanceof Element && target.closest('.mes')) return true;
+  return Array.from(mutation.addedNodes).some(node =>
+    node instanceof Element && (node.matches('.mes,.mes_text') || !!node.querySelector('.mes,.mes_text')),
+  );
+}
+
 /** 处理 tab 切换点击事件 */
 function handleTabClick(e: Event) {
   const target = e.target as HTMLElement;
@@ -638,6 +671,7 @@ $(() => {
 
   // 初始化已有消息
   processAllMessages();
+  scheduleBurstRefresh();
   const messagePanelApi = {
     refreshAll: processAllMessages,
     refreshMessage: processOneMessage,
@@ -650,12 +684,24 @@ $(() => {
     tavern_events.MESSAGE_UPDATED,
     tavern_events.MESSAGE_SWIPED,
     tavern_events.CHARACTER_MESSAGE_RENDERED,
+    tavern_events.GENERATION_ENDED,
+    tavern_events.GENERATION_STOPPED,
     tavern_events.CHAT_CHANGED,
-  ];
+  ].filter(Boolean);
 
   refreshEvents.forEach(eventName => {
-    eventOn(eventName, () => setTimeout(processAllMessages, 200));
+    eventOn(eventName, scheduleBurstRefresh);
   });
+
+  // SillyTavern can replace the latest .mes_text after generation events have fired.
+  // The idle observer covers that final DOM replacement without relying on event order.
+  const chatContainer = doc.querySelector('#chat') || doc.body;
+  const observer = new MutationObserver(mutations => {
+    if (mutations.some(mutationTouchesChatMessage)) {
+      scheduleIdleRefresh();
+    }
+  });
+  observer.observe(chatContainer, { childList: true, subtree: true });
 
   // 事件委托：tab 切换
   doc.addEventListener('click', handleTabClick, true);
@@ -666,6 +712,13 @@ $(() => {
   // 清理函数
   const cleanup = () => {
     style.remove();
+    observer.disconnect();
+    refreshTimers.forEach(timer => hostWindow.clearTimeout(timer));
+    refreshTimers.clear();
+    if (idleRefreshTimer !== undefined) {
+      hostWindow.clearTimeout(idleRefreshTimer);
+      idleRefreshTimer = undefined;
+    }
     if (hostWindow.MysteryMessagePanel === messagePanelApi) {
       delete hostWindow.MysteryMessagePanel;
     }

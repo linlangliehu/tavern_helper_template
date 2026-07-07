@@ -1,5 +1,15 @@
 # Findings
 
+## 2026-07-07：第二轮对话缺状态面板是消息内面板补渲染漏跑，不是 MVU/EJS
+
+**现象：** 当前聊天 `#4`（第二轮 AI 回复）没有 `.mfrs-msg-panel`，但 `chat[4].variables[0].stat_data` 与 `Mvu.getMvuData({type:'message', message_id:4})` 都存在且一致，内容仍为 `姓名=次卧室`、`身份=初级驭鬼者`、`事件代号=七中灵异事件`、`行动建议.length=4`。
+
+**关键验证：** 手动调用 `MysteryMessagePanel.refreshMessage(4)` 后，`#4` 状态面板立即出现，行动建议也能正确显示 `思路` 与风险/收益摘要。这证明数据可读、渲染函数可用，缺口只在自动刷新触发。
+
+**根因：** v8.5.11 的消息内面板只依赖 `MESSAGE_RECEIVED / MESSAGE_UPDATED / MESSAGE_SWIPED / CHARACTER_MESSAGE_RENDERED / CHAT_CHANGED` 事件后单次 200ms 刷新。第二轮生成完成时页面 console 同时出现事件派发阶段的 `TypeError: Cannot read properties of undefined (reading 'getContext')`，且 SillyTavern 会在生成结束后继续替换最新 `.mes_text`。因此面板可能已刷新过早，或后续 DOM 替换把面板移掉，最终 `#4` 没有面板。
+
+**修复方向：** 消息内面板需要不只依赖一次事件回调：增加 `GENERATION_ENDED/GENERATION_STOPPED` 后多段延迟刷新，并增加 `MutationObserver` 监听最终 `.mes/.mes_text` 替换，在 DOM 空闲后补跑 `processAllMessages()`。
+
 ## 2026-07-07：v8.5.11 当前导入卡已验证，“未知行动”已消失
 
 **当前真页验证：** Chrome DevTools MCP 读到当前角色 `神秘复苏模拟器发布版`，资源为 `@15c2feb` + `mvu-v8511`。最新 AI 楼层 #2 的 `chat[2].variables[0].stat_data` 与 `Mvu.getMvuData({type:'message', message_id:2})` 完全一致，`行动建议.length=4`，每项字段是 `选项/思路/主要风险/预期收益/死亡风险/复苏风险`。

@@ -206,6 +206,9 @@ assert.ok(messagePanelSource.includes('refreshMessage: processOneMessage'), 'mes
 assert.ok(messagePanelSource.includes('s.思路'), 'message panel action buttons should render Chinese MVU suggestion text');
 assert.ok(messagePanelSource.includes('s.选项'), 'message panel action buttons should render Chinese MVU suggestion option keys');
 assert.ok(messagePanelSource.includes('mfrs-msg-action-meta'), 'message panel action buttons should show suggestion risk/gain metadata');
+assert.ok(messagePanelSource.includes('MutationObserver'), 'message panel should observe final message DOM replacements');
+assert.ok(messagePanelSource.includes('scheduleBurstRefresh'), 'message panel should retry refresh after generation/render events');
+assert.ok(messagePanelSource.includes('tavern_events.GENERATION_ENDED'), 'message panel should refresh after generation ended');
 
 for (const root of [mfrsRoot, releaseRoot]) {
   const variableOutput = readText(join(root, '\u4e16\u754c\u4e66', '\u53d8\u91cf', '\u53d8\u91cf\u8f93\u51fa\u683c\u5f0f.yaml'));
