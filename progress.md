@@ -1,5 +1,30 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ P7 发布链路完成：v8.5.9）
+
+**执行内容：**
+- ✅ 发布同步提交并推送：`ec6b64a chore(release): publish mfrs v8.5.9`，包含 `scripts/publish-card.mjs`、发布版 `index.yaml`、`神秘复苏模拟器.png`、`神秘复苏模拟器发布版.png`。
+- ✅ 发布配置：`CDN_REF=e36f8aa`，`CDN_CACHE_VERSION=phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v859`，`releaseVersion=8.5.9`。
+- ✅ bot bundle：`e36f8aa [bot] bundle` / tag `v0.0.378` 已验证 hotfix normalizer、`MysteryMessagePanel.refreshMessage`、runtime URL wrapper、同 ref vendor import 均进入 dist。
+
+**验证：**
+- ✅ `node --check scripts\publish-card.mjs`
+- ✅ `node scripts\verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src\神秘复苏模拟器发布版\神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ `git diff --check`
+- ✅ 发布版 YAML：`8.5.9`×1、`e36f8aa`×7、`mvu-v859`×8；旧 `454267e` / 8.5.8 / localhost / 127.0.0.1 / `@main` / `@52b2e62` 均 0。
+- ✅ 发布版 PNG `神秘复苏模拟器发布版.png`：chara/ccv3 中 `8.5.9`×2、`e36f8aa`×14、`mvu-v859`×16；旧 ref、旧版本、本地链接、`@main`、`@52b2e62` 均 0。
+- ✅ CDN smoke `@e36f8aa`：hotfix、数据库 loader、数据库前端、消息内面板、vendor 均 HTTP 200，marker 命中且无 `file:///` / `@main/` / `@52b2e62`。
+- ✅ 远端发布版 `@ec6b64a`：YAML 200，含 `8.5.9` / `e36f8aa` / `mvu-v859` 且无旧 ref/local；发布版 PNG 200 / 7,752,510 bytes，chara/ccv3 含 `8.5.9` / `e36f8aa` / `mvu-v859` 且无旧 ref/local。
+
+**遇到的问题：**
+- PowerShell 向 `node -e` 传多行 JavaScript 时剥掉字符串引号，导致验证脚本语法错误；已改用 PowerShell/.NET 原生 PNG chunk、git blob 和 CDN 内容检查。
+- 当前 PowerShell 未加载 `[System.Net.Http.HttpClient]` 类型；远端 smoke 改用兼容的 `[System.Net.WebClient]` 完成。
+
+**边界：**
+- 未触发真实 AI，未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- `.tmp-mfrs-regex-backup-20260707.json` 与未跟踪截图 `屏幕截图 2026-07-06 235029.png` 不提交。
+- P8 真实 AI 最小复测仍需用户明确批准。
+
 ## 2026-07-07 CST（✅ P0-P6 二次修复完成，P7 source 提交前验证进行中）
 
 **完成内容：**

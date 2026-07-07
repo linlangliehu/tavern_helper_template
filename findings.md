@@ -1,5 +1,18 @@
 # Findings
 
+## 2026-07-07：v8.5.9 发布验证，MVU hotfix 协议兼容与同 ref vendor 链进入发布版
+
+**结论：** v8.5.9 已完成正式发布链路。source `5f38953` 触发 bot bundle `e36f8aa` / tag `v0.0.378`，发布同步 commit `ec6b64a` 已 push；发布版 YAML/PNG 和 CDN smoke 均证明 hotfix normalizer、消息内面板刷新接口、runtime URL wrapper 和同 ref vendor 链进入发布版。
+
+**验证判据：**
+- 发布版 YAML：version `8.5.9`，`e36f8aa` 7 处，`mvu-v859` 8 处；旧 `454267e`、8.5.8、localhost、127.0.0.1、`@main`、`@52b2e62` 均为 0。
+- 发布版 PNG `神秘复苏模拟器发布版.png`：`chara` / `ccv3` 中 `8.5.9` 2 处、`e36f8aa` 14 处、`mvu-v859` 16 处；旧 ref、旧版本、本地链接、`@main`、`@52b2e62` 均为 0。
+- worldbook gate：383 entries / 33 disabled / max enabled 5851。
+- CDN smoke `@e36f8aa`：hotfix、数据库 loader、数据库前端、消息内面板、vendor 均 HTTP 200；marker 命中且无 `file:///` / `@main/` / `@52b2e62`。
+- 远端发布版 `@ec6b64a`：YAML/PNG 均 HTTP 200；YAML 与 PNG 元数据均含 `8.5.9` / `e36f8aa` / `mvu-v859`，旧 ref、本地链接和错误 fallback 均为 0。
+
+**边界：** 本次仍未触发真实 AI、未发送消息、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。P8 的一次最小真实对话复测必须等用户明确批准后再执行。
+
 ## 2026-07-07：webpack 会把脚本内 `import.meta.url` 固化成本地 file URL，发布 ref 推导必须用运行态 URL
 
 **结论：** 在当前 webpack 配置下，普通脚本 bundle 里的 `import.meta.url` 会被生产构建固化为构建机源码路径，例如 `file:///D:/project/.../src/神秘复苏模拟器/脚本/数据库/index.ts`。不能用它推导 jsdelivr 当前 bundle ref；否则发布运行时会退到 `@main/vendor/...` 或其他 fallback，破坏“loader 与 vendor 同 bundle”的目标。
