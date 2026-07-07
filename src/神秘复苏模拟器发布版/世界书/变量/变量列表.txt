@@ -32,9 +32,14 @@ _%>
 
 <%_
 var rawStatData = _.get(variables, 'stat_data', {});
-var cleanStatData = (rawStatData && typeof rawStatData === 'object')
+var nestedStatData = _.get(rawStatData, 'stat_data');
+var rootStatData = (rawStatData && typeof rawStatData === 'object')
   ? _.omit(rawStatData, 'stat_data')
   : {};
+var cleanStatData = rootStatData;
+if (_.isPlainObject(nestedStatData) && _.isEmpty(rootStatData)) {
+  cleanStatData = nestedStatData;
+}
 _%>
 <stat_data>
 <%- JSON.stringify(cleanStatData, null, 2) %>

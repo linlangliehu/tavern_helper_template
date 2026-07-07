@@ -582,11 +582,7 @@ function extractFirstJsonArrayText(text: string) {
 function parseUpdateVariablePatchArray(message: string) {
   const match = stripThinkingBlocks(message).match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i)
   if (!match) return []
-  const source = match[1]
-    .replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi, '')
-    .replace(/<\/?JSON[P]atch\b[^>]*>/gi, '')
-    .trim()
-  const arrayText = extractFirstJsonArrayText(source)
+  const arrayText = extractUpdateVariableJsonPatchArrayText(match[1])
   if (!arrayText) return []
   try {
     const parsed = JSON.parse(arrayText)
@@ -599,6 +595,18 @@ function parseUpdateVariablePatchArray(message: string) {
       return []
     }
   }
+}
+
+function extractUpdateVariableJsonPatchArrayText(inner: string) {
+  const source = String(inner || '')
+    .replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi, '')
+    .trim()
+  const jsonPatchPattern = /<JSON[P]atch\b[^>]*>\s*([\s\S]*?)\s*<\/JSON[P]atch>/gi
+  for (const jsonPatchMatch of source.matchAll(jsonPatchPattern)) {
+    const arrayText = extractFirstJsonArrayText(jsonPatchMatch[1])
+    if (arrayText) return arrayText
+  }
+  return extractFirstJsonArrayText(source.replace(/<\/?JSON[P]atch\b[^>]*>/gi, ''))
 }
 
 function isDirectActionOption(item: unknown) {

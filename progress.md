@@ -1,5 +1,49 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ 发布后真实对话修复任务 1-5 已实施）
+
+**完成内容：**
+- ✅ P0 协议修复：开发版与发布版 `变量输出格式.yaml`、系统提示词、事件 MVU 规则和对话示例已改为 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>` 首选格式；已清除“direct array inside `<UpdateVariable>`”旧约束。
+- ✅ P1 兼容解析：`App.vue` 与 `vendor/shujuku-sp-fork/index.js` 均改为优先解析 nested `<JSONPatch>`，保留旧 direct-array fallback；vendor raw repair 现在会归一化为 nested `<JSONPatch>`，不再重写回旧直接数组。
+- ✅ P2 初始化变量结构：开发版与发布版 `initvar.yaml` 移除顶层 `stat_data:`，root 直接对齐 `schema.ts`；`变量列表.txt` 保留旧 `stat_data.stat_data` 污染兜底，但正常输出不再放大嵌套。
+- ✅ P3 no-AI 运行态复测：`Mvu.parseMessage()` 在完整 MVU 容器 `{ stat_data: ... }` 下，nested `<JSONPatch>` 可更新 `姓名/所在位置/当前灵异事件/行动建议`；旧 direct-array 仍不被当前 MVU 消费。现有旧消息内面板仍显示默认值，是旧消息已按 direct-array 保存的预期结果，后续新回复需真实 AI 复测确认。
+- ✅ P4 全局 Tavern Regex 围栏泄漏处理：已备份两个全局正则到 `.tmp-mfrs-regex-backup-20260707.json`，并仅移除 replacement 首尾 ```html / ```；刷新当前 5 条消息显示后，DOM 中 closing fence 段落从 2 个降为 0。
+
+**验证：**
+- ✅ `node --check scripts/verify-output-cleaning-regressions.mjs`
+- ✅ `node --check vendor/shujuku-sp-fork/index.js`
+- ✅ `node --check scripts/publish-card.mjs`
+- ✅ `node scripts/verify-output-cleaning-regressions.mjs`
+- ✅ `pnpm verify:mfrs-frontend`
+- ✅ `git diff --check`
+- ✅ `pnpm build` 通过；仅数据库前端既有 414 KiB performance warning。
+- ✅ Node/YAML 最小结构检查：两个 `initvar.yaml` root 无 `stat_data`，两个 `变量输出格式.yaml` 含 `<JSONPatch>` 且无旧 direct-array 文案。
+- ✅ 发布版 PNG worldbook gate：383 entries / 33 disabled / max enabled 5851。
+
+**边界：**
+- 未发送消息，未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- 当前已产生本地构建产物 dirty：`dist/**`、开发版/发布版 PNG 会随本轮改动刷新；正式提交前仍需按发布策略决定是否保留 PNG、是否清理 dist。
+- P5 正式发布链路尚未执行：未 source commit/push，未等待 bot bundle，未回填 `scripts/publish-card.mjs` 到 v8.5.8，未重新发布。
+
+## 2026-07-07 CST（🧭 发布后真实对话问题修复清单已建立）
+
+**完成内容：**
+- ✅ 按用户要求基于已确认根因制作修复任务清单，并写入 `task_plan.md` 顶部“当前状态 / 当前任务清单 / 需要提交的文件”。
+- ✅ `findings.md` 顶部新增根因记录：`<UpdateVariable>` 直接数组与实际 MVU parser 不兼容、`initvar.yaml` 多包一层 `stat_data:`、消息内面板 stale 是下游表现、代码围栏泄漏来自运行态全局 Tavern Regex。
+- ✅ 只做 planning 整理，未修改业务源码，未触发真实 AI，未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+
+**当前待实施清单：**
+1. P0 修 `变量输出格式.yaml`：改为 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>`。
+2. P1 修状态栏/vendor/回归脚本解析兼容 nested `<JSONPatch>`。
+3. P2 修 `initvar.yaml` root，并复查 `变量列表.txt` 的 `stat_data.stat_data` workaround。
+4. P3 复测消息内面板 message variables。
+5. P4 处理运行态全局 Tavern Regex closing fence 泄漏。
+6. P5 做 no-AI 验证与正式发布链路，真实 AI 复测需用户明确批准。
+
+**工作区边界：**
+- 当前 `git diff --stat` 在整理前为空，`git status --short --branch` 只有未跟踪截图 `屏幕截图 2026-07-06 235029.png`。
+- 本次整理后预期 dirty 只有 planning 三件套；截图仍不提交。
+
 ## 2026-07-07 CST（✅ 新对话恢复记录刷新）
 
 **完成内容：**

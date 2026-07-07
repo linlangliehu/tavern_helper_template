@@ -25,6 +25,7 @@
 </choices>
 
 <UpdateVariable>
+<JSONPatch>
 [
   { "op": "replace", "path": "/姓名", "value": "林安" },
   { "op": "replace", "path": "/所在位置", "value": "大昌市郊区废弃烂尾楼三楼" },
@@ -37,4 +38,5 @@
     { "选项": "D", "思路": "自定义行动", "主要风险": "取决于玩家输入", "预期收益": "保留自由行动", "死亡风险": "未知", "复苏风险": "未知" }
   ] }
 ]
+</JSONPatch>
 </UpdateVariable>

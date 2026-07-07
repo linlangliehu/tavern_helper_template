@@ -1,5 +1,38 @@
 # Findings
 
+## 2026-07-07：修复验证结果，nested JSONPatch 是当前 MVU 唯一可消费格式
+
+**结论：** 本轮已把角色卡输出协议切到 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>`。在当前 SillyTavern 运行态中，`Mvu.parseMessage()` 对 nested `<JSONPatch>` 可以更新完整 `stat_data`；旧 `<UpdateVariable>[...]</UpdateVariable>` direct-array 仍不会更新变量，因此旧格式只能作为状态栏/vendor 自己提取行动建议的兼容输入，不能再要求模型输出。
+
+**no-AI 证据：**
+- `Mvu.parseMessage(nestedMessage, { stat_data })` 更新了 `stat_data.姓名 = 测试角色`、`stat_data.所在位置 = 测试地点`、`stat_data.当前灵异事件.事件代号 = 测试事件`、`stat_data.行动建议.length = 1`。
+- 同一 patch 的 direct-array 旧格式保持旧值不变。
+- 现有真实聊天里第 2、4 条 AI 消息仍是旧 direct-array 且不含 `<JSONPatch>`，所以 5 个消息内面板继续显示默认 `未知/未立案灵异事件/暂无行动建议`，这是旧消息的预期下游表现；新协议需要下一轮真实 AI 才能验证 message variables 写入。
+
+**全局 Regex 修复证据：**
+- 已备份 `【6.12】数据库多功能美化正则1` 与 `新·星河璀璨数据库召回配套正则1` 到 `.tmp-mfrs-regex-backup-20260707.json`。
+- 两个 replacement 仅移除了首尾 ```html / ```，保留原 findRegex、placement、启用状态。
+- 当前聊天刷新 5 条消息显示后，DOM 中含 ``` 的 closing fence 段落从 2 个降到 0；输入框仍为空，未触发生成。
+
+## 2026-07-07：发布后真实对话问题根因，MVU 协议格式与 initvar 结构不匹配
+
+**结论：** 用户导入 `神秘复苏模拟器发布版` v8.5.7 后真实对话中变量不更新，主因是卡内提示词要求 AI 输出 `<UpdateVariable>` 直接 JSON 数组，但当前 MagVarUpdate / TavernHelper 运行时实际需要 `<JSONPatch>...</JSONPatch>` 包裹才能消费。数据库前端正常显示不代表 MVU message variables 正常，两者是不同路径。
+
+**证据：**
+- 当前 AI 回复的 `<UpdateVariable>` 块是直接数组；`Mvu.parseMessage(currentMessage, oldData)` 返回 unchanged。
+- 同一数组改为 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>` 后，`Mvu.parseMessage` 能更新 `姓名`、`所在位置`、`当前灵异事件.事件代号` 等字段。
+- `src/神秘复苏模拟器/世界书/变量/变量输出格式.yaml` 和发布版同名文件仍明确写着 “valid JSON array directly inside `<UpdateVariable>`”。
+- `src/神秘复苏模拟器/世界书/变量/initvar.yaml` 和发布版同名文件顶层是 `stat_data:`，但 `src/神秘复苏模拟器/schema.ts` 的根字段直接是 `姓名`、`身份`、`所在位置` 等，运行态因此出现 `variables.stat_data.stat_data`。
+
+**下游表现：**
+- `src/神秘复苏模拟器/脚本/消息内面板/index.ts` 读取 `getVariables({ type: 'message', message_id }).stat_data`；MVU 不写入 message variables 时，`.mfrs-msg-panel` 只能显示默认 `未知`。
+- 可见的 closing code fence 泄漏来自 SillyTavern 运行态全局显示正则 replacement 外层 ```html / ```，不是 raw 消息，也不在当前仓库源码内。
+
+**修复方向：**
+- 首选让提示词输出 MVU 实际可消费的 `<JSONPatch>` 包裹格式。
+- 同时让状态栏/vendor/回归脚本兼容 nested `<JSONPatch>`，保留旧直接数组 fallback。
+- 修正 `initvar.yaml` root，使初始化变量结构与 schema 对齐，再复查 `变量列表.txt` 的 `_.omit(rawStatData, 'stat_data')` workaround。
+
 ## 2026-07-07：PowerShell here-string 管道给 Node 时中文路径可能变成 `????`
 
 **结论：** 在本机 PowerShell 中用 `@' ... '@ | node -` 运行内联 Node 脚本时，脚本里的中文路径或中文 URL 可能被管道编码成 `????`。这会造成 PNG 读取 `ENOENT`，或 CDN URL 变成错误路径返回 403。不要据此判断中文文件或 CDN 资源损坏。

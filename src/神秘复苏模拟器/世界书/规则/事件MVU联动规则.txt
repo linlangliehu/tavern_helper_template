@@ -12,4 +12,4 @@
 6. 隐藏档案：真实杀人规律、关键生路、鬼的真实位置、误导线索、原剧情关键转折和高权限情报优先写入「隐藏档案」，不得直接写进正文、状态栏或推演选项。
 7. 世界线与势力：玩家改变死亡名单、关键人物、厉鬼/物品归属、封锁状态、总部行动、原剧情节点或大型事件结果时写入「世界线记录」；总部、负责人、朋友圈、灵异论坛、国王组织、民间驭鬼者、鬼邮局等介入时更新「势力关系」。拖延、错误处理、公开暴露、人员伤亡或势力介入会提高扩散趋势、总部关注度或社会公开度。
 8. 行动判定与建议：每次玩家行动结算后必须 replace「最近行动判定」；生成 A/B/C/D 后必须 replace「行动建议」为 0-4 条，只写选项、思路、主要风险、预期收益。两者只能基于玩家可见信息，并且要匹配当前调查循环阶段，避免每轮重复同质选项。
-9. 路径与格式：变量更新只用 `<UpdateVariable>` JSON Patch；路径必须是 schema 中文字段，禁止 known_rules/current_event/in_scene_characters/death_risk/resurrection_risk/status/location 等旧式路径；「规律推理记录」必须写对象。
+9. 路径与格式：变量更新只用 `<UpdateVariable><JSONPatch>...</JSONPatch></UpdateVariable>` JSON Patch；路径必须是 schema 中文字段，禁止 known_rules/current_event/in_scene_characters/death_risk/resurrection_risk/status/location 等旧式路径；「规律推理记录」必须写对象。

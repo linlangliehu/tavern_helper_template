@@ -2,9 +2,10 @@
 update_output_contract:
   must_output: |-
     End every reply with one variable update block. Update only facts that happened, were revealed, or were resolved in this turn.
-    The payload inside <UpdateVariable> must be a valid JSON array directly. Do not include an analysis tag, prose, code fences, comments, standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note.
+    The payload inside <UpdateVariable> must be a <JSONPatch> block containing one valid JSON array. Do not include an analysis tag, prose, code fences, comments, standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note.
 
     <UpdateVariable>
+    <JSONPatch>
     [
       { "op": "delta", "path": "/风险值", "value": 0 },
       { "op": "delta", "path": "/驭鬼者状态/总复苏风险", "value": 0 },
@@ -16,10 +17,11 @@ update_output_contract:
         { "选项": "D", "思路": "自定义行动", "主要风险": "取决于玩家输入", "预期收益": "保留自由行动", "死亡风险": "未知", "复苏风险": "未知" }
       ] }
     ]
+    </JSONPatch>
     </UpdateVariable>
   patch_rules:
-    - The patch payload must be a valid JSON array directly inside <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
-    - Never output analysis text or any explanatory text inside <UpdateVariable>; the first non-space character after <UpdateVariable> must be [ and the last non-space character before </UpdateVariable> must be ].
+    - The patch payload must be a valid JSON array inside <JSONPatch> within <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
+    - Never output analysis text or any explanatory text inside <UpdateVariable>; the first non-space tag after <UpdateVariable> must be <JSONPatch>, and the last non-space tag before </UpdateVariable> must be </JSONPatch>.
     - Paths are rooted at stat_data. Never use obsolete paths: /known_rules, /current_event, /in_scene_characters, /death_risk, /resurrection_risk, /status, /location.
     - Do not update readonly fields whose names start with _.
     - Death danger uses /风险值 only. Ghost revival risk uses /驭鬼者状态/总复苏风险. Do not write /死亡风险; /厉鬼复苏程度 is legacy mirror only.

@@ -19,7 +19,7 @@
 7. “错误推断”会影响后续风险。玩家重复错误推断时，应让后果更危险。
 8. “隐藏档案”只用于保持事件内在一致性，禁止直接向玩家揭露真实杀人规律、关键生路、鬼的真实位置等隐藏内容。
 9. 每次回复结尾必须输出 `<UpdateVariable>`，只更新本轮确实发生变化的字段。
-10. 每次玩家行动被结算后，`<UpdateVariable>` 的补丁数组必须包含 `/最近行动判定` 的 replace 操作；只要本轮生成或刷新 A/B/C/D 后台行动建议，就必须包含 `/行动建议` 的 replace 操作。
+10. 每次玩家行动被结算后，`<UpdateVariable>` 内 `<JSONPatch>` 的补丁数组必须包含 `/最近行动判定` 的 replace 操作；只要本轮生成或刷新 A/B/C/D 后台行动建议，就必须包含 `/行动建议` 的 replace 操作。
 11. `/规律推理记录/-` 只能插入对象，禁止插入纯字符串；禁止使用 known_rules、current_event、in_scene_characters、death_risk、resurrection_risk、status、location 等旧式英文变量路径。
 
 【正文输出契约】

@@ -144,23 +144,36 @@ function parseTaggedChoices(text) {
   return JSON.parse(match[1]);
 }
 
-function parseTaggedPatch(text) {
+function extractUpdateVariablePatchArrayText(inner) {
+  const source = String(inner || '')
+    .replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi, '')
+    .trim();
+  const jsonPatchMatches = source.matchAll(/<JSONPatch\b[^>]*>\s*([\s\S]*?)\s*<\/JSONPatch>/gi);
+  for (const jsonPatchMatch of jsonPatchMatches) {
+    const arrayMatch = jsonPatchMatch[1].match(/(\[[\s\S]*\])/);
+    if (arrayMatch) return arrayMatch[1];
+  }
+  const legacyArrayMatch = source.replace(/<\/?JSONPatch\b[^>]*>/gi, '').match(/(\[[\s\S]*\])/);
+  return legacyArrayMatch ? legacyArrayMatch[1] : '';
+}
+
+function parseTaggedPatch(text, { expectJsonPatch = true } = {}) {
   const match = stripThinkingBlocks(text).match(/<UpdateVariable>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);
   assert.ok(match, 'raw message should retain tagged <UpdateVariable>');
-  assert.equal(/<JSONPatch>/i.test(match[1]), false, 'raw UpdateVariable should not require a nested <JSONPatch> tag');
+  if (expectJsonPatch) assert.ok(/<JSONPatch>/i.test(match[1]), 'raw UpdateVariable should use a nested <JSONPatch> tag');
   assert.equal(/<Analysis>/i.test(match[1]), false, 'raw UpdateVariable should not contain an Analysis tag');
-  const payload = match[1].trim();
-  assert.ok(payload.startsWith('['), 'raw UpdateVariable payload should start with a JSON array');
-  assert.ok(payload.endsWith(']'), 'raw UpdateVariable payload should end with a JSON array');
+  const payload = extractUpdateVariablePatchArrayText(match[1]);
+  assert.ok(payload.startsWith('['), 'UpdateVariable JSONPatch payload should contain a JSON array');
+  assert.ok(payload.endsWith(']'), 'UpdateVariable JSONPatch payload should end with a JSON array');
   return JSON.parse(payload);
 }
 
 function parseUpdateVariableActionSuggestionSample(text) {
   const match = text.match(/<UpdateVariable>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);
   assert.ok(match, 'sample should contain UpdateVariable');
-  const arrayMatch = match[1].match(/(\[[\s\S]*\])/);
-  assert.ok(arrayMatch, 'sample UpdateVariable should contain a JSON patch array');
-  const patch = JSON.parse(arrayMatch[1]);
+  const arrayText = extractUpdateVariablePatchArrayText(match[1]);
+  assert.ok(arrayText, 'sample UpdateVariable should contain a JSON patch array');
+  const patch = JSON.parse(arrayText);
   const actionPatch = patch.find(item => item.path === '/\u884c\u52a8\u5efa\u8bae');
   assert.ok(actionPatch, 'sample should carry /行动建议 in UpdateVariable');
   const choices = actionPatch.value.map(item => ({
@@ -227,9 +240,11 @@ const sample = [
   'Lin Che wakes up in a corridor. The primary anomaly is a knocking sound, and the visible evidence points to a nearby door.',
   'La luz del tel\u00e9fono m\u00f3vil ilumina el pasillo, la pared mojada y el riesgo de acercarse a las opciones del estado.',
   '<UpdateVariable>',
+  '<JSONPatch>',
   '[',
   '  { "op": "replace", "path": "/recent_action", "value": { "result": "watch corridor" } }',
   ']',
+  '</JSONPatch>',
   '</UpdateVariable>',
 ].join('\n');
 
@@ -245,6 +260,7 @@ assert.equal(parsedPatch[0].op, 'replace');
 const updateVariableOnlySample = [
   'Only markdown narration and variable patch are present.',
   '<UpdateVariable>',
+  '<JSONPatch>',
   '[',
   '  { "op": "replace", "path": "/\u884c\u52a8\u5efa\u8bae", "value": [',
   '    { "\u9009\u9879": "A", "\u601d\u8def": "\u7559\u5728\u539f\u5730\u89c2\u5bdf", "\u4e3b\u8981\u98ce\u9669": "\u53ef\u80fd\u9519\u8fc7\u6551\u547d\u7a97\u53e3" },',
@@ -252,12 +268,20 @@ const updateVariableOnlySample = [
   '    { "\u9009\u9879": "C", "\u601d\u8def": "\u6cbf\u5899\u64a4\u79bb", "\u4e3b\u8981\u98ce\u9669": "\u53ef\u80fd\u88ab\u8ffd\u8e2a" }',
   '  ] }',
   ']',
+  '</JSONPatch>',
   '</UpdateVariable>',
 ].join('\n');
 const fallbackChoices = parseUpdateVariableActionSuggestionSample(updateVariableOnlySample);
 assert.equal(fallbackChoices.length, 4, 'UpdateVariable-only action suggestions should deterministically yield A-D');
 assert.equal(fallbackChoices[0].key, 'A');
 assert.equal(fallbackChoices[3].text, '\u81ea\u5b9a\u4e49\u884c\u52a8');
+const legacyDirectUpdateVariableSample = updateVariableOnlySample
+  .replace(/<JSONPatch>\n/i, '')
+  .replace(/\n<\/JSONPatch>/i, '');
+const legacyDirectChoices = parseUpdateVariableActionSuggestionSample(legacyDirectUpdateVariableSample);
+assert.equal(legacyDirectChoices.length, 4, 'legacy direct-array UpdateVariable action suggestions should remain compatible');
+const legacyDirectPatch = parseTaggedPatch(legacyDirectUpdateVariableSample, { expectJsonPatch: false });
+assert.equal(legacyDirectPatch[0].path, '/\u884c\u52a8\u5efa\u8bae', 'legacy direct-array UpdateVariable should still parse');
 
 const thinkingPollutedProtocolSample = [
   '<think>',
@@ -270,7 +294,9 @@ const thinkingPollutedProtocolSample = [
   '[{ "key": "A", "text": "listen quietly", "risk": { "death": 2, "revive": 0, "source": "quiet" } }]',
   '</choices>',
   '<UpdateVariable>',
+  '<JSONPatch>',
   '[{ "op": "replace", "path": "/\u884c\u52a8\u5efa\u8bae", "value": [] }]',
+  '</JSONPatch>',
   '</UpdateVariable>',
 ].join('\n');
 const thinkingChoices = parseTaggedChoices(thinkingPollutedProtocolSample);
@@ -387,6 +413,7 @@ assert.ok(statusAppSource.includes('displayLocation'), 'status bar should displa
 assert.ok(statusAppSource.includes('item.id'), 'status bar should accept id as a structured choices key alias');
 assert.ok(statusAppSource.includes('parseUpdateVariableActionSuggestions'), 'status bar should parse /行动建议 from UpdateVariable when <choices> is missing');
 assert.ok(statusAppSource.includes('function stripThinkingBlocks'), 'status bar should strip thinking blocks before parsing protocol tags');
+assert.ok(statusAppSource.includes('extractUpdateVariableJsonPatchArrayText'), 'status bar should prefer nested JSONPatch inside UpdateVariable');
 assert.ok(statusAppSource.includes('coerceDirectActionOptionsPatchArray'), 'status bar should coerce direct action-option arrays inside UpdateVariable');
 assert.ok(statusAppSource.includes('mirrorCoreStateToDatabase'), 'status bar should mirror key 4.0 tables from MVU/sp_status when database is empty');
 assert.ok(statusAppSource.includes('acu_mfrs_core_state_crud_mirror'), 'core state mirror should have a localStorage kill switch');
@@ -418,11 +445,13 @@ assert.ok(vendorSource.includes('stripMfrsThinkingBlocks_ACU(content).match(/<Up
 assert.ok(vendorSource.includes('stripMfrsRuntimeVariableNoise_ACU(stripMfrsThinkingBlocks_ACU(content))'), 'vendor raw sanitizer should remove thinking/runtime noise before protocol repair');
 assert.ok(vendorSource.includes('allowUnclosedThinkingSalvage'), 'vendor should delay unclosed-thinking salvage until late stabilization retries');
 assert.ok(vendorSource.includes('[8000, 15000]'), 'vendor should include late stabilization retries before salvaging unclosed thinking payloads');
+assert.ok(vendorSource.includes('extractMfrsUpdateVariableJsonPatchArrayText_ACU'), 'vendor should prefer nested JSONPatch inside UpdateVariable');
 assert.ok(vendorSource.includes('coerceMfrsDirectActionOptionsPatchArray_ACU'), 'vendor should coerce direct action-option arrays inside UpdateVariable');
 assert.ok(vendorSource.includes('const protocolPatterns = ['), 'vendor should recover valid protocol payloads after unclosed thinking tags');
 assert.ok(vendorSource.includes('buildMfrsChoicesProtocolPatch_ACU'), 'vendor should synthesize missing short tags/choices from UpdateVariable');
 assert.ok(vendorSource.includes('repairMfrsTaggedChoicesBlock_ACU'), 'vendor should repair malformed existing <choices> JSON blocks');
-assert.ok(vendorSource.includes('repairMfrsUpdateVariableBlock_ACU'), 'vendor should rewrite UpdateVariable payload to a direct JSON array');
+assert.ok(vendorSource.includes('repairMfrsUpdateVariableBlock_ACU'), 'vendor should repair UpdateVariable payloads');
+assert.ok(vendorSource.includes('<JSONPatch>'), 'vendor should normalize repaired UpdateVariable payloads to nested JSONPatch');
 assert.ok(vendorSource.includes('repairMfrsChoicesOrder_ACU'), 'vendor should move <choices> before <sp_choices> when the model outputs the old order');
 assert.ok(vendorSource.includes('sanitizeMfrsMessageObjectRawProtocol_ACU'), 'vendor should sanitize both message mes and swipe content');
 assert.ok(vendorSource.includes('swipes[swipeId] = cleanedContent'), 'vendor sanitizer should write cleaned raw back to the active swipe');
