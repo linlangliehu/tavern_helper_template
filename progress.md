@@ -1,5 +1,29 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ P5 发布链路完成：v8.5.8）
+
+**执行内容：**
+- ✅ 精确 source commit/push：`971c617 fix(mfrs): align mvu update variable protocol`。
+- ✅ 等到 GitHub bot bundle：`454267e [bot] bundle`，tag `v0.0.375`；状态栏 dist 已确认含 nested `JSONPatch` 解析逻辑。
+- ✅ 回填 `scripts/publish-card.mjs`：`CDN_REF=454267e`，`releaseVersion=8.5.8`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，同步发布版 YAML/PNG；日志显示镜像世界书 386 个文件、替换 15 处链接、保留版本 8.5.8。
+
+**验证：**
+- ✅ `node --check scripts/publish-card.mjs`
+- ✅ `git diff --check`
+- ✅ `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ 发布版 YAML：version 8.5.8，`454267e` 7 处；旧 `bbbe6c7` / 8.5.7 / localhost / 127.0.0.1 均未命中。
+- ✅ 发布版 PNG `chara` / `ccv3`：合计 `454267e` 14 处、8.5.8 2 处；旧 `bbbe6c7` / 8.5.7 / localhost / 127.0.0.1 均未命中。
+- ✅ CDN smoke `@454267e`：状态栏 200 且含 `UpdateVariable` / `JSON[P]atch`，vendor 200 且含 `extractMfrsUpdateVariableJsonPatchArrayText_ACU` / `<JSONPatch>`，数据库前端 200 且含自动召回 marker。
+- ✅ 发布同步 commit `5b97c78 chore(release): publish mfrs v8.5.8` 已 push。
+- ✅ 推送后远端 CDN `@5b97c78`：发布版 YAML 200，含 8.5.8 和 `454267e`×7，旧 `bbbe6c7` / 8.5.7 / local 为 0；发布版 PNG 200 / 7746686 bytes，chara/ccv3 含 8.5.8 与 `454267e`×14，旧 ref/local 为 0。
+
+**边界：**
+- ✅ 未触发真实 AI，未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ `.tmp-mfrs-regex-backup-20260707.json` 是全局 Tavern Regex 修改前的本地备份，不提交。
+- ✅ 未跟踪截图 `屏幕截图 2026-07-06 235029.png` 不提交。
+- ✅ P5 正式发布链路已完成；真实 AI 最小复测仍需用户明确批准。
+
 ## 2026-07-07 CST（✅ 发布后真实对话修复任务 1-5 已实施）
 
 **完成内容：**

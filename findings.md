@@ -1,5 +1,18 @@
 # Findings
 
+## 2026-07-07：v8.5.8 发布验证，JSONPatch 协议修复已进入发布版
+
+**结论：** MVU JSONPatch 协议修复已完成正式发布链路。source `971c617` 已触发 bot bundle `454267e`，发布版 YAML/PNG 已回填到版本 8.5.8 和 CDN ref `454267e`；发布同步 commit `5b97c78` 已 push，本地内容验证、资源 CDN smoke 和远端发布版 YAML/PNG smoke 均通过。
+
+**验证判据：**
+- 发布版 YAML：version 8.5.8，`454267e` 7 处；旧 `bbbe6c7`、8.5.7、localhost、127.0.0.1 均为 0。
+- 发布版 PNG `chara` / `ccv3`：合计 `454267e` 14 处、8.5.8 2 处；旧 `bbbe6c7`、8.5.7、本地链接均为 0。
+- worldbook gate：383 entries / 33 disabled / max enabled 5851。
+- CDN smoke `@454267e`：状态栏、vendor、数据库前端均 HTTP 200；状态栏含 `UpdateVariable` / `JSON[P]atch`，vendor 含 nested JSONPatch parser / repair marker，数据库前端保留自动召回 marker。
+- 远端发布版 `@5b97c78`：YAML/PNG 均 HTTP 200；YAML 含 8.5.8 和 `454267e` 7 处，PNG chara/ccv3 含 8.5.8 和 `454267e` 14 处；旧 ref、旧版本、本地链接均为 0。
+
+**剩余边界：** 本次仍未触发真实 AI；新回复是否按提示词稳定输出 nested `<JSONPatch>` 需要用户明确批准后做一次最小真实对话复测。
+
 ## 2026-07-07：修复验证结果，nested JSONPatch 是当前 MVU 唯一可消费格式
 
 **结论：** 本轮已把角色卡输出协议切到 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>`。在当前 SillyTavern 运行态中，`Mvu.parseMessage()` 对 nested `<JSONPatch>` 可以更新完整 `stat_data`；旧 `<UpdateVariable>[...]</UpdateVariable>` direct-array 仍不会更新变量，因此旧格式只能作为状态栏/vendor 自己提取行动建议的兼容输入，不能再要求模型输出。
