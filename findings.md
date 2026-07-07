@@ -1,5 +1,87 @@
 # Findings
 
+## 2026-07-07：当前角色卡脚本、变量、MVU/EJS 关系与最终根因
+
+**脚本职责图：**
+- `mvu`：加载 MagVarUpdate bundle，提供 `window.Mvu.parseMessage/getMvuData/replaceMvuData`。
+- `hotfix-generation-ended-listeners`：在 `GENERATION_ENDED` 后读取 raw `<UpdateVariable>`，归一化 nested `<JSONPatch>` / 旧 direct-array / `op:"add"`，解析后写回对应 message variables，并清洗可见正文协议块。
+- `变量结构`：调用 `registerMvuSchema(Schema)` 注册 Zod schema；schema 根字段就是 `姓名/身份/所在位置/当前灵异事件/行动建议...`，不是再包一层 `stat_data`。
+- `界面美化`：负责显示层清理与美化，不是变量写入来源。
+- `固定状态栏`：只保留 host 槽位，供数据库仪表盘和 14 表前端挂载。
+- `spv3.9.5·数据库`：数据库引擎/vendor loader，负责数据库镜像和自动填表链路。
+- `神秘复苏数据库前端`：仪表盘/14 表前端；它会读最新 message/chat 的 MVU `stat_data` 做即时状态，但数据库只是长期镜像，不覆盖 MVU。
+- `消息内面板`：按 DOM 楼层 `mesid` 调 `getVariables({ type:'message', message_id })` 读取该条消息的 `stat_data`，所以它是检验 message variables 是否落盘的关键读者。
+
+**变量关系：**
+- `initvar.yaml` 顶层已直接对齐 schema 字段，运行态由 MVU 包成 `message.variables[swipe_id].stat_data`。
+- `变量列表.txt` 是 EJS 只读提示词注入：读取 `variables.stat_data`，清理旧的 `stat_data.stat_data` 污染兜底，再输出 `<stat_data>{...}</stat_data>` 给模型；它不负责更新变量。
+- `变量输出格式.yaml` 要求模型每轮输出 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>`，禁止直接把 JSON 数组放在 `<UpdateVariable>` 下，也禁止 `op:"add"`。
+- `util/mvu.ts`、状态栏 store、消息内面板和 EJS 都围绕 `getVariables(...).stat_data` 工作；因此真正要修的是“写回到同一条消息的 `variables[swipe_id].stat_data`”，不是数据库或 EJS。
+
+**本轮只读运行态确认：**
+- 当前页仍是 `神秘复苏模拟器发布版`，脚本 ref 为 `@e36f8aa ... mvu-v859`。
+- `host.getVariables` / `host.updateVariablesWith` 为 `undefined`，实际可用函数在 `host.TavernHelper.getVariables/updateVariablesWith`；`ctx.saveChat`、`Mvu.getMvuData/replaceMvuData/parseMessage` 均存在。
+- #2/#4 当前 message variables 已被本地候选修复后的恢复扫描修正：#2 为 `测试 / 初级驭鬼者 / 大昌市七中事件 / 4建议`，#4 为 `测试 / 初级驭鬼者、七中学生、穿越者 / 敲门鬼事件 / 4建议`。
+
+**最终根因：**
+v8.5.9 的协议、发布包、vendor 同 ref、nested `<JSONPatch>`、raw protocol 保存、`Mvu.parseMessage(raw, oldData)`、`Mvu.replaceMvuData(data,{type:'message',message_id})` 和消息内面板刷新都已经生效。剩余失败是写回可靠性和持久化缺口：hotfix 单次调用 `replaceMvuData` 后信任日志，没有读回验证、没有在读回失败时直接写 `chat[messageIndex].variables[swipe_id]`、没有事件链稳定后的延迟重试、没有安装恢复扫描旧 raw protocol，并且直接兜底写内存后还需要 `saveChat()` 持久化，避免刷新后丢失。
+
+**当前 source 候选补强：**
+- `getRuntimeFunction()` 已纳入 `TavernHelper?.[key]`，匹配真实运行态。
+- `assignMessageVariablesDirectly()` 在 `variables` 不存在时按当前 ST 结构初始化为 swipe 数组。
+- 直接兜底命中后调用 `SillyTavern.getContext().saveChat()`，日志记录 `persisted`。
+- 回归 gate 已要求 TavernHelper fallback、直接兜底持久化和 `saveChat()`，并通过 `pnpm verify:mfrs-mvu-hotfix` / `pnpm build`。
+
+## 2026-07-07：v8.5.9 写回失败复核，协议/解析/API 均生效，缺的是 verified writeback 与恢复补写
+
+**结论：** 之前的修复有一大半已经生效：v8.5.9 发布包、runtime URL/vendor 同 ref 链、nested `<JSONPatch>` 输出、raw protocol 保存、`Mvu.parseMessage(raw, oldData)` 和 `Mvu.replaceMvuData(data, { type:'message', message_id })` 本身都可用。真实失败不是“解析不了”或“API 不能写”，而是 hotfix 在 `GENERATION_ENDED` 单次写回后没有读回校验、延迟重试和页面恢复补写；真实生成事件链结束后，最终 `chat[i].variables[0]` 仍可能停在初始值。
+
+**本轮运行态探针：**
+- 只读探针：#2/#4 的 `extra._mfrs_raw_protocol_message` 均含 nested `<JSONPatch>`；`Mvu.parseMessage(raw, oldData)` 直接得到正确新变量，#4 结果为 `姓名=测试`、`身份=初级驭鬼者、七中学生、穿越者`、`事件代号=敲门鬼事件`、`行动建议.length=4`。
+- 可逆 sentinel 探针：`Mvu.replaceMvuData(testData, { type:'message', message_id:4 })` 会立即写到 `chat[4].variables[0]` 和 `Mvu.getMvuData(...)`，恢复原值成功。
+- 可逆真实 raw 探针：用 #4 raw `parseMessage` 结果调用 `replaceMvuData` 后，消息变量和 `.mfrs-msg-panel` 都显示 `测试 / 敲门鬼事件`，恢复原值成功。
+- 3.5 秒延迟探针：手动写入后没有被状态栏 interval 或 vendor 延迟流程回滚。
+- `setChatMessages([{ message_id, mes, extra }])` 复现未冲掉 sentinel，说明 vendor raw 清洗的 `setChatMessages` 不是当前已复现的覆盖源。
+
+**已实施的 source 修复：**
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts` 新增 `writeMvuDataWithVerification()`：调用 `Mvu.replaceMvuData` 后立即 `Mvu.getMvuData` 读回比对 `stat_data`。
+- 若读回仍不一致，新增 `assignMessageVariablesDirectly()` 兜底写入 `chat[messageIndex].variables[swipe_id]`，并在日志中输出 `verified`。
+- `GENERATION_ENDED` 后新增 250ms / 1000ms / 2500ms 延迟重试，覆盖真实生成事件链中消息变量晚初始化或后续刷新造成的空窗。
+- 安装成功后新增 `recoverRecentRawProtocolMessages()`，扫描最近 12 条 AI 消息里的 `extra._mfrs_raw_protocol_message`，可自动补写已失败的 #2/#4 旧消息。
+
+**本地真页验证：** 将本轮构建出的本地 hotfix bundle 临时执行到当前 SillyTavern 页后，安装恢复扫描成功修复 #2/#4：#2 变为 `姓名=测试 / 身份=初级驭鬼者 / 事件代号=大昌市七中事件 / 行动建议=4`，#4 变为 `姓名=测试 / 身份=初级驭鬼者、七中学生、穿越者 / 事件代号=敲门鬼事件 / 行动建议=4`，消息内面板 DOM 同步显示正确值。未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+
+## 2026-07-07：v8.5.9 真实对话复测失败，hotfix 声称写回但 message variables 仍是初始值
+
+**结论：** v8.5.9 发布包确实加载到了真实页面，模型输出也已经是可解析的 nested `<JSONPatch>`，但修复没有完全成功。失败不在协议保存或 JSONPatch 解析，而在 MVU 写回层：hotfix console 打印“已解析并写回消息变量”，写入器为 `Mvu.replaceMvuData`，但随后 SillyTavern / Prompt Template / 消息内面板读取到的仍是初始 `chat[i].variables[0].stat_data`。
+
+**运行态证据：**
+- 当前页面：`SillyTavern (http://127.0.0.1:8000/)`，角色 `神秘复苏模拟器发布版`，avatar `神秘复苏模拟器发布版.png`，chat length 5，AI 消息 #0/#2/#4。
+- `window.Mvu` 存在，`parseMessage.length === 2`、`replaceMvuData.length === 2`；`MysteryMessagePanel.refreshMessage` 存在。
+- `window.__mfrsScriptResourceUrls__['神秘复苏数据库前端']` 与 `['spv3.9.5·数据库']` 均指向 `@e36f8aa ... mvu-v859`，说明发布 ref / vendor 链不是当前失败主因。
+
+**协议证据：**
+- #2/#4 visible `mes` 已清洗，不含 `<UpdateVariable>`；原始协议保存在 `extra._mfrs_raw_protocol_message`。
+- #2 raw protocol：1 个 `<UpdateVariable>` / 1 个 `<JSONPatch>`，16 个 `replace`，含 `/姓名=测试`、`/身份=初级驭鬼者`、`/所在位置=大昌市第七中学·教室内`、`/当前灵异事件`、`/行动建议`。
+- #4 raw protocol：17 个 op，14 `replace`、2 `delta`、1 `insert`，含 `/姓名=测试`、`/身份=初级驭鬼者、七中学生、穿越者`、`/当前灵异事件/事件代号=敲门鬼事件`、`/行动建议`。
+
+**失败证据：**
+- `chat[2].variables[0].stat_data` 与 `chat[4].variables[0].stat_data` 仍是初始：`姓名=未知`、`身份=""`、`所在位置=未知`、`当前灵异事件.事件代号=未立案灵异事件`、`行动建议.length=0`。
+- `.mfrs-msg-panel` 仍显示 `未知 / 未立案灵异事件 / 暂无行动建议`。
+- `TavernHelper.getVariables({ type:'chat' })` 也仍读取到初始 `stat_data`。
+- 底部数据库仪表盘已显示 `测试 / 初级驭鬼者 / 大昌市第七中学教室内 / 最近行动...`，因此这是数据库镜像路径成功、MVU/message variables 路径失败的分裂状态。
+
+**console 关键链路：**
+- `[Hotfix] GENERATION_ENDED 触发 {"messageIndex":4,"hasUpdateVariable":true}`
+- `mag_variable_update_started`、`mag_command_parsed`、`mag_variable_update_ended`
+- `[Hotfix] MVU parseMessage 已解析并写回消息变量 {"writer":"Mvu.replaceMvuData","normalized":{"blocks":1,"legacyWrapped":0,"addToInsert":0,"addToReplace":0,"skipped":0}}`
+- 随后的 `[Prompt Template] message #4.0 variables` 仍打印初始对象，证明写回没有落到实际读取目标。
+
+**下一步根因方向：**
+- 查 `Mvu.replaceMvuData` 是否接受 message index + data，还是需要 message id / current context / 特定 MvuData shape。
+- 对比 `chat[i].variables` 的真实结构：当前是 array-like，关键数据在 `variables[0].stat_data`，不能写到 `variables.stat_data` 或临时 clone。
+- 如果 MVU API 无法可靠指定历史消息，hotfix 应显式写入 `chat[messageIndex].variables[0]` 或 TavernHelper 正确 setter，再触发保存和 `MysteryMessagePanel.refreshMessage(messageIndex)`。
+
 ## 2026-07-07：v8.5.9 发布验证，MVU hotfix 协议兼容与同 ref vendor 链进入发布版
 
 **结论：** v8.5.9 已完成正式发布链路。source `5f38953` 触发 bot bundle `e36f8aa` / tag `v0.0.378`，发布同步 commit `ec6b64a` 已 push；发布版 YAML/PNG 和 CDN smoke 均证明 hotfix normalizer、消息内面板刷新接口、runtime URL wrapper 和同 ref vendor 链进入发布版。

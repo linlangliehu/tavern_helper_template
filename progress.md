@@ -1,5 +1,117 @@
 # Progress Log
 
+## 2026-07-07 CST（🔧 v8.5.10 写回补强：TavernHelper fallback + saveChat 持久化）
+
+**执行内容：**
+- ✅ 按 `planning-with-files` 恢复 `task_plan.md`、`progress.md`、`findings.md` 和 `PROJECT_FLOW.md`；`session-catchup.py` 返回旧 2026-07-04 EJS 残片，本轮按 planning 顶部与当前 git diff 为准。
+- ✅ 复核当前角色卡脚本库：`mvu`、`hotfix-generation-ended-listeners`、`变量结构`、`界面美化`、`固定状态栏`、`spv3.9.5·数据库`、`神秘复苏数据库前端`、`消息内面板` 均在发布版 `@e36f8aa ... mvu-v859` 链路内。
+- ✅ 复核变量链路：`initvar.yaml` 顶层对齐 schema；`变量列表.txt` 是只读 EJS，读 `variables.stat_data` 并输出 `<stat_data>`；`变量输出格式.yaml` 要求 nested `<UpdateVariable><JSONPatch>...`，禁止 direct-array 与 `op:"add"`。
+- ✅ 复核读者：`util/mvu.ts`、消息内面板、数据库前端即时状态均读取 `getVariables(...).stat_data`；数据库前端正确不等于历史 message variables 正确。
+- ✅ 补强 `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：
+  - `getRuntimeFunction()` 增加 `TavernHelper?.[key]` fallback，匹配真页 `host.getVariables === undefined`、`host.TavernHelper.getVariables === function` 的运行态。
+  - 直接变量兜底在 `message.variables` 缺失时按 swipe 数组初始化。
+  - 直接写 `chat[messageIndex].variables[swipe_id]` 后调用 `SillyTavern.getContext().saveChat()` 持久化，并在日志中记录 `persisted`。
+- ✅ 补强 `scripts/verify-mfrs-mvu-hotfix-regressions.mjs` 静态 gate：要求 TavernHelper fallback、`persistDirectMessageVariables()`、`context.saveChat()` 和 `persisted` 日志。
+- ✅ 只读 CDP 验证当前真页：当前角色 `神秘复苏模拟器发布版`，`ctx.saveChat` / `Mvu.*` / `TavernHelper.getVariables/updateVariablesWith` 均存在；#2/#4 message variables 已显示 raw protocol 对应的 `测试 / 大昌市七中事件或敲门鬼事件 / 4建议`。
+- ✅ 清理临时探针文件：`.tmp-current-runtime-summary.js`、`.tmp-current-mvu-audit.js`、`.tmp-current-runtime-keys.js`。
+
+**验证：**
+- ✅ `node --check scripts\verify-mfrs-mvu-hotfix-regressions.mjs`
+- ✅ `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `pnpm build` 通过，仅数据库前端 416 KiB 既有 performance warning。
+- ✅ 构建后复跑 `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `git diff --check`
+- ✅ `git status --short --branch` / `git diff --stat`
+
+**遇到的问题：**
+- 一行式 CDP 表达式在 PowerShell 参数中破坏 JS 引号，导致 `ReferenceError: 行动建议 is not defined`；已改为临时 JS 文件执行同一只读探针，并清理临时文件。
+
+**当前结论：**
+- 之前修复已生效的部分：发布包/ref/vendor、nested `<JSONPatch>`、raw protocol 保存、parser/API、消息内面板刷新。
+- 真正剩余根因：写回可靠性与持久化，而不是 EJS 或数据库路径。
+- 当前 source 候选已补齐写后验证、直接兜底、延迟重试、安装恢复、TavernHelper fallback 和 `saveChat()` 持久化。下一步是按 source-only 边界提交/push，等待 bot bundle 后发布 v8.5.10。
+
+## 2026-07-07 CST（🧭 恢复对话并修正 v8.5.10 候选提交边界）
+
+**执行内容：**
+- ✅ 按 `planning-with-files` 恢复 `task_plan.md`、`progress.md`、`findings.md` 与 `PROJECT_FLOW.md`；`session-catchup.py` 返回的是旧 2026-07-04 残片，本轮按 planning 顶部和当前 git diff 为准。
+- ✅ 复核当前 diff：业务改动集中在 `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts` 与 `scripts/verify-mfrs-mvu-hotfix-regressions.mjs`；`dist/**` 为本地 `pnpm build` 产物。
+- ✅ 更新 `task_plan.md`：新增 `v8.5.10 candidate` 版本索引，修正“需要提交的文件”为 source 修复候选，而不是旧的 planning-only 收口；明确 source commit 默认不提交 `dist/**`，由 bot bundle Action 重建。
+
+**当前结论：**
+- v8.5.9 之前的协议/解析/同 ref vendor/消息面板刷新修复已生效。
+- 当前失败原因已定位为写回可靠性缺口：hotfix 单次 `replaceMvuData` 后没有读回校验、直接变量兜底、延迟重试和安装恢复补写。
+- v8.5.10 source 候选已实现并在真页本地临时注入验证有效；下一步是轻量 gate 复跑后精确 source commit/push，等待 bot bundle，再走发布版同步。
+
+**本轮复跑验证：**
+- ✅ `node --check scripts\verify-mfrs-mvu-hotfix-regressions.mjs`
+- ✅ `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `git diff --check`
+- ✅ `git status --short --branch` 已确认：source 修复、回归脚本、planning 三件套为当前候选；`dist/**` 为本地构建产物，`.tmp-mfrs-regex-backup-20260707.json` 与截图仍不提交。
+
+## 2026-07-07 CST（✅ v8.5.9 写回失败定位完成，verified writeback 修复已实现）
+
+**执行内容：**
+- ✅ 使用项目自带 `scripts/cdp-evaluate.mjs` 连接当前 SillyTavern 真页；未发送消息、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ 只读确认当前页仍为 `神秘复苏模拟器发布版`，`window.Mvu` 存在，chat length 5。
+- ✅ 运行态探针确认：#2/#4 raw protocol 保存完好且为 nested `<JSONPatch>`；`Mvu.parseMessage(raw, oldData)` 能解析出正确 `stat_data`。
+- ✅ 可逆写回探针确认：`Mvu.replaceMvuData()` 本身可写入 `chat[4].variables[0]`；真实 #4 raw parse 结果写入后，消息变量和消息内面板都显示 `测试 / 敲门鬼事件`，随后恢复成功。
+- ✅ 延迟覆盖探针确认：手动写入后等待 3.5 秒不会被状态栏 interval 或 vendor 后续流程回滚；`setChatMessages([{ message_id, mes, extra }])` 也未复现变量覆盖。
+
+**定位结论：**
+- ✅ v8.5.9 之前的协议修复、normalizer、runtime URL/vendor 同 ref 链、`Mvu.parseMessage` 调用修正、消息内面板刷新 API 都已生效。
+- ❌ 失败点不再是解析或 API 不可写，而是 hotfix 只做一次 `replaceMvuData` 并信任日志，没有读回校验、事件链稳定后的重试，也没有安装后扫描 `extra._mfrs_raw_protocol_message` 补写旧失败消息。
+
+**代码改动：**
+- ✅ `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`
+  - 新增 `writeMvuDataWithVerification()`，写回后立即读回比对 `stat_data`。
+  - 新增 `assignMessageVariablesDirectly()`，读回不一致时直接写 `chat[messageIndex].variables[swipe_id]`。
+  - `GENERATION_ENDED` 后增加 250ms / 1000ms / 2500ms 延迟重试。
+  - 安装成功后增加 `recoverRecentRawProtocolMessages()`，扫描最近 12 条 AI 消息 raw protocol 并补写。
+- ✅ `scripts/verify-mfrs-mvu-hotfix-regressions.mjs` 增加静态 gate，防止 verified writeback、直接兜底、延迟重试、历史补写被删。
+
+**验证：**
+- ✅ `node --check src\神秘复苏模拟器\脚本\hotfix-generation-ended-listeners\protocol-normalizer.js`
+- ✅ `node --check scripts\verify-mfrs-mvu-hotfix-regressions.mjs`
+- ✅ `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `node scripts\verify-output-cleaning-regressions.mjs`
+- ✅ `pnpm verify:mfrs-frontend`
+- ✅ `git diff --check`
+- ✅ `pnpm build` 通过，仅数据库前端既有 416 KiB performance warning。
+- ✅ 构建后再次 `pnpm verify:mfrs-mvu-hotfix` 通过。
+- ✅ 将本地构建 hotfix bundle 临时执行到当前真页后，安装恢复扫描成功修复 #2/#4 message variables 和 `.mfrs-msg-panel`：#2/#4 均从 `未知 / 未立案灵异事件 / 0建议` 变为 raw protocol 对应的 `测试 / 大昌市七中事件或敲门鬼事件 / 4建议`。
+
+**边界与剩余：**
+- 本轮没有触发真实 AI，没有发送消息，没有点击“立即手动更新”，没有调用 `manualUpdate()` / `triggerUpdate()`。
+- 当前页面已临时执行本地 hotfix bundle，刷新页面后该本地注入消失；正式分发仍需走 source commit/push → bot bundle → publish-card 的发布链路。
+- `pnpm build` 产生 `dist/**` dirty，其中 hotfix dist 包含本轮改动，状态栏/数据库前端 dist 是构建噪声；正式提交前按发布策略清理或保留。
+
+## 2026-07-07 CST（🔎 v8.5.9 真实对话复测失败：MVU 写回未落到 message variables）
+
+**执行内容：**
+- ✅ 使用 Chrome DevTools MCP 只读验证当前 SillyTavern 页 `http://127.0.0.1:8000/`，当前角色为 `神秘复苏模拟器发布版`，avatar `神秘复苏模拟器发布版.png`，chat length 5，AI 消息为 #0/#2/#4。
+- ✅ 未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ 运行态确认 `window.Mvu` 存在，`parseMessage.length === 2`、`getMvuData.length === 1`、`replaceMvuData.length === 2`；`MysteryMessagePanel.refreshMessage` 存在；`window.__mfrsScriptResourceUrls__` 中数据库前端与数据库脚本均指向 `@e36f8aa ... mvu-v859`。
+
+**验证结果：**
+- ❌ v8.5.9 没有完全修复真实对话问题。
+- #2/#4 visible `mes` 已清洗不含 `<UpdateVariable>`，但 `extra._mfrs_raw_protocol_message` 均保存原始协议。
+- #2 raw protocol 含 1 个 `<UpdateVariable>` / 1 个 nested `<JSONPatch>`，16 个 `replace`，关键路径含 `/姓名=测试`、`/身份=初级驭鬼者`、`/所在位置=大昌市第七中学·教室内`、`/当前灵异事件`、`/行动建议`。
+- #4 raw protocol 含 1 个 nested `<JSONPatch>`，17 个 op：14 `replace`、2 `delta`、1 `insert`，关键路径含 `/姓名=测试`、`/身份=初级驭鬼者、七中学生、穿越者`、`/当前灵异事件/事件代号=敲门鬼事件`、`/行动建议`。
+- 但 `chat[2].variables[0].stat_data` 与 `chat[4].variables[0].stat_data` 仍为初始：`姓名=未知`、`身份=""`、`所在位置=未知`、`当前灵异事件.事件代号=未立案灵异事件`、`行动建议.length=0`。
+- `.mfrs-msg-panel` 仍显示 `姓名 未知`、`身份 未知`、`事件代号 未立案灵异事件`、`行动建议 暂无行动建议`。
+- 底部数据库仪表盘已更新为 `姓名 测试`、`身份 初级驭鬼者`、`所在地点 大昌市第七中学教室内`、`最近行动 观察窗外与走廊动静...`，说明数据库镜像路径成功、MVU/message variables 路径失败。
+
+**关键 console 证据：**
+- `[Hotfix] GENERATION_ENDED 触发 {"messageIndex":4,"messageId":4,"hasUpdateVariable":true,"hasChoices":true}`
+- `mag_variable_update_started` / `mag_command_parsed` / `mag_variable_update_ended` 均出现。
+- `[Hotfix] MVU parseMessage 已解析并写回消息变量 {"messageIndex":4,"messageId":4,"writer":"Mvu.replaceMvuData","normalized":{"blocks":1,"legacyWrapped":0,"addToInsert":0,"addToReplace":0,"skipped":0}}`
+- 紧接着 Prompt Template 渲染 `message #4.0 variables` 和 `all variables` 仍是初始 `stat_data`，证明日志声称写回不等于 ST/MVU 实际读取层已更新。
+
+**当前判断：**
+- 模型输出契约已明显改善，发布 ref/vendor 链也进入 `@e36f8aa`；失败集中在 hotfix 写回层。
+- 下一步优先查 `Mvu.replaceMvuData` 的参数语义和持久化目标，确认它是否写到当前消息的 `variables[0]`；必要时改用 `chat[messageIndex].variables[0]` / TavernHelper 正确 setter 做显式写回，并补回归覆盖“写回后 Prompt Template 读取同一变量”的断言。
+
 ## 2026-07-07 CST（✅ P7 发布链路完成：v8.5.9）
 
 **执行内容：**

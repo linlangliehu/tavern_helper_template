@@ -25,6 +25,16 @@ type MessageVariableOption = {
   message_id: number | 'latest';
 };
 
+type ChatMessage = {
+  mes?: string;
+  message_id?: number;
+  is_user?: boolean;
+  swipe_id?: number;
+  swipes?: string[];
+  extra?: Record<string, unknown>;
+  variables?: Record<string, unknown>[] | Record<string, unknown>;
+};
+
 const { normalizeMfrsUpdateVariableProtocol } = protocolNormalizer as {
   normalizeMfrsUpdateVariableProtocol: (message: string) => {
     message: string;
@@ -49,15 +59,8 @@ type HostWindow = Window & {
         emit?: (event: string, ...args: unknown[]) => void;
         events?: Record<string, unknown[]>;
       };
-      chat?: Array<{
-        mes?: string;
-        message_id?: number;
-        is_user?: boolean;
-        swipe_id?: number;
-        swipes?: string[];
-        extra?: Record<string, unknown>;
-        variables?: Record<string, unknown>[] | Record<string, unknown>;
-      }>;
+      chat?: ChatMessage[];
+      saveChat?: () => unknown | Promise<unknown>;
       characterId?: string | number;
       event_types?: Record<string, string>;
     };
@@ -85,6 +88,13 @@ type HostWindow = Window & {
     updater: (variables: Record<string, unknown>) => Record<string, unknown>,
     options: MessageVariableOption,
   ) => Record<string, unknown> | Promise<Record<string, unknown>>;
+  TavernHelper?: {
+    getVariables?: (options: MessageVariableOption) => Record<string, unknown>;
+    updateVariablesWith?: (
+      updater: (variables: Record<string, unknown>) => Record<string, unknown>,
+      options: MessageVariableOption,
+    ) => Record<string, unknown> | Promise<Record<string, unknown>>;
+  };
   MysteryMessagePanel?: {
     refreshMessage?: (messageId: number | string) => void;
   };
@@ -126,7 +136,7 @@ function getMvuApi(hostWindow: HostWindow) {
 
 function getRuntimeFunction<K extends 'getVariables' | 'updateVariablesWith'>(hostWindow: HostWindow, key: K) {
   const localWindow = window as HostWindow;
-  return hostWindow[key] ?? localWindow[key];
+  return hostWindow[key] ?? hostWindow.TavernHelper?.[key] ?? localWindow[key] ?? localWindow.TavernHelper?.[key];
 }
 
 function getTavernEventName(hostWindow: HostWindow, key: 'MESSAGE_RECEIVED' | 'GENERATION_ENDED', fallback: string) {
@@ -146,6 +156,11 @@ function getTavernEventName(hostWindow: HostWindow, key: 'MESSAGE_RECEIVED' | 'G
 
 function getMessageVariableId(message: { message_id?: number } | undefined, fallbackIndex: number) {
   return typeof message?.message_id === 'number' ? message.message_id : fallbackIndex;
+}
+
+function getMessageSwipeId(message: { swipe_id?: number } | undefined) {
+  const swipeId = Number(message?.swipe_id ?? 0);
+  return Number.isInteger(swipeId) && swipeId >= 0 ? swipeId : 0;
 }
 
 function resolveMessageIndex(
@@ -168,6 +183,26 @@ function resolveMessageIndex(
 
 function hasInternalProtocol(message: string) {
   return /<UpdateVariable\b|<choices\b/i.test(message);
+}
+
+function cloneMvuData(data: MvuData): MvuData {
+  try {
+    return JSON.parse(JSON.stringify(data || {})) as MvuData;
+  } catch {
+    return { ...(data || {}) };
+  }
+}
+
+function stringifyStatData(data: MvuData | undefined) {
+  try {
+    return JSON.stringify(data?.stat_data ?? {});
+  } catch {
+    return '';
+  }
+}
+
+function hasSameStatData(actual: MvuData | undefined, expected: MvuData | undefined) {
+  return stringifyStatData(actual) === stringifyStatData(expected);
 }
 
 function readMessageTextForMvu(message: { mes?: string; extra?: Record<string, unknown> } | undefined) {
@@ -222,6 +257,69 @@ async function replaceMvuData(hostWindow: HostWindow, data: MvuData, messageOpti
   throw new Error('Mvu.replaceMvuData / updateVariablesWith 均不可用');
 }
 
+function assignMessageVariablesDirectly(chat: ChatMessage[], messageIndex: number, data: MvuData) {
+  const message = chat[messageIndex];
+  if (!message) return '';
+
+  const clonedData = cloneMvuData(data);
+  if (!message.variables) {
+    const swipeId = getMessageSwipeId(message);
+    const variables: Record<string, unknown>[] = [];
+    variables[swipeId] = clonedData;
+    message.variables = variables;
+    return `chat.variables[${swipeId}]`;
+  }
+
+  if (Array.isArray(message.variables)) {
+    const swipeId = getMessageSwipeId(message);
+    message.variables[swipeId] = clonedData;
+    return `chat.variables[${swipeId}]`;
+  }
+
+  message.variables = clonedData;
+  return 'chat.variables';
+}
+
+async function persistDirectMessageVariables(hostWindow: HostWindow, messageIndex: number) {
+  const context = getSillyTavernContext(hostWindow);
+  if (typeof context?.saveChat !== 'function') return false;
+
+  try {
+    await context.saveChat();
+    return true;
+  } catch (error) {
+    console.warn('[Hotfix] 直接写入消息变量后保存聊天失败', { messageIndex, error });
+    return false;
+  }
+}
+
+async function writeMvuDataWithVerification(
+  hostWindow: HostWindow,
+  chat: ChatMessage[],
+  messageIndex: number,
+  data: MvuData,
+  messageOption: MessageVariableOption,
+) {
+  const primaryWriter = await replaceMvuData(hostWindow, data, messageOption);
+  let verified = hasSameStatData(readOldMvuData(hostWindow, messageOption), data);
+  let directWriter = '';
+  let persisted = false;
+
+  if (!verified) {
+    directWriter = assignMessageVariablesDirectly(chat, messageIndex, data);
+    verified = hasSameStatData(readOldMvuData(hostWindow, messageOption), data);
+    if (directWriter) {
+      persisted = await persistDirectMessageVariables(hostWindow, messageIndex);
+    }
+  }
+
+  return {
+    writer: directWriter ? `${primaryWriter}+${directWriter}` : primaryWriter,
+    verified,
+    persisted,
+  };
+}
+
 function refreshMessagePanel(hostWindow: HostWindow, messageId: number | string) {
   try {
     hostWindow.MysteryMessagePanel?.refreshMessage?.(messageId);
@@ -266,14 +364,68 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
     return;
   }
 
-  const writer = await replaceMvuData(hostWindow, newData, messageOption);
+  if (hasSameStatData(oldData, newData)) {
+    console.debug('[Hotfix] MVU 变量已是解析结果，跳过重复写回', {
+      messageIndex,
+      messageId: messageOption.message_id,
+      normalized: normalized.stats,
+    });
+    return;
+  }
+
+  const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, newData, messageOption);
   refreshMessagePanel(hostWindow, messageOption.message_id);
   console.info('[Hotfix] MVU parseMessage 已解析并写回消息变量', {
     messageIndex,
     messageId: messageOption.message_id,
-    writer,
+    writer: writeResult.writer,
+    verified: writeResult.verified,
+    persisted: writeResult.persisted,
     normalized: normalized.stats,
   });
+
+  if (!writeResult.verified) {
+    console.warn('[Hotfix] MVU 写回后读回仍不一致，保留延迟重试', {
+      messageIndex,
+      messageId: messageOption.message_id,
+    });
+  }
+}
+
+function scheduleMvuWriteBackRetries(messageIndex: number, eventMessageId?: unknown) {
+  for (const delay of [250, 1000, 2500]) {
+    window.setTimeout(() => {
+      parseAndWriteMvuMessage(messageIndex, eventMessageId).catch(error => {
+        console.warn('[Hotfix] MVU 延迟写回重试失败', { messageIndex, delay, error });
+      });
+    }, delay);
+  }
+}
+
+async function recoverRecentRawProtocolMessages() {
+  const hostWindow = getHostWindow();
+  const context = getSillyTavernContext(hostWindow);
+  const chat = context?.chat;
+  if (!chat || chat.length === 0) return;
+
+  let candidates = 0;
+  for (let index = Math.max(0, chat.length - 12); index < chat.length; index += 1) {
+    const message = chat[index];
+    if (!message || message.is_user) continue;
+    const rawMessage = readMessageTextForMvu(message);
+    if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) continue;
+
+    candidates += 1;
+    try {
+      await parseAndWriteMvuMessage(index);
+    } catch (error) {
+      console.warn('[Hotfix] 历史 raw protocol 消息补写失败', { messageIndex: index, error });
+    }
+  }
+
+  if (candidates > 0) {
+    console.info('[Hotfix] 已扫描历史 raw protocol 消息补写', { candidates });
+  }
 }
 
 async function cleanProtocolBlocks(messageIndex: number) {
@@ -362,6 +514,7 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
   // 1. 触发 MVU 解析
   try {
     await parseAndWriteMvuMessage(lastMessageIndex, eventMessageId);
+    scheduleMvuWriteBackRetries(lastMessageIndex, eventMessageId);
   } catch (error) {
     console.error('[Hotfix] MVU parseMessage 执行失败', error);
   }
@@ -467,6 +620,11 @@ async function installHotfix() {
   const success = registerEventListeners();
   if (success) {
     console.info('[Hotfix] GENERATION_ENDED 监听器补丁安装成功');
+    window.setTimeout(() => {
+      recoverRecentRawProtocolMessages().catch(error => {
+        console.warn('[Hotfix] 历史 raw protocol 消息补写扫描失败', error);
+      });
+    }, 1000);
   } else {
     console.error('[Hotfix] GENERATION_ENDED 监听器补丁安装失败');
   }

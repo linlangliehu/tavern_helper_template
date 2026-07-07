@@ -182,11 +182,23 @@ assert.equal(legacyAdd.stats.addToReplace, 4, 'legacy add sample should convert 
 const hotfixSource = readText(hotfixPath);
 assert.ok(hotfixSource.includes('normalizeMfrsUpdateVariableProtocol(rawMessage)'), 'hotfix should normalize before parseMessage');
 assert.ok(hotfixSource.includes('mvu.parseMessage(normalized.message, oldData)'), 'hotfix should call parseMessage with message text and old data');
-assert.ok(hotfixSource.includes('replaceMvuData(hostWindow, newData, messageOption)'), 'hotfix should write parsed MVU data back to message variables');
+assert.ok(
+  hotfixSource.includes('writeMvuDataWithVerification(hostWindow, chat, messageIndex, newData, messageOption)'),
+  'hotfix should write parsed MVU data back through verified writeback',
+);
 assert.equal(hotfixSource.includes('parseMessage(lastMessageIndex'), false, 'hotfix must not pass message index to parseMessage');
 assert.ok(hotfixSource.includes('RAW_PROTOCOL_EXTRA_KEY'), 'hotfix should preserve raw protocol before cleaning mes');
 assert.ok(hotfixSource.includes('getTavernEventName'), 'hotfix should register real runtime event names');
 assert.ok(hotfixSource.includes('MysteryMessagePanel?.refreshMessage'), 'hotfix should refresh message panel after MVU writeback');
+assert.ok(hotfixSource.includes('writeMvuDataWithVerification'), 'hotfix should verify MVU writeback after replaceMvuData');
+assert.ok(hotfixSource.includes('assignMessageVariablesDirectly'), 'hotfix should have a direct chat variables fallback');
+assert.ok(hotfixSource.includes('hostWindow.TavernHelper?.[key]'), 'hotfix should find TavernHelper runtime variable APIs');
+assert.ok(hotfixSource.includes('persistDirectMessageVariables'), 'hotfix should persist direct chat variables fallback');
+assert.ok(hotfixSource.includes('context.saveChat()'), 'hotfix should save chat after direct variable mutation');
+assert.ok(hotfixSource.includes('scheduleMvuWriteBackRetries'), 'hotfix should retry writeback after generation event settles');
+assert.ok(hotfixSource.includes('recoverRecentRawProtocolMessages'), 'hotfix should recover existing raw protocol messages on install');
+assert.ok(hotfixSource.includes('verified: writeResult.verified'), 'hotfix logs should include writeback verification result');
+assert.ok(hotfixSource.includes('persisted: writeResult.persisted'), 'hotfix logs should include direct fallback persistence result');
 
 const messagePanelSource = readText(messagePanelPath);
 assert.ok(messagePanelSource.includes('MysteryMessagePanel'), 'message panel should expose a refresh API');
