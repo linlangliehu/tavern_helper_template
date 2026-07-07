@@ -13,7 +13,7 @@
 
 ## 2026-07-07：自动召回真页 smoke 可用本地 bundle 临时注入，验证后要刷新页面清理监听器
 
-**结论：** 自动召回的真页非 AI smoke 已通过。当前发布版 v8.5.6 尚不含自动召回，验证开发版时可先 `pnpm build`，再用本地静态服务提供 `dist/神秘复苏模拟器/脚本/数据库前端/index.js`，把该脚本临时注入 `TH-script--神秘复苏数据库前端--...3002` iframe。验证完成后必须刷新页面，清理本地脚本和 `GENERATION_AFTER_COMMANDS` 监听器，避免影响用户下一次真实发送。
+**结论：** 自动召回的真页非 AI smoke 已通过，并已在 v8.5.7 进入发布版。若后续在发布前验证新的开发版数据库前端改动，可先 `pnpm build`，再用本地静态服务提供 `dist/神秘复苏模拟器/脚本/数据库前端/index.js`，把该脚本临时注入 `TH-script--神秘复苏数据库前端--...3002` iframe。验证完成后必须刷新页面，清理本地脚本和 `GENERATION_AFTER_COMMANDS` 监听器，避免影响用户下一次真实发送。
 
 **本次 smoke 结果：**
 - `MysteryAcuVisualizer` 新增 API 正常：`getAutoRecallPreview()` / `buildAutoRecallPrompt()`。
@@ -47,15 +47,15 @@
 - 注入预算：限制条数和字符数，避免把 80 条候选全部塞入提示词。
 - 控制项：召回页提供“剧情召回”“记忆召回”两个开关；关闭对应类型后不注入该类，但仍可在页内看到候选和状态。
 
-## 2026-07-07：当前应导入 v8.5.6 发布版 PNG，CDN ref 为 573807b
+## 2026-07-07：当前应导入 v8.5.7 发布版 PNG，CDN ref 为 bbbe6c7
 
-**结论：** 当前需要导入的角色卡是 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。该发布版对应版本 `8.5.6`，CDN ref `573807b`，发布同步 commit `4f2202f` 已在 `origin/main`。
+**结论：** 当前需要导入的角色卡是 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`。该发布版对应版本 `8.5.7`，CDN ref `bbbe6c7`，发布同步 commit `27acf1f` 和 planning 收口 commit `0242af8` 已在 `origin/main`。
 
 **验证判据：**
-- PNG `chara` / `ccv3` 元数据：version `8.5.6`，worldbook `383 entries / 33 disabled / max enabled 5851`。
-- CDN 引用：`573807b` 出现 7 次；旧 `843db59`、`8.5.5`、localhost、127.0.0.1 均为 0。
-- 固定状态栏截图内容 marker：`神秘复苏14表` / `生存状态` 在发布版 YAML/PNG 中为 0；CDN `@573807b` 固定状态栏 bundle 也不含 summary/detail UI marker。
-- 工作树核对：`dist/神秘复苏模拟器/**` 曾被本地 dev build 改写为含 `eval(`/`sourceURL` 的开发构建产物，已精确还原；当前除 planning 三件套记录外，只剩本地未跟踪截图 `屏幕截图 2026-07-06 235029.png`，它不是发布资产，不提交。
+- PNG `chara` / `ccv3` 元数据：version `8.5.7`，worldbook `383 entries / 33 disabled / max enabled 5851`。
+- CDN 引用：`bbbe6c7` 出现 7 次；旧 `573807b`、`8.5.6`、localhost、127.0.0.1 均为 0。
+- 自动召回 marker：CDN `@bbbe6c7` 数据库前端 bundle 为 200，含 `mfrs_auto_plot_memory_recall`、`自动剧情记忆召回`、`toggle-auto-plot`、`toggle-auto-memory`。
+- 工作树核对：当前 tracked 文件干净；只剩本地未跟踪截图 `屏幕截图 2026-07-06 235029.png`，它不是发布资产，不提交。
 
 ## 2026-07-06：固定状态栏截图内容应移除，保留数据库槽位即可
 

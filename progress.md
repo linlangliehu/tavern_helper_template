@@ -1,5 +1,18 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ 新对话恢复记录刷新）
+
+**完成内容：**
+- ✅ 按用户要求刷新 `planning-with-files` 记录，确保新开对话可直接从 v8.5.7 收口状态继续。
+- ✅ `task_plan.md` 顶部新增“2026-07-07 新对话恢复快照”：记录当前 HEAD `0242af8`、发布同步 `27acf1f`、bot bundle `bbbe6c7`、source `f67c780`、发布版 PNG 路径、版本 `8.5.7`、CDN ref `bbbe6c7`、当前无未决任务。
+- ✅ 修正 `task_plan.md` 中旧的“当前版本 / 下次恢复入口 / 工作区状态 / 版本变更索引”锚点，避免新对话误回到 v8.5.6 或 source commit 阶段。
+- ✅ 更新 `findings.md` 当前导入结论：当前应导入 v8.5.7 发布版 PNG，CDN ref 为 `bbbe6c7`；旧 v8.5.6 结论不再作为当前入口。
+
+**当前停点：**
+- `main` 与 `origin/main` 一致，tracked 文件除本次 planning 刷新外无业务 dirty。
+- 只剩未跟踪截图 `屏幕截图 2026-07-06 235029.png`，默认不提交。
+- 无当前未决开发任务；如用户继续新需求，先读 `task_plan.md` 顶部恢复快照、`PROJECT_FLOW.md`、本条 progress 和 `findings.md` 顶部编码经验。
+
 ## 2026-07-07 CST（✅ 任务 7 完成：v8.5.7 发布同步）
 
 **执行内容：**
