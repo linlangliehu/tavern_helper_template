@@ -1,5 +1,39 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ DevTools 真页验证 v8.5.11 当前导入卡）
+
+**执行内容：**
+- ✅ 使用 Chrome DevTools MCP 只读验证当前 SillyTavern 页；未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ 当前角色为 `神秘复苏模拟器发布版`，运行资源已是 `@15c2feb` + `mvu-v8511`。
+- ✅ 最新 AI 楼层 #2 的 `chat[2].variables[0].stat_data` 与 `Mvu.getMvuData({ type:'message', message_id:2 })` 完全一致：`姓名=次卧室`、`身份=初级驭鬼者`、`所在位置=大昌市第七中学教室`、`事件代号=七中灵异事件`、`行动建议.length=4`。
+- ✅ `行动建议` 每项字段均为中文 schema：`选项/思路/主要风险/预期收益/死亡风险/复苏风险`。
+- ✅ 消息内面板 DOM 已正确显示 A/B/C/D 的 `思路` 与风险/收益摘要，`domHasUnknownAction=false`，`.mfrs-msg-action-meta` 数量为 4。
+
+**结论：**
+- v8.5.10 的 MVU 写回/持久化修复生效。
+- v8.5.11 的消息内面板中文字段映射修复在当前导入卡中生效。
+- “未知行动”的根因不是 MVU/EJS，而是旧消息内面板只读取 `label/text`，没有读取当前行动建议 schema 的 `思路/选项`。
+
+## 2026-07-07 CST（✅ v8.5.11 发布同步：修复消息内面板“未知行动”）
+
+**执行内容：**
+- ✅ source commit `157917a fix(mfrs): render Chinese action suggestions` 已推送。
+- ✅ bot bundle `15c2feb [bot] bundle` / tag `v0.0.384` 已生成；dist 仅更新 `dist/神秘复苏模拟器/脚本/消息内面板/index.js`。
+- ✅ bot dist 已验证包含 `mfrs-msg-action-meta`、中文行动建议字段映射和 `MysteryMessagePanel`。
+- ✅ 回填 `scripts/publish-card.mjs`：`CDN_REF=15c2feb`、`CDN_CACHE_VERSION=phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v8511`、`releaseVersion=8.5.11`。
+- ✅ 运行 `pnpm run publish-card -- 神秘复苏模拟器发布版`，生成发布版 YAML/PNG。
+
+**验证：**
+- ✅ `node --check scripts\publish-card.mjs`
+- ✅ `node scripts\verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src\神秘复苏模拟器发布版\神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ 发布版 YAML：`8.5.11`×1、`15c2feb`×7、`mvu-v8511`×8；旧 `8.5.10/c576add/mvu-v8510`、localhost、127.0.0.1、`@main`、`@52b2e62` 均未命中。
+- ✅ 发布版 PNG `chara/ccv3`：各 `8.5.11`×1、`15c2feb`×7、`mvu-v8511`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 均 0。
+- ✅ CDN smoke `@15c2feb`：消息内面板、hotfix、数据库 loader 均 200；消息内面板含 `mfrs-msg-action-meta/data-action/MysteryMessagePanel`，无 stale ref。
+
+**边界：**
+- 未发送消息、未触发真实 AI、未点击“立即手动更新”、未调用 `manualUpdate()` / `triggerUpdate()`。
+- 后续 DevTools 真页验证已确认当前导入卡加载 v8.5.11 后会默认显示修复后的行动建议。
+
 ## 2026-07-07 CST（🔎 真页验证 v8.5.10 + 修复“未知行动”显示）
 
 **执行内容：**
