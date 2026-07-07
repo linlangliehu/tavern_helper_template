@@ -21,6 +21,22 @@
 9. 每次回复结尾必须输出 `<UpdateVariable>`，只更新本轮确实发生变化的字段。
 10. 每次玩家行动被结算后，`<UpdateVariable>` 内 `<JSONPatch>` 的补丁数组必须包含 `/最近行动判定` 的 replace 操作；只要本轮生成或刷新 A/B/C/D 后台行动建议，就必须包含 `/行动建议` 的 replace 操作。
 11. `/规律推理记录/-` 只能插入对象，禁止插入纯字符串；禁止使用 known_rules、current_event、in_scene_characters、death_risk、resurrection_risk、status、location 等旧式英文变量路径。
+12. `<UpdateVariable>` 的固定格式是 `<UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable>`。禁止把 JSON 数组直接放在 `<UpdateVariable>` 下，禁止输出 `op:"add"`；数组追加统一使用 `op:"insert"` 和 `.../-` 路径，字段覆盖统一使用 `op:"replace"`。
+
+固定变量更新骨架：
+<UpdateVariable>
+<JSONPatch>
+[
+  { "op": "replace", "path": "/最近行动判定", "value": { "类型": "investigate/move/use-ghost/suppress/test-rule/use-resource", "行动": "current action", "依据": ["player-visible evidence"], "结果": "visible result", "代价": "none", "死亡风险变化": "+0", "复苏风险变化": "+0", "可见结论": "no hidden truth" } },
+  { "op": "replace", "path": "/行动建议", "value": [
+    { "选项": "A", "思路": "visible plan A", "主要风险": "visible risk A", "预期收益": "visible gain A" },
+    { "选项": "B", "思路": "visible plan B", "主要风险": "visible risk B", "预期收益": "visible gain B" },
+    { "选项": "C", "思路": "visible plan C", "主要风险": "visible risk C", "预期收益": "visible gain C" },
+    { "选项": "D", "思路": "自定义行动", "主要风险": "取决于玩家输入", "预期收益": "保留自由行动" }
+  ] }
+]
+</JSONPatch>
+</UpdateVariable>
 
 【正文输出契约】
 聊天正文只保留剧情和当前回合摘要。详细交互、行动建议按钮、线索验证、灵异物品使用和厉鬼档案操作由神秘复苏数据库前端负责。

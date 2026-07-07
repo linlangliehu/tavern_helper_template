@@ -43,6 +43,7 @@ type FrontendState = {
 type HostWindow = Window & {
   AutoCardUpdaterAPI?: AutoCardUpdaterAPI;
   __mfrsDatabaseScriptMarker__?: string;
+  __mfrsScriptResourceUrls__?: Record<string, string>;
   SillyTavern?: {
     saveChat?: unknown;
     getContext?: () => {
@@ -83,8 +84,11 @@ type HostWindow = Window & {
   };
 };
 
-const databaseScriptUrl = 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@52b2e62/vendor/shujuku-sp-fork/index.js?v=phase163-4-0-final-baseline-6-28-p5-4-hotfix13-rowid';
-const databaseScriptMarker = 'mfrs-4-0-final-baseline-6-28-p5-4-hotfix13-rowid';
+const databaseFrontendScriptName = '神秘复苏数据库前端';
+const databaseVendorPath = 'vendor/shujuku-sp-fork/index.js';
+const databaseFrontendDistPath = 'dist/神秘复苏模拟器/脚本/数据库前端/index.js';
+const databaseScriptCacheVersion = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v859';
+const databaseScriptMarker = 'mfrs-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v859';
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
@@ -124,6 +128,97 @@ function getHostWindow() {
   } catch {
     return window as HostWindow;
   }
+}
+
+function safeDecodeUrl(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function normalizePathForMatch(value: string) {
+  return safeDecodeUrl(value).replace(/\\/g, '/');
+}
+
+function isUsableHttpUrl(value: unknown) {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isMatchingScriptUrl(value: unknown, distPath: string) {
+  if (!isUsableHttpUrl(value)) return false;
+  return normalizePathForMatch(String(value)).includes(normalizePathForMatch(distPath));
+}
+
+function getCandidateScriptUrlsFromDocument(doc: Document | undefined | null) {
+  if (!doc) return [];
+  const candidates: string[] = [];
+  const currentScript = doc.currentScript as HTMLScriptElement | null;
+  if (currentScript?.src) candidates.push(currentScript.src);
+  for (const script of Array.from(doc.querySelectorAll<HTMLScriptElement>('script[src]'))) {
+    if (script.src) candidates.push(script.src);
+  }
+  return candidates;
+}
+
+function getCandidateScriptUrlsFromPerformance(targetWindow: Window | undefined | null) {
+  try {
+    return targetWindow?.performance
+      ?.getEntriesByType?.('resource')
+      ?.map(entry => entry.name)
+      ?.reverse() ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function getCandidateScriptUrlsFromStack() {
+  const stack = new Error().stack ?? '';
+  return Array.from(stack.matchAll(/https?:\/\/[^\s)]+/g)).map(match => match[0]);
+}
+
+function resolveRuntimeScriptUrl(label: string, distPath: string) {
+  const hostWindow = getHostWindow();
+  const localWindow = window as HostWindow;
+  const candidates = [
+    hostWindow.__mfrsScriptResourceUrls__?.[label],
+    localWindow.__mfrsScriptResourceUrls__?.[label],
+    ...getCandidateScriptUrlsFromDocument(document),
+    ...getCandidateScriptUrlsFromDocument(hostWindow.document),
+    ...getCandidateScriptUrlsFromPerformance(window),
+    ...getCandidateScriptUrlsFromPerformance(hostWindow),
+    ...getCandidateScriptUrlsFromStack(),
+  ];
+
+  return candidates.find(candidate => isMatchingScriptUrl(candidate, distPath)) ?? null;
+}
+
+function buildRepositoryResourceUrl(currentScriptUrl: string, resourcePath: string) {
+  const parsed = new URL(currentScriptUrl);
+  const href = `${parsed.origin}${parsed.pathname}`;
+  const decodedHref = normalizePathForMatch(href);
+  const distIndex = decodedHref.indexOf('/dist/');
+  if (distIndex >= 0) {
+    return `${href.slice(0, distIndex + 1)}${resourcePath}?v=${databaseScriptCacheVersion}`;
+  }
+
+  return `${parsed.origin}/${resourcePath}?v=${databaseScriptCacheVersion}`;
+}
+
+function buildDatabaseScriptBaseUrl() {
+  const currentScriptUrl = resolveRuntimeScriptUrl(databaseFrontendScriptName, databaseFrontendDistPath);
+  if (!currentScriptUrl) {
+    throw new Error('[神秘复苏数据库前端] 无法确认当前前端脚本 URL，已拒绝回退到 @main 以避免加载错版本 vendor。');
+  }
+
+  return buildRepositoryResourceUrl(currentScriptUrl, databaseVendorPath);
 }
 
 function getSillyTavernContext(hostWindow: HostWindow) {
@@ -205,7 +300,7 @@ async function reloadDatabaseScriptForCurrentCard(hostWindow: HostWindow, reason
   if (!isMysteryRevivalCardActive(hostWindow)) return false;
   if (databaseScriptReloadPromise) return databaseScriptReloadPromise;
 
-  const reloadUrl = `${databaseScriptUrl}&mfrs_reclaim=${Date.now()}_${databaseScriptReloadSeq++}`;
+  const reloadUrl = `${buildDatabaseScriptBaseUrl()}&mfrs_reclaim=${Date.now()}_${databaseScriptReloadSeq++}`;
   clearPreviousDatabaseInstance(hostWindow);
   databaseScriptReloadPromise = import(/* webpackIgnore: true */ reloadUrl)
     .then(async () => {
@@ -433,10 +528,12 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow, force = false) 
   }
 
   if (!isExpectedDatabaseApi(api)) {
-    // 资源链路由角色卡 loader/vendor 本身负责。这里不再用硬编码 URL self-reclaim，
-    // 避免本地/候选 runtime 被旧 CDN 数据库本体覆盖。
-    tagDatabaseApi(hostWindow);
-    console.info('[神秘复苏数据库前端] 检测到数据库 API marker 不匹配，继续使用当前已加载 API。');
+    await reloadDatabaseScriptForCurrentCard(hostWindow, 'marker_mismatch');
+    api = (await waitForApi(hostWindow, 16, 250)) ?? api;
+    if (!isExpectedDatabaseApi(api)) {
+      tagDatabaseApi(hostWindow);
+      console.warn('[神秘复苏数据库前端] 数据库 API marker 仍不匹配，继续使用当前已加载 API。');
+    }
   }
 
   let status = await readTemplateStatus(api);
@@ -454,18 +551,6 @@ async function runMysteryTemplateAutofix(hostWindow: HostWindow, force = false) 
     rerenderAcu(hostWindow);
     return;
   }
-
-  // v6.13: 禁用自动 reload 数据库脚本，避免新版本被旧版本覆盖
-  // 如果 marker 不匹配，只导入模板，不重新加载数据库本体
-  // if (!isExpectedDatabaseApi(api)) {
-  //   await reloadDatabaseScriptForCurrentCard(hostWindow, 'template_mismatch');
-  //   api = (await waitForApi(hostWindow, 16, 250)) ?? api;
-  //   status = await readTemplateStatus(api);
-  //   if (status.templateLoaded) {
-  //     rerenderAcu(hostWindow);
-  //     return;
-  //   }
-  // }
 
   if (!api.importTemplateFromData) {
     console.warn('[神秘复苏数据库前端] 当前数据库 API 不支持模板导入，无法自动切换神秘复苏模板。', status);

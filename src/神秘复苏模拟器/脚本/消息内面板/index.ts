@@ -1,9 +1,16 @@
 // 消息内状态面板脚本 - 在每条 AI 消息内嵌入完整状态面板（两个 tab）+ 叙事文本包装
 
 type StatusData = Record<string, any>;
+type MessagePanelHostWindow = Window & {
+  MysteryMessagePanel?: {
+    refreshAll: () => void;
+    refreshMessage: (messageId: number | string) => void;
+  };
+};
 
 // iframe 运行环境，必须通过 parent.document 访问主窗口 DOM
-const doc: Document = window.parent?.document ?? document;
+const hostWindow = (window.parent ?? window) as MessagePanelHostWindow;
+const doc: Document = hostWindow.document ?? document;
 
 /** 从值中提取第一个数字，无数字返回 null */
 function toNumber(value: unknown): number | null {
@@ -273,6 +280,14 @@ function processAllMessages() {
     injectPanelForMessage(mes);
     wrapNarrativeText(mes);
   });
+}
+
+function processOneMessage(messageId: number | string) {
+  const target = Array.from(doc.querySelectorAll('.mes:not(.user)'))
+    .find(mes => mes.getAttribute('mesid') === String(messageId));
+  if (!target) return;
+  injectPanelForMessage(target);
+  wrapNarrativeText(target);
 }
 
 /** 处理 tab 切换点击事件 */
@@ -598,6 +613,11 @@ $(() => {
 
   // 初始化已有消息
   processAllMessages();
+  const messagePanelApi = {
+    refreshAll: processAllMessages,
+    refreshMessage: processOneMessage,
+  };
+  hostWindow.MysteryMessagePanel = messagePanelApi;
 
   // 监听相关事件
   const refreshEvents = [
@@ -621,6 +641,9 @@ $(() => {
   // 清理函数
   const cleanup = () => {
     style.remove();
+    if (hostWindow.MysteryMessagePanel === messagePanelApi) {
+      delete hostWindow.MysteryMessagePanel;
+    }
     doc.removeEventListener('click', handleTabClick, true);
     doc.removeEventListener('click', handleActionClick, true);
   };

@@ -86,7 +86,7 @@
 
   - 名称: '[mvu_update]变量更新规则'
     启用: true
-    激活策略: { 类型: 绿灯, 关键字: [变量更新规则, 变量更新, UpdateVariable, JSONPatch, 最近行动判定, 行动建议, 风险值, 复苏风险] }
+    激活策略: { 类型: 蓝灯 }
     插入位置:
       类型: 指定深度
       角色: 系统
@@ -6634,8 +6634,15 @@
       内容: |-
         const loadLocalModule = async (label, url) => {
           const maxAttempts = 20;
+          const registerModuleUrl = () => {
+            const hostWindow = window.parent ?? window;
+            hostWindow.__mfrsScriptResourceUrls__ ??= {};
+            hostWindow.__mfrsScriptResourceUrls__[label] = url;
+            window.__mfrsScriptResourceUrls__ = hostWindow.__mfrsScriptResourceUrls__;
+          };
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
+              registerModuleUrl();
               await import(`${url}?t=${Date.now()}`);
               console.info(`[${label}] 本地资源已加载`);
               return;
@@ -6656,8 +6663,15 @@
       内容: |-
         const loadLocalModule = async (label, url) => {
           const maxAttempts = 20;
+          const registerModuleUrl = () => {
+            const hostWindow = window.parent ?? window;
+            hostWindow.__mfrsScriptResourceUrls__ ??= {};
+            hostWindow.__mfrsScriptResourceUrls__[label] = url;
+            window.__mfrsScriptResourceUrls__ = hostWindow.__mfrsScriptResourceUrls__;
+          };
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
+              registerModuleUrl();
               await import(`${url}?t=${Date.now()}`);
               console.info(`[${label}] 本地资源已加载`);
               return;

@@ -20,7 +20,8 @@ update_output_contract:
     </JSONPatch>
     </UpdateVariable>
   patch_rules:
-    - The patch payload must be a valid JSON array inside <JSONPatch> within <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
+    - The patch payload must be a valid JSON array inside <JSONPatch> within <UpdateVariable>. Never place the JSON array directly under <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
+    - Never output op:"add". For array append use op:"insert" with a .../- path. For scalar/object field overwrite use op:"replace".
     - Never output analysis text or any explanatory text inside <UpdateVariable>; the first non-space tag after <UpdateVariable> must be <JSONPatch>, and the last non-space tag before </UpdateVariable> must be </JSONPatch>.
     - Paths are rooted at stat_data. Never use obsolete paths: /known_rules, /current_event, /in_scene_characters, /death_risk, /resurrection_risk, /status, /location.
     - Do not update readonly fields whose names start with _.

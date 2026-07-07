@@ -1,5 +1,33 @@
 # Findings
 
+## 2026-07-07：webpack 会把脚本内 `import.meta.url` 固化成本地 file URL，发布 ref 推导必须用运行态 URL
+
+**结论：** 在当前 webpack 配置下，普通脚本 bundle 里的 `import.meta.url` 会被生产构建固化为构建机源码路径，例如 `file:///D:/project/.../src/神秘复苏模拟器/脚本/数据库/index.ts`。不能用它推导 jsdelivr 当前 bundle ref；否则发布运行时会退到 `@main/vendor/...` 或其他 fallback，破坏“loader 与 vendor 同 bundle”的目标。
+
+**证据：**
+- P4 初版修复后，`dist/神秘复苏模拟器/脚本/数据库/index.js` 出现 `new URL('file:///D:/project/.../index.ts')`，并包含 `@main/vendor/shujuku-sp-fork/index.js` fallback。
+- 补强后 dist 不再含 `file:///` / `@main/` / `@52b2e62`，`verify:mfrs-mvu-hotfix` 已把这些作为 hard gate。
+- no-AI 运行态 smoke：卡内 wrapper 注册本地 loader URL 后，导入 `127.0.0.1:5501/dist/.../脚本/数据库/index.js`，临时 CORS 服务日志记录随后请求同根 `/vendor/shujuku-sp-fork/index.js?v=phase164-...-mvu-v859&mfrs_loader=...`。
+
+**修复模式：**
+- 卡内脚本 wrapper 在 `await import()` 前写入 `window.__mfrsScriptResourceUrls__[label] = url`。
+- bundle 先读该运行时 URL，再用 `performance.getEntriesByType('resource')`、DOM `script[src]` 和 `new Error().stack` 作为兜底候选。
+- 从候选 URL 的 `/dist/` 前缀推导仓库根路径，再拼出同根 `vendor/shujuku-sp-fork/index.js`；找不到运行时 URL 时直接报错，不静默退到 `@main`。
+
+## 2026-07-07：v8.5.8 真实对话复测失败根因
+
+**结论：** v8.5.8 发布包不是“完全没生效”，而是失败在三段链路叠加：首轮生成没有注入完整变量输出格式；后续生成虽注入 nested `<JSONPatch>` 骨架但模型仍输出旧 direct-array；MVU hotfix 又用错误参数调用 `Mvu.parseMessage()`，且没有在调用前把旧 direct-array 归一化为 nested `<JSONPatch>`，所以 message variables 仍未写入。
+
+**证据：**
+- Chrome DevTools 网络请求 `reqid=281`（15:50 首轮真实生成）：`messages` 中没有 `update_output_contract` / `变量输出格式`，`<JSONPatch>` 仅 1 次，说明首轮开局/召回生成路径未携带完整输出骨架。
+- 网络请求 `reqid=317`（15:58 第二轮真实生成）：已携带 `update_output_contract`，`<JSONPatch>` 5 次、`<UpdateVariable>` 19 次、无 direct-array 提示；但模型仍实际输出 `<UpdateVariable>[...]</UpdateVariable>` 旧格式。
+- 运行态 `window.Mvu.parseMessage.length === 2`，函数头为 `async function(t,n){const a=e(n);return await le(t,a),a}`，与类型声明一致：第一个参数应为消息文本。当前 `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts` 调用的是 `Mvu.parseMessage(lastMessageIndex, {})`，把消息序号传成了消息文本。
+- no-write 对比验证：`Mvu.parseMessage(4, oldData)` 与 `Mvu.parseMessage(directArrayMessage, oldData)` 均保持 `姓名=未知 / 风险值=0 / 事件代号=未立案灵异事件`；把同一 direct-array 包进 `<JSONPatch>` 后，`风险值=5`、`事件代号=敲门鬼媒介传播事件`、`鬼域状态=疑似鬼域` 才更新。
+- 发布版脚本加载链路仍有旧 vendor：`dist/神秘复苏模拟器/脚本/数据库/index.js`、`src/神秘复苏模拟器/脚本/数据库/index.ts`、`src/神秘复苏模拟器/脚本/数据库前端/index.ts` 都硬编码 `@52b2e62/vendor/shujuku-sp-fork/index.js`。因此发布卡虽通过 `@454267e` 加载数据库 loader，loader 实际又拉旧 vendor；之前 `@454267e/vendor/...` 的 CDN smoke 没验证到运行时真实 import 链路。
+- 模型还输出了 `op: "add"`，但当前变量输出规则和 MVU 支持的是 `insert`；即使外层修成 nested，这类数组追加仍会丢失或被忽略。
+
+**失败性质：** 数据库前端可从回复和本地 fallback 写入一部分镜像数据，所以底部仪表盘显示已更新；但 MVU message variables 没更新，导致消息内状态面板仍显示初始值。这是数据库镜像路径成功、MVU 变量路径失败的分裂状态。
+
 ## 2026-07-07：v8.5.8 发布验证，JSONPatch 协议修复已进入发布版
 
 **结论：** MVU JSONPatch 协议修复已完成正式发布链路。source `971c617` 已触发 bot bundle `454267e`，发布版 YAML/PNG 已回填到版本 8.5.8 和 CDN ref `454267e`；发布同步 commit `5b97c78` 已 push，本地内容验证、资源 CDN smoke 和远端发布版 YAML/PNG smoke 均通过。

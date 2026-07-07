@@ -9,7 +9,8 @@
     "dump": "node dump_schema.ts",
     "sync": "node tavern_sync.mjs",
     "publish-card": "node scripts/publish-card.mjs",
-    "verify:mfrs-frontend": "node scripts/verify-mfrs-database-frontend-p3.mjs"
+    "verify:mfrs-frontend": "node scripts/verify-mfrs-database-frontend-p3.mjs",
+    "verify:mfrs-mvu-hotfix": "node scripts/verify-mfrs-mvu-hotfix-regressions.mjs"
   },
   "browserslist": [
     "defaults and partially supports es6-module"

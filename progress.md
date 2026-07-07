@@ -1,5 +1,56 @@
 # Progress Log
 
+## 2026-07-07 CST（✅ P0-P6 二次修复完成，P7 source 提交前验证进行中）
+
+**完成内容：**
+- ✅ P1/P2：`hotfix-generation-ended-listeners` 改为保存清洗前 raw protocol，使用 `normalizeMfrsUpdateVariableProtocol(rawMessage)` 后调用 `mvu.parseMessage(normalized.message, oldData)`，再通过 `Mvu.replaceMvuData` / `updateVariablesWith` 写回对应 message variables；旧 direct-array 和 `op:"add"` 已兼容。
+- ✅ P3：开发版/发布版系统提示词与 `变量输出格式.yaml` 增加固定 nested `<JSONPatch>` 骨架，禁止 direct-array 和 `op:"add"`；`[mvu_update]变量更新规则` 改为蓝灯常驻。
+- ✅ P4：修正第一次方案的漏洞：`import.meta.url` 在 webpack dist 中会变成 `file:///D:/.../index.ts` 并可能退到 `@main/vendor`。现改为卡内 wrapper 注册 `window.__mfrsScriptResourceUrls__`，bundle 从运行时 URL / performance / stack 推导同 bundle 根路径；数据库前端 marker mismatch 时用当前前端 URL self-reclaim。
+- ✅ P5：新增 `scripts/verify-mfrs-mvu-hotfix-regressions.mjs` 与 `pnpm verify:mfrs-mvu-hotfix`，覆盖 nested、direct-array、direct-array+`op:"add"`、hotfix 写回、消息面板刷新、首轮契约、wrapper URL 注册、dist 禁止 `file:///` / `@main` / 旧 `@52b2e62`。
+- ✅ P6：真页 no-AI smoke 通过。旧 direct-array + `op:"add"` 样本归一化后写入 `姓名=P6可逆测试`、`风险值=5`、`事件代号=P6敲门鬼媒介传播事件`、`鬼域状态=疑似鬼域`、`行动建议.length=1`，`MysteryMessagePanel.refreshMessage(4)` 后消息内面板也显示临时姓名/事件；finally 恢复后变量与面板均无临时残留。
+- ✅ P4 运行态 URL smoke：本地 CORS 服务日志显示导入 `127.0.0.1:5501/dist/.../脚本/数据库/index.js` 后，loader 请求同根 `/vendor/shujuku-sp-fork/index.js?v=phase164-...-mvu-v859&mfrs_loader=...`，没有 `@main` 或旧 `@52b2e62`。
+
+**验证：**
+- ✅ `node --check src\神秘复苏模拟器\脚本\hotfix-generation-ended-listeners\protocol-normalizer.js`
+- ✅ `node --check scripts\verify-mfrs-mvu-hotfix-regressions.mjs`
+- ✅ `pnpm verify:mfrs-mvu-hotfix`
+- ✅ `node scripts\verify-output-cleaning-regressions.mjs`
+- ✅ `pnpm verify:mfrs-frontend`
+- ✅ `git diff --check`
+- ✅ `pnpm build`（仅数据库前端既有体积 warning，当前 416 KiB）
+
+**边界：**
+- 未发送消息，未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- P4/P6 smoke 后已刷新页面，停止 5500/5501 临时服务并删除 `.tmp-mfrs-*` smoke 文件；仅保留既有 `.tmp-mfrs-regex-backup-20260707.json` 与用户截图不提交。
+- 下一步：精确 source commit/push，等待 bot bundle，验证 bot dist 后发布 v8.5.9。
+
+## 2026-07-07 CST（🧭 v8.5.8 二次修复任务清单已建立）
+
+**完成内容：**
+- ✅ 基于上一轮只读 Chrome DevTools MCP 找到的失败根因，更新 `task_plan.md` 顶部当前状态：v8.5.8 已发布但真实对话复测失败，当前进入二次修复线，目标版本候选 v8.5.9。
+- ✅ 在 `task_plan.md` 的“当前任务清单”新增 P0-P8：运行态失败样本复核、MVU hotfix 调用链修复、旧协议/direct-array/`op:"add"` 归一化、首轮完整输出契约注入、真实 vendor import 链路修复、回归脚本补强、no-AI 真页验证、发布链路、用户批准后的最小真实对话复测。
+- ✅ 修正 `task_plan.md` 旧的“待修 bug：无”描述，避免新会话误判当前没有阻断项。
+
+**边界：**
+- 本轮只更新 planning；尚未修改业务源码。
+- 未发送消息，未触发真实 AI，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- 当前 dirty 预期为 planning 三件套；`.tmp-mfrs-regex-backup-20260707.json` 和截图仍不提交。
+
+## 2026-07-07 CST（🔎 v8.5.8 真实对话复测失败根因已定位）
+
+**执行内容：**
+- ✅ 使用 Chrome DevTools MCP 只读检查当前 SillyTavern 页面，未发送消息，未点击“立即手动更新”，未调用 `manualUpdate()` / `triggerUpdate()`。
+- ✅ 确认当前角色为 `神秘复苏模拟器发布版`，卡体含 `8.5.8` / `454267e`，但两条真实 AI 回复仍输出旧 `<UpdateVariable>[...]</UpdateVariable>` direct-array。
+- ✅ 确认 MVU 根变量和每条消息变量快照仍是初始值；消息内状态面板显示 `未知/0/未立案`，底部数据库仪表盘则已更新为 `测试/初级驭鬼者/死亡风险镜像 5/敲门鬼媒介传播事件`。
+
+**根因定位：**
+- 首轮真实生成请求 `reqid=281` 未携带完整 `update_output_contract` / `变量输出格式` 骨架，只带弱 `<UpdateVariable>`/`<JSONPatch>` 规则。
+- 第二轮真实生成请求 `reqid=317` 已携带 nested `<JSONPatch>` 骨架，但模型仍输出旧 direct-array，且包含不支持的 `op: "add"`。
+- `hotfix-generation-ended-listeners` 调用 `Mvu.parseMessage(lastMessageIndex,{})`，而运行态和类型声明都表明 `parseMessage` 第一个参数应为消息文本；该调用不会把当前消息变量写入。
+- 数据库 loader / 数据库前端源码和 dist 仍硬编码旧 vendor `@52b2e62`，运行时真实 import 链路没有使用本轮验证过的 `@454267e/vendor/...`。
+
+**当前停点：** 失败原因已写入 `findings.md` 顶部；尚未修复业务代码。工作区新增 dirty 仅为 planning 记录，未跟踪 `.tmp-mfrs-regex-backup-20260707.json` 和截图仍不提交。
+
 ## 2026-07-07 CST（✅ P5 发布链路完成：v8.5.8）
 
 **执行内容：**
