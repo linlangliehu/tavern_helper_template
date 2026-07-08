@@ -1,5 +1,32 @@
 # Progress Log
 
+## 2026-07-08 CST（✅ v8.5.14 远端发布完成：跨角色卡污染清理）
+
+**链路：** source `b53f5b5 fix(mfrs): cleanup cross-card pollution (v8.5.14)` → bot bundle `0717fc4 [bot] bundle`（tag `v0.0.391`）→ publish sync `7a52ae9 chore(release): publish mfrs v8.5.14`，已 push origin/main。
+
+**publish-card 配置：** `CDN_REF=0717fc4`、`CDN_CACHE_VERSION=phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v8514`、`releaseVersion=8.5.14`。
+
+**验证：**
+- ✅ `node --check scripts\publish-card.mjs`
+- ✅ `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src\神秘复苏模拟器发布版\神秘复苏模拟器发布版.png"`：383 entries / 33 disabled / max enabled 5851。
+- ✅ `pnpm verify:mfrs-mvu-hotfix` / `pnpm verify:mfrs-frontend` 通过。
+- ✅ 发布版 YAML：`8.5.14`×1、`0717fc4`×7、`mvu-v8514`×8；旧 `8.5.13/8b3ea67/mvu-v8513`、localhost、127.0.0.1、`@main`、`@52b2e62` 全 0。
+- ✅ 发布版 PNG `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` `chara` 与 `ccv3` 各 `8.5.14`×1、`0717fc4`×7、`mvu-v8514`×8；旧版本/ref/cache、本地链接、`@main`、`@52b2e62` 全 0；size 7754350 bytes。
+- ✅ bot bundle dist 含新 marker：数据库前端 `MysteryAcuVisualizer.cleanup`、`unregisterTableUpdateCallback`、`CHAT_CHANGED`、`__mfrsFixedStatusCleanup__`、`__mfrsDatabaseFrontendCleanup__`；固定状态栏 `__mfrsFixedStatusCleanup__`、`CHAT_CHANGED`、`神秘复苏模拟器`、`mfrs-fixed-status-host`。
+- ✅ CDN smoke `@0717fc4`：4 个 mfrs bundle（数据库前端/固定状态栏/hotfix-generation-ended-listeners/消息内面板）均 HTTP 200，marker 与本地 dist 一致。
+- ✅ 远端发布版 `@7a52ae9`：YAML HTTP 200 / 274960 bytes、含 `8.5.14×1 + 0717fc4×7 + mvu-v8514×8` 且无旧 ref/local/`@main`；PNG HTTP 200 / 7754350 bytes、chara/ccv3 chunks 均 `8.5.14×1 + 0717fc4×7 + mvu-v8514×8`，旧 ref/local/`@main` 全 0。
+
+**真页非 AI smoke 摘要（详见上一条记录）：**
+- 当前 SillyTavern 在 `Science Worship 20260628` 卡上，运行 v8.5.13 残留：`MFRS`/`MysteryDatabaseFrontend`/`MysteryAcuVisualizer=object`、3 个 ACU style 节点、`__mfrsScriptResourceUrls__` 残留 2 个神秘复苏键。
+- 调用已有 `__mfrsFixedStatusCleanup__`/`__mfrsDatabaseFrontendCleanup__`/`MysteryAcuVisualizer.cleanup` + 手动移除 4 style selectors + delete globals + remove resource url markers（模拟 v8.5.14 `cleanupMfrsDatabaseFrontend({removeFixedStatusHost, removeGlobals, unregisterNativeListener})` 路径）后：`MFRS`/`MysteryDatabaseFrontend`/`MysteryAcuVisualizer=undefined`、3 个 style 节点=false、resourceUrls keys=null（被删）、`Mvu` 仍 true（MVU 框架本身不属清理范围）。
+- 刷新页面后所有 markers 干净，未触发 AI、未发消息、未点"立即手动更新"、未调 `manualUpdate()`/`triggerUpdate()`。
+- 「切回神秘复苏卡重挂」未在本次 smoke 实测（保护用户当前 Science Worship 卡的 5 条聊天），但重挂路径是 v8.5.13 既有逻辑、未被本轮改动行为修改，仅触发条件变化；待用户下次本卡使用时观察。
+
+**当前状态：**
+- v8.5.14 已完成 source → bot bundle → publish-card → 发步同步 push → 远端 YAML/PNG smoke。
+- 本轮没有触发真实 AI、没有发送消息、没有点击"立即手动更新"、没有调用 `manualUpdate()` / `triggerUpdate()`。
+- 待用户导入 v8.5.14 后真实观察：切非神秘复苏卡时无 `MFRS`/`MysteryDatabaseFrontend`/`MysteryAcuVisualizer`/`mfrs-fixed-status-host`/`.acu-*` 残留；切回神秘复苏卡时固定状态栏/数据库前端/召回 tab/抽卡面板/消息内面板正常重挂。
+
 ## 2026-07-08 CST（🔧 v8.5.14 立项：跨角色卡污染清理，静态 gate 已绿，待全 gate + 真页 smoke + 发布链路）
 
 **恢复与定位：**
