@@ -187,6 +187,9 @@ body {
   position: absolute !important;
   top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
   background:
+    repeating-linear-gradient(30deg, transparent 0, transparent 23px, rgba(140,20,20,0.04) 23px, rgba(140,20,20,0.04) 24px),
+    repeating-linear-gradient(150deg, transparent 0, transparent 23px, rgba(140,20,20,0.04) 23px, rgba(140,20,20,0.04) 24px),
+    repeating-linear-gradient(90deg, transparent 0, transparent 41px, rgba(140,20,20,0.04) 41px, rgba(140,20,20,0.04) 42px),
     url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"),
     radial-gradient(ellipse at 3% 50%, rgba(60,0,0,0.05) 0%, transparent 30%),
     radial-gradient(ellipse at 97% 10%, rgba(80,0,0,0.04) 0%, transparent 25%) !important;
@@ -202,6 +205,13 @@ body {
   opacity: 0.045 !important;
   background: radial-gradient(ellipse at center, #5a1010 0%, transparent 70%) !important;
   pointer-events: none !important;
+  transform-origin: center !important;
+  animation: mfrs-seal-spin 10s linear infinite !important;
+}
+
+@keyframes mfrs-seal-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .mes .ch_name .name_text {
@@ -372,7 +382,7 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 5px !important;
+  width: 8px !important;
 }
 
 ::-webkit-scrollbar-track {
@@ -380,12 +390,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4a2828 !important;
+  background: rgba(140,20,20,.55) !important;
   border-radius: 2px !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6a3030 !important;
+  background: rgba(220,50,50,.95) !important;
+  box-shadow: 0 0 6px rgba(220,50,50,.6) !important;
 }
 
 ::selection {
@@ -400,15 +411,12 @@ body {
 
 .horror-options {
   background: #1b1414 !important;
-  border: 1px solid #5a2a2a !important;
-  border-left: 3px solid #9a3a3a !important;
-  border-right: 1px solid #5a2a2a !important;
   padding: 20px 24px !important;
   margin: 18px auto !important;
   max-width: 560px !important;
   position: relative !important;
   box-shadow: 0 0 22px rgba(0,0,0,0.45), inset 0 0 24px rgba(40,10,10,0.32), 0 0 6px rgba(120,30,30,0.18) !important;
-  border-radius: 2px !important;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px) !important;
 }
 
 .horror-options::before {
@@ -439,6 +447,24 @@ body {
   border-bottom: 1px solid #5a2a2a !important;
   padding-bottom: 10px !important;
   margin-bottom: 14px !important;
+  text-align: center !important;
+  position: relative !important;
+}
+
+.horror-options-title::before {
+  content: '◆' !important;
+  position: absolute !important;
+  left: 0 !important;
+  color: #9a3a3a !important;
+  font-size: 14px !important;
+}
+
+.horror-options-title::after {
+  content: '◇' !important;
+  position: absolute !important;
+  right: 0 !important;
+  color: #9a3a3a !important;
+  font-size: 14px !important;
 }
 
 .horror-options-body {
@@ -695,18 +721,21 @@ body {
   border-left: 3px solid #a44242 !important;
   color: #eadede !important;
   padding: 10px 12px !important;
-  border-radius: 6px !important;
   cursor: pointer !important;
   font: inherit !important;
   line-height: 1.65 !important;
   box-shadow: inset 0 0 14px rgba(0,0,0,.2) !important;
   position: relative !important;
+  border-radius: 0 !important;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px) !important;
+  filter: drop-shadow(0 6px 12px rgba(164,66,66,.5)) drop-shadow(0 12px 24px rgba(164,66,66,.35)) drop-shadow(0 20px 48px rgba(164,66,66,.2)) !important;
+  transition: filter 0.25s ease, color 0.25s ease !important;
 }
 
-.mfrs-choice-button[data-risk="high"] { border-left-color: #d83030 !important; }
-.mfrs-choice-button[data-risk="mid"] { border-left-color: #c8742a !important; }
-.mfrs-choice-button[data-risk="low"] { border-left-color: #5a7a30 !important; }
-.mfrs-choice-button[data-risk="unknown"] { border-left-color: #6a4a6a !important; }
+.mfrs-choice-button[data-risk="high"] { border-left-color: #b23a32 !important; filter: drop-shadow(0 6px 12px rgba(178,58,50,.5)) drop-shadow(0 12px 24px rgba(178,58,50,.35)) drop-shadow(0 20px 48px rgba(178,58,50,.2)) !important; }
+.mfrs-choice-button[data-risk="mid"] { border-left-color: #c8742a !important; filter: drop-shadow(0 6px 12px rgba(200,116,42,.5)) drop-shadow(0 12px 24px rgba(200,116,42,.35)) drop-shadow(0 20px 48px rgba(200,116,42,.2)) !important; }
+.mfrs-choice-button[data-risk="low"] { border-left-color: #5a7a30 !important; filter: drop-shadow(0 6px 12px rgba(90,122,48,.5)) drop-shadow(0 12px 24px rgba(90,122,48,.35)) drop-shadow(0 20px 48px rgba(90,122,48,.2)) !important; }
+.mfrs-choice-button[data-risk="unknown"] { border-left-color: #6a4a6a !important; filter: drop-shadow(0 6px 12px rgba(106,74,106,.5)) drop-shadow(0 12px 24px rgba(106,74,106,.35)) drop-shadow(0 20px 48px rgba(106,74,106,.2)) !important; }
 
 .mfrs-choice-risk {
   display: inline-block !important;
@@ -726,7 +755,13 @@ body {
   color: #f0d8d8 !important;
   border-color: #b03838 !important;
   box-shadow: 0 0 14px rgba(150,45,45,.22), inset 0 0 14px rgba(0,0,0,.18) !important;
+  filter: drop-shadow(0 8px 16px rgba(178,58,50,.65)) drop-shadow(0 16px 32px rgba(178,58,50,.45)) drop-shadow(0 28px 64px rgba(178,58,50,.3)) !important;
 }
+
+.mfrs-choice-button[data-risk="high"]:hover { filter: drop-shadow(0 8px 16px rgba(178,58,50,.65)) drop-shadow(0 16px 32px rgba(178,58,50,.45)) drop-shadow(0 28px 64px rgba(178,58,50,.3)) !important; }
+.mfrs-choice-button[data-risk="mid"]:hover { filter: drop-shadow(0 8px 16px rgba(200,116,42,.65)) drop-shadow(0 16px 32px rgba(200,116,42,.45)) drop-shadow(0 28px 64px rgba(200,116,42,.3)) !important; }
+.mfrs-choice-button[data-risk="low"]:hover { filter: drop-shadow(0 8px 16px rgba(90,122,48,.65)) drop-shadow(0 16px 32px rgba(90,122,48,.45)) drop-shadow(0 28px 64px rgba(90,122,48,.3)) !important; }
+.mfrs-choice-button[data-risk="unknown"]:hover { filter: drop-shadow(0 8px 16px rgba(106,74,106,.65)) drop-shadow(0 16px 32px rgba(106,74,106,.45)) drop-shadow(0 28px 64px rgba(106,74,106,.3)) !important; }
 
 .mfrs-choice-key {
   color: #d05050 !important;
@@ -738,19 +773,17 @@ body {
   display: block !important;
 }
 .mfrs-choice-item .mfrs-choice-button {
-  border-bottom-left-radius: 6px !important;
-  border-bottom-right-radius: 6px !important;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px) !important;
 }
 .mfrs-choice-item:has(> .mfrs-choice-why) .mfrs-choice-button {
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
+  clip-path: polygon(8px 0, 100% 0, 100% 100%, calc(100% - 8px) 100%, 0 100%, 0 8px) !important;
 }
 .mfrs-choice-why {
   border: 1px solid rgba(150,58,58,.5) !important;
   border-top: none !important;
-  border-radius: 0 0 6px 6px !important;
   background: rgba(20,12,12,.66) !important;
   overflow: hidden !important;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)) !important;
 }
 .mfrs-choice-why > summary {
   cursor: pointer !important;

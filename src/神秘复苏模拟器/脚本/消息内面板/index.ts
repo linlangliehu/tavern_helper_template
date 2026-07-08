@@ -104,9 +104,11 @@ function buildStatusTabHtml(data: StatusData): string {
 
   return `
 <div class="mfrs-msg-header">
+  <div class="mfrs-msg-top-icon-left"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#b23a32" stroke-width="1.4"><circle cx="20" cy="20" r="16"/><polygon points="20,8 30,14 30,26 20,32 10,26 10,14"/><circle cx="20" cy="20" r="4" fill="#b23a32" stroke="none"/><animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="10s" repeatCount="indefinite"/></g></svg></div>
   <div class="mfrs-msg-header-item"><span class="mfrs-msg-header-ico">🎬</span><span class="mfrs-msg-header-lbl">阶段</span><span class="mfrs-msg-header-val">${_.escape(phase)}</span></div>
   <div class="mfrs-msg-header-item"><span class="mfrs-msg-header-ico">📍</span><span class="mfrs-msg-header-lbl">位置</span><span class="mfrs-msg-header-val">${_.escape(location)}</span></div>
   <div class="mfrs-msg-header-item"><span class="mfrs-msg-header-ico">🩸</span><span class="mfrs-msg-header-lbl">死亡风险</span><span class="mfrs-msg-header-val" style="color:${deathColor}">${deathRisk}%</span></div>
+  <div class="mfrs-msg-top-icon-right"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#b23a32" stroke-width="1.4"><circle cx="20" cy="20" r="16"/><polygon points="20,8 30,14 30,26 20,32 10,26 10,14"/><circle cx="20" cy="20" r="4" fill="#b23a32" stroke="none"/><animateTransform attributeName="transform" type="rotate" from="360 20 20" to="0 20 20" dur="10s" repeatCount="indefinite"/></g></svg></div>
 </div>
 <div class="mfrs-msg-columns">
   <div class="mfrs-msg-col">
@@ -180,8 +182,10 @@ function buildRelationTabHtml(data: StatusData): string {
 
   return `
 <div class="mfrs-msg-header">
+  <div class="mfrs-msg-top-icon-left"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#b23a32" stroke-width="1.4"><circle cx="20" cy="20" r="16"/><polygon points="20,8 30,14 30,26 20,32 10,26 10,14"/><circle cx="20" cy="20" r="4" fill="#b23a32" stroke="none"/><animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="10s" repeatCount="indefinite"/></g></svg></div>
   <div class="mfrs-msg-header-item"><span class="mfrs-msg-header-ico">📍</span><span class="mfrs-msg-header-lbl">当前位置</span><span class="mfrs-msg-header-val">${_.escape(location)}</span></div>
   <div class="mfrs-msg-header-item"><span class="mfrs-msg-header-ico">🎬</span><span class="mfrs-msg-header-lbl">阶段</span><span class="mfrs-msg-header-val">${_.escape(phase)}</span></div>
+  <div class="mfrs-msg-top-icon-right"><svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#b23a32" stroke-width="1.4"><circle cx="20" cy="20" r="16"/><polygon points="20,8 30,14 30,26 20,32 10,26 10,14"/><circle cx="20" cy="20" r="4" fill="#b23a32" stroke="none"/><animateTransform attributeName="transform" type="rotate" from="360 20 20" to="0 20 20" dur="10s" repeatCount="indefinite"/></g></svg></div>
 </div>
 <div class="mfrs-msg-section">
   <div class="mfrs-msg-section-title">🗺️ 环境</div>
@@ -392,20 +396,37 @@ $(() => {
   line-height: 1.8;
 }
 
-/* 消息内面板容器 */
+/* 消息内面板容器（八角切角 + 网格光斑底） */
 .mfrs-msg-panel {
-  background: linear-gradient(180deg, rgba(18,14,13,0.96), rgba(24,18,17,0.98));
-  border: 1px solid rgba(90,42,42,0.68);
-  border-radius: 10px;
+  background: #1a1010;
   margin-top: 16px;
   padding: 0;
   box-shadow:
     0 4px 16px rgba(0,0,0,0.45),
     inset 0 0 24px rgba(100,24,24,0.12);
   overflow: hidden;
+  position: relative;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
 }
 
-/* Tab 标签栏（居中胶囊） */
+.mfrs-msg-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(30deg, transparent 0, transparent 23px, rgba(178,58,50,0.05) 23px, rgba(178,58,50,0.05) 24px),
+    repeating-linear-gradient(150deg, transparent 0, transparent 23px, rgba(178,58,50,0.05) 23px, rgba(178,58,50,0.05) 24px),
+    repeating-linear-gradient(90deg, transparent 0, transparent 41px, rgba(178,58,50,0.05) 41px, rgba(178,58,50,0.05) 42px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mfrs-msg-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Tab 标签栏（两按钮居中） */
 .mfrs-msg-tabs {
   display: flex;
   justify-content: center;
@@ -416,28 +437,30 @@ $(() => {
 
 .mfrs-msg-tab {
   flex: 0 0 auto;
-  background: rgba(30,20,20,0.6);
+  background: rgba(78,42,42,0.75);
   color: #9a8080;
   border: 1px solid rgba(90,42,42,0.5);
-  border-radius: 20px;
   padding: 8px 24px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: filter 0.25s ease, color 0.25s ease, background 0.25s ease;
   font-family: "Noto Sans SC", sans-serif;
+  border-radius: 0;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
 }
 
 .mfrs-msg-tab:hover {
-  background: rgba(139,32,32,0.2);
+  background: rgba(178,58,50,0.35);
   color: #c85c5c;
+  filter: drop-shadow(0 4px 8px rgba(178,58,50,0.35));
 }
 
 .mfrs-msg-tab-active {
-  background: linear-gradient(180deg, rgba(160,40,40,0.35), rgba(120,30,30,0.5)) !important;
-  color: #f0b0b0 !important;
+  background: #b23a32 !important;
+  color: #12141d !important;
   border-color: #b23a32;
-  box-shadow: 0 0 12px rgba(178,58,50,0.5);
+  filter: drop-shadow(0 6px 12px rgba(178,58,50,0.55)) drop-shadow(0 12px 24px rgba(178,58,50,0.35)) drop-shadow(0 20px 48px rgba(178,58,50,0.2));
 }
 
 /* Tab 内容区 */
@@ -450,7 +473,7 @@ $(() => {
   display: block;
 }
 
-/* 顶部浓缩信息栏 */
+/* 顶部浓缩信息栏（三段式） */
 .mfrs-msg-header {
   display: flex;
   flex-wrap: wrap;
@@ -461,6 +484,20 @@ $(() => {
   background: linear-gradient(90deg, rgba(70,22,22,0.42), rgba(30,14,14,0.28));
   border: 1px solid rgba(139,32,32,0.35);
   border-radius: 8px;
+}
+
+.mfrs-msg-top-icon-left,
+.mfrs-msg-top-icon-right {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  opacity: 0.55;
+}
+
+.mfrs-msg-top-icon-left svg,
+.mfrs-msg-top-icon-right svg {
+  width: 100%;
+  height: 100%;
 }
 
 .mfrs-msg-header-item {
@@ -483,8 +520,28 @@ $(() => {
 
 .mfrs-msg-col { min-width: 0; }
 
-/* 分区 */
-.mfrs-msg-section { margin-bottom: 20px; }
+/* 分区（八角切角 + 红描边 + 网格光斑内底） */
+.mfrs-msg-section {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: rgba(26,16,16,0.72);
+  border: 1px solid rgba(178,58,50,0.45);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  position: relative;
+}
+
+.mfrs-msg-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(30deg, transparent 0, transparent 23px, rgba(178,58,50,0.05) 23px, rgba(178,58,50,0.05) 24px),
+    repeating-linear-gradient(150deg, transparent 0, transparent 23px, rgba(178,58,50,0.05) 23px, rgba(178,58,50,0.05) 24px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mfrs-msg-section > * { position: relative; z-index: 1; }
 .mfrs-msg-section:last-child { margin-bottom: 0; }
 .mfrs-msg-section-full { margin-top: 4px; }
 
@@ -492,10 +549,12 @@ $(() => {
   font-size: 15px;
   font-weight: 700;
   color: #d87070;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(139,32,32,0.35);
+  margin: -12px -14px 10px;
+  padding: 6px 14px;
+  background: rgba(178,58,50,0.15);
+  border-bottom: 1px solid rgba(178,58,50,0.45);
   font-family: "Noto Serif SC", serif;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 0, 0 0, 0 8px);
 }
 
 /* 键值对行 */
@@ -552,6 +611,7 @@ $(() => {
   transition: width 0.4s ease, background 0.3s ease;
   border-radius: 4px;
   box-shadow: 0 0 8px currentColor;
+  filter: drop-shadow(0 0 8px currentColor);
 }
 
 /* 厉鬼列表 */
@@ -565,9 +625,10 @@ $(() => {
   background: rgba(139,32,32,0.22);
   color: #d87070;
   padding: 6px 12px;
-  border-radius: 4px;
   font-size: 13px;
   border: 1px solid rgba(139,32,32,0.35);
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
 }
 
 /* NPC 列表（名字着色 + 描述） */
@@ -588,10 +649,15 @@ $(() => {
   align-items: baseline;
 }
 
-.mfrs-msg-npc-name { color: #e0a860; font-weight: 700; flex: 0 0 auto; }
+.mfrs-msg-npc-name {
+  color: #e0a860;
+  font-weight: 700;
+  flex: 0 0 auto;
+  text-shadow: 0 0 6px rgba(224,168,96,0.4);
+}
 .mfrs-msg-npc-desc { color: #a8b0c0; line-height: 1.6; }
 
-/* 行动建议按钮 */
+/* 行动建议按钮（切角 + 三层辉光） */
 .mfrs-msg-actions {
   display: flex;
   flex-direction: column;
@@ -604,13 +670,28 @@ $(() => {
   background: linear-gradient(180deg, rgba(58,42,42,0.75), rgba(48,32,32,0.85));
   color: #e0c0a0;
   border: 1px solid rgba(139,92,32,0.45);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 10px 14px;
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: filter 0.25s ease, color 0.25s ease, background 0.25s ease;
   font-family: "Noto Sans SC", sans-serif;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  filter: drop-shadow(0 6px 12px rgba(139,92,32,0.5)) drop-shadow(0 12px 24px rgba(139,92,32,0.35)) drop-shadow(0 20px 48px rgba(139,92,32,0.2));
+}
+
+.mfrs-msg-action-btn:hover {
+  background: linear-gradient(180deg, rgba(78,52,32,0.85), rgba(68,42,22,0.92));
+  color: #f0d0b0;
+  filter: drop-shadow(0 8px 16px rgba(178,58,50,0.65)) drop-shadow(0 16px 32px rgba(178,58,50,0.45)) drop-shadow(0 28px 64px rgba(178,58,50,0.3));
+}
+
+.mfrs-msg-action-btn:active {
+  background: #b23a32;
+  color: #12141d;
+  filter: drop-shadow(0 6px 12px rgba(178,58,50,0.8)) drop-shadow(0 12px 24px rgba(178,58,50,0.55));
+  transform: translateY(1px);
 }
 
 .mfrs-msg-action-key {
@@ -620,7 +701,7 @@ $(() => {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(179,112,32,0.35);
+  background: rgba(178,58,50,0.35);
   color: #f0d0a0;
   font-weight: 700;
   font-size: 12px;
@@ -647,16 +728,20 @@ $(() => {
   line-height: 1.45;
 }
 
-.mfrs-msg-action-btn:hover {
-  background: linear-gradient(180deg, rgba(78,52,32,0.85), rgba(68,42,22,0.92));
-  border-color: rgba(179,112,32,0.65);
-  color: #f0d0b0;
-  box-shadow: 0 2px 8px rgba(139,92,32,0.35);
+/* 面板内滚动条独立样式 */
+.mfrs-msg-panel ::-webkit-scrollbar {
+  width: 8px;
 }
-
-.mfrs-msg-action-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 4px rgba(139,92,32,0.25);
+.mfrs-msg-panel ::-webkit-scrollbar-track {
+  background: rgba(26,16,16,0.6);
+}
+.mfrs-msg-panel ::-webkit-scrollbar-thumb {
+  background: rgba(140,20,20,0.55);
+  border-radius: 2px;
+}
+.mfrs-msg-panel ::-webkit-scrollbar-thumb:hover {
+  background: rgba(220,50,50,0.95);
+  box-shadow: 0 0 6px rgba(220,50,50,0.6);
 }
 
 /* 空状态 */
