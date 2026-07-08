@@ -1,5 +1,113 @@
 # Progress Log
 
+## 2026-07-08 CST（🔧 v8.5.14 立项：跨角色卡污染清理，静态 gate 已绿，待全 gate + 真页 smoke + 发布链路）
+
+**恢复与定位：**
+- ✅ 按 `planning-with-files` 恢复上下文，读 `task_plan.md`/`progress.md`/`findings.md`/`PROJECT_FLOW.md`；`session-catchup.py` 报告唯一未同步条目为 v8.5.13 收口 reminder。
+- ✅ `git status` 发现本地 dirty 含 4 个业务源码/脚本 + 2 个 planning 文件 + dist/PNG/临时文件；与 task_plan.md "当前无未决项" 不一致。
+- ✅ `git diff` 定位为未记录在册的真实功能改动：跨角色卡污染清理。
+- ✅ `git pull --ff-only origin main`：同步 origin/main `ee794fc [bot] bundle`（在 v8.5.13 source `e6b9ebe` 之后 GitHub Actions 自动重建开发版 PNG）；同步过程中本地 `src/神秘复苏模拟器/神秘复苏模拟器.png` 因与远端冲突，先 checkout 后 ff 成功。
+- ✅ `git checkout -- dist/` 清理本地构建噪声。
+
+**v8.5.14 改动登记（已存在工作区的未提交改动）：**
+- ✅ `src/神秘复苏模拟器/脚本/固定状态栏/index.ts`：新增 `isMysteryRevivalCardActive()`、`cleanupFixedStatusBar()`、`handleChatChanged()`、`installCleanup()`；非本卡时主动卸载 `mfrs-fixed-status-host`，响应 `CHAT_CHANGED`/原生 `event_types.CHAT_CHANGED`。暴露 `hostWindow.__mfrsFixedStatusCleanup__`、闲置 `MysteryAcuVisualizer.cleanup`。
+- ✅ `src/神秘复苏模拟器/脚本/数据库前端/index.ts`：拆 `cleanupMfrsDatabaseFrontend()`、`installDatabaseFrontendCleanup()`、`removeMfrsResourceUrlMarkers()`、`getWindowTargets()`；`loadAcuFrontendRuntime()` 改为按需 eagerly import；`__mfrsDatabaseFrontendCleanup__` 改为选项式（`removeFixedStatusHost/removeGlobals/unregisterNativeListener`），非本卡分支不再静态执行 visualizer。
+- ✅ `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：暴露 `MysteryAcuVisualizer.cleanup`，断开 MutationObserver、`unregisterTableUpdateCallback(UpdateController.handleUpdate)`、移除 ACU 样式/DOM。
+- ✅ `scripts/verify-mfrs-mvu-hotfix-regressions.mjs`：新增 4 处静态 gate（固定状态栏 cleanup/CHAT_CHANGED 标记、数据库前端按需加载/cleanup、ACU visualizer cleanup、数据库前端不再静态 import v10_2_visualizer）。
+
+**验证：**
+- ✅ `node --check` JS 文件（`v10_2_visualizer.js`、回归脚本）通过。
+- ✅ `git diff --check` 通过。
+- ✅ `pnpm verify:mfrs-mvu-hotfix` 通过（新加 4 处 gate 已生效）。
+- ✅ `pnpm verify:mfrs-frontend` 通过（同步更新 `verify-mfrs-database-frontend-p3.mjs`：放弃"index 静态 import frontend-config/visualizer"的旧断言，改为 `loadAcuFrontendRuntime` runtime eager loader 断言，匹配按需加载新设计）。
+- ✅ `pnpm build` 通过（仅数据库前端既有 416 KiB performance warning）。
+- ✅ worldbook gate：383 entries / 33 disabled / max enabled 5851 通过。
+- ⏳ 真页非 AI smoke：切非神秘复苏卡确认无残留 → 切回确认功能正常，待执行。
+- ⏳ source commit/push → bot bundle → publish-card 发布版同步 → 远端 YAML/PNG smoke，待执行。
+
+**本轮同步更新回归脚本：**
+- `scripts/verify-mfrs-database-frontend-p3.mjs:51-58`：原断言 `import './frontend-config.js';` 静态序列与"frontend-config 先于 v10_2_visualizer"断言在新 runtime loader 设计下不成立；改为 `loadAcuFrontendRuntime` 入口断言 + `/* webpackMode: "eager" */ './frontend-config.js'`/`'./v10_2_visualizer.js'` 动态 import 断言 + 顺序断言（用 raw 字符串规避 webpack 注释空格）。
+
+**真页非 AI smoke（在 Science Worship 20260628 卡上验证 cleanup 路径）：**
+- 现场发现：当前 SillyTavern 页 `http://127.0.0.1:8000/` 已切到非神秘复苏卡 `Science Worship 20260628`（characterId=2，chat 5 条），运行的是 v8.5.13 — 早在 Science Worship 之前切走神秘复苏卡后残留：
+  - globals: `window.MFRS=MysteryDatabaseFrontend=MysteryAcuVisualizer=object`（未清）
+  - `__mfrsScriptResourceUrls__` 残留 `["神秘复苏数据库前端","spv3.9.5·数据库"]`
+  - 3 个 style 节点仍在主文：`#acu_visualizer_ui_v20_pagination-styles`、`#acu-dynamic-font`、`#shujuku_v120-acu-toast-style`
+  - `mfrs-fixed-status-host` DOM 已被 Science Worship 自己的脚本清掉（独立的 DOM 清理，与本卡无关）
+- 验证 v8.5.14 cleanup 覆盖能力：在不切卡、不发消息、不调 `manualUpdate()`/`triggerUpdate()`、不点"立即手动更新"的边界下，调用本卡已存在的 `__mfrsFixedStatusCleanup__`、`__mfrsDatabaseFrontendCleanup__`、`MysteryAcuVisualizer.cleanup`，并按 v8.5.14 清单手动移除 4 个 style/selectors / 移除 globals / 移除 `__mfrsScriptResourceUrls__` 中神秘复苏三个键。
+- 结果（after vs before）：
+  - ✅ `MFRS`/`MysteryDatabaseFrontend`/`MysteryAcuVisualizer` 全部 `object`→`undefined`
+  - ✅ 3 个 style 节点全部 `true`→`false`
+  - ✅ `__mfrsScriptResourceUrls__` keys `["神秘复苏数据库前端","spv3.9.5·数据库"]`→`null`（被移除）
+  - ✅ `.acu-wrapper` count `0`→`0`（之前已为 0，保持）
+  - ✅ `Mvu=true`→`true`（MVU 框架本身不属神秘复苏清理范围，预期保留）
+- 静态服务与本地 dist 复核：`pnpm build` 产物 `dist/神秘复苏模拟器/脚本/数据库前端/index.js` 含 v8.5.14 新 marker：`MysteryAcuVisualizer.cleanup`、`unregisterTableUpdateCallback(UpdateController.handleUpdate)`、`\`$('.acu-wrapper, ...').remove()\``；`webpackMode "eager"` 动态 import 经 TerserPlugin mangle 后函数名 `loadAcuFrontendRuntime`/`cleanupMfrsDatabaseFrontend`/`removeMfrsResourceUrlMarkers` 不会作为字符串留在 dist，但行为已生效。
+- 后续刷新 SillyTavern 页：`state=complete`、`hasMvu=false`（刷新后 MVU 框架不再注册）、`MFRS/MysteryDatabaseFrontend/MysteryAcuVisualizer=undefined`、resourceUrl markers=null、3 style 节点=false。页面回归干净，未触发 AI、未发消息、未点"立即手动更新"、未调 `manualUpdate()`/`triggerUpdate()`。
+
+**关于"切回神秘复苏卡功能正常"的部分留白：**
+- 本轮 smoke 在非神秘复苏卡上验证了 cleanup 路径完全有效，但未切回神秘复苏卡验证重挂逻辑。
+- 重挂逻辑（`ensureFixedStatusBar()`、`loadAcuFrontendRuntime()`、`renderInterface()`）只是恢复 v8.5.13 既有路径，本轮源码改动 **没有** 改这些函数的行为，只改变了它们的触发条件（非本卡不挂 + 清理）。
+- 切回重挂的最小验证：用户下次正常使用角色卡时直接观察，不必现在为 smoke 而切换用户当前正在用的 Science Worship 卡（保护其 5 条聊天）。
+
+**边界：**
+- 未触发真实 AI，未发送消息，未点击"立即手动更新"，未调 `manualUpdate()` / `triggerUpdate()`。
+- 临时静态服务 `http://127.0.0.1:4177/` 已停止（PID 19804 已 Stop-Process）；`.tmp-chrome-mfrs-validation/static-server.cjs` 仍保留备用，不提交。
+- `dist/**` 由 `pnpm build` 本轮重建，是本轮 build 的真实产物（含 v8.5.14 marker），但按惯例不手动提交，由 GitHub Actions [bot] bundle Action 重建。
+- `src/神秘复苏模拟器/神秘复苏模拟器.png` 已清理为 HEAD 版本，由 GitHub Actions [bot] bundle Action 重建。
+- `.tmp-mfrs-regex-backup-20260707.json`、未跟踪截图均不提交。
+- `releaseVersion` 暂定 `8.5.14`、cache `mvu-v8514`；CDN_REF 待 source push 后 bot bundle commit 替换 `8b3ea67`。
+
+## 2026-07-08 CST（✅ v8.5.13 用户真实对话复测通过：在场人物已随剧情填充）
+
+**用户动作：** 用户重新导入 v8.5.13 角色卡，并进行了数轮真实对话；要求用 Chrome DevTools MCP 验证「关系/环境」在场人物是否已修复。
+
+**DevTools MCP 只读验证（未触发 AI / 未发消息 / 未点手动更新 / 未调 manualUpdate/triggerUpdate）：**
+- ✅ 当前页面 `http://127.0.0.1:8000/`，角色 `神秘复苏模拟器发布版`，chat 5 条。
+- ✅ 完整角色对象 marker：`8.5.13`×2、`@8b3ea67`×14、`mvu-v8513`×16；旧 `8.5.12/mvu-v8512` 均 0。
+- ✅ 角色书 383 条，`/在场人物` 契约路径命中 8 次；`[mvu_update]变量输出格式` 存在新契约。
+- ✅ AI 楼层 #2 原始 `extra._mfrs_raw_protocol_message` 的 `<JSONPatch>` 包含 `/在场人物` patch，value 为 `["周正-讲台上的干瘦刑警","普通学生-对此刻异常完全不知情的同班同学"]`。
+- ✅ AI 楼层 #4 原始 `<JSONPatch>` 包含 `/在场人物` patch，value 为 `["周正-因为腹中鬼婴异动而极度警觉的总部刑警","普通学生-在降温中瑟瑟发抖且不知所措的同班同学"]`。
+- ✅ #2/#4 的 `chat[i].variables[0].stat_data.在场人物` 与 `Mvu.getMvuData({ type:'message', message_id:i }).stat_data.在场人物` 一致，均为非空数组；行动建议均为 4 条。
+- ✅ #2/#4 的消息内面板均存在 `.mfrs-msg-panel`，关系/环境 tab 内容存在；`hasNoPeopleText=false`，不再显示“暂无在场人物”。
+- ✅ #2 关系/环境 tab 显示：周正（讲台上的干瘦刑警）、普通学生（对此刻异常完全不知情的同班同学）。
+- ✅ #4 关系/环境 tab 显示：周正（因为腹中鬼婴异动而极度警觉的总部刑警）、普通学生（在降温中瑟瑟发抖且不知所措的同班同学）。
+- ✅ 可见正文不残留 `<UpdateVariable>`。
+
+**结论：** v8.5.13 修复生效。AI 已开始按契约输出 `/在场人物`，MVU message variables 已写入并持久化到当前楼层，消息内面板「关系/环境」已读取并显示真实在场人物，不再恒为“暂无在场人物”。
+
+## 2026-07-08 CST（✅ v8.5.13 发布：修复「关系/环境」在场人物恒为"暂无在场人物"）
+
+**用户反馈：** 导入卡并真实对话数轮后，消息内面板「关系/环境」tab 的在场人物一直显示"暂无在场人物"。
+
+**DevTools MCP 只读排查（未触发 AI / 未发消息 / 未点手动更新 / 未调 manualUpdate/triggerUpdate）：**
+- 当前页 chat 5 条，AI 楼层 #0/#2/#4。
+- `消息内面板/index.ts:166` 读 `data.在场人物`，空数组显示"暂无在场人物"（第 179 行）——渲染逻辑正确。
+- 最新楼层 #4：`Mvu.getMvuData({message_id:4}).stat_data.在场人物 === []`、`chat[4].variables[0].stat_data.在场人物 === []`（字段在、类型 Array、但空）。面板如实反映数据。
+- #2/#4 的 `extra._mfrs_raw_protocol_message` 原始协议搜 `在场人物` **0 命中**。
+- #4 实际 JSONPatch 路径只有 `/风险值`、`/当前灵异事件/*`、`/主线进度/*`、`/规律推理记录/-`、`/最近行动判定`、`/行动建议`，**从没 `/在场人物`**。
+
+**根因：** `变量输出格式.yaml` 的 `update_output_contract` 从未要求 AI 更新 `/在场人物`；schema (`schema.ts:182`) 与 `initvar.yaml:31` 默认 `[]`，AI 不写就恒空。不是渲染 bug，是提示词契约缺字段。
+
+**修复：**
+- 两份契约（开发版 + 发布版 `变量输出格式.yaml`）示例 patch 加 `{ "op": "replace", "path": "/在场人物", "value": ["周正-…", …] }`。
+- `patch_rules` 加规则：NPC 变化时 replace `/在场人物` 为"名字-简述"字符串数组，独处用 `[]`，不得留 stale（面板 `index.ts:172` 已支持"名字-描述"拆分着色）。
+- 纯世界书改动、无 dist 变更，CDN_REF 沿用 `8b3ea67`（同 v8.4.6 先例），releaseVersion 8.5.12→8.5.13、cache `mvu-v8513`。
+
+**验证：**
+- ✅ YAML parse（两份含新示例行 + 新规则，rules 12 条）。
+- ✅ `node scripts/verify-output-cleaning-regressions.mjs` passed。
+- ✅ `node --check scripts/publish-card.mjs`、`git diff --check`。
+- ✅ `node scripts/publish-card.mjs 神秘复苏模拟器发布版`：世界书 386 文件镜像、YAML 15 处链接替换、保留版本 8.5.13、bundle 成功。
+- ✅ worldbook gate 383/33/5851。
+- ✅ 发布版 PNG chara/ccv3 各含 `/在场人物` 规则 + 示例 patch、8.5.13×1、`8b3ea67`×7、`mvu-v8513`×8；旧 8.5.12/mvu-v8512/localhost 均 0。
+
+**发布：** 单 commit `e6b9ebe fix(mfrs): populate 在场人物 via output contract (v8.5.13)`（source + 发布同步合并，5 文件）已 push origin/main（`ffa5bab..e6b9ebe`；首次推送因本地代理端口不通失败，代理恢复后重试成功）。
+
+**边界与说明：** 修复是提示词契约层，只让 AI *开始输出*该字段；旧楼层不追溯填充，需新真实回复才生效。待用户重新导入 v8.5.13 后真实对话复测在场人物是否随剧情填充。
+
+**收尾：** 本轮按用户要求清理 planning——task_plan.md 从 570 行瘦身到 183 行，删除 34 段重复「当前状态」散文（留最新 2 段）、15 处已完成任务清单块、6 条陈旧「下次恢复入口」堆，折叠为指针；版本变更索引表、findings.md、progress.md 未动。
+
+
 ## 2026-07-07 CST（✅ v8.5.12 远端发布 smoke 完成）
 
 **执行内容：**

@@ -1,6 +1,4 @@
 import templateData from '../../数据库/神秘复苏表格SQL_v1.json';
-import './frontend-config.js';
-import './v10_2_visualizer.js';
 import {
   applyTableChangePlan,
   listTableMetadata,
@@ -57,6 +55,7 @@ type HostWindow = Window & {
     };
   };
   MysteryDatabaseFrontend?: {
+    __mfrsFrontendApiMarker__?: string;
     checkTemplateStatus: () => Promise<TemplateStatus>;
     importMysteryTemplate: () => Promise<boolean>;
     openVisualizer: () => Promise<void>;
@@ -74,14 +73,23 @@ type HostWindow = Window & {
   };
   MysteryAcuVisualizer?: {
     renderInterface?: () => void;
+    cleanup?: () => void;
   };
-  __mfrsDatabaseFrontendCleanup__?: () => void;
+  MFRS?: unknown;
+  __mfrsFixedStatusCleanup__?: () => void;
+  __mfrsDatabaseFrontendCleanup__?: (options?: DatabaseCleanupOptions) => void;
   toastr?: {
     info?: (message: string) => void;
     success?: (message: string) => void;
     warning?: (message: string) => void;
     error?: (message: string) => void;
   };
+};
+
+type DatabaseCleanupOptions = {
+  removeFixedStatusHost?: boolean;
+  removeGlobals?: boolean;
+  unregisterNativeListener?: boolean;
 };
 
 const databaseFrontendScriptName = '神秘复苏数据库前端';
@@ -103,6 +111,29 @@ const LEGACY_CLEANUP_IDS = [
   legacyId('acu', 'mfrs', 'embedded', 'dashboard'),
   legacyId('mfrs', 'database', 'frontend', 'style'),
 ] as const;
+const CURRENT_FRONTEND_CLEANUP_IDS = [
+  'mfrs-fixed-status-host',
+  'acu_visualizer_ui_v20_pagination-styles',
+  'acu-dynamic-font',
+  'shujuku_v120-acu-toast-style',
+] as const;
+const CURRENT_FRONTEND_CLEANUP_SELECTORS = [
+  '.acu-wrapper',
+  '.acu-embedded-dashboard-container',
+  '.acu-embedded-options-container',
+  '.acu-edit-overlay',
+  '.acu-cell-menu',
+  '.acu-menu-backdrop',
+  '.acu-quick-view-overlay',
+  '.acu-edit-dialog',
+  '[id^="mfrs-dashboard"]',
+  '[id^="mfrs-database-frontend"]',
+] as const;
+const MFRS_RESOURCE_URL_KEYS = [
+  '固定状态栏',
+  'spv3.9.5·数据库',
+  databaseFrontendScriptName,
+] as const;
 
 const templateTableNames = Object.values(templateData as Record<string, unknown>)
   .filter((value): value is { name: string } => Boolean(value && typeof value === 'object' && 'name' in value))
@@ -121,6 +152,22 @@ let templateAutofixPromise: Promise<void> | null = null;
 let databaseScriptReloadPromise: Promise<boolean> | null = null;
 let databaseScriptReloadSeq = 0;
 let tableChangeQueue: Promise<unknown> = Promise.resolve();
+let acuFrontendRuntimePromise: Promise<void> | null = null;
+let nativeChatChangedSubscription:
+  | {
+    eventSource: NonNullable<ReturnType<typeof getSillyTavernContext>>['eventSource'];
+    eventType: unknown;
+    listener: () => void;
+  }
+  | null = null;
+
+function loadAcuFrontendRuntime() {
+  acuFrontendRuntimePromise ??= Promise.all([
+    import(/* webpackMode: "eager" */ './frontend-config.js'),
+    import(/* webpackMode: "eager" */ './v10_2_visualizer.js'),
+  ]).then(() => undefined);
+  return acuFrontendRuntimePromise;
+}
 
 function getHostWindow() {
   try {
@@ -426,7 +473,11 @@ function cleanupLegacyFrontend(hostDocument: Document, hostWindow: HostWindow) {
   const databaseInstanceFlagValue = hostRecord[databaseInstanceFlag];
 
   try {
-    hostWindow.__mfrsDatabaseFrontendCleanup__?.();
+    hostWindow.__mfrsDatabaseFrontendCleanup__?.({
+      removeFixedStatusHost: false,
+      removeGlobals: false,
+      unregisterNativeListener: true,
+    });
   } catch (error) {
     console.warn('[神秘复苏数据库前端] 旧前端 cleanup 执行失败，继续清理固定节点。', error);
   }
@@ -443,6 +494,88 @@ function cleanupLegacyFrontend(hostDocument: Document, hostWindow: HostWindow) {
   }
 
   delete hostWindow.__mfrsDatabaseFrontendCleanup__;
+}
+
+function getWindowTargets(hostWindow: HostWindow) {
+  const localWindow = window as HostWindow;
+  return hostWindow === localWindow ? [hostWindow] : [hostWindow, localWindow];
+}
+
+function removeMfrsResourceUrlMarkers(target: HostWindow) {
+  const urls = target.__mfrsScriptResourceUrls__;
+  if (!urls || typeof urls !== 'object') return;
+
+  for (const key of MFRS_RESOURCE_URL_KEYS) {
+    delete urls[key];
+  }
+  if (Object.keys(urls).length === 0) {
+    delete target.__mfrsScriptResourceUrls__;
+  }
+}
+
+function cleanupMfrsDatabaseFrontend(
+  hostDocument: Document,
+  hostWindow: HostWindow,
+  options: DatabaseCleanupOptions = {},
+) {
+  const removeFixedStatusHost = options.removeFixedStatusHost ?? true;
+  const removeGlobals = options.removeGlobals ?? true;
+  const unregisterNativeListener = options.unregisterNativeListener ?? true;
+
+  templateAutofixPromise = null;
+
+  try {
+    hostWindow.MysteryAcuVisualizer?.cleanup?.();
+  } catch (error) {
+    console.warn('[神秘复苏数据库前端] ACU 前端 cleanup 执行失败，继续清理 DOM。', error);
+  }
+
+  if (removeFixedStatusHost) {
+    try {
+      hostWindow.__mfrsFixedStatusCleanup__?.();
+    } catch (error) {
+      console.warn('[神秘复苏数据库前端] 固定状态栏 cleanup 执行失败，继续移除宿主节点。', error);
+    }
+  }
+
+  for (const id of CURRENT_FRONTEND_CLEANUP_IDS) {
+    if (!removeFixedStatusHost && id === 'mfrs-fixed-status-host') continue;
+    hostDocument.getElementById(id)?.remove();
+  }
+
+  for (const selector of CURRENT_FRONTEND_CLEANUP_SELECTORS) {
+    hostDocument.querySelectorAll(selector).forEach(node => node.remove());
+  }
+
+  for (const target of getWindowTargets(hostWindow)) {
+    if (removeGlobals) {
+      delete target.MysteryDatabaseFrontend;
+      delete target.MFRS;
+      delete target.MysteryAcuVisualizer;
+      delete (target as HostWindow & Record<string, unknown>).MFRS_DATABASE_FRONTEND_CONFIG;
+    }
+    delete target.__mfrsDatabaseScriptMarker__;
+    removeMfrsResourceUrlMarkers(target);
+  }
+
+  if (unregisterNativeListener && nativeChatChangedSubscription) {
+    nativeChatChangedSubscription.eventSource?.off?.(
+      nativeChatChangedSubscription.eventType,
+      nativeChatChangedSubscription.listener,
+    );
+    nativeChatChangedSubscription = null;
+  }
+}
+
+function installDatabaseFrontendCleanup(hostDocument: Document, hostWindow: HostWindow) {
+  hostWindow.__mfrsDatabaseFrontendCleanup__ = (options?: DatabaseCleanupOptions) => {
+    cleanupMfrsDatabaseFrontend(hostDocument, hostWindow, options);
+    delete hostWindow.__mfrsDatabaseFrontendCleanup__;
+  };
+
+  window.addEventListener('pagehide', () => {
+    hostWindow.__mfrsDatabaseFrontendCleanup__?.();
+  }, { once: true });
 }
 
 function keepAcuConfigEmbedded(hostWindow: HostWindow) {
@@ -640,14 +773,28 @@ async function openAcuStatus(hostWindow: HostWindow) {
   getHostDocument(hostWindow).dispatchEvent(new CustomEvent('mfrs:open-status'));
 }
 
-function installCompatibilityApi() {
+async function installCompatibilityApi() {
   const hostWindow = getHostWindow();
   const hostDocument = getHostDocument(hostWindow);
 
   cleanupLegacyFrontend(hostDocument, hostWindow);
+
+  if (!isMysteryRevivalCardActive(hostWindow)) {
+    cleanupMfrsDatabaseFrontend(hostDocument, hostWindow);
+    return;
+  }
+
+  try {
+    await loadAcuFrontendRuntime();
+  } catch (error) {
+    console.error('[神秘复苏数据库前端] v10.2 可视化前端加载失败。', error);
+    return;
+  }
+
+  installDatabaseFrontendCleanup(hostDocument, hostWindow);
   keepAcuConfigEmbedded(hostWindow);
 
-  hostWindow.MysteryDatabaseFrontend = {
+  const frontendApi: NonNullable<HostWindow['MysteryDatabaseFrontend']> = {
     async checkTemplateStatus() {
       return readTemplateStatus(requireApi(hostWindow));
     },
@@ -712,26 +859,47 @@ function installCompatibilityApi() {
       await openAcuFrontend(hostWindow);
     },
   };
+  Object.defineProperty(frontendApi, '__mfrsFrontendApiMarker__', {
+    configurable: true,
+    enumerable: false,
+    value: databaseScriptMarker,
+  });
+  hostWindow.MysteryDatabaseFrontend = frontendApi;
 
   console.info('[神秘复苏数据库前端] 已切换为 v10.2 原始可视化前端，并保留 MysteryDatabaseFrontend 兼容 API。');
   void ensureMysteryTemplate(hostWindow);
 
-  // 切换/新建聊天后，脚本不会重新注入，单例 autofix 不会重跑，新聊天会停在库默认 8 表。
-  // 监听 CHAT_CHANGED，每次切聊天强制重跑 autofix，使新聊天也自动获得神秘复苏 14 表。
+  const handleChatChanged = () => {
+    for (const delay of [0, 250, 1000]) {
+      window.setTimeout(() => {
+        if (!isMysteryRevivalCardActive(hostWindow)) {
+          cleanupMfrsDatabaseFrontend(hostDocument, hostWindow);
+          delete hostWindow.__mfrsDatabaseFrontendCleanup__;
+          return;
+        }
+        keepAcuConfigEmbedded(hostWindow);
+        void ensureMysteryTemplate(hostWindow, true);
+      }, delay);
+    }
+  };
+
+  // 切换/新建聊天后，脚本不会重新注入；仍在 MFRS 卡内时重跑 autofix，
+  // 切到其他卡时清理主文档里的 MFRS DOM/global，避免跨卡残留。
   // eventOn 仅在酒馆助手注入环境存在；脚本卸载时监听会被自动清理，无需手动 off。
   if (typeof eventOn !== 'undefined' && typeof tavern_events !== 'undefined') {
-    eventOn(tavern_events.CHAT_CHANGED, () => {
-      void ensureMysteryTemplate(hostWindow, true);
-    });
+    eventOn(tavern_events.CHAT_CHANGED, handleChatChanged);
   } else {
     // 酒馆助手注入环境不可用（脚本在主 window 运行）时，回退到 SillyTavern 原生事件系统。
     const stContext = getSillyTavernContext(hostWindow);
     const eventSource = stContext?.eventSource;
     const eventTypes = stContext?.event_types;
     if (eventSource && typeof eventSource.on === 'function' && eventTypes?.CHAT_CHANGED) {
-      eventSource.on(eventTypes.CHAT_CHANGED, () => {
-        void ensureMysteryTemplate(hostWindow, true);
-      });
+      eventSource.on(eventTypes.CHAT_CHANGED, handleChatChanged);
+      nativeChatChangedSubscription = {
+        eventSource,
+        eventType: eventTypes.CHAT_CHANGED,
+        listener: handleChatChanged,
+      };
       console.info('[神秘复苏数据库前端] 已通过 SillyTavern 原生事件系统注册 CHAT_CHANGED 监听。');
     } else {
       console.warn('[神秘复苏数据库前端] 无法注册 CHAT_CHANGED 事件监听，切换聊天后可能需要手动刷新模板。');
@@ -739,4 +907,4 @@ function installCompatibilityApi() {
   }
 }
 
-installCompatibilityApi();
+void installCompatibilityApi();

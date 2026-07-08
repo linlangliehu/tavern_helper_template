@@ -5767,9 +5767,36 @@
              if (getCore().getDB()?.exportTableAsJson && $) {
                   renderInterface();
                  const host = getHost();
+                 const cleanupInterface = () => {
+                     const { $ } = getCore();
+                     try {
+                         if (observer) {
+                             observer.disconnect();
+                             observer = null;
+                         }
+                     } catch (e) {
+                         console.warn('[ACU] 清理监听器失败', e);
+                     }
+                     try {
+                         const api = getCore().getDB();
+                         if (api && api.unregisterTableUpdateCallback) {
+                             api.unregisterTableUpdateCallback(UpdateController.handleUpdate);
+                         }
+                     } catch (e) {
+                         console.warn('[ACU] 注销表格更新回调失败', e);
+                     }
+                     if ($) {
+                         $('.acu-wrapper, .acu-embedded-dashboard-container, .acu-embedded-options-container, .acu-edit-overlay, .acu-cell-menu, .acu-menu-backdrop, .acu-quick-view-overlay').remove();
+                     } else {
+                         document.querySelectorAll('.acu-wrapper, .acu-embedded-dashboard-container, .acu-embedded-options-container, .acu-edit-overlay, .acu-cell-menu, .acu-menu-backdrop, .acu-quick-view-overlay').forEach(el => el.remove());
+                     }
+                     document.getElementById(`${SCRIPT_ID}-styles`)?.remove();
+                     document.getElementById('acu-dynamic-font')?.remove();
+                 };
                  host.MysteryAcuVisualizer = {
                      ...(host.MysteryAcuVisualizer || {}),
                      renderInterface,
+                     cleanup: cleanupInterface,
                      getAutoRecallPreview: buildAutoRecallResultFromCurrentData,
                      buildAutoRecallPrompt: () => buildAutoRecallResultFromCurrentData().prompt,
                  };

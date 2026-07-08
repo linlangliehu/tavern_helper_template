@@ -48,11 +48,13 @@ function loadFrontendConfig() {
   return fakeWindow.MFRS_DATABASE_FRONTEND_CONFIG;
 }
 
-assertContains(indexSource, "import './frontend-config.js';", 'index import order');
-assertContains(indexSource, "import './v10_2_visualizer.js';", 'index import order');
+assertContains(indexSource, 'loadAcuFrontendRuntime', 'index runtime loader');
+assertContains(indexSource, String.raw`/* webpackMode: "eager" */ './frontend-config.js'`, 'index runtime frontend-config import');
+assertContains(indexSource, String.raw`/* webpackMode: "eager" */ './v10_2_visualizer.js'`, 'index runtime visualizer import');
 assert.ok(
-  indexSource.indexOf("import './frontend-config.js';") < indexSource.indexOf("import './v10_2_visualizer.js';"),
-  'frontend-config must load before v10_2_visualizer',
+  indexSource.indexOf("('./frontend-config.js')") < indexSource.indexOf("('./v10_2_visualizer.js')")
+    || indexSource.indexOf(String.raw`'./frontend-config.js'`) < indexSource.indexOf(String.raw`'./v10_2_visualizer.js'`),
+  'frontend-config must still load before v10_2_visualizer in the runtime loader',
 );
 
 const frontendConfig = loadFrontendConfig();

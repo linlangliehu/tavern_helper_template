@@ -4,10 +4,76 @@ const frontendSlotId = 'mfrs-fixed-frontend-slot';
 const statusSlotId = 'mfrs-fixed-status-slot';
 const statusSummaryId = 'mfrs-fixed-status-summary';
 const statusDetailId = 'mfrs-fixed-status-detail';
+const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
+const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
+
+type HostWindow = Window & {
+  __mfrsFixedStatusCleanup__?: () => void;
+  SillyTavern?: {
+    getContext?: () => {
+      characterId?: string | number;
+      characters?: Array<{ name?: string; avatar?: string }> | Record<string, { name?: string; avatar?: string }>;
+      eventSource?: {
+        on?: (event: unknown, listener: (...args: unknown[]) => void) => void;
+        off?: (event: unknown, listener: (...args: unknown[]) => void) => void;
+      };
+      event_types?: Record<string, unknown> & { CHAT_CHANGED?: unknown };
+    };
+  };
+};
+
+declare const eventOn:
+  | undefined
+  | ((event: unknown, listener: (...args: unknown[]) => void) => void);
+declare const tavern_events: undefined | { CHAT_CHANGED?: unknown };
 
 // 酒馆助手「脚本」运行在 JS-Slash-Runner 的 TH-script iframe 中，该 iframe 的 document
 // 不含主窗口的 #send_form；必须用父窗口(主文档)挂载数据库前端槽位。
-const doc: Document = window.parent && window.parent.document ? window.parent.document : document;
+const hostWindow: HostWindow = (() => {
+  try {
+    return (window.parent ?? window) as HostWindow;
+  } catch {
+    return window as HostWindow;
+  }
+})();
+const doc: Document = hostWindow.document ?? document;
+let nativeChatChangedSubscription:
+  | { eventSource: NonNullable<ReturnType<typeof getSillyTavernContext>>['eventSource']; eventType: unknown; listener: () => void }
+  | null = null;
+
+function getSillyTavernContext() {
+  for (const st of [hostWindow.SillyTavern, (window as HostWindow).SillyTavern]) {
+    try {
+      const context = st?.getContext?.();
+      if (context) return context;
+    } catch {
+      // SillyTavern can briefly expose a half-updated context while switching chats.
+    }
+  }
+  return null;
+}
+
+function getCurrentCharacter() {
+  const context = getSillyTavernContext();
+  const characterId = context?.characterId;
+  if (characterId === undefined || characterId === null) return null;
+
+  const characters = context?.characters;
+  const character = Array.isArray(characters)
+    ? characters[Number(characterId)]
+    : characters?.[String(characterId)];
+
+  return character ? { id: String(characterId), ...character } : { id: String(characterId) };
+}
+
+function isMysteryRevivalCardActive() {
+  const character = getCurrentCharacter();
+  return Boolean(
+    character
+      && ((character.name && mysteryCardNames.has(character.name))
+        || (character.avatar && mysteryCardAvatars.has(character.avatar))),
+  );
+}
 
 function getSendForm() {
   return doc.querySelector('#send_form') ?? doc.querySelector('#form_sheld');
@@ -68,6 +134,11 @@ function ensureFixedStatusLayout(host: HTMLDivElement) {
 }
 
 function ensureFixedStatusBar() {
+  if (!isMysteryRevivalCardActive()) {
+    cleanupFixedStatusBar();
+    return false;
+  }
+
   const sendForm = getSendForm();
   if (!sendForm) {
     console.warn('[MFRS Fixed Status] 找不到输入区容器，稍后重试');
@@ -85,9 +156,56 @@ function ensureFixedStatusBar() {
   return true;
 }
 
+function cleanupFixedStatusBar() {
+  doc.getElementById(statusContainerId)?.remove();
+}
+
 function retryMount(attempt = 1) {
   if (ensureFixedStatusBar()) return;
   if (attempt < 20) setTimeout(() => retryMount(attempt + 1), 1000);
 }
 
+function handleChatChanged() {
+  for (const delay of [0, 250, 1000]) {
+    window.setTimeout(() => {
+      if (isMysteryRevivalCardActive()) {
+        void ensureFixedStatusBar();
+      } else {
+        cleanupFixedStatusBar();
+      }
+    }, delay);
+  }
+}
+
+function installCleanup() {
+  hostWindow.__mfrsFixedStatusCleanup__?.();
+  hostWindow.__mfrsFixedStatusCleanup__ = () => {
+    cleanupFixedStatusBar();
+    if (nativeChatChangedSubscription) {
+      nativeChatChangedSubscription.eventSource?.off?.(
+        nativeChatChangedSubscription.eventType,
+        nativeChatChangedSubscription.listener,
+      );
+      nativeChatChangedSubscription = null;
+    }
+    delete hostWindow.__mfrsFixedStatusCleanup__;
+  };
+
+  window.addEventListener('pagehide', hostWindow.__mfrsFixedStatusCleanup__, { once: true });
+
+  if (typeof eventOn !== 'undefined' && typeof tavern_events !== 'undefined' && tavern_events.CHAT_CHANGED) {
+    eventOn(tavern_events.CHAT_CHANGED, handleChatChanged);
+    return;
+  }
+
+  const context = getSillyTavernContext();
+  const eventSource = context?.eventSource;
+  const eventType = context?.event_types?.CHAT_CHANGED;
+  if (eventSource?.on && eventType) {
+    eventSource.on(eventType, handleChatChanged);
+    nativeChatChangedSubscription = { eventSource, eventType, listener: handleChatChanged };
+  }
+}
+
+installCleanup();
 retryMount();

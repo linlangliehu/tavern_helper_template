@@ -16,6 +16,8 @@ const normalizerPath = join(hotfixDir, 'protocol-normalizer.js');
 const messagePanelPath = join(mfrsRoot, '\u811a\u672c', '\u6d88\u606f\u5185\u9762\u677f', 'index.ts');
 const dbLoaderPath = join(mfrsRoot, '\u811a\u672c', '\u6570\u636e\u5e93', 'index.ts');
 const dbFrontendPath = join(mfrsRoot, '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'index.ts');
+const dbFrontendVisualizerPath = join(mfrsRoot, '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'v10_2_visualizer.js');
+const fixedStatusPath = join(mfrsRoot, '\u811a\u672c', '\u56fa\u5b9a\u72b6\u6001\u680f', 'index.ts');
 const distDbLoaderPath = join(repoRoot, 'dist', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93', 'index.js');
 const distDbFrontendPath = join(repoRoot, 'dist', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'index.js');
 const distHotfixPath = join(repoRoot, 'dist', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', 'hotfix-generation-ended-listeners', 'index.js');
@@ -231,6 +233,33 @@ for (const path of [dbLoaderPath, dbFrontendPath]) {
   assert.ok(source.includes('performance') && source.includes('getEntriesByType'), `${path} should keep performance resource fallback`);
   assert.ok(source.includes('databaseScriptCacheVersion'), `${path} should carry the current vendor cache marker`);
 }
+
+const dbFrontendSource = readText(dbFrontendPath);
+assert.equal(
+  dbFrontendSource.includes("import './v10_2_visualizer.js'"),
+  false,
+  'database frontend must not statically execute the ACU visualizer on non-MFRS cards',
+);
+assert.ok(dbFrontendSource.includes('loadAcuFrontendRuntime'), 'database frontend should defer ACU visualizer loading');
+assert.ok(dbFrontendSource.includes('cleanupMfrsDatabaseFrontend'), 'database frontend should clean stale MFRS DOM/globals');
+assert.ok(dbFrontendSource.includes('__mfrsDatabaseFrontendCleanup__'), 'database frontend should expose a cleanup hook');
+assert.ok(
+  dbFrontendSource.includes('!isMysteryRevivalCardActive(hostWindow)'),
+  'database frontend should branch away from non-MFRS cards',
+);
+
+const fixedStatusSource = readText(fixedStatusPath);
+assert.ok(fixedStatusSource.includes('__mfrsFixedStatusCleanup__'), 'fixed status should expose a cleanup hook');
+assert.ok(fixedStatusSource.includes('cleanupFixedStatusBar'), 'fixed status should remove its host on cleanup');
+assert.ok(fixedStatusSource.includes('!isMysteryRevivalCardActive()'), 'fixed status should not mount on non-MFRS cards');
+assert.ok(fixedStatusSource.includes('CHAT_CHANGED'), 'fixed status should react to chat/card changes');
+
+const dbFrontendVisualizerSource = readText(dbFrontendVisualizerPath);
+assert.ok(dbFrontendVisualizerSource.includes('cleanup: cleanupInterface'), 'ACU visualizer should expose cleanup');
+assert.ok(
+  dbFrontendVisualizerSource.includes('unregisterTableUpdateCallback(UpdateController.handleUpdate)'),
+  'ACU visualizer cleanup should unregister table update rerender callback',
+);
 
 for (const root of [mfrsRoot, releaseRoot]) {
   const indexYaml = readText(join(root, 'index.yaml'));
