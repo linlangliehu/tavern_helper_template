@@ -1,6 +1,60 @@
 # Progress Log
 
-## 2026-07-09 CST（✅ v8.7.2 已发布）
+## 2026-07-09 CST（✅ v8.7.3 hotfix 已发布 HEAD=`69a16bb`）
+
+**v8.7.2 导入后发现 LOGO 不可见。** 用户用角色卡进行几轮真实对话后报告视觉 bug。立刻用 Chrome DevTools MCP 抓 `.mes_text::after` computed style：
+
+**根因诊断：** v8.7.2 的 LOGO 设计让 `.mes_text::after` 默认值是 `opacity:0 !important` + `transform: scale(0.7) rotate(-12deg) !important`，再挂 `animation: mfrs-seal-press 320ms ease-out iteration=1 forwards !important`，希望 keyframes 从 0 → 0.9 动画到终态。**Chrome 实测：3 条 AI 消息全部停在 opacity=0，LOGO 完全不可见**。原因是 `!important` 声明的默认值只在 keyframes 通过 `animation-fill-mode: forwards` 把动画终态保活时才会被覆盖；但 Chrome 对 `opacity` 这种可继承属性的 keyframes→inline computed 同步存在 race，在 320ms 短动画 + iteration=1 场景里没可靠触发 forwards 应用。结果：动画跑完 keyframes 再也回不来 cover 默认值，元素永远停在 `!important` 写的 `opacity:0`。
+
+**hotfix 三处源码改动 `src/神秘复苏模拟器/脚本/界面美化/index.ts` line 257-259：**
+1. `opacity: 0 !important` → `opacity: 0.9 !important`（默认值直接设为终态；动画即使失败也可见）
+2. `transform: scale(0.7) rotate(-12deg) !important` → `transform: scale(1) rotate(0deg) !important`（同理）
+3. `animation: ... forwards !important` → `animation: ... both !important`（both = forwards + backwards，keyframes from 也能覆盖默认值；动画跑不跑都不影响终态可见性）
+
+**全链路验证：**
+- ✅ dist `界面美化/index.js` 内容校验：`opacity:0.9`×4（主规则 1 + keyframes to/60% 2 + reduced-motion 1）、`animation both`×1（主规则）、`animation forwards`×0（全部已改）、`mfrs-seal-press`×2（主规则 + @keyframes 定义）
+- ✅ jsdelivr `@4a99a4c` dist `界面美化/index.js` HTTP 200 fetch + marker count：与本地完全一致
+- ✅ 发布版 PNG `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` ccv3 (`.data.extensions.tavern_helper.scripts`)：
+  - `character_version = 8.7.3` ✓
+  - 8 个 scripts 总数（含 hotfix/变量结构/界面美化/固定状态栏/数据库前端/mvu/数据库 loader/消息内面板）
+  - 7 个核心 script 全部 SHA=`4a99a4c`、全部 cache=`v873`
+- ✅ 真页 Chrome DevTools MCP evaluate 3 条 AI 消息 `.mes_text::after`：
+  - opacity=`0.9`（曾经是 `0`） ✓
+  - transform=`matrix(1, 0, 0, 1, 0, 0)` = identity（曾经是 `scale(0.7) rotate(-12deg)`） ✓
+  - animationName=`mfrs-seal-press`、width=48px、height=48px、content=`""`
+  - backgroundImage=`radial-gradient(circle at 38% 28%, rgba(212, 168, 110, 0.45) 0%, ...)` 血封之眼 LOGO 已渲染 ✓
+
+**4 commits 完成链路：**
+1. `4a99a4c` fix(mfrs): v8.7.3 hotfix LOGO forwards->both for stable entrance — source (`界面美化/index.ts` line 257-259) + dist bundle + publish-card.mjs 占位
+2. `caf381a` chore(release): bump publish-card CDN_REF to 4a99a4c (v8.7.3) — 回填 `__PENDING_HOTFIX_873__` 占位符为真实 SHA
+3. `4591342` chore(release): publish v8.7.3 神秘复苏模拟器发布版 — 发布版 YAML+PNG sync 完成
+4. push 时 origin 自动跑了一次 `28d3ac4`（worktree 残留 cleanup），`git pull --rebase origin main` 顺滑完成 2 commits rebase，最终 push HEAD=`69a16bb`
+
+**publish-card.mjs 最终配置：**
+- `CDN_REF = '4a99a4c'`（v8.7.3: LOGO forwards→both 入场稳定 hotfix）
+- `CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v873'`
+- `releaseVersion = '8.7.3'`
+
+**v8.7.2 视觉设计（v8.7.3 hotfix 仍保留，文档备查）：**
+- ① LOGO 重设计为「血封之眼」(Sealed Blood Eye)：7 层 CSS gradient 绘制（L1 brass 蜡面高光 / L2 异变十字+光晕 / L3 漆黑瞳孔 / L4 血色虹膜环 / L5 八角 dashed 封印环 / L6 蜡封底色），替代 v8.7.0/v8.7.1 的 42KB base64 PNG
+  - 位置：从 wrapper::after (clip-path 内) 移到 `.mes_text::after`（跨 wrapper 边框）top:8 right:8 z-index:10
+  - 尺寸从 64→48px（实测不挡任何文字节点）
+  - 取消持续 10s 旋转 → 静态徽章 + 320ms ease-out 入场（UX 红线「continuous animation for loader only」）
+  - 加 `@media (prefers-reduced-motion: reduce)` 兜底
+- ② MVU 状态面板 (`消息内面板/index.ts`) 加双层封存边框
+  - `border-image: linear-gradient(180deg, rgba(212,68,58,0.55)→rgba(138,31,26,0.7)) 1`
+  - `outline: 1px solid rgba(212,68,58,0.18)` + `outline-offset: -4px`
+  - `panel::before mfrs-panel-breathe 4s ease-in-out infinite` 极轻呼吸（opacity 0.6↔1.0）
+
+**真页截图**：`.tmp-v873-full.png` 已保存（模型不支持识图，保存为本地证据不提交 git）
+
+**待办（非紧急）：**
+- planning 文档本轮已 dirty（task_plan.md + progress.md + findings.md），未 commit；新对话恢复时可直接 commit + push 同步远端
+- v8.8.0 折叠功能预留（独立下版任务，需要用户明确说"开始 v8.8.0"才进入实现阶段）
+
+---
+
+## 2026-07-09 CST（✅ v8.7.2 已发布，含 LOGO 不可见 bug）
 
 **v8.7.2 全链路发布完成。** 用户真页反馈 v8.7.1 LOGO 64px 挡正文，且 MVU 状态面板缺少边框。用 ui-ux-pro-max skill 设计方案后实施并验证：
 

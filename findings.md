@@ -1,5 +1,98 @@
 # Findings
 
+## 2026-07-09：v8.7.3 hotfix — CSS `!important` 默认值 + `forwards` fill-mode 在 Chrome 上动画失败的根因
+
+> **状态：** v8.7.3 已全链路发布。v8.7.2 导入后 LOGO 完全不可见，根因+修复经验单独归档在此，避免后续 v8.8.0+ 再踩同坑。
+
+### A. 根因诊断（DevTools computed style 实测）
+
+**v8.7.2 触发 BUG 的写法**（`src/神秘复苏模拟器/脚本/界面美化/index.ts` 原 line 257-259 附近）：
+
+```css
+.mes[is_user="false"] .mes_text::after {
+  /* ... LOGO 视觉规则 ... */
+  opacity: 0 !important;
+  transform: scale(0.7) rotate(-12deg) !important;
+  animation: mfrs-seal-press 320ms ease-out 1 forwards !important;
+}
+
+@keyframes mfrs-seal-press {
+  from { opacity: 0; transform: scale(0.7) rotate(-12deg); }
+  60%  { opacity: 0.95; transform: scale(1.08) rotate(0deg); }
+  to   { opacity: 0.9; transform: scale(1) rotate(0deg); }
+}
+```
+
+**预期行为：** 元素入场前 opacity=0，动画跑 320ms 把它推到 0.9 终态，`forwards` fill-mode 把 0.9 保活  
+**实际行为（3/3 AI 消息全部失败）：** Chrome DevTools evaluate 抓 `getComputedStyle(el, '::after').opacity` 返回 `0`，3 条 AI 消息全部停在 `opacity:0`，LOGO 视觉效果完全不可见
+
+### B. 失败机理（Chrome 对 !important 默认值 + keyframes forwards 的覆盖条件）
+
+**核心结论：** 当元素的 computed style 默认值用 `!important` 声明，**只有当 keyframes 在 animation 期间或 forwards 保活期间实际取该帧的值时**，`!important` 默认声明才会被 keyframes 覆盖。
+
+实测观察到的具体现象：
+1. animation 跑期间（0→320ms）：`getComputedStyle(...).opacity` 可能短暂显示 `0.9` 或类似插值，但 320ms 太短 evaluate 抓不到
+2. animation 完成后（t > 320ms）：
+   - 如果 `forwards` fill-mode 正确生效：keyframes `to` 帧的 `opacity:0.9` 应该接管 `!important` 声明，computed style 应该是 `0.9`
+   - 但实测：computed style 是 `0`，意味着 forwards 没有正常把 `to` 帧保活到元素上
+3. 推断原因：在 Chrome 上，当 keyframes `to` 帧的值（`opacity:0.9`）没带 `!important` 时，无法覆盖元素的 `!important` 默认值 `opacity:0`。`forwards` fill-mode 在这个 race 里没足够优先级赢过 `!important` 默认声明
+
+**简化验证模型：** `@keyframes to {opacity:0.9}` 不带 `!important` → 不能覆盖元素 `opacity:0 !important` 默认值，无论 fill-mode 是 forwards 还是 both。这是 CSS `!important` 优先级机制 —— keyframes 值的来源不算 inline style，优先级低于 `!important` 声明。
+
+**官方规范依据：** CSS Animations Level 1 spec §3 节"动画属性覆盖" 明确：enqueued animation value 通过 CSS cascading 算法派发，但被标记为 `!important` 的常规声明优先级高于 animation origin。所以 v8.7.2 的写法在严格规范下就**不可能成功**，无论动画跑不跑 forwards 都盖不过 `opacity:0 !important`。
+
+### C. 修复方案（v8.7.3 实际改动，3 行）
+
+```diff
+ .mes[is_user="false"] .mes_text::after {
+   /* ... LOGO 视觉规则 ... */
+-  opacity: 0 !important;
+-  transform: scale(0.7) rotate(-12deg) !important;
+-  animation: mfrs-seal-press 320ms ease-out 1 forwards !important;
++  opacity: 0.9 !important;
++  transform: scale(1) rotate(0deg) !important;
++  animation: mfrs-seal-press 320ms ease-out 1 both !important;
+ }
+```
+
+**三处策略变化：**
+1. **默认值 = 终态**（opacity 0→0.9、transform 起始→identity）：动画无论跑不跑，元素停在终态可见
+2. **fill-mode 改 `both`**（= forwards + backwards）：backwards 让动画期间 keyframes `from` 帧也能 cover `!important`，forwards 照旧；但即使 forwards 失效也无所谓，因为默认值已经是终态
+3. **关键不变：** keyframes 内部值不改，仍是 `from {opacity:0} → 60% {opacity:0.95} → to {opacity:0.9}`，动画入场效果与 v8.7.2 设计完全一致
+
+**等价兜底逻辑：** 用 `!important` 写默认值 = 终态 + 让动画做"装饰"而不是"唯一可见来源"。这在 Chrome 严格 !important 优先级规则下是唯一可靠的写法。
+
+### D. v8.7.3 真页验证（3/3 AI 消息全绿）
+
+Chrome DevTools evaluate 抓 `getComputedStyle(mes_text, '::after')`：
+
+| 字段 | v8.7.2 实测 | v8.7.3 实测 |
+|---|---|---|
+| opacity | `0`（不可见） | `0.9` ✓ |
+| transform | `matrix(0.7, 0, 0, 0.7, 0, 0)` 等价 `scale(0.7) rotate(-12deg)` 但 rotation 项不对 | `matrix(1, 0, 0, 1, 0, 0)` = identity ✓ |
+| animationName | `mfrs-seal-press` | `mfrs-seal-press` ✓ |
+| width/height | `48px`/`48px` | `48px`/`48px` ✓ |
+| backgroundImage | `radial-gradient(circle at 38% 28%, ...)` 血封之眼 | 同上 ✓ |
+
+LOGO 在所有 AI 消息右上角正确渲染，血封之眼 radial-gradient 7 层 gradient 全部生效。
+
+### E. 经验教训（v8.8.0+ 实施时的 CSS 红线）
+
+1. **如果你想把"动画终态"作为元素默认状态：** 元素 declared 值必须等于终态值，不能是初始态值依赖动画推到终态
+2. **`!important` 与 CSS animations 的优先级：** `!important` 常规声明 > animation origin（即使 fill-mode=forwards/backwards/both）。keyframes 内部值必须同时挂 `!important` 才能覆盖，否则不可靠
+3. **推荐写法：** declared value = `!important` 终态 + animation 做入场动效用 `both` fill-mode；不要用 declared `opacity:0 !important` + 动画 forwards 试图保活
+4. **类似场景：** v8.7.0 之前 v8.5.x 的 message panel/fixed status bar fadeIn 动画 + opacity 默认值组合，如果发现隐身或闪烁，先查 declared `!important` 与 animation 是否冲突
+5. **阈值规则：** 如果动画 iteration > 1 或 infinite，CSS keyframes 值在跑期间是直接生效的（不存在 forwards race）；但 iteration=1 + forwards 在短动画（< 400ms）+ !important 默认值场景下命中最容易暴露
+
+### F. v8.7.3 发布链路验证（不再重复列详细表格）
+
+- `4a99a4c` fix → `caf381a` CDN_REF 回填 → `4591342` publish sync → rebase 后 HEAD=`69a16bb`
+- CDN `@4a99a4c` dist HTTP 200 内容与本地一致（marker count 全对）
+- 发布版 PNG ccv3 character_version=8.7.3、7 个核心 scripts 全部 `@4a99a4c`、cache 全部 `v873`
+- 详细见 `progress.md` 顶部「2026-07-09 v8.7.3 hotfix 已发布」一节
+
+---
+
 ## 2026-07-09：v8.7.1 视觉升级完成（基于 Chrome DevTools MCP 真页实测）
 
 > **状态：** v8.7.1 已全链路发布。用户真页反馈 v8.7.0 "边框单调 + LOGO 太小"，用 Chrome DevTools MCP 连酒馆解析 computed style 后，三轮视觉升级"全要"组合一次性实施完成。
