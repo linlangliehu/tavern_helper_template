@@ -1,5 +1,44 @@
 # Progress Log
 
+## 2026-07-09 CST（✅ v8.7.0 全链路完成 + 已 push origin/main）
+
+**v8.7.0 正式发布完成。** source / bot bundle / publish sync 三 commit 全部在 origin/main。
+
+**三 commit 链路：**
+1. `99a052d` feat(mfrs): narrative wrapper octagon + spinning logo (v8.7.0) — source only（2 src + 3 planning, +601/-26）
+2. `9c67b2c` [bot] bundle — bundle Action 自动重建 dist（只改 2 个 dist 文件，与源码变更范围一致）
+3. `8d9f169` chore(release): publish mfrs v8.7.0 — publish-card.mjs 配置升级 + 发布版 YAML/PNG 同步（3 文件, +12/-12）
+
+**publish-card.mjs 配置最终值：**
+- `CDN_REF = '9c67b2c'`（bot bundle commit）
+- `CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v870'`
+- `releaseVersion = '8.7.0'`
+
+**发布版验证全绿：**
+- ✅ `worldbook-pollution-gate`: passed (383 entries / 33 disabled / max enabled 5851)
+- ✅ 发布版 YAML: 8.7.0×1 + 9c67b2c×7 + mvu-v870×8，旧 8.6.0/24e2f05/mvu-v860/localhost 全 0
+- ✅ 发布版 PNG `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` (7578 KB)
+  - chara chunk: has870/has9c67b2c/hasMvuV870 all true, 旧值全 false
+  - ccv3 chunk: has870/has9c67b2c/hasMvuV870 all true, 旧值全 false
+- ✅ CDN smoke at `@9c67b2c`:
+  - 界面美化/index.js: 200/89314，含 `mfrs-narrative-seal-spin` + `data:image/png;base64,` + `mfrs-msg-narrative-wrapper` 三个新 marker
+  - 消息内面板/index.js: 200/20598，含 `mfrs-msg-narrative-wrapper`（旧 wrapper selector 仍被 wrapNarrativeText() 创建用），无新规则/LOGO（符合预期）
+  - hotfix / 数据库前端 / 状态栏 index.html: 均 200，无新 marker（符合预期）
+
+**没有做的：**
+- ❌ 未做远端真页 smoke（GitHub push 已确认同步，CDN smoke 已绿；但没切到神秘复苏模拟器角色+不刷新页面做最终真页视觉验证，因为 v8.7.0 纯 CSS + 1 base64 图，没有 JS 业务逻辑变化，且已完成 CDN smoke + PNG 元数据验证，等用户重新导入发布版卡时即可观察真页效果）
+- ❌ 未做真实 AI 复测（v8.7.0 无 JS/数据逻辑变化，不需要 AI 触发）
+- ❌ 临时真页 probe + 临时 css 文件已清理（真页无残留 DOM，文件系统无残留临时文件）
+
+**临时工作产物清单（这些不提交，保持 untracked）：**
+- `.tmp-v870-smoke.png`（本地真页视觉截图证据，untracked）
+- `ChatGPT Image 2026年7月9日 13_44_41.png`（用户提供的原始 LOGO，untracked）
+- `C:\Users\linlang\AppData\Local\Temp\opencode\` 下的所有脚本和中间文件（不在仓库内）
+
+**恢复路径：** v8.7.0 已发布完成。下一步选择：(1) 等用户用 SillyTavern UI 重新导入 v8.7.0 发布版 PNG 真页视觉验收，(2) 直接进入 v8.8.0 折叠功能开发。
+
+---
+
 ## 2026-07-09 CST（🚀 v8.7.0 实施完成 + 真页视觉 smoke 全绿，等 push/发布）
 
 **本轮完成 v8.7.0 全部实现：** 5 项决策死指标全部命中 computed style。
