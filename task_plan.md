@@ -15,11 +15,17 @@
 
 ## 当前状态
 
-**2026-07-09 v8.7.0 全链路完成 + 已 push origin/main。** source `99a052d` → bot bundle `9c67b2c` → publish sync `8d9f169`。5 项决策死指标全部命中。发布版 YAML/PNG 8.7.0+9c67b2c+mvu-v870 全部归一化，旧值全 0。CDN smoke `@9c67b2c` 200 全绿且含新 marker。worldbook gate 通过。
+**2026-07-09 v8.7.1 全链路完成 + 已 push origin/main。** source `361a3fc` → publish-card `533dd8f` → bot bundle `d21ca5c`（途中 rebase 跳过 origin CI 自动跑的无关 bundle commit `7861406`）。3 项视觉升级死指标在真页 computed style 全部命中。发布版 YAML/PNG 8.7.1+361a3fc+mvu-v871 全部归一化。CDN smoke `@361a3fc` 8/8 marker 全绿。
 
-**v8.7.0 当前版本：**
-- **最新发布包为 v8.7.0**：叙事 wrapper 双层八角 + LOGO 自旋；source `99a052d`，bot bundle `9c67b2c`，publish sync `8d9f169`；CDN_REF=`9c67b2c`/releaseVersion=8.7.0/cache=`phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v870`。
-- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（当前已发布版本 8.7.0，CDN `@9c67b2c`，cache `mvu-v870`，size 7578 KB）
+**v8.7.1 当前版本：**
+- **最新发布包为 v8.7.1**：v8.7.0 视觉增强版（用户真页反馈"边框单调 + LOGO 太小"，Chrome DevTools MCP 实测 computed style 后三轮决策"全要"升级）；source `361a3fc`，publish-card `533dd8f`，bot bundle `d21ca5c`；CDN_REF=`361a3fc`/releaseVersion=8.7.1/cache=`phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v871`。
+- 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（当前已发布版本 8.7.1，CDN `@361a3fc`，cache `mvu-v871`，size 7578 KB）
+- 仍待 push：本轮 docs commit（task_plan + progress + findings，仅文档同步，无源码/PNG/配置变更）
+
+**v8.7.1 三项视觉升级（v8.7.0 基础上）：**
+1. ✅ ① LOGO 36→64px + 14px 偏移 + opacity 0.55→0.9 + `border-radius:50%` 圆形底盘 rgba(48,10,8,0.55) + drop-shadow 红晕 `rgba(212,68,58,0.7) 0 0 6px` + box-shadow 红辐射
+2. ✅ ② 边框渐变描边 `border-image: linear-gradient(180deg,#d4443a→#8a1f1a) 1` + inset 辅助线 `inset 0 0 0 6px rgba(120,30,26,0.55)` + 红辉光 0.35→0.45
+3. ✅ ③ 血雾径向渐变背景（顶 0.10 红亮 + 底 0.55 黑沉）+ 网格光斑 α 0.04→0.06 强化 + 左右 2px 红竖线 0.28 收束 + 顶 padding 18→28px 给 LOGO 让位
 
 **v8.7.0 5 项决策最终结果（全部封闭、全部实施、全部验证、全部发布）：**
 1. ✅ 外框视觉：(a) 双层八角 wrapper —— 外红描边 `#b23a32` + 内黑底 `#080404` + 红辉光
@@ -42,7 +48,7 @@
 **历史状态快照（v8.6.0 及更早）已归档：** 逐版本收口详情见下方「版本变更索引」表和 progress.md 对应条目，不再在此重复散文快照。
 
 **当前版本：**
-- **最新发布包为 v8.7.0**：叙事 wrapper 双层八角 + LOGO 自旋；source `99a052d`，bot bundle `9c67b2c`，publish sync `8d9f169`；CDN_REF=`9c67b2c`/releaseVersion=8.7.0/cache=`phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v870`。
+- **最新发布包为 v8.7.1**：v8.7.0 视觉增强版；source `361a3fc`，publish-card `533dd8f`，bot bundle `d21ca5c`；CDN_REF=`361a3fc`/releaseVersion=8.7.1/cache=`phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v871`。
 - 发布版 PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（当前已发布版本 8.7.0，CDN `@9c67b2c`，cache `mvu-v870`，size 7578 KB）
 - **最新发布包为 v8.6.0**：Science-Worship 风格八角切角视觉改造；source `24e2f05`，bot bundle `40c241b`，publish sync `852447b`；CDN_REF=`24e2f05`/releaseVersion=8.6.0/cache=`phase164-...-mvu-v860`。
 - v8.5.14：跨角色卡污染清理；source `b53f5b5`，bot bundle `0717fc4`（tag `v0.0.391`），publish sync `7a52ae9`；CDN_REF=`0717fc4`/releaseVersion=8.5.14/cache=`mvu-v8514`。

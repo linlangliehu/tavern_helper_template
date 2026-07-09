@@ -1,5 +1,46 @@
 # Progress Log
 
+## 2026-07-09 CST（⏳ v8.7.1 docs commit 待 push / 主体已发布）
+
+**v8.7.1 主体已发布到 GitHub。** 用户真页反馈 v8.7.0 "边框单调 + LOGO 太小"，用 Chrome DevTools MCP 看实际 computed style 后给出三项升级方案（用户选 "全要"），实施完成并验证：
+
+1. ✅ `361a3fc` feat(mfrs): v8.7.1 nar wrapper visual upgrade — LOGO 64px + 双层封存边框 + 血雾氛围 (pushed)
+2. ✅ `533dd8f` chore(release): bump publish-card to v8.7.1 (CDN_REF=361a3fc) — pushed
+3. ✅ `d21ca5c` [bot] bundle — pushed (含 publish-card 同步的 YAML + PNG 7578 KB)
+4. ⏳ docs commit 待 push（本 commit）
+
+**v8.7.1 三项视觉升级（源码 30 行新增 / 20 行删除，纯 CSS 改 `#mfrs-horror-theme` 末尾规则）：**
+- ① LOGO 36→64px + `border-radius:50%` 圆形底盘（rgba(48,10,8,0.55)）+ drop-shadow 红晕（`rgba(212,68,58,0.7) 0 0 6px`）+ box-shadow 红辐射 + opacity 0.55→0.9
+- ② 边框渐变描边（`border-image: linear-gradient(180deg,#d4443a→#8a1f1a)`）+ inset 辅助线（`inset 0 0 0 6px rgba(120,30,26,0.55)`）+ 红辉光 0.35→0.45
+- ③ 血雾径向渐变背景（顶部 0.10 红亮 + 底部 0.55 黑沉）+ 网格光斑 α 0.04→0.06 强化 + 左右 2px 红竖线 0.28 收束注意力 + 顶 padding 18→28px 给 LOGO 让位
+
+**publish-card.mjs 配置最终值：**
+- `CDN_REF = '361a3fc'`（source commit）
+- `CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v871'`
+- `releaseVersion = '8.7.1'`
+
+**发布版验证全绿（scripts 检查通过 ccv3.data.extensions.scripts 8 条）：**
+- ✅ character_version: 8.7.1
+- ✅ character_book: 383 entries
+- ✅ depth_prompt: depth=4 role=system
+- ✅ scripts count: 8（mvu/hotfix/变量结构/界面美化/固定状态栏/spv3.9.5·数据库/神秘复苏数据库前端/消息内面板）
+- ✅ CDN refs: 全部单一 `@361a3fc`，无 @main 残留
+- ✅ CDN smoke `@361a3fc` dist/.../界面美化/index.js: 8/8 marker 全绿
+  - width:64px / border-image:linear-gradient / radial-gradient(ellipse at 50% 0% / rgba(178,58,50,0.28) / drop-shadow(0 0 6px / padding:28px 22px 16px / data:image/png;base64 / v8.7.1 marker
+
+**真页 Chrome DevTools MCP evaluate 5 项死指标命中（在原对话 5 条 .mes 不重渲染前提下）：**
+- count=5 wrappers, width=723px
+- padding="28px 22px 16px" ✓
+- borderImage="linear-gradient(rgb(212,68,58) 0%, rgb(138,31,26) 100%) 1" ✓
+- boxShadowInset=true ✓
+- backgroundHasRadial=true ✓
+- before.bgLen=713 + hasLinearGradient=true ✓
+- after: width=64px, height=64px, top=14px right=14px, borderRadius=50%, opacity=0.9, animationName=mfrs-narrative-seal-spin 10s ✓
+- after.filter="drop-shadow(rgba(212,68,58,0.7) 0 0 6px) drop-shadow(rgba(0,0,0,0.6) 0 0 2px)" ✓
+- after.backgroundColor="rgba(48,10,8,0.55)" ✓
+
+**Rebase 记录：** 期间 GitHub Actions bot 在我 push `533dd8f` 后自动跑了一次 CI rebuild 产生 `7861406 [bot] bundle`（仅 3 个 dist 文件微变），导致我后续 push non-fast-forward。`git pull --rebase` 顺滑解决，最终 origin/main HEAD = `d21ca5c`。
+
 ## 2026-07-09 CST（⏳ v8.7.0 docs commit 待 push / 主体已发布）
 
 **v8.7.0 主体已发布到 GitHub。** 三 commit 中前两个已 push origin/main，第三个 docs commit 待 push：

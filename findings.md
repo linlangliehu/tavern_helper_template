@@ -1,5 +1,87 @@
 # Findings
 
+## 2026-07-09：v8.7.1 视觉升级完成（基于 Chrome DevTools MCP 真页实测）
+
+> **状态：** v8.7.1 已全链路发布。用户真页反馈 v8.7.0 "边框单调 + LOGO 太小"，用 Chrome DevTools MCP 连酒馆解析 computed style 后，三轮视觉升级"全要"组合一次性实施完成。
+
+### 关键工作流：Chrome DevTools MCP 真页诊断 → computed style 驱动决策
+
+1. 用 `list_pages` 看到 SillyTavern，`take_snapshot` 看到消息已渲染（无需重渲染即可读 computed style）
+2. 用 `evaluate_script` 读 `.mfrs-msg-narrative-wrapper` 的 `getComputedStyle` + `::after` + `::before` + `getBoundingClientRect`，确认 v8.7.0 实际值
+3. 实测 v8.7.0 死指标：LOGO 36×36px（占框宽 5% 偏小），2px 单层细线边框（无层次），网格光斑 α=0.04 几乎透明
+4. 截图工具 `take_screenshot` 在本模型不可读（"Cannot read image: this model does not support image input"），但 evaluate 读到的精确数值比截图更可信
+5. 基于实测数据给用户三项升级方案（①LOGO 64px+红晕 ②双层边框+渐变描边 ③血雾+竖线+padding），用户选"全要"
+
+### v8.7.1 新增规则块（src/神秘复苏模拟器/脚本/界面美化/index.ts line 818-884）
+
+源码改动 +30 / -20 行，全部在 `#mfrs-horror-theme` stylesheet 末尾 `.mfrs-msg-narrative-wrapper` 规则块内：
+
+**① LOGO ::after 升级（line 854-879）**
+- `width/height: 36px → 64px`
+- `top/right: 8px → 14px`
+- `opacity: 0.55 → 0.9`
+- `border-radius: 50%`（新增，圆形裁切）
+- `background-color: rgba(48,10,8,0.55)`（新增，圆形暗红底盘）
+- `filter: drop-shadow(0 0 6px rgba(212,68,58,0.7)) drop-shadow(0 0 2px rgba(0,0,0,0.6))`（新增，红晕环）
+- `box-shadow: 0 0 10px rgba(178,58,50,0.45), inset 0 0 4px rgba(0,0,0,0.4)`（新增，外辐射+内阴影）
+- base64 图本身未改，仍是 v8.7.0 缩到 144×144 PNG / 31 KB 的 41968 字符单行内嵌
+
+**② 边框层次升级（line 819-841 wrapper 主块）**
+- `border: 2px solid #b23a32`（保留，仍是 2px 描边但被 border-image 覆盖）
+- `border-image: linear-gradient(180deg,#d4443a 0%,#8a1f1a 100%) 1`（新增，红渐变）
+- `box-shadow` 增加 `inset 0 0 0 6px rgba(120,30,26,0.55)`（新增，内缩 6px 暗红辅助线）
+- 外辉光 0.35→0.45、内辉光 0.15→0.22
+
+**③ 内氛围升级（line 819-841 background + line 842-855 ::before）**
+- wrapper background：从纯 `#080404` → `radial-gradient(at 50% 0% rgba(178,58,50,0.10)) + radial-gradient(at 50% 100% rgba(0,0,0,0.55)) + #080404`（顶红亮、底沉黑）
+- ::before 网格光斑 α 0.04→0.06；侧位椭圆 8% 50% 0.08（左侧）/ 92% 80% 0.06（右下）
+- ::before 尾部新增 `linear-gradient(90deg, rgba(178,58,50,0.28) 0, transparent 2px, transparent calc(100% - 2px), rgba(178,58,50,0.28) 100%)`（左右各 2px 红竖线收束）
+- wrapper padding：`18px 22px 16px → 28px 22px 16px`（顶 padding 加大给放大后的 LOGO 让位）
+
+**真页实测死指标全部命中**（`evaluate_script` 在原对话 5 条 .mes 不重渲染前提下读 computed style）：
+- wrapper.width=723px / padding="28px 22px 16px" / borderImage 含 `linear-gradient(rgb(212,68,58) 0%, rgb(138,31,26) 100%)` / boxShadowInset=true / backgroundHasRadial=true / before.bgLen=713 + hasLinearGradient=true
+- ::after.width=64px / height=64px / top=14px / right=14px / borderRadius=50% / opacity=0.9 / animationName=mfrs-narrative-seal-spin / animationDuration=10s / filter 含两层 drop-shadow / backgroundColor=rgba(48,10,8,0.55) / boxShadowSlice 含外辐射和 inset
+
+**注：CSS 限制 / 未做的事项**
+- 四角 L 形刻线方案 ② 在最终实施时被简化为 `inset 0 0 0 6px` 内缩辅助线（L 刻线需要额外 `border-image` 复杂定义或额外伪元素，与八角 clip-path 冲突概率高，故未做）。当前 `inset 6px` 已能在 2px 描边内侧画出一条暗红辅助线，视觉层次足够
+- LOGO 64px 与八角切角 10px 协调（右上角 LOGO 中心位于 (right=14+32=46px, top=14+32=46px)，距八角切角 ~14px 距离，不冲突）
+
+### 发布链路与 rebase 小插曲
+
+1. source commit `361a3fc` feat(mfrs): v8.7.1 nar wrapper visual upgrade
+2. publish-card.mjs commit `533dd8f` chore(release): bump publish-card to v8.7.1 (CDN_REF=361a3fc)
+3. push `533dd8f` 成功后，发现 GitHub Actions bot 在我 push 后自动跑了一次 CI rebuild，产生了 `7861406 [bot] bundle`（仅 3 个 dist 文件微变，与我的 publish-card 同步的 dist 内容相同无冲突）
+4. 我在推送发布版 YAML+PNG 前未同步远程，本地 `5f84f2a [bot] bundle` 与远程 `7861406 [bot] bundle` 形成平行分歧，push non-fast-forward 失败
+5. `git pull --rebase origin main` 顺滑完成（bot 的 7861406 与我的 5f84f2a 同内容文件无冲突），我的 5f84f2a 重写为 `d21ca5c [bot] bundle` 叠在 origin `7861406` 之上
+6. push `d21ca5c` 成功，origin/main HEAD = `d21ca5c`
+
+**经验：** GitHub Actions bot 的 bundle Action 会在每次 push 到 main 后自动跑，如果发布过程跨多次 push 推送 YAML+PNG 中间被 bot 插队，最终 push 之前必须 `git pull --rebase`。已为下一次发布留预警。
+
+### 发布版 PNG 验证全绿（ccv3.data.extensions.scripts 8 条）
+
+- character_version: 8.7.1 ✓
+- character_book entries: 383 ✓
+- depth_prompt: {depth: 4, role: 'system'} ✓
+- scripts count: 8（mvu/hotfix/变量结构/界面美化/固定状态栏/spv3.9.5·数据库/神秘复苏数据库前端/消息内面板）✓
+- CDN refs 跨所有 script content：唯一 `@361a3fc` ✓
+- CDN smoke `@361a3fc` dist/.../界面美化/index.js 8 个 marker 全命中：
+
+```
+width:64px ✓                  ① LOGO 尺寸
+border-image:linear-gradient ✓ ② 渐变描边
+radial-gradient(ellipse at 50% 0% ✓ ③ 血雾背景
+rgba(178,58,50,0.28) ✓        ③ 左右红竖线
+drop-shadow(0 0 6px ✓          ① LOGO 红晕
+padding:28px 22px 16px ✓       ③ 顶 padding
+data:image/png;base64 ✓        ① base64 图保留
+v8.7.1 marker ✓               版本标记
+```
+
+### 下一步选择
+
+- (1) 等用户用 SillyTavern UI 重新导入 v8.7.1 发布版 PNG 真页视觉验收
+- (2) 直接进入 v8.8.0 折叠功能开发（详见下方 D 节，已识别 6 个 bug 风险）
+
 ## 2026-07-09：v8.7.0 决策封闭 + v8.8.0 折叠功能预留（未动代码，无实现）
 
 > **状态：** v8.7.0 的 5 项决策已全部封闭，版本范围明确为"纯 CSS + 1 个 base64 `<img>`，零 JS"。折叠功能推迟到 v8.8.0 单独做。本轮仍未改任何 src/dist/yaml/PNG。
