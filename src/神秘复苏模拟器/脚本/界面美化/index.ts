@@ -254,9 +254,9 @@ body {
     drop-shadow(0 0 3px rgba(212,68,58,0.7))
     drop-shadow(0 0 1px rgba(0,0,0,0.8))
     contrast(1.18) saturate(0.92) !important;
-  opacity: 0 !important;
-  transform: scale(0.7) rotate(-12deg) !important;
-  animation: mfrs-seal-press 320ms ease-out 0s 1 forwards !important;
+  opacity: 0.9 !important;
+  transform: scale(1) rotate(0deg) !important;
+  animation: mfrs-seal-press 320ms ease-out 0s 1 both !important;
 }
 
 @keyframes mfrs-seal-press {
