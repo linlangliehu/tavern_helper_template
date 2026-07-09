@@ -383,19 +383,6 @@ $(() => {
   const style = document.createElement('style');
   style.id = 'mfrs-msg-panel-style';
   style.textContent = `
-/* 叙事文本包装容器 */
-.mfrs-msg-narrative-wrapper {
-  background: linear-gradient(180deg, rgba(28,18,18,0.88), rgba(18,12,12,0.92));
-  border: 1px solid rgba(139,32,32,0.45);
-  border-radius: 6px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  box-shadow:
-    0 2px 8px rgba(0,0,0,0.35),
-    inset 0 0 20px rgba(100,20,20,0.08);
-  line-height: 1.8;
-}
-
 /* 消息内面板容器（八角切角 + 网格光斑底） */
 .mfrs-msg-panel {
   background: #1a1010;

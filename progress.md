@@ -1,5 +1,184 @@
 # Progress Log
 
+## 2026-07-09 CST（🚀 v8.7.0 实施完成 + 真页视觉 smoke 全绿，等 push/发布）
+
+**本轮完成 v8.7.0 全部实现：** 5 项决策死指标全部命中 computed style。
+
+**改动文件（source）：**
+- `src/神秘复苏模拟器/脚本/界面美化/index.ts` (+57 行)：在 `#mfrs-horror-theme` stylesheet 末尾追加 `.mfrs-msg-narrative-wrapper` 双层八角 + ::before 内层网格光斑 + ::after 右上角 LOGO base64 PNG 36×36 + `@keyframes mfrs-narrative-seal-spin` 10s 顺时针
+- `src/神秘复苏模拟器/脚本/消息内面板/index.ts` (-13 行)：删除 line 386-397 旧 `.mfrs-msg-narrative-wrapper` 圆角 6px 规则（line 249-283 `wrapNarrativeText()` DOM 创建零改动）
+
+**LOGO 处理路线：** 用户提供的原始 PNG `ChatGPT Image 2026年7月9日 13_44_41.png` 是 1254×1254px / 1768 KB，base64 达 2.35 MB 直接内嵌会让 index.ts 过大。按用户决策"缩小到 144×144 PNG"，先用 System.Drawing HighQualityBicubic 缩到 144×144px / 31 KB，转 base64 得 41968 字符单行（无 LF/CR）。Decision 3 文案"base64 PNG 嵌图 `<img>` + CSS rotate" 本质 = PNG base64 嵌图 + CSS 旋转，v8.7.0 用 `::after` 伪元素 + `background-image: url("data:image/png;base64,...")` + `animation: mfrs-narrative-seal-spin 10s linear infinite` + `transform-origin: center` 实现，符合决策本意同时遵守"零 JS、不动 wrapNarrativeText()"硬约束。
+
+**实施 7 步流水线执行结果：**
+1. ✅ 读取 LOGO PNG 二进制 → 缩到 144×144 → base64 41968 字符单行
+2. ✅ 新增规则到 `界面美化/index.ts` 的 `#mfrs-horror-theme`（用临时 ps1 脚本读取 b64 + 拼接 CSS 块 + 写回，避免中文路径与 PS here-string 转义问题）
+3. ✅ 删除 `消息内面板/index.ts` line 386-397 旧规则（用 edit 工具精确替换，line 249-283 `wrapNarrativeText()` 不动）
+4. ✅ `pnpm build` 成功（webpack compiled successfully in 5042 ms）；`pnpm verify:mfrs-mvu-hotfix` 通过（`verify-mfrs-mvu-hotfix-regressions: passed`）；`git diff --check` clean
+5. ✅ 本地真页视觉 smoke：通过 Chrome DevTools MCP evaluate 把 build 后 CSS 注入 Science Worship 真页（不影响当前角色），创建临时 probe `<div class="mfrs-msg-narrative-wrapper"><p>叙事测试</p></div>` 计算 computed style，5 项决策死指标全部命中：
+   - `wrapperBgColor: rgb(8,4,4)` == `#080404` 内黑底 ✅
+   - `wrapperBorder: 2px solid rgb(178,58,50)` == `#b23a32` 外红描边 ✅
+   - `wrapperClipPath: polygon(10px 0, calc(100%-10px) 0, 100% 10px, ..., 0 10px)` 双层八角 10px 切角 ✅
+   - `boxShadow`: 18px 红辉光 + 14px 黑底下沉 + 12px 内红辉光 ✅
+   - `after.backgroundImage: url("data:image/png;base64,iVBORw0KGgo...")` LOGO 嵌图 ✅
+   - `after.width/height: 36px/36px` 36×36 LOGO 尺寸 ✅
+   - `after.animation: 10s linear infinite mfrs-narrative-seal-spin` + `transform-origin: 18px 18px` 10s 顺时针旋转 ✅
+   - `after.opacity: 0.55`、`pointerEvents: none` ✅
+   - `before.zIndex: 0` 内层网格光斑底 ✅
+6. ⏳ source commit/push → 等 bot bundle → publish-card v8.7.0 → 远端 smoke（已 staged，等 commit + push）
+7. ⏳ 同步更新 planning 文件（进行中）
+
+**本轮未做事项：**
+- ❌ 未真实跑 publish-card（等先 commit/push source + 等 bot bundle 自动重建 dist + 拿到 bot bundle commit hash 后再做）
+- ❌ 未做真实 AI 触发（v8.7.0 纯 CSS 变化，不需要 AI 复测）
+- ❌ 真页 probe + 临时 CSS 已清理，无残留 DOM（已 evaluate 验证 `probeRemoved: true, styleRemoved: true`）；临时 css/mfrs-v870-css-extract.css 文件已删；.tmp-v870-smoke.png 保留作为本地截图证据不提交（默认不纳入 git，实际 staged 时也不会主动 add）
+
+**临时工作产物清单（这些不提交，保持 untracked/dirty）：**
+- `.tmp-v870-smoke.png`（本地真页视觉截图证据，untracked）
+- `C:\Users\linlang\AppData\Local\Temp\opencode\logo_src.png` / `logo_144.png` / `logo_b64_inline.txt` / `extracted_css.txt` / `inject_css*.ps1` / `resize_logo.ps1`（操作目录，不在仓库）
+- 用户提供的原始 LOGO `ChatGPT Image 2026年7月9日 13_44_41.png`（保留 untracked，不纳入 git）
+
+**恢复路径：** v8.7.0 source 已 staged 待 commit。下一步 = commit 含 2 个 source + 3 个 planning 文件（task_plan/progress/findings）的精确 staging，push origin main，等 bot bundle Action 跑出 `[bot] bundle` commit 和新 tag，再用该 commit hash 作为 `CDN_REF` 跑 `pnpm run publish-card -- 神秘复苏模拟器发布版` 同步发布版 YAML+PNG 到 v8.7.0。
+
+---
+
+## 2026-07-09 CST（✅ v8.7.0 决策封闭 + v8.8.0 折叠功能预留，仍未动代码）
+
+**决策封闭同步：** 5 项 v8.7.0 决策全部确认完成，版本范围明确；折叠功能推迟到 v8.8.0 独立做。本轮仍是纯讨论，**未改任何 src/dist/yaml/PNG，未 commit/push，未在真页留 DOM**。
+
+**5 项决策最终结果：**
+1. ✅ 外框视觉：(a) 双层八角 wrapper —— 外红描边 `#b23a32` + 内黑底 `#080404` + 红辉光
+2. ✅ 切角尺寸：(i) 10px 八角切角
+3. ✅ LOGO 内容：**方案 (i) base64 PNG 嵌图** `<img>` + CSS rotate（沿用 Science Worship 真页硬证据路线，见下条探测结论）
+4. ✅ 旋转方向：(p) 顺时针 10s `@keyframes mfrs-narrative-seal-spin`
+5. ✅ 折叠功能：**推迟到 v8.8.0**（v8.7.0 不含，降低本轮 bug 风险）
+
+**Science Worship 真页探测硬证据（Chrome DevTools MCP 实测 iframe `TH-message--4--0`）：**
+- `.icon-left` = `<img>` 57×57px，src 是 `data:image/png;base64,...`（长度 68310 字符 ≈ 51 KB base64），**是位图 PNG 不是矢量**
+- `.icon-right` = `<img>` 57×57px，src 是 `data:image/png;base64,...`（长度 85206 字符 ≈ 64 KB base64），**也是位图 PNG**
+- "动起来" = CSS `animation: spin-cw-77150097 10s` / `spin-ccw-77150097 10s` 套在 `<img>` 外，**整张 PNG 绕中心旋转**
+- iframe 内 `svgCount: 0`，零 SVG 元素
+- **结论：参考卡自走"PNG base64 嵌图 + CSS rotate"路线，v8.7.0 沿用此路线零风险**
+- 额外发现：用户当前模型不支持识图重画复杂 SVG，也是选 base64 嵌图路线的客观约束之一
+
+**v8.7.0 最终范围：** 纯 CSS + 1 个 base64 `<img>`，**零 JS**，和 v8.6.0 一样稳。约 25 行 CSS 改动。
+**v8.8.0 范围：** 方案 b 全都要（联动折叠 + 持久化 + 丝滑动画），独立做/测/revert，约 80 行 JS + CSS。
+
+**v8.8.0 已记录的 6 个 bug 风险（实现时需逐一处理）：** ①楼层重渲染状态丢失（高，几乎必然触发）②事件绑定时机错位（中）③动画期间状态不一致（低）④联动状态面板 MVU 时序（中）⑤持久化路径选择（低）⑥联动折叠后面板高度自适应（低）。协调点：v8.6.0 多段延迟 `MutationObserver` / MVU 状态刷新 / `processAllMessages()` / 切换聊天 `.mes_text` 整块替换。
+
+**v8.7.0 实现阶段 7 步流水线（用户说"开始改"即可启动）：**
+1. 读取 LOGO PNG 二进制 → base64
+2. 新增规则到 `界面美化/index.ts` 的 `#mfrs-horror-theme`：`.mfrs-msg-narrative-wrapper` 双层八角 + 顶栏右上角 36×36 `<img>` + `@keyframes mfrs-narrative-seal-spin` 10s 顺时针
+3. 删除 `消息内面板/index.ts` line 387-397 旧圆角规则
+4. `pnpm build` + `verify:mfrs-mvu-hotfix` + `git diff --check`
+5. 本地真页 smoke（不触发 AI）
+6. source commit/push → 等 bot bundle → publish-card v8.7.0 → 远端 smoke
+7. 更新 planning 文件
+
+**本轮未做事项：**
+- ❌ 未改任何 src/dist/yaml/PNG
+- ❌ 未跑 `pnpm build` / `pnpm verify` / `publish-card`
+- ❌ 未 commit / push
+- ❌ 未在真页留下任何持久 DOM
+
+**恢复路径：** 新对话读 `task_plan.md` 顶部 + `findings.md` 顶部「2026-07-09 v8.7.0 决策封闭 + v8.8.0 折叠功能预留」一节 + 本 progress 条目。v8.7.0 决策已封闭可直接进入实现阶段，但**进入实现阶段前需要用户明确说"开始改"或"开始实现"**；v8.8.0 折叠功能作为独立下版任务，本节已完整记录其"全都要"要求和 6 个 bug 风险以便后续直接接续。
+
+---
+
+## 2026-07-09 CST（⏸ v8.7.0 讨论阶段，未动代码）
+
+**任务背景：** 给 v8.6.0 正文本体 `.mfrs-msg-narrative-wrapper` 加独立外框（红黑双层八角）+ 右上角动态旋转 LOGO + 折叠功能，与 v8.6.0 八角状态面板 `.mfrs-msg-panel` 视觉同构但样式隔离。本轮纯讨论/规划，**未改任何 src/dist/yaml/PNG，未 commit/push，未在真页留 DOM**。
+
+**5 项决策当前进度（3 项已定，2 项待用户确认）：**
+1. ✅ 外框视觉：(a) 双层八角 wrapper —— 外红描边 `#b23a32` + 内黑底 `#080404` + 红辉光
+2. ✅ 切角尺寸：(i) 沿用 10px 八角切角
+3. ⏳ **LOGO 内容**（问题 1）：候选 A 六角血符文 / B 烛火祭颅 / C 倒五芒血印；用户提议可用自己提供的图片。我已答复：Read 工具能读图片并当作附件识别，但只能根据看到的形状**手工重写 SVG 近似还原**（简单几何还原度高，复杂插画/带光影的成品 LOGO 还原度差；复杂 LOGO 更建议直接 base64/CDN 嵌图但会失去"纯矢量、可着色、可缩放"优势）。授权问题已提示用户。待用户决定发图还是用 A/B/C 候选。
+4. ✅ 旋转方向：(p) 顺时针 10s `@keyframes mfrs-narrative-seal-spin`
+5. ⏳ **折叠方案**（问题 2）：本轮已确认要做。方案 a 纯 `<details>` 原生折叠（零 JS、无障碍友好、永不坏；缺点 DOM 强约束、不能联动状态面板、动画受限、状态不持久化）；方案 b 自建 toggle 按钮事件（DOM 结构自由、可联动、动画丝滑、状态可持久化到 `chat[i].variables`；缺点要写 30-50 行 JS、要和 `MutationObserver` 重渲染协调、本轮改造范围更大）。待用户二选一。
+
+**本轮探测/只读工作（未改源码）：**
+- Chrome DevTools 真页只读确认 v8.6.0 视觉全部生效（9 个 `.mfrs-msg-panel` 八角 10px 切角、三层 drop-shadow、网格光斑 `::before`、`@keyframes mfrs-seal-spin` 挂到 `.mes_text::after`）
+- 探测正文与状态面板 DOM 结构：`.mes_text` 下两个兄弟节点 `.mfrs-msg-narrative-wrapper`（正文，要改） + `.mfrs-msg-panel`（不动）
+- 探测 Science Worship 20260628 iframe 内 Vue 3 应用结构：`.app > .top-bar / .content-box-wrapper / .button-row / .panel-box-wrapper×2`
+- 探测 `TH-collapse-code-block-button` 行为：酒馆助手原生"显示/隐藏前端代码块源码"，只对 iframe 路线有效；神秘复苏不走 iframe，无法复用，折叠功能要在方案 a/b 中二选一
+- 探测两处源码位置（本轮只读）：
+  - `src/神秘复苏模拟器/脚本/消息内面板/index.ts` line 252-286 `wrapNarrativeText()` 创建 wrapper DOM；line 387-397 旧 CSS 规则（圆角 6px，实现阶段要删）
+  - `src/神秘复苏模拟器/脚本/界面美化/index.ts` line 41-43 `$(() => { style.id = 'mfrs-horror-theme' })`；line 209-215 已有 `mfrs-seal-spin` keyframes（参考点）
+- 临时在真页注入 3 个候选 LOGO 预览浮层 `#mfrs-logo-preview-overlay`（A 六角血符文 / B 烛火祭颅 / C 倒五芒血印，顺时针 10s 旋转），讨论末尾用户要求停止后已 `evaluate_script` 清除该浮层，酒馆页面恢复原状，无残留 DOM
+
+**本轮未做事项：**
+- ❌ 未改任何 src/dist/yaml/PNG
+- ❌ 未跑 `pnpm build` / `pnpm verify` / `publish-card`
+- ❌ 未 commit / push
+- ❌ 未在真页留下任何持久 DOM
+
+**恢复路径：** 新对话读 `task_plan.md` 顶部「当前状态」「当前任务清单」+ `findings.md` 顶部「2026-07-09 v8.7.0 正文外框 + LOGO + 折叠功能讨论阶段」一节 + 本 progress 条目。向用户确认 LOGO（问题 1）和折叠方案（问题 2）的最终选择，5 项决策整体封闭后才进入实现阶段。**当前明确禁止动代码。**
+
+---
+
+## 2026-07-08 CST（✅ v8.6.0 远端发布完成：Science-Worship 风格八角切角视觉改造）
+
+**任务背景：** 用户要求把 Science Worship 20260628 参考卡的结构化科技视觉（八边形切角、24×42px 三向网格光斑、切角按钮+三层 drop-shadow 辉光、10s 旋转血色印记 SVG、8px 辉光滚动条）复刻进神秘复苏模拟器，主色青蓝 `#33e6f2` → 血红 `#b23a32`。**核心决策：不引入 Vue / 不改协议 / 不动数据流/JS 逻辑函数/世界书/角色卡 JSON/开局自定义面板/MVU 浮窗**，只改 CSS + 少量 HTML 模板，保留现有命令式 DOM 架构。改造只涉及 3 处源码。
+
+**改造点 1：`src/神秘复苏模拟器/脚本/界面美化/index.ts` — 12 项 CSS 改造（任务 1 完成）**
+- `.mes_text::before` 叠加 24×42px 三层斜纹光斑（30°/150°/90°），`rgba(178,58,50,0.05)` / `rgba(140,20,20,0.04)` 双色
+- `.mes_text::after` 血色印记加 `@keyframes mfrs-seal-spin` 10s 线性旋转
+- `.horror-options` 八角 clip-path 切角 + title 居中 + ◆/◇ 装饰
+- `.mfrs-choice-button` 8px chamfer（左上右下削角）+ 三层 drop-shadow 辉光 + `data-risk` 四色（high `#b23a32` / mid `#c8742a` / low `#5a7a30` / unknown `#6a4a6a`）
+- `:hover` 增强至 28px 辉光 + 四色同步；`.mfrs-choice-why` 双角切角
+- 滚动条 `5px→8px`，thumb `rgba(140,20,20,.55)`，hover `rgba(220,50,50,.95)` + 6px glow
+- **JS 函数体零改动**，`#mfrs-welcome-root` 段落零改动
+
+**改造点 2：`src/神秘复苏模拟器/脚本/消息内面板/index.ts` — 17 项 CSS+HTML 改造（任务 2 完成）**
+- `.mfrs-msg-panel` 八角 10px clip-path + `#1a1010` 底色 + `::before` 网格光斑
+- 顶栏双 40×40px 血色印记 SVG（10s 自旋，左顺 `0→360` 右逆 `360→0`），`buildStatusTabHtml`/`buildRelationTabHtml` 已注入
+- Tab chamfer 8px，激活 `#b23a32` 底 `#12141d` 字 + 三层辉光
+- `.mfrs-msg-section` 八角切角 + 1px 红描边 + 网格光斑内底；title 顶部 4 角切角
+- `.mfrs-msg-risk-fill` `drop-shadow(0 0 8px currentColor)` + `box-shadow`
+- `.mfrs-msg-ghost-item` 双角切角，`.mfrs-msg-action-btn` 切角+三层辉光+激活血红
+- `.mfrs-msg-action-key` `rgba(178,58,50,.35)`，`.mfrs-msg-npc-name` 金色+6px 柔光
+- 面板内独立滚动条 8px + glow；所有 API/属性匹配保留
+- 真页 smoke：CORS server 加载 dist bundle eval 注入，`#mfrs-horror-theme` + `#mfrs-msg-panel-style` 挂载，22 项选择器实测命中
+
+**改造点 3：`src/神秘复苏模拟器/index.yaml` — 2 条正则内联 `<style>` 改造（任务 3 完成）**
+- **3a `渲染警告与系统提示`**（line 5408，启用: true）`.horror-options*`：bg `#080505`→`#1b1414`，删 border/radius，加 clip-path 八角 8px，`::before` 删 SVG 噪声改 24×42 三层斜纹光斑，title `#a03030`→`#d85858` 居中+◆/◇ absolute 装饰，body `#b0a8a8`→`#e0d6d6`
+- **3b `[显示]渲染神秘复苏短标签面板`**（line 6262，启用: false）`.sp-panel*`：删 border-left/border-radius:12px，加 clip-path 八角 10px，`::before` 改 24×42 三层斜纹光斑，header 顶部 4 角切角，title 加 filter 三层 drop-shadow，body 八角 6px + `::before` 网格光斑内底 z-index:-1，risk-high 加 drop-shadow，details/summary/sp-mark/sp-db-live/sp-db-open 全切角化，sp-db-open 删 border-radius:999px 改 7px 切角+三层辉光+hover 增强
+- HTML 结构（`sp-panel-$1`/`data-sp-kind`/`$1`/`$2`/`onclick="window.MysteryDatabaseFrontend?.openPanel?.()"`）零改动
+- 真页 smoke：直接 DOM/CSS 注入（前缀 `mfrs-smoke-`），getComputedStyle 实测 22 项全命中（clip-path/drop-shadow/repeating-linear-gradient 三种 CSS 形态），◆/◇ content 验证通过
+
+**任务 4 回归验证全绿：**
+- `pnpm build` 全绿（webpack 5.106.2，4 个 entry 全部 compiled successfully，含 1 个 size warnings）
+- `pnpm verify:mfrs-mvu-hotfix` passed
+- `git diff --check` 无空白错误
+- dist 产物内容验证含改造后关键 CSS（24×42 网格、clip-path 八角、三层 drop-shadow、mfrs-seal-spin 10s 旋转、8px 辉光滚动条）
+- worldbook JSON / `神秘复苏模拟器.json` / `世界书/` 目录零改动
+- YAML 解析（`node -e yaml.parse`）无异常
+
+**任务 5 发布流程完成（链路）：**
+1. **5a commit 任务相关改动**：精确 stage 8 个文件（src/神秘复苏模拟器/index.yaml + src/神秘复苏模拟器/脚本/{界面美化,消息内面板}/index.ts + dist/神秘复苏模拟器/脚本/{界面美化,消息内面板,hotfix-generation-ended-listeners,数据库前端}/index.js + dist/神秘复苏模拟器/界面/状态栏/index.html），不提交 findings.md / .tmp-* / Science Worship 20260628.png / 屏幕截图 / 开发版 PNG。commit `24e2f05 feat(mfrs): Science-Worship-style octagon/chamfer UI for theme-msg-panel (v8.6.0 prep)`，8 files changed, 229 insertions(+), 82 deletions(-)。
+2. **5b push 拿新 HEAD sha**：`git push origin main` (`ec5d955..24e2f05`)。新 HEAD = `24e2f0559002ad02f197d7e0b485f31868c2406b`。bot 自动 bundle 出 `40c241b [bot] bundle`（dist 5 个产物 CDN sha 同步 + 开发版 PNG 自动重打包）。
+3. **5c 更新 publish-card.mjs 三处配置**：`CDN_REF='24e2f05'`（注释 "Science-Worship-style 八角切角视觉改造（v8.6.0）"）、`CDN_CACHE_VERSION='phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v860'`、`releaseVersion='8.6.0'`。
+4. **5d 跑 publish-card**：`pnpm publish-card 神秘复苏模拟器发布版`。镜像 5 个 syncDirs（第一条消息/系统提示词/对话示例/世界书 386 文件/数据库）+ 头像 PNG 同步 + 替换 15 处链接 + `tavern_sync bundle 神秘复苏模拟器发布版` 出新角色卡 PNG。
+5. **5e 验证 + 第二次 commit/push**：新发布版 PNG `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` size 7578.0 KB、`character_version: 8.6.0`、8 条 CDN URL 全部 200 指向 `@24e2f05`、cache 全部 `mvu-v860`、mvu cache 也刷新。rebase 时遇到 bot bundle `40c241b` 推到 origin/main（non-fast-forward），stash 非 commit 范围改动后 `git pull --rebase origin main` 重写本地 commit 为 `852447b`，push 成功。
+
+**关键经验（本轮新发现）：**
+- **用户实际导入酒馆的"当前角色卡"是发布版 PNG `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`，不是开发版 PNG**。开发版 PNG `src/神秘复苏模拟器/神秘复苏模拟器.png` 的 `character_version=2.0`、CDN sha 是 `@47a5fe50` / `@1fa42d8` 旧 commit；其中 `@47a5fe50` 时 dist 还未生成 `消息内面板/index.js` 目录，开发版 PNG 中消息内面板 URL 404——但开发版 PNG 不直接进口酒馆，仅作为 publish-card 的 syncFiles 头像源。
+- 临时根 PNG `神秘复苏模拟器.png`（2.8 MB）是过时旧版（character_version=1.0，0 scripts），不可作为当前角色卡。
+- `publish-card.mjs` 的 `EXISTING_CDN_PATTERN` 会强制把所有旧 jsdelivr sha URL 替换为新 `CDN_REF`，因此任何 sha 过期导致的角色卡 404 问题都会在发布流程中被自动修复。
+- bot bundle Action 只在真实 yaml/PNG 变化时才生成 `[bot] bundle` commit；v8.6.0 的 publish sync `852447b` 之后 bot 未再 bundle。
+- PowerShell 对 inline node `-e` 命令中的单引号/复杂正则不友好，反复出现中文路径 + 复杂正则时建议改用 `write` 写入临时 .mjs 文件后 `node` 调用，再 `Remove-Item` 清理。
+- pnpm build 不会修改 `src/神秘复苏模拟器/神秘复苏模拟器.png`；开发版 PNG 的 dirty 状态是上次 `pnpm sync` / bot bundle 留下的，与本次 build 无关。
+
+**验证 CDN 内容（@24e2f05 实测）：**
+- 界面美化 dist bundle (45 KB) 含：`mfrs-seal-spin`×2、`repeating-linear-gradient(30deg`×1、`clip-path:polygon(`、`rgba(178,58,50`×9、`rgba(140,20,20`×12、`10s linear infinite`×1。
+- 消息内面板 dist bundle (21 KB) 含：`repeating-linear-gradient(30deg`×2、`clip-path:polygon(`、`drop-shadow(0 0`×1、`rgba(178,58,50`×24、`rgba(140,20,20`×1。
+
+**本次未触发真实 AI、未发送消息、未点击"立即手动更新"、未调 `manualUpdate()` / `triggerUpdate()`、未改 MVU 协议/数据流/JS 逻辑函数。**
+
+**当前任务收口，无未决开发项；待用户导入 v8.6.0 发布版 PNG 后真实使用观察视觉效果。**
+
+---
+
 ## 2026-07-08 CST（✅ v8.5.14 远端发布完成：跨角色卡污染清理）
 
 **链路：** source `b53f5b5 fix(mfrs): cleanup cross-card pollution (v8.5.14)` → bot bundle `0717fc4 [bot] bundle`（tag `v0.0.391`）→ publish sync `7a52ae9 chore(release): publish mfrs v8.5.14`，已 push origin/main。

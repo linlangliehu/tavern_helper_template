@@ -1,5 +1,305 @@
 # Findings
 
+## 2026-07-09：v8.7.0 决策封闭 + v8.8.0 折叠功能预留（未动代码，无实现）
+
+> **状态：** v8.7.0 的 5 项决策已全部封闭，版本范围明确为"纯 CSS + 1 个 base64 `<img>`，零 JS"。折叠功能推迟到 v8.8.0 单独做。本轮仍未改任何 src/dist/yaml/PNG。
+
+### A. v8.7.0 最终决策（5/5 全部封闭）
+
+| # | 决策项 | 最终结果 | 备注 |
+|---|---|---|---|
+| 1 | 正文外框视觉 | (a) 双层八角 wrapper | 外红描边 `#b23a32` + 内黑底 `#080404` + 红辉光 |
+| 2 | 八角切角尺寸 | (i) 10px 八角切角 | 和状态面板视觉同构 |
+| 3 | LOGO 内容 | **方案 (i) base64 PNG 嵌图** | `<img>` + CSS rotate，沿用 Science Worship 已验证路线 |
+| 4 | LOGO 旋转方向 | (p) 顺时针 10s | `@keyframes mfrs-narrative-seal-spin` |
+| 5 | 折叠功能 | **推迟到 v8.8.0** | v8.7.0 不含折叠 |
+
+### B. Science Worship 真页探测硬证据（Chrome DevTools MCP 实测）
+
+**探测对象：** 当前酒馆真页 Science Worship 20260628 的 iframe `TH-message--4--0` 内 `.icon-left` / `.icon-right` 元素。
+- `.icon-left` = `<img>` 元素，57×57px，`src = "data:image/png;base64,iVBORw..."`（长度 68310 字符 ≈ 51 KB base64）—— **是位图 PNG 嵌在 `<img>` 里**，不是矢量 SVG
+- `.icon-right` = `<img>` 元素，57×57px，`src = "data:image/png;base64,iVBORw..."`（长度 85206 字符 ≈ 64 KB base64）—— **也是位图 PNG**
+- "动起来"技术：不是 SVG 路径动画，而是 `<img>` 外面套 CSS `animation: spin-cw-77150097 10s`（左）/ `spin-ccw-77150097 10s`（右），**整张 PNG 绕中心旋转**
+- iframe 内 `svgCount: 0`，**整个状态栏渲染零 SVG 元素**
+- **结论：参考卡 Science Worship 自己就是"PNG base64 嵌图 + CSS rotate"路线**，不是矢量。神秘复苏 v8.7.0 沿用此路线零风险。
+
+### C. "矢量优势"科普（对比位图路线）
+
+| 维度 | 矢量 SVG | 位图 PNG base64 嵌图 |
+|---|---|---|
+| 缩放 | 任意放大不模糊 | 放大出锯齿/模糊 |
+| 旋转 | 边缘锐利 | 边缘可能锯齿（36×36 小尺寸肉眼难分） |
+| 着色 | 改 `fill` 一处即可换色 | 要重新出图 |
+| 文件大小 | 通常 < 1 KB | 通常 10-100 KB（base64 再膨胀 33%） |
+| 形变动画 | 可做路径/形变动画 | 只能整体平移旋转 |
+| 100% 还原图 | 简单几何才能还原 | **任意成品图 100% 还原** |
+
+**v8.7.0 选位图路线的理由**：① 走 Science Worship 已验证生产路线 ② 能 100% 保留用户提供的成品 LOGO（含渐变/纹理/字体）③ 36×36 小尺寸肉眼分不出矢量锐利差异 ④ 用户表示当前模型不支持识图重画复杂 SVG ⑤ CSS rotate 在位图上跑 10s 旋转和矢量效果肉眼一致。
+
+### D. v8.8.0 折叠功能待办（已明确"全都要"组合）
+
+用户已确认 v8.8.0 折叠功能需求：
+- Q2.1 范围：联动折叠（正文 + 状态面板 `.mfrs-msg-panel` 一个按钮控制两层）
+- Q2.2 持久化：需要（刷新/楼层重渲染后保留用户折叠状态）
+- Q2.3 动画：要丝滑开合（`max-height` transition）
+- 实现方案：**方案 b 自建 toggle 按钮事件**（选项 2 全都要，接受 6 个 bug 风险）
+
+**v8.8.0 已识别的 6 个 bug 风险（实现时需逐一处理）：**
+
+| # | 风险点 | 触发场景 | 后果 | 严重度 |
+|---|---|---|---|---|
+| 1 | 楼层重渲染后折叠状态丢失 | `processAllMessages()` / MVU 刷新 / 切换聊天都会重建 wrapper DOM | 所有楼层重渲染后变回默认展开 | **高（几乎必然触发）** |
+| 2 | 事件绑定时机错位 | 酒馆楼层动态插入，v8.6.0 的 `MutationObserver` 多段延迟刷新跑着 | 同一按钮多次绑定 / 绑到旧 DOM 上 | 中 |
+| 3 | 动画期间状态不一致 | `max-height` transition 跑一半时用户再快速点击 | 动画卡死 / `data-collapsed` 和 display 不一致 | 低 |
+| 4 | 联动状态面板时序问题 | `display:none` 状态面板时 MVU 可能错误更新；`display:block` 后网格光斑/尺寸错位 | 状态面板 MVU 错误或尺寸异常 | 中 |
+| 5 | 持久化路径选择（`chat[i].variables` vs localStorage） | 存储失败/读取异常时折叠状态崩坏 | 折叠功能异常 | 低 |
+| 6 | 联动折叠后面板高度自适应 | 状态面板高度随 stat_data 动态变化 | `max-height` 固定值可能裁掉面板内容 | 低 |
+
+**v8.8.0 与 v8.6.0 已有行为的协调点（实现时要处理）：**
+- v8.6.0 多段延迟 `MutationObserver`（`scripts/消息内面板/index.ts` `wrapNarrativeText` 会重建 wrapper）
+- MVU 状态刷新触发状态面板重渲染
+- `processAllMessages()` 酒馆重新处理所有楼层
+- 切换聊天时 `.mes_text` 整块替换
+
+**v8.8.0 实现阶段预计代码量：** ~80 行 JS + CSS（含状态恢复 + 事件委托 + 联动时序）
+
+### E. v8.7.0 实现阶段步骤（5 项决策封闭后即可执行，本轮仍未执行）
+
+1. **读取 LOGO PNG** → base64 内联进 CSS（纯字节操作，无需模型识图）
+2. **新增规则到 `src/神秘复苏模拟器/脚本/界面美化/index.ts` 的 `#mfrs-horror-theme` stylesheet**：
+   - `.mfrs-msg-narrative-wrapper` 双层八角 wrapper（外红描边 `#b23a32` + 内黑底 `#080404` + 红辉光，10px clip-path 八角切角）
+   - 顶栏右上角 36×36 `<img>` LOGO absolute 定位，`src="data:image/png;base64,..."`
+   - `@keyframes mfrs-narrative-seal-spin` 10s 顺时针 `transform: rotate(0→360deg)`
+3. **从 `src/神秘复苏模拟器/脚本/消息内面板/index.ts` line 387-397 删除旧 `.mfrs-msg-narrative-wrapper` 圆角 6px CSS 规则**（避免和新规则冲突；line 252-286 `wrapNarrativeText()` DOM 创建逻辑不动）
+4. `pnpm build` + `pnpm verify:mfrs-mvu-hotfix` + `git diff --check`
+5. 本地真页注入临时 dist 视觉 smoke（不触发 AI/不点手动更新）
+6. source commit/push → 等 bot bundle → publish-card v8.7.0 → 远端 smoke
+7. 同步更新 task_plan.md / progress.md / findings.md / 版本变更索引
+
+### F. 本轮未做事项清单（同前节）
+
+- ❌ 未改任何 src/dist/yaml/PNG
+- ❌ 未跑 `pnpm build` / `pnpm verify` / `publish-card`
+- ❌ 未 commit / push
+- ❌ 未在真页留下任何持久 DOM（临时预览浮层已清除）
+
+### G. 下一对话恢复入口
+
+1. 读 `task_plan.md` 顶部「当前状态」「当前任务清单」+ 本 findings.md 本节
+2. 读 `progress.md` 顶部最近条目
+3. v8.7.0 决策已封闭，可直接进入实现阶段（按本节 E 的 7 步走）
+4. v8.8.0 折叠功能已明确"全都要"要求和 6 个 bug 风险，作为独立下版任务
+5. **本轮是讨论阶段，进入实现阶段前用户应明确说"开始改"或"开始实现"**
+
+---
+
+## 2026-07-09（前）：v8.7.0 正文外框 + LOGO + 折叠功能讨论阶段（未动代码，无实现）
+
+> **状态：** 本轮是纯讨论/规划阶段，**未做任何源码/dist/yaml/PNG 改动**。所有结论记录在此，供新对话恢复后继续。Chrome DevTools 真页预览浮层 `#mfrs-logo-preview-overlay` 已在讨论末尾清除，酒馆页面恢复原状。
+
+### A. 改造目标
+
+给神秘复苏模拟器 **正文** `.mfrs-msg-narrative-wrapper`（AI 楼层 `.mes_text` 下的兄弟节点，与状态面板 `.mfrs-msg-panel` 并列）加独立外框 + 右上角动态 LOGO，与 v8.6.0 八角状态面板**视觉同构但样式隔离**，再追加折叠功能。
+
+### B. 5 项决策当前进度（4 项已定，2 项待定）
+
+| # | 决策项 | 已选方案 | 状态 |
+|---|---|---|---|
+| 1 | 正文外框视觉 | (a) 双层八角 wrapper —— 外红描边 `#b23a32` + 内黑底 `#080404` + 红辉光 | ✅ 已定 |
+| 2 | 八角切角尺寸 | (i) 沿用 10px 八角切角（和状态面板视觉同构） | ✅ 已定 |
+| 3 | LOGO 内容 | 待定：用 A/B/C 候选 SVG，或用户提供图片由我 Read 后重写 SVG | ⏳ **待定（问题 1）** |
+| 4 | LOGO 旋转方向 | (p) 顺时针 10s `@keyframes mfrs-narrative-seal-spin` | ✅ 已定 |
+| 5 | 折叠功能 | 本轮一起做（已确认），实现方案待定 | ⏳ **待定（问题 2）** |
+
+### C. 待决策问题
+
+#### 问题 1：LOGO 内容
+- 候选 A 六角血符文：六边形外框 + 内六边形 + 中心血红眼 + 六辐射线（几何神秘学）
+- 候选 B 烛火祭颅：红色跳动烛火 + 烛体 + 下方骷髅头围圈（剧情元素，契合神秘复苏烛火鬼魂题材）
+- 候选 C 倒五芒血印：倒五角星 + 外圆 + 双虚线辅助圆 + 血点（经典西式魔法）
+- 用户提议可用自己提供的图片；我已答复：Read 工具能读取图片并当作附件识别，但只能**根据看到的形状手工重写 SVG 近似还原**（简单几何还原度较高，复杂插画/带光影的成品 LOGO 还原度差；复杂 LOGO 更建议直接 base64/CDN 嵌图但会失去"纯矢量、可着色、可缩放"优势）。复杂度上限、授权问题已提示用户。待用户决定是发图让我重写 SVG、还是继续用 A/B/C 候选。
+
+#### 问题 2：折叠功能实现方案
+本轮已确认要做，2 选 1 待定：
+- **方案 a 纯 `<details>` 原生折叠**：零 JS、无障碍友好、永不坏；缺点是 DOM 结构受 `<details>` 强约束、美化默认箭头要额外 CSS、不能与状态面板联动、动画受限、状态不持久到聊天存储。
+- **方案 b 自建 toggle 按钮事件**：DOM 结构完全自由、可联动状态面板、动画丝滑、状态可持久化到 `chat[i].variables` / localStorage、可套 v8.6.0 三层 drop-shadow 切角风格；缺点是要写 30-50 行 JS 事件代码、要和 `MutationObserver` 重渲染协调状态恢复、本轮改造范围更大。
+- 待用户选定 a 还是 b。
+
+### D. DOM 架构现状（v8.6.0 已稳定，本轮不动）
+
+神秘复苏不走 iframe，用 `script_files` 命令式注入到主窗口 `.mes_text`。每条 AI 楼层 `.mes_text` 下两个兄弟节点：
+- `div.mfrs-msg-narrative-wrapper`（正文，当前是旧圆角 6px，本轮要改）
+- `div.mfrs-msg-panel`（v8.6.0 八角状态面板，**不动**）
+
+### E. stylesheet 隔离思路（实现阶段用）
+
+- 把 `.mfrs-msg-narrative-wrapper` 规则从 `消息内面板/index.ts` 的 `#mfrs-msg-panel-style`（line 387-397 旧 CSS）抽出
+- 重写到 `界面美化/index.ts` 的 `#mfrs-horror-theme`（注入点 line 41-43）
+- 让正文样式和状态面板样式**完全独立**，互不污染
+
+### F. 关键源码位置（本轮只读，未改）
+
+- `src/神秘复苏模拟器/脚本/消息内面板/index.ts`
+  - line 252-286 `wrapNarrativeText()` 创建 wrapper DOM（**不动**，只读参考）
+  - line 387-397 旧 CSS 规则（圆角 6px，**实现阶段要删**）
+- `src/神秘复苏模拟器/脚本/界面美化/index.ts`
+  - line 41-43 `$(() => { style.id = 'mfrs-horror-theme' })` 注入点
+  - line 209-215 已有 `mfrs-seal-spin` keyframes（参考点，本轮新增 `mfrs-narrative-seal-spin`）
+
+### G. 探测得到的参考结论（Science Worship 20260628）
+
+- 正文框 `.content-box-wrapper` 与状态面板 `.panel-box-wrapper` 在 `.app` 下是**兄弟节点**，互不嵌套
+- 顶栏双 `.icon-left`/`.icon-right` 各 57×57，一个顺时针一个逆时针 10s 旋转
+- `TH-collapse-code-block-button` 是酒馆助手的"显示/隐藏前端代码块源码"按钮，只对 iframe 路线有效；**神秘复苏不走 iframe，无法直接复用**，所以折叠功能要在方案 a/b 中二选一
+
+### H. 本轮未做事项清单
+
+- ❌ 未改任何 src/dist/yaml/PNG
+- ❌ 未跑 `pnpm build` / `pnpm verify` / `publish-card`
+- ❌ 未 commit / push
+- ❌ 未在真页留下任何持久 DOM（临时预览浮层已清除）
+
+### I. 下一对话恢复入口
+
+1. 读 `task_plan.md` 顶部「当前状态」「当前任务清单」+ 本 findings.md 本节
+2. 读 `progress.md` 顶部最近条目（v8.6.0 收口 + v8.7.0 讨论记录）
+3. 向用户确认 LOGO（问题 1）和折叠方案（问题 2）的最终选择，5 项决策整体封闭后才进入实现阶段
+4. 实现阶段步骤：新增 `#mfrs-horror-theme` 里 `.mfrs-msg-narrative-wrapper` 规则 + LOGO SVG + keyframes + 折叠 DOM/JS → 从 `消息内面板/index.ts` line 387-397 删除旧 CSS → `pnpm build` + `verify:mfrs-mvu-hotfix` + `git diff --check` → 本地真页 smoke（不触发 AI）→ source commit/push → 等 bot bundle → publish-card v8.7.0 → 远端 smoke → 更新 planning 文件
+
+---
+
+## 2026-07-08：Science Worship 20260628 美化方案完整逆向（用户想复刻的目标）
+
+> **任务背景：** 用户希望把 Science Worship 20260628 这张卡（characterId=2、character_version=`20260628`、worldbook 210 entries、avatar `Science Worship 20260628.png`）的**文字美化和状态栏美化效果**复刻进神秘复苏模拟器。本节是通过 Chrome DevTools MCP 在当前酒馆真页只读探测得到的硬证据，不是 PNG 元数据猜测（之前的逆向基于捆绑样本，多有多处误判，这里全部订正）。
+
+### 1. 整体技术栈与挂载方式
+
+| 项目 | 事实 |
+|---|---|
+| 卡本体配置 | 0 个 `script_files`、4 条 `regex_scripts`（全 enabled、内容见下）、210 条世界书条目 |
+| 不挂任何"输入框上方 host" | `#send_form` 兄弟节点没有自定义 wrapper；`#mfrs-fixed-status-host` 不存在；Science Worship 不复用神秘复苏的固定状态栏 host 模式 |
+| 也不挂主窗口常驻悬浮窗 | `TH-script--悬浮状态栏--09354102-...` 这个酒馆助手脚本 iframe **被脚本自身设为 `display:none / 0×0`**（之前旧 findings 误以为是"前端脚本"，其实它已被作者禁用，仅留作历史/兼容） |
+| 真正生效的渲染方式 | **酒馆助手原生 ` ``` `-代码块 iframe 自动渲染**：4 条正则里的 `regex[2] 显示状态栏(前端)` 把整个 315 KB 的 webpack bundle 字符串塞到 `replaceString` 里，用 ```html 三引号包裹，命中 `<content>(…)</content>` 后替换；SillyTavern 的 markdownOnly 渲染管线把这部分换成 `<iframe id="TH-message--X--Y">`，**iframe 里 Vue 3 应用通过 JS-Slash-Runner 注入的 `getVariables/getCurrentMessageId/formatAsTavernRegexedString/builtin.renderMarkdown` 直接运行** |
+| 数据流 | `getVariables({type:'message', message_id: getCurrentMessageId()})` → 读 `stat_data` → Vue reactive 渲染；onMounted 用 `formatAsTavernRegexedString(messageContent, 'ai_output', 'display', {depth:0})` 拿到"sed display 正则清洗过的正文"作为内容块 |
+| 主窗口上 `#mvu-floating-window-host` 是 MagVarUpdate 自带浮窗（281×264 视口左上角），**不是 Science Worship 自家美化** | 那是 MagVarUpdate extension 自带，与卡无关 |
+
+### 2. 4 条正则全文摘要（全 enabled、非 disabled — 订正旧"全 disabled"误判）
+
+| # | name | placement | markdownOnly | promptOnly | runOnEdit | findRegex | replaceString 大小 |
+|---|---|---|---|---|---|---|---|
+| 0 | 去除变量更新 | [1,2] | true | true | false | `/<update(?:variable)?>(?:(?!.*<\/update(?:variable)?>).*$\|.*<\/update(?:variable)?>)/gsi` | 0 字（空替换，把 `<UpdateVariable>` 从提示词中删干净）|
+| 1 | 去除状态栏占位符 | [2] | false | **true** | false | `<StatusPlaceHolderImpl/>` | 0 字（提示词侧只发空消息时，把占位符删掉） |
+| 2 | **显示状态栏(前端)** | [2] | true | false | true | `<content>(?:(?!<content>)[\s\S])*?<\/content>` | **315 433 字**（webpack bundle，主体）|
+| 3 | 显示状态栏(纯文字) | [2] | true | false | true | `<StatusPlaceHolderImpl/>` | 1 043 字（详情折叠 + `<span style=color:...>` + `{{get_message_variable::stat_data.*}}` 宏 — **运行时宏不解析，未生效，留作废案/兼容**）|
+
+**关键事实订正**：
+- 之前捆 PNG 检出的"显示状态栏(纯文字)"**那条**其实在新导入卡里**没被禁用**（`disabled=false`）；但其 `{{get_message_variable::stat_data.角色.当前身份}}` 这类宏在 `TavernHelper.formatAsDisplayedMessage` / `substituteParamsExtended` 中**不会被解析**（已运行态探针实测），所以它即使被加载也不会产生可视效果。`\n  时间：{{get_message_variable::stat_data.时间天气.时间}}` 等位置仍原样输出 `{{...}}` 字符文字。
+- 真正美化的是 `regex[2] 显示状态栏(前端)`，它把 vue3 webpack bundle 整个塞进 ```html 代码块作为 replaceString，并用正则吃掉 `<content>...</content>` 块达到"用消息正文撑起状态栏内容"的效果。它 placement=2 (display only)，runOnEdit=true，markdownOnly=true。
+
+### 3. regex[2] "显示状态栏(前端)" Vue 应用的结构与样式
+
+> 完整 38 464 字 scoped CSS 已 CDP 抓取保存（`data-v-77150097` scope id），并能从 sourceMap base64 反编译出 `./src/新建前端/App.vue` 源码；核心要点如下：
+
+**技术栈**：Vue 3 `<script setup lang="ts">` + Zod + TailwindCSS v4.1.12 + scoped CSS。
+
+**核心 DOM 结构**（`#app` → `.app` scoped）：
+
+```
+.app
+├─ .top-bar (顶栏 12px 16px padding, --top-block-height:60px)
+│  ├─ .top-left (3 行时间/天气/温度, font 13px, .info-label color #aeb4c5)
+│  │  └─ .info-row { .info-label } + .info-value (彩色 inline style)
+│  ├─ .top-spacer (flex:1)
+│  └─ .top-group (.icon-left / .title / .icon-right  各 50×50 px 自旋转 + 反自旋转 10s)
+├─ .content-box-wrapper (1px #33e6f2 border via outer clip-path polygon 8 corners)
+│  └─ .content-box
+│     ├─ ::before (gradient stripe pattern, 24×42 px tile, 5% #33e6f2 12% / 88%)
+│     └─ .content-scroll (240px 高, thin scrollbar, font 16px = --content-font-size)
+├─ .button-row (两个按钮: 状态面板 / 关系面板 切换)
+│  └─ .btn-wrapper.active (drop-shadow 6/12/20px glow)
+│     └─ .chamfered-btn (8px chamfer clip-path, base #4a6c7c, hover #5a7c8c, active #33e6f2 fg #12141d)
+└─ .panel-box-wrapper (activePanel === 'status' or 'relation' 时展示)
+   └─ .panel-box (min-height 120px, ::before 同 stripe pattern)
+      ├─ [v-show status] .tile-grid 2col repeat
+      │  ├─ .tile (左：玩家归档信息)
+      │  │  ├─ .tile-line.panel-text.panel-label "当前身份"
+      │  │  ├─ .tile-line.panel-textpanel {roleIdentity}
+      │  │  ├─ .tile-line "超现实形式: {roleSupernaturalTypeLabel}" (能力者 ? '超现实形式' : '魔法类型')
+      │  │  ├─ .tile-line "超现实层级: {roleSupernaturalLevel}"
+      │  │  ├─ .tile-line "层级提升进度: {roleSupernaturalProgress}"
+      │  │  └─ .tile-line "行动选项: {actionOptionsValueHtml}" (v-html markdown)
+      │  └─ .tile (右：当前环境)
+      │     ├─ "当前位置: {environmentLocationValueHtml}" v-html
+      │     ├─ "环境描述: {environmentDescriptionValueHtml}" v-html
+      │     └─ "周围人物: {environmentPeopleValueHtml}" v-html (主要角色 Orange / 次要 White)
+      └─ [v-show relation] .relation-panel
+         └─ .relation-scroll (auto overflow, 8px scrollbar cyan)
+            ├─ .relation-empty "暂无关系"  OR
+            └─ .relation-grid auto-fill minmax(160px,1fr)
+                └─ .relation-tile (rgba(255,255,255,0.03) bg, 1px 8% white border, backdrop blur 4px)
+                   ├─ .relation-name (16px panel-normal-color)
+                   └─ .relation-meta × 2 (13px muted: 相识时间 / 具体关系)
+```
+
+**全局变量（`:global(.app)`）**：
+```css
+--panel-chamfer: 10px;
+--content-font-size: 16px;
+--panel-muted-color: #aeb4c5;   /* 暗淡的标签文字 */
+--panel-normal-color: #e3e4e8;  /* 正常数据文字 */
+```
+**配色**：暗背景 `#12141d`、卡片内底 `#1c1f2b`、外描边 `#33e6f2`（青色）、文字 `#e3e4e8`、淡标签 `#aeb4c5`、激活按钮底 `#33e6f2` (fg `#12141d`)、未激活按钮 `#4a6c7c`、hover `#5a7c8c`。**与神秘复苏主调（暗紫/黑色）不同，是冷青蓝科技风**。
+
+**视觉特征**：
+- **"八边形切角面板"**：外 wrapper `#33e6f2` 1px 描边用 8 角 clip-path 实现；内嵌同形 inner clip-path 减 1px 制造 1px 描边效果，无 box-shadow。
+- **"网格光斑纹理"**：`.content-box::before` / `.panel-box::before` 三层 linear-gradient（30°/150°/90°）形成 5% 青色斜纹与左右边缘光斑，24×42 px tile 平铺，z-index:0，内容 z-index:1。
+- **"圆形旋转图标"**：顶部 `.icon-left` 顺时针 / `.icon-right` 逆时针 自旋转 10s（science png + magic png + title svg）。
+- **"切角按钮 + 选中辉光"**：按钮 8px 单边削角 + 三层 drop-shadow 青色辉光。
+- **"细滚动条青色"**：8px width, `rgba(0,128,128,0.5)` thumb, hover `rgba(0,255,255,0.95)` + 6px glow。
+
+### 4. AI 输出协议（与神秘复苏对照）
+
+| 项目 | Science Worship | 神秘复苏 |
+|---|---|---|
+| 正文包裹 | `<content>...</content>`（必出现一对，正则 regex[2] 命中后把它替换为 vue iframe） | 无 `<content>`；消息正文去掉 `<UpdateVariable>` 后直接显示 |
+| 变量更新 | `<update><update_analysis>...</update_analysis><json_patch>[ {op:replace\|delta\|insert\|remove, path, value} ]</json_patch></update>`（**自定义 `delta` 操作**，非 RFC 6902 标准；每次只更新一个值） | `<UpdateVariable><JSONPatch>[{op:"replace",...}]</JSONPatch></UpdateVariable>`（nested 包裹）|
+| 变量列表提示词注入 | `<status_current_variable>{{format_message_variable::stat_data}}\n$出场角色:待定\n$行动选项:待定\n</status_current_variable>` — **`format_message_variable` 宏在 Science Worship 当前运行态也不解析，但被卡.reporting 仍按字符串原样注入提示词** | `<stat_data><%- JSON.stringify(cleanStatData, null, 2) %></stat_data>`（EJS 渲染，已验证可解析）|
+| 变量结构 | `stat_data.角色.{当前身份, 超现实形式, 超现实层级, 层级提升进度, 关系{[角色名]: {结识时间, 具体关系}}}, stat_data.时间天气.{时间, 天气类型, 天气颜色, 温度数值, 温度颜色}, stat_data.环境.{位置, 描述, 周围人物}, stat_data.$出场角色, stat_data.$行动选项` | `stat_data.{姓名, 身份, 风险值, 当前灵异事件{事件代号,...}, 行动建议[], 在场人物[], 主线进度, 规律推理记录, 最近行动判定, ...}` |
+| 升级规则 | Level3 → Level4 (100) → Level5 (200) → Level6 (250 锁死)，每轮用 `{{roll:1d4\|1d2\|1}}` 骰子加进度，EJS 模板 `getvar` 条件渲染；魔法侧对应 Kabbalah / Qliphoth 体系 | 无骰子升级；直接用 `行动建议`/`死亡风险`/`复苏风险` 文字简述 |
+| 周围人物 | `主要角色 Orange; 次要 White`，输出格式 `<span style=color:Orange>{{主要角色}}-{{行动}}</span><br>` —— **AI 直接生成彩色 HTML** | 消息内面板事后着色 NPC，AI 输出"名字-简述"字符串数组 |
+| 行动选项 | 2-5 条 `<br>` 分隔，第 1 条必须把 `<user>` 引导至剧情；标注 `$` 开头的变量路径特殊处理 | 消息内面板显示 `思路 / 选项`，按钮点击后填入输入框 |
+| 文风 / 美化正则 | 还含 `<Ruby.Rule>`（`<ruby>汉字<rt>English</rt></ruby>` 标注专有名词），但也是由 AI 自觉输出、显示层 markdown 不 strip — 与神秘复苏 `[界面]正文美化` 类似 | 有 `[界面]状态栏` / `[显示]sp_input / sp_start` 等美化 |
+| **关键全局规则** | 世界书条目 `其他规则` 写了 `<content>` 强制包裹、角色关系校验流程（"IF (Target_Character ∈ <user>.关系列表) {...}"）、认知隔离 / 上帝视角隔离 等多条隐性规则 | 类似机制在神秘复苏 `系统设定/变量输出格式.yaml` 中可实现 |
+
+### 5. 复刻到神秘复苏的可选路线
+
+> 已 CDP 探测到酒馆助手在 ` ``` `-iframe 注入运行时 API：`getVariables`、`getCurrentMessageId`、`formatAsTavernRegexedString`、`builtin.renderMarkdown`、`getChatMessages`、`nextTick`、`onMounted`、`onUnmounted`。
+
+**建议路线 A（最贴合原效果）**：在神秘复苏里写一个独立的小型 Vue 项目，构建产物 bundle 通过 markdown-only 正则 `replaceString` 嵌入每条 AI 消息中。
+- 创建 `src/神秘复苏模拟器/脚本/状态栏前端/App.vue`（Vue 3 + scoped CSS，复刻 Science Worship scoped 样式）
+- 调整数据来源：`getVariables({type:'message', message_id: getCurrentMessageId()}).stat_data.{姓名, 身份, 风险值, 当前灵异事件, 在场人物, ...}`
+- AI 协议改为 `<content>剧情正文</content>` 包裹（或保留神秘复苏既有 `<UpdateVariable>`，只扩展 `<stat_data>` 提示词路径）
+- 构建 bundle 后，在角色卡 `regex_scripts` 里新增一条 placement=2/markdownOnly=true/runOnEdit=true 的正则把 `<content>...</content>` 替换为 ```html bundle ```
+- 需要：新增 `dist/状态栏前端/index.js` 由 webpack 生成并 inline 到正则；卡片 YAML 里登记正则条目
+
+**建议路线 B（复用现有架构）**：
+- 把神秘复苏现有 `消息内面板` (TypeScript `processAllMessages` 命令式 DOM 注入) 的 CSS 表层改成 Science Worship 配色 + "八边形切角 + 网格光斑 + 旋转图标" 视觉。
+- 不引入 Vue；纯 CSS 改造 + 几个 SVG icon 即可达到 80% 视觉相似度。
+- 工作量最小，但失去 Vue reactive 即时响应的魅力。
+
+**建议路线 C（混合方案）**：
+- 路线 B 的视觉改造 + 路线 A 的 Vue 状态面板都做：消息内显示用 CSS 改造，状态面板按钮悬停或点击弹出 mini-Vue 面板（类似 Science Worship `.button-row` 双按钮切换 status / relation 面板）。
+
+### 6. 不可误解的几点（避免再次踩坑）
+
+1. **`{{get_message_variable::stat_data.*}}` / `{{format_message_variable::stat_data}}` 在 Science Worship 的 SillyTavern 运行态也不会被解析**。已用 `TavernHelper.formatAsDisplayedMessage(testText, {message_id})` 实测，输出原样 `{{...}}`。这两个宏只是"约定字符串"：AI 看到这些字符串仍能学会"这里应该填值"，但运行时不是真的宏替换。神秘复苏的世界书 `变量列表.txt` 同理 — 它用 EJS `<%- JSON.stringify(cleanStatData) %>` 真渲染。
+2. **之前 finding 里"作者禁用了纯文字版"的结论是基于捆绑 PNG 抓取，不适用新导入的真页运行态**。CDP 探测显示 `disabled=false`，只是它的宏不解析导致最终效果不可见。
+3. **"悬浮状态栏" 酒馆助手脚本 iframe 在主窗口上是 `display:none / 0×0`**，并未真正渲染；它要么是历史兼容，要么是把 Vue 注入到消息 iframe 里（消息 iframe 里那个最像"悬浮状态栏"的运行时）。Science Worship 的状态面板真正的样子是 `TH-message--X--Y`。
+4. **`#mvu-floating-window-host` 是 MagVarUpdate 扩展自带浮窗，不是 Science Worship 自家美化**。它的 281×264 大小和 Science Worship 的"状态面板"完全无关，是 MVU extension 提供给开发者看 MVU 数据的。
+5. **Science Worship 没有 `script_files`/酒馆助手脚本（`extensions.script_files=[]`）**；所有美化都通过"4 条 Native Regex Scripts + 210 条世界书条目 + 一条 webpack bundle 替换"实现。这是"声明式 + 正则"路线的极致。
+
+---
+
 ## 2026-07-07：第二轮对话缺状态面板是消息内面板补渲染漏跑，不是 MVU/EJS
 
 **现象：** 当前聊天 `#4`（第二轮 AI 回复）没有 `.mfrs-msg-panel`，但 `chat[4].variables[0].stat_data` 与 `Mvu.getMvuData({type:'message', message_id:4})` 都存在且一致，内容仍为 `姓名=次卧室`、`身份=初级驭鬼者`、`事件代号=七中灵异事件`、`行动建议.length=4`。
