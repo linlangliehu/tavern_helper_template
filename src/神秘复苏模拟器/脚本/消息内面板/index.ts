@@ -384,13 +384,21 @@ $(() => {
   style.id = 'mfrs-msg-panel-style';
   style.textContent = `
 /* 消息内面板容器（八角切角 + 网格光斑底） */
+/* v8.7.2: 加 border-image + outline 双层封存边框（与 wrapper 视觉对齐，不嵌 LOGO） */
 .mfrs-msg-panel {
   background: #1a1010;
   margin-top: 16px;
   padding: 0;
+  border: 1px solid;
+  border-image: linear-gradient(180deg, rgba(212,68,58,0.55) 0%, rgba(138,31,26,0.7) 100%) 1;
+  border-image-slice: 1;
+  outline: 1px solid rgba(212,68,58,0.18);
+  outline-offset: -4px;
   box-shadow:
     0 4px 16px rgba(0,0,0,0.45),
-    inset 0 0 24px rgba(100,24,24,0.12);
+    inset 0 0 24px rgba(100,24,24,0.12),
+    inset 0 0 6px rgba(178,58,50,0.45),
+    0 0 4px rgba(178,58,50,0.25);
   overflow: hidden;
   position: relative;
   clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
@@ -406,6 +414,16 @@ $(() => {
     repeating-linear-gradient(90deg, transparent 0, transparent 41px, rgba(178,58,50,0.05) 41px, rgba(178,58,50,0.05) 42px);
   pointer-events: none;
   z-index: 0;
+  animation: mfrs-panel-breathe 4s ease-in-out infinite;
+}
+
+@keyframes mfrs-panel-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfrs-msg-panel::before { animation: none; opacity: 0.8; }
 }
 
 .mfrs-msg-panel > * {
