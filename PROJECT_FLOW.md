@@ -114,6 +114,28 @@
 - 发布版最新版本号来自 `src/神秘复苏模拟器发布版/index.yaml` 顶部 `版本:`，也应进入 PNG 的 `chara` / `ccv3` 元数据。
 - 后续若实现卡内“检查更新”，应通过当前角色接口读取玩家当前版本，比较远端最新版本，再调用角色卡导入接口加载最新 PNG。
 
+## CDN ref 选择与 `@main` 规避规则
+
+**历史背景**：从 v8.4.2 起到 v8.7.0，所有发布版本的 `scripts/publish-card.mjs` 里 `CDN_REF` 一直是 commit SHA（如 `9c67b2c` / `24e2f05`），从未使用 `@main` branch ref。这是关键稳定性保障——jsdelivr 对 GitHub repo 的 branch ref（`@main`）解析曾被锁死在很旧的 SHA `75341c6`（2026-07-02 的旧 bundle），即使 `purge.jsdelivr.net` + 空 commit + annotated tag 三种手段都触发过，jsdelivr 后端仍未即时把 `@main` 解析到 HEAD。角色卡所有脚本注入走 SHA ref 完全绕开了这个问题。
+
+**什么情况下会暴露这个 `@main` bug**：
+1. 在新版本角色卡的 YAML/字段/正则脚本里手滑引用 `jsdelivr.net/gh/<repo>@main/...` 资源（不走 `publish-card.mjs` 的 `CDN_REF` 自动归一化）
+2. 在测试脚本、临时验证脚本、文档示例里为了"看最新 main 内容"而拼接 `@main` URL
+3. 后续如果要把 `CDN_REF` 改成 `@main` 试图"自动跟 HEAD"——这是反模式，会触发 `@main` 不被 jsdelivr 即时同步的问题
+4. `publish-card.mjs` 的 `EXISTING_CDN_PATTERN` 同时匹配 `@<SHA>` 和 `@main`，会把别人埋的 `@main` 链接归一化到当前 `CDN_REF`；但如果 `CDN_REF` 自己被改成 `@main`，归一化无效，反而固化 `@main` bug
+
+**规避规则（强制）**：
+1. `publish-card.mjs` 的 `CDN_REF` 必须是 commit SHA（7 位短哈希，对应 `[bot] bundle` commit），**禁止**改成 `@main` 或任何 branch ref
+2. 任何角色卡字段、YAML、正则脚本、HTML、`script_files` 注入引用 jsdelivr 资源时，URL 必须用 `@<SHA>` 或 `@v<版本号>` tag ref，**不得**用 `@main`
+3. 推荐 v8.8.0 起把发布版 git tag `v<版本号>`（annotated，指向 release commit）作为 `CDN_REF` 候选——tag ref 不可变、对 jsdelivr 友好、语义比 SHA 更可读（当前 v8.7.0 已打 `v8.7.0` annotated tag 指向 `8d9f169`）
+4. CDN smoke 验证脚本里临时用 `@main` 测 jsdelivr 同步状态是允许的（仅诊断用途），但不得把 `@main` 作为发布版注入 ref
+5. 任何时候检测到 v8.x 的发布版引用 `@main` 的 URL，必须视为发布阻断缺陷，先归一化到 `@<SHA>` 再继续发布
+
+**正确 ref 优先级**：
+- `@<7位SHA>`（v8.4.2 → v8.7.0 历史路径，最稳定）
+- `@v<版本号>` annotated tag（v8.7.0 起可选，等 jsdelivr 同步后语义更佳）
+- **禁止**：`@main` / `@master` 等 branch ref
+
 ## 真页与 SQL 验收口径
 
 - 酒馆页面：`http://127.0.0.1:8000/`

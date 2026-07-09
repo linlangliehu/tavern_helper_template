@@ -1,13 +1,27 @@
 # Progress Log
 
-## 2026-07-09 CST（✅ v8.7.0 全链路完成 + 已 push origin/main）
+## 2026-07-09 CST（⏳ v8.7.0 docs commit 待 push / 主体已发布）
 
-**v8.7.0 正式发布完成。** source / bot bundle / publish sync 三 commit 全部在 origin/main。
+**v8.7.0 主体已发布到 GitHub。** 三 commit 中前两个已 push origin/main，第三个 docs commit 待 push：
 
-**三 commit 链路：**
-1. `99a052d` feat(mfrs): narrative wrapper octagon + spinning logo (v8.7.0) — source only（2 src + 3 planning, +601/-26）
-2. `9c67b2c` [bot] bundle — bundle Action 自动重建 dist（只改 2 个 dist 文件，与源码变更范围一致）
-3. `8d9f169` chore(release): publish mfrs v8.7.0 — publish-card.mjs 配置升级 + 发布版 YAML/PNG 同步（3 文件, +12/-12）
+1. ✅ `99a052d` feat(mfrs): narrative wrapper octagon + spinning logo (v8.7.0) — pushed
+2. ✅ `9c67b2c` [bot] bundle — bot 自动 push 后 trigger 已 fetch 同步到本地
+3. ✅ `8d9f169` chore(release): publish mfrs v8.7.0 — pushed (发布核心：YAML+PNG+publish-card.mjs 配置)
+4. ⏳ `31aa195` docs: update mfrs v8.7.0 release progress — **本地待 push（GitHub 网络波动，443 直连超时；主体发布不受影响）**
+
+**重要：** docs commit `31aa195` 只包含 task_plan.md + progress.md 文档同步（2 文件 +53/-21），不含源码/PNG/配置变更。即使暂时不 push，v8.7.0 的实际发布效果已经完整：
+- origin/main HEAD 已是 `8d9f169 chore(release): publish mfrs v8.7.0`
+- CDN `@9c67b2c` 已生效（`dist/.../界面美化/index.js` 含新规则 mfrs-narrative-seal-spin / data:image/png;base64 / mfrs-msg-narrative-wrapper 三个 marker）
+- 发布版 PNG 已包含 v8.7.0 / 9c67b2c / mvu-v870 元数据，旧值全清
+
+**待用户网络恢复后操作（一次性）：** 在 PowerShell 中执行
+```powershell
+$env:HTTPS_PROXY=""; $env:HTTP_PROXY=""
+git -c http.proxy= -c https.proxy= push origin main
+```
+即可把 docs commit `31aa195` 推到远端，让 origin/main HEAD 也变成文档已同步状态。
+
+**v8.7.0 三 commit 链路（已发布）：**
 
 **publish-card.mjs 配置最终值：**
 - `CDN_REF = '9c67b2c'`（bot bundle commit）

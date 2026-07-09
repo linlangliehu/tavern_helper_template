@@ -91,6 +91,24 @@
 4. v8.8.0 折叠功能已明确"全都要"要求和 6 个 bug 风险，作为独立下版任务
 5. **本轮是讨论阶段，进入实现阶段前用户应明确说"开始改"或"开始实现"**
 
+### H. jsdelivr `@main` branch ref 同步 bug + 规避结论（v8.7.0 发布排查时实测）
+
+**根因结论**：jsdelivr 对 GitHub repo 的 branch ref（`@main`）解析是后台周期同步、非 webhook 驱动。即使触发 GitHub refs 更新（空 commit push）+ `purge.jsdelivr.net` 三次刷新全部 `throttled: false` + 推 annotated tag `v8.7.0` 也无法让 jsdelivr 后端即时把 `@main` 解析到 HEAD。
+
+**实测硬证据**（2026-07-09 排查 v8.7.0 时观察到）：
+- GitHub `git ls-remote origin main` = `cf70668...`（与 HEAD 同步）
+- `data.jsdelivr.com/v1/packages/gh/StageDog/tavern_helper_template@main` data API 显示 `dist/` 子目录只含 `角色卡示例/`（结构对应旧 commit `75341c6`，2026-07-02 的 bot bundle），根本不含 `神秘复苏模拟器/` 子目录
+- `testingcf.jsdelivr.net/.../tavern_helper_template@main/dist/神秘复苏模拟器/脚本/界面美化/index.js` → 404
+- 同 SHA ref `@9c67b2c` / `@31aa195` / `@cf70668` / `@8d9f169` → 全部 200 OK + 89314~89316 bytes + 含 `8.7.0` + `mfrs-narrative-seal-spin`
+
+**结论**：
+1. 项目 v8.4.2 → v8.7.0 所有发布版本的 `publish-card.mjs` `CDN_REF` 全部是 commit SHA（`9c67b2c` / `24e2f05` / `0717fc4` / `e36f8aa` / 等），从未使用 `@main`——这才是为什么之前 21 个版本都未暴露这个 bug
+2. jsdelivr 对 branch ref 同步慢 (~12-24h 或更久)，文件内容 purge 有效但 ref→SHA 映射刷新不可人工触发
+3. 正确 ref 优先级：`@<7位SHA>` > `@v<版本号>` annotated tag > **禁止** `@main`/`@master` 等 branch ref
+4. v8.7.0 已为该诊断打 git annotated tag `v8.7.0` 指向 release commit `8d9f169`，给未来 v8.8.0+ 用 tag ref 替代 SHA 留候选
+
+**完整强制规则**（已写入 `PROJECT_FLOW.md` 的 `CDN ref 选择与 @main 规避规则` 节）：见 PROJECT_FLOW.md 同名节，含历史背景、4 种暴露场景、5 条规避规则、3 级 ref 优先级。
+
 ---
 
 ## 2026-07-09（前）：v8.7.0 正文外框 + LOGO + 折叠功能讨论阶段（未动代码，无实现）
