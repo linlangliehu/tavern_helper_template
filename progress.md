@@ -1,6 +1,51 @@
 # Progress Log
 
-## 2026-07-09 CST（⏳ v8.7.1 docs commit 待 push / 主体已发布）
+## 2026-07-09 CST（✅ v8.7.2 已发布）
+
+**v8.7.2 全链路发布完成。** 用户真页反馈 v8.7.1 LOGO 64px 挡正文，且 MVU 状态面板缺少边框。用 ui-ux-pro-max skill 设计方案后实施并验证：
+
+1. ✅ `6e44e0f` feat(mfrs): v8.7.2 血封之眼 LOGO + MVU 面板边框 (pushed)
+2. ✅ `8f9777b` [bot] bundle — pushed
+3. ✅ `01d6f5e` chore(release): bump publish-card to v8.7.2 (CDN_REF=6e44e0f) — pushed
+
+**v8.7.2 视觉升级（基于 ui-ux-pro-max Academia × Dark Mode OLED 风格）：**
+- ① LOGO 重新设计为「血封之眼」(Sealed Blood Eye) — CSS 多层 background 绘制，替代 42KB base64 PNG
+  - L1 brass 蜡面高光 / L2 异变十字+光晕 / L3 漆黑瞳孔 / L4 血色虹膜环 / L5 八角 dashed 封印环 / L6 蜡封底色（共 7 层 gradient）
+  - 镶嵌位置：从 wrapper::after (clip-path 内) 移到 ⭐ `.mes_text::after` (跨 wrapper 边框) top:8 right:8
+  - 尺寸 64→48px (实测不挡任何文字节点 — TreeWalker overlap=null)
+  - 取消持续 10s 旋转 → 静态徽章 + 320ms ease-out 入场 (符合 UX 红线「continuous animation for loader only」)
+  - z-index 2→10 (UX 阶层规范)
+  - 加 `@media (prefers-reduced-motion: reduce)` 兜底
+- ② MVU 状态面板 (`消息内面板/index.ts`) 加双层封存边框
+  - `border-image: linear-gradient(180deg, rgba(212,68,58,0.55)→rgba(138,31,26,0.7)) 1` (与 wrapper 一致)
+  - `outline: 1px solid rgba(212,68,58,0.18)` + `outline-offset: -4px` (模拟 wrapper inset 6)
+  - panel::before 加 `mfrs-panel-breathe 4s ease-in-out infinite` 极轻呼吸 (opacity 0.6↔1.0)
+  - 同步加 prefers-reduced-motion 兜底
+
+**真页 evaluate 全绿指标（Chrome DevTools MCP 实测）：**
+- ✅ LOGO 尺寸 48×48 / top:8 right:8 / z-index:10 / borderRadius:50%
+- ✅ LOGO 渐层数 = 7 (L1-L6 全存在)
+- ✅ base64 PNG 残留 = false (42KB 删除)
+- ✅ LOGO 动画 = mfrs-seal-press / 0.32s / iteration=1 (静态徽章 ✓)
+- ✅ wrapper::after content = "none" (旧 LOGO 槽删除)
+- ✅ panel border-image = linear-gradient(...d4443a→8a1f1a...) FOUND
+- ✅ panel outline = rgba(212,68,58,0.18) solid FOUND
+- ✅ panel::before = mfrs-panel-breathe 4s infinite (极轻呼吸 ✓)
+- ✅ prefers-reduced-motion 媒体查询支持
+- ✅ LOGO 不挡任何 TextNode (TreeWalker 遍历 wrapper 全文本节点 = 无重叠)
+
+**publish-card.mjs 配置最终值：**
+- `CDN_REF = '6e44e0f'`（source commit feat 含 v8.7.2 LOGO+panel 改动）
+- `CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v872'`
+- `releaseVersion = '8.7.2'`
+
+**CDN smoke 8/8 marker 全绿：**
+- ✅ 界面美化 dist index.js (CDN @6e44e0f): mfrs-seal-press / L6 wax / prefers-reduced-motion 全 FOUND
+- ✅ 消息内面板 dist index.js: border-image / outline / mfrs-panel-breathe / prefers-reduced-motion 全 FOUND
+
+---
+
+## 2026-07-09 CST（✅ v8.7.1 已发布，详见上方 v8.7.2 升级记录）
 
 **v8.7.1 主体已发布到 GitHub。** 用户真页反馈 v8.7.0 "边框单调 + LOGO 太小"，用 Chrome DevTools MCP 看实际 computed style 后给出三项升级方案（用户选 "全要"），实施完成并验证：
 
