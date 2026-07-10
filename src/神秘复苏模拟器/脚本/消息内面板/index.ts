@@ -53,6 +53,12 @@ function readStatusForMessage(mesElement: Element): StatusData {
   }
 }
 
+/** 检查 mes 元素是否为用户消息（SillyTavern 用 is_user="true" 属性标记，不加 .user class） */
+function isUserMessage(mesElement: Element): boolean {
+  return mesElement.getAttribute('is_user') === 'true' ||
+         mesElement.classList.contains('user');
+}
+
 /** 构建「状态面板」tab 的 HTML（顶部浓缩信息栏 + 左右两列 + 通栏行动建议） */
 function buildStatusTabHtml(data: StatusData): string {
   const name = valueText(data.姓名);
@@ -79,7 +85,12 @@ function buildStatusTabHtml(data: StatusData): string {
   const eventDomain = valueText(event.鬼域状态, '未知');
   const eventHandle = valueText(event.处理状态, '未知');
 
-  const ghostList = _.get(data, '驭鬼者状态.已驾驭厉鬼', []) || data.驾驭厉鬼 || [];
+  const rawGhostList = _.get(data, '驭鬼者状态.已驾驭厉鬼', []) || data.驾驭厉鬼 || [];
+  const ghostList = Array.isArray(rawGhostList)
+    ? rawGhostList.filter((g: any, i: number, arr: any[]) =>
+        i === arr.findIndex((h: any) => valueText(h?.代号 || h?.厉鬼名称, '') === valueText(g?.代号 || g?.厉鬼名称, ''))
+      )
+    : [];
   const ghostsHtml = ghostList.length
     ? ghostList.map((g: any) => `<div class="mfrs-msg-ghost-item">${_.escape(valueText(g.代号 || g.厉鬼名称, '未命名厉鬼'))}</div>`).join('')
     : '<div class="mfrs-msg-empty">暂无驾驭厉鬼</div>';
@@ -203,17 +214,18 @@ function buildRelationTabHtml(data: StatusData): string {
 function buildPanelHtml(data: StatusData): string {
   const statusTab = buildStatusTabHtml(data);
   const relationTab = buildRelationTabHtml(data);
+  const panelId = `mfrs-panel-${Math.random().toString(36).slice(2, 10)}`;
 
   return `
-<div class="mfrs-msg-panel">
-  <div class="mfrs-msg-tabs">
-    <button class="mfrs-msg-tab mfrs-msg-tab-active" data-tab="status">状态面板</button>
-    <button class="mfrs-msg-tab" data-tab="relation">关系/环境</button>
+<div class="mfrs-msg-panel" id="${panelId}">
+  <div class="mfrs-msg-tabs" role="tablist" aria-label="神秘复苏状态面板">
+    <button class="mfrs-msg-tab mfrs-msg-tab-active" role="tab" data-tab="status" id="${panelId}-tab-status" aria-selected="true" aria-controls="${panelId}-panel-status" tabindex="0">状态面板</button>
+    <button class="mfrs-msg-tab" role="tab" data-tab="relation" id="${panelId}-tab-relation" aria-selected="false" aria-controls="${panelId}-panel-relation" tabindex="-1">关系/环境</button>
   </div>
-  <div class="mfrs-msg-tab-content mfrs-msg-tab-content-active" data-tab-content="status">
+  <div class="mfrs-msg-tab-content mfrs-msg-tab-content-active" data-tab-content="status" id="${panelId}-panel-status" role="tabpanel" aria-labelledby="${panelId}-tab-status">
     ${statusTab}
   </div>
-  <div class="mfrs-msg-tab-content" data-tab-content="relation">
+  <div class="mfrs-msg-tab-content" data-tab-content="relation" id="${panelId}-panel-relation" role="tabpanel" aria-labelledby="${panelId}-tab-relation" hidden>
     ${relationTab}
   </div>
 </div>
@@ -224,7 +236,7 @@ function buildPanelHtml(data: StatusData): string {
 function injectPanelForMessage(mesElement: Element) {
   // 只处理 AI 消息（含最新一条：刷新事件均在生成完成后触发，不会在流式中途注入）
   if (!mesElement.classList.contains('mes')) return;
-  const isUser = mesElement.classList.contains('user');
+  const isUser = isUserMessage(mesElement);
   if (isUser) return;
 
   // 跳过无有效 mesid 的元素（如 SillyTavern 挂在 #chat 外的隐藏 .mes 模板）
@@ -251,6 +263,7 @@ function injectPanelForMessage(mesElement: Element) {
 
 /** 为叙事文本段落添加样式包装容器 */
 function wrapNarrativeText(mesElement: Element) {
+  if (isUserMessage(mesElement)) return;
   const mesText = mesElement.querySelector('.mes_text');
   if (!mesText) return;
 
@@ -285,8 +298,17 @@ function wrapNarrativeText(mesElement: Element) {
   }
 }
 
+/** 清理已注入用户消息的面板和叙事包装器（BUG-001 修复后清理历史残留） */
+function cleanupUserMessages() {
+  const userMessages = Array.from(doc.querySelectorAll('.mes[is_user="true"]'));
+  userMessages.forEach(mes => {
+    mes.querySelectorAll('.mfrs-msg-panel, .mfrs-msg-narrative-wrapper').forEach(el => el.remove());
+  });
+}
+
 /** 处理所有 AI 消息（注入面板 + 包装叙事） */
 function processAllMessages() {
+  cleanupUserMessages();
   const messages = doc.querySelectorAll('.mes:not(.user)');
   messages.forEach(mes => {
     injectPanelForMessage(mes);
@@ -348,13 +370,25 @@ function handleTabClick(e: Event) {
   if (!tabName) return;
 
   // 切换 tab 激活状态
-  panel.querySelectorAll('.mfrs-msg-tab').forEach(t => t.classList.remove('mfrs-msg-tab-active'));
+  panel.querySelectorAll('.mfrs-msg-tab').forEach(t => {
+    t.classList.remove('mfrs-msg-tab-active');
+    t.setAttribute('aria-selected', 'false');
+    t.setAttribute('tabindex', '-1');
+  });
   tab.classList.add('mfrs-msg-tab-active');
+  tab.setAttribute('aria-selected', 'true');
+  tab.setAttribute('tabindex', '0');
 
   // 切换内容显示
-  panel.querySelectorAll('.mfrs-msg-tab-content').forEach(content => content.classList.remove('mfrs-msg-tab-content-active'));
+  panel.querySelectorAll('.mfrs-msg-tab-content').forEach(content => {
+    content.classList.remove('mfrs-msg-tab-content-active');
+    content.setAttribute('hidden', '');
+  });
   const targetContent = panel.querySelector(`.mfrs-msg-tab-content[data-tab-content="${tabName}"]`);
-  if (targetContent) targetContent.classList.add('mfrs-msg-tab-content-active');
+  if (targetContent) {
+    targetContent.classList.add('mfrs-msg-tab-content-active');
+    targetContent.removeAttribute('hidden');
+  }
 }
 
 /** 处理行动建议按钮点击事件 */
@@ -476,6 +510,10 @@ $(() => {
 
 .mfrs-msg-tab-content-active {
   display: block;
+}
+
+.mfrs-msg-tab-content[hidden] {
+  display: none !important;
 }
 
 /* 顶部浓缩信息栏（三段式） */

@@ -18,6 +18,7 @@ const dbLoaderPath = join(mfrsRoot, '\u811a\u672c', '\u6570\u636e\u5e93', 'index
 const dbFrontendPath = join(mfrsRoot, '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'index.ts');
 const dbFrontendVisualizerPath = join(mfrsRoot, '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'v10_2_visualizer.js');
 const fixedStatusPath = join(mfrsRoot, '\u811a\u672c', '\u56fa\u5b9a\u72b6\u6001\u680f', 'index.ts');
+const themePath = join(mfrsRoot, '\u811a\u672c', '\u754c\u9762\u7f8e\u5316', 'index.ts');
 const distDbLoaderPath = join(repoRoot, 'dist', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93', 'index.js');
 const distDbFrontendPath = join(repoRoot, 'dist', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', '\u6570\u636e\u5e93\u524d\u7aef', 'index.js');
 const distHotfixPath = join(repoRoot, 'dist', '\u795e\u79d8\u590d\u82cf\u6a21\u62df\u5668', '\u811a\u672c', 'hotfix-generation-ended-listeners', 'index.js');
@@ -211,6 +212,79 @@ assert.ok(messagePanelSource.includes('mfrs-msg-action-meta'), 'message panel ac
 assert.ok(messagePanelSource.includes('MutationObserver'), 'message panel should observe final message DOM replacements');
 assert.ok(messagePanelSource.includes('scheduleBurstRefresh'), 'message panel should retry refresh after generation/render events');
 assert.ok(messagePanelSource.includes('tavern_events.GENERATION_ENDED'), 'message panel should refresh after generation ended');
+
+// ── v8.7.4 static gates ──
+
+// BUG-002: protocol-normalizer must NOT list /驭鬼者状态/已驾驭厉鬼 in ARRAY_APPEND_PATHS
+const normalizerSource = readText(normalizerPath);
+assert.equal(
+  normalizerSource.includes("'/\u9a6d\u9b3c\u8005\u72b6\u6001/\u5df2\u9a7e\u9a6d\u5389\u9b3c'"),
+  false,
+  'protocol-normalizer must NOT list /\u9a6d\u9b3c\u8005\u72b6\u6001/\u5df2\u9a7e\u9a6d\u5389\u9b3c in ARRAY_APPEND_PATHS (BUG-002)',
+);
+
+// BUG-002: yaml contract must declare replace semantics for 已驾驭厉鬼
+for (const root of [mfrsRoot, releaseRoot]) {
+  const variableOutput = readText(join(root, '\u4e16\u754c\u4e66', '\u53d8\u91cf', '\u53d8\u91cf\u8f93\u51fa\u683c\u5f0f.yaml'));
+  assert.ok(
+    variableOutput.includes('\u9a6d\u9b3c\u8005\u72b6\u6001/\u5df2\u9a7e\u9a6d\u5389\u9b3c'),
+    `${root} variable output format must mention /\u9a6d\u9b3c\u8005\u72b6\u6001/\u5df2\u9a7e\u9a6d\u5389\u9b3c replace contract`,
+  );
+  assert.ok(
+    /\u5df2\u9a7e\u9a6d\u5389\u9b3c[\s\S]{0,200}?replace/s.test(variableOutput),
+    `${root} variable output format must declare replace semantics for \u5df2\u9a7e\u9a6d\u5389\u9b3c`,
+  );
+  const variableRules = readText(join(root, '\u4e16\u754c\u4e66', '\u53d8\u91cf', '\u53d8\u91cf\u66f4\u65b0\u89c4\u5219.yaml'));
+  assert.ok(
+    /\u5df2\u9a7e\u9a6d\u5389\u9b3c[\s\S]{0,200}?op:"replace"/s.test(variableRules),
+    `${root} variable update rules must declare replace-only for \u5df2\u9a7e\u9a6d\u5389\u9b3c`,
+  );
+}
+
+// BUG-002: render-layer dedup fallback
+assert.ok(
+  messagePanelSource.includes('rawGhostList') && messagePanelSource.includes('findIndex'),
+  'message panel must deduplicate ghost list by \u4ee3\u53f7 (BUG-002 render fallback)',
+);
+
+// BUG-001: is_user attribute filtering
+assert.ok(
+  messagePanelSource.includes('isUserMessage'),
+  'message panel must expose isUserMessage helper (BUG-001)',
+);
+assert.ok(
+  messagePanelSource.includes("getAttribute('is_user')"),
+  'message panel isUserMessage must check is_user attribute (BUG-001)',
+);
+assert.ok(
+  messagePanelSource.includes('cleanupUserMessages'),
+  'message panel must expose cleanupUserMessages (BUG-001)',
+);
+
+// BUG-003: wrapper padding-top ≥ 40px
+const themeSource = readText(themePath);
+assert.ok(
+  /mfrs-msg-narrative-wrapper[\s\S]*?padding:\s*4[0-9]px\s+22px\s+16px/s.test(themeSource),
+  'narrative wrapper padding-top must be \u2265 40px (BUG-003)',
+);
+
+// BUG-004: tab ARIA roles
+assert.ok(
+  messagePanelSource.includes('role="tablist"'),
+  'message panel tabs must have role=tablist (BUG-004)',
+);
+assert.ok(
+  messagePanelSource.includes('role="tab"'),
+  'message panel tab buttons must have role=tab (BUG-004)',
+);
+assert.ok(
+  messagePanelSource.includes('role="tabpanel"'),
+  'message panel content areas must have role=tabpanel (BUG-004)',
+);
+assert.ok(
+  messagePanelSource.includes('aria-selected'),
+  'message panel tabs must have aria-selected (BUG-004)',
+);
 
 for (const root of [mfrsRoot, releaseRoot]) {
   const variableOutput = readText(join(root, '\u4e16\u754c\u4e66', '\u53d8\u91cf', '\u53d8\u91cf\u8f93\u51fa\u683c\u5f0f.yaml'));

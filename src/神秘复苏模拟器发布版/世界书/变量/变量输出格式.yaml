@@ -33,3 +33,5 @@ update_output_contract:
     - /最近行动判定, /行动建议, /收录档案, and /收录规律 may contain only player-visible evidence. Never reveal hidden files, complete killing laws, key survival routes, or true ghost locations.
     - Insert objects, not strings, into /规律推理记录/-. Required fields: 时间点, 行为, 观察结果, 推断, 确认等级, 是否触发规律, 风险等级. 确认等级 is one of 猜测, 疑似, 部分确认, 已验证, 可执行应对.
     - When ghost power, ghost domain, medium contact, body testing, wrong deduction, supernatural item cost, or faction intervention occurs, update the matching risk/resource/event/rule/worldline fields.
+    - /驭鬼者状态/已驾驭厉鬼 is an object array that must be replaced as a whole. Use op:"replace" with the full current roster. Never use op:"insert" or op:"add" on this path; appending duplicates causes ghost档案 to accumulate every turn.
+    - When any field inside a /驭鬼者状态/已驾驭厉鬼 entry changes (代号, 复苏进度, 是否死机, 压制关系, etc.), replace the entire /驭鬼者状态/已驾驭厉鬼 array with the updated full roster. Do not patch individual entries via op:"insert".

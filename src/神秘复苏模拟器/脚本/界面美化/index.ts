@@ -200,7 +200,14 @@ body {
 /* v8.7.2: 血封之眼 LOGO (Sealed Blood Eye) — 镶嵌在 mes_text 右上角，跨 wrapper 边框
    CSS 多层 background 绘制 (替代 42KB base64 PNG)；静态徽章 + 320ms ease-out 入场
    Academia crimson wax seal 语义 + Dark Mode OLED minimal glow */
+@property --mfrs-seal-ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: -22.5deg;
+}
+
 .mes[is_user="false"] .mes_text::after {
+  --mfrs-seal-ring-angle: -22.5deg;
   content: '' !important;
   position: absolute !important;
   top: 8px !important; right: 8px !important;
@@ -233,7 +240,7 @@ body {
       #8a1f1a 58%, #4a1010 70%,
       transparent 78%),
     /* L5 八角封印环 dashed (8 段 + 4 缺口对齐八方位) */
-    conic-gradient(from -22.5deg,
+    conic-gradient(from var(--mfrs-seal-ring-angle),
       #d4443a 0deg 22deg, transparent 22deg 45deg,
       #d4443a 45deg 67deg, transparent 67deg 90deg,
       #d4443a 90deg 112deg, transparent 112deg 135deg,
@@ -256,7 +263,15 @@ body {
     contrast(1.18) saturate(0.92) !important;
   opacity: 0.9 !important;
   transform: scale(1) rotate(0deg) !important;
-  animation: mfrs-seal-press 320ms ease-out 0s 1 both !important;
+  animation:
+    mfrs-seal-press 320ms ease-out 0s 1 both,
+    mfrs-seal-ring-spin 24s linear 320ms infinite !important;
+  animation-play-state: running, paused !important;
+}
+
+/* 只让最新 AI 楼层持续旋转，历史楼层停在当前角度，避免长聊天中大量渐变重绘。 */
+.mes.last_mes[is_user="false"] .mes_text::after {
+  animation-play-state: running, running !important;
 }
 
 @keyframes mfrs-seal-press {
@@ -272,6 +287,11 @@ body {
     opacity: 0.9;
     transform: scale(1) rotate(0deg);
   }
+}
+
+@keyframes mfrs-seal-ring-spin {
+  from { --mfrs-seal-ring-angle: -22.5deg; }
+  to { --mfrs-seal-ring-angle: 337.5deg; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -892,7 +912,7 @@ body {
     #080404 !important;
   border: 2px solid #b23a32 !important;
   border-image: linear-gradient(180deg, #d4443a 0%, #8a1f1a 100%) 1 !important;
-  padding: 28px 22px 16px !important;
+  padding: 40px 22px 16px !important;
   margin-bottom: 16px !important;
   box-shadow:
     0 0 22px rgba(178,58,50,0.45),
