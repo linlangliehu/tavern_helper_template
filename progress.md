@@ -10,6 +10,14 @@
 - 下一步：精确审计并暂存开发版源码、开发版PNG、新/更新门禁、4.0基线清单与必要planning；不暂存本地dist、截图、探针或发布版文件。
 - 提交前自动门禁复跑通过：archive UI 180项、MVU hotfix、数据库前端、output-cleaning、storage/provider、syncbridge、table adapter、SQL、CRUD parse 9/9、PNG双chunk self-test、开发/发布worldbook 383/33/max5851。
 - 首次Prettier范围误包含两份只做最小断言修正的旧门禁脚本，触发其既有整文件格式基线；按Phase 6已确认边界不做整文件重排。缩小到新增门禁与实际TypeScript源码后Prettier通过；ESLint 0 error，仅保留旧门禁7条Node/dynamic-require warning。
+- 精确source commit `d87eec4`（13文件，未含dist/截图/探针）先推任务分支，再确认`origin/main=3181948`可安全快进后推到main；workflow仅监听main/master，任务分支推送本身不会触发bundle。
+- 本机无`gh`命令，source已成功推main后`gh auth status/run list`报`CommandNotFoundException`；改用GitHub官方REST API只读轮询，bundle run `29150328734`在48.6秒后success。
+- bot commit=`7f745d1`（tag `v8.7.13`），只更新消息内面板/界面美化/数据库前端3个相关dist；`git show`确认`mfrs-msg-brand`、`mfrs-welcome-root`、`档案柜`等marker存在。
+- 从`origin/main@7f745d1`建立干净发布worktree `D:\project\tavern_helper_template_ghostseal_release`，发布配置改为version `8.9.0`、ref `7f745d1`、cache `...mvu-v890-ghostseal`，保留既有`8.8.0`折叠版本规划。
+- dry-run确认镜像第一条消息1、系统提示词1、对话示例1、世界书386、数据库1、头像1，替换15处链接；正式`publish-card`成功生成发布PNG。
+- 发布门禁通过：YAML `8.9.0×1/ref×7/cache×8`，旧8.7.4/7e52d45/v874、本地地址、`@main`全0；PNG chara/ccv3均33正则、8脚本、ref×7/cache×8；worldbook 383/33/max5851。
+- CDN smoke：发布YAML中的7条`@7f745d1`项目资源全部HTTP 200；消息品牌、欢迎页、档案柜marker均命中。发布产物SHA256：YAML=`BCBC242E...579B6`、头像=`CBCDE838...C24B4`、发布PNG=`605E2533...DDD48`。
+- 一次PowerShell YAML计数命令因单双引号嵌套导致parser error；改用Ordinal `IndexOf`逐项计数后通过，未改文件。
 
 ---
 

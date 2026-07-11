@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 神秘复苏模拟器.png
-版本: '8.7.4'
+版本: '8.9.0'
 作者: 琳琅
 备注: ''
 
@@ -5633,22 +5633,25 @@
     替换为: |-
       <style>
       .mfrs-roll {
-        --roll-bg: #0a0404;
-        --roll-card: rgba(20, 7, 7, .96);
-        --roll-border: rgba(120, 28, 28, .68);
-        --roll-border-soft: rgba(120, 28, 28, .26);
-        --roll-accent: #d04a4a;
-        --roll-text: #dccaca;
-        --roll-muted: #ad8f8f;
-        --roll-pass: #8fae5a;
-        --roll-fail: #ff6a6a;
+        --roll-corpse: #5f8f86;
+        --roll-brass: #9c784a;
+        --roll-bone: #ded4bd;
+        --roll-blood: #9f342f;
+        --roll-border-soft: rgba(156, 120, 74, .28);
+        --roll-text: var(--roll-bone);
+        --roll-muted: #82928b;
+        --roll-pass: #8eaa78;
+        --roll-fail: #d76a61;
         margin: 16px auto;
         max-width: 820px;
-        border: 1px solid var(--roll-border);
-        border-left: 4px solid var(--roll-accent);
-        border-radius: 12px;
-        background: radial-gradient(620px 220px at 8% -20%, rgba(130,20,20,.16), transparent 60%), linear-gradient(150deg, rgba(8,3,3,.98), rgba(20,6,6,.95));
-        box-shadow: 0 16px 38px rgba(0,0,0,.7), inset 0 0 38px rgba(42,0,0,.26);
+        border: 1px solid var(--roll-brass);
+        border-left: 4px solid var(--roll-corpse);
+        border-radius: 2px;
+        background:
+          repeating-linear-gradient(0deg, rgba(222,212,189,.018) 0 1px, transparent 1px 4px),
+          linear-gradient(105deg, rgba(95,143,134,.055), transparent 34%),
+          #0b0d0c;
+        box-shadow: 0 12px 30px rgba(0,0,0,.48), inset 3px 0 0 rgba(95,143,134,.12);
         color: var(--roll-text);
         font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
         overflow: hidden;
@@ -5661,24 +5664,37 @@
         gap: 10px;
         padding: 11px 15px;
         border-bottom: 1px solid var(--roll-border-soft);
-        background: linear-gradient(90deg, rgba(28,7,7,.92), rgba(10,3,3,.82));
+        background: linear-gradient(90deg, rgba(95,143,134,.09), rgba(11,13,12,.88));
       }
       .mfrs-roll-title {
-        color: var(--roll-accent);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--roll-bone);
         font-family: "Noto Serif SC", "SimSun", serif;
         font-weight: 900;
         letter-spacing: .16em;
         font-size: 14px;
-        text-shadow: 0 0 10px rgba(180,36,36,.45);
+        text-shadow: 0 0 10px rgba(95,143,134,.24);
       }
-      .mfrs-roll-title::before { content: '🎲 '; }
+      .mfrs-roll-title::before {
+        content: '验';
+        display: inline-grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--roll-brass);
+        color: var(--roll-corpse);
+        font-size: 11px;
+        letter-spacing: 0;
+      }
       .mfrs-roll-route {
         flex: 0 0 auto;
         padding: 3px 10px;
         border: 1px solid var(--roll-border-soft);
-        border-radius: 999px;
+        border-radius: 2px;
         color: var(--roll-muted);
-        background: rgba(8,3,3,.6);
+        background: rgba(156,120,74,.08);
         font-size: 11px;
         letter-spacing: .08em;
       }
@@ -5689,8 +5705,8 @@
         position: relative;
         height: 30px;
         border: 1px solid var(--roll-border-soft);
-        border-radius: 999px;
-        background: linear-gradient(90deg, rgba(60,18,18,.5), rgba(20,6,6,.5));
+        border-radius: 2px;
+        background: linear-gradient(90deg, rgba(159,52,47,.24), rgba(95,143,134,.2));
         overflow: hidden;
       }
       .mfrs-roll-dc {
@@ -5717,10 +5733,10 @@
         width: 16px;
         height: 16px;
         transform: translate(-50%, -50%);
-        border-radius: 50%;
-        background: var(--roll-accent);
-        box-shadow: 0 0 10px rgba(208,74,74,.8);
-        border: 2px solid #1a0606;
+        border-radius: 2px;
+        background: var(--roll-blood);
+        box-shadow: 0 0 10px rgba(159,52,47,.64);
+        border: 2px solid var(--roll-bone);
       }
       .mfrs-roll-meta {
         display: flex;
@@ -5732,7 +5748,7 @@
       }
       .mfrs-roll-num { font-size: 22px; font-weight: 900; letter-spacing: .04em; }
       .mfrs-roll-vs { color: var(--roll-muted); }
-      .mfrs-roll-result { padding: 3px 11px; border-radius: 999px; font-weight: 800; letter-spacing: .1em; }
+      .mfrs-roll-result { padding: 3px 11px; border-radius: 2px; font-weight: 800; letter-spacing: .1em; }
       .mfrs-roll-result.is-pass { color: var(--roll-pass); border: 1px solid rgba(143,174,90,.5); background: rgba(60,80,30,.22); }
       .mfrs-roll-result.is-fail { color: var(--roll-fail); border: 1px solid rgba(255,106,106,.45); background: rgba(90,20,20,.24); }
       .mfrs-roll-verify {
@@ -5748,22 +5764,22 @@
         .mfrs-roll-verify { margin-left: 0; }
       }
       </style>
-      <div class="mfrs-roll" data-mfrs-roll data-seed="$1" data-roll="$2" data-dc="$3" data-route="$4">
+      <div class="mfrs-roll" data-mfrs-roll data-seed="$1" data-roll="$2" data-dc="$3" data-route="$4" role="group" aria-labelledby="mfrs-roll-title">
         <div class="mfrs-roll-head">
-          <div class="mfrs-roll-title">不确定性结算</div>
+          <div class="mfrs-roll-title" id="mfrs-roll-title">不确定性结算</div>
           <div class="mfrs-roll-route">$4</div>
         </div>
         <div class="mfrs-roll-body">
           <div class="mfrs-roll-act"><b>判定：</b>$5</div>
-          <div class="mfrs-roll-track">
+          <div class="mfrs-roll-track" role="meter" aria-label="本轮不确定性骰值" aria-valuemin="1" aria-valuemax="100" aria-valuenow="$2">
             <div class="mfrs-roll-dc" data-dc="$3" style="left:$3%"></div>
             <div class="mfrs-roll-marker" style="left:$2%"></div>
           </div>
           <div class="mfrs-roll-meta">
             <span class="mfrs-roll-num">$2</span>
             <span class="mfrs-roll-vs">/ 100　门槛 DC $3</span>
-            <span class="mfrs-roll-result">结算中</span>
-            <span class="mfrs-roll-verify">seed <span class="mfrs-roll-seed">$1</span></span>
+            <span class="mfrs-roll-result" aria-live="polite">结算中</span>
+            <span class="mfrs-roll-verify" aria-live="polite">seed <span class="mfrs-roll-seed">$1</span></span>
           </div>
         </div>
       </div>
@@ -5783,16 +5799,20 @@
     替换为: |-
       <style>
       #mfrs-welcome-root {
-        --mfrs-bg: #0a0404;
-        --mfrs-panel: #150808;
-        --mfrs-panel-soft: rgba(32, 12, 12, .72);
-        --mfrs-border: rgba(160, 40, 40, .5);
-        --mfrs-border-soft: rgba(160, 40, 40, .24);
-        --mfrs-text: #e0d0d0;
-        --mfrs-muted: #b89090;
-        --mfrs-dim: #8a6565;
-        --mfrs-accent: #c83838;
-        --mfrs-accent-dim: #902828;
+        --mfrs-corpse-cyan: #5f8f86;
+        --mfrs-aged-brass: #9c784a;
+        --mfrs-bone-white: #ded4bd;
+        --mfrs-blood-red: #9f342f;
+        --mfrs-bg: #0b0d0c;
+        --mfrs-panel: #101311;
+        --mfrs-panel-soft: rgba(222, 212, 189, .025);
+        --mfrs-border: var(--mfrs-aged-brass);
+        --mfrs-border-soft: rgba(156, 120, 74, .26);
+        --mfrs-text: var(--mfrs-bone-white);
+        --mfrs-muted: #82928b;
+        --mfrs-dim: #6d7a75;
+        --mfrs-accent: var(--mfrs-corpse-cyan);
+        --mfrs-accent-dim: var(--mfrs-aged-brass);
         margin: 18px auto;
         max-width: 900px;
         color: var(--mfrs-text);
@@ -5802,18 +5822,25 @@
       #mfrs-welcome-root .mfrs-welcome-card {
         position: relative;
         overflow: hidden;
-        padding: 34px 32px;
-        border: 2px solid var(--mfrs-border);
-        border-radius: 14px;
-        background: radial-gradient(760px 420px at 15% 0%, rgba(160, 40, 40, .10), transparent 60%), linear-gradient(180deg, var(--mfrs-bg), var(--mfrs-panel));
-        box-shadow: 0 24px 64px rgba(0,0,0,.7), inset 0 0 48px rgba(80,0,0,.18);
+        padding: 34px 32px 34px 38px;
+        border: 1px solid var(--mfrs-border);
+        border-radius: 2px;
+        background:
+          repeating-linear-gradient(0deg, rgba(222,212,189,.018) 0 1px, transparent 1px 4px),
+          linear-gradient(105deg, rgba(95,143,134,.055), transparent 34%),
+          var(--mfrs-bg);
+        box-shadow: 0 18px 44px rgba(0,0,0,.58), inset 3px 0 0 rgba(95,143,134,.16);
       }
       #mfrs-welcome-root .mfrs-welcome-card::before {
         content: '';
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(120,0,0,.025) 3px, rgba(120,0,0,.025) 6px);
+        inset: 0 auto 0 14px;
+        width: 1px;
+        background: repeating-linear-gradient(180deg, var(--mfrs-blood-red) 0 5px, transparent 5px 10px);
+        box-shadow: 4px 0 0 rgba(156,120,74,.12);
+        opacity: .64;
       }
       #mfrs-welcome-root .mfrs-welcome-inner { position: relative; z-index: 1; }
       #mfrs-welcome-root .mfrs-welcome-header {
@@ -5829,7 +5856,7 @@
         font-size: 34px;
         font-weight: 900;
         letter-spacing: .18em;
-        text-shadow: 0 0 22px rgba(200,56,56,.35);
+        text-shadow: 0 0 18px rgba(95,143,134,.28);
       }
       #mfrs-welcome-root .mfrs-welcome-subtitle {
         color: var(--mfrs-muted);
@@ -5841,8 +5868,8 @@
         margin: 18px 0 24px;
         padding: 16px 18px;
         border: 1px solid var(--mfrs-border-soft);
-        border-radius: 10px;
-        background: rgba(34,22,22,.60);
+        border-radius: 2px;
+        background: var(--mfrs-panel-soft);
         color: var(--mfrs-muted);
         white-space: pre-wrap;
         line-height: 1.8;
@@ -5858,8 +5885,8 @@
       #mfrs-welcome-root .mfrs-badge {
         padding: 7px 13px;
         border: 1px solid var(--mfrs-border);
-        border-radius: 999px;
-        background: rgba(34,22,22,.74);
+        border-radius: 2px;
+        background: rgba(156,120,74,.08);
         color: var(--mfrs-text);
         font-size: 12px;
         font-weight: 700;
@@ -5867,8 +5894,8 @@
       #mfrs-welcome-root details {
         margin: 18px 0;
         border: 1px solid var(--mfrs-border);
-        border-radius: 12px;
-        background: rgba(21,8,8,.54);
+        border-radius: 2px;
+        background: rgba(222,212,189,.02);
         overflow: hidden;
       }
       #mfrs-welcome-root summary {
@@ -5877,7 +5904,7 @@
         color: var(--mfrs-accent);
         font-weight: 900;
         letter-spacing: .12em;
-        background: linear-gradient(90deg, rgba(32,12,12,.88), rgba(21,8,8,.82));
+        background: linear-gradient(90deg, rgba(95,143,134,.09), rgba(11,13,12,.88));
       }
       #mfrs-welcome-root .mfrs-world-body {
         padding: 18px;
@@ -5896,7 +5923,7 @@
         font-weight: 900;
         letter-spacing: .14em;
       }
-      #mfrs-welcome-root .mfrs-section-title::before { content: '◆'; color: var(--mfrs-accent-dim); }
+      #mfrs-welcome-root .mfrs-section-title::before { content: '档'; color: var(--mfrs-accent-dim); font-size: 11px; }
       #mfrs-welcome-root .mfrs-row {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5910,44 +5937,49 @@
         min-width: 0;
         padding: 12px 14px;
         border: 1px solid var(--mfrs-border);
-        border-radius: 10px;
-        outline: none;
-        background: rgba(34,23,23,.82);
+        min-height: 48px;
+        border-radius: 2px;
+        background: var(--mfrs-panel);
         color: var(--mfrs-text);
         font: inherit;
       }
-      #mfrs-welcome-root input:focus,
-      #mfrs-welcome-root select:focus,
-      #mfrs-welcome-root textarea:focus {
+      #mfrs-welcome-root input:focus-visible,
+      #mfrs-welcome-root select:focus-visible,
+      #mfrs-welcome-root textarea:focus-visible,
+      #mfrs-welcome-root summary:focus-visible,
+      #mfrs-welcome-root .mfrs-ghost-icon-button:focus-visible,
+      #mfrs-welcome-root .mfrs-submit:focus-visible {
+        outline: 2px solid var(--mfrs-corpse-cyan);
+        outline-offset: 2px;
         border-color: var(--mfrs-accent);
-        background: rgba(42,28,28,.90);
-        box-shadow: 0 0 0 3px rgba(200,56,56,.10);
+        background: rgba(95,143,134,.07);
       }
       #mfrs-welcome-root textarea { min-height: 82px; resize: vertical; }
       #mfrs-welcome-root .mfrs-span-2 { grid-column: 1 / -1; }
       #mfrs-welcome-root .mfrs-ghost-list { display: grid; gap: 10px; }
-      #mfrs-welcome-root .mfrs-ghost-slot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px; border: 1px solid rgba(130,32,32,.32); border-radius: 10px; background: rgba(34,22,22,.50); }
+      #mfrs-welcome-root .mfrs-ghost-slot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px; border: 1px solid rgba(156,120,74,.30); border-radius: 2px; background: rgba(222,212,189,.022); }
       #mfrs-welcome-root .mfrs-ghost-slot[hidden] { display: none; }
       #mfrs-welcome-root .mfrs-ghost-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
       #mfrs-welcome-root .mfrs-ghost-label { color: var(--mfrs-muted); font-size: 12px; letter-spacing: .08em; }
-      #mfrs-welcome-root .mfrs-ghost-icon-button { width: 28px; height: 28px; display: inline-grid; place-items: center; border: 1px solid var(--mfrs-border); border-radius: 999px; background: rgba(42,26,26,.86); color: var(--mfrs-text); cursor: pointer; font: inherit; font-size: 18px; font-weight: 900; line-height: 1; }
-      #mfrs-welcome-root .mfrs-ghost-icon-button:hover { border-color: var(--mfrs-accent); color: #f0d6d6; }
+      #mfrs-welcome-root .mfrs-ghost-icon-button { width: 44px; min-width: 44px; height: 44px; flex: 0 0 44px; display: inline-grid; place-items: center; border: 1px solid var(--mfrs-border); border-radius: 2px; background: rgba(156,120,74,.08); color: var(--mfrs-text); cursor: pointer; font: inherit; font-size: 18px; font-weight: 900; line-height: 1; }
+      #mfrs-welcome-root .mfrs-ghost-icon-button:hover { border-color: var(--mfrs-accent); color: var(--mfrs-bone-white); background: rgba(95,143,134,.08); }
       #mfrs-welcome-root .mfrs-ghost-remove { font-size: 16px; }
       #mfrs-welcome-root .mfrs-submit {
         width: 100%;
         margin-top: 22px;
         padding: 15px 18px;
         border: 1px solid var(--mfrs-border);
-        border-radius: 10px;
-        background: linear-gradient(135deg, rgba(150,46,46,.82), rgba(112,34,34,.88));
+        min-height: 48px;
+        border-radius: 2px;
+        background: linear-gradient(135deg, rgba(159,52,47,.76), rgba(82,36,32,.92));
         color: var(--mfrs-text);
         cursor: pointer;
         font-size: 16px;
         font-weight: 900;
         letter-spacing: .22em;
-        box-shadow: 0 10px 28px rgba(160,40,40,.25);
+        box-shadow: 0 10px 28px rgba(159,52,47,.22);
       }
-      #mfrs-welcome-root .mfrs-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(160,40,40,.35); }
+      #mfrs-welcome-root .mfrs-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(159,52,47,.32); }
       @media (max-width: 640px) {
         #mfrs-welcome-root { max-width: 96vw; }
         #mfrs-welcome-root .mfrs-welcome-card { padding: 26px 18px; }
@@ -5955,11 +5987,11 @@
         #mfrs-welcome-root .mfrs-row { grid-template-columns: 1fr; }
       }
       </style>
-      <div id="mfrs-welcome-root">
+      <div id="mfrs-welcome-root" role="region" aria-labelledby="mfrs-welcome-title">
         <div class="mfrs-welcome-card">
           <div class="mfrs-welcome-inner">
             <header class="mfrs-welcome-header">
-              <h1 class="mfrs-welcome-title">神秘复苏模拟器</h1>
+              <h1 class="mfrs-welcome-title" id="mfrs-welcome-title">神秘复苏模拟器</h1>
               <div class="mfrs-welcome-subtitle">五浊恶世，地狱已空。厉鬼复苏，人间如狱。</div>
             </header>
             <div class="mfrs-welcome-seed">$1</div>
@@ -5976,9 +6008,9 @@
             </details>
             <div class="mfrs-section-title">身份与处境</div>
             <div class="mfrs-row">
-              <input data-mfrs="name" placeholder="姓名（例：杨间）" required>
-              <input data-mfrs="ageGender" placeholder="年龄/性别（例：18/男）" required>
-              <select data-mfrs="identity" required>
+              <input data-mfrs="name" aria-label="姓名" placeholder="姓名（例：杨间）" required>
+              <input data-mfrs="ageGender" aria-label="年龄和性别" placeholder="年龄/性别（例：18/男）" required>
+              <select data-mfrs="identity" aria-label="身份" required>
                 <option value="">选择身份</option>
                 <option>普通学生（无驭鬼能力）</option>
                 <option>普通人（卷入灵异事件）</option>
@@ -5993,38 +6025,38 @@
                     <div class="mfrs-ghost-label">自定义厉鬼 1（可选）</div>
                     <button type="button" class="mfrs-ghost-icon-button mfrs-ghost-add" aria-label="添加第二只厉鬼" title="添加第二只厉鬼" onclick="var r=this.closest('#mfrs-welcome-root');var s=r&&r.querySelector('[data-mfrs-ghost-slot=&quot;2&quot;]');if(s){s.hidden=false;var i=s.querySelector('input, textarea');if(i)i.focus();this.hidden=true;}">+</button>
                   </div>
-                  <select data-mfrs="ghostPreset1" onchange="var r=this.closest('#mfrs-welcome-root');var n=r&&r.querySelector('[data-mfrs=&quot;ghostName1&quot;]');var l=r&&r.querySelector('[data-mfrs=&quot;ghostLaw1&quot;]');var v=this.value||'';var g=v.split('；')[0]||'';var m=v.match(/可见杀人规律：([^；]+)/);if(n){n.value=v?g:'';n.dispatchEvent(new Event('input',{bubbles:true}));}if(l){l.value=v&&m?m[1]:'';l.dispatchEvent(new Event('input',{bubbles:true}));}">
+                  <select data-mfrs="ghostPreset1" aria-label="第一只厉鬼预设" onchange="var r=this.closest('#mfrs-welcome-root');var n=r&&r.querySelector('[data-mfrs=&quot;ghostName1&quot;]');var l=r&&r.querySelector('[data-mfrs=&quot;ghostLaw1&quot;]');var v=this.value||'';var g=v.split('；')[0]||'';var m=v.match(/可见杀人规律：([^；]+)/);if(n){n.value=v?g:'';n.dispatchEvent(new Event('input',{bubbles:true}));}if(l){l.value=v&&m?m[1]:'';l.dispatchEvent(new Event('input',{bubbles:true}));}">
                     <option value="">自定义厉鬼 1：手动填写或无</option>
                     <option value="鬼手印；可见杀人规律：直接接触厉鬼、鬼奴、灵异媒介或驭鬼者体内灵异时，疑似会窃取目标一部分灵异力量并留下冰冷手印；可见档案：被留下手印的目标可能短暂规律残缺、鬼域破损、媒介失效或复苏失衡，鬼手印会获得残缺灵异拼图；成长主题：接触窃取、灵异残片、拼图拼接、印域叠加；驾驭方向：死机、与被窃拼图平衡、异类化为灵异空壳、手印诅咒。">预设｜鬼手印｜规律：接触留下手印并窃取灵异</option>
                     <option value="鬼档案；可见杀人规律：填写、确认、签收厉鬼档案或按档案编号调用、寻找目标者，疑似会被记录并逐渐变成已归档对象；可见档案：完整验证厉鬼杀人规律、媒介、触发条件、规避/压制窗口、鬼域表现和关押条件后，可生成厉鬼档案拼图；成长主题：收录厉鬼档案、调用档案规律、档案鬼域叠加、代价转嫁；驾驭方向：档案厉鬼承受代价、多档案互相平衡、鬼档案本体近似死机、活档案异类化。">预设｜鬼档案｜规律：完整档案可收录厉鬼</option>
                     <option value="鬼拓本；可见杀人规律：接触厉鬼规律、受害痕迹、灵异媒介或鬼域残留后，疑似会在纸面、皮肤、墙面或影像中留下拓印纹路，并复刻目标的一部分杀人规律；可见档案：同类型拓印规律会互相覆盖、融合并进阶，不同类型拓印规律会被撕碎、剥离或分解成灵异墨迹，用来提高鬼拓本恐怖程度；成长主题：规律复刻、同类融合、异类分解、拓本拼页、复写污染；驾驭方向：死机、复刻规律平衡、异类化为活拓本、拓印诅咒。">预设｜鬼拓本｜规律：复刻并重组其它厉鬼规律</option>
                   </select>
-                  <input data-mfrs="ghostName1" placeholder="厉鬼名称（例：鬼眼、鬼影、敲门鬼）">
-                  <textarea data-mfrs="ghostLaw1" placeholder="杀人规律（例：听到敲门声后会被标记）"></textarea>
+                  <input data-mfrs="ghostName1" aria-label="第一只厉鬼名称" placeholder="厉鬼名称（例：鬼眼、鬼影、敲门鬼）">
+                  <textarea data-mfrs="ghostLaw1" aria-label="第一只厉鬼杀人规律" placeholder="杀人规律（例：听到敲门声后会被标记）"></textarea>
                 </div>
                 <div class="mfrs-ghost-slot" data-mfrs-ghost-slot="2" hidden>
                   <div class="mfrs-ghost-header">
                     <div class="mfrs-ghost-label">自定义厉鬼 2</div>
                     <button type="button" class="mfrs-ghost-icon-button mfrs-ghost-remove" aria-label="删除第二只厉鬼" title="删除第二只厉鬼" onclick="var r=this.closest('#mfrs-welcome-root');var s=r&&r.querySelector('[data-mfrs-ghost-slot=&quot;2&quot;]');if(s){s.querySelectorAll('input,textarea').forEach(function(e){e.value='';e.dispatchEvent(new Event('input',{bubbles:true}));});s.hidden=true;}var a=r&&r.querySelector('.mfrs-ghost-add');if(a)a.hidden=false;">×</button>
                   </div>
-                  <input data-mfrs="ghostName2" placeholder="第二只厉鬼名称（可选）">
-                  <textarea data-mfrs="ghostLaw2" placeholder="第二只厉鬼杀人规律（可选）"></textarea>
+                  <input data-mfrs="ghostName2" aria-label="第二只厉鬼名称" placeholder="第二只厉鬼名称（可选）">
+                  <textarea data-mfrs="ghostLaw2" aria-label="第二只厉鬼杀人规律" placeholder="第二只厉鬼杀人规律（可选）"></textarea>
                 </div>
               </div>
             </div>
             <div class="mfrs-section-title">特殊能力</div>
             <div class="mfrs-row">
-              <select class="mfrs-span-2" data-mfrs="specialAbilityPreset" onchange="var r=this.closest('#mfrs-welcome-root');var a=r&&r.querySelector('[data-mfrs=&quot;specialAbility&quot;]');if(a){a.value=this.value||'';a.dispatchEvent(new Event('input',{bubbles:true}));}">
+              <select class="mfrs-span-2" data-mfrs="specialAbilityPreset" aria-label="特殊能力预设" onchange="var r=this.closest('#mfrs-welcome-root');var a=r&&r.querySelector('[data-mfrs=&quot;specialAbility&quot;]');if(a){a.value=this.value||'';a.dispatchEvent(new Event('input',{bubbles:true}));}">
                 <option value="">特殊能力：自定义或无</option>
                 <option value="强外挂模式（非默认）·永久死机驾驭：玩家已经成功驾驭的所有厉鬼本体都会永久处于死机状态，包括开局厉鬼和后续驾驭的新厉鬼；调用已驾驭厉鬼的本体能力、基础鬼域或本体杀人规律时不增加自身复苏代价，也不会被这些本体厉鬼反噬。新厉鬼必须先按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程；若已驾驭厉鬼通过拼图、档案、残片、鬼奴、媒介或交易调用外来灵异，外来灵异仍需单独判定污染、冲突、反噬和失控风险。选择鬼手印时，该能力会稳定鬼手印本体与冰冷手印媒介，降低接触窃取、残片调用和印域叠加对玩家自身的复苏压力，但被窃残片本身仍可能复苏、污染、互相冲突或反向锁定。">强外挂｜永久死机驾驭｜已驾驭厉鬼全部死机（非默认）</option>
                 <option value="灵异档案视野：玩家接触灵异现象后，可获得鬼档案收录辅助提示，包括档案完整度、已验证字段、缺失字段、疑似媒介、疑似触发条件、鬼域迹象、可收录风险和档案拼图稳定度；该视野只提示收录方向，不直接公开完整隐藏规律、源头位置、最终生路或无条件关押方案。">预设｜灵异档案视野｜辅助鬼档案收录档案</option>
                 <option value="规律目录视野：玩家接触灵异现象、厉鬼规律、受害痕迹、灵异媒介或鬼域残留后，可获得面向鬼拓本的目录提示，包括规律类型、拓印完整度、兼容方向、可融合/可分解倾向、疑似媒介、污染风险、反噬风险和推荐处理；该视野只整理玩家已接触证据，不直接公开完整隐藏规律、源头位置、最终生路或无条件关押方案。">预设｜规律目录视野｜辅助鬼拓本整理拓印</option>
               </select>
-              <textarea class="mfrs-span-2" data-mfrs="specialAbility" placeholder="自定义特殊能力（可选；特殊能力上限为1个，选择预设时此处会自动填入）"></textarea>
+              <textarea class="mfrs-span-2" data-mfrs="specialAbility" aria-label="自定义特殊能力" placeholder="自定义特殊能力（可选；特殊能力上限为1个，选择预设时此处会自动填入）"></textarea>
             </div>
             <div class="mfrs-section-title">时空锚点</div>
             <div class="mfrs-row">
-              <select data-mfrs="anchor">
+              <select data-mfrs="anchor" aria-label="剧情时空锚点">
                 <option value="">选择剧情节点</option>
                 <option value="论坛鬼故事·雷电法王发帖|灵异复苏初期|大昌市网络论坛|阶段0｜开局与七中前后|局部致命；普通人以逃生、观察、求助为主。|玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括传闻、敲门声、课堂警告、失踪、鬼域错位和早期求生线索。|不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。" data-group="阶段0｜七中与敲门鬼事件" data-chapter="普通人接入｜七中与早期怪谈" data-name="论坛鬼故事·雷电法王发帖" data-time="灵异复苏初期" data-loc="大昌市网络论坛">阶段0｜七中与敲门鬼事件｜普通人接入｜七中与早期怪谈｜论坛鬼故事·雷电法王发帖</option>
                 <option value="七中前数日·怪谈传播|灵异复苏初期|大昌市第七中学|阶段0｜开局与七中前后|局部致命；普通人以逃生、观察、求助为主。|玩家只能获得所在地点、身份权限和已观察证据允许的信息。可见异常包括传闻、敲门声、课堂警告、失踪、鬼域错位和早期求生线索。|不得直接公开完整杀人规律、关键生路、源头位置、后续重大变化、角色结局或终局真相；需要随调查、权限和实际行动逐步暴露。" data-group="阶段0｜七中与敲门鬼事件" data-chapter="普通人接入｜七中与早期怪谈" data-name="七中前数日·怪谈传播" data-time="灵异复苏初期" data-loc="大昌市第七中学">阶段0｜七中与敲门鬼事件｜普通人接入｜七中与早期怪谈｜七中前数日·怪谈传播</option>
@@ -6087,8 +6119,8 @@
             </div>
             <div class="mfrs-section-title">初始资源、背景与情报权限</div>
             <div class="mfrs-row">
-              <textarea class="mfrs-span-2" data-mfrs="resources" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
-              <textarea class="mfrs-span-2" data-mfrs="background" placeholder="背景与情报权限（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
+              <textarea class="mfrs-span-2" data-mfrs="resources" aria-label="初始资源" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
+              <textarea class="mfrs-span-2" data-mfrs="background" aria-label="背景与情报权限" placeholder="背景与情报权限（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
             </div>
             <button type="button" class="mfrs-submit">进入神秘复苏世界</button>
           </div>
@@ -6110,21 +6142,26 @@
     替换为: |-
       <style>
       .mfrs-input-panel {
-        --mfrs-input-bg: #151111;
-        --mfrs-input-card: rgba(34, 22, 22, .96);
-        --mfrs-input-border: rgba(130, 32, 32, .66);
-        --mfrs-input-border-soft: rgba(130, 32, 32, .24);
-        --mfrs-input-text: #decaca;
-        --mfrs-input-muted: #ad8f8f;
-        --mfrs-input-accent: #d04a4a;
+        --mfrs-input-corpse: #5f8f86;
+        --mfrs-input-brass: #9c784a;
+        --mfrs-input-bone: #ded4bd;
+        --mfrs-input-blood: #9f342f;
+        --mfrs-input-border: var(--mfrs-input-brass);
+        --mfrs-input-border-soft: rgba(156, 120, 74, .26);
+        --mfrs-input-text: var(--mfrs-input-bone);
+        --mfrs-input-muted: #82928b;
+        --mfrs-input-accent: var(--mfrs-input-corpse);
         margin: 18px auto;
         max-width: 860px;
         color: var(--mfrs-input-text);
         font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
         border: 1px solid var(--mfrs-input-border);
-        border-radius: 14px;
-        background: radial-gradient(720px 300px at 0% 0%, rgba(150, 38, 38, .16), transparent 62%), linear-gradient(145deg, rgba(21,17,17,.98), rgba(34,22,22,.94));
-        box-shadow: 0 20px 46px rgba(0,0,0,.72), inset 0 0 42px rgba(70,0,0,.24);
+        border-radius: 2px;
+        background:
+          repeating-linear-gradient(0deg, rgba(222,212,189,.018) 0 1px, transparent 1px 4px),
+          linear-gradient(105deg, rgba(95,143,134,.055), transparent 34%),
+          #0b0d0c;
+        box-shadow: 0 14px 34px rgba(0,0,0,.5), inset 3px 0 0 rgba(159,52,47,.36);
         overflow: hidden;
       }
       .mfrs-input-panel * { box-sizing: border-box; }
@@ -6135,23 +6172,23 @@
         gap: 12px;
         padding: 14px 18px;
         border-bottom: 1px solid var(--mfrs-input-border-soft);
-        background: linear-gradient(90deg, rgba(44,20,20,.94), rgba(26,16,16,.86));
+        background: linear-gradient(90deg, rgba(95,143,134,.09), rgba(11,13,12,.88));
       }
       .mfrs-input-title {
         color: var(--mfrs-input-accent);
         font-family: "Noto Serif SC", "SimSun", serif;
         font-weight: 900;
         letter-spacing: .18em;
-        text-shadow: 0 0 12px rgba(180,36,36,.42);
+        text-shadow: 0 0 12px rgba(95,143,134,.24);
       }
-      .mfrs-input-title::before { content: '◆ '; color: #8c2828; }
+      .mfrs-input-title::before { content: '录 '; color: var(--mfrs-input-brass); }
       .mfrs-input-tip { color: var(--mfrs-input-muted); font-size: 12px; letter-spacing: .08em; }
       .mfrs-input-seed {
         margin: 14px 16px 0;
         padding: 12px 14px;
         border: 1px solid var(--mfrs-input-border-soft);
-        border-radius: 10px;
-        background: rgba(34,22,22,.68);
+        border-radius: 2px;
+        background: rgba(222,212,189,.025);
         color: var(--mfrs-input-muted);
         white-space: pre-wrap;
         line-height: 1.8;
@@ -6170,18 +6207,25 @@
         width: 100%;
         min-width: 0;
         border: 1px solid var(--mfrs-input-border);
-        border-radius: 10px;
-        outline: none;
+        min-height: 48px;
+        border-radius: 2px;
         padding: 11px 12px;
-        background: rgba(34,23,23,.82);
+        background: #101311;
         color: var(--mfrs-input-text);
         font: inherit;
         letter-spacing: 0;
       }
       .mfrs-input-panel textarea { min-height: 82px; resize: vertical; line-height: 1.75; }
-      .mfrs-input-panel input:focus,
-      .mfrs-input-panel select:focus,
-      .mfrs-input-panel textarea:focus { border-color: var(--mfrs-input-accent); background: rgba(42,28,28,.90); box-shadow: 0 0 0 3px rgba(200,56,56,.10); }
+      .mfrs-input-panel input:focus-visible,
+      .mfrs-input-panel select:focus-visible,
+      .mfrs-input-panel textarea:focus-visible,
+      .mfrs-input-fill:focus-visible,
+      .mfrs-input-clear:focus-visible {
+        outline: 2px solid var(--mfrs-input-corpse);
+        outline-offset: 2px;
+        border-color: var(--mfrs-input-corpse);
+        background: rgba(95,143,134,.07);
+      }
       .mfrs-input-wide { grid-column: 1 / -1; }
       .mfrs-input-actions {
         display: flex;
@@ -6192,15 +6236,16 @@
       .mfrs-input-fill,
       .mfrs-input-clear {
         border: 1px solid var(--mfrs-input-border);
-        border-radius: 999px;
+        min-height: 44px;
+        border-radius: 2px;
         padding: 10px 15px;
-        color: #f0d6d6;
-        background: linear-gradient(135deg, rgba(78, 24, 24, .92), rgba(42, 22, 22, .94));
+        color: var(--mfrs-input-bone);
+        background: linear-gradient(135deg, rgba(159,52,47,.72), rgba(82,36,32,.88));
         cursor: pointer;
         font-weight: 800;
         letter-spacing: .12em;
       }
-      .mfrs-input-clear { color: var(--mfrs-input-muted); background: rgba(34,22,22,.66); }
+      .mfrs-input-clear { color: var(--mfrs-input-muted); background: rgba(222,212,189,.035); }
       @media (max-width: 720px) {
         .mfrs-input-panel { max-width: 96vw; margin: 14px auto; }
         .mfrs-input-head { align-items: flex-start; flex-direction: column; }
@@ -6208,9 +6253,9 @@
         .mfrs-input-actions { padding-left: 13px; padding-right: 13px; }
       }
       </style>
-      <div class="mfrs-input-panel" data-mfrs-panel="input">
+      <div class="mfrs-input-panel" data-mfrs-panel="input" role="region" aria-labelledby="mfrs-input-title">
         <div class="mfrs-input-head">
-          <div class="mfrs-input-title">复杂行动输入面板</div>
+          <div class="mfrs-input-title" id="mfrs-input-title">复杂行动输入面板</div>
           <div class="mfrs-input-tip">填写后仅写入输入框，不自动发送</div>
         </div>
         <div class="mfrs-input-seed">$1</div>
@@ -6568,7 +6613,7 @@
       启用: true
       类型: 脚本
       内容: |-
-        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874';
+        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal';
 
     - 名称: hotfix-generation-ended-listeners
       id: hotfix-generation-ended-001
@@ -6590,7 +6635,7 @@
           console.error(`[${label}] 加载失败，请检查 CDN 可用性`);
         };
 
-        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');
 
     - 名称: 变量结构
       id: f65ab164-4268-4366-8228-16af904c2251
@@ -6611,7 +6656,7 @@
           }
         };
 
-        loadLocalModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadLocalModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');
 
     - 名称: 界面美化
       id: a1b2c3d4-0006-4000-8000-000000000006
@@ -6632,7 +6677,7 @@
           }
         };
 
-        loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');
 
     - 名称: 固定状态栏
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001
@@ -6654,7 +6699,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和固定状态栏脚本入口可用`);
         };
 
-        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');
 
     - 名称: spv3.9.5·数据库
       id: 93648737-21db-406c-8aab-3ef8f3af1238
@@ -6683,7 +6728,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库脚本入口可用`);
         };
 
-        loadLocalModule('spv3.9.5·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadLocalModule('spv3.9.5·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');
 
     - 名称: 神秘复苏数据库前端
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3002
@@ -6712,7 +6757,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库前端脚本入口可用`);
         };
 
-        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');
 
     - 名称: 消息内面板
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3003
@@ -6734,4 +6779,4 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和消息内面板脚本入口可用`);
         };
 
-        loadLocalModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7e52d45/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%B6%88%E6%81%AF%E5%86%85%E9%9D%A2%E6%9D%BF/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v874');
+        loadLocalModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@7f745d1/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%B6%88%E6%81%AF%E5%86%85%E9%9D%A2%E6%9D%BF/index.js?v=phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal');

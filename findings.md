@@ -1,5 +1,14 @@
 # Findings
 
+## 2026-07-11：Phase 7 bundle与发布链路结论
+
+- `.github/workflows/bundle.yaml`只监听`main/master`，推送任务分支不会产生`[bot] bundle`。发布任务必须先确认`origin/main`是source commit的祖先，再用安全快进触发workflow；不能把“分支已push”误当成bundle已启动。
+- 没有GitHub CLI时，可用GitHub官方Actions REST API按source `head_sha`只读轮询workflow；本轮run `29150328734`成功后，权威不可变bundle commit为`7f745d1`。
+- 当前worktree若保留本地build dist，不应为拉取bot commit而覆盖或清理这些文件；从`origin/main@bot-sha`建立干净发布worktree可把source验证、bot产物与release镜像边界分开。
+- 发布版必须同时验证YAML和PNG双chunk，且CDN smoke应从最终YAML提取7条项目URL逐一GET；只验证本地dist marker不能证明分发链路已可用。
+
+---
+
 ## 2026-07-11：聊天重载时品牌不能进入叙事 wrapper
 
 - `injectBrandForMessage()`只把`.mes_text`直接子品牌视为可复用实例；如果已有`.mfrs-msg-brand`被`wrapNarrativeText()`移入`.mfrs-msg-narrative-wrapper`，下一次注入会认为品牌不存在并再创建一份。
