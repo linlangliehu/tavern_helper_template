@@ -32,7 +32,7 @@ function setTextareaValue(input: HTMLTextAreaElement, value: string) {
 }
 
 function getActionText(rawText: string) {
-  const text = rawText.replace(/^[ABCD][\.、：:]\s*/, '').trim();
+  const text = rawText.replace(/^[ABCD][.、：:]\s*/, '').trim();
   return text === '自定义行动'
     ? text
     : text.replace(/[。；;]?\s*(?:死亡风险|复苏风险|风险来源|风险|death|revive|<risk)[\s\S]*$/i, '').trim();
@@ -51,6 +51,10 @@ body {
 }
 
 #chat {
+  --mfrs-corpse-cyan: #5f8f86;
+  --mfrs-aged-brass: #9c784a;
+  --mfrs-bone-white: #ded4bd;
+  --mfrs-blood-red: #9f342f;
   background: #151111 !important;
 }
 
@@ -195,111 +199,6 @@ body {
     radial-gradient(ellipse at 97% 10%, rgba(80,0,0,0.04) 0%, transparent 25%) !important;
   pointer-events: none !important;
   border-radius: 2px !important;
-}
-
-/* v8.7.2: 血封之眼 LOGO (Sealed Blood Eye) — 镶嵌在 mes_text 右上角，跨 wrapper 边框
-   CSS 多层 background 绘制 (替代 42KB base64 PNG)；静态徽章 + 320ms ease-out 入场
-   Academia crimson wax seal 语义 + Dark Mode OLED minimal glow */
-@property --mfrs-seal-ring-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: -22.5deg;
-}
-
-.mes[is_user="false"] .mes_text::after {
-  --mfrs-seal-ring-angle: -22.5deg;
-  content: '' !important;
-  position: absolute !important;
-  top: 8px !important; right: 8px !important;
-  width: 48px !important; height: 48px !important;
-  z-index: 10 !important;
-  pointer-events: none !important;
-  border-radius: 50% !important;
-  border: 2px solid rgba(178,58,50,0.7) !important;
-  background:
-    /* L1 brass 顶部蜡面高光 (Academia brass touch) */
-    radial-gradient(circle at 38% 28%,
-      rgba(212, 168, 110, 0.45) 0%,
-      rgba(212, 168, 110, 0) 28%),
-    /* L2 异变十字高光 (瞳孔上方 4 道短金光) */
-    linear-gradient(90deg,
-      transparent 45%, rgba(212,168,110,0.5) 48%,
-      rgba(212,168,110,0.5) 52%, transparent 55%),
-    radial-gradient(circle at 50% 44%,
-      rgba(212,168,110,0.3) 0%,
-      rgba(212,168,110,0) 22%),
-    /* L3 瞳孔 (漆黑 + 暗红描边) */
-    radial-gradient(circle at 50% 50%,
-      #080404 0%, #080404 18%,
-      #3a1010 22%, rgba(58,16,16,0) 30%),
-    /* L4 虹膜血色环 (外圈红 → 内圈暗红) */
-    radial-gradient(circle at 50% 50%,
-      transparent 28%,
-      #4a1010 30%, #8a1f1a 38%,
-      #b23a32 45%, #b23a32 50%,
-      #8a1f1a 58%, #4a1010 70%,
-      transparent 78%),
-    /* L5 八角封印环 dashed (8 段 + 4 缺口对齐八方位) */
-    conic-gradient(from var(--mfrs-seal-ring-angle),
-      #d4443a 0deg 22deg, transparent 22deg 45deg,
-      #d4443a 45deg 67deg, transparent 67deg 90deg,
-      #d4443a 90deg 112deg, transparent 112deg 135deg,
-      #d4443a 135deg 157deg, transparent 157deg 180deg,
-      #d4443a 180deg 202deg, transparent 202deg 225deg,
-      #d4443a 225deg 247deg, transparent 247deg 270deg,
-      #d4443a 270deg 292deg, transparent 292deg 315deg,
-      #d4443a 315deg 337deg, transparent 337deg 360deg),
-    /* L6 蜡封底色 (深红黑径向) */
-    radial-gradient(circle at 50% 50%,
-      #2a0808 0%, #1a0404 60%, #080404 100%) !important;
-  box-shadow:
-    0 0 8px rgba(178,58,50,0.55),
-    0 0 24px rgba(178,58,50,0.2),
-    inset 0 0 6px rgba(8,4,4,0.7),
-    inset 0 1px 2px rgba(212,168,110,0.3) !important;
-  filter:
-    drop-shadow(0 0 3px rgba(212,68,58,0.7))
-    drop-shadow(0 0 1px rgba(0,0,0,0.8))
-    contrast(1.18) saturate(0.92) !important;
-  opacity: 0.9 !important;
-  transform: scale(1) rotate(0deg) !important;
-  animation:
-    mfrs-seal-press 320ms ease-out 0s 1 both,
-    mfrs-seal-ring-spin 24s linear 320ms infinite !important;
-  animation-play-state: running, paused !important;
-}
-
-/* 只让最新 AI 楼层持续旋转，历史楼层停在当前角度，避免长聊天中大量渐变重绘。 */
-.mes.last_mes[is_user="false"] .mes_text::after {
-  animation-play-state: running, running !important;
-}
-
-@keyframes mfrs-seal-press {
-  from {
-    opacity: 0;
-    transform: scale(0.7) rotate(-12deg);
-  }
-  60% {
-    opacity: 0.95;
-    transform: scale(1.06) rotate(2deg);
-  }
-  to {
-    opacity: 0.9;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
-@keyframes mfrs-seal-ring-spin {
-  from { --mfrs-seal-ring-angle: -22.5deg; }
-  to { --mfrs-seal-ring-angle: 337.5deg; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mes[is_user="false"] .mes_text::after {
-    animation: none !important;
-    opacity: 0.9 !important;
-    transform: none !important;
-  }
 }
 
 .mes .ch_name .name_text {
@@ -612,19 +511,22 @@ body {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 12px !important;
+  min-height: 48px !important;
   padding: 12px 14px !important;
-  border: 1px solid rgba(160, 40, 40, .5) !important;
-  border-radius: 10px !important;
-  background: rgba(34,23,23,.82) !important;
-  color: #e0d0d0 !important;
+  border: 1px solid var(--mfrs-aged-brass, #9c784a) !important;
+  border-radius: 2px !important;
+  background:
+    repeating-linear-gradient(0deg, rgba(222,212,189,.018) 0 1px, transparent 1px 4px),
+    #101311 !important;
+  color: var(--mfrs-bone-white, #ded4bd) !important;
   cursor: pointer !important;
   font: inherit !important;
 }
 
 #mfrs-welcome-root .mfrs-dropdown-trigger:hover,
 .custom-mfrs-welcome-root .mfrs-dropdown-trigger:hover {
-  border-color: #c83838 !important;
-  background: rgba(42,28,28,.90) !important;
+  border-color: var(--mfrs-corpse-cyan, #5f8f86) !important;
+  background: rgba(95, 143, 134, .08) !important;
 }
 
 #mfrs-welcome-root .mfrs-dropdown-display,
@@ -638,7 +540,7 @@ body {
 #mfrs-welcome-root .mfrs-dropdown-arrow,
 .custom-mfrs-welcome-root .mfrs-dropdown-arrow {
   flex: 0 0 auto !important;
-  color: #902828 !important;
+  color: var(--mfrs-corpse-cyan, #5f8f86) !important;
   font-size: 12px !important;
   transition: transform .2s ease !important;
 }
@@ -657,9 +559,11 @@ body {
   top: calc(100% + 8px) !important;
   max-height: min(420px, 62vh) !important;
   overflow-y: auto !important;
-  border: 1px solid rgba(160, 40, 40, .5) !important;
-  border-radius: 10px !important;
-  background: rgba(34,23,23,.97) !important;
+  border: 1px solid var(--mfrs-aged-brass, #9c784a) !important;
+  border-radius: 2px !important;
+  background:
+    repeating-linear-gradient(0deg, rgba(222,212,189,.018) 0 1px, transparent 1px 4px),
+    #0b0d0c !important;
   box-shadow: 0 16px 42px rgba(0,0,0,.68) !important;
   z-index: 1000 !important;
 }
@@ -671,7 +575,7 @@ body {
 
 #mfrs-welcome-root .mfrs-dropdown-group,
 .custom-mfrs-welcome-root .mfrs-dropdown-group {
-  border-bottom: 1px solid rgba(160, 40, 40, .22) !important;
+  border-bottom: 1px solid rgba(156, 120, 74, .24) !important;
 }
 
 #mfrs-welcome-root .mfrs-dropdown-group-title,
@@ -682,15 +586,21 @@ body {
   align-items: center !important;
   justify-content: space-between !important;
   gap: 10px !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  text-align: left !important;
   cursor: pointer !important;
+  font: inherit !important;
   transition: background .2s ease, color .2s ease !important;
 }
 
 #mfrs-welcome-root .mfrs-dropdown-group-title,
 .custom-mfrs-welcome-root .mfrs-dropdown-group-title {
   padding: 13px 16px !important;
-  color: #c83838 !important;
-  background: rgba(32,12,12,.55) !important;
+  color: var(--mfrs-corpse-cyan, #5f8f86) !important;
+  background: rgba(95, 143, 134, .07) !important;
   font-weight: 900 !important;
   font-size: 14px !important;
 }
@@ -698,9 +608,9 @@ body {
 #mfrs-welcome-root .mfrs-dropdown-chapter-title,
 .custom-mfrs-welcome-root .mfrs-dropdown-chapter-title {
   padding: 11px 16px 11px 26px !important;
-  color: #b89090 !important;
-  background: rgba(20,12,12,.50) !important;
-  border-top: 1px solid rgba(160,40,40,.15) !important;
+  color: var(--mfrs-bone-white, #ded4bd) !important;
+  background: rgba(222, 212, 189, .025) !important;
+  border-top: 1px solid rgba(156, 120, 74, .18) !important;
   font-size: 13px !important;
   font-weight: 800 !important;
 }
@@ -710,7 +620,7 @@ body {
 #mfrs-welcome-root .mfrs-dropdown-chapter-title::after,
 .custom-mfrs-welcome-root .mfrs-dropdown-chapter-title::after {
   content: '▾' !important;
-  color: #902828 !important;
+  color: var(--mfrs-aged-brass, #9c784a) !important;
   font-size: 12px !important;
   transition: transform .2s ease !important;
 }
@@ -739,7 +649,8 @@ body {
 #mfrs-welcome-root .mfrs-dropdown-item,
 .custom-mfrs-welcome-root .mfrs-dropdown-item {
   padding: 10px 16px 10px 40px !important;
-  color: #e0d0d0 !important;
+  min-height: 44px !important;
+  color: var(--mfrs-bone-white, #ded4bd) !important;
   cursor: pointer !important;
   font-size: 14px !important;
   line-height: 1.5 !important;
@@ -747,7 +658,7 @@ body {
 
 #mfrs-welcome-root .mfrs-dropdown-item:hover,
 .custom-mfrs-welcome-root .mfrs-dropdown-item:hover {
-  background: rgba(160,40,40,.14) !important;
+  background: rgba(95, 143, 134, .09) !important;
 }
 
 #mfrs-welcome-root .mfrs-dropdown-item-name,
@@ -765,8 +676,20 @@ body {
 #mfrs-welcome-root .mfrs-dropdown-item-meta,
 .custom-mfrs-welcome-root .mfrs-dropdown-item-meta {
   margin-top: 3px !important;
-  color: #8a6565 !important;
+  color: #82928b !important;
   font-size: 12px !important;
+}
+
+#mfrs-welcome-root .mfrs-dropdown-trigger:focus-visible,
+.custom-mfrs-welcome-root .mfrs-dropdown-trigger:focus-visible,
+#mfrs-welcome-root .mfrs-dropdown-group-title:focus-visible,
+.custom-mfrs-welcome-root .mfrs-dropdown-group-title:focus-visible,
+#mfrs-welcome-root .mfrs-dropdown-chapter-title:focus-visible,
+.custom-mfrs-welcome-root .mfrs-dropdown-chapter-title:focus-visible,
+#mfrs-welcome-root .mfrs-dropdown-item:focus-visible,
+.custom-mfrs-welcome-root .mfrs-dropdown-item:focus-visible {
+  outline: 2px solid var(--mfrs-corpse-cyan, #5f8f86) !important;
+  outline-offset: -3px !important;
 }
 
 .mfrs-choice-list {
@@ -903,43 +826,37 @@ body {
 }
 .mfrs-choice-why-key.is-death { color: #f08080 !important; }
 .mfrs-choice-why-key.is-revive { color: #c89adf !important; }
-/* v8.7.2: nar wrapper octagon + 双层封存边框 + 血雾氛围 (LOGO 移到 .mes_text::after) */
+/* 正文档案：焦纸表面、单层旧铜边框与左侧装订线 */
 .mfrs-msg-narrative-wrapper {
   position: relative !important;
+  color: var(--mfrs-bone-white) !important;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(178,58,50,0.10) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.55) 0%, transparent 50%),
-    #080404 !important;
-  border: 2px solid #b23a32 !important;
-  border-image: linear-gradient(180deg, #d4443a 0%, #8a1f1a 100%) 1 !important;
-  padding: 40px 22px 16px !important;
+    repeating-linear-gradient(0deg, rgba(222,212,189,0.018) 0 1px, transparent 1px 4px),
+    linear-gradient(90deg, transparent 0 14px, rgba(95,143,134,0.055) 14px 15px, transparent 15px),
+    linear-gradient(115deg, rgba(156,120,74,0.055), transparent 28%),
+    #0b0d0c !important;
+  border: 1px solid var(--mfrs-aged-brass) !important;
+  padding: 18px 22px 17px 30px !important;
   margin-bottom: 16px !important;
   box-shadow:
-    0 0 22px rgba(178,58,50,0.45),
-    0 4px 14px rgba(0,0,0,0.55),
-    inset 0 0 14px rgba(178,58,50,0.22),
-    inset 0 0 0 6px rgba(120,30,26,0.55) !important;
+    0 7px 18px rgba(0,0,0,0.34),
+    inset 0 0 26px rgba(0,0,0,0.46),
+    inset 3px 0 0 rgba(95,143,134,0.16) !important;
   overflow: hidden !important;
-  line-height: 1.8 !important;
-  clip-path: polygon(
-    10px 0, calc(100% - 10px) 0, 100% 10px,
-    100% calc(100% - 10px), calc(100% - 10px) 100%,
-    10px 100%, 0 calc(100% - 10px), 0 10px
-  ) !important;
+  line-height: 1.9 !important;
 }
 .mfrs-msg-narrative-wrapper::before {
   content: '' !important;
   position: absolute !important;
-  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  top: 10px !important;
+  bottom: 10px !important;
+  left: 14px !important;
+  width: 1px !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  background:
-    repeating-linear-gradient(30deg, transparent 0, transparent 23px, rgba(178,58,50,0.06) 23px, rgba(178,58,50,0.06) 24px),
-    repeating-linear-gradient(150deg, transparent 0, transparent 23px, rgba(178,58,50,0.06) 23px, rgba(178,58,50,0.06) 24px),
-    repeating-linear-gradient(90deg, transparent 0, transparent 41px, rgba(178,58,50,0.05) 41px, rgba(178,58,50,0.05) 42px),
-    radial-gradient(ellipse at 8% 50%, rgba(178,58,50,0.08) 0%, transparent 38%),
-    radial-gradient(ellipse at 92% 80%, rgba(178,58,50,0.06) 0%, transparent 30%),
-    linear-gradient(90deg, rgba(178,58,50,0.28) 0, transparent 2px, transparent calc(100% - 2px), rgba(178,58,50,0.28) 100%) !important;
+  background: repeating-linear-gradient(180deg, var(--mfrs-blood-red) 0 5px, transparent 5px 10px) !important;
+  box-shadow: 4px 0 0 rgba(156,120,74,0.12) !important;
+  opacity: 0.64 !important;
 }
 .mfrs-msg-narrative-wrapper > * {
   position: relative !important;
@@ -972,16 +889,26 @@ body {
   const enhanceChoicePanels = () => {
     const detectRisk = (text: string): 'high' | 'mid' | 'low' | 'unknown' => {
       const lower = text;
-      if (/致命|高危|高风险|危险|险境|险峻|绝境|九死一生|送死|送命|引鬼|招鬼|招惹|强行|硬闯|挑衅|对抗|交战|交锋|搏命|拼命|不归路/.test(lower)) return 'high';
+      if (
+        /致命|高危|高风险|危险|险境|险峻|绝境|九死一生|送死|送命|引鬼|招鬼|招惹|强行|硬闯|挑衅|对抗|交战|交锋|搏命|拼命|不归路/.test(
+          lower,
+        )
+      )
+        return 'high';
       if (/中等|中风险|警惕|谨慎|试探|冒险|博弈|两难|不确定|存疑|风险较高|侧面|绕行|拖延/.test(lower)) return 'mid';
-      if (/安全|稳妥|低风险|保守|撤退|退避|回避|远离|脱离|求助|协作|休整|观察|静候|静观|按兵不动/.test(lower)) return 'low';
+      if (/安全|稳妥|低风险|保守|撤退|退避|回避|远离|脱离|求助|协作|休整|观察|静候|静观|按兵不动/.test(lower))
+        return 'low';
       return 'unknown';
     };
-    const riskLabel = (risk: string) => risk === 'high' ? '高危' : risk === 'mid' ? '中险' : risk === 'low' ? '稳妥' : '未明';
+    const riskLabel = (risk: string) =>
+      risk === 'high' ? '高危' : risk === 'mid' ? '中险' : risk === 'low' ? '稳妥' : '未明';
 
     const splitChoiceDetail = (rawText: string): { detail: string; meta: Array<{ label: string; value: string }> } => {
       const meta: Array<{ label: string; value: string }> = [];
-      const segments = rawText.split(/[；;]/).map(s => s.trim()).filter(Boolean);
+      const segments = rawText
+        .split(/[；;]/)
+        .map(s => s.trim())
+        .filter(Boolean);
       const detailParts: string[] = [];
       for (const segment of segments) {
         const m = segment.match(/^(死亡风险|复苏风险|风险来源|风险|代价|资源|后果|说明|提示)[：:]?\s*(.+)$/);
@@ -1012,7 +939,8 @@ body {
         item.className = 'mfrs-choice-legend-item';
         const dot = hostDocument.createElement('span');
         dot.className = 'mfrs-choice-legend-dot';
-        dot.style.background = risk === 'high' ? '#d83030' : risk === 'mid' ? '#c8742a' : risk === 'low' ? '#5a7a30' : '#6a4a6a';
+        dot.style.background =
+          risk === 'high' ? '#d83030' : risk === 'mid' ? '#c8742a' : risk === 'low' ? '#5a7a30' : '#6a4a6a';
         item.appendChild(dot);
         item.appendChild(hostDocument.createTextNode(label));
         legend.appendChild(item);
@@ -1023,8 +951,8 @@ body {
       list.className = 'mfrs-choice-list';
 
       actions.forEach((line, index) => {
-        const key = /^[A-Da-d][\.、：:]/.test(line) ? line.slice(0, 1).toUpperCase() : String.fromCharCode(65 + index);
-        const rawText = line.replace(/^[A-Da-d][\.、：:]\s*/, '').trim();
+        const key = /^[A-Da-d][.、：:]/.test(line) ? line.slice(0, 1).toUpperCase() : String.fromCharCode(65 + index);
+        const rawText = line.replace(/^[A-Da-d][.、：:]\s*/, '').trim();
         const actionText = getActionText(rawText);
         const visibleText = actionText || rawText;
         const risk = detectRisk(rawText);
@@ -1083,8 +1011,11 @@ body {
     };
 
     const splitChoiceActions = (raw: string) => {
-      const text = raw.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').trim();
-      const marker = /(?:^|[\n\r\s。；;！？!?，,、])([A-Da-d])\s*[\.、：:]\s*/g;
+      const text = raw
+        .replace(/\r\n?/g, '\n')
+        .replace(/\u00a0/g, ' ')
+        .trim();
+      const marker = /(?:^|[\n\r\s。；;！？!?，,、])([A-Da-d])\s*[.、：:]\s*/g;
       const matches = Array.from(text.matchAll(marker));
       if (!matches.length) return [];
 
@@ -1095,9 +1026,7 @@ body {
           const next = matches[index + 1];
           const nextMarkerText = next?.[0] ?? '';
           const nextKeyOffset = nextMarkerText.search(/[A-Da-d]/);
-          const bodyEnd = next
-            ? (next.index ?? text.length) + Math.max(0, nextKeyOffset)
-            : text.length;
+          const bodyEnd = next ? (next.index ?? text.length) + Math.max(0, nextKeyOffset) : text.length;
           const key = match[1].toUpperCase();
           const body = text.slice(bodyStart, bodyEnd).trim();
           if (!body || /^标题[：:]/.test(body) || /^说明[：:]/.test(body)) return '';
@@ -1119,8 +1048,7 @@ body {
         .split(/\n+/)
         .map(line => line.trim())
         .filter(Boolean);
-      const actions = lines.filter(line => /^[A-Da-d][\.、：:]/.test(line));
-
+      const actions = lines.filter(line => /^[A-Da-d][.、：:]/.test(line));
 
       if (actions.length < 4) {
         const splitActions = splitChoiceActions(raw);
@@ -1148,10 +1076,7 @@ body {
   const SP_PRIMARY_KEY = /标题|死亡风险|复苏风险|风险变化|结果|可见结论|结论|建议|下一步|确认度|状态/;
 
   const renderSpLine = (line: string) => {
-    const escaped = line
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const fieldMatch = escaped.match(/^([^：:]{2,16})[：:](.*)$/);
     const riskClass = /死亡风险|复苏风险|高危|濒死|失控|命中规律|被标记/.test(escaped)
       ? ' sp-risk-high'
@@ -1193,10 +1118,12 @@ body {
     }
   };
 
-  const MFRS_INLINE_PROTOCOL_TAG_PATTERN = /<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i;
+  const MFRS_INLINE_PROTOCOL_TAG_PATTERN =
+    /<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i;
 
   const hideRawProtocolParagraphs = () => {
-    const protocolPattern = /<UpdateVariable|<\/UpdateVariable|<JSONPatch|<\/JSONPatch|StatusPlaceHolderImpl|myactivity\.google\.com\/product\/gemini|No\.7 High School setting locked|"\s*op\s*"\s*:\s*"\s*replace\s*"|\/行动建议|\/当前灵异事件|\/最近行动判定/;
+    const protocolPattern =
+      /<UpdateVariable|<\/UpdateVariable|<JSONPatch|<\/JSONPatch|StatusPlaceHolderImpl|myactivity\.google\.com\/product\/gemini|No\.7 High School setting locked|"\s*op\s*"\s*:\s*"\s*replace\s*"|\/行动建议|\/当前灵异事件|\/最近行动判定/;
     hostDocument.querySelectorAll<HTMLElement>('.mes_text p:not([data-mfrs-protocol-hidden])').forEach(paragraph => {
       const text = paragraph.innerText || paragraph.textContent || '';
       if (!protocolPattern.test(text) && !MFRS_INLINE_PROTOCOL_TAG_PATTERN.test(text)) return;
@@ -1216,9 +1143,7 @@ body {
   };
 
   const enhanceRollBars = () => {
-    const bars = hostDocument.querySelectorAll<HTMLElement>(
-      '.mfrs-roll[data-mfrs-roll]:not([data-mfrs-roll-ready])',
-    );
+    const bars = hostDocument.querySelectorAll<HTMLElement>('.mfrs-roll[data-mfrs-roll]:not([data-mfrs-roll-ready])');
     for (const bar of bars) {
       bar.dataset.mfrsRollReady = 'true';
       const seed = bar.dataset.seed ?? '';
@@ -1246,11 +1171,17 @@ body {
       }
       const verify = bar.querySelector<HTMLElement>('.mfrs-roll-verify');
       if (verify) {
-        const seedHtml = `<span class="mfrs-roll-seed">${seed}</span>`;
-        verify.innerHTML = verified
-          ? `✓ 已验证 seed ${seedHtml}`
-          : `⚠ 已按 seed 复算（原值 ${Number.isNaN(claimed) ? '无' : claimed}）seed ${seedHtml}`;
+        verify.textContent = verified
+          ? '已验证 seed '
+          : `已按 seed 复算（原值 ${Number.isNaN(claimed) ? '无' : claimed}）seed `;
+        const seedSpan = hostDocument.createElement('span');
+        seedSpan.className = 'mfrs-roll-seed';
+        seedSpan.textContent = seed;
+        verify.append(seedSpan);
       }
+      const track = bar.querySelector<HTMLElement>('.mfrs-roll-track');
+      track?.setAttribute('aria-valuenow', String(shown));
+      track?.setAttribute('aria-valuetext', `骰值 ${shown}，门槛 ${dc}，${pass ? '通过' : '未通过'}`);
     }
   };
 
@@ -1271,7 +1202,9 @@ body {
     };
     const getValue = (key: string) => {
       const selectors = [`[data-mfrs="${key}"]`, fallbackSelectors[key]].filter(Boolean).join(', ');
-      return root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selectors)?.value.trim() ?? '';
+      return (
+        root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selectors)?.value.trim() ?? ''
+      );
     };
     const getPresetGhost = () => getValue('ghostPreset1');
     const getCustomGhosts = () => {
@@ -1295,8 +1228,10 @@ body {
     const storyPhase = (hasTimeField ? anchorParts[3] : anchorParts[2]) || '未定阶段';
     const eventPressure = (hasTimeField ? anchorParts[4] : anchorParts[3]) || '请根据身份与剧情节点判断接入边界';
     const visibleIntel = (hasTimeField ? anchorParts[5] : anchorParts[4]) || '仅依据当前选择与背景设定';
-    const spoilerBoundary = (hasTimeField ? anchorParts[6] : anchorParts[5]) || '不得直接揭露隐藏规律、关键生路和幕后真相';
-    const message = `【神秘复苏·开局设定】\n\n` +
+    const spoilerBoundary =
+      (hasTimeField ? anchorParts[6] : anchorParts[5]) || '不得直接揭露隐藏规律、关键生路和幕后真相';
+    const message =
+      `【神秘复苏·开局设定】\n\n` +
       `1. 基本信息\n` +
       `   - 姓名：${getValue('name')}\n` +
       `   - 年龄/性别：${getValue('ageGender')}\n` +
@@ -1341,19 +1276,22 @@ body {
       return;
     }
 
-    secondSlot.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select').forEach(input => {
-      input.value = '';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    secondSlot
+      .querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select')
+      .forEach(input => {
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
     secondSlot.hidden = true;
     if (addButton) addButton.hidden = false;
   };
 
   const welcomeRootSelector = '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root';
-  const inWelcomeRoots = (childSelector: string) => welcomeRootSelector
-    .split(',')
-    .map(selector => `${selector.trim()} ${childSelector}`)
-    .join(', ');
+  const inWelcomeRoots = (childSelector: string) =>
+    welcomeRootSelector
+      .split(',')
+      .map(selector => `${selector.trim()} ${childSelector}`)
+      .join(', ');
   const ghostPresetSelector = '[data-mfrs="ghostPreset1"], #mfrs-ghost-preset-1';
   const specialAbilityPresetSelector = '[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset';
 
@@ -1377,16 +1315,23 @@ body {
   };
 
   const syncSpecialAbilityPreset = (root: HTMLElement) => {
-    const preset = root.querySelector<HTMLSelectElement>('[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset');
+    const preset = root.querySelector<HTMLSelectElement>(
+      '[data-mfrs="specialAbilityPreset"], #mfrs-special-ability-preset',
+    );
     const abilityInput = root.querySelector<HTMLTextAreaElement>('[data-mfrs="specialAbility"], #mfrs-special-ability');
     if (!preset || !abilityInput) return;
     abilityInput.value = preset.value.trim();
     abilityInput.dispatchEvent(new Event('input', { bubbles: true }));
   };
 
-  const closeSiblingAccordions = (node: HTMLElement, selector: string) => {
+  const setWelcomeAccordionOpen = (node: Element, titleSelector: string, open: boolean) => {
+    node.classList.toggle('is-open', open);
+    node.querySelector<HTMLElement>(`:scope > ${titleSelector}`)?.setAttribute('aria-expanded', String(open));
+  };
+
+  const closeSiblingAccordions = (node: HTMLElement, selector: string, titleSelector: string) => {
     Array.from(node.parentElement?.children ?? []).forEach(sibling => {
-      if (sibling !== node && sibling.matches(selector)) sibling.classList.remove('is-open');
+      if (sibling !== node && sibling.matches(selector)) setWelcomeAccordionOpen(sibling, titleSelector, false);
     });
   };
 
@@ -1434,6 +1379,7 @@ body {
       trigger.className = 'mfrs-dropdown-trigger';
       trigger.setAttribute('aria-haspopup', 'listbox');
       trigger.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-label', '选择剧情节点');
 
       const display = hostDocument.createElement('span');
       display.className = 'mfrs-dropdown-display';
@@ -1450,6 +1396,9 @@ body {
       const menu = hostDocument.createElement('div');
       menu.className = 'mfrs-dropdown-menu';
       menu.setAttribute('role', 'listbox');
+      const menuId = `mfrs-anchor-menu-${Array.from(hostDocument.querySelectorAll(inWelcomeRoots('select[data-mfrs="anchor"]'))).indexOf(select)}`;
+      menu.id = menuId;
+      trigger.setAttribute('aria-controls', menuId);
 
       const grouped = new Map<string, Map<string, WelcomeAnchorOption[]>>();
       options.forEach(option => {
@@ -1465,19 +1414,24 @@ body {
         groupDiv.className = 'mfrs-dropdown-group';
         if (groupIndex === 0) groupDiv.classList.add('is-open');
 
-        const groupTitle = hostDocument.createElement('div');
+        const groupTitle = hostDocument.createElement('button');
+        groupTitle.type = 'button';
         groupTitle.className = 'mfrs-dropdown-group-title';
         groupTitle.textContent = groupName;
+        const groupBodyId = `${menuId}-group-${groupIndex}`;
+        groupTitle.setAttribute('aria-controls', groupBodyId);
+        groupTitle.setAttribute('aria-expanded', String(groupIndex === 0));
         groupTitle.addEventListener('click', event => {
           event.preventDefault();
           event.stopPropagation();
-          closeSiblingAccordions(groupDiv, '.mfrs-dropdown-group');
-          groupDiv.classList.toggle('is-open');
+          closeSiblingAccordions(groupDiv, '.mfrs-dropdown-group', '.mfrs-dropdown-group-title');
+          setWelcomeAccordionOpen(groupDiv, '.mfrs-dropdown-group-title', !groupDiv.classList.contains('is-open'));
         });
         groupDiv.appendChild(groupTitle);
 
         const groupBody = hostDocument.createElement('div');
         groupBody.className = 'mfrs-dropdown-group-body';
+        groupBody.id = groupBodyId;
 
         let chapterIndex = 0;
         chapters.forEach((items, chapterName) => {
@@ -1485,24 +1439,34 @@ body {
           chapterDiv.className = 'mfrs-dropdown-chapter';
           if (groupIndex === 0 && chapterIndex === 0) chapterDiv.classList.add('is-open');
 
-          const chapterTitle = hostDocument.createElement('div');
+          const chapterTitle = hostDocument.createElement('button');
+          chapterTitle.type = 'button';
           chapterTitle.className = 'mfrs-dropdown-chapter-title';
           chapterTitle.textContent = chapterName;
+          const chapterBodyId = `${groupBodyId}-chapter-${chapterIndex}`;
+          chapterTitle.setAttribute('aria-controls', chapterBodyId);
+          chapterTitle.setAttribute('aria-expanded', String(groupIndex === 0 && chapterIndex === 0));
           chapterTitle.addEventListener('click', event => {
             event.preventDefault();
             event.stopPropagation();
-            closeSiblingAccordions(chapterDiv, '.mfrs-dropdown-chapter');
-            chapterDiv.classList.toggle('is-open');
+            closeSiblingAccordions(chapterDiv, '.mfrs-dropdown-chapter', '.mfrs-dropdown-chapter-title');
+            setWelcomeAccordionOpen(
+              chapterDiv,
+              '.mfrs-dropdown-chapter-title',
+              !chapterDiv.classList.contains('is-open'),
+            );
           });
           chapterDiv.appendChild(chapterTitle);
 
           const chapterBody = hostDocument.createElement('div');
           chapterBody.className = 'mfrs-dropdown-chapter-body';
+          chapterBody.id = chapterBodyId;
 
           items.forEach(item => {
             const itemDiv = hostDocument.createElement('div');
             itemDiv.className = 'mfrs-dropdown-item';
             itemDiv.setAttribute('role', 'option');
+            itemDiv.setAttribute('aria-selected', String(select.value === item.value));
             itemDiv.tabIndex = 0;
 
             const nameSpan = hostDocument.createElement('span');
@@ -1518,10 +1482,14 @@ body {
             const choose = () => {
               select.value = item.value;
               display.textContent = `${item.group} · ${item.chapter} · ${item.name}`;
+              menu.querySelectorAll<HTMLElement>('[role="option"]').forEach(option => {
+                option.setAttribute('aria-selected', String(option === itemDiv));
+              });
               dropdown.classList.remove('is-open');
               trigger.setAttribute('aria-expanded', 'false');
               select.dispatchEvent(new Event('input', { bubbles: true }));
               select.dispatchEvent(new Event('change', { bubbles: true }));
+              trigger.focus();
             };
             itemDiv.addEventListener('click', event => {
               event.preventDefault();
@@ -1529,9 +1497,25 @@ body {
               choose();
             });
             itemDiv.addEventListener('keydown', event => {
-              if (event.key !== 'Enter' && event.key !== ' ') return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                choose();
+                return;
+              }
+              if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+              const visibleOptions = Array.from(menu.querySelectorAll<HTMLElement>('[role="option"]')).filter(
+                option => option.offsetParent !== null,
+              );
+              const currentIndex = visibleOptions.indexOf(itemDiv);
+              const nextIndex =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? visibleOptions.length - 1
+                    : (currentIndex + (event.key === 'ArrowDown' ? 1 : -1) + visibleOptions.length) %
+                      visibleOptions.length;
               event.preventDefault();
-              choose();
+              visibleOptions[nextIndex]?.focus();
             });
             chapterBody.appendChild(itemDiv);
           });
@@ -1553,18 +1537,29 @@ body {
         event.preventDefault();
         event.stopPropagation();
         const willOpen = !dropdown.classList.contains('is-open');
-        root.querySelectorAll<HTMLElement>('.mfrs-dropdown.is-open, .custom-mfrs-dropdown.is-open').forEach(openDropdown => {
-          if (openDropdown !== dropdown) openDropdown.classList.remove('is-open');
-        });
+        root
+          .querySelectorAll<HTMLElement>('.mfrs-dropdown.is-open, .custom-mfrs-dropdown.is-open')
+          .forEach(openDropdown => {
+            if (openDropdown !== dropdown) openDropdown.classList.remove('is-open');
+          });
         dropdown.classList.toggle('is-open', willOpen);
         trigger.setAttribute('aria-expanded', String(willOpen));
       });
       menu.addEventListener('click', event => event.stopPropagation());
+      menu.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') return;
+        dropdown.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.focus();
+      });
     });
   };
 
   const fillInputPanel = (root: HTMLElement) => {
-    const getValue = (key: string) => root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs-input="${key}"]`)?.value.trim() ?? '';
+    const getValue = (key: string) =>
+      root
+        .querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[data-mfrs-input="${key}"]`)
+        ?.value.trim() ?? '';
     const lines = [
       '【神秘复苏·复杂行动】',
       '',
@@ -1583,15 +1578,19 @@ body {
   };
 
   const clearInputPanel = (root: HTMLElement) => {
-    root.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[data-mfrs-input], textarea[data-mfrs-input]').forEach(input => {
-      input.value = '';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    root
+      .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[data-mfrs-input], textarea[data-mfrs-input]')
+      .forEach(input => {
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
   };
 
   const handleInputPanelClick = (event: Event) => {
     const target = event.target as HTMLElement | null;
-    const button = target?.closest('.mfrs-input-fill, .custom-mfrs-input-fill, .mfrs-input-clear, .custom-mfrs-input-clear');
+    const button = target?.closest(
+      '.mfrs-input-fill, .custom-mfrs-input-fill, .mfrs-input-clear, .custom-mfrs-input-clear',
+    );
     if (!button) return;
     const root = button.closest<HTMLElement>('.mfrs-input-panel, .custom-mfrs-input-panel');
     if (!root) return;
@@ -1606,15 +1605,23 @@ body {
   const handleWelcomeClick = (event: Event) => {
     const target = event.target as HTMLElement | null;
     if (!target?.closest('.mfrs-dropdown, .custom-mfrs-dropdown')) {
-      hostDocument.querySelectorAll<HTMLElement>('.mfrs-dropdown.is-open, .custom-mfrs-dropdown.is-open').forEach(dropdown => {
-        dropdown.classList.remove('is-open');
-        dropdown.querySelector<HTMLElement>('.mfrs-dropdown-trigger, .custom-mfrs-dropdown-trigger')?.setAttribute('aria-expanded', 'false');
-      });
+      hostDocument
+        .querySelectorAll<HTMLElement>('.mfrs-dropdown.is-open, .custom-mfrs-dropdown.is-open')
+        .forEach(dropdown => {
+          dropdown.classList.remove('is-open');
+          dropdown
+            .querySelector<HTMLElement>('.mfrs-dropdown-trigger, .custom-mfrs-dropdown-trigger')
+            ?.setAttribute('aria-expanded', 'false');
+        });
     }
 
-    const ghostButton = target?.closest('.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost');
+    const ghostButton = target?.closest(
+      '.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost',
+    );
     if (ghostButton) {
-      const root = ghostButton.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+      const root = ghostButton.closest<HTMLElement>(
+        '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root',
+      );
       if (!root) return;
       event.preventDefault();
       event.stopPropagation();
@@ -1642,41 +1649,55 @@ body {
   };
 
   const bindWelcomePresetControls = () => {
-    hostDocument.querySelectorAll<HTMLSelectElement>(`${ghostPresetSelector}, ${specialAbilityPresetSelector}`).forEach(select => {
-      if (select.dataset.mfrsPresetBound === 'true') return;
-      const root = select.closest<HTMLElement>(welcomeRootSelector);
-      if (!root) return;
-      select.dataset.mfrsPresetBound = 'true';
-      const sync = () => {
-        const currentRoot = select.closest<HTMLElement>(welcomeRootSelector);
-        if (!currentRoot) return;
-        if (select.matches(ghostPresetSelector)) syncPresetGhost1(currentRoot);
-        if (select.matches(specialAbilityPresetSelector)) syncSpecialAbilityPreset(currentRoot);
-      };
-      select.addEventListener('change', sync, true);
-      select.addEventListener('input', sync, true);
-      select.addEventListener('click', () => hostWindow?.setTimeout(sync, 0), true);
-      select.addEventListener('keyup', event => {
-        if (event.key === 'Enter' || event.key === ' ') hostWindow?.setTimeout(sync, 0);
-      }, true);
-    });
+    hostDocument
+      .querySelectorAll<HTMLSelectElement>(`${ghostPresetSelector}, ${specialAbilityPresetSelector}`)
+      .forEach(select => {
+        if (select.dataset.mfrsPresetBound === 'true') return;
+        const root = select.closest<HTMLElement>(welcomeRootSelector);
+        if (!root) return;
+        select.dataset.mfrsPresetBound = 'true';
+        const sync = () => {
+          const currentRoot = select.closest<HTMLElement>(welcomeRootSelector);
+          if (!currentRoot) return;
+          if (select.matches(ghostPresetSelector)) syncPresetGhost1(currentRoot);
+          if (select.matches(specialAbilityPresetSelector)) syncSpecialAbilityPreset(currentRoot);
+        };
+        select.addEventListener('change', sync, true);
+        select.addEventListener('input', sync, true);
+        select.addEventListener('click', () => hostWindow?.setTimeout(sync, 0), true);
+        select.addEventListener(
+          'keyup',
+          event => {
+            if (event.key === 'Enter' || event.key === ' ') hostWindow?.setTimeout(sync, 0);
+          },
+          true,
+        );
+      });
   };
 
   const bindWelcomeGhostButtons = () => {
-    hostDocument.querySelectorAll<HTMLElement>(
-      '.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost',
-    ).forEach(button => {
-      if (button.dataset.mfrsGhostBound === 'true') return;
-      button.dataset.mfrsGhostBound = 'true';
-      button.addEventListener('click', event => {
-        const root = button.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
-        if (!root) return;
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        setSecondGhostSlotVisible(root, button.matches('.mfrs-ghost-add, .custom-mfrs-ghost-add, #mfrs-add-ghost'));
-      }, true);
-    });
+    hostDocument
+      .querySelectorAll<HTMLElement>(
+        '.mfrs-ghost-add, .mfrs-ghost-remove, .custom-mfrs-ghost-add, .custom-mfrs-ghost-remove, #mfrs-add-ghost, #mfrs-remove-ghost',
+      )
+      .forEach(button => {
+        if (button.dataset.mfrsGhostBound === 'true') return;
+        button.dataset.mfrsGhostBound = 'true';
+        button.addEventListener(
+          'click',
+          event => {
+            const root = button.closest<HTMLElement>(
+              '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root',
+            );
+            if (!root) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            setSecondGhostSlotVisible(root, button.matches('.mfrs-ghost-add, .custom-mfrs-ghost-add, #mfrs-add-ghost'));
+          },
+          true,
+        );
+      });
   };
 
   let welcomeDashboardAutoOpenDone = false;
@@ -1725,6 +1746,15 @@ body {
     timeoutIds.forEach(id => {
       if (id !== undefined) hostWindow?.clearTimeout(id);
     });
+    hostDocument.querySelectorAll<HTMLElement>('[data-mfrs-anchor-dropdown="true"]').forEach(dropdown => {
+      dropdown.remove();
+    });
+    hostDocument
+      .querySelectorAll<HTMLSelectElement>(inWelcomeRoots('select[data-mfrs-anchor-enhanced="true"]'))
+      .forEach(select => {
+        delete select.dataset.mfrsAnchorEnhanced;
+        select.style.removeProperty('display');
+      });
     hostStyle.remove();
     if (hostWindow?.__mfrsHorrorThemeCleanup__ === cleanup) {
       delete hostWindow.__mfrsHorrorThemeCleanup__;

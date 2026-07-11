@@ -261,12 +261,34 @@ assert.ok(
   'message panel must expose cleanupUserMessages (BUG-001)',
 );
 
-// BUG-003: wrapper padding-top ≥ 40px
+// BUG-003: legacy pseudo-logo needs text avoidance; Phase 2 entity brand occupies its own flow row.
 const themeSource = readText(themePath);
-assert.ok(
-  /mfrs-msg-narrative-wrapper[\s\S]*?padding:\s*4[0-9]px\s+22px\s+16px/s.test(themeSource),
-  'narrative wrapper padding-top must be \u2265 40px (BUG-003)',
-);
+const hasLegacyPseudoLogo = themeSource.includes('.mes[is_user="false"] .mes_text::after');
+const hasEntityBrand = messagePanelSource.includes('class="mfrs-msg-brand"');
+assert.ok(hasLegacyPseudoLogo || hasEntityBrand, 'message branding must retain a visible BUG-003 replacement');
+if (hasLegacyPseudoLogo) {
+  assert.ok(
+    /mfrs-msg-narrative-wrapper[\s\S]*?padding:\s*4[0-9]px\s+22px\s+16px/s.test(themeSource),
+    'legacy pseudo-logo requires narrative wrapper padding-top >= 40px (BUG-003)',
+  );
+} else {
+  const narrativePadding = themeSource.match(
+    /mfrs-msg-narrative-wrapper[\s\S]*?padding:\s*(\d+)px\s+(\d+)px\s+(\d+)px(?:\s+(\d+)px)?/s,
+  );
+  assert.ok(narrativePadding, 'entity brand narrative wrapper must keep explicit padding (BUG-003)');
+  const top = Number(narrativePadding[1]);
+  const right = Number(narrativePadding[2]);
+  const bottom = Number(narrativePadding[3]);
+  const left = Number(narrativePadding[4] ?? narrativePadding[2]);
+  assert.ok(
+    top === 18 && right === 22 && bottom >= 16 && left >= 22,
+    'entity brand must keep normal top padding and reserve any Phase 3 binding-line inset (BUG-003)',
+  );
+  assert.ok(
+    messagePanelSource.includes('mesText.insertBefore(nextBrand, wrapper ?? mesText.firstChild)'),
+    'entity brand must occupy a dedicated flow row before narrative text (BUG-003)',
+  );
+}
 
 // BUG-004: tab ARIA roles
 assert.ok(

@@ -1,5 +1,231 @@
 # Progress Log
 
+## 2026-07-11 CST（▶ Phase 7开始）
+
+- 用户已明确要求继续完成Phase 7，提交、push、等待CI bundle与发布卡流程现已获授权；仍严格遵守精确staging，不使用`git add .`。
+- 已把主工作区中Phase 6完成态的`task_plan.md`、`progress.md`、`findings.md`机械同步到独立worktree，三份SHA256分别为`DF59AB...67211`、`62DB2A...5A173`、`D773AC...A46A`。
+- 发布前基线确认：`.tmp-ghostseal-baseline-v874/`保留15张桌面/移动截图；当前发布版`index.yaml` SHA256=`B30E6172...388FE`，发布版PNG SHA256=`17642BAE...E2FB6`。
+- 版本决策：本轮“鬼眼封案”使用`8.9.0`，保留既有`8.8.0`给已规划但本轮未混入的正文/面板联动折叠功能。
+- 恢复阶段一次PowerShell哈希表命令因`foreach`结果直接接管道触发`An empty pipe element is not allowed`；改为先累积`$rows`再格式化后成功，未修改任何项目文件。
+- 下一步：精确审计并暂存开发版源码、开发版PNG、新/更新门禁、4.0基线清单与必要planning；不暂存本地dist、截图、探针或发布版文件。
+- 提交前自动门禁复跑通过：archive UI 180项、MVU hotfix、数据库前端、output-cleaning、storage/provider、syncbridge、table adapter、SQL、CRUD parse 9/9、PNG双chunk self-test、开发/发布worldbook 383/33/max5851。
+- 首次Prettier范围误包含两份只做最小断言修正的旧门禁脚本，触发其既有整文件格式基线；按Phase 6已确认边界不做整文件重排。缩小到新增门禁与实际TypeScript源码后Prettier通过；ESLint 0 error，仅保留旧门禁7条Node/dynamic-require warning。
+
+---
+
+## 2026-07-11 CST（✅ Phase 6完成，停在Phase 7前）
+
+- 在独立worktree `D:\project\tavern_helper_template_ghostseal` 完成Phase 6静态、构建与开发版真页总验收；未commit、push、publish，发布版目录与`publish-card.mjs`无任务diff。
+- 自动门禁全绿：`git diff --check`、目标Prettier/ESLint、MVU hotfix、数据库前端、output-cleaning、storage/provider、syncbridge、table adapter、SQL、CRUD parse、Phase 5 UI gate 180项、PNG双chunk self-test/发布卡门禁、开发/发布worldbook 383/33/max5851。
+- 既有SQL回归脚本仍要求旧`<sp_status>`早于`<choices>`，与当前精简输出契约冲突；只修改门禁为锁定“【本轮摘要】→`<choices>`→`<UpdateVariable>`”，未改世界书或AI输出内容，SQL全量回归通过。
+- 两轮`pnpm build`成功，仅数据库前端426KiB既有performance warning；前后哈希确认schema、世界书、开发/发布关键PNG、发布版YAML和`publish-card`无非预期漂移。生产build把无关dev dist噪声收敛为4个实际相关产物。
+- 四视口375×812、500×901、768×1024、1440×900均保持角色id=4、AI/用户3/2、候选panel/wrapper/brand=3/3/3、用户0/0/0、主题/面板/档案柜单例1；document/body/chat/fixed host/archive/dashboard横向溢出0，无真实文本截断。品牌与正文/面板交叠为0或小于0.2px²的边界取整，不构成可见遮挡。
+- 动画策略通过：历史AI鬼眼/法阵paused，最新AI 9s/18s running；reduced-motion下brand/eye/seal均animationName=none、duration=0s。截图为`.tmp-ghostseal-phase6-{375x812,500x901,768x1024,1440x900}.png`。
+- 消息交互通过：三次refresh根节点稳定；Left/Right/Home/End同步Tab、焦点和tabpanel；行动建议只填充并聚焦输入框，消息数不变；风险meter、Font Awesome、连续档案分区正常。
+- 档案柜短门禁通过：14个公共API全在，双插槽order10/20，17个导航入口，单次总览内容非空，10个Tab均为button，方向键/Home/End闭环，主折叠为button、嵌入折叠role=button/tabindex=0，aurora配置不变。
+- Phase 6发现阻断bug：同聊天重载后最新AI楼层出现2个`.mfrs-msg-brand`。根因是重载竞态中已有brand被`wrapNarrativeText()`当叙事节点移入wrapper，随后`injectBrandForMessage()`只检查直接子节点并再建一份。修复为先提升嵌套brand、包装叙事时跳过brand；门禁增至180项。
+- 修复后同聊天重载连续3次采样稳定AI panel/wrapper/brand=3/3/3、用户0、style1；切到Science Worship后目标panel/wrapper/brand/style/API/iframe全0，切回后重新注入仍3/3/3单例；整页刷新回SillyTavern System后显式选择id=4恢复正常。
+- Console最终只有2条宿主`MacrosParser.registerMacro`弃用warning；Network失败仍只有ISSUE-006的`data/storage/script.js`与`scripts/extensions.js`两个既有404，各5次；21个4177候选请求全部200。
+- 收口：恢复角色id=4、5楼、1440×900、空输入框、正式panel/wrapper3/3、brand0、候选script0、Phase6 sessionStorage键0；4177已停止且listeners=0。当前停在Phase 7前。
+
+---
+
+## 2026-07-11 CST（✅ Phase 5完成，停在Phase 6前）
+
+- 按 `planning-with-files` 恢复流程读取主工作区 `task_plan.md`、`progress.md`、`findings.md` 与 `PROJECT_FLOW.md`；ghostseal worktree 内同名文件只是 `origin/main=3181948` 的旧提交快照，当前权威 Phase 5 状态仍在主工作区 planning 文件。
+- Chrome DevTools MCP 工具 schema 已在本会话加载，实际 `list_pages` 成功连接当前选中的 `SillyTavern (http://127.0.0.1:8000/)`，无需使用 agent-browser/CDP 兜底。
+- `session-catchup.py` 仅返回已被后续版本覆盖的 v8.5.13 旧摘要，不作为当前停点；`task_plan.md` 无 attestation，当前 SHA256 为 `c9404c153ca1b76e613646a10f52da416680eb1c134484b2ff88b7f5b70bfc03`。
+- 独立 worktree 确认为 `D:\project\tavern_helper_template_ghostseal`、分支 `codex/mfrs-ghostseal`、HEAD `3181948`；Phase 1-4 源码/门禁改动与 `.tmp-ghostseal-*` 证据均保留，tracked `dist/**` 仍视为依赖漂移噪声。
+- 首次读取该 worktree 的 Git 状态被 `dubious ownership` 拦截；后续只使用单命令 `git -c safe.directory=D:/project/tavern_helper_template_ghostseal ...`，未修改全局 Git 配置。
+- Phase 5 首次真页只读探针发现页面当前实际选中 `SillyTavern System`（`characterId=null`，第0楼为系统欢迎文本），与上轮“角色id=4”交接状态不一致；该页面没有 `<sp_start>`/`#mfrs-welcome-root`，不能作为目标卡入口结论。实时监听“允许监听”已启用，Console 无 warn/error；下一步先切回角色id=4再重做证据。
+- 首次源码 `rg` 同时搜索欢迎页、掷骰和通用关键词，命中schema/世界书/App.vue等大量无关结果并被输出截断；后续改为按 `第一条消息/0.txt`、`index.yaml`目标正则块和活跃脚本逐文件读取，不重复同一宽搜索。
+- Phase 5 精确读取首轮又遇到 Windows 管道编码错误：把含中文相对路径写进 PowerShell here-string 再管道给 Node 后，路径在 Node 侧变成 `src/???????/index.yaml` 并报 `ENOENT`。后续改由 PowerShell `Resolve-Path` 将 Unicode 绝对路径放入环境变量，Node 脚本本身不再包含中文路径。
+- 第二次 YAML 解析已解决文件路径，但管道中的中文属性名仍被改写为`????`，导致 Node 正则字面量语法错误；下一次只使用 ASCII JavaScript 与 `\\uXXXX` 属性键，彻底绕开管道代码页。
+- 一次并行token/gate搜索因其中一条`rg`无匹配返回exit 1而让组合调用失败；token结果仍可读，gate随后改为直接按UTF-8完整读取，不再依赖组合命令的匹配退出码。
+- 本轮严格只执行 Phase 5：先在真页证明欢迎页由 `第一条消息/0.txt` 的 `<sp_start>` 与开发版启用正则生成，再只改真实欢迎页/通用输入/掷骰 UI 及必要无障碍；不进入 Phase 6，不提交、推送或发布。
+- Phase 5静态实现已落地到独立worktree：修改开发版`index.yaml`的开局页/通用输入/掷骰三条启用正则替换UI，并修改活跃`脚本/界面美化/index.ts`的欢迎页锚点下拉与掷骰增强；未修改第一条消息、schema、世界书、发布版、PNG或发布配置。
+- 三段正则UI统一到尸青`#5f8f86`、旧铜`#9c784a`、骨白`#ded4bd`、血红`#9f342f`，使用焦纸纹理和单层档案边框；移除目标模板`outline:none`和掷骰🎲，欢迎页增删厉鬼按钮提升到44×44px，输入/提交控件保留原选择器与数据键。
+- 欢迎页锚点组/章节标题改原生button并同步`aria-expanded/aria-controls`，选项补`aria-selected`与方向键/Home/End/Escape；掷骰补meter/aria-live，复算后同步`aria-valuenow/aria-valuetext`，seed改用`textContent`避免未经转义的innerHTML。
+- Phase 5门禁扩展到175项并通过；锁定33条正则、29/4启用向量、全部欢迎页`data-mfrs`、目标正则启用状态、44px、focus-visible、region/meter与活跃脚本交互契约。YAML解析和`git diff --check`通过。
+- 错误处理：首次门禁的正则块提取把`\\s*$`与多行模式组合，导致启用行被截掉并误报向量全false；改用真正文件尾断言后通过。`index.yaml`当前与HEAD均不通过整文件Prettier，确认为既有格式基线，未机械重排；仅对TypeScript和门禁脚本执行Prettier并通过复查。
+- 新会话接续时 Chrome DevTools MCP 实际可用；页面保持角色id=4、5条聊天消息、1440×900、输入框为空，两份Phase 5 sessionStorage备份与本地候选均仍在。首次组合恢复脚本因JavaScript模板中的PowerShell反引号触发语法错误，已改用`String.raw`与`[char]9`后成功，不影响项目或页面状态。
+- 欢迎页锚点键盘闭环通过：分组按钮Enter折叠、Space展开；章节按钮Enter折叠、Space展开；可见option的ArrowDown、End、Home、ArrowUp均按预期移动焦点（含首尾循环）；Escape关闭listbox并把焦点归还主触发器。
+- 欢迎页提交闭环通过：填写4个必填字段并从自定义锚点listbox选择首个节点后，点击“进入神秘复苏世界”只把完整开局设定写入`#send_textarea`；聊天消息保持5条、`isGenerating=false`、欢迎页仍在，未自动发送。随后恢复表单原值与空输入框。
+- 通用输入面板通过真实正则渲染API临时生成：6个字段可填写，“写入行动草稿”只更新`#send_textarea`且消息仍为5、未生成；“清空面板”清空面板自身6项。测试DOM已删除，聊天输入框恢复为空。
+- 掷骰条通过真实正则渲染API临时生成两例：seed复算结果分别为61/DC1“通过”和15/DC100“未通过”，显示值与源码`hash=0; hash=hash*31+charCode`算法一致；meter同步`aria-valuenow/aria-valuetext`。含`</span><b>unsafe</b><span>`的seed最终仅作为`.mfrs-roll-seed`文本存在，验证区无`b/img`注入节点。测试DOM已删除。
+- 掷骰复算首次独立验算误把hash初值写成FNV常量`2166136261`，造成期望值32/52与页面61/15不一致；重读目标源码确认初值应为0，修正后两例精确匹配，未修改代码或页面逻辑。
+- Phase 5桌面布局检查通过：1440×900下document/body/欢迎页横向溢出均0；锚点菜单关闭时13个、打开时28个可见交互控件的最小宽高均为44px。为避免既有固定档案柜遮挡证据，只对其DOM临时设`visibility:hidden`，未触发设置或数据库写入；桌面全页截图保存为`.tmp-ghostseal-phase5-desktop-final.png`。
+- 首次切换375×812设备模拟后酒馆自动回到临时聊天（character=null、2楼），导致欢迎页探针为空；重新`selectCharacterById(4)`后恢复5楼目标卡与候选。移动实测发现唯一触控缺口：厉鬼添加按钮声明width 44px但因`flex-shrink:1`缩到32.2px。
+- 已在开发版欢迎页模板为厉鬼增删按钮补`min-width:44px; flex:0 0 44px`，并把Phase 5门禁从单纯width/height升级为锁定不可收缩约束；运行态正则候选同步该单行后，375×812下按钮恢复44×44，18个可见控件最小宽高均44，document/body/欢迎页横向溢出均0。
+- 移动截图排查：固定档案柜虽`visibility:hidden`仍占据flex布局，使`#chat`只剩约2px高；改为仅测试期`display:none`后聊天区恢复737px。元素全高截图受宿主滚动容器裁剪，最终保存可复核的375×812顶部视口截图`.tmp-ghostseal-phase5-mobile-final.png`；临时clone截图方案视觉失真，已删除clone并恢复原欢迎页id。
+- 修复后最终验证：Phase 5门禁179项、目标Prettier、ESLint、`git diff --check`再次通过；追加一轮`pnpm run build:dev`成功。发布版目录与`scripts/publish-card.mjs`的任务diff为空；build仅继续产生已知开发PNG/dist依赖漂移噪声，不提交。
+- Console/Network最终复核未发现Phase 5新增异常：保留的warn/error为宿主Settings未就绪、宏API废弃、MVU parseMessage不可用、unload permissions-policy，以及vendor storage的两条既有404；正式重载后的Network无4177/phase5候选请求。
+- 正式状态恢复完成：从`codex-mfrs-phase5-regex-backup`还原33条角色正则，删除regex/page两份sessionStorage键，整页reload后切回角色id=4；当前5条消息、1440×900、输入框为空、固定档案柜正式display恢复、临时DOM和4177脚本资源均为0。PID18580已停止，4177监听为0。
+- **停点：Phase 5完成；不进入Phase 6，不commit、不push、不publish。**
+
+---
+
+## 2026-07-11 CST（📌 新对话交接：Phase 4完成，停在Phase 5前）
+
+- 当前开发worktree：`D:\project\tavern_helper_template_ghostseal`，分支`codex/mfrs-ghostseal`，HEAD=`3181948`；Phase 1-4均已实现和验证但未commit/push/publish。
+- 下一步只执行Phase 5：先证明欢迎页真实运行入口，再改欢迎页与正则UI表现；不要凭`App.vue`死代码猜入口，不进入Phase 6/7。
+- `chrome-devtools` MCP配置检查为enabled，命令指向`chrome-devtools-mcp@latest --browserUrl http://127.0.0.1:9222`；但当前会话没有暴露MCP工具schema。上轮真页使用`agent-browser --cdp 9222`进行交互，并用项目裸CDP脚本做evaluate、截图和设备模拟。
+- 正式页面已恢复角色id=4、1440×900、本地候选token为空；4177服务停止。新会话如需本地候选，必须重新启动CORS服务并显式注入，不能把正式v8.7.4 DOM当成本地源码结果。
+- 完整恢复步骤、禁止范围、Phase 5首步和Phase 4复核命令已写入`task_plan.md`顶部“新对话最短恢复快照”。
+
+---
+
+## 2026-07-11 CST（✅「鬼眼封案」Phase 4 完成：档案柜换肤与无障碍）
+
+- 只修改活跃入口`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`和Phase 4静态门禁；固定host、dashboard/frontend插槽ID与order`10/20`、`MysteryDatabaseFrontend`公共API、14表、CRUD/召回/一致性/抽卡/编辑器逻辑均未改。
+- 在兼容的`aurora`主题内增加尸青/旧铜/骨白/血红档案柜token、网格焦纸表面、旧铜装订边与尸青辅助色；默认`theme:'aurora'`和`acu_ui_config_v18`保存键不迁移，真页操作前后保存配置字符串不变。
+- 可见“仪表盘”改为“档案柜”，内部`TAB_DASHBOARD='acu_tab_dashboard_home'`、`data-table`、`data-target`及`.acu-wrapper/.acu-nav-container/.acu-embedded-dashboard-container`契约不变。
+- 即时状态与六组档案Tab改为原生`button`，保留tablist/tab/tabpanel/aria-selected/aria-controls/hidden，新增Left/Right/Home/End循环、首尾跳转、roving tabindex和焦点同步；编辑齿轮拆为相邻44px原生按钮，避免嵌套交互元素。
+- 主导航收起态新增`.acu-collapsed-trigger`原生按钮；嵌入档案柜、行动选项用可聚焦`role=button`折叠条；设置分区标题改原生按钮。所有入口同步`aria-expanded`，原生按钮或自定义handler支持Enter/Space。
+- 删除visualizer内全部`outline:none`，加入作用于wrapper/嵌入容器/弹窗/菜单的高对比`:focus-visible`；阶段目标控件真页实测无小于44px命中区，Tab/按钮无文字溢出。
+- Phase 4门禁从124项补强到138项，新增主题token、可见档案柜文案、默认主题兼容、方向键、三类折叠、Enter/Space、44px和全面禁止outline suppression检查。
+- 自动验证全绿：Node语法、Phase 4 gate 138项、`verify:mfrs-frontend`、`verify:mfrs-mvu-hotfix`、output-cleaning、门禁Prettier、`git diff --check`和两轮`pnpm run build:dev`。visualizer整文件Prettier在HEAD与当前均失败，确认为既有基线，未引入整文件重排；关闭对大段HTML/CSS模板的5条Tailwind/Prettier误报规则后，HEAD与当前ESLint均为既有28 errors/2 warnings，证明本阶段未新增真实lint项。
+- 真页导航17项=总览/召回/一致性3项+14表；逐项打开均active、visible且内容非空。抽卡主面板、自定义物品编辑器、设置分区、主折叠、嵌入档案柜折叠均通过；Tab四种键位状态、焦点与唯一可见tabpanel正确。
+- cleanup真页门禁为wrapper/dashboard/style`1/1/1 -> 0/0/0 -> 1/1/1`，API同步卸载/恢复；重注入后档案柜标题、旧铜token、尸青Tab文字与双插槽order`10/20`正确，控制台只有3条正常info，无warn/error。
+- 桌面1440×900与移动375×812任务节点布局通过：body、固定host、wrapper、dashboard自身横向溢出0，控制目标无小于44px；移动模拟的`documentElement`额外宽度来自宿主第三方`.tf-ball`停留在桌面x=1374，不是档案柜节点。截图为`.tmp-ghostseal-phase4-desktop-final.png`与`.tmp-ghostseal-phase4-mobile-final2.png`。
+- 错误处理：大补丁首轮匹配失败后改小块精确补丁；嵌套Tab编辑按钮在自检中拆开；两次长异步浏览器探针超时后改短步骤重放。最终清除移动模拟、重载并恢复正式v8.7.4角色id=4，本地archive token为空；4177服务已停止。
+- 未修改开发/发布YAML、PNG、`publish-card.mjs`或数据库模板；无commit、push或发布，未进入Phase 5。
+
+---
+
+## 2026-07-11 CST（✅「鬼眼封案」Phase 3 完成：正文与连续档案面板）
+
+- `界面美化/index.ts` 在`#chat`作用域新增尸青/旧铜/骨白/血红语义token；AI正文wrapper改为焦纸纹理、单层旧铜边框、18px顶部间距和左侧装订线，删除旧双层红框、八角裁切与血雾光斑。
+- `消息内面板/index.ts` 保留`.mfrs-msg-panel`、`data-tab=status|relation`、`data-action`和原数据路径，把面板改为一个档案外框内的连续分区；身份/能力/生存/事件/厉鬼/行动/环境/人物不再各自形成嵌套红卡。
+- Tab文案更新为“生存状态 / 现场关系”，保留tablist/tab/tabpanel/aria-selected/aria-controls/hidden契约；新增Left/Right循环切换与Home/End首尾切换，切换后焦点跟随。
+- 风险计新增`riskPresentation()`：死亡/复苏风险均同时输出“可控/警戒/高危”等级、百分比、解释文字、语义颜色与`role=meter/aria-valuenow`；原字段读取和数值clamp保持不变。
+- 状态面板结构性emoji全部替换为项目既有Font Awesome；真页发现全局字体规则覆盖图标字体后，在`.mfrs-msg-panel .fa-solid`内显式恢复`Font Awesome 6 Free`和900字重。
+- 行动建议继续使用宿主realm textarea setter，只填充并聚焦`#send_textarea`；bundle和门禁均确认不含`#send_but`、`requestSubmit`或`.click()`自动发送路径。
+- Phase 3 gate扩展至116项，新增语义token、单层正文边框、连续分区、键盘Tab、ARIA、风险非纯颜色表达、Font Awesome字体恢复和禁止自动发送检查；MVU BUG-003门禁允许装订线增加左内边距但仍锁住顶部18px与品牌独立文档流。
+- 验证全绿：Phase 3 gate 116项、MVU hotfix、数据库前端、output cleaning、目标Prettier、目标ESLint、`git diff --check`和两轮`pnpm run build:dev`；MVU回归脚本仅保留既有dynamic-require warning。
+- 真页本地bundle最终为AI panel/wrapper/brand=`3/3/3`、用户=`0/0/0`、style/theme各1、`brand -> wrapper -> panel`顺序、连续三次刷新panel根节点稳定；Left/Right/Home/End状态和焦点均正确。
+- 行动点击测试：输入框填入建议，消息数`6 -> 6`，未自动发送，随后恢复原输入框值；风险计显示等级/数值/文字/颜色，结构emoji=0，Font Awesome字体为`Font Awesome 6 Free`。
+- 桌面1440×900与移动375×812布局通过：document/chat横向溢出均0，Tab和行动按钮`scrollWidth===clientWidth`，移动单列、桌面双列；最终截图为`.tmp-ghostseal-phase3-desktop-final.png`和`.tmp-ghostseal-phase3-mobile-final.png`。
+- 错误处理：首次Python静态服务无CORS导致候选未加载；改用本地Node CORS服务。首次探针缓存刷新前旧panel导致假阴性；改为等待延迟刷新后重选节点。首次图标截图显示方框；修复字体族后复测通过。
+- 最终整页重载并显式重新选择角色id=4，恢复正式v8.7.4：AI panel/wrapper=`3/3`、用户0、正式brand0、消息面板API/iframe/style各1；4177服务已停止。未commit、push或发布，未进入Phase 4。
+
+---
+
+## 2026-07-11 CST（✅「鬼眼封案」Phase 2 完成：三段式实体 Logo）
+
+- `消息内面板/index.ts` 新增稳定 `.mfrs-msg-brand` 实体根节点和render key更新：左侧鬼眼三轨道+静态眼球，中间“鬼眼封案/神秘复苏/SUPERNATURAL ARCHIVE”双层字标与档案/阶段/位置/危害元数据，右侧八方封尸法阵。
+- 品牌只读取mesid、`主线进度.当前阶段`、`所在位置`、`当前灵异事件.危害等级`；可见动态字段和根节点`aria-label`全部经`_.escape`，两份装饰SVG均`aria-hidden=true`且无`${...}`动态插值。
+- 品牌在`.mes_text`内按`brand -> narrative wrapper -> panel`独立占据文档流；旧`.mes_text::after`血封之眼、`@property --mfrs-seal-ring-angle`、旧press/ring-spin keyframes、40px正文避让和两个Tab里的SMIL `<animateTransform>`全部删除。
+- 动画预算收口：品牌入场`360ms`单次；历史AI鬼眼/法阵均paused；最新AI鬼眼`9s`顺时针、法阵`18s reverse`逆时针；reduced-motion模拟下brand/eye/seal均`animationName=none`。旧`mfrs-panel-breathe`提前从Phase 3完成删除，目标消息UI源码仅剩2处`infinite`。
+- Phase 2门禁从79项补强到90项，新增字段边界、动态转义、SVG禁止插值、旧避让归零、动画时长和仅两处持续动画检查；baseline门禁同步兼容旧伪元素与新实体品牌两种阶段状态。
+- `verify-mfrs-mvu-hotfix-regressions.mjs`的BUG-003门禁由“永远要求40px顶部避让”升级为双路径：旧伪Logo要求≥40px，实体品牌要求18px正常padding并位于正文前独立文档流。
+- 验证全绿：Phase 2 gate 90项、MVU hotfix、数据库前端、output cleaning、新消息面板与门禁Prettier、两份目标源码ESLint、`git diff --check`和`pnpm run build:dev`。`界面美化`保留原排版并收敛为精确差异；目标dist含brand marker且仅2处infinite，旧Logo/角度/keyframes/40px/面板呼吸marker均为0。
+- 真页本地bundle：AI消息3条/brand3，用户2条/brand0，style/theme各1，刷新后brand根节点稳定；每层2个SVG、SMIL 0、旧伪元素content=none；品牌与正文及panel交叠面积均0，document/chat横向溢出均0。
+- 桌面1440×900和移动375×812截图视觉通过：固定三列品牌结构完整，移动端字标/元数据换行且无文本溢出。证据为worktree根目录`.tmp-ghostseal-phase2-brand-desktop-final.png`与`.tmp-ghostseal-phase2-brand-mobile.png`。
+- 首次Phase 2 gate因baseline硬编码旧Logo reduced-motion marker失败；修正为阶段兼容门禁。首次MVU回归因旧BUG-003 40px断言失败；修正为实体品牌路径。`界面美化`目标lint另发现5处既有字符类`\.`多余转义，等价改为`.`后通过。
+- 最终已重载并恢复正式v8.7.4：消息5（AI3/用户2）、AI panel/wrapper3/3、用户0/0、正式brand0、主题/面板样式1、固定三槽与关键API正常；4177服务停止。未commit、push或发布，未进入Phase 3其余工作。
+
+---
+
+## 2026-07-11 CST（✅「鬼眼封案」Phase 1 完成：跨卡真页收口通过）
+
+- 启动本地 `4177` CORS 静态服务，在当前 v8.7.4 发布卡的 `TH-script--消息内面板` iframe 内加载 worktree development bundle；未修改角色卡、YAML、PNG、数据库或聊天内容。
+- 本地候选同卡复核通过：AI panel/wrapper=`3/3`、用户=`0/0`、style/API/cleanup/目标iframe均为1；连续三次 `refreshAll()` 根节点不变，返回后重新加载候选并刷新仍为单例。
+- 第一轮跨卡：从“神秘复苏模拟器发布版”切到“Science Worship 20260628”后，消息面板 panel/wrapper/style/API/cleanup/目标iframe全部归零；切回正式目标卡后恢复 panel/wrapper=`3/3`、style/API/目标iframe各1。
+- 真页确认切换角色会销毁并重建 Tavern Helper script iframe。为验证返回后的本地候选，在新建的消息面板 iframe 中再次加载本地 bundle；候选重挂后仍为 AI `3/3`、用户 `0/0`、style/API/cleanup/iframe各1，两次刷新根节点稳定。
+- 第二轮离开目标卡后再次确认 panel/wrapper/brand/style/API/cleanup/目标iframe全部为0，证明本地候选 cleanup 可重复执行且不跨卡残留。
+- 最终重新选择目标卡并恢复正式 v8.7.4：消息5（AI3/用户2）、AI panel/wrapper=`3/3`、用户=`0/0`、主题/面板样式1、固定host/dashboard/frontend各1、`MFRS`/数据库/消息面板API均存在，document/chat横向溢出均为0。
+- Phase 1 静态门禁仍为70项通过；本轮未进入Phase 2，未commit、push或发布。development build产生的目标dist和9个依赖漂移dist噪声保持未提交状态。
+
+---
+
+## 2026-07-10 CST（⏸️「鬼眼封案」再次暂停：Phase 1主体完成，待跨卡真页收口）
+
+- 已修改开发版 `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：稳定 `mfrs-panel-<mesid>` ID、stat_data render key、数据不变直接返回、数据变化原位 `replaceChildren`；保留当前 Tab 与面板内焦点。
+- 跨 realm 改为 `nodeType`/宿主构造器；observer 使用宿主 `MutationObserver`，处理期间 disconnect/resume；行动建议改用宿主 textarea/Event/InputEvent realm。
+- 新增宿主 `__mfrsMessagePanelCleanup__` 单例、事件订阅 stop、timer/observer/style/API/DOM 完整清理；wrapper 清理改为解包，避免删除消息正文；CHAT_CHANGED 已实现停用/重挂逻辑但尚未完成本地 bundle 的真实跨卡往返验证。
+- 更新 `scripts/verify-mfrs-archive-ui-regressions.mjs`，Phase 1 门禁从基础检查扩展到 render key、原位更新、焦点恢复、observer暂停、事件取消、wrapper解包和跨卡标记；`--stage phase1` 通过70项。
+- 验证通过：Prettier；目标文件真实 ESLint；目标文件独立严格 TypeScript；`verify-mfrs-mvu-hotfix-regressions`、`verify-mfrs-database-frontend-p3`、`verify-output-cleaning-regressions`；`git diff --check`；`pnpm run build:dev`。
+- 完整项目 `tsc --noEmit` 仍被仓库既有 `TypeFest`、全局脚本重复声明、旧示例/adapter错误阻断；本轮目标文件独立检查为0错误。
+- 真页同卡验证通过：连续3次 `refreshAll()` 后3个AI楼层panel/wrapper根节点全部不变；强制render key失效仍原位更新；关系Tab与焦点保留；用户楼层0注入；cleanup后panel/wrapper/style/API为0且三条正文保留；同iframe重新import后恢复3/3/0/0与单例。
+- 为验证本地 bundle执行 frozen install；离线首次因缺 `@types/node@26.1.1` tarball失败，随后经官方pnpm registry补齐锁定依赖，lockfile未改。development build产生9个无关dist入口依赖漂移噪声和目标消息面板dist，均未提交；恢复时先精确核对并只清理本轮build产物。
+- 暂停前已整页恢复并重新选择目标卡；最终真页回到v8.7.4基线：消息5（AI3/用户2）、AI panel/wrapper 3/3、用户0/0、主题/面板样式1、固定host/dashboard/frontend各1、MFRS/数据库/消息面板API均存在。临时4177静态服务已停止。
+- 未修改YAML、PNG、`publish-card.mjs`或发布配置；Phase 2-7未开始；无commit、push或发布。
+
+---
+
+## 2026-07-10 CST（⏳「鬼眼封案」恢复：Phase 1进行中）
+
+- 按 `planning-with-files-zh` 重读 `task_plan.md`、`progress.md`、`findings.md`、`PROJECT_FLOW.md`，并核读开发 worktree 的 `4.0功能基线回归清单.md` 与两份 Phase 0 门禁脚本。
+- 主工作区既有 dirty/untracked 全部保留；开发 worktree 为 `codex/mfrs-ghostseal`，`HEAD=origin/main=3181948`，仅三份 Phase 0 文件与 `.tmp-ghostseal-*` 未跟踪。
+- 首次读取开发 worktree 状态被 Git dubious ownership 拦截；改用单条命令级 `git -c safe.directory=D:/project/tavern_helper_template_ghostseal` 成功读取，未写全局配置。
+- `session-catchup.py` 返回旧 v8.5.13 残片，已被当前 v8.7.4 规划覆盖，不用于恢复结论。
+- 参考图确认三段横向品牌头与连续全宽档案分区；Phase 1 不提前做视觉，只处理消息面板跨 realm、幂等更新、焦点/Tab 保留、observer 自触发、宿主 cleanup 与跨卡重挂。
+
+---
+
+## 2026-07-10 CST（⏸️「鬼眼封案」执行暂停：Phase 0完成，Phase 1未开始）
+
+- 按用户要求暂停，不再继续前端修改、构建或发布；恢复入口是 `task_plan.md` 当前任务的Phase 1。
+- 从 `origin/main=3181948` 建立独立worktree `D:\project\tavern_helper_template_ghostseal`，分支 `codex/mfrs-ghostseal`；主工作区既有dirty未清理、未覆盖。
+- 独立worktree已新增但未提交：`4.0功能基线回归清单.md`、`scripts/verify-mfrs-release-png.mjs`、`scripts/verify-mfrs-archive-ui-regressions.mjs`。另有 `.tmp-ghostseal-*` CDP辅助文件和基线截图，均为不提交的临时证据。
+- PNG门禁self-test通过：强制同时存在且分别验证`chara`/`ccv3`，并拒绝缺chunk、重复chunk、元数据不一致、错误版本/ref/cache、脚本顺序变化、`localhost`、`127.0.0.1`、`@main`。
+- v8.7.4发布卡双chunk通过：版本8.7.4、项目ref 7个、cache 8个、正则33、脚本8且顺序不变；开发/发布worldbook gate均为383/33/max5851。
+- UI baseline gate通过50项；`verify:mfrs-mvu-hotfix`、`verify:mfrs-frontend`、`verify-output-cleaning-regressions`、`git diff --check`均通过。
+- 真页已切换到“神秘复苏模拟器发布版”v8.7.4并完成只读基线：世界书383、正则33、脚本8；消息5（AI 3/用户2）；AI panel/wrapper各3、用户各0；主题样式1、面板样式1、固定host/dashboard/frontend各1；`MFRS`、`MysteryDatabaseFrontend`、`MysteryMessagePanel`均挂载。
+- 已采集1440×900、500×901、375×812的仪表盘和消息视图截图，目录为独立worktree的`.tmp-ghostseal-baseline-v874/`；未复用v8.7.3截图。
+- 整页重载并重新选择目标卡后的运行基线：Console 230条，0 error、2个第三方deprecated warning；Network 633请求、2个既有404，均为`vendor/shujuku-sp-fork/data/storage/`缺失文件；项目资源固定在`@7e52d45`。
+- 未修改任何UI源码、开发/发布YAML、PNG、dist、`publish-card.mjs`；Phase 1–7均未开始，无commit、push或发布。
+
+---
+
+## 2026-07-10 CST（✅「鬼眼封案」前端重设计任务清单完成，未改代码）
+
+- 按 `planning-with-files-zh` 恢复现有规划，并按 `make-plan` 完成角色卡、前端所有权、验证/发布三条只读证据链。
+- 结构化解析开发版/发布版 YAML 与 PNG：发布基线 v8.7.4，世界书383/禁用33/max5851、正则33、启用脚本8、数据库14表；开发/发布 worldbook gate 均通过。
+- 当前自动回归：`verify-mfrs-mvu-hotfix-regressions`、`verify-output-cleaning-regressions`、`verify-mfrs-database-frontend-p3` 全部通过。
+- 确认真实入口：`界面美化`拥有全局/正文/旧Logo样式；`消息内面板`拥有panel/wrapper/Tab/行动DOM；`固定状态栏`只维护双插槽；`数据库前端/v10_2_visualizer.js`拥有档案柜/主题与数据交互。
+- 确认前置风险：跨realm Element判断、面板删除重建、消息面板缺宿主cleanup、内联SVG不受reduced-motion、缺失4.0基线清单、PNG双chunk/ref/cache门禁缺失。
+- 已在 `task_plan.md` 新增 Phase 0-7 实施清单：先补门禁与生命周期，再做实体Logo、正文/面板、档案柜、欢迎页，最后执行静态/构建/真页/发布/回滚。
+- 本轮只修改 `task_plan.md`、`findings.md`、`progress.md`；未修改源码、YAML、PNG、dist、发布配置，未触发AI、写库或发布。
+
+---
+
+## 2026-07-10 CST（⏳ Chrome DevTools MCP 酒馆界面探索式 QA）
+
+- 范围：当前 SillyTavern 页中的“神秘复苏模拟器发布版”角色卡，重点检查消息渲染、LOGO、消息内状态面板、固定仪表盘、交互、响应式和运行时错误。
+- 安全边界：不触发 AI 生成、不发送消息、不点击“立即手动更新”、不调用写库接口；允许 tab 切换、滚动、视口调整和可恢复的输入框填充测试。
+- 证据目录：`dogfood-output/`；报告初始化为 `dogfood-output/report.md`。
+- 旧 session-catchup 输出出现乱码且停留在 v8.5.13，已按编码规则判为不可靠旧数据，不用于本轮结论。
+- ✅ 基线定向完成：已连接 SillyTavern 当前页，保存 `dogfood-output/screenshots/baseline.png` 和完整无障碍树；发现“用户消息也有面板”“鬼档案重复显示”两个待复核候选问题。
+- ✅ ISSUE-001 已确认并记录：用户消息也被注入完整状态面板和正文包装（2/2 用户消息命中，medium）。
+- ✅ ISSUE-002 已确认并记录：AI 消息面板的“驾驭厉鬼”重复显示同一个“鬼档案”（mesid=2 为 8 次，mesid=3/4 为 3 次，medium）。
+- ✅ ISSUE-003 已确认并记录：48px 血封之眼与最新 AI 正文首行布局框轻微交叠（low）。
+- ✅ ISSUE-004 已确认并记录：状态/关系 tab 切换正常，但缺少 tab/tabpanel ARIA 语义（low）。
+- 交互测试记录：首次用猜测的 `.mfrs-msg-action` 选择器定位行动建议未命中；没有改变页面或输入框。后续改用无障碍快照中的实际按钮引用，不重复该选择器。
+- ✅ 行动建议安全交互通过：点击最新 AI 消息 A 选项后，只把“立刻收起灵异，低头装作害怕的普通学生”填入并聚焦输入框；有效消息仍为 5 条，无自动发送。测试后已恢复空输入框。
+
+---
+
+## 2026-07-10 CST（✅ 血封之眼外层封印环慢速旋转本地完成，未发布）
+
+- 用户确认希望把血封之眼的外层八段封印环改为缓慢持续旋转。
+- 方案选定为 CSS Houdini 自定义角度属性：现有 L5 `conic-gradient(from -22.5deg, ...)` 改为读取角度变量，只动画该变量；眼球主体、瞳孔、虹膜、蜡封底色与高光不参与旋转。
+- 保留 v8.7.3 的三项稳定兜底：默认 `opacity:0.9`、默认 `transform:identity`、入场动画 fill-mode=`both`。
+- 本轮范围：源码、构建和酒馆真页临时验证；不自动发布新版本，不改发布版 YAML/PNG/CDN_REF。
+- 验证错误记录：首次 `prettier --check` 报目标源码格式不符合项目规范；并行构建结果未采用。下一步改为先对该单文件执行 `prettier --write`，复查通过后再单独构建。
+- 验证错误记录：隔离 production 构建成功后，首次用 `rg webpack.config.* *.config.*` 查多配置结构在 Windows 上报路径语法错误；改用 `rg --files` 获取真实配置路径。隔离输出目录是否发生多入口同名覆盖需要继续核对，暂不把其中的 bundle 当作最终验证证据。
+- 验证错误记录：临时目标入口 webpack 配置首次加载失败（TS5097：导入路径不能显式带 `.ts`；基础导出项是配置工厂函数而非已解析配置）。已改为无扩展名导入，并在临时配置函数中执行工厂后按 entry 过滤。
+- 验证错误记录：第二次加载仍因 ESM 无法解析省略扩展名的 `webpack.config` 失败。第三种方案改用 Node 24 原生 TypeScript 模块加载；只读导入测试通过（17 个配置工厂），因此改用 `.mjs` 临时过滤配置显式导入 `webpack.config.ts`。
+- ✅ 最终源码已用临时 `.mjs` 过滤配置完成单入口 production 构建：界面美化 bundle 51.9 KiB，webpack compiled successfully；隔离 bundle marker 为 RingAngle×5、RingSpin×2、24s×1、PlayState×2、Opacity0.9×4、both×1、reduced-motion×1。
+- ✅ Chrome DevTools MCP 真页临时验证：最新 AI 楼层封印环角度在 1.6 秒内连续变化，前一 AI 楼层保持暂停；眼球整体 transform 始终 identity、opacity 始终 0.9。
+- ✅ 酒馆原运行时样式与滚动位置已恢复；恢复后 animationName 回到单独 `mfrs-seal-press`，没有把临时候选规则留在页面中。
+- ✅ 当前工作树的监听构建产物 `dist/神秘复苏模拟器/脚本/界面美化/index.js` 已包含 RingAngle×5、RingSpin×2；HEAD 基线均为 0。其他既有 dist dirty 与本轮无关，未主动覆盖或清理。
+- ℹ️ 控制台仍有既有 404、Permissions Policy 和 MVU JSONPatch 警告；与 LOGO 动画无关，本轮未处理。
+- **最终状态：本地源码 + dist + 真页临时验证完成；未 commit、未 push、未发布角色卡。**
+
+---
+
 ## 2026-07-09 CST（✅ v8.7.3 hotfix 已发布 HEAD=`69a16bb`）
 
 **v8.7.2 导入后发现 LOGO 不可见。** 用户用角色卡进行几轮真实对话后报告视觉 bug。立刻用 Chrome DevTools MCP 抓 `.mes_text::after` computed style：
@@ -2578,3 +2804,15 @@ visualizer 通过 JS-Slash-Runner 机制执行。JS-Slash-Runner 将脚本内容
 - **2026-06-22 任务 G（项目文档更新）**：README.md + CHANGELOG.md 已合并 `9756e2a`。
 - **2026-06-22 步骤 6.6-11 验收报告**：CDN smoke 通过，hotfix 生效，数据库 12/14 表落盘，3 表损坏（已修复）。
 - **2026-06-18 及更早（6.3-6.27）**：Task 20 协议/开局锁/事件纪要落库收口、SQL 兜底限流、SQL 参数/边界/约束、R2SQL、Task 19 raw/display 收口、503/524 上游分流等历史修复。详细见 `planning_archive_2026-06/`。
+# 2026-07-10 Chrome DevTools MCP 探索式 QA（继续）
+
+- 收口完成：`dogfood-output/report.md` 共 7 个问题（High 1 / Medium 2 / Low 4），11 个引用证据均存在，无缺失链接。
+- 页面已恢复到桌面视口（约 1708×981 CSS px）、原聊天滚动位置 7466.6665、仪表盘展开、最新消息“状态面板”激活；输入框为空，有效消息仍为 5 条。
+- 本轮只做浏览器只读检查与可逆 UI 操作，没有发送消息、触发 AI 生成、保存数据库、手动更新或发布。
+- 恢复现有浏览器会话与 dogfood 报告，未发送消息、未触发生成、未写库。
+- 复核控制台 msgid=143/182/290/329，并只读导出当前消息变量与 MVU 状态。
+- 已正式记录 ISSUE-005（high）：JSONPatch 路径层级错误，造成驾驭厉鬼/收录档案写入失败；当前 MVU 数组为空，但最新消息快照重复累积 6 份相同档案。
+- 已核实 reqid=449/451 的两个数据库 storage helper CDN 请求均为 404，并记录 ISSUE-006（low）。
+- 已完成 500×901 CSS px 窄屏复核：聊天区无自身横向溢出，仪表盘导航可用；补充 ISSUE-003 窄屏证据，并新增 ISSUE-007（low）记录浮动入口和仪表盘 tab 的可访问性缺失。
+- 已安全验证仪表盘收起/恢复，交互本身正常；折叠后的“展开面板”是不可键盘聚焦的 DIV，已并入 ISSUE-007，且已恢复原本展开状态。
+- 下一步：检查窄屏下剩余固定控件归属、恢复桌面视口和原始滚动位置，然后收口报告。

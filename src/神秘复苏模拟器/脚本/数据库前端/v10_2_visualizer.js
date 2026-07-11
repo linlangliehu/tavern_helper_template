@@ -1170,13 +1170,13 @@
 
         return `
             <div id="mfrs-current-status-card" class="acu-dash-card" style="width:100%; box-sizing:border-box; margin-bottom:8px; padding:0; overflow:hidden;">
-                <div class="acu-tab-header" style="padding:10px 16px 0 16px; margin-bottom:0;">
-                    <div class="acu-tab-btn active" data-target="mfrs-status-risk">风险</div>
-                    <div class="acu-tab-btn" data-target="mfrs-status-action">行动</div>
-                    <div class="acu-tab-btn" data-target="mfrs-status-file">档案</div>
+                <div class="acu-tab-header" role="tablist" aria-label="即时状态档案" style="padding:10px 16px 0 16px; margin-bottom:0;">
+                    <button type="button" class="acu-tab-btn active" id="mfrs-status-risk-tab" data-target="mfrs-status-risk" role="tab" aria-selected="true" aria-controls="mfrs-status-risk" tabindex="0">风险</button>
+                    <button type="button" class="acu-tab-btn" id="mfrs-status-action-tab" data-target="mfrs-status-action" role="tab" aria-selected="false" aria-controls="mfrs-status-action" tabindex="-1">行动</button>
+                    <button type="button" class="acu-tab-btn" id="mfrs-status-file-tab" data-target="mfrs-status-file" role="tab" aria-selected="false" aria-controls="mfrs-status-file" tabindex="-1">档案</button>
                 </div>
                 <div class="acu-no-scrollbar" style="padding:10px 16px 16px 16px; max-height:260px; overflow-y:auto;">
-                    <div id="mfrs-status-risk" class="acu-tab-pane active">
+                    <div id="mfrs-status-risk" class="acu-tab-pane active" role="tabpanel" aria-labelledby="mfrs-status-risk-tab">
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px;">
                             ${statusLine('事件代号', event.事件代号, '未立案灵异事件')}
                             ${statusLine('危害等级', event.危害等级)}
@@ -1186,7 +1186,7 @@
                             ${statusLine('当前状态', stat.状态, '健康')}
                         </div>
                     </div>
-                    <div id="mfrs-status-action" class="acu-tab-pane">
+                    <div id="mfrs-status-action" class="acu-tab-pane" role="tabpanel" aria-labelledby="mfrs-status-action-tab" hidden>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px;">
                             ${statusLine('行动类型', action.类型, '未判定')}
                             ${statusLine('行动内容', action.行动, '无')}
@@ -1195,7 +1195,7 @@
                             ${suggestionHtml}
                         </div>
                     </div>
-                    <div id="mfrs-status-file" class="acu-tab-pane">
+                    <div id="mfrs-status-file" class="acu-tab-pane" role="tabpanel" aria-labelledby="mfrs-status-file-tab" hidden>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px;">
                             ${statusLine('处理状态', event.处理状态, '未接触')}
                             ${statusLine('鬼域状态', event.鬼域状态, '未确认')}
@@ -2019,7 +2019,31 @@
 
                 .acu-wrapper { --acu-highlight: #d35400; --acu-highlight-bg: rgba(211, 84, 0, 0.1); --acu-title-color: var(--acu-text-main); z-index: 20000; }
                 ${themeCss}
+                .acu-theme-aurora {
+                    --mfrs-archive-corpse-cyan: #789c91;
+                    --mfrs-archive-old-brass: #a98b57;
+                    --mfrs-archive-bone-white: #ded7c9;
+                    --mfrs-archive-blood-red: #8f302d;
+                    --mfrs-archive-ink: #151513;
+                    --mfrs-archive-paper: #24221f;
+                    --acu-highlight: var(--mfrs-archive-old-brass);
+                    --acu-highlight-bg: rgba(169, 139, 87, 0.18);
+                    --acu-accent: var(--mfrs-archive-corpse-cyan);
+                    --acu-title-color: var(--mfrs-archive-bone-white);
+                }
                 .acu-wrapper { position: relative; width: 100%; margin: 10px 0 10px 0; z-index: 20000; display: flex; flex-direction: column; contain: layout; }
+                .acu-theme-aurora.acu-wrapper, .acu-theme-aurora.acu-embedded-dashboard-container, .acu-theme-aurora.acu-embedded-options-container, .acu-theme-aurora.acu-edit-dialog { color: var(--mfrs-archive-bone-white); }
+                .acu-theme-aurora .acu-nav-container, .acu-theme-aurora.acu-embedded-dashboard-container {
+                    border-color: rgba(169, 139, 87, 0.72);
+                    border-left: 4px solid var(--mfrs-archive-old-brass);
+                    border-radius: 4px;
+                    background-color: var(--mfrs-archive-ink);
+                    background-image: linear-gradient(rgba(120, 156, 145, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(120, 156, 145, 0.025) 1px, transparent 1px);
+                    background-size: 18px 18px;
+                    box-shadow: inset 0 0 0 1px rgba(222, 215, 201, 0.05), 0 8px 24px rgba(0, 0, 0, 0.38);
+                }
+                .acu-theme-aurora .acu-panel-title i, .acu-theme-aurora .acu-dash-title, .acu-theme-aurora .acu-opt-header, .acu-theme-aurora .acu-section-title i { color: var(--mfrs-archive-corpse-cyan) !important; }
+                .acu-theme-aurora .acu-tab-btn:not(.active) { color: #a9b8b1; }
                 .acu-nav-container { display: flex; gap: 0; padding: 6px; background: var(--acu-bg-nav); border: 1px solid var(--acu-border); border-radius: 14px; box-shadow: 0 4px 15px var(--acu-shadow); position: relative; z-index: 20001; backdrop-filter: blur(5px); flex-direction: column; }
                 .acu-nav-tabs-area { display: grid; grid-template-columns: var(--acu-nav-cols, repeat(auto-fill, minmax(110px, 1fr))); gap: 6px; width: 100%; }
                 .acu-nav-separator { width: 100%; height: 1px; border-top: 1px dashed var(--acu-border); margin: 6px 0 6px 0; opacity: 0.6; }
@@ -2034,7 +2058,7 @@
 
                 .acu-option-panel { display: grid; grid-template-columns: var(--acu-opt-cols, repeat(4, 1fr)); gap: 8px; padding: 8px; background: var(--acu-bg-nav); border: 1px solid var(--acu-border); border-radius: 12px; margin-bottom: 8px; backdrop-filter: blur(5px); width: 100%; box-sizing: border-box; z-index: 20001; contain: layout style; transition: opacity 0.15s ease-out; opacity: 1; }
                 .acu-opt-btn { background: var(--acu-card-bg); border: 1px solid var(--acu-border); box-shadow: 0 2px 5px var(--acu-shadow); padding: 8px 15px; border-radius: 8px; cursor: pointer; color: var(--acu-text-main); font-size: var(--acu-opt-font-size); transition: all 0.2s; font-weight: 500; user-select: none; text-align: left; width: 100%; overflow: hidden; white-space: pre-wrap; word-break: break-word; min-height: 38px; display: flex; align-items: center; }
-                .acu-opt-btn:focus { outline: none; scroll-margin: 0; }
+                .acu-opt-btn:focus { scroll-margin: 0; }
                 .acu-opt-btn:hover { background: var(--acu-highlight); color: #fff; transform: translateY(-2px); border-color: var(--acu-highlight); box-shadow: 0 4px 10px var(--acu-highlight-bg); }
                 .acu-opt-btn:active { transform: translateY(0); opacity: 0.8; }
                 .acu-opt-header { grid-column: 1 / -1; text-align: center; font-size: 12px; font-weight: bold; color: var(--acu-title-color); padding: 2px 0; border-bottom: 1px dashed var(--acu-border); margin-bottom: 4px; opacity: 0.9; }
@@ -2044,7 +2068,17 @@
                 .acu-no-anim { animation: none !important; transform: none !important; }
                 @keyframes popUp { from { opacity: 0; transform: translateY(15px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-                .acu-wrapper *:focus { scroll-margin: 0 !important; scroll-padding: 0 !important; outline: none !important; }
+                .acu-wrapper *:focus { scroll-margin: 0 !important; scroll-padding: 0 !important; }
+                .acu-wrapper :is(button, [role="button"], [role="tab"], input, select, textarea, [tabindex]):focus-visible,
+                .acu-embedded-dashboard-container :is(button, [role="button"], [role="tab"], input, select, textarea, [tabindex]):focus-visible,
+                .acu-embedded-options-container :is(button, [role="button"], input, select, textarea, [tabindex]):focus-visible,
+                .acu-edit-dialog :is(button, [role="button"], input, select, textarea, [tabindex]):focus-visible,
+                .acu-cell-menu :is(button, [role="button"], [tabindex]):focus-visible {
+                    outline: 3px solid var(--acu-highlight) !important;
+                    outline-offset: 2px;
+                    box-shadow: 0 0 0 2px var(--acu-bg-panel), 0 0 0 5px rgba(169, 139, 87, 0.28) !important;
+                }
+                .acu-wrapper button, .acu-edit-dialog button, .acu-cell-menu button, .acu-section-header, .acu-dash-ctrl-bar, .acu-opt-ctrl-bar { min-width: 44px; min-height: 44px; }
                 .acu-nav-btn, .acu-action-btn, .acu-opt-btn, .acu-page-btn, .acu-header-btn, .acu-btn-block, .acu-dialog-btn, .acu-dash-interactive, .acu-grid-item, .acu-full-item, .acu-inline-item, .acu-editable-title, .acu-tab-btn, .acu-close-pill, .acu-cell-menu-item, .acu-slot-setting-btn { -webkit-tap-highlight-color: transparent; }
                 .acu-data-display { contain: layout style; }
                 .acu-data-display:not(.visible) { visibility: hidden; pointer-events: none; position: absolute; }
@@ -2054,7 +2088,7 @@
                 .acu-header-actions { display: flex; align-items: center; gap: 6px; }
                 .acu-search-wrapper { position: relative; display: flex; align-items: center; }
                 .acu-search-input { height: 32px; box-sizing: border-box; background: var(--acu-btn-bg); border: 1px solid var(--acu-border); color: var(--acu-text-main); padding: 0 10px; border-radius: 8px; font-size: 12px; width: 100px; transition: all 0.2s; }
-                .acu-search-input:focus { width: 140px; outline: none; border-color: var(--acu-highlight); background: var(--acu-input-bg); }
+                .acu-search-input:focus { width: 140px; border-color: var(--acu-highlight); background: var(--acu-input-bg); }
                 .acu-search-icon { position: absolute; left: 10px; font-size: 10px; color: var(--acu-text-sub); pointer-events: none; }
                 
                 .acu-header-btn { width:  28px; height:  28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--acu-border); background: var(--acu-btn-bg); color: var(--acu-text-sub); cursor: pointer; transition: all 0.2s; font-size:  12px; flex-shrink: 0; }
@@ -2112,9 +2146,11 @@
                 
                 
                 .acu-tab-header { display: flex; gap: 5px; border-bottom: 1px solid var(--acu-border); margin-bottom: 10px; }
-                .acu-tab-btn { padding: 6px 12px; cursor: pointer; font-size: var(--acu-dash-font-size, var(--acu-font-size)); font-weight: bold; color: var(--acu-text-sub); border-bottom: none; transition: all 0.2s; flex: 1; text-align: center; }
+                .acu-tab-item { display: flex; flex: 1; min-width: 0; align-items: center; }
+                .acu-tab-item .acu-tab-btn { min-width: 0; }
+                .acu-tab-btn { padding: 8px 12px; min-height: 44px; cursor: pointer; font: inherit; font-size: var(--acu-dash-font-size, var(--acu-font-size)); font-weight: bold; color: var(--acu-text-sub); border: 0; border-bottom: 2px solid transparent; background: transparent; transition: color 0.2s, background 0.2s, border-color 0.2s; flex: 1; text-align: center; }
                 .acu-tab-btn:hover { color: var(--acu-text-main); background: var(--acu-table-hover); border-radius: 4px 4px 0 0; }
-                .acu-tab-btn.active { color: var(--acu-highlight);  }
+                .acu-tab-btn.active { color: var(--acu-highlight); border-bottom-color: var(--acu-highlight); }
                 .acu-tab-pane { display: none; animation: fadeIn 0.3s; }
                 .acu-tab-pane.active { display: block; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -2240,18 +2276,16 @@
                 .acu-order-controls.visible { display: block; }
                 .acu-nav-container.editing-order .acu-nav-btn, .acu-nav-container.editing-order .acu-action-btn { border: 1px dashed #f0ad4e; cursor: grab; opacity: 0.8; }
                 .acu-divider { width: 1px; height: 18px; background: var(--acu-border); margin: 0 6px; }
-                .acu-nav-container.collapsed > *:not(#acu-btn-toggle):not(.acu-collapsed-text) { display: none !important; }
+                .acu-nav-container.collapsed > *:not(.acu-collapsed-trigger) { display: none !important; }
                 .acu-nav-container.collapsed { width: 100%; justify-content: center; cursor: pointer; padding: 8px 0; flex-direction: column; gap: 0; height: auto; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); }
                 .acu-nav-container.collapsed.acu-collapse-pill { width: auto !important; border-radius: 50px; padding: 8px 25px; margin-top: 5px; box-shadow: 0 5px 15px var(--acu-shadow); background: var(--acu-bg-nav); border: 1px solid var(--acu-border); }
                 .acu-nav-container.collapsed.acu-collapse-pill.acu-pill-center { align-self: center; }
                 .acu-nav-container.collapsed.acu-collapse-pill.acu-pill-left { align-self: flex-start; margin-left: 15px; }
                 .acu-nav-container.collapsed.acu-collapse-pill.acu-pill-right { align-self: flex-end; margin-right: 15px; }
                 .acu-nav-container.collapsed.acu-collapse-pill:hover { transform: scale(1.05); border-color: var(--acu-highlight); color: var(--acu-highlight); }
-                .acu-nav-container.collapsed.acu-collapse-pill #acu-btn-toggle { display: none !important; }
-                .acu-nav-container.collapsed.acu-collapse-pill .acu-collapsed-text { display: block; font-size: 12px; margin: 0; font-weight: bold; }
-                .acu-nav-container.collapsed #acu-btn-toggle { background: transparent; border: none; width: 100%; pointer-events: none; height: 24px; }
-                .acu-collapsed-text { display: none; font-size: 12px; color: var(--acu-text-sub); margin-top: 2px; text-align: center; width: 100%; pointer-events: none; font-weight: bold; letter-spacing: 1px; }
-                .acu-nav-container.collapsed .acu-collapsed-text { display: block; }
+                .acu-collapsed-trigger { display: none; width: 100%; min-height: 44px; border: 0; background: transparent; color: var(--acu-text-main); cursor: pointer; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+                .acu-nav-container.collapsed .acu-collapsed-trigger { display: flex; }
+                .acu-nav-container.collapsed.acu-collapse-pill .acu-collapsed-trigger { width: auto; padding: 0 10px; }
 
                 .acu-height-drag-handle { cursor: ns-resize !important; touch-action: none; }
                 .acu-height-drag-handle.active { color: var(--acu-highlight); background: var(--acu-table-hover); }
@@ -2272,10 +2306,9 @@
                 .acu-card-edit-field { margin-bottom: 10px; }
                 .acu-card-edit-label { display: block; font-size: 12px; color: var(--acu-highlight); font-weight: bold; margin-bottom: 4px; }
                 .acu-card-edit-input { width: 100%; min-height: 38px; padding: 8px; border: 1px solid var(--acu-border); background: var(--acu-input-bg); color: var(--acu-text-main); border-radius: 6px; resize: none; overflow-y: hidden; line-height: 1.4; font-family: inherit; font-size: 14px; box-sizing: border-box; }
-                .acu-card-edit-input:focus { border-color: var(--acu-highlight); outline: none; }
+                .acu-card-edit-input:focus { border-color: var(--acu-highlight); }
                 .acu-cell-menu-item#act-edit-card { color: var(--acu-highlight); }
                 .acu-cell-menu-item#act-insert { color: #2980b9; }
-                .acu-wrapper button:focus, .acu-edit-dialog button:focus, .acu-cell-menu button:focus { outline: none !important; }
                 
                 
                 .acu-nav-container {
@@ -2723,7 +2756,6 @@
                 position: relative;
                 flex-shrink: 0;
                 -webkit-tap-highlight-color: transparent;
-                outline: none;
             }
             .acu-color-circle:hover { transform: scale(1.15); }
             .acu-color-circle:active { transform: scale(0.9); }
@@ -2741,12 +2773,12 @@
             .acu-nice-select {
                 appearance: none !important; border: 1px solid var(--acu-border) !important; background-color: var(--acu-btn-bg) !important;
                 color: var(--acu-text-main) !important; padding: 6px 24px 6px 10px !important; border-radius: 8px !important;
-                font-size: 12px !important; text-align: center !important; font-weight: bold !important; outline: none !important; box-shadow: none !important;
+                font-size: 12px !important; text-align: center !important; font-weight: bold !important; box-shadow: none !important;
                 background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
                 background-repeat: no-repeat !important; background-position: right 8px center !important; background-size: 10px !important;
                 min-width: 100px !important;
             }
-            .acu-nice-slider { width: 100% !important; height: 6px !important; background: var(--acu-text-sub) !important; opacity: 0.5; border-radius: 3px !important; outline: none !important; appearance: none !important; }
+            .acu-nice-slider { width: 100% !important; height: 6px !important; background: var(--acu-text-sub) !important; opacity: 0.5; border-radius: 3px !important; appearance: none !important; }
             .acu-nice-slider::-webkit-slider-thumb { appearance: none !important; width: 20px !important; height: 20px !important; background: var(--acu-text-main) !important; border: 2px solid var(--acu-highlight) !important; border-radius: 50% !important; cursor: pointer !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important; }
             .acu-settings-group { background: var(--acu-table-head); border-radius: 12px; padding: 0 15px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); }
             .acu-edit-header { padding: 10px 20px; border-bottom: 1px solid var(--acu-border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); }
@@ -2806,15 +2838,15 @@
             .acu-step-val { flex: 1; text-align: center; font-weight: bold; font-size: 14px; color: var(--acu-text-main); user-select: none; border-left: 1px solid var(--acu-border); border-right: 1px solid var(--acu-border); height: 32px; display: flex; align-items: center; justify-content: center; background: var(--acu-input-bg); }
 .acu-edit-dialog .acu-show-scroll::-webkit-scrollbar-thumb { background-color: var(--acu-text-sub); }
         
-            .acu-custom-color-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; flex-shrink: 0; -webkit-tap-highlight-color: transparent; outline: none; box-sizing: content-box; overflow: hidden; }
+            .acu-custom-color-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; flex-shrink: 0; -webkit-tap-highlight-color: transparent; box-sizing: content-box; overflow: hidden; }
             .acu-custom-color-btn:hover { transform: scale(1.15); }
             .acu-custom-color-btn:active { transform: scale(0.9); }
             .acu-custom-color-btn.selected { border-color: var(--acu-ui-color); box-shadow: 0 4px 12px rgba(0,0,0,0.2); transform: scale(1.25); }
             .acu-custom-color-btn.selected::after { content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: var(--acu-ui-color); border-radius: 50%; transform: translate(-50%, -50%); opacity: 0.7; pointer-events: none; z-index: 3; }
             .acu-custom-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 1; }
-            .acu-custom-color-btn input[type="color"] { position: absolute; top: -10px; left: -10px; width: 200%; height: 200%; opacity: 0; cursor: pointer; z-index: 2; padding: 0; margin: 0; border: none; outline: none; }
+            .acu-custom-color-btn input[type="color"] { position: absolute; top: -10px; left: -10px; width: 200%; height: 200%; opacity: 0; cursor: pointer; z-index: 2; padding: 0; margin: 0; border: none; }
             .acu-settings-content::-webkit-scrollbar { display: none !important; width: 0 !important; }
-            .acu-section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--acu-btn-bg); border: 1px solid var(--acu-border); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
+            .acu-section-header { display: flex; width: 100%; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--acu-btn-bg); color: inherit; font: inherit; text-align: left; border: 1px solid var(--acu-border); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; user-select: none; -webkit-tap-highlight-color: transparent; }
             .acu-section-header:hover { background: var(--acu-btn-hover); transform: translateY(-1px); }
             .acu-section-header.active { background: var(--acu-table-head); border-radius: 12px 12px 0 0; border-bottom: 1px solid var(--acu-border); margin-bottom: 0; box-shadow: none; }
             .acu-section-header.active:hover { transform: none; }
@@ -2842,7 +2874,7 @@
                      </div>
                     <div class="acu-settings-content" style="flex: 1; overflow-y: auto; padding: 20px;">
                         
-                        <div class="acu-section-header" data-target="sec-appearance"><div class="acu-section-title"><i class="fa-solid fa-palette"></i> 主题与外观</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-appearance"><div class="acu-settings-group">
+                        <button type="button" class="acu-section-header" data-target="sec-appearance" aria-expanded="false" aria-controls="sec-appearance"><span class="acu-section-title"><i class="fa-solid fa-palette"></i> 主题与外观</span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-appearance"><div class="acu-settings-group">
                             <div class="acu-control-row">
                                 <div class="acu-label-col"><span class="acu-label-main">背景主题</span></div>
                                 <div class="acu-input-col">
@@ -2944,7 +2976,7 @@
                                         <span class="acu-slider-switch"></span>
                                     </label>
                                 </div>
-                            </div></div></div><div class="acu-section-header" data-target="sec-layout"><div class="acu-section-title"><i class="fa-solid fa-layer-group"></i> 布局与样式</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-layout"><div class="acu-settings-group"><div class="acu-control-row">
+                            </div></div></div><button type="button" class="acu-section-header" data-target="sec-layout" aria-expanded="false" aria-controls="sec-layout"><span class="acu-section-title"><i class="fa-solid fa-layer-group"></i> 布局与样式</span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-layout"><div class="acu-settings-group"><div class="acu-control-row">
                                 <div class="acu-label-col"><span class="acu-label-main">页面布局</span></div>
                                 <div class="acu-input-col">
                                     <select id="cfg-layout" class="acu-nice-select">
@@ -2993,7 +3025,7 @@
                                         <button class="acu-step-btn plus" data-key="itemsPerPage" data-step="5" data-min="5" data-max="100"><i class="fa-solid fa-plus"></i></button>
                                     </div>
                                 </div>
-                            </div></div></div><div class="acu-section-header" data-target="sec-actions"><div class="acu-section-title"><i class="fa-solid fa-list-check"></i> 选项面板 ${!allTableNames.some(n => n.includes('选项') || n.includes('行动建议')) ? '<span class="acu-section-desc" style="color:#e74c3c !important;">未检测到选项表</span>' : ''}</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-actions"><div class="acu-settings-group">
+                            </div></div></div><button type="button" class="acu-section-header" data-target="sec-actions" aria-expanded="false" aria-controls="sec-actions"><span class="acu-section-title"><i class="fa-solid fa-list-check"></i> 选项面板 ${!allTableNames.some(n => n.includes('选项') || n.includes('行动建议')) ? '<span class="acu-section-desc" style="color:#e74c3c !important;">未检测到选项表</span>' : ''}</span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-actions"><div class="acu-settings-group">
 <div class="acu-control-row" >
                                 <div class="acu-label-col"><span class="acu-label-main">选项面板开关</span></div>
                                 <div class="acu-input-col">
@@ -3023,9 +3055,9 @@
                                     </div>
                                 </div>
                             </div>
-</div></div><div class="acu-section-header" data-target="sec-dashboard"><div class="acu-section-title"><i class="fa-solid fa-tachometer-alt"></i> 仪表盘</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-dashboard"><div class="acu-settings-group">
+</div></div><button type="button" class="acu-section-header" data-target="sec-dashboard" aria-expanded="false" aria-controls="sec-dashboard"><span class="acu-section-title"><i class="fa-solid fa-box-archive"></i> 档案柜</span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-dashboard"><div class="acu-settings-group">
 <div class="acu-control-row" >
-                                <div class="acu-label-col"><span class="acu-label-main">仪表盘开关</span></div>
+                                <div class="acu-label-col"><span class="acu-label-main">档案柜开关</span></div>
                                 <div class="acu-input-col">
                                     <label class="acu-switch">
                                         <input type="checkbox" id="cfg-show-dash" ${config.showDashboard !== false ? 'checked' : ''}>
@@ -3034,7 +3066,7 @@
                                 </div>
                             </div>
 <div class="acu-control-row" id="row-dash-pos" >
-                                <div class="acu-label-col"><span class="acu-label-main">仪表盘位置</span></div>
+                                <div class="acu-label-col"><span class="acu-label-main">档案柜位置</span></div>
                                 <div class="acu-input-col">
                                     <select id="cfg-dash-pos" class="acu-nice-select">
                                         <option value="fixed_status" ${config.dashboardPosition === 'fixed_status' ? 'selected' : ''}>输入框上方</option>
@@ -3044,7 +3076,7 @@
                                 </div>
                             </div>
                             <div class="acu-control-row">
-                                <div class="acu-label-col"><span class="acu-label-main">仪表盘字体大小</span></div>
+                                <div class="acu-label-col"><span class="acu-label-main">档案柜字体大小</span></div>
                                 <div class="acu-input-col">
                                     <div class="acu-stepper">
                                         <button class="acu-step-btn minus" data-key="dashboardFontSize" data-step="1" data-min="10" data-max="20"><i class="fa-solid fa-minus"></i></button>
@@ -3053,7 +3085,7 @@
                                     </div>
                                 </div>
                             </div>
-</div></div><div class="acu-section-header" data-target="sec-features"><div class="acu-section-title"><i class="fa-solid fa-universal-access"></i> 辅助功能</div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-features"><div class="acu-settings-group">
+</div></div><button type="button" class="acu-section-header" data-target="sec-features" aria-expanded="false" aria-controls="sec-features"><span class="acu-section-title"><i class="fa-solid fa-universal-access"></i> 辅助功能</span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-features"><div class="acu-settings-group">
                              
                             
                             
@@ -3072,12 +3104,12 @@
                              
                             
                             
-                        </div></div><div class="acu-section-header" data-target="sec-tables"><div class="acu-section-title"><i class="fa-solid fa-table"></i> 表格管理 <span class="acu-section-desc">点击眼睛显隐，开启开关倒序</span></div><i class="fa-solid fa-chevron-right acu-section-icon"></i></div><div class="acu-section-content" id="sec-tables"><div class="acu-settings-group" id="list-reverse-tables" style="padding: 0;">
+                        </div></div><button type="button" class="acu-section-header" data-target="sec-tables" aria-expanded="false" aria-controls="sec-tables"><span class="acu-section-title"><i class="fa-solid fa-table"></i> 表格管理 <span class="acu-section-desc">点击眼睛显隐，开启开关倒序</span></span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-tables"><div class="acu-settings-group" id="list-reverse-tables" style="padding: 0;">
                             <div style="max-height: 200px; overflow-y: auto;">
                                 ${allTableNames.length > 0 ? allTableNames.filter(n => !n.includes('选项')).map(name => `
                                     <div class="acu-control-row" style="padding: 10px 15px;">
                                         <div class="acu-label-col" style="max-width:70%; display:flex; flex-direction:row; align-items:center; gap:8px;">
-                                            <i class="fa-solid ${hiddenTables.includes(name) ? 'fa-eye-slash' : 'fa-eye'} acu-visibility-toggle" data-table="${name}" style="cursor:pointer; color:var(--acu-text-sub); width:20px; text-align:center; outline:none; -webkit-tap-highlight-color:transparent;"></i>
+                                            <button type="button" class="acu-visibility-toggle" data-table="${name}" aria-label="${hiddenTables.includes(name) ? '显示' : '隐藏'} ${name}" style="cursor:pointer; color:var(--acu-text-sub); width:44px; height:44px; padding:0; border:0; background:transparent; text-align:center; -webkit-tap-highlight-color:transparent;"><i class="fa-solid ${hiddenTables.includes(name) ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
                                             <span class="acu-label-main" style="font-weight:normal;">${name}</span>
                                         </div>
                                         <div class="acu-input-col">
@@ -3102,10 +3134,10 @@
             const $this = $(this);
             const $target = dialog.find('#' + $this.data('target'));
             const isOpen = $this.hasClass('active');
-            dialog.find('.acu-section-header.active').not(this).removeClass('active');
+            dialog.find('.acu-section-header.active').not(this).removeClass('active').attr('aria-expanded', 'false');
             dialog.find('.acu-section-content:visible').not($target).slideUp(200);
-            if (isOpen) { $this.removeClass('active'); $target.slideUp(200); } 
-            else { $this.addClass('active'); $target.slideDown(200); }
+            if (isOpen) { $this.removeClass('active').attr('aria-expanded', 'false'); $target.slideUp(200); }
+            else { $this.addClass('active').attr('aria-expanded', 'true'); $target.slideDown(200); }
         });
 
         dialog.find('#cfg-theme').on('change', function() { 
@@ -3271,13 +3303,14 @@
         });
         dialog.find('.acu-visibility-toggle').on('click', function() {
             const tName = $(this).data('table');
+            const $icon = $(this).find('i');
             let currentList = getHiddenTables();
             if (currentList.includes(tName)) {
                 currentList = currentList.filter(n => n !== tName);
-                $(this).removeClass('fa-eye-slash').addClass('fa-eye');
+                $icon.removeClass('fa-eye-slash').addClass('fa-eye');
             } else {
                 currentList.push(tName);
-                $(this).removeClass('fa-eye').addClass('fa-eye-slash');
+                $icon.removeClass('fa-eye').addClass('fa-eye-slash');
             }
             saveHiddenTables(currentList);
             renderInterface();
@@ -3359,6 +3392,7 @@
                     if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
                         $wrapper.css(expandedContentCss);
                         $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
+                        $header.attr('aria-expanded', 'true');
                     }
                     $editBtn.css('display', 'inline-flex');
                     $editIcon.removeClass('fa-edit').addClass('fa-check').css('color', 'var(--acu-highlight)');
@@ -3367,8 +3401,10 @@
                     // 非编辑模式下，根据折叠状态显示/隐藏编辑按钮
                     if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
                         $editBtn.hide();
+                        $header.attr('aria-expanded', 'false');
                     } else {
                         $editBtn.css('display', 'inline-flex');
+                        $header.attr('aria-expanded', 'true');
                     }
                 }
             } else {
@@ -3380,7 +3416,7 @@
                 $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
 
                 const headerHtml = `
-                    <div class="acu-dash-ctrl-bar" style="
+                    <div class="acu-dash-ctrl-bar" role="button" tabindex="0" aria-expanded="${!isCollapsed}" aria-controls="acu-dash-content" style="
                         display: flex; justify-content: space-between; align-items: center;
                         padding: 10px 12px;
                         background: var(--acu-bg-nav);
@@ -3395,8 +3431,8 @@
                         -webkit-tap-highlight-color: transparent;
                     ">
                         <div style="display:flex; align-items:center; gap:8px;">
-                             <i class="fa-solid fa-tachometer-alt" style="color:var(--acu-highlight);"></i>
-                             <span style="font-weight: bold; color: var(--acu-title-color); font-size: 13px;">仪表盘</span>
+                             <i class="fa-solid fa-box-archive" style="color:var(--acu-highlight);"></i>
+                             <span style="font-weight: bold; color: var(--acu-title-color); font-size: 13px;">档案柜</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <button id="acu-btn-dash-edit-emb" title="编辑布局" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; padding:0 4px; height:16px; display:${isCollapsed ? 'none' : 'inline-flex'}; align-items:center;"><i class="fa-solid ${isDashEditing ? 'fa-check' : 'fa-edit'}" style="${isDashEditing ? 'color:var(--acu-highlight)' : ''}"></i></button>
@@ -3406,7 +3442,7 @@
 
                 const contentStyle = isCollapsed ? 'height: 0; opacity: 0; padding: 0; overflow: hidden;' : expandedContentStyle;
                 const contentWrapperHtml = `
-                    <div class="acu-dash-content-wrapper" style="
+                    <div class="acu-dash-content-wrapper" id="acu-dash-content" style="
                         overflow: hidden;
                         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         background: var(--acu-bg-nav);
@@ -3436,12 +3472,19 @@
                     if (isCurrentlyCollapsed) {
                         $wrapper.css(expandedContentCss);
                         $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
+                        $header.attr('aria-expanded', 'true');
                         $container.find('#acu-btn-dash-edit-emb').css('display', 'inline-flex');
                     } else {
                         $wrapper.css({ 'height': '0', 'max-height': '', 'opacity': '0', 'padding': '0', 'overflow': 'hidden' });
                         $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
+                        $header.attr('aria-expanded', 'false');
                         $container.find('#acu-btn-dash-edit-emb').hide();
                     }
+                });
+                $header.on('keydown', function(e) {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    $(this).trigger('click');
                 });
 
                 if (isFixedDashboard) {
@@ -3505,7 +3548,7 @@
                 $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
 
                 const headerHtml = `
-                    <div class="acu-opt-ctrl-bar" style="
+                    <div class="acu-opt-ctrl-bar" role="button" tabindex="0" aria-expanded="${!isCollapsed}" aria-controls="acu-opt-content" style="
                         display: flex; justify-content: center; align-items: center;
                         padding: 10px 12px;
                         background: var(--acu-bg-nav);
@@ -3525,7 +3568,7 @@
 
                 const contentStyle = isCollapsed ? 'max-height: 0; opacity: 0; padding: 0;' : 'max-height: 1000px; opacity: 1; padding: 8px;';
                 const contentWrapperHtml = `
-                    <div class="acu-opt-content-wrapper" style="
+                    <div class="acu-opt-content-wrapper" id="acu-opt-content" style="
                         overflow: hidden;
                         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         background: var(--acu-bg-nav);
@@ -3554,12 +3597,19 @@
                     if (currentIsCollapsed) {
                         $wrapper.css({ 'max-height': '1000px', 'opacity': '1', 'padding': '8px' });
                         $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
+                        $header.attr('aria-expanded', 'true');
                         localStorage.setItem(STORAGE_KEY_OPT_COLLAPSE, 'false');
                     } else {
                         $wrapper.css({ 'max-height': '0', 'opacity': '0', 'padding': '0' });
                         $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
+                        $header.attr('aria-expanded', 'false');
                         localStorage.setItem(STORAGE_KEY_OPT_COLLAPSE, 'true');
                     }
+                });
+                $header.on('keydown', function(e) {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    $(this).trigger('click');
                 });
 
                 $target.append($container);
@@ -3679,7 +3729,7 @@
                 'acu-btn-open-native': `<button class="acu-action-btn" id="acu-btn-open-native" title="打开原生编辑器"><i class="fa-solid fa-external-link-alt"></i></button>`,
                 'acu-btn-manual-update': `<button class="acu-action-btn" id="acu-btn-manual-update" title="立即手动更新"><i class="fa-solid fa-bolt"></i></button>`,
                 'acu-btn-settings': `<button class="acu-action-btn" id="acu-btn-settings" title="全能设置"><i class="fa-solid fa-cog"></i></button>`,
-                'acu-btn-toggle': `<button class="acu-action-btn" id="acu-btn-toggle" title="${isCollapsed ? '展开' : '收起'}"><i class="fa-solid ${isCollapsed ? 'fa-chevron-up' : 'fa-chevron-down'}"></i></button>`
+                'acu-btn-toggle': `<button type="button" class="acu-action-btn" id="acu-btn-toggle" title="${isCollapsed ? '展开档案柜' : '收起档案柜'}" aria-expanded="${!isCollapsed}" aria-controls="acu-nav-tabs"><i class="fa-solid ${isCollapsed ? 'fa-chevron-up' : 'fa-chevron-down'}"></i></button>`
             };
 
             const savedActionOrder = getSavedActionOrder() || Object.keys(actionBtns);
@@ -3757,8 +3807,8 @@
                     </div>
                     <div class="acu-nav-container ${isCollapsed ? 'collapsed' : ''} ${isEditingOrder ? 'editing-order' : ''} acu-collapse-${collapseStyle} acu-pill-${collapsePos}" id="acu-nav-bar" style="${consistencyWarnings.size > 0 && isCollapsed ? 'border: 2px solid #e74c3c !important; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5) !important;' : ''}">
                         ${orderControlsHtml}
-                        <div class="acu-nav-tabs-area">
-                            ${(showDash && config.dashboardPosition === 'panel') ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-tachometer-alt"></i><span>仪表盘</span></button>` : ''}
+                        <div class="acu-nav-tabs-area" id="acu-nav-tabs">
+                            ${(showDash && config.dashboardPosition === 'panel') ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-box-archive"></i><span>档案柜</span></button>` : ''}
                             <button class="acu-nav-btn ${currentTabName === TAB_GLOBAL ? 'active' : ''}" data-table="${TAB_GLOBAL}"><i class="fa-solid fa-layer-group"></i><span>总览</span></button>
                             <button class="acu-nav-btn ${currentTabName === TAB_RECALL ? 'active' : ''}" data-table="${TAB_RECALL}"><i class="fa-solid fa-magnifying-glass"></i><span>召回</span></button>
                             <button class="acu-nav-btn ${currentTabName === TAB_CONSISTENCY ? 'active' : ''}" data-table="${TAB_CONSISTENCY}"><i class="fa-solid fa-scale-balanced"></i><span>一致性</span></button>
@@ -3783,7 +3833,7 @@
                         <div class="acu-nav-actions-area">
                             ${navActionsHtml}
                         </div>
-                        <div class="acu-collapsed-text">展开面板</div>
+                        <button type="button" class="acu-collapsed-trigger" aria-expanded="false" aria-controls="acu-nav-tabs"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>展开档案柜</span></button>
                     </div>
                 </div>`;
             insertHtmlToPage(html); 
@@ -3978,8 +4028,8 @@
              `;
         };
 
-        const getTabEditBtn = (sid) => isDashEditing ? 
-             `<button class="acu-slot-setting-btn" data-slot="${sid}" style="margin-left:5px; width:20px; height:20px; border-radius:50%; background:var(--acu-btn-active-bg); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-cog" style="font-size:10px;"></i></button>` : '';
+        const getTabEditBtn = (sid) => isDashEditing ?
+             `<button type="button" class="acu-slot-setting-btn" data-slot="${sid}" aria-label="编辑此档案槽位" style="margin-left:5px; width:44px; height:44px; border-radius:4px; background:var(--acu-btn-active-bg); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-cog" style="font-size:12px;"></i></button>` : '';
 
         const render3In1Group = (groupId, slotIds, minHeight, isAutoHeight) => {
             let visibleIds = slotIds.filter(id => !getSlotCfg(id).isEmpty);
@@ -3987,15 +4037,15 @@
 
             if (visibleIds.length === 0) return '';
 
-            let header = '<div class="acu-tab-header">';
+            let header = `<div class="acu-tab-header" role="tablist" aria-label="${groupId} 档案分类">`;
             let body = '<div class="acu-tab-content-container" style="flex:1;">';
 
             visibleIds.forEach((sid, i) => {
                 const active = i === 0 ? 'active' : '';
                 const title = getSlotTitle(sid);
                 const tabId = `${groupId}-${sid}`;
-                header += `<div class="acu-tab-btn ${active}" data-target="${tabId}">${title} ${getTabEditBtn(sid)}</div>`;
-                body += `<div id="${tabId}" class="acu-tab-pane ${active}">${renderSlotContent(sid)}</div>`;
+                header += `<div class="acu-tab-item"><button type="button" class="acu-tab-btn ${active}" id="${tabId}-tab" data-target="${tabId}" role="tab" aria-selected="${i === 0}" aria-controls="${tabId}" tabindex="${i === 0 ? '0' : '-1'}">${title}</button>${getTabEditBtn(sid)}</div>`;
+                body += `<div id="${tabId}" class="acu-tab-pane ${active}" role="tabpanel" aria-labelledby="${tabId}-tab" ${i === 0 ? '' : 'hidden'}>${renderSlotContent(sid)}</div>`;
             });
             header += '</div>';
             body += '</div>';
@@ -4048,12 +4098,12 @@
         const html = `
             <div class="acu-panel-header">
                 <div class="acu-panel-title">
-                    <i class="fa-solid fa-tachometer-alt"></i> 仪表盘
+                    <i class="fa-solid fa-box-archive"></i> 档案柜
                     ${isDashEditing ? '<span style="font-size:12px; margin-left:10px; color:var(--acu-highlight); background:var(--acu-highlight-bg); padding:2px 8px; border-radius:4px;">编辑模式</span>' : ''}
                 </div>
                 <div class="acu-header-actions">
                     <div class="acu-header-btn-group" style="display:flex; gap:6px; align-items:center;">
-                        <button class="acu-header-btn" id="acu-btn-dash-edit" title="${isDashEditing ? '退出编辑' : '编辑仪表盘'}">
+                        <button class="acu-header-btn" id="acu-btn-dash-edit" title="${isDashEditing ? '退出编辑' : '编辑档案柜'}">
                             <i class="fa-solid ${isDashEditing ? 'fa-check' : 'fa-edit'}" style="${isDashEditing ? 'color:var(--acu-highlight)' : ''}"></i>
                         </button>
                         <button class="acu-header-btn acu-height-drag-handle" data-table="acu_tab_dashboard_home" title="按住拖动调整高度">
@@ -4737,20 +4787,29 @@
                      if (row) showQuickView(row, table.headers, tableName, colIdx);
                 }
             });
+            const activateArchiveTab = ($tab, focusTab = false) => {
+                 const $container = $tab.closest('.acu-dash-card');
+                 const targetId = String($tab.data('target') || '');
+                 const $tabs = $container.find('.acu-tab-header').first().find('.acu-tab-btn');
+                 const $panes = $container.find('.acu-tab-pane');
+
+                 $tabs.removeClass('active').attr({ 'aria-selected': 'false', tabindex: '-1' });
+                 $tab.addClass('active').attr({ 'aria-selected': 'true', tabindex: '0' });
+                 $panes.removeClass('active').attr('hidden', true);
+                 if (targetId) $container.find(`#${targetId}`).addClass('active').removeAttr('hidden');
+                 if (focusTab) $tab.trigger('focus');
+            };
             $('.acu-tab-btn').off('click').on('click', function(e) {
                  e.stopPropagation();
-
-                 const $container = $(this).closest('.acu-dash-card');
-                 const index = $(this).index(); 
-
-                 $container.find('.acu-tab-btn').removeClass('active');
-                 $(this).addClass('active');
-
-                 const $panes = $container.find('.acu-tab-pane');
-                 $panes.removeClass('active');
-                 if ($panes.length > index) {
-                     $panes.eq(index).addClass('active');
-                 }
+                 activateArchiveTab($(this));
+            }).off('keydown').on('keydown', function(e) {
+                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+                 e.preventDefault();
+                 e.stopPropagation();
+                 const $tabs = $(this).closest('.acu-tab-header').find('.acu-tab-btn');
+                 const currentIndex = $tabs.index(this);
+                 const nextIndex = e.key === 'Home' ? 0 : e.key === 'End' ? $tabs.length - 1 : (currentIndex + (e.key === 'ArrowRight' ? 1 : -1) + $tabs.length) % $tabs.length;
+                 activateArchiveTab($tabs.eq(nextIndex), true);
             });
             $('.acu-page-btn').off('click').on('click', function(e) {
                 e.stopPropagation();
@@ -5085,7 +5144,7 @@
 
         const toggleUI = () => { isCollapsed = !isCollapsed; localStorage.setItem(STORAGE_KEY_UI_COLLAPSE, isCollapsed); renderInterface(); };
         $('#acu-btn-toggle').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); });
-        if (isCollapsed) { $('.acu-nav-container').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); }); }
+        $('.acu-collapsed-trigger').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); });
 
         $('#acu-btn-gacha').off('click').on('click', (e) => { e.stopPropagation(); showGachaPanel(); });
         $('#acu-btn-settings').off('click').on('click', (e) => { e.stopPropagation(); if (isEditingOrder) { toggleOrderEditMode(); } else { showSettingsModal(); } });

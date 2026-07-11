@@ -25,7 +25,6 @@ const outputProtocolPromptPaths = [
   releaseChoicesRulePath,
   join(repoRoot, 'src', '神秘复苏模拟器', '系统提示词', '0.txt'),
   join(repoRoot, 'src', '神秘复苏模拟器发布版', '系统提示词', '0.txt'),
-  ...outputProtocolExamplePaths,
 ];
 const srcRoot = join(repoRoot, 'src');
 const vendorSource = readFileSync(vendorPath, 'utf8');
@@ -1221,11 +1220,12 @@ function testCrudPlanDiffTrackingGuards() {
   // 注：以下曾验证的 p5.4 fallback 机制（missing critical plan 合成、rate-limit recovery、
   // 短纪要延迟、partialSuccess、collected_archives 最小记录等）已在 hotfix13 稳定化
   // （commit 9954c98 "fix: stabilize hotfix13 runtime source chain"）整体移除，
-  // 相关断言同步删除；保留的仅剩 diff-tracking 核心 + 可见输出顺序守卫。
+  // 相关断言同步删除；保留的仅剩 diff-tracking 核心 + 当前精简输出顺序守卫。
   assert.ok(
     choicesRuleSource.includes('正文剧情（首段控制在 350 字以内）')
-      && choicesRuleSource.indexOf('<sp_status>') < choicesRuleSource.indexOf('<choices>'),
-    'visible output rule should put compact status/clue protocol before long choices to avoid token truncation',
+      && choicesRuleSource.indexOf('【本轮摘要】') < choicesRuleSource.indexOf('<choices>')
+      && choicesRuleSource.indexOf('<choices>') < choicesRuleSource.indexOf('<UpdateVariable>'),
+    'visible output rule should put the compact turn summary before backend choices and variable updates',
   );
   assert.ok(
     vendorSource.includes('keysToTrackAsUpdated = keysToPersist'),
@@ -1237,25 +1237,26 @@ function testMfrsOutputProtocolPromptOrder() {
   for (const filePath of outputProtocolPromptPaths) {
     const source = readFileSync(filePath, 'utf8');
     const label = relative(repoRoot, filePath);
-    assert.ok(source.includes('<sp_status>'), `${label} should mention the sp_status protocol block`);
+    assert.ok(source.includes('【本轮摘要】'), `${label} should include the compact turn summary`);
     assert.ok(source.includes('<choices>'), `${label} should mention the choices protocol block`);
+    assert.ok(source.includes('<UpdateVariable>'), `${label} should mention the variable update block`);
     assert.ok(
-      source.indexOf('<sp_status>') < source.indexOf('<choices>'),
-      `${label} should put <sp_status> before <choices>`,
+      /【本轮摘要】\s*→\s*`<choices>`\s*→\s*`<UpdateVariable>`/.test(source),
+      `${label} should declare compact summary -> <choices> -> <UpdateVariable>`,
     );
-    if (source.includes('<sp_clue_deduce>') && source.includes('<choices>')) {
-      assert.ok(
-        source.indexOf('<sp_clue_deduce>') < source.indexOf('<choices>'),
-        `${label} should put <sp_clue_deduce> before <choices> when clue deduction is required`,
-      );
-    }
   }
   for (const filePath of outputProtocolExamplePaths) {
     const source = readFileSync(filePath, 'utf8');
+    const label = relative(repoRoot, filePath);
+    assert.ok(
+      source.indexOf('【本轮摘要】') < source.indexOf('<choices>')
+        && source.indexOf('<choices>') < source.indexOf('<UpdateVariable>'),
+      `${label} should render compact summary before <choices> and <UpdateVariable>`,
+    );
     assert.equal(
       source.includes('<StatusPlaceHolderImpl/>'),
       false,
-      `${relative(repoRoot, filePath)} should not show the old StatusPlaceHolderImpl placeholder in examples`,
+      `${label} should not show the old StatusPlaceHolderImpl placeholder in examples`,
     );
   }
 }
