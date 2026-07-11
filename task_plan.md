@@ -121,6 +121,6 @@
 
 ## Planning 权威性
 
-- 当前权威状态：本文件及同目录`progress.md`、`findings.md`。
-- 主工作区和旧ghostseal worktree中的同名文件是过期副本，不得作为恢复入口。
+- 当前权威状态：`origin/main`中的本文件及同目录`progress.md`、`findings.md`。
+- 主工作区、source worktree和release worktree的三份planning及v8.9.0归档摘要已同步；若以后发生分歧，以`origin/main`为准。
 - 精简前完整planning可通过Git提交`59d506f`读取，不在当前文件中重复保存。
