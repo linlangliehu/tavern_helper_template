@@ -16,7 +16,7 @@
 
 最终 SillyTavern 只读确认通过：角色 id=4、版本8.9.0、原聊天5楼、AI/用户=3/2、panel/wrapper/brand=3/3/3、用户消息面板0、style/theme/archive/dashboard均为1、输入框为空、视口1440×900、reduced-motion关闭、CRUD测试token残留0、同名发布卡仅1张。运行资源均指向`@7f745d1`与`mvu-v890-ghostseal`。
 
-当前没有待完成的源码、构建、发布或真页任务。本轮仅剩 planning 精简文档提交；完成该 docs commit 后任务彻底收口。
+当前没有待完成的源码、构建、发布、真页或planning任务。planning精简提交=`9a94b1b`，对应workflow `29155358967`成功；“鬼眼封案”现已彻底收口。
 
 ## 当前任务
 
@@ -84,6 +84,7 @@
 | Bundle | `7f745d1 [bot] bundle`；workflow `29150328734` success |
 | Release | `59d506f chore(release): publish mfrs v8.9.0 ghost-seal archive UI` |
 | Release workflow | `29150629082` success |
+| Planning compact | `9a94b1b docs: compact planning files after mfrs v8.9.0`；workflow `29155358967` success |
 | Version | `8.9.0` |
 | CDN ref | `7f745d1`，禁止 `@main` |
 | Cache | `phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal` |

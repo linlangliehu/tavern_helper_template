@@ -20,6 +20,7 @@
 - 可逆CRUD使用“灵异物品”表：`PHASE7_TEST_TOKEN_20260711`插入成功后计数1，删除成功后`exportCurrentData()`残留0。
 - 最终只读确认：id=4、版本8.9.0、5楼、3/2、3/3/3、style/theme/archive/dashboard=1、输入框空、1440×900、同名卡1张、正式ref/cache生效、CRUD token=0。
 - Page errors与新增console error均为0；Network只保留ISSUE-006两种既有vendor storage 404。
+- planning精简提交`9a94b1b`将根文件压缩为task_plan 125行、progress 58行、findings 86行，并新增78行归档摘要；删除4508行陈旧流水，重复标题与长段落均为0。workflow `29155358967`成功且未产生新dist commit。
 
 ### Phase 7遇到的错误与处理
 
