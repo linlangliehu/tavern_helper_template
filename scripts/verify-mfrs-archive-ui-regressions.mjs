@@ -611,17 +611,25 @@ addCheck('phase5', 'C1-C4 hud information density', () => {
     'actions height cap',
   );
   assert.ok(sources.message.includes('data-mfrs-hud="actions"'), 'actions details host');
-  // 本轮选项唯一入口：输入框上方 HUD；正文 inline 去掉
+  // 本轮选项唯一入口：输入框上方 HUD；无真实行动建议时隐藏
   assert.ok(sources.message.includes('function stripInlineChoicesFromMessage'), 'strip body inline choices');
+  assert.ok(sources.message.includes('function hasRealActionSuggestions'), 'gate HUD on real 行动建议');
+  assert.ok(sources.message.includes('function collectRealActionSuggestions'), 'collect real actions only');
   assert.ok(
     sources.message.includes('actionsSlot.innerHTML = buildActionsHtml(data)') ||
       sources.message.includes('actionsSlot.innerHTML=buildActionsHtml(data)'),
     'HUD actions slot filled with buildActionsHtml',
   );
   assert.ok(
-    sources.message.includes('data-mfrs-hud="actions" open') ||
-      sources.message.includes("data-mfrs-hud=\"actions\" open"),
-    'HUD actions default open (above composer)',
+    sources.message.includes('actionsHost.hidden = true') ||
+      sources.message.includes('actionsHost.hidden=true'),
+    'HUD actions hidden when no real 行动建议',
+  );
+  assert.equal(
+    sources.message.includes('先观察走廊敲门声与教室反应') ||
+      sources.message.includes('本轮未落库行动建议'),
+    false,
+    'must not ship provisional opening placeholders',
   );
   assert.ok(sources.message.includes('function resolveActionSuggestions'), 'fixed A-D action resolver');
   assert.ok(

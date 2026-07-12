@@ -152,8 +152,8 @@ type ActionSuggestion = {
   provisional?: boolean;
 };
 
-/** 固定 A/B/C/D；MVU/表优先，缺省时用安全占位（只填输入框，不自动发送） */
-function resolveActionSuggestions(data: StatusData): ActionSuggestion[] {
+/** 仅收集 MVU/表中的真实行动建议；无数据返回空（不注入开局占位） */
+function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
   const fromStat = Array.isArray(data.行动建议) ? data.行动建议 : [];
   const list: ActionSuggestion[] = [];
   const pushItem = (s: any, i: number) => {
@@ -186,71 +186,50 @@ function resolveActionSuggestions(data: StatusData): ActionSuggestion[] {
       });
     }
   }
+  return list;
+}
+
+function hasRealActionSuggestions(data: StatusData): boolean {
+  return collectRealActionSuggestions(data).length > 0;
+}
+
+/** 固定 A/B/C/D 槽位；仅真实落库项，无数据返回空 */
+function resolveActionSuggestions(data: StatusData): ActionSuggestion[] {
+  const list = collectRealActionSuggestions(data);
+  if (!list.length) return [];
   const byKey = new Map(list.map(item => [item.key.toUpperCase(), item]));
-  const defaults: ActionSuggestion[] = [
-    {
-      key: 'A',
-      text: '先观察走廊敲门声与教室反应，不主动接触媒介',
-      meta: '占位·低风险观察',
-      fill: '先观察走廊敲门声与教室反应，不主动接触媒介',
-      provisional: true,
-    },
-    {
-      key: 'B',
-      text: '靠近周正或可信同学，确认是否也听到异常',
-      meta: '占位·求证/求援',
-      fill: '靠近周正或可信同学，确认是否也听到异常',
-      provisional: true,
-    },
-    {
-      key: 'C',
-      text: '拉开与门口距离，准备撤离或保护身边人',
-      meta: '占位·规避/保护',
-      fill: '拉开与门口距离，准备撤离或保护身边人',
-      provisional: true,
-    },
-    {
-      key: 'D',
-      text: '自定义行动',
-      meta: '自由输入',
-      fill: '',
-      provisional: true,
-    },
-  ];
-  return ['A', 'B', 'C', 'D'].map((key, i) => {
-    const hit = byKey.get(key) || list[i];
-    if (hit && hit.text) {
+  return ['A', 'B', 'C', 'D']
+    .map((key, i) => {
+      const hit = byKey.get(key) || list[i];
+      if (!hit?.text) return null;
       return {
         key,
         text: hit.text,
         meta: hit.meta,
         fill: hit.fill || hit.text,
         provisional: false,
-      };
-    }
-    return defaults[i];
-  });
+      } satisfies ActionSuggestion;
+    })
+    .filter((item): item is ActionSuggestion => item != null);
 }
 
-function buildActionButtonsHtml(data: StatusData, opts?: { compact?: boolean; showProvisionalHint?: boolean }): string {
+function buildActionButtonsHtml(data: StatusData, opts?: { compact?: boolean }): string {
   const items = resolveActionSuggestions(data);
-  const provisional = items.some(item => item.provisional);
-  const hint =
-    opts?.showProvisionalHint && provisional
-      ? '<div class="mfrs-msg-actions-hint">本轮未落库行动建议，以下为临时 4 键（点选只填输入框）</div>'
-      : '';
+  if (!items.length) return '';
   const buttons = items
     .map(item => {
       const fill = item.key === 'D' && !item.fill ? '' : item.fill;
       const meta = item.meta ? `<span class="mfrs-msg-action-meta">${_.escape(item.meta)}</span>` : '';
-      return `<button type="button" class="mfrs-msg-action-btn${item.provisional ? ' is-provisional' : ''}" data-action="${_.escape(fill)}" data-option-key="${_.escape(item.key)}"><span class="mfrs-msg-action-key">${_.escape(item.key)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(item.text)}</span>${meta}</span></button>`;
+      return `<button type="button" class="mfrs-msg-action-btn" data-action="${_.escape(fill)}" data-option-key="${_.escape(item.key)}"><span class="mfrs-msg-action-key">${_.escape(item.key)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(item.text)}</span>${meta}</span></button>`;
     })
     .join('');
-  return `${hint}<div class="mfrs-msg-actions${opts?.compact ? ' is-compact' : ''}">${buttons}</div>`;
+  return `<div class="mfrs-msg-actions${opts?.compact ? ' is-compact' : ''}">${buttons}</div>`;
 }
 
 function buildActionsHtml(data: StatusData): string {
-  return `${buildActionButtonsHtml(data, { showProvisionalHint: true })}${buildCheckSuggestionsFoldHtml(data)}`;
+  const buttons = buildActionButtonsHtml(data);
+  if (!buttons) return '';
+  return `${buttons}${buildCheckSuggestionsFoldHtml(data)}`;
 }
 
 /** 正文内不挂本轮选项：清掉 inline + 隐藏三栏拟办块，唯一入口在输入框上方 HUD */
@@ -3967,13 +3946,19 @@ function refreshHudPanels(force = false) {
   const dossierSlot = shell.querySelector('[data-mfrs-hud="dossier-slot"]');
   if (dossierSlot) dossierSlot.innerHTML = buildHudDossierHtml(data);
 
-  // 本轮选项唯一入口：输入框上方 HUD（正文 inline 已 strip）
+  // 本轮选项唯一入口：输入框上方 HUD；无真实行动建议时整栏隐藏
   const actionsHost = shell.querySelector('[data-mfrs-hud="actions"]') as HTMLElement | null;
   const actionsSlot = shell.querySelector('[data-mfrs-hud="actions-slot"]');
   if (actionsHost && actionsSlot) {
-    actionsHost.hidden = false;
-    actionsHost.setAttribute('open', '');
-    actionsSlot.innerHTML = buildActionsHtml(data);
+    if (hasRealActionSuggestions(data)) {
+      actionsHost.hidden = false;
+      actionsHost.setAttribute('open', '');
+      actionsSlot.innerHTML = buildActionsHtml(data);
+    } else {
+      actionsHost.hidden = true;
+      actionsHost.removeAttribute('open');
+      actionsSlot.innerHTML = '';
+    }
   }
 
   const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
