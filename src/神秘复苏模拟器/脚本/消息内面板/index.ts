@@ -757,6 +757,8 @@ let messageObserver: MutationObserver | null = null;
 let observedChatContainer: Node | null = null;
 let observerEnabled = false;
 let isProcessingMessages = false;
+let historyCatchUpToken = 0;
+let observerResumeTimer: number | undefined;
 
 function resumeMessageObserver() {
   if (!observerEnabled || !messageObserver || !observedChatContainer) return;
@@ -767,6 +769,17 @@ function resumeMessageObserver() {
     characterData: false,
     attributes: false,
   });
+}
+
+function pauseMessageObserverTemporarily(ms = 120) {
+  messageObserver?.disconnect();
+  if (observerResumeTimer !== undefined) {
+    hostWindow.clearTimeout(observerResumeTimer);
+  }
+  observerResumeTimer = hostWindow.setTimeout(() => {
+    observerResumeTimer = undefined;
+    resumeMessageObserver();
+  }, ms);
 }
 
 function withMessageObserverPaused(callback: () => void) {
@@ -781,31 +794,68 @@ function withMessageObserverPaused(callback: () => void) {
   }
 }
 
-/** 处理 AI 消息（注入面板 + 包装叙事）。沉浸态只维护最新楼，避免长聊天全量 DOM 重建卡顿 */
-function processAllMessages(options: { fullHistory?: boolean } = {}) {
-  const fullHistory = options.fullHistory === true || !isHudMounted();
+function processMessageElement(mes: Element) {
+  injectBrandForMessage(mes);
+  wrapNarrativeText(mes);
+  injectPanelForMessage(mes);
+  composeTriCenter(mes);
+}
+
+function processLatestAiMessageOnly() {
   withMessageObserverPaused(() => {
     cleanupUserMessages();
-    if (fullHistory) {
-      const messages = doc.querySelectorAll('.mes:not(.user)');
-      messages.forEach(mes => {
-        injectBrandForMessage(mes);
-        wrapNarrativeText(mes);
-        injectPanelForMessage(mes);
-        composeTriCenter(mes);
-      });
-    } else {
-      // E1：沉浸只刷最新 AI 楼
-      const last = getLatestAiMessageElement();
-      if (last) {
-        injectBrandForMessage(last);
-        wrapNarrativeText(last);
-        injectPanelForMessage(last);
-        composeTriCenter(last);
-      }
-    }
+    const last = getLatestAiMessageElement();
+    if (last) processMessageElement(last);
   });
   refreshHudPanels();
+}
+
+/** 历史楼分片补齐，避免退出沉浸时一次扫完全部楼层卡死主线程 */
+function processHistoricalMessagesInChunks(messages: Element[], startIndex: number, token: number, chunkSize = 3) {
+  if (token !== historyCatchUpToken || isHudMounted()) return;
+  if (startIndex >= messages.length) return;
+  const end = Math.min(startIndex + chunkSize, messages.length);
+  withMessageObserverPaused(() => {
+    for (let i = startIndex; i < end; i += 1) {
+      processMessageElement(messages[i]);
+    }
+  });
+  if (end >= messages.length) return;
+  const ric = (hostWindow as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (typeof ric === 'function') {
+    ric(() => processHistoricalMessagesInChunks(messages, end, token, chunkSize), { timeout: 240 });
+  } else {
+    hostWindow.setTimeout(() => processHistoricalMessagesInChunks(messages, end, token, chunkSize), 32);
+  }
+}
+
+/** 退出沉浸 / 需要补历史时：先最新楼同步，再 idle 分片历史 */
+function scheduleFullHistoryCatchUp() {
+  historyCatchUpToken += 1;
+  const token = historyCatchUpToken;
+  processLatestAiMessageOnly();
+  const timer = hostWindow.setTimeout(() => {
+    refreshTimers.delete(timer);
+    if (token !== historyCatchUpToken || isHudMounted()) return;
+    const latest = getLatestAiMessageElement();
+    // 从旧到新分片，避免一次处理大量历史
+    const rest = Array.from(doc.querySelectorAll('.mes:not(.user)')).filter(mes => mes !== latest);
+    if (rest.length === 0) return;
+    processHistoricalMessagesInChunks(rest, 0, token, 3);
+  }, 48);
+  refreshTimers.add(timer);
+}
+
+/** 处理 AI 消息。默认 latest-only；全量仅显式 fullHistory 或分片 catch-up */
+function processAllMessages(options: { fullHistory?: boolean } = {}) {
+  if (options.fullHistory === true) {
+    // 显式全量：仍走分片，避免 activate/unmount 同步卡死
+    scheduleFullHistoryCatchUp();
+    return;
+  }
+  processLatestAiMessageOnly();
 }
 
 function processOneMessage(messageId: number | string) {
@@ -814,10 +864,7 @@ function processOneMessage(messageId: number | string) {
       mes => mes.getAttribute('mesid') === String(messageId),
     );
     if (!target) return;
-    injectBrandForMessage(target);
-    wrapNarrativeText(target);
-    injectPanelForMessage(target);
-    composeTriCenter(target);
+    processMessageElement(target);
   });
   refreshHudPanels();
 }
@@ -828,9 +875,14 @@ let idleRefreshTimer: number | undefined;
 function clearRefreshTimers() {
   refreshTimers.forEach(timer => hostWindow.clearTimeout(timer));
   refreshTimers.clear();
+  historyCatchUpToken += 1;
   if (idleRefreshTimer !== undefined) {
     hostWindow.clearTimeout(idleRefreshTimer);
     idleRefreshTimer = undefined;
+  }
+  if (observerResumeTimer !== undefined) {
+    hostWindow.clearTimeout(observerResumeTimer);
+    observerResumeTimer = undefined;
   }
 }
 
@@ -843,8 +895,8 @@ function scheduleProcessAllMessages(delay = 200, options: { fullHistory?: boolea
 }
 
 function scheduleBurstRefresh() {
-  // E1：沉浸态 2 段 latest-only；非沉浸 4 段全量
-  const delays = isHudMounted() ? [250, 1200] : [200, 800, 2000, 4000];
+  // 生成结束只刷最新楼（2 段）；全量改由分片 catch-up 按需触发
+  const delays = isHudMounted() ? [250, 1200] : [200, 900];
   delays.forEach(delay => scheduleProcessAllMessages(delay));
 }
 
@@ -852,11 +904,11 @@ function scheduleIdleRefresh(delay = 800) {
   if (idleRefreshTimer !== undefined) {
     hostWindow.clearTimeout(idleRefreshTimer);
   }
-  // 沉浸态 Mutation 更密，加长 debounce
-  const wait = isHudMounted() ? Math.max(delay, 1200) : delay;
+  // 沉浸态 Mutation 更密，加长 debounce；一律 latest-only
+  const wait = isHudMounted() ? Math.max(delay, 1200) : Math.max(delay, 500);
   idleRefreshTimer = hostWindow.setTimeout(() => {
     idleRefreshTimer = undefined;
-    processAllMessages();
+    processLatestAiMessageOnly();
   }, wait);
 }
 
@@ -2906,6 +2958,9 @@ function mountHudImmersive() {
 function unmountHudImmersive() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   const chat = getChatElement();
+  // 退出路径：先停观察者，避免 reparent 触发 mutation → 全量刷新风暴
+  messageObserver?.disconnect();
+  historyCatchUpToken += 1;
   closeHudCabinetLayer();
   closeHudTavernMenu();
   restoreHudFromStUi();
@@ -2929,8 +2984,9 @@ function unmountHudImmersive() {
   doc.getElementById('mfrs-hud-st-return')?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
   rebindMessageObserverToChat();
-  // E1/E4：退出沉浸立即补全历史 α 面板（不走 debounce）
-  processAllMessages({ fullHistory: true });
+  pauseMessageObserverTemporarily(180);
+  // 退出：先同步最新楼，历史楼分片补齐（不再同步全量扫 DOM）
+  scheduleFullHistoryCatchUp();
 }
 
 function exitHudImmersive() {
@@ -4060,7 +4116,8 @@ $(() => {
     observerEnabled = true;
     resumeMessageObserver();
     syncHudMotionPreference();
-    processAllMessages({ fullHistory: true });
+    // 激活：先最新楼，再分片补历史（避免切卡瞬间全量卡顿）
+    scheduleFullHistoryCatchUp();
     syncHudImmersiveWithCard();
     if (!runtimeActive) scheduleBurstRefresh();
     runtimeActive = true;

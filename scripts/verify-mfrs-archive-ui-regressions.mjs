@@ -596,11 +596,15 @@ addCheck('phase5', 'E1-E4 immersive perf and card lifecycle', () => {
   assert.ok(sources.message.includes('mfrs_hud_low_motion'), 'E3 optional localStorage low motion');
   assert.ok(sources.message.includes('characterData: false'), 'observer should not watch characterData');
   assert.ok(sources.message.includes("closest('#chat')") || sources.message.includes('closest("#chat")'), 'mutations must prefer #chat scope');
+  assert.ok(sources.message.includes('function processLatestAiMessageOnly'), 'latest-only path required');
+  assert.ok(sources.message.includes('function scheduleFullHistoryCatchUp'), 'chunked history catch-up required');
+  assert.ok(sources.message.includes('function processHistoricalMessagesInChunks'), 'history must be chunked');
   const process = between(sources.message, 'function processAllMessages', 'function processOneMessage');
-  assert.ok(process.includes('getLatestAiMessageElement'), 'immersive path must process latest AI only');
-  assert.ok(process.includes('fullHistory'), 'fullHistory option for exit/activate');
+  assert.ok(process.includes('scheduleFullHistoryCatchUp') || process.includes('processLatestAiMessageOnly'), 'processAllMessages must avoid sync full scan');
   const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');
-  assert.ok(unmount.includes('fullHistory: true') || unmount.includes('fullHistory:true'), 'unmount must full-history reprocess');
+  assert.ok(unmount.includes('scheduleFullHistoryCatchUp'), 'unmount must chunk history catch-up');
+  assert.ok(unmount.includes('pauseMessageObserverTemporarily') || unmount.includes('messageObserver?.disconnect'), 'unmount should pause observer during reparent');
+  assert.equal(unmount.includes('processAllMessages({ fullHistory: true })'), false, 'unmount must not sync fullHistory processAllMessages');
   const deactivate = between(sources.message, 'function deactivateMessagePanelRuntime', 'function activateMessagePanelRuntime');
   assert.ok(deactivate.includes('destroyHudImmersive'), 'E4 deactivate must destroy shell');
   assert.equal(deactivate.includes('unmountHudImmersive()') && !deactivate.includes('destroyHudImmersive'), false, 'prefer destroy over bare unmount on deactivate');
