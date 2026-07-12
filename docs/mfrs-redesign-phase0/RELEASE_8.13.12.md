@@ -24,8 +24,8 @@
 | 项 | 值 |
 |----|-----|
 | 版本 | **8.13.12** |
-| 功能/dist commit | （发版时回填） |
-| CDN_REF | （发版时回填） |
+| 功能/dist commit | `75f74f42706f` |
+| CDN_REF | `75f74f42706f…` |
 | cache | `…-v81312-p2-mvu-empty-send-crud` |
 
 ## 使用
