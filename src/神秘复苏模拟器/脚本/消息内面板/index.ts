@@ -2894,34 +2894,79 @@ function parseCssZIndex(value: string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** 是否为应抬到壳上的外置大面板（排除 HUD 自身与已极高 z 的 ACU 弹层） */
+/** ST 常驻布局：绝不能当「外置弹层」抬层，否则会与壳 z 打架闪烁 */
+const HUD_ST_CORE_LAYOUT_IDS = new Set([
+  'bg1',
+  'bg2',
+  'bg3',
+  'sheld',
+  'chat',
+  'form_sheld',
+  'send_form',
+  'top-bar',
+  'top-settings-holder',
+  'character-name',
+  'avatar',
+  'main',
+  'page-wrapper',
+  'shadow_popup',
+  'dialogue_popup_ok',
+]);
+
+function isHudStCoreLayoutElement(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  if (HUD_ST_CORE_LAYOUT_IDS.has(el.id)) return true;
+  // 聊天/输入常驻祖先
+  if (el.id === 'chat' || el.closest?.('#chat, #sheld, #form_sheld, #send_form, #top-bar, #top-settings-holder, #bg1')) {
+    // 但抽屉 open 内容允许
+    if (el.classList?.contains('drawer-content') && el.classList.contains('openDrawer')) return false;
+    if (el.matches?.(SP_DB_UI_SELECTOR) || el.closest?.(SP_DB_UI_SELECTOR)) return false;
+    if (el.classList?.contains('popup') || el.classList?.contains('dialogue_popup')) return false;
+    // 在 sheld/bg1 树内的普通节点一律视为核心布局
+    if (el.closest?.('#sheld, #bg1, #chat, #form_sheld') && !el.matches?.(ST_OPEN_DRAWER_SELECTOR)) return true;
+  }
+  return false;
+}
+
+/** 是否为应抬到壳上的外置大面板（排除 HUD 自身、ST 核心布局、已极高 z 的 ACU 弹层） */
 function isHudCoverableExternalOverlay(el: HTMLElement): boolean {
   if (!el?.isConnected || el.id === HUD_SHELL_ID || el.closest?.(`#${HUD_SHELL_ID}`)) return false;
   if (el.id === 'mfrs-hud-st-return' || el.id === 'mfrs-hud-toast' || el.id === FIXED_HOST_ID) return false;
   if (el.classList?.contains('mfrs-hud-cabinet-mask') || el.classList?.contains('mfrs-hud-cabinet-chrome')) return false;
+  if (isHudStCoreLayoutElement(el)) return false;
   // 已在极高层的确认框/toast 不需要再抬
   if (el.classList?.contains('acu-edit-overlay') || el.classList?.contains('mfrs-confirm-overlay')) return false;
   if (el.classList?.contains('mfrs-toast-container') || el.classList?.contains('acu-quick-view-overlay')) return false;
+  // 扩展菜单本身很高 z，不抬菜单壳，只抬其子面板
+  if (el.id === 'extensionsMenu' || el.classList?.contains('options-content')) return false;
   const cs = hostWindow.getComputedStyle?.(el);
   if (!cs) return false;
   if (cs.position !== 'fixed' && cs.position !== 'absolute') return false;
   if (cs.pointerEvents === 'none') return false;
   const z = parseCssZIndex(cs.zIndex);
-  // 无 z 或低于壳(10000) 才可能被盖；>=10080 视为已抬/已安全
+  // 无 z 或低于壳(10000) 才可能被盖；>=10080 视为已抬/已安全（不再重复 yield）
   if (z !== null && z >= HUD_Z_SHELL + 80) return false;
   if (z !== null && z > 0 && z < 20) return false; // 忽略底层装饰
   if (!isElementVisiblyLarge(el, 160, 100)) return false;
-  const r = el.getBoundingClientRect();
-  const vw = hostWindow.innerWidth || doc.documentElement.clientWidth || 1;
-  const vh = hostWindow.innerHeight || doc.documentElement.clientHeight || 1;
-  const areaRatio = (r.width * r.height) / (vw * vh);
-  // 半屏级面板，或已知 SP 壳
+  // 白名单：已知外置面板（不靠面积误伤 #sheld/#bg1）
   if (el.matches?.(SP_DB_UI_SELECTOR) || el.closest?.(SP_DB_UI_SELECTOR)) return true;
   if (el.classList?.contains('drawer-content') && el.classList.contains('openDrawer')) return true;
   if (el.classList?.contains('popup') || el.classList?.contains('dialogue_popup')) return true;
   if (el.id === 'floatingPrompt' || el.id === 'cfgConfig' || el.id === 'logprobsViewer') return true;
-  if (areaRatio >= 0.18) return true;
-  if (r.width >= vw * 0.42 && r.height >= vh * 0.35) return true;
+  if (el.id === 'completion_prompt_manager_popup') return true;
+  if (el.getAttribute?.('role') === 'dialog' || el.getAttribute?.('aria-modal') === 'true') {
+    // 排除 ST 核心树内的伪 dialog
+    if (isHudStCoreLayoutElement(el)) return false;
+    return true;
+  }
+  // 兜底：仅 body 直接子级、且不是核心布局的大半屏面板
+  if (el.parentElement === doc.body && !isHudStCoreLayoutElement(el)) {
+    const r = el.getBoundingClientRect();
+    const vw = hostWindow.innerWidth || doc.documentElement.clientWidth || 1;
+    const vh = hostWindow.innerHeight || doc.documentElement.clientHeight || 1;
+    const areaRatio = (r.width * r.height) / (vw * vh);
+    if (areaRatio >= 0.22 && (z === null || z < HUD_Z_SHELL)) return true;
+  }
   return false;
 }
 
@@ -2935,7 +2980,7 @@ function collectHudCoverableOverlays(): HTMLElement[] {
     seen.add(el);
     out.push(node);
   };
-  // 已知名单
+  // 已知名单（不扫 body 全部子级误伤 #bg1/#sheld）
   doc.querySelectorAll(
     [
       SP_DB_UI_SELECTOR,
@@ -2950,10 +2995,24 @@ function collectHudCoverableOverlays(): HTMLElement[] {
       '[aria-modal="true"]',
     ].join(', '),
   ).forEach(push);
-  // 兜底：body 直接子级 fixed/absolute
+  // 仅扫描已标记抬层的节点（保持跟踪）+ body 直接子级白名单外的可疑面板
+  doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}="1"]`).forEach(el => {
+    // 已抬的：若仍可见且非核心布局，算作活跃叠层（用于阻止误 restore）
+    if (isHudStCoreLayoutElement(el as HTMLElement)) {
+      el.removeAttribute(HUD_OVERLAY_LIFT_ATTR);
+      return;
+    }
+    if (isElementVisiblyLarge(el as HTMLElement, 80, 60)) {
+      seen.add(el);
+      out.push(el as HTMLElement);
+    }
+  });
   Array.from(doc.body?.children || []).forEach(child => {
     if (!(child instanceof hostWindow.HTMLElement || child instanceof HTMLElement)) return;
-    push(child as HTMLElement);
+    const node = child as HTMLElement;
+    if (isHudStCoreLayoutElement(node)) return;
+    if (node.id === HUD_SHELL_ID) return;
+    push(node);
   });
   return out;
 }
@@ -3002,8 +3061,8 @@ function scheduleHudOverlayWatch() {
     hostWindow.clearTimeout(hudOverlayWatchTimer);
     hudOverlayWatchTimer = null;
   }
-  // 打开动画期间多次扫描
-  const delays = [0, 50, 120, 280, 500, 900, 1600];
+  // 仅在「可能刚打开外置面板」时短扫描，避免常驻误伤 #sheld/#bg1 导致 st-ui 闪烁
+  const delays = [0, 80, 200, 450, 900];
   delays.forEach((ms, i) => {
     hostWindow.setTimeout(() => {
       if (!isHudMounted()) return;
@@ -3018,26 +3077,42 @@ function scheduleHudOverlayWatch() {
         stopHudOverlayWatch();
         return;
       }
-      if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasHudCoverableOverlays() || hasOpenStDrawers()) {
+      // 仅在已让层或确实有外置叠层时巡检；无则不碰 st-ui
+      if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasActiveHudExternalOverlay()) {
         scanAndYieldHudOverlays();
         maybeRestoreHudAfterOverlayClose();
       }
-    }, 900);
+    }, 1200);
   }
 }
 
 function ensureHudOverlayObserver() {
   if (hudOverlayObserver || !doc.body) return;
-  hudOverlayObserver = new MutationObserver(() => {
+  hudOverlayObserver = new MutationObserver(mutations => {
     if (!isHudMounted()) return;
+    // 忽略仅 core 布局 class/style 抖动，减少无意义扫描
+    const interesting = mutations.some(m => {
+      const t = m.target as Element;
+      if (!t || t === doc.body) return m.type === 'childList';
+      if (t.id === HUD_SHELL_ID || t.closest?.(`#${HUD_SHELL_ID}`)) return false;
+      if (isHudStCoreLayoutElement(t as HTMLElement)) return m.type === 'childList' && m.addedNodes.length > 0;
+      return true;
+    });
+    if (!interesting) return;
     if (hudOverlayWatchTimer !== null) hostWindow.clearTimeout(hudOverlayWatchTimer);
     hudOverlayWatchTimer = hostWindow.setTimeout(() => {
       hudOverlayWatchTimer = null;
       scanAndYieldHudOverlays();
       maybeRestoreHudAfterOverlayClose();
-    }, 60);
+    }, 100);
   });
-  hudOverlayObserver.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'open'] });
+  // 不监听 style 全树，避免 #sheld 动画触发死循环
+  hudOverlayObserver.observe(doc.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'open', 'aria-hidden'],
+  });
 }
 
 function stopHudOverlayWatch() {
@@ -3097,10 +3172,22 @@ function maybeYieldHudForExternalOverlay(target: EventTarget | null) {
   }, 100);
 }
 
+function hasActiveHudExternalOverlay() {
+  // 活跃叠层：ST 抽屉 / SP / 仍挂着 lift 标记的可见面板 / 扫描命中的待抬面板
+  if (hasOpenStDrawers() || isSpDatabaseUiOpen()) return true;
+  const lifted = Array.from(doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}="1"]`)) as HTMLElement[];
+  if (lifted.some(el => !isHudStCoreLayoutElement(el) && isElementVisiblyLarge(el, 80, 60))) return true;
+  return hasHudCoverableOverlays();
+}
+
 function maybeRestoreHudAfterOverlayClose() {
   if (!isHudMounted()) return;
   if (!doc.body.classList.contains(HUD_ST_UI_CLASS)) return;
-  if (hasOpenStDrawers() || isSpDatabaseUiOpen() || hasHudCoverableOverlays()) {
+  // 先清掉误标在核心布局上的 lift，避免死循环
+  doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}="1"]`).forEach(el => {
+    if (isHudStCoreLayoutElement(el as HTMLElement)) el.removeAttribute(HUD_OVERLAY_LIFT_ATTR);
+  });
+  if (hasActiveHudExternalOverlay()) {
     liftHudCoverableOverlays();
     return;
   }
@@ -4170,8 +4257,12 @@ function bindHudShellEvents() {
     doc.addEventListener('keydown', handleHudKeydown, true);
     hudKeydownBound = true;
   }
+  // 只挂观察者；不在 mount 时主动 yield，避免误把 #sheld/#bg1 当弹层
   ensureHudOverlayObserver();
-  scheduleHudOverlayWatch();
+  // 清理历史误标
+  doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}="1"]`).forEach(el => {
+    if (isHudStCoreLayoutElement(el as HTMLElement)) el.removeAttribute(HUD_OVERLAY_LIFT_ATTR);
+  });
 }
 
 function unbindHudShellEvents() {

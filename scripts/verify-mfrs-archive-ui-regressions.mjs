@@ -686,6 +686,9 @@ addCheck('phase5', 'immersive overlay scan + extension menu unified yield', () =
   assert.ok(sources.message.includes('function scheduleHudOverlayWatch'), 'timed overlay watch');
   assert.ok(sources.message.includes('function stopHudOverlayWatch'), 'overlay watch cleanup');
   assert.ok(sources.message.includes('data-mfrs-hud-overlay-lift'), 'lift attribute marker');
+  assert.ok(sources.message.includes('function isHudStCoreLayoutElement'), 'must exclude ST core layout');
+  assert.ok(sources.message.includes("'sheld'") || sources.message.includes('"sheld"'), 'must exclude #sheld');
+  assert.ok(sources.message.includes("'bg1'") || sources.message.includes('"bg1"'), 'must exclude #bg1');
   assert.ok(sources.message.includes('HUD_EXTENSION_ENTRY_SELECTOR') || sources.message.includes('#extensionsMenu'), 'extension menu entry');
   assert.ok(sources.message.includes('function isHudExtensionEntryClick'), 'extension entry click detector');
   const unbind = between(sources.message, 'function unbindHudShellEvents', 'function rebindMessageObserverToChat');
