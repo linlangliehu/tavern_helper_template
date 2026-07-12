@@ -61,8 +61,16 @@ assert.ok(
   'hotfix must recover send UI after empty AI reply',
 );
 assert.ok(
+  hotfixSource.includes('function forceRecoverSendUi'),
+  'hotfix must force-recover send UI after every generation end',
+);
+assert.ok(
   hotfixSource.includes('activateSendButtons'),
   'hotfix empty-reply recovery must call activateSendButtons',
+);
+assert.ok(
+  hotfixSource.includes("forceRecoverSendUi(hostWindow, 'generation_ended_always'"),
+  'hotfix must always unlock send after GENERATION_ENDED',
 );
 assert.ok(
   hotfixSource.includes('handleGenerationStopped'),

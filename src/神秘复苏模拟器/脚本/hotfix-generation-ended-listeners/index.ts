@@ -535,6 +535,90 @@ async function handleMessageReceived(eventMessageId?: unknown) {
   await cleanProtocolBlocks(lastMessageIndex);
 }
 
+function isStopButtonVisible(hostWindow: HostWindow) {
+  try {
+    const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
+    if (!stopButton) return false;
+    return getComputedStyle(stopButton).display !== 'none';
+  } catch {
+    return false;
+  }
+}
+
+function isSendButtonHidden(hostWindow: HostWindow) {
+  try {
+    const sendButton = hostWindow.document?.querySelector?.('#send_but') as HTMLElement | null;
+    if (!sendButton) return false;
+    const style = getComputedStyle(sendButton);
+    return style.display === 'none' || style.visibility === 'hidden';
+  } catch {
+    return false;
+  }
+}
+
+/** 强制恢复发送态：清 ST 发送互斥 / 停止钮残留，避免「能看到发送但点不动」 */
+function forceRecoverSendUi(hostWindow: HostWindow, reason: string, options?: { hideStop?: boolean; toastEmpty?: boolean }) {
+  const context = getSillyTavernContext(hostWindow);
+  let activated = false;
+  let stopped = false;
+
+  try {
+    context?.activateSendButtons?.();
+    activated = true;
+  } catch (error) {
+    console.debug('[Hotfix] activateSendButtons 失败', error);
+  }
+
+  if (options?.hideStop !== false && isStopButtonVisible(hostWindow)) {
+    try {
+      const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
+      stopButton?.click?.();
+      stopped = true;
+    } catch {
+      // ignore
+    }
+    // 再解锁一次，避免 stop 点击把发送态又关掉
+    try {
+      context?.activateSendButtons?.();
+    } catch {
+      // ignore
+    }
+  }
+
+  // 部分 ST 版本仅改 display；兜底直接露出发送钮
+  try {
+    const sendButton = hostWindow.document?.querySelector?.('#send_but') as HTMLElement | null;
+    if (sendButton && getComputedStyle(sendButton).display === 'none') {
+      sendButton.style.display = '';
+    }
+    const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
+    if (stopButton && getComputedStyle(stopButton).display !== 'none' && options?.hideStop !== false) {
+      stopButton.style.display = 'none';
+    }
+  } catch {
+    // ignore
+  }
+
+  if (options?.toastEmpty) {
+    try {
+      hostWindow.toastr?.warning?.('本轮 AI 回复为空，请重试或重新生成。', '神秘复苏', {
+        timeOut: 5000,
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  console.info('[Hotfix] 已恢复发送按钮', {
+    reason,
+    activated,
+    stopped,
+    sendHidden: isSendButtonHidden(hostWindow),
+    stopVisible: isStopButtonVisible(hostWindow),
+  });
+  return activated || stopped;
+}
+
 function recoverSendUiAfterEmptyGeneration(
   hostWindow: HostWindow,
   lastMessage: ChatMessage | undefined,
@@ -545,30 +629,7 @@ function recoverSendUiAfterEmptyGeneration(
   const text = typeof lastMessage.mes === 'string' ? lastMessage.mes.trim() : '';
   if (text) return false;
 
-  const context = getSillyTavernContext(hostWindow);
-  try {
-    context?.activateSendButtons?.();
-  } catch (error) {
-    console.debug('[Hotfix] activateSendButtons 失败', error);
-  }
-
-  try {
-    const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
-    if (stopButton && getComputedStyle(stopButton).display !== 'none') {
-      stopButton.click();
-    }
-  } catch {
-    // ignore
-  }
-
-  try {
-    hostWindow.toastr?.warning?.('本轮 AI 回复为空，请重试或重新生成。', '神秘复苏', {
-      timeOut: 5000,
-    });
-  } catch {
-    // ignore
-  }
-
+  forceRecoverSendUi(hostWindow, reason, { toastEmpty: true });
   console.warn('[Hotfix] 检测到空 AI 回复，已尝试恢复发送按钮', {
     messageIndex: lastMessageIndex,
     reason,
@@ -583,16 +644,15 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
 
   if (!chat || chat.length === 0) {
     console.debug('[Hotfix] GENERATION_ENDED: 聊天记录为空，跳过处理');
-    try {
-      context?.activateSendButtons?.();
-    } catch {
-      // ignore
-    }
+    forceRecoverSendUi(hostWindow, 'generation_ended_empty_chat');
     return;
   }
 
   const lastMessageIndex = resolveMessageIndex(chat, eventMessageId);
-  if (lastMessageIndex < 0) return;
+  if (lastMessageIndex < 0) {
+    forceRecoverSendUi(hostWindow, 'generation_ended_no_message');
+    return;
+  }
   const lastMessage = chat[lastMessageIndex];
 
   console.info('[Hotfix] GENERATION_ENDED 触发', {
@@ -602,7 +662,7 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
     hasChoices: lastMessage.mes?.includes('<choices>'),
   });
 
-  // 假流式/上游空 content：先恢复发送态，避免停在「停止生成」
+  // 假流式/上游空 content：先恢复发送态
   recoverSendUiAfterEmptyGeneration(hostWindow, lastMessage, lastMessageIndex, 'generation_ended');
 
   // 1. 触发 MVU 解析
@@ -627,6 +687,9 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
 
   // 清洗后若正文被剥空，再恢复一次发送态
   recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_ended_after_clean');
+
+  // 无论是否有正文：GENERATION_ENDED 后必须解锁发送互斥（假流式常见「有回复但点不动」）
+  forceRecoverSendUi(hostWindow, 'generation_ended_always', { hideStop: true });
 }
 
 async function handleGenerationStopped(eventMessageId?: unknown) {
@@ -634,16 +697,14 @@ async function handleGenerationStopped(eventMessageId?: unknown) {
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
   if (!chat || chat.length === 0) {
-    try {
-      context?.activateSendButtons?.();
-    } catch {
-      // ignore
-    }
+    forceRecoverSendUi(hostWindow, 'generation_stopped_empty_chat');
     return;
   }
   const lastMessageIndex = resolveMessageIndex(chat, eventMessageId);
-  if (lastMessageIndex < 0) return;
-  recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_stopped');
+  if (lastMessageIndex >= 0) {
+    recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_stopped');
+  }
+  forceRecoverSendUi(hostWindow, 'generation_stopped_always', { hideStop: true });
 }
 
 function registerEventListeners() {
