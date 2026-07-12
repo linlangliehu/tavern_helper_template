@@ -1373,29 +1373,45 @@ function ensureHudStyle() {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 body.${HUD_ST_UI_CLASS} #mfrs-hud-st-return { display: inline-flex; align-items: center; justify-content: center; }
-/* 沉浸内叠 ST 配置：不退出壳，只抬高打开的抽屉/弹窗 */
+/* 沉浸内叠 ST 配置：抽屉挂在 #top-settings-holder(z≈3005) 下，必须抬高整棵祖先堆叠上下文，否则会被壳 z=10000 挡住（看起来像“没反应”） */
 body.${HUD_ST_UI_CLASS} #${HUD_SHELL_ID}.is-active {
   opacity: 1;
   pointer-events: auto;
+  z-index: ${HUD_Z_SHELL} !important;
 }
+body.${HUD_ST_UI_CLASS} #top-settings-holder,
 body.${HUD_ST_UI_CLASS} #top-bar {
-  z-index: ${HUD_Z_SHELL + 55} !important;
+  z-index: ${HUD_Z_SHELL + 70} !important;
   pointer-events: auto !important;
+}
+body.${HUD_ST_UI_CLASS} #top-settings-holder {
+  position: relative !important;
 }
 body.${HUD_ST_UI_CLASS} .drawer-content.openDrawer,
 body.${HUD_ST_UI_CLASS} #left-nav-panel.openDrawer,
 body.${HUD_ST_UI_CLASS} #right-nav-panel.openDrawer,
+body.${HUD_ST_UI_CLASS} #WorldInfo.openDrawer,
+body.${HUD_ST_UI_CLASS} #rm_api_block.openDrawer,
+body.${HUD_ST_UI_CLASS} #AdvancedFormatting.openDrawer,
+body.${HUD_ST_UI_CLASS} #user-settings-block.openDrawer,
+body.${HUD_ST_UI_CLASS} #rm_extensions_block.openDrawer,
+body.${HUD_ST_UI_CLASS} #PersonaManagement.openDrawer,
+body.${HUD_ST_UI_CLASS} #Backgrounds.openDrawer,
 body.${HUD_ST_UI_CLASS} #floatingPrompt,
 body.${HUD_ST_UI_CLASS} #cfgConfig,
 body.${HUD_ST_UI_CLASS} #logprobsViewer,
 body.${HUD_ST_UI_CLASS} #completion_prompt_manager_popup,
 body.${HUD_ST_UI_CLASS} .popup,
 body.${HUD_ST_UI_CLASS} .dialogue_popup {
-  position: fixed !important;
-  z-index: ${HUD_Z_SHELL + 60} !important;
+  z-index: ${HUD_Z_SHELL + 80} !important;
   pointer-events: auto !important;
   max-height: 100vh;
   overflow: auto;
+}
+body.${HUD_ST_UI_CLASS} .drawer-content.openDrawer,
+body.${HUD_ST_UI_CLASS} #left-nav-panel.openDrawer,
+body.${HUD_ST_UI_CLASS} #right-nav-panel.openDrawer {
+  position: fixed !important;
 }
 #${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: none; }
 #${HUD_SHELL_ID} .mfrs-hud-tool-btn {
@@ -1902,13 +1918,19 @@ function runHudTavernAction(action: HudTavernAction) {
     }
     closeHudTavernMenu();
     if (action.yieldUi) yieldHudToStUi();
-    hostWindow.setTimeout(() => {
+    // 先应用叠层样式再点 ST 图标，避免抽屉在壳下打开
+    const fire = () => {
       try {
         target.click();
       } catch (error) {
         console.warn(`[消息内面板] 酒馆菜单点击失败: ${action.label}`, error);
       }
-    }, 0);
+    };
+    if (typeof hostWindow.requestAnimationFrame === 'function') {
+      hostWindow.requestAnimationFrame(() => hostWindow.setTimeout(fire, 0));
+    } else {
+      hostWindow.setTimeout(fire, 0);
+    }
   }
 }
 
