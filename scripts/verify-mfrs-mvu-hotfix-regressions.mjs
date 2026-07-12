@@ -29,6 +29,34 @@ function readText(path) {
   return readFileSync(path, 'utf8');
 }
 
+const hotfixSource = readText(hotfixPath);
+const initvarSource = readText(join(mfrsRoot, '\u4e16\u754c\u4e66', '\u53d8\u91cf', 'initvar.yaml'));
+
+assert.ok(
+  hotfixSource.includes('function seedMissingStatPaths'),
+  'hotfix must seed missing MagVar paths before parseMessage',
+);
+assert.ok(
+  hotfixSource.includes('seedMissingStatPaths(readOldMvuData'),
+  'hotfix must call seedMissingStatPaths on oldData before parseMessage',
+);
+assert.ok(
+  hotfixSource.includes('行动建议'),
+  'hotfix seed must cover 行动建议',
+);
+assert.ok(
+  hotfixSource.includes('最近行动判定') && hotfixSource.includes('DEFAULT_ACTION_JUDGEMENT'),
+  'hotfix seed must cover 最近行动判定',
+);
+assert.ok(
+  /行动建议:\s*\[\]/.test(initvarSource),
+  'initvar must seed 行动建议: [] so MagVar replace path exists on new chats',
+);
+assert.ok(
+  /最近行动判定:[\s\S]*?类型:\s*未判定/.test(initvarSource),
+  'initvar must seed 最近行动判定 defaults',
+);
+
 function extractPatchArrayText(message) {
   const updateMatch = String(message).match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);
   assert.ok(updateMatch, 'message should contain <UpdateVariable>');
@@ -182,7 +210,6 @@ assert.equal(legacyAdd.stats.legacyWrapped, 1, 'legacy add sample should be wrap
 assert.equal(legacyAdd.stats.addToInsert, 2, 'legacy add sample should convert two array appends to insert');
 assert.equal(legacyAdd.stats.addToReplace, 4, 'legacy add sample should convert scalar/object set add operations to replace');
 
-const hotfixSource = readText(hotfixPath);
 assert.ok(hotfixSource.includes('normalizeMfrsUpdateVariableProtocol(rawMessage)'), 'hotfix should normalize before parseMessage');
 assert.ok(hotfixSource.includes('mvu.parseMessage(normalized.message, oldData)'), 'hotfix should call parseMessage with message text and old data');
 assert.ok(

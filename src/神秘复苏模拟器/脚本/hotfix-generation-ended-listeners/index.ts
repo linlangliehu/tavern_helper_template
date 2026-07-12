@@ -193,6 +193,44 @@ function cloneMvuData(data: MvuData): MvuData {
   }
 }
 
+/** MagVar replace/set 要求路径已存在；旧档/initvar 常缺这些键，需在 parseMessage 前补种。 */
+const DEFAULT_ACTION_JUDGEMENT = {
+  类型: '未判定',
+  行动: '',
+  依据: [] as string[],
+  结果: '未结算',
+  代价: '无',
+  死亡风险变化: '无变化',
+  复苏风险变化: '无变化',
+  可见结论: '',
+};
+
+function seedMissingStatPaths(data: MvuData): MvuData {
+  const next = cloneMvuData(data);
+  if (!next.stat_data || typeof next.stat_data !== 'object' || Array.isArray(next.stat_data)) {
+    next.stat_data = {};
+  }
+  const stat = next.stat_data as Record<string, unknown>;
+  let seeded = false;
+
+  if (!Object.prototype.hasOwnProperty.call(stat, '行动建议')) {
+    stat['行动建议'] = [];
+    seeded = true;
+  }
+  if (!Object.prototype.hasOwnProperty.call(stat, '最近行动判定')) {
+    stat['最近行动判定'] = { ...DEFAULT_ACTION_JUDGEMENT, 依据: [] };
+    seeded = true;
+  }
+
+  if (seeded) {
+    console.info('[Hotfix] 已补种缺失 MVU 路径', {
+      hasActionSuggestions: Object.prototype.hasOwnProperty.call(stat, '行动建议'),
+      hasActionJudgement: Object.prototype.hasOwnProperty.call(stat, '最近行动判定'),
+    });
+  }
+  return next;
+}
+
 function stringifyStatData(data: MvuData | undefined) {
   try {
     return JSON.stringify(data?.stat_data ?? {});
@@ -353,7 +391,7 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
     message_id: getMessageVariableId(message, messageIndex),
   };
   const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
-  const oldData = readOldMvuData(hostWindow, messageOption);
+  const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
   const newData = await mvu.parseMessage(normalized.message, oldData);
   if (!newData || typeof newData !== 'object') {
     console.info('[Hotfix] MVU parseMessage 未产生变量变化', {
