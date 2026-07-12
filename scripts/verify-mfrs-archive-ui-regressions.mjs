@@ -611,14 +611,28 @@ addCheck('phase5', 'C1-C4 hud information density', () => {
     'actions height cap',
   );
   assert.ok(sources.message.includes('data-mfrs-hud="actions"'), 'actions details host');
-  // 本轮选项默认展开，摘要下另有 inline 4 键
+  // 本轮选项唯一入口：输入框上方 HUD；正文 inline 去掉
+  assert.ok(sources.message.includes('function stripInlineChoicesFromMessage'), 'strip body inline choices');
   assert.ok(
-    /data-mfrs-hud="actions"\s+open/.test(sources.message) || /data-mfrs-hud="actions" open/.test(sources.message),
-    'actions must default open for A/B/C/D',
+    sources.message.includes('actionsSlot.innerHTML = buildActionsHtml(data)') ||
+      sources.message.includes('actionsSlot.innerHTML=buildActionsHtml(data)'),
+    'HUD actions slot filled with buildActionsHtml',
+  );
+  assert.ok(
+    sources.message.includes('data-mfrs-hud="actions" open') ||
+      sources.message.includes("data-mfrs-hud=\"actions\" open"),
+    'HUD actions default open (above composer)',
   );
   assert.ok(sources.message.includes('function resolveActionSuggestions'), 'fixed A-D action resolver');
-  assert.ok(sources.message.includes('function injectInlineChoicesUnderSummary'), 'inline choices under summary');
-  assert.ok(sources.message.includes('mfrs-msg-inline-choices'), 'inline choices host class');
+  assert.ok(
+    /mfrs-msg-inline-choices[\s\S]{0,120}display:\s*none\s*!important/.test(sources.message) ||
+      sources.message.includes('body.${HUD_BODY_CLASS} .mfrs-msg-inline-choices'),
+    'body inline choices must be hidden in HUD mode',
+  );
+  assert.ok(
+    sources.message.includes('mfrs-msg-actions-block') && sources.message.includes("display = 'none'"),
+    'tri-panel 拟办 block must be suppressed',
+  );
   assert.ok(sources.message.includes('data-fold="event">') || sources.message.includes("data-fold=\"event\">"), 'event fold can collapse in hud');
   assert.ok(sources.message.includes('-webkit-line-clamp: 1') || sources.message.includes('line-clamp: 1'), 'relation one-line clamp');
   assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'density pass must remain read-only');

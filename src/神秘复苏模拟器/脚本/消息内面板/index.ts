@@ -253,40 +253,16 @@ function buildActionsHtml(data: StatusData): string {
   return `${buildActionButtonsHtml(data, { showProvisionalHint: true })}${buildCheckSuggestionsFoldHtml(data)}`;
 }
 
-/** 摘要下直接挂 4 键（最新 AI 楼叙事区） */
-function injectInlineChoicesUnderSummary(mesElement: Element) {
+/** 正文内不挂本轮选项：清掉 inline + 隐藏三栏拟办块，唯一入口在输入框上方 HUD */
+function stripInlineChoicesFromMessage(mesElement: Element) {
   if (isUserMessage(mesElement)) return;
   const mesText = mesElement.querySelector('.mes_text');
   if (!mesText) return;
-  const data = readStatusForMessage(mesElement);
-  const html = buildActionButtonsHtml(data, { compact: true, showProvisionalHint: true });
-  const host =
-    mesText.querySelector(':scope > .mfrs-msg-panel .mfrs-msg-center-host') ??
-    mesText.querySelector('.mfrs-msg-center-host') ??
-    mesText;
-  let block = host.querySelector(':scope > .mfrs-msg-inline-choices') as HTMLElement | null;
-  if (!block) {
-    block = doc.createElement('div');
-    block.className = 'mfrs-msg-inline-choices';
-    block.setAttribute('data-mfrs-inline-choices', '1');
-  }
-  block.innerHTML = `<div class="mfrs-msg-inline-choices-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>本轮选项</span></div>${html}`;
-
-  const narrative =
-    host.querySelector(':scope > .mfrs-msg-narrative-wrapper') ??
-    mesText.querySelector('.mfrs-msg-narrative-wrapper');
-  // 挂在叙事包装末尾（紧贴【本轮摘要】后的视觉位置）
-  if (narrative && narrative.parentElement === host) {
-    if (block.parentElement !== host || block.previousElementSibling !== narrative) {
-      narrative.after(block);
-    }
-  } else if (narrative) {
-    narrative.appendChild(block);
-  } else {
-    const panel = host.querySelector(':scope > .mfrs-msg-panel');
-    if (panel) host.insertBefore(block, panel);
-    else host.appendChild(block);
-  }
+  mesText.querySelectorAll('.mfrs-msg-inline-choices').forEach(node => node.remove());
+  mesText.querySelectorAll('.mfrs-msg-actions-block').forEach(node => {
+    (node as HTMLElement).hidden = true;
+    (node as HTMLElement).style.display = 'none';
+  });
 }
 
 /** 组 D：检定建议暂挂拟办下，默认折叠 */
@@ -713,10 +689,6 @@ function buildTriPanelHtml(data: StatusData, panelId: string): string {
   <div class="mfrs-msg-tri-center">
     <div class="mfrs-msg-tri-story" data-mfrs-center="story">
       <div class="mfrs-msg-center-host" data-mfrs-host="content"></div>
-      <div class="mfrs-msg-section mfrs-msg-section-full mfrs-msg-actions-block">
-        <div class="mfrs-msg-section-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></div>
-        <div class="mfrs-msg-actions">${buildActionsHtml(data)}</div>
-      </div>
     </div>
     <div class="mfrs-msg-tri-relation" data-mfrs-center="relation" hidden>
       ${relationTab}
@@ -1057,7 +1029,7 @@ function processMessageElement(mes: Element) {
   wrapNarrativeText(mes);
   injectPanelForMessage(mes);
   composeTriCenter(mes);
-  injectInlineChoicesUnderSummary(mes);
+  stripInlineChoicesFromMessage(mes);
 }
 
 function processLatestAiMessageOnly() {
@@ -1768,13 +1740,17 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-nav-btn span {
   white-space: nowrap;
 }
-/* 本轮选项：默认展开，摘要下/拟办区同构 4 键 */
+/* 本轮选项唯一入口：输入框上方 HUD；正文 inline / 三栏拟办隐藏 */
 #${HUD_SHELL_ID} .mfrs-hud-actions {
+  display: block;
   flex: 0 0 auto;
   max-height: min(36vh, 280px);
   overflow: auto;
   border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 34%, transparent);
   background: rgba(7, 9, 9, 0.96);
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions[hidden] {
+  display: none !important;
 }
 #${HUD_SHELL_ID} .mfrs-hud-actions:not([open]) {
   max-height: none;
@@ -2493,7 +2469,10 @@ body.${HUD_BODY_CLASS} .mfrs-msg-tri-left,
 body.${HUD_BODY_CLASS} .mfrs-msg-tri-right,
 body.${HUD_BODY_CLASS} .mfrs-msg-tabs,
 body.${HUD_BODY_CLASS} .mfrs-msg-brand,
-body.${HUD_BODY_CLASS} .mfrs-msg-actions-block {
+body.${HUD_BODY_CLASS} .mfrs-msg-actions-block,
+body.${HUD_BODY_CLASS} .mfrs-msg-section.mfrs-msg-actions-block,
+body.${HUD_BODY_CLASS} .mfrs-msg-tri-story > .mfrs-msg-actions-block,
+body.${HUD_BODY_CLASS} .mfrs-msg-inline-choices {
   display: none !important;
 }
 body.${HUD_BODY_CLASS} .mfrs-msg-tri-center {
@@ -3988,8 +3967,14 @@ function refreshHudPanels(force = false) {
   const dossierSlot = shell.querySelector('[data-mfrs-hud="dossier-slot"]');
   if (dossierSlot) dossierSlot.innerHTML = buildHudDossierHtml(data);
 
+  // 本轮选项唯一入口：输入框上方 HUD（正文 inline 已 strip）
+  const actionsHost = shell.querySelector('[data-mfrs-hud="actions"]') as HTMLElement | null;
   const actionsSlot = shell.querySelector('[data-mfrs-hud="actions-slot"]');
-  if (actionsSlot) actionsSlot.innerHTML = buildActionsHtml(data);
+  if (actionsHost && actionsSlot) {
+    actionsHost.hidden = false;
+    actionsHost.setAttribute('open', '');
+    actionsSlot.innerHTML = buildActionsHtml(data);
+  }
 
   const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
   if (relationSlot) relationSlot.innerHTML = buildHudRelationHtml(data);
