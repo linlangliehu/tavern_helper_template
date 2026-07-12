@@ -26,9 +26,9 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = 'f26e0766fd8e3675e78b451082ae174ffdc7e2ef';  // v8.12.1: immersive HUD perf (latest-only refresh + less animation)
+const CDN_REF = '5de11629e92da04d8933df9d3e75080078094db3';  // v8.12.2: ST panels overlay on immersive HUD (no yield)
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase166-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8121-hud-perf';
+const CDN_CACHE_VERSION = 'phase167-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8122-st-overlay';
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -55,7 +55,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.12.1',
+    releaseVersion: '8.12.2',
   },
 ];
 
