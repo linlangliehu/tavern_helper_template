@@ -26,10 +26,10 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-// v8.13.9: close SP database UI from HUD close panel (dist @55adbd8f32a2)
-const CDN_REF = '55adbd8f32a2d6de4833a90924a9dfa34d9a3088';
+// v8.13.10: fallback HUD actions from UpdateVariable (dist @bb61a8e543b2)
+const CDN_REF = 'bb61a8e543b2982686e01da4e6b4cb42b64e1dc2';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8139-close-sp-panel';
+const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81310-actions-updatevar-fallback';
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -56,7 +56,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.13.9',
+    releaseVersion: '8.13.10',
   },
 ];
 
