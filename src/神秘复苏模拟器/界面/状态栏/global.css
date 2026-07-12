@@ -30,9 +30,9 @@
   --accent-dark-red-bright: #8b2020;
   --accent-dark-red-glow: rgba(120, 20, 20, 0.3);
   --rivet-highlight: rgba(255, 255, 255, 0.08);
-  --scanline-opacity: 0.005;
-  --noise-opacity: 0.025;
-  --vignette-strength: 0.65;
+  --scanline-opacity: 0.003;
+  --noise-opacity: 0.015;
+  --vignette-strength: 0.55;
   --shadow-panel: 0 0 50px rgba(0, 0, 0, 0.98), inset 0 0 60px rgba(10, 0, 0, 0.8);
   --shadow-inset: inset 0 1px 4px rgba(0, 0, 0, 0.7);
   --shadow-text-red: 0 0 10px rgba(120, 20, 20, 0.4);
@@ -115,7 +115,7 @@ body::after {
 #app {
   position: relative;
   padding: 16px 12px;
-  animation: flicker 12s ease-in-out infinite;
+  animation: flicker 18s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

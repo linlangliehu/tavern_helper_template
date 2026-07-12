@@ -51,11 +51,11 @@ body {
 }
 
 #chat {
-  --mfrs-corpse-cyan: #5f8f86;
+  --mfrs-corpse-cyan: #3d6b66;
   --mfrs-aged-brass: #9c784a;
-  --mfrs-bone-white: #ded4bd;
-  --mfrs-blood-red: #9f342f;
-  background: #151111 !important;
+  --mfrs-bone-white: #c8c0ae;
+  --mfrs-blood-red: #6b2a26;
+  background: #0a0b0b !important;
 }
 
 #top-bar {
@@ -826,22 +826,23 @@ body {
 }
 .mfrs-choice-why-key.is-death { color: #f08080 !important; }
 .mfrs-choice-why-key.is-revive { color: #c89adf !important; }
-/* 正文档案：焦纸表面、单层旧铜边框与左侧装订线 */
+/* 正文档案：暗底直角尸青线框与左侧装订线 */
 .mfrs-msg-narrative-wrapper {
   position: relative !important;
   color: var(--mfrs-bone-white) !important;
   background:
-    repeating-linear-gradient(0deg, rgba(222,212,189,0.018) 0 1px, transparent 1px 4px),
-    linear-gradient(90deg, transparent 0 14px, rgba(95,143,134,0.055) 14px 15px, transparent 15px),
-    linear-gradient(115deg, rgba(156,120,74,0.055), transparent 28%),
-    #0b0d0c !important;
-  border: 1px solid var(--mfrs-aged-brass) !important;
+    repeating-linear-gradient(0deg, rgba(200,192,174,0.016) 0 1px, transparent 1px 4px),
+    linear-gradient(90deg, transparent 0 14px, rgba(61,107,102,0.06) 14px 15px, transparent 15px),
+    linear-gradient(115deg, rgba(61,107,102,0.05), transparent 28%),
+    rgba(8,10,10,0.96) !important;
+  border: 1px solid var(--mfrs-corpse-cyan) !important;
+  border-radius: 0 !important;
   padding: 18px 22px 17px 30px !important;
   margin-bottom: 16px !important;
   box-shadow:
     0 7px 18px rgba(0,0,0,0.34),
     inset 0 0 26px rgba(0,0,0,0.46),
-    inset 3px 0 0 rgba(95,143,134,0.16) !important;
+    inset 0 0 0 1px rgba(61,107,102,0.12) !important;
   overflow: hidden !important;
   line-height: 1.9 !important;
 }
@@ -854,9 +855,9 @@ body {
   width: 1px !important;
   pointer-events: none !important;
   z-index: 0 !important;
-  background: repeating-linear-gradient(180deg, var(--mfrs-blood-red) 0 5px, transparent 5px 10px) !important;
-  box-shadow: 4px 0 0 rgba(156,120,74,0.12) !important;
-  opacity: 0.64 !important;
+  background: repeating-linear-gradient(180deg, var(--mfrs-corpse-cyan) 0 5px, transparent 5px 10px) !important;
+  box-shadow: 4px 0 0 rgba(61,107,102,0.12) !important;
+  opacity: 0.48 !important;
 }
 .mfrs-msg-narrative-wrapper::after {
   content: '' !important;
@@ -882,41 +883,33 @@ body {
   z-index: 1 !important;
 }
 .mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper {
-  animation:
-    mfrs-frame-breathe 3.2s ease-in-out infinite,
-    mfrs-frame-glitch 3.4s ease-in-out infinite !important;
+  animation: mfrs-frame-breathe 4.2s ease-in-out infinite !important;
 }
 .mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper::before {
-  animation: mfrs-grid-pulse 4s ease-in-out infinite !important;
+  animation: mfrs-grid-pulse 5s ease-in-out infinite !important;
 }
 .mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper::after {
-  opacity: 1 !important;
-  animation: mfrs-scan-h 7s linear infinite !important;
+  opacity: 0.45 !important;
+  animation: mfrs-scan-h 9s linear infinite !important;
 }
 @keyframes mfrs-frame-breathe {
   0%, 100% {
     box-shadow:
       0 7px 18px rgba(0,0,0,0.34),
       inset 0 0 26px rgba(0,0,0,0.46),
-      inset 3px 0 0 rgba(95,143,134,0.16) !important;
+      inset 0 0 0 1px rgba(61,107,102,0.12) !important;
   }
   50% {
     box-shadow:
-      0 9px 22px rgba(0,0,0,0.4),
+      0 8px 20px rgba(0,0,0,0.38),
       inset 0 0 28px rgba(0,0,0,0.5),
-      inset 3px 0 0 rgba(95,143,134,0.28),
-      0 0 12px rgba(159,52,47,0.12) !important;
+      inset 0 0 0 1px rgba(61,107,102,0.22),
+      0 0 10px rgba(107,42,38,0.08) !important;
   }
 }
-@keyframes mfrs-frame-glitch {
-  0%, 90%, 100% { transform: none; filter: none; }
-  92% { transform: translateX(0.4px); filter: contrast(1.05); }
-  94% { transform: translateX(-0.4px); filter: brightness(1.04); }
-  96% { transform: none; filter: none; }
-}
 @keyframes mfrs-grid-pulse {
-  0%, 100% { opacity: 0.64; }
-  50% { opacity: 1; }
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
 }
 @keyframes mfrs-scan-h {
   0% { top: -12%; }

@@ -75,7 +75,7 @@ function riskPresentation(value: unknown, kind: RiskKind) {
     return {
       numeric,
       percent,
-      color: '#a63832',
+      color: kind === 'death' ? '#6b2a26' : '#3d6b66',
       level: '高危',
       tone: 'is-critical',
       copy: kind === 'death' ? '生存窗口正在急剧收窄' : '厉鬼复苏已逼近失控线',
@@ -85,7 +85,7 @@ function riskPresentation(value: unknown, kind: RiskKind) {
     return {
       numeric,
       percent,
-      color: '#a77b42',
+      color: '#9c784a',
       level: '警戒',
       tone: 'is-elevated',
       copy: kind === 'death' ? '继续行动需要预留退路' : '灵异躁动需要持续压制',
@@ -94,7 +94,7 @@ function riskPresentation(value: unknown, kind: RiskKind) {
   return {
     numeric,
     percent,
-    color: '#56847c',
+    color: kind === 'death' ? '#6b2a26' : '#3d6b66',
     level: '可控',
     tone: 'is-calm',
     copy: kind === 'death' ? '当前仍有足够应对余地' : '复苏征兆暂处稳定区间',
@@ -125,16 +125,52 @@ function isUserMessage(mesElement: Element): boolean {
   return mesElement.getAttribute('is_user') === 'true' || mesElement.classList.contains('user');
 }
 
-/** 构建「状态面板」tab 的 HTML（顶部浓缩信息栏 + 左右两列 + 通栏行动建议） */
-function buildStatusTabHtml(data: StatusData): string {
+function buildGhostListHtml(data: StatusData): string {
+  const rawGhostList = _.get(data, '驭鬼者状态.已驾驭厉鬼', []) || data.驾驭厉鬼 || [];
+  const ghostList = Array.isArray(rawGhostList)
+    ? rawGhostList.filter(
+        (g: any, i: number, arr: any[]) =>
+          i ===
+          arr.findIndex((h: any) => valueText(h?.代号 || h?.厉鬼名称, '') === valueText(g?.代号 || g?.厉鬼名称, '')),
+      )
+    : [];
+  return ghostList.length
+    ? ghostList
+        .map(
+          (g: any) =>
+            `<div class="mfrs-msg-ghost-item">${_.escape(valueText(g.代号 || g.厉鬼名称, '未命名厉鬼'))}</div>`,
+        )
+        .join('')
+    : '<div class="mfrs-msg-empty">暂无驾驭厉鬼</div>';
+}
+
+function buildActionsHtml(data: StatusData): string {
+  const suggestions = Array.isArray(data.行动建议) ? data.行动建议 : [];
+  if (!suggestions.length) return '<div class="mfrs-msg-empty">暂无拟办意见</div>';
+  return suggestions
+    .map((s: any, i: number) => {
+      const optionKey = valueText(s.选项 ?? s.option ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
+      const actionText = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '未知行动');
+      const metaParts = [
+        valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
+        valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
+        valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
+        valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
+      ].filter(Boolean);
+      const actionValue = actionText === '未知行动' ? '' : actionText;
+      return `<button type="button" class="mfrs-msg-action-btn" data-action="${_.escape(actionValue)}"><span class="mfrs-msg-action-key">${_.escape(optionKey)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(actionText)}</span>${metaParts.length ? `<span class="mfrs-msg-action-meta">${_.escape(metaParts.join('｜'))}</span>` : ''}</span></button>`;
+    })
+    .join('');
+}
+
+function buildDossierSectionsHtml(data: StatusData): string {
   const name = valueText(data.姓名);
   const gender = valueText(data.性别);
   const identity = valueText(data.身份);
   const ability = valueText(data.特殊能力描述, '无');
   const cost = valueText(data.消耗代价, '无');
   const playerStatus = valueText(data.状态, '健康');
-  const location = valueText(data.所在位置);
-  const phase = valueText(_.get(data, '主线进度.当前阶段'));
+  const resources = valueText(data.灵异资源 ?? _.get(data, '资源') ?? _.get(data, '持有资源'), '');
 
   const deathRisk = riskPresentation(data.风险值, 'death');
   const reviveRisk = riskPresentation(
@@ -149,40 +185,63 @@ function buildStatusTabHtml(data: StatusData): string {
   const eventDomain = valueText(event.鬼域状态, '未知');
   const eventHandle = valueText(event.处理状态, '未知');
 
-  const rawGhostList = _.get(data, '驭鬼者状态.已驾驭厉鬼', []) || data.驾驭厉鬼 || [];
-  const ghostList = Array.isArray(rawGhostList)
-    ? rawGhostList.filter(
-        (g: any, i: number, arr: any[]) =>
-          i ===
-          arr.findIndex((h: any) => valueText(h?.代号 || h?.厉鬼名称, '') === valueText(g?.代号 || g?.厉鬼名称, '')),
-      )
-    : [];
-  const ghostsHtml = ghostList.length
-    ? ghostList
-        .map(
-          (g: any) =>
-            `<div class="mfrs-msg-ghost-item">${_.escape(valueText(g.代号 || g.厉鬼名称, '未命名厉鬼'))}</div>`,
-        )
-        .join('')
-    : '<div class="mfrs-msg-empty">暂无驾驭厉鬼</div>';
+  const resourceBlock = resources
+    ? `<details class="mfrs-msg-fold" data-fold="resource" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>资源</span></summary>
+  <div class="mfrs-msg-fold-body"><div class="mfrs-msg-info-text">${_.escape(resources)}</div></div>
+</details>`
+    : '';
 
-  const suggestions = Array.isArray(data.行动建议) ? data.行动建议 : [];
-  const suggestionsHtml = suggestions.length
-    ? suggestions
-        .map((s: any, i: number) => {
-          const optionKey = valueText(s.选项 ?? s.option ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
-          const actionText = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '未知行动');
-          const metaParts = [
-            valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
-            valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
-            valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
-            valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
-          ].filter(Boolean);
-          const actionValue = actionText === '未知行动' ? '' : actionText;
-          return `<button class="mfrs-msg-action-btn" data-action="${_.escape(actionValue)}"><span class="mfrs-msg-action-key">${_.escape(optionKey)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(actionText)}</span>${metaParts.length ? `<span class="mfrs-msg-action-meta">${_.escape(metaParts.join('｜'))}</span>` : ''}</span></button>`;
-        })
-        .join('')
-    : '<div class="mfrs-msg-empty">暂无行动建议</div>';
+  return `
+<details class="mfrs-msg-fold" data-fold="identity" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-id-card" aria-hidden="true"></i><span>身份</span></summary>
+  <div class="mfrs-msg-fold-body">
+    <div class="mfrs-msg-kv"><span>姓名</span><b>${_.escape(name)}</b></div>
+    <div class="mfrs-msg-kv"><span>性别</span><b>${_.escape(gender)}</b></div>
+    <div class="mfrs-msg-kv"><span>身份</span><b>${_.escape(identity)}</b></div>
+    <div class="mfrs-msg-info-text"><strong>能力</strong>${_.escape(ability)}</div>
+    <div class="mfrs-msg-info-text"><strong>代价</strong>${_.escape(cost)}</div>
+  </div>
+</details>
+<details class="mfrs-msg-fold" data-fold="risk" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i><span>风险</span></summary>
+  <div class="mfrs-msg-fold-body">
+    <div class="mfrs-msg-risk-item ${deathRisk.tone}" style="--mfrs-risk-color:${deathRisk.color};--mfrs-risk-pct:${deathRisk.percent}%">
+      <div class="mfrs-msg-risk-label"><span>死亡风险</span><strong class="mfrs-msg-risk-level">${deathRisk.level}</strong><span class="mfrs-msg-risk-value">${deathRisk.numeric}%</span></div>
+      <div class="mfrs-msg-risk-copy">${deathRisk.copy}</div>
+      <div class="mfrs-msg-risk-bar" role="meter" aria-label="死亡风险" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${deathRisk.percent}"><div class="mfrs-msg-risk-fill"></div></div>
+    </div>
+    <div class="mfrs-msg-risk-item ${reviveRisk.tone}" style="--mfrs-risk-color:${reviveRisk.color};--mfrs-risk-pct:${reviveRisk.percent}%">
+      <div class="mfrs-msg-risk-label"><span>复苏风险</span><strong class="mfrs-msg-risk-level">${reviveRisk.level}</strong><span class="mfrs-msg-risk-value">${reviveRisk.numeric}%</span></div>
+      <div class="mfrs-msg-risk-copy">${reviveRisk.copy}</div>
+      <div class="mfrs-msg-risk-bar" role="meter" aria-label="复苏风险" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${reviveRisk.percent}"><div class="mfrs-msg-risk-fill"></div></div>
+    </div>
+    <div class="mfrs-msg-kv"><span>状态</span><b>${_.escape(playerStatus)}</b></div>
+  </div>
+</details>
+<details class="mfrs-msg-fold" data-fold="event" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>事件</span></summary>
+  <div class="mfrs-msg-fold-body">
+    <div class="mfrs-msg-kv"><span>事件代号</span><b>${_.escape(eventCode)}</b></div>
+    <div class="mfrs-msg-kv"><span>危害等级</span><b>${_.escape(eventLevel)}</b></div>
+    <div class="mfrs-msg-kv"><span>发生地点</span><b>${_.escape(eventPlace)}</b></div>
+    <div class="mfrs-msg-kv"><span>鬼域状态</span><b>${_.escape(eventDomain)}</b></div>
+    <div class="mfrs-msg-kv"><span>处理状态</span><b>${_.escape(eventHandle)}</b></div>
+  </div>
+</details>
+<details class="mfrs-msg-fold" data-fold="ghost" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-ghost" aria-hidden="true"></i><span>厉鬼</span></summary>
+  <div class="mfrs-msg-fold-body"><div class="mfrs-msg-ghost-list">${buildGhostListHtml(data)}</div></div>
+</details>
+${resourceBlock}
+`;
+}
+
+/** 构建「状态面板」tab 的 HTML（历史楼收束：顶栏 + 双列 + 拟办意见） */
+function buildStatusTabHtml(data: StatusData): string {
+  const location = valueText(data.所在位置);
+  const phase = valueText(_.get(data, '主线进度.当前阶段'));
+  const deathRisk = riskPresentation(data.风险值, 'death');
 
   return `
 <div class="mfrs-msg-header">
@@ -190,53 +249,33 @@ function buildStatusTabHtml(data: StatusData): string {
   <div class="mfrs-msg-header-item"><i class="fa-solid fa-location-dot mfrs-msg-header-ico" aria-hidden="true"></i><span class="mfrs-msg-header-lbl">位置</span><span class="mfrs-msg-header-val">${_.escape(location)}</span></div>
   <div class="mfrs-msg-header-item"><i class="fa-solid fa-triangle-exclamation mfrs-msg-header-ico" aria-hidden="true"></i><span class="mfrs-msg-header-lbl">死亡风险</span><span class="mfrs-msg-header-val" style="color:${deathRisk.color}">${deathRisk.numeric}% · ${deathRisk.level}</span></div>
 </div>
-<div class="mfrs-msg-columns">
-  <div class="mfrs-msg-col">
-    <div class="mfrs-msg-section">
-      <div class="mfrs-msg-section-title"><i class="fa-solid fa-id-card" aria-hidden="true"></i><span>身份信息</span></div>
-      <div class="mfrs-msg-kv"><span>姓名</span><b>${_.escape(name)}</b></div>
-      <div class="mfrs-msg-kv"><span>性别</span><b>${_.escape(gender)}</b></div>
-      <div class="mfrs-msg-kv"><span>身份</span><b>${_.escape(identity)}</b></div>
-    </div>
-    <div class="mfrs-msg-section">
-      <div class="mfrs-msg-section-title"><i class="fa-solid fa-eye" aria-hidden="true"></i><span>特殊能力</span></div>
-      <div class="mfrs-msg-info-text"><strong>能力</strong>${_.escape(ability)}</div>
-      <div class="mfrs-msg-info-text"><strong>代价</strong>${_.escape(cost)}</div>
-    </div>
-    <div class="mfrs-msg-section">
-      <div class="mfrs-msg-section-title"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i><span>生存状态</span></div>
-      <div class="mfrs-msg-risk-item ${deathRisk.tone}" style="--mfrs-risk-color:${deathRisk.color};--mfrs-risk-pct:${deathRisk.percent}%">
-        <div class="mfrs-msg-risk-label"><span>死亡风险</span><strong class="mfrs-msg-risk-level">${deathRisk.level}</strong><span class="mfrs-msg-risk-value">${deathRisk.numeric}%</span></div>
-        <div class="mfrs-msg-risk-copy">${deathRisk.copy}</div>
-        <div class="mfrs-msg-risk-bar" role="meter" aria-label="死亡风险" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${deathRisk.percent}"><div class="mfrs-msg-risk-fill"></div></div>
-      </div>
-      <div class="mfrs-msg-risk-item ${reviveRisk.tone}" style="--mfrs-risk-color:${reviveRisk.color};--mfrs-risk-pct:${reviveRisk.percent}%">
-        <div class="mfrs-msg-risk-label"><span>复苏风险</span><strong class="mfrs-msg-risk-level">${reviveRisk.level}</strong><span class="mfrs-msg-risk-value">${reviveRisk.numeric}%</span></div>
-        <div class="mfrs-msg-risk-copy">${reviveRisk.copy}</div>
-        <div class="mfrs-msg-risk-bar" role="meter" aria-label="复苏风险" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${reviveRisk.percent}"><div class="mfrs-msg-risk-fill"></div></div>
-      </div>
-      <div class="mfrs-msg-kv"><span>状态</span><b>${_.escape(playerStatus)}</b></div>
-    </div>
-  </div>
-  <div class="mfrs-msg-col">
-    <div class="mfrs-msg-section">
-      <div class="mfrs-msg-section-title"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>当前灵异事件</span></div>
-      <div class="mfrs-msg-kv"><span>事件代号</span><b>${_.escape(eventCode)}</b></div>
-      <div class="mfrs-msg-kv"><span>危害等级</span><b>${_.escape(eventLevel)}</b></div>
-      <div class="mfrs-msg-kv"><span>发生地点</span><b>${_.escape(eventPlace)}</b></div>
-      <div class="mfrs-msg-kv"><span>鬼域状态</span><b>${_.escape(eventDomain)}</b></div>
-      <div class="mfrs-msg-kv"><span>处理状态</span><b>${_.escape(eventHandle)}</b></div>
-    </div>
-    <div class="mfrs-msg-section">
-      <div class="mfrs-msg-section-title"><i class="fa-solid fa-ghost" aria-hidden="true"></i><span>驾驭厉鬼</span></div>
-      <div class="mfrs-msg-ghost-list">${ghostsHtml}</div>
-    </div>
-  </div>
+<div class="mfrs-msg-dossier-history">
+  ${buildDossierSectionsHtml(data)}
 </div>
 <div class="mfrs-msg-section mfrs-msg-section-full">
-  <div class="mfrs-msg-section-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>行动建议</span></div>
-  <div class="mfrs-msg-actions">${suggestionsHtml}</div>
+  <div class="mfrs-msg-section-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></div>
+  <div class="mfrs-msg-actions">${buildActionsHtml(data)}</div>
 </div>
+`;
+}
+
+function buildNavHtml(panelId: string): string {
+  const items = [
+    { id: 'story', label: '正文', icon: 'fa-align-left' },
+    { id: 'dossier', label: '档案', icon: 'fa-folder-open' },
+    { id: 'relation', label: '关系', icon: 'fa-users' },
+    { id: 'cabinet', label: '柜', icon: 'fa-box-archive' },
+    { id: 'settings', label: '设置', icon: 'fa-gear', disabled: true },
+  ];
+  return `
+<nav class="mfrs-msg-nav" id="${panelId}-nav" aria-label="现场导航">
+  ${items
+    .map(
+      item =>
+        `<button type="button" class="mfrs-msg-nav-btn${item.disabled ? ' is-disabled' : ''}" data-nav="${item.id}" ${item.disabled ? 'disabled aria-disabled="true" title="二期"' : ''} id="${panelId}-nav-${item.id}"><i class="fa-solid ${item.icon}" aria-hidden="true"></i><span>${item.label}</span></button>`,
+    )
+    .join('')}
+</nav>
 `;
 }
 
@@ -307,53 +346,34 @@ function getBrandViewModel(data: StatusData, mesid: string) {
     archive: mesid,
     phase: valueText(_.get(data, '主线进度.当前阶段')),
     location: valueText(data.所在位置),
+    event: valueText(_.get(data, '当前灵异事件.事件代号'), '无'),
+    domain: valueText(_.get(data, '当前灵异事件.鬼域状态'), '未知'),
     danger: valueText(_.get(data, '当前灵异事件.危害等级')),
   };
 }
 
 function buildBrandHtml(data: StatusData, mesid: string): string {
   const brand = getBrandViewModel(data, mesid);
-  const accessibleName = `鬼眼封案档案标识，档案 ${brand.archive}，阶段 ${brand.phase}，位置 ${brand.location}，危害等级 ${brand.danger}`;
+  const accessibleName = `现场档案状态条，位置 ${brand.location}，阶段 ${brand.phase}，事件 ${brand.event}，鬼域 ${brand.domain}，危害 ${brand.danger}`;
 
   return `
-<section class="mfrs-msg-brand" id="${getBrandId(mesid)}" role="img" aria-label="${_.escape(accessibleName)}">
-  <div class="mfrs-msg-brand-eye" aria-hidden="true">
-    <svg viewBox="0 0 64 64" focusable="false" aria-hidden="true">
-      <g class="mfrs-msg-brand-eye-orbit" fill="none" stroke="currentColor" stroke-width="1.4">
-        <ellipse cx="32" cy="32" rx="25" ry="11"/>
-        <ellipse cx="32" cy="32" rx="25" ry="11" transform="rotate(60 32 32)"/>
-        <ellipse cx="32" cy="32" rx="25" ry="11" transform="rotate(120 32 32)"/>
-      </g>
-      <path class="mfrs-msg-brand-eye-lid" d="M12 32c6-10 13-15 20-15s14 5 20 15c-6 10-13 15-20 15S18 42 12 32Z"/>
-      <circle class="mfrs-msg-brand-eye-iris" cx="32" cy="32" r="9"/>
-      <circle class="mfrs-msg-brand-eye-pupil" cx="32" cy="32" r="3.5"/>
-      <circle class="mfrs-msg-brand-eye-glint" cx="29" cy="29" r="1.4"/>
-    </svg>
+<section class="mfrs-msg-brand" id="${getBrandId(mesid)}" role="region" aria-label="${_.escape(accessibleName)}">
+  <span class="mfrs-msg-brand-corner mfrs-msg-brand-corner-tl" aria-hidden="true"></span>
+  <span class="mfrs-msg-brand-corner mfrs-msg-brand-corner-tr" aria-hidden="true"></span>
+  <span class="mfrs-msg-brand-corner mfrs-msg-brand-corner-bl" aria-hidden="true"></span>
+  <span class="mfrs-msg-brand-corner mfrs-msg-brand-corner-br" aria-hidden="true"></span>
+  <div class="mfrs-msg-brand-rail">
+    <span class="mfrs-msg-brand-kicker">现场档案</span>
+    <span class="mfrs-msg-brand-stamp">MFRS</span>
+    <span class="mfrs-msg-brand-archive">#${_.escape(brand.archive)}</span>
   </div>
-  <div class="mfrs-msg-brand-center">
-    <div class="mfrs-msg-brand-wordmark">
-      <span class="mfrs-msg-brand-kicker">鬼眼封案</span>
-      <strong>神秘复苏</strong>
-      <span class="mfrs-msg-brand-subtitle">SUPERNATURAL ARCHIVE</span>
-    </div>
-    <dl class="mfrs-msg-brand-meta">
-      <div><dt>档案</dt><dd>#${_.escape(brand.archive)}</dd></div>
-      <div><dt>阶段</dt><dd>${_.escape(brand.phase)}</dd></div>
-      <div class="mfrs-msg-brand-location"><dt>位置</dt><dd>${_.escape(brand.location)}</dd></div>
-      <div><dt>危害</dt><dd>${_.escape(brand.danger)}</dd></div>
-    </dl>
-  </div>
-  <div class="mfrs-msg-brand-seal" aria-hidden="true">
-    <svg viewBox="0 0 64 64" focusable="false" aria-hidden="true">
-      <g class="mfrs-msg-brand-seal-rotor" fill="none" stroke="currentColor">
-        <circle cx="32" cy="32" r="27" stroke-width="1.2" stroke-dasharray="3 3"/>
-        <path d="M32 5 40 12 51 13 52 24 59 32 52 40 51 51 40 52 32 59 24 52 13 51 12 40 5 32 12 24 13 13 24 12Z" stroke-width="1.5"/>
-        <path d="M32 11 39 22 53 25 43 35 45 50 32 43 19 50 21 35 11 25 25 22Z" stroke-width="1"/>
-      </g>
-      <circle class="mfrs-msg-brand-seal-core" cx="32" cy="32" r="14"/>
-      <path class="mfrs-msg-brand-seal-mark" d="M25 23h14M23 29h18M27 35h10M24 41h16M32 21v23"/>
-    </svg>
-  </div>
+  <dl class="mfrs-msg-brand-meta">
+    <div class="mfrs-msg-brand-location"><dt>位置</dt><dd>${_.escape(brand.location)}</dd></div>
+    <div><dt>阶段</dt><dd>${_.escape(brand.phase)}</dd></div>
+    <div><dt>事件</dt><dd>${_.escape(brand.event)}</dd></div>
+    <div><dt>鬼域</dt><dd>${_.escape(brand.domain)}</dd></div>
+    <div><dt>危害</dt><dd>${_.escape(brand.danger)}</dd></div>
+  </dl>
 </section>
 `;
 }
@@ -367,8 +387,9 @@ function injectBrandForMessage(mesElement: Element) {
 
   const data = readStatusForMessage(mesElement);
   const renderKey = getPanelRenderKey(getBrandViewModel(data, mesid));
+  const host = mesText.querySelector('.mfrs-msg-center-host');
   const brands = Array.from(mesText.querySelectorAll<HTMLElement>('.mfrs-msg-brand')).filter(
-    brand => brand.parentElement === mesText,
+    brand => brand.parentElement === mesText || brand.parentElement === host,
   );
   const existingBrand = brands.shift() ?? null;
   brands.forEach(brand => brand.remove());
@@ -381,22 +402,24 @@ function injectBrandForMessage(mesElement: Element) {
   nextBrand.dataset.mfrsRenderKey = renderKey;
 
   if (!existingBrand) {
+    const host = mesText.querySelector('.mfrs-msg-center-host');
+    if (host) {
+      host.insertBefore(nextBrand, host.firstChild);
+      return;
+    }
     const wrapper = Array.from(mesText.children).find(child => child.classList.contains('mfrs-msg-narrative-wrapper'));
     mesText.insertBefore(nextBrand, wrapper ?? mesText.firstChild);
     return;
   }
 
   existingBrand.id = getBrandId(mesid);
-  existingBrand.setAttribute('role', 'img');
-  existingBrand.setAttribute('aria-label', nextBrand.getAttribute('aria-label') ?? '鬼眼封案档案标识');
+  existingBrand.setAttribute('role', 'region');
+  existingBrand.setAttribute('aria-label', nextBrand.getAttribute('aria-label') ?? '现场档案状态条');
   existingBrand.dataset.mfrsRenderKey = renderKey;
   existingBrand.replaceChildren(...Array.from(nextBrand.childNodes));
 }
 
-/** 构建完整面板 HTML（包含 tab 切换） */
-function buildPanelHtml(data: StatusData, panelId: string): string {
-  const statusTab = buildStatusTabHtml(data);
-  const relationTab = buildRelationTabHtml(data);
+function getPanelRiskClass(data: StatusData): string {
   const deathRisk = riskPresentation(data.风险值, 'death');
   const reviveRisk = riskPresentation(
     toNumber(_.get(data, '驭鬼者状态.总复苏风险')) ?? toNumber(data.厉鬼复苏程度) ?? 0,
@@ -404,14 +427,66 @@ function buildPanelHtml(data: StatusData, panelId: string): string {
   );
   const highRisk = deathRisk.numeric >= 70 || reviveRisk.numeric >= 70;
   const midRisk = !highRisk && (deathRisk.numeric >= 40 || reviveRisk.numeric >= 40);
-  const riskClass = highRisk ? ' is-high-risk' : midRisk ? ' is-mid-risk' : '';
-  const bloodLayer = highRisk
+  return highRisk ? ' is-high-risk' : midRisk ? ' is-mid-risk' : '';
+}
+
+function getBloodLayerHtml(data: StatusData): string {
+  const deathRisk = riskPresentation(data.风险值, 'death');
+  const reviveRisk = riskPresentation(
+    toNumber(_.get(data, '驭鬼者状态.总复苏风险')) ?? toNumber(data.厉鬼复苏程度) ?? 0,
+    'revive',
+  );
+  const highRisk = deathRisk.numeric >= 70 || reviveRisk.numeric >= 70;
+  return highRisk
     ? `<div class="mfrs-msg-blood-layer" aria-hidden="true"><span class="mfrs-msg-blood-drop d1"></span><span class="mfrs-msg-blood-drop d2"></span><span class="mfrs-msg-blood-drop d3"></span><span class="mfrs-msg-blood-drop d4"></span></div>`
     : '';
+}
+
+/** 最新楼三栏壳：左档案 | 中叙事槽+拟办 | 右导航 */
+function buildTriPanelHtml(data: StatusData, panelId: string): string {
+  const relationTab = buildRelationTabHtml(data);
+  return `
+<div class="mfrs-msg-panel mfrs-msg-tri${getPanelRiskClass(data)}" id="${panelId}" data-mfrs-layout="tri" data-mfrs-view="story">
+  ${getBloodLayerHtml(data)}
+  <aside class="mfrs-msg-tri-left" aria-label="现场档案">
+    <div class="mfrs-msg-tri-left-title"><span class="mfrs-msg-tri-left-kicker">现场档案</span><span class="mfrs-msg-tri-left-sub">驭鬼者摘录</span></div>
+    <div class="mfrs-msg-dossier">${buildDossierSectionsHtml(data)}</div>
+  </aside>
+  <div class="mfrs-msg-tri-center">
+    <div class="mfrs-msg-tri-story" data-mfrs-center="story">
+      <div class="mfrs-msg-center-host" data-mfrs-host="content"></div>
+      <div class="mfrs-msg-section mfrs-msg-section-full mfrs-msg-actions-block">
+        <div class="mfrs-msg-section-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></div>
+        <div class="mfrs-msg-actions">${buildActionsHtml(data)}</div>
+      </div>
+    </div>
+    <div class="mfrs-msg-tri-relation" data-mfrs-center="relation" hidden>
+      ${relationTab}
+    </div>
+  </div>
+  <aside class="mfrs-msg-tri-right">
+    ${buildNavHtml(panelId)}
+  </aside>
+  <div class="mfrs-msg-tabs mfrs-msg-tabs-a11y" role="tablist" aria-label="神秘复苏状态面板">
+    <button class="mfrs-msg-tab mfrs-msg-tab-active" role="tab" data-tab="status" id="${panelId}-tab-status" aria-selected="true" aria-controls="${panelId}-panel-status" tabindex="0">生存状态</button>
+    <button class="mfrs-msg-tab" role="tab" data-tab="relation" id="${panelId}-tab-relation" aria-selected="false" aria-controls="${panelId}-panel-relation" tabindex="-1">现场关系</button>
+  </div>
+  <div class="mfrs-msg-tab-content mfrs-msg-tab-content-active mfrs-msg-sr-only" data-tab-content="status" id="${panelId}-panel-status" role="tabpanel" aria-labelledby="${panelId}-tab-status"></div>
+  <div class="mfrs-msg-tab-content mfrs-msg-sr-only" data-tab-content="relation" id="${panelId}-panel-relation" role="tabpanel" aria-labelledby="${panelId}-tab-relation" hidden></div>
+</div>
+`;
+}
+
+/** 历史楼收束面板（线性 tab，非全三栏） */
+function buildPanelHtml(data: StatusData, panelId: string, options?: { tri?: boolean }): string {
+  if (options?.tri) return buildTriPanelHtml(data, panelId);
+
+  const statusTab = buildStatusTabHtml(data);
+  const relationTab = buildRelationTabHtml(data);
 
   return `
-<div class="mfrs-msg-panel${riskClass}" id="${panelId}">
-  ${bloodLayer}
+<div class="mfrs-msg-panel${getPanelRiskClass(data)}" id="${panelId}" data-mfrs-layout="stack">
+  ${getBloodLayerHtml(data)}
   <div class="mfrs-msg-tabs" role="tablist" aria-label="神秘复苏状态面板">
     <button class="mfrs-msg-tab mfrs-msg-tab-active" role="tab" data-tab="status" id="${panelId}-tab-status" aria-selected="true" aria-controls="${panelId}-panel-status" tabindex="0">生存状态</button>
     <button class="mfrs-msg-tab" role="tab" data-tab="relation" id="${panelId}-tab-relation" aria-selected="false" aria-controls="${panelId}-panel-relation" tabindex="-1">现场关系</button>
@@ -426,6 +501,53 @@ function buildPanelHtml(data: StatusData, panelId: string): string {
 `;
 }
 
+function isLatestAiMessage(mesElement: Element): boolean {
+  return mesElement.classList.contains('last_mes') && !isUserMessage(mesElement);
+}
+
+function dismantleTriPanel(panel: Element) {
+  const host = panel.querySelector('.mfrs-msg-center-host');
+  const mesText = panel.parentElement;
+  if (!host || !mesText) return;
+  Array.from(host.childNodes).forEach(node => {
+    mesText.insertBefore(node, panel);
+  });
+}
+
+function composeTriCenter(mesElement: Element) {
+  if (!isLatestAiMessage(mesElement)) return;
+  const mesText = mesElement.querySelector('.mes_text');
+  if (!mesText) return;
+  const panel = Array.from(mesText.children).find(child => child.classList.contains('mfrs-msg-panel')) as
+    | HTMLElement
+    | undefined;
+  if (!panel?.classList.contains('mfrs-msg-tri')) return;
+  const host = panel.querySelector('.mfrs-msg-center-host');
+  if (!host) return;
+
+  const brand = Array.from(mesText.children).find(child => child.classList.contains('mfrs-msg-brand'));
+  const narrative = Array.from(mesText.children).find(child => child.classList.contains('mfrs-msg-narrative-wrapper'));
+  if (brand && brand.parentElement === mesText) host.appendChild(brand);
+  if (narrative && narrative.parentElement === mesText) host.appendChild(narrative);
+}
+
+function setTriView(panel: Element, view: 'story' | 'relation' | 'dossier') {
+  panel.setAttribute('data-mfrs-view', view);
+  const story = panel.querySelector<HTMLElement>('.mfrs-msg-tri-story');
+  const relation = panel.querySelector<HTMLElement>('.mfrs-msg-tri-relation');
+  const left = panel.querySelector<HTMLElement>('.mfrs-msg-tri-left');
+  if (story) story.hidden = view === 'relation';
+  if (relation) relation.hidden = view !== 'relation';
+  if (left) left.classList.toggle('is-emphasis', view === 'dossier');
+  panel.querySelectorAll('.mfrs-msg-nav-btn').forEach(btn => {
+    const id = btn.getAttribute('data-nav');
+    const active = (view === 'story' && id === 'story') || (view === 'relation' && id === 'relation') || (view === 'dossier' && id === 'dossier');
+    btn.classList.toggle('is-active', active);
+  });
+  if (view === 'relation') setActivePanelTab(panel, 'relation');
+  else setActivePanelTab(panel, 'status');
+}
+
 type PanelFocusSnapshot =
   | { kind: 'tab'; value: string }
   | { kind: 'action'; value: string; index: number }
@@ -438,6 +560,9 @@ function capturePanelFocus(panel: Element): PanelFocusSnapshot {
   const tab = activeElement.closest('.mfrs-msg-tab');
   const tabName = tab?.getAttribute('data-tab');
   if (tabName) return { kind: 'tab', value: tabName };
+  const nav = activeElement.closest('.mfrs-msg-nav-btn');
+  const navId = nav?.getAttribute('data-nav');
+  if (navId) return { kind: 'id', value: activeElement.id || `${panel.id}-nav-${navId}` };
   const action = activeElement.closest('.mfrs-msg-action-btn');
   const actionText = action?.getAttribute('data-action');
   if (action && actionText) {
@@ -500,18 +625,27 @@ function injectPanelForMessage(mesElement: Element) {
 
   const data = readStatusForMessage(mesElement);
   const panelId = getPanelId(mesid);
-  const renderKey = getPanelRenderKey(data);
+  const useTri = isLatestAiMessage(mesElement);
+  const renderKey = `${getPanelRenderKey(data)}:${useTri ? 'tri' : 'stack'}`;
   const panels = Array.from(mesText.querySelectorAll<HTMLElement>('.mfrs-msg-panel')).filter(
-    panel => panel.parentElement === mesText,
+    panel => panel.parentElement === mesText || panel.closest('.mes_text') === mesText,
   );
   const existingPanel = panels.shift() ?? null;
-  panels.forEach(panel => panel.remove());
-  if (existingPanel?.dataset.mfrsRenderKey === renderKey) return;
+  panels.forEach(panel => {
+    if (panel.classList.contains('mfrs-msg-tri')) dismantleTriPanel(panel);
+    panel.remove();
+  });
+  if (existingPanel?.dataset.mfrsRenderKey === renderKey) {
+    if (useTri) composeTriCenter(mesElement);
+    return;
+  }
 
   const activeTab =
     existingPanel?.querySelector('.mfrs-msg-tab[aria-selected="true"]')?.getAttribute('data-tab') ?? 'status';
+  const activeView = (existingPanel?.getAttribute('data-mfrs-view') as 'story' | 'relation' | 'dossier' | null) ?? 'story';
   const focusSnapshot = existingPanel ? capturePanelFocus(existingPanel) : null;
-  const panelHtml = buildPanelHtml(data, panelId);
+  if (existingPanel?.classList.contains('mfrs-msg-tri')) dismantleTriPanel(existingPanel);
+  const panelHtml = buildPanelHtml(data, panelId, { tri: useTri });
 
   const panelContainer = doc.createElement('div');
   panelContainer.innerHTML = panelHtml;
@@ -521,13 +655,25 @@ function injectPanelForMessage(mesElement: Element) {
 
   if (!existingPanel) {
     mesText.appendChild(nextPanel);
+    if (useTri) {
+      composeTriCenter(mesElement);
+      setTriView(nextPanel, activeView === 'relation' ? 'relation' : 'story');
+    }
     return;
   }
 
   existingPanel.id = panelId;
+  existingPanel.className = nextPanel.className;
   existingPanel.dataset.mfrsRenderKey = renderKey;
+  if (useTri) existingPanel.setAttribute('data-mfrs-layout', 'tri');
+  else existingPanel.setAttribute('data-mfrs-layout', 'stack');
   existingPanel.replaceChildren(...Array.from(nextPanel.childNodes));
-  setActivePanelTab(existingPanel, activeTab);
+  if (useTri) {
+    composeTriCenter(mesElement);
+    setTriView(existingPanel, activeTab === 'relation' || activeView === 'relation' ? 'relation' : 'story');
+  } else {
+    setActivePanelTab(existingPanel, activeTab);
+  }
   restorePanelFocus(existingPanel, focusSnapshot);
 }
 
@@ -537,13 +683,18 @@ function wrapNarrativeText(mesElement: Element) {
   const mesText = mesElement.querySelector('.mes_text');
   if (!mesText) return;
 
+  const host =
+    mesText.querySelector(':scope > .mfrs-msg-panel .mfrs-msg-center-host') ??
+    mesText.querySelector('.mfrs-msg-center-host');
+  const brandParent = host && host.querySelector('.mfrs-msg-brand') ? host : mesText;
+
   const nestedBrands = Array.from(mesText.querySelectorAll<HTMLElement>('.mfrs-msg-brand')).filter(
-    brand => brand.parentElement !== mesText,
+    brand => brand.parentElement !== mesText && brand.parentElement !== host,
   );
-  nestedBrands.forEach(brand => mesText.insertBefore(brand, mesText.firstChild));
+  nestedBrands.forEach(brand => brandParent.insertBefore(brand, brandParent.firstChild));
 
   const existingWrappers = Array.from(mesText.querySelectorAll('.mfrs-msg-narrative-wrapper')).filter(
-    wrapper => wrapper.parentElement === mesText,
+    wrapper => wrapper.parentElement === mesText || wrapper.parentElement === host,
   );
   if (existingWrappers.length > 0) {
     const primaryWrapper = existingWrappers.shift()!;
@@ -554,8 +705,8 @@ function wrapNarrativeText(mesElement: Element) {
     return;
   }
 
-  // 找到所有段落（排除面板）
-  const panel = mesText.querySelector('.mfrs-msg-panel');
+  // 找到所有段落（排除面板与已挂入三栏中心的内容）
+  const panel = Array.from(mesText.children).find(child => child.classList.contains('mfrs-msg-panel'));
   const allNodes = Array.from(mesText.childNodes);
 
   // 收集面板之前的所有节点作为叙事内容
@@ -563,6 +714,7 @@ function wrapNarrativeText(mesElement: Element) {
   for (const node of allNodes) {
     if (node === panel || (isElementNode(node) && panel && node.contains(panel))) break;
     if (isElementNode(node) && node.matches('.mfrs-msg-brand')) continue;
+    if (isElementNode(node) && node.matches('.mfrs-msg-panel')) continue;
     narrativeNodes.push(node);
   }
 
@@ -575,8 +727,10 @@ function wrapNarrativeText(mesElement: Element) {
   // 将叙事节点移入包装器
   narrativeNodes.forEach(node => wrapper.appendChild(node));
 
-  // 在面板之前插入包装器
-  if (panel) {
+  // 优先挂入三栏中心；否则在面板之前
+  if (host) {
+    host.appendChild(wrapper);
+  } else if (panel) {
     mesText.insertBefore(wrapper, panel);
   } else {
     mesText.insertBefore(wrapper, mesText.firstChild);
@@ -588,6 +742,7 @@ function unwrapNarrativeWrapper(wrapper: Element) {
 }
 
 function cleanupOwnedMessageUi(root: ParentNode = doc) {
+  root.querySelectorAll('.mfrs-msg-panel.mfrs-msg-tri').forEach(panel => dismantleTriPanel(panel));
   root.querySelectorAll('.mfrs-msg-panel, .mfrs-msg-brand').forEach(element => element.remove());
   root.querySelectorAll('.mfrs-msg-narrative-wrapper').forEach(unwrapNarrativeWrapper);
 }
@@ -626,9 +781,10 @@ function processAllMessages() {
     cleanupUserMessages();
     const messages = doc.querySelectorAll('.mes:not(.user)');
     messages.forEach(mes => {
-      injectPanelForMessage(mes);
-      wrapNarrativeText(mes);
       injectBrandForMessage(mes);
+      wrapNarrativeText(mes);
+      injectPanelForMessage(mes);
+      composeTriCenter(mes);
     });
   });
 }
@@ -639,9 +795,10 @@ function processOneMessage(messageId: number | string) {
       mes => mes.getAttribute('mesid') === String(messageId),
     );
     if (!target) return;
-    injectPanelForMessage(target);
-    wrapNarrativeText(target);
     injectBrandForMessage(target);
+    wrapNarrativeText(target);
+    injectPanelForMessage(target);
+    composeTriCenter(target);
   });
 }
 
@@ -700,7 +857,54 @@ function handleTabClick(e: Event) {
 
   const tabName = tab.getAttribute('data-tab');
   if (!tabName) return;
+  if (panel.classList.contains('mfrs-msg-tri')) {
+    setTriView(panel, tabName === 'relation' ? 'relation' : 'story');
+    return;
+  }
   setActivePanelTab(panel, tabName);
+}
+
+function openArchiveCabinet() {
+  const host = doc.querySelector('#mfrs-fixed-status-host') as HTMLElement | null;
+  const frontend = doc.querySelector('#mfrs-fixed-frontend-slot, .acu-wrapper') as HTMLElement | null;
+  const target = frontend ?? host;
+  if (!target) return;
+  target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  target.classList.add('mfrs-msg-cabinet-flash');
+  hostWindow.setTimeout(() => target.classList.remove('mfrs-msg-cabinet-flash'), 1200);
+  const expandBtn = doc.querySelector(
+    '#mfrs-fixed-frontend-slot button[aria-expanded="false"], .acu-wrapper button[aria-expanded="false"]',
+  ) as HTMLElement | null;
+  expandBtn?.click();
+}
+
+function handleNavClick(e: Event) {
+  const target = e.target as HTMLElement;
+  const btn = target.closest?.('.mfrs-msg-nav-btn') as HTMLElement | null;
+  if (!btn || btn.hasAttribute('disabled')) return;
+  const panel = btn.closest('.mfrs-msg-panel');
+  if (!panel) return;
+  const nav = btn.getAttribute('data-nav');
+  if (!nav) return;
+
+  if (nav === 'story') {
+    setTriView(panel, 'story');
+    const host = panel.querySelector('.mfrs-msg-center-host');
+    host?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+  if (nav === 'dossier') {
+    setTriView(panel, 'dossier');
+    panel.querySelector('.mfrs-msg-tri-left')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+  if (nav === 'relation') {
+    setTriView(panel, 'relation');
+    return;
+  }
+  if (nav === 'cabinet') {
+    openArchiveCabinet();
+  }
 }
 
 function handleTabKeydown(e: KeyboardEvent) {
@@ -760,160 +964,113 @@ $(() => {
   const style = doc.createElement('style');
   style.id = 'mfrs-msg-panel-style';
   style.textContent = `
-/* 三段式实体品牌：鬼眼轨道 / 双层字标 / 八方封尸法阵 */
+/* 公文顶状态条：无眼/阵，直角尸青线框 + L 角标 */
 .mfrs-msg-brand {
+  --mfrs-brand-line: #3d6b66;
+  --mfrs-brand-blood: #6b2a26;
+  --mfrs-brand-paper: #c8c0ae;
+  --mfrs-brand-brass: #9c784a;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) 64px;
-  align-items: center;
-  gap: 16px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px 16px;
   width: 100%;
-  min-height: 96px;
-  margin: 0 0 14px;
-  padding: 12px 16px;
-  color: #d5b9a8;
+  min-height: 56px;
+  margin: 0 0 12px;
+  padding: 10px 14px 10px 12px;
+  color: var(--mfrs-brand-paper);
   background:
-    linear-gradient(90deg, rgba(8, 12, 12, 0.96), rgba(22, 14, 13, 0.94) 48%, rgba(8, 12, 12, 0.96)),
-    #080c0c;
-  border-block: 1px solid rgba(151, 117, 76, 0.48);
-  border-inline: 2px solid rgba(42, 91, 87, 0.72);
+    linear-gradient(180deg, rgba(12, 14, 14, 0.96), rgba(8, 10, 10, 0.94)),
+    #0a0b0b;
+  border: 1px solid color-mix(in srgb, var(--mfrs-brand-line) 78%, #111 22%);
+  border-radius: 0;
   box-shadow:
-    inset 0 1px rgba(228, 211, 177, 0.08),
-    inset 0 -1px rgba(115, 26, 24, 0.22),
-    0 6px 18px rgba(0, 0, 0, 0.28);
+    inset 0 0 0 1px rgba(61, 107, 102, 0.12),
+    0 4px 14px rgba(0, 0, 0, 0.28);
   overflow: hidden;
   position: relative;
   isolation: isolate;
   animation: mfrs-msg-brand-reveal 360ms ease-out 1 both;
 }
 
-.mfrs-msg-brand::before,
+.mfrs-msg-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--mfrs-brand-blood) 18%, transparent), transparent 18%),
+    repeating-linear-gradient(90deg, transparent 0 27px, rgba(61, 107, 102, 0.04) 27px 28px);
+}
+
 .mfrs-msg-brand::after {
   content: '';
   position: absolute;
-  z-index: -1;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  z-index: 1;
   pointer-events: none;
-}
-
-.mfrs-msg-brand::before {
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent 0 31%, rgba(151, 117, 76, 0.12) 31% 31.2%, transparent 31.2% 68.8%, rgba(151, 117, 76, 0.12) 68.8% 69%, transparent 69%),
-    repeating-linear-gradient(90deg, transparent 0 31px, rgba(54, 95, 90, 0.055) 31px 32px);
-}
-
-.mfrs-msg-brand::after {
-  inset: 6px;
-  border: 1px solid rgba(105, 30, 27, 0.32);
-}
-
-.mfrs-msg-brand-eye,
-.mfrs-msg-brand-seal {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  color: #9f433a;
-}
-
-.mfrs-msg-brand-eye svg,
-.mfrs-msg-brand-seal svg {
-  display: block;
-  width: 58px;
-  height: 58px;
-  overflow: visible;
-}
-
-.mfrs-msg-brand-eye-orbit,
-.mfrs-msg-brand-seal-rotor {
-  transform-box: fill-box;
-  transform-origin: center;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mfrs-brand-line) 70%, transparent) 40%, transparent);
+  opacity: 0.35;
   animation-play-state: paused;
 }
 
-.mfrs-msg-brand-eye-orbit {
-  animation: mfrs-msg-brand-eye-spin 9s linear infinite;
-  animation-play-state: paused;
+.mfrs-msg-brand-corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: 2;
 }
+.mfrs-msg-brand-corner-tl { top: 4px; left: 4px; border-top: 1px solid var(--mfrs-brand-line); border-left: 1px solid var(--mfrs-brand-line); }
+.mfrs-msg-brand-corner-tr { top: 4px; right: 4px; border-top: 1px solid var(--mfrs-brand-line); border-right: 1px solid var(--mfrs-brand-line); }
+.mfrs-msg-brand-corner-bl { bottom: 4px; left: 4px; border-bottom: 1px solid var(--mfrs-brand-line); border-left: 1px solid var(--mfrs-brand-line); }
+.mfrs-msg-brand-corner-br { bottom: 4px; right: 4px; border-bottom: 1px solid var(--mfrs-brand-line); border-right: 1px solid var(--mfrs-brand-line); }
 
-.mfrs-msg-brand-eye-lid {
-  fill: rgba(47, 15, 14, 0.92);
-  stroke: #9f433a;
-  stroke-width: 1.4;
-}
-
-.mfrs-msg-brand-eye-iris {
-  fill: #711f1b;
-  stroke: #c27855;
-  stroke-width: 1.2;
-}
-
-.mfrs-msg-brand-eye-pupil { fill: #050303; }
-.mfrs-msg-brand-eye-glint { fill: #d8c4a6; }
-
-.mfrs-msg-brand-seal-rotor {
-  animation: mfrs-msg-brand-seal-spin 18s linear infinite reverse;
-  animation-play-state: paused;
-}
-
-.mfrs-msg-brand-seal-core {
-  fill: rgba(46, 13, 12, 0.92);
-  stroke: #a8463c;
-  stroke-width: 1.4;
-}
-
-.mfrs-msg-brand-seal-mark {
-  fill: none;
-  stroke: #c59a68;
-  stroke-width: 1.3;
-  stroke-linecap: square;
-}
-
-.mfrs-msg-brand-center {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(132px, 0.72fr) minmax(0, 1.28fr);
-  align-items: center;
-  gap: 16px;
-}
-
-.mfrs-msg-brand-wordmark {
-  min-width: 0;
+.mfrs-msg-brand-rail {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  color: #d9c8ad;
+  justify-content: center;
+  gap: 2px;
+  min-width: 72px;
+  padding-right: 12px;
+  border-right: 1px solid color-mix(in srgb, var(--mfrs-brand-line) 45%, transparent);
 }
 
 .mfrs-msg-brand-kicker {
-  margin-bottom: 2px;
-  color: #6d9b91;
-  font-size: 11px;
-  line-height: 1.2;
-}
-
-.mfrs-msg-brand-wordmark strong {
-  color: #e0d4bd;
+  color: var(--mfrs-brand-line);
   font-family: 'Noto Serif SC', 'SimSun', serif;
-  font-size: 22px;
-  line-height: 1.1;
-  font-weight: 800;
-  text-shadow: 0 0 12px rgba(143, 52, 45, 0.34);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
 }
 
-.mfrs-msg-brand-subtitle {
-  margin-top: 3px;
-  color: #8c7562;
-  font-size: 9px;
+.mfrs-msg-brand-stamp {
+  color: color-mix(in srgb, var(--mfrs-brand-brass) 80%, #fff 8%);
+  font-size: 10px;
+  letter-spacing: 0.18em;
   line-height: 1.2;
+}
+
+.mfrs-msg-brand-archive {
+  color: #8a8376;
+  font-size: 10px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 .mfrs-msg-brand-meta {
   min-width: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: minmax(78px, 0.7fr) minmax(110px, 1.3fr);
-  gap: 6px 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px 12px;
+  align-content: center;
 }
 
 .mfrs-msg-brand-meta > div {
@@ -928,13 +1085,13 @@ $(() => {
 .mfrs-msg-brand-meta dd { margin: 0; }
 
 .mfrs-msg-brand-meta dt {
-  color: #6f918a;
+  color: color-mix(in srgb, var(--mfrs-brand-line) 85%, #fff 8%);
   font-size: 10px;
 }
 
 .mfrs-msg-brand-meta dd {
   min-width: 0;
-  color: #cdbdad;
+  color: var(--mfrs-brand-paper);
   font-size: 11px;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -942,33 +1099,33 @@ $(() => {
 
 .mfrs-msg-brand-location { grid-column: 1 / -1; }
 
-.mes[is_user="false"]:not(.last_mes) .mfrs-msg-brand .mfrs-msg-brand-eye-orbit,
-.mes[is_user="false"]:not(.last_mes) .mfrs-msg-brand .mfrs-msg-brand-seal-rotor {
+.mes[is_user="false"]:not(.last_mes) .mfrs-msg-brand {
+  animation: none;
+}
+.mes[is_user="false"]:not(.last_mes) .mfrs-msg-brand::after {
+  animation: none;
   animation-play-state: paused;
+  opacity: 0.2;
 }
 
-.mes.last_mes[is_user="false"] .mfrs-msg-brand .mfrs-msg-brand-eye-orbit,
-.mes.last_mes[is_user="false"] .mfrs-msg-brand .mfrs-msg-brand-seal-rotor {
+.mes.last_mes[is_user="false"] .mfrs-msg-brand::after {
+  animation: mfrs-msg-brand-lamp 2.5s ease-in-out infinite;
   animation-play-state: running;
 }
 
 @keyframes mfrs-msg-brand-reveal {
-  from { opacity: 0; filter: contrast(0.72) brightness(0.72); }
-  to { opacity: 1; filter: contrast(1) brightness(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-@keyframes mfrs-msg-brand-eye-spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes mfrs-msg-brand-seal-spin {
-  to { transform: rotate(360deg); }
+@keyframes mfrs-msg-brand-lamp {
+  0%, 100% { opacity: 0.22; }
+  50% { opacity: 0.55; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mfrs-msg-brand,
-  .mfrs-msg-brand-eye-orbit,
-  .mfrs-msg-brand-seal-rotor,
+  .mfrs-msg-brand::after,
   .mfrs-msg-panel,
   .mfrs-msg-panel::before,
   .mfrs-msg-panel::after,
@@ -984,61 +1141,60 @@ $(() => {
   .mes.last_mes .mfrs-msg-panel.is-high-risk .mfrs-msg-action-btn {
     animation: none !important;
   }
-  .mfrs-msg-panel::after { opacity: 0 !important; }
+  .mfrs-msg-panel::after,
+  .mfrs-msg-brand::after { opacity: 0 !important; }
   .mfrs-msg-tab:active,
   .mfrs-msg-action-btn:active { transform: none; }
 }
 
 @media (max-width: 520px) {
   .mfrs-msg-brand {
-    grid-template-columns: 48px minmax(0, 1fr) 48px;
-    gap: 8px;
-    min-height: 104px;
-    padding: 10px 8px;
-  }
-
-  .mfrs-msg-brand-eye,
-  .mfrs-msg-brand-seal {
-    width: 48px;
-    height: 48px;
-  }
-
-  .mfrs-msg-brand-eye svg,
-  .mfrs-msg-brand-seal svg {
-    width: 44px;
-    height: 44px;
-  }
-
-  .mfrs-msg-brand-center {
     grid-template-columns: 1fr;
-    gap: 6px;
+    gap: 8px;
+    min-height: 0;
+    padding: 10px 12px;
   }
 
-  .mfrs-msg-brand-wordmark strong { font-size: 18px; }
-  .mfrs-msg-brand-subtitle { display: none; }
-  .mfrs-msg-brand-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 8px; }
+  .mfrs-msg-brand-rail {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    padding-right: 0;
+    padding-bottom: 6px;
+    border-right: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--mfrs-brand-line) 40%, transparent);
+  }
+
+  .mfrs-msg-brand-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3px 8px;
+  }
+
   .mfrs-msg-brand-meta > div { display: block; }
   .mfrs-msg-brand-meta dt { display: inline; margin-right: 4px; }
   .mfrs-msg-brand-meta dd { display: inline; font-size: 10px; }
+  .mfrs-msg-brand-location { grid-column: 1 / -1; }
 }
 
 /* 连续档案面板：单一外框，内部只用分隔线组织信息 */
 .mfrs-msg-panel {
-  --mfrs-panel-corpse: var(--mfrs-corpse-cyan, #5f8f86);
+  --mfrs-panel-corpse: var(--mfrs-corpse-cyan, #3d6b66);
   --mfrs-panel-brass: var(--mfrs-aged-brass, #9c784a);
-  --mfrs-panel-bone: var(--mfrs-bone-white, #ded4bd);
-  --mfrs-panel-blood: var(--mfrs-blood-red, #9f342f);
+  --mfrs-panel-bone: var(--mfrs-bone-white, #c8c0ae);
+  --mfrs-panel-blood: var(--mfrs-blood-red, #6b2a26);
   color: var(--mfrs-panel-bone);
   background:
-    repeating-linear-gradient(0deg, rgba(222, 212, 189, 0.018) 0 1px, transparent 1px 4px),
-    linear-gradient(100deg, rgba(95, 143, 134, 0.055), transparent 32%),
-    #0b0d0c;
+    repeating-linear-gradient(0deg, rgba(200, 192, 174, 0.016) 0 1px, transparent 1px 4px),
+    linear-gradient(100deg, rgba(61, 107, 102, 0.06), transparent 32%),
+    rgba(8, 10, 10, 0.96);
   margin-top: 16px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--mfrs-panel-brass) 72%, #111 28%);
+  border: 1px solid color-mix(in srgb, var(--mfrs-panel-corpse) 72%, #111 28%);
+  border-radius: 0;
   box-shadow:
     0 8px 22px rgba(0, 0, 0, 0.34),
-    inset 3px 0 0 rgba(95, 143, 134, 0.22);
+    inset 0 0 0 1px rgba(61, 107, 102, 0.1);
   overflow: hidden;
   position: relative;
 }
@@ -1049,9 +1205,9 @@ $(() => {
   inset: 0 auto 0 13px;
   width: 1px;
   background:
-    repeating-linear-gradient(180deg, var(--mfrs-panel-blood) 0 5px, transparent 5px 10px);
+    repeating-linear-gradient(180deg, var(--mfrs-panel-corpse) 0 5px, transparent 5px 10px);
   pointer-events: none;
-  opacity: 0.58;
+  opacity: 0.42;
 }
 
 .mfrs-msg-panel::after {
@@ -1102,22 +1258,22 @@ $(() => {
 .mfrs-msg-blood-drop.d4 { left: 86%; }
 
 .mes.last_mes .mfrs-msg-panel {
-  animation: mfrs-panel-edge-pulse 3s ease-in-out infinite;
+  animation: mfrs-panel-edge-pulse 4.2s ease-in-out infinite;
 }
 
 .mes.last_mes .mfrs-msg-panel::before {
-  animation: mfrs-panel-breathe 2.8s ease-in-out infinite;
+  animation: mfrs-panel-breathe 3.6s ease-in-out infinite;
 }
 
 .mes.last_mes .mfrs-msg-panel::after {
-  opacity: 1;
-  animation: mfrs-panel-scan 6.5s linear infinite;
+  opacity: 0.55;
+  animation: mfrs-panel-scan 9s linear infinite;
 }
 
 .mes.last_mes .mfrs-msg-panel.is-high-risk {
   animation:
-    mfrs-panel-edge-pulse 1.6s ease-in-out infinite,
-    mfrs-panel-danger-flash 2.4s ease-in-out infinite;
+    mfrs-panel-edge-pulse 2.2s ease-in-out infinite,
+    mfrs-panel-danger-flash 2.8s ease-in-out infinite;
 }
 
 .mes.last_mes .mfrs-msg-blood-drop.d1 { animation: mfrs-blood-drop 3.2s ease-in infinite; }
@@ -1154,20 +1310,20 @@ $(() => {
   0%, 100% {
     box-shadow:
       0 8px 22px rgba(0, 0, 0, 0.34),
-      inset 3px 0 0 rgba(95, 143, 134, 0.22),
-      0 0 0 0 rgba(159, 52, 47, 0);
+      inset 0 0 0 1px rgba(61, 107, 102, 0.1),
+      0 0 0 0 rgba(107, 42, 38, 0);
   }
   50% {
     box-shadow:
-      0 10px 26px rgba(0, 0, 0, 0.4),
-      inset 3px 0 0 rgba(95, 143, 134, 0.34),
-      0 0 14px rgba(159, 52, 47, 0.12);
+      0 9px 24px rgba(0, 0, 0, 0.38),
+      inset 0 0 0 1px rgba(61, 107, 102, 0.2),
+      0 0 10px rgba(107, 42, 38, 0.08);
   }
 }
 
 @keyframes mfrs-panel-breathe {
-  0%, 100% { opacity: 0.48; }
-  50% { opacity: 0.82; }
+  0%, 100% { opacity: 0.34; }
+  50% { opacity: 0.62; }
 }
 
 @keyframes mfrs-panel-scan {
@@ -1176,7 +1332,7 @@ $(() => {
 }
 
 @keyframes mfrs-panel-danger-flash {
-  0%, 100% { border-color: color-mix(in srgb, var(--mfrs-panel-brass) 72%, #111 28%); }
+  0%, 100% { border-color: color-mix(in srgb, var(--mfrs-panel-corpse) 72%, #111 28%); }
   45% { border-color: color-mix(in srgb, var(--mfrs-panel-blood) 78%, #111 22%); }
   55% { border-color: color-mix(in srgb, var(--mfrs-panel-blood) 55%, #111 45%); }
 }
@@ -1224,7 +1380,7 @@ $(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 0 14px;
-  border-bottom: 1px solid rgba(156, 120, 74, 0.38);
+  border-bottom: 1px solid rgba(61, 107, 102, 0.38);
   background: rgba(5, 7, 7, 0.54);
 }
 
@@ -1282,7 +1438,7 @@ $(() => {
   gap: 10px 18px;
   align-items: start;
   padding: 15px 0 13px;
-  border-bottom: 1px solid rgba(156, 120, 74, 0.34);
+  border-bottom: 1px solid rgba(61, 107, 102, 0.34);
 }
 
 .mfrs-msg-header-item {
@@ -1316,7 +1472,7 @@ $(() => {
 
 .mfrs-msg-col { min-width: 0; }
 .mfrs-msg-col + .mfrs-msg-col {
-  border-left: 1px solid rgba(156, 120, 74, 0.22);
+  border-left: 1px solid rgba(61, 107, 102, 0.22);
   padding-left: 22px;
 }
 
@@ -1324,7 +1480,7 @@ $(() => {
 .mfrs-msg-section {
   margin: 0;
   padding: 15px 0 17px;
-  border-top: 1px solid rgba(156, 120, 74, 0.22);
+  border-top: 1px solid rgba(61, 107, 102, 0.22);
 }
 
 .mfrs-msg-col .mfrs-msg-section:first-child { border-top: 0; }
@@ -1356,8 +1512,8 @@ $(() => {
   gap: 12px;
   font-size: 13px;
   line-height: 1.9;
-  color: #c8c0ad;
-  border-bottom: 1px dotted rgba(156, 120, 74, 0.18);
+  color: #c8c0ae;
+  border-bottom: 1px dotted rgba(61, 107, 102, 0.18);
   padding: 2px 0;
 }
 
@@ -1421,9 +1577,10 @@ $(() => {
 .mfrs-msg-risk-bar {
   width: 100%;
   height: 7px;
-  background: rgba(222, 212, 189, 0.08);
+  background: rgba(200, 192, 174, 0.08);
   overflow: hidden;
-  border: 1px solid rgba(156, 120, 74, 0.18);
+  border: 1px solid rgba(61, 107, 102, 0.22);
+  border-radius: 0;
 }
 
 .mfrs-msg-risk-fill {
@@ -1484,10 +1641,11 @@ $(() => {
   min-width: 44px;
   min-height: 44px;
   box-sizing: border-box;
-  background: rgba(222, 212, 189, 0.035);
+  background: rgba(200, 192, 174, 0.035);
   color: var(--mfrs-panel-bone);
-  border: 1px solid rgba(156, 120, 74, 0.28);
-  border-left: 3px solid var(--mfrs-panel-brass);
+  border: 1px solid rgba(61, 107, 102, 0.28);
+  border-left: 3px solid var(--mfrs-panel-corpse);
+  border-radius: 0;
   padding: 10px 14px;
   font-size: 13px;
   text-align: left;
@@ -1573,10 +1731,244 @@ $(() => {
     padding-left: 0;
   }
   .mfrs-msg-col + .mfrs-msg-col .mfrs-msg-section:first-child {
-    border-top: 1px solid rgba(156, 120, 74, 0.22);
+    border-top: 1px solid rgba(61, 107, 102, 0.22);
   }
   .mfrs-msg-header { grid-template-columns: 1fr; gap: 8px; }
   .mfrs-msg-npc-item { align-items: flex-start; flex-direction: column; gap: 2px; }
+}
+
+/* ===== Phase2 三栏壳（仅 last_mes） ===== */
+.mfrs-msg-panel.mfrs-msg-tri {
+  display: grid;
+  grid-template-columns: minmax(196px, 0.3fr) minmax(0, 1fr) 52px;
+  grid-template-rows: auto;
+  gap: 0;
+  align-items: stretch;
+  padding: 0;
+  overflow: visible;
+}
+
+.mfrs-msg-tri-left {
+  min-width: 0;
+  border-right: 1px solid rgba(61, 107, 102, 0.34);
+  background: linear-gradient(180deg, rgba(10, 12, 12, 0.96), rgba(8, 10, 10, 0.92));
+  padding: 12px 10px 14px;
+  max-height: min(78vh, 920px);
+  overflow: auto;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.mfrs-msg-tri-left.is-emphasis {
+  box-shadow: inset 0 0 0 1px rgba(61, 107, 102, 0.45);
+}
+
+.mfrs-msg-tri-left-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(61, 107, 102, 0.28);
+}
+
+.mfrs-msg-tri-left-kicker {
+  color: var(--mfrs-panel-corpse);
+  font-family: "Noto Serif SC", serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.mfrs-msg-tri-left-sub {
+  color: #8a8376;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.mfrs-msg-fold {
+  margin: 0;
+  border-top: 1px solid rgba(61, 107, 102, 0.18);
+  padding: 0;
+}
+
+.mfrs-msg-fold:first-child { border-top: 0; }
+
+.mfrs-msg-fold-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--mfrs-panel-corpse);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Noto Serif SC", serif;
+  user-select: none;
+}
+
+.mfrs-msg-fold-summary::-webkit-details-marker { display: none; }
+.mfrs-msg-fold-summary::after {
+  content: '▸';
+  margin-left: auto;
+  color: #7f8e87;
+  font-size: 11px;
+  transition: transform 0.15s ease;
+}
+.mfrs-msg-fold[open] > .mfrs-msg-fold-summary::after { transform: rotate(90deg); }
+.mfrs-msg-fold-summary i { width: 14px; color: var(--mfrs-panel-brass); text-align: center; }
+.mfrs-msg-fold-body { padding: 0 0 12px 2px; }
+
+.mfrs-msg-tri-center {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.mfrs-msg-center-host {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px 0;
+}
+
+.mfrs-msg-center-host > .mfrs-msg-brand,
+.mfrs-msg-center-host > .mfrs-msg-narrative-wrapper {
+  margin-bottom: 0;
+}
+
+.mfrs-msg-actions-block {
+  padding: 8px 12px 14px;
+  border-top: 1px solid rgba(61, 107, 102, 0.22);
+}
+
+.mfrs-msg-tri-relation {
+  padding: 10px 14px 14px;
+}
+
+.mfrs-msg-tri-right {
+  border-left: 1px solid rgba(61, 107, 102, 0.34);
+  background: rgba(6, 8, 8, 0.94);
+  padding: 8px 4px;
+}
+
+.mfrs-msg-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  position: sticky;
+  top: 8px;
+}
+
+.mfrs-msg-nav-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 6px 2px;
+  border: 1px solid rgba(61, 107, 102, 0.28);
+  border-radius: 0;
+  background: rgba(200, 192, 174, 0.03);
+  color: #a8b0aa;
+  font-size: 10px;
+  line-height: 1.15;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.mfrs-msg-nav-btn i { font-size: 12px; color: var(--mfrs-panel-corpse); }
+.mfrs-msg-nav-btn:hover {
+  color: var(--mfrs-panel-bone);
+  border-color: rgba(61, 107, 102, 0.55);
+  background: rgba(61, 107, 102, 0.1);
+}
+.mfrs-msg-nav-btn.is-active {
+  color: var(--mfrs-panel-bone);
+  border-color: color-mix(in srgb, var(--mfrs-panel-blood) 55%, var(--mfrs-panel-corpse));
+  background: linear-gradient(180deg, rgba(107, 42, 38, 0.16), rgba(61, 107, 102, 0.08));
+}
+.mfrs-msg-nav-btn.is-disabled,
+.mfrs-msg-nav-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.mfrs-msg-nav-btn:focus-visible {
+  outline: 2px solid var(--mfrs-panel-corpse);
+  outline-offset: -2px;
+}
+
+.mfrs-msg-tabs-a11y,
+.mfrs-msg-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.mfrs-msg-cabinet-flash {
+  outline: 1px solid color-mix(in srgb, var(--mfrs-panel-corpse, #3d6b66) 70%, transparent);
+  box-shadow: 0 0 0 1px rgba(61, 107, 102, 0.35), 0 0 18px rgba(61, 107, 102, 0.2);
+}
+
+.mes[is_user="false"]:not(.last_mes) .mfrs-msg-panel.mfrs-msg-tri {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .mfrs-msg-panel.mfrs-msg-tri {
+    grid-template-columns: minmax(0, 1fr) 52px;
+    grid-template-areas:
+      "center right"
+      "left right";
+  }
+  .mfrs-msg-tri-left { grid-area: left; max-height: none; border-right: 0; border-top: 1px solid rgba(61, 107, 102, 0.28); }
+  .mfrs-msg-tri-center { grid-area: center; }
+  .mfrs-msg-tri-right { grid-area: right; }
+}
+
+@media (max-width: 640px) {
+  .mfrs-msg-panel.mfrs-msg-tri {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "right"
+      "center"
+      "left";
+  }
+  .mfrs-msg-tri-right {
+    border-left: 0;
+    border-bottom: 1px solid rgba(61, 107, 102, 0.28);
+    padding: 6px;
+  }
+  .mfrs-msg-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    justify-content: space-between;
+  }
+  .mfrs-msg-nav-btn {
+    flex: 1 1 18%;
+    min-width: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfrs-msg-cabinet-flash { transition: none; }
+  .mfrs-msg-fold-summary::after { transition: none; }
 }
 `;
 
@@ -1679,6 +2071,7 @@ $(() => {
 
   // 事件委托：行动建议点击
   doc.addEventListener('click', handleActionClick, true);
+  doc.addEventListener('click', handleNavClick, true);
 
   const cleanup = () => {
     if (disposed) return;
@@ -1690,6 +2083,7 @@ $(() => {
     doc.removeEventListener('click', handleTabClick, true);
     doc.removeEventListener('keydown', handleTabKeydown, true);
     doc.removeEventListener('click', handleActionClick, true);
+    doc.removeEventListener('click', handleNavClick, true);
     window.removeEventListener('pagehide', cleanup);
     messageObserver = null;
     observedChatContainer = null;

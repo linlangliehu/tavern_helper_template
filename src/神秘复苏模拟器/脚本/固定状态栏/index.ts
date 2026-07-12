@@ -94,10 +94,10 @@ function styleFixedHost(host: HTMLDivElement) {
   host.style.display = 'flex';
   host.style.flexDirection = 'column';
   host.style.gap = '6px';
-  host.style.setProperty('--mfrs-host-bone', '#ded4bd');
-  host.style.setProperty('--mfrs-host-copper', '#9c784a');
-  host.style.setProperty('--mfrs-host-blood', '#9f342f');
-  host.style.setProperty('--mfrs-host-teal', 'rgba(12, 20, 18, 0.55)');
+  host.style.setProperty('--mfrs-host-bone', '#c8c0ae');
+  host.style.setProperty('--mfrs-host-copper', '#3d6b66');
+  host.style.setProperty('--mfrs-host-blood', '#6b2a26');
+  host.style.setProperty('--mfrs-host-teal', 'rgba(8, 10, 10, 0.72)');
 }
 
 function ensureFixedHostStyles() {
@@ -111,15 +111,16 @@ function ensureFixedHostStyles() {
 #${statusContainerId} #${dashboardSlotId}:not(:empty),
 #${statusContainerId} #${frontendSlotId}:not(:empty) {
   box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--mfrs-host-copper) 55%, transparent);
-  outline: 1px solid color-mix(in srgb, var(--mfrs-host-blood) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mfrs-host-copper) 70%, transparent);
+  border-radius: 0;
+  outline: 1px solid color-mix(in srgb, var(--mfrs-host-blood) 16%, transparent);
   outline-offset: -3px;
   background:
-    linear-gradient(180deg, rgba(12, 20, 18, 0.42), rgba(8, 10, 10, 0.28)),
+    linear-gradient(180deg, rgba(10, 12, 12, 0.55), rgba(8, 10, 10, 0.4)),
     var(--mfrs-host-teal);
   box-shadow:
     0 6px 16px rgba(0, 0, 0, 0.28),
-    inset 0 0 0 1px rgba(222, 212, 189, 0.04);
+    inset 0 0 0 1px rgba(61, 107, 102, 0.1);
 }
 #${statusContainerId} #${dashboardSlotId}:empty,
 #${statusContainerId} #${frontendSlotId}:empty {

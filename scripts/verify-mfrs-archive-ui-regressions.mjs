@@ -235,12 +235,13 @@ addCheck('phase1', 'message narrative wrapper cannot absorb an entity brand duri
   );
 });
 
-// Phase 2 target: replace pseudo-element/SMIL branding with one owned entity brand.
+// Phase 2 target: dossier status strip (no eye/seal glyphs); fields stay escaped and AI-only.
 for (const marker of [
   'mfrs-msg-brand',
-  'mfrs-msg-brand-eye',
-  'mfrs-msg-brand-wordmark',
-  'mfrs-msg-brand-seal',
+  'mfrs-msg-brand-rail',
+  'mfrs-msg-brand-kicker',
+  'mfrs-msg-brand-meta',
+  '现场档案',
   'aria-hidden="true"',
 ]) {
   addCheck('phase2', `entity brand target: ${marker}`, () => {
@@ -248,9 +249,21 @@ for (const marker of [
   });
 }
 for (const marker of [
+  'mfrs-msg-brand-eye',
+  'mfrs-msg-brand-seal',
+  '鬼眼封案',
+  'SUPERNATURAL ARCHIVE',
+]) {
+  addCheck('phase2', `retired ghost-seal brand marker absent: ${marker}`, () => {
+    assert.equal(sources.message.includes(marker), false, `message still contains retired marker: ${marker}`);
+  });
+}
+for (const marker of [
   'archive: mesid',
   "phase: valueText(_.get(data, '主线进度.当前阶段'))",
   'location: valueText(data.所在位置)',
+  "event: valueText(_.get(data, '当前灵异事件.事件代号'), '无')",
+  "domain: valueText(_.get(data, '当前灵异事件.鬼域状态'), '未知')",
   "danger: valueText(_.get(data, '当前灵异事件.危害等级'))",
 ]) {
   addCheck('phase2', `brand field boundary: ${marker}`, () => {
@@ -264,13 +277,14 @@ addCheck('phase2', 'brand dynamic text and accessible name are escaped', () => {
     '_.escape(brand.archive)',
     '_.escape(brand.phase)',
     '_.escape(brand.location)',
+    '_.escape(brand.event)',
+    '_.escape(brand.domain)',
     '_.escape(brand.danger)',
   ]) {
     assert.ok(brandBuilder.includes(marker), `brand builder missing escaped dynamic value: ${marker}`);
   }
   const svgBlocks = brandBuilder.match(/<svg[\s\S]*?<\/svg>/g) || [];
-  assert.equal(svgBlocks.length, 2, 'brand must contain exactly two decorative SVG blocks');
-  svgBlocks.forEach(block => assert.equal(block.includes('${'), false, 'decorative SVG must not interpolate data'));
+  assert.equal(svgBlocks.length, 0, 'dossier brand must not use decorative SVG blocks');
 });
 addCheck('phase2', 'legacy pseudo logo and inline SMIL are retired', () => {
   assert.equal(
@@ -285,22 +299,14 @@ addCheck('phase2', 'legacy pseudo logo and inline SMIL are retired', () => {
     'legacy pseudo-logo text avoidance must be removed',
   );
 });
-addCheck('phase2', 'brand owns the complete continuous-motion budget', () => {
-  assert.equal(
-    sources.message.includes('mfrs-panel-breathe'),
-    false,
-    'legacy panel breathing animation must be removed',
-  );
-  assert.equal(
-    (sources.message.match(/\binfinite\b/g) || []).length,
-    2,
-    'message UI must contain exactly the eye and seal infinite animations',
-  );
+addCheck('phase2', 'dossier brand keeps a thin latest-only lamp budget', () => {
+  assert.ok(sources.message.includes('mfrs-msg-brand-lamp 2.5s'), 'brand lamp animation must remain latest-only');
+  assert.ok(sources.message.includes('animation-play-state: paused'), 'historical brand lamp must pause');
+  assert.ok(sources.message.includes('animation-play-state: running'), 'latest brand lamp must run');
 });
 for (const marker of [
   'mfrs-msg-brand-reveal 360ms',
-  'mfrs-msg-brand-eye-spin 9s linear infinite',
-  'mfrs-msg-brand-seal-spin 18s linear infinite reverse',
+  'mfrs-msg-brand-lamp 2.5s ease-in-out infinite',
   'animation-play-state: paused',
   'animation-play-state: running',
 ]) {
@@ -329,7 +335,11 @@ for (const marker of ['--mfrs-corpse-cyan', '--mfrs-aged-brass', '--mfrs-bone-wh
 }
 addCheck('phase3', 'narrative uses one archive border and a binding line', () => {
   const narrativeCss = between(sources.theme, '.mfrs-msg-narrative-wrapper {', '.mfrs-msg-narrative-wrapper > *');
-  assert.ok(narrativeCss.includes('border: 1px solid var(--mfrs-aged-brass)'), 'narrative needs one old-brass border');
+  assert.ok(
+    narrativeCss.includes('border: 1px solid var(--mfrs-corpse-cyan)') ||
+      narrativeCss.includes('border: 1px solid var(--mfrs-aged-brass)'),
+    'narrative needs one archive line border',
+  );
   assert.equal(narrativeCss.includes('border-image:'), false, 'narrative must not keep the old double border');
   assert.ok(narrativeCss.includes('.mfrs-msg-narrative-wrapper::before'), 'narrative needs a binding-line layer');
 });
