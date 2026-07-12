@@ -26,9 +26,9 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = '7f745d1';  // v8.9.0: 鬼眼封案 Logo + 正文/面板/欢迎页/档案柜重设计
+const CDN_REF = 'a37fe0b';  // v8.10.0: ghost-seal + latest-only motion boost / reduced-motion / 44px
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v890-ghostseal';
+const CDN_CACHE_VERSION = 'phase164-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8100-motion';
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -55,7 +55,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.9.0',
+    releaseVersion: '8.10.0',
   },
 ];
 
