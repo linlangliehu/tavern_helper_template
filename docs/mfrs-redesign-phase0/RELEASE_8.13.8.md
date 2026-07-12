@@ -19,7 +19,8 @@
 | 项 | 值 |
 |----|-----|
 | 版本 | **8.13.8** |
-| 功能/dist commit | （见 `publish-card.mjs` `CDN_REF`） |
+| 功能/dist commit | `bf24343e507a` |
+| CDN_REF | `bf24343e507a…` |
 | cache | `…-v8138-hide-empty-actions` |
 
 ## 使用
