@@ -2421,7 +2421,7 @@ function handleReset() {
 .eye-icon {
   font-size: 16px;
   opacity: 0.4;
-  animation: eye-glow 3s ease-in-out infinite;
+  animation: eye-glow 4.5s ease-in-out infinite;
 }
 
 .dossier-module {
@@ -2775,8 +2775,16 @@ function handleReset() {
 }
 
 @keyframes eye-glow {
-  0%, 100% { opacity: 0.3; text-shadow: none; }
-  50% { opacity: 0.6; text-shadow: 0 0 6px rgba(139, 26, 26, 0.4); }
+  0%, 100% { opacity: 0.28; text-shadow: none; }
+  50% { opacity: 0.52; text-shadow: 0 0 5px rgba(159, 52, 47, 0.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eye-icon {
+    animation: none !important;
+    opacity: 0.4;
+    text-shadow: none;
+  }
 }
 
 .card-footer {

@@ -77,6 +77,7 @@ function riskPresentation(value: unknown, kind: RiskKind) {
       percent,
       color: '#a63832',
       level: '高危',
+      tone: 'is-critical',
       copy: kind === 'death' ? '生存窗口正在急剧收窄' : '厉鬼复苏已逼近失控线',
     };
   }
@@ -86,6 +87,7 @@ function riskPresentation(value: unknown, kind: RiskKind) {
       percent,
       color: '#a77b42',
       level: '警戒',
+      tone: 'is-elevated',
       copy: kind === 'death' ? '继续行动需要预留退路' : '灵异躁动需要持续压制',
     };
   }
@@ -94,6 +96,7 @@ function riskPresentation(value: unknown, kind: RiskKind) {
     percent,
     color: '#56847c',
     level: '可控',
+    tone: 'is-calm',
     copy: kind === 'death' ? '当前仍有足够应对余地' : '复苏征兆暂处稳定区间',
   };
 }
@@ -202,12 +205,12 @@ function buildStatusTabHtml(data: StatusData): string {
     </div>
     <div class="mfrs-msg-section">
       <div class="mfrs-msg-section-title"><i class="fa-solid fa-heart-pulse" aria-hidden="true"></i><span>生存状态</span></div>
-      <div class="mfrs-msg-risk-item" style="--mfrs-risk-color:${deathRisk.color};--mfrs-risk-pct:${deathRisk.percent}%">
+      <div class="mfrs-msg-risk-item ${deathRisk.tone}" style="--mfrs-risk-color:${deathRisk.color};--mfrs-risk-pct:${deathRisk.percent}%">
         <div class="mfrs-msg-risk-label"><span>死亡风险</span><strong class="mfrs-msg-risk-level">${deathRisk.level}</strong><span class="mfrs-msg-risk-value">${deathRisk.numeric}%</span></div>
         <div class="mfrs-msg-risk-copy">${deathRisk.copy}</div>
         <div class="mfrs-msg-risk-bar" role="meter" aria-label="死亡风险" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${deathRisk.percent}"><div class="mfrs-msg-risk-fill"></div></div>
       </div>
-      <div class="mfrs-msg-risk-item" style="--mfrs-risk-color:${reviveRisk.color};--mfrs-risk-pct:${reviveRisk.percent}%">
+      <div class="mfrs-msg-risk-item ${reviveRisk.tone}" style="--mfrs-risk-color:${reviveRisk.color};--mfrs-risk-pct:${reviveRisk.percent}%">
         <div class="mfrs-msg-risk-label"><span>复苏风险</span><strong class="mfrs-msg-risk-level">${reviveRisk.level}</strong><span class="mfrs-msg-risk-value">${reviveRisk.numeric}%</span></div>
         <div class="mfrs-msg-risk-copy">${reviveRisk.copy}</div>
         <div class="mfrs-msg-risk-bar" role="meter" aria-label="复苏风险" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${reviveRisk.percent}"><div class="mfrs-msg-risk-fill"></div></div>
@@ -394,9 +397,21 @@ function injectBrandForMessage(mesElement: Element) {
 function buildPanelHtml(data: StatusData, panelId: string): string {
   const statusTab = buildStatusTabHtml(data);
   const relationTab = buildRelationTabHtml(data);
+  const deathRisk = riskPresentation(data.风险值, 'death');
+  const reviveRisk = riskPresentation(
+    toNumber(_.get(data, '驭鬼者状态.总复苏风险')) ?? toNumber(data.厉鬼复苏程度) ?? 0,
+    'revive',
+  );
+  const highRisk = deathRisk.numeric >= 70 || reviveRisk.numeric >= 70;
+  const midRisk = !highRisk && (deathRisk.numeric >= 40 || reviveRisk.numeric >= 40);
+  const riskClass = highRisk ? ' is-high-risk' : midRisk ? ' is-mid-risk' : '';
+  const bloodLayer = highRisk
+    ? `<div class="mfrs-msg-blood-layer" aria-hidden="true"><span class="mfrs-msg-blood-drop d1"></span><span class="mfrs-msg-blood-drop d2"></span><span class="mfrs-msg-blood-drop d3"></span><span class="mfrs-msg-blood-drop d4"></span></div>`
+    : '';
 
   return `
-<div class="mfrs-msg-panel" id="${panelId}">
+<div class="mfrs-msg-panel${riskClass}" id="${panelId}">
+  ${bloodLayer}
   <div class="mfrs-msg-tabs" role="tablist" aria-label="神秘复苏状态面板">
     <button class="mfrs-msg-tab mfrs-msg-tab-active" role="tab" data-tab="status" id="${panelId}-tab-status" aria-selected="true" aria-controls="${panelId}-panel-status" tabindex="0">生存状态</button>
     <button class="mfrs-msg-tab" role="tab" data-tab="relation" id="${panelId}-tab-relation" aria-selected="false" aria-controls="${panelId}-panel-relation" tabindex="-1">现场关系</button>
@@ -953,9 +968,25 @@ $(() => {
 @media (prefers-reduced-motion: reduce) {
   .mfrs-msg-brand,
   .mfrs-msg-brand-eye-orbit,
-  .mfrs-msg-brand-seal-rotor {
+  .mfrs-msg-brand-seal-rotor,
+  .mfrs-msg-panel,
+  .mfrs-msg-panel::before,
+  .mfrs-msg-panel::after,
+  .mes.last_mes .mfrs-msg-panel,
+  .mes.last_mes .mfrs-msg-panel::before,
+  .mes.last_mes .mfrs-msg-panel::after,
+  .mes.last_mes .mfrs-msg-panel.is-high-risk,
+  .mes.last_mes .mfrs-msg-blood-drop,
+  .mes.last_mes .mfrs-msg-risk-item.is-calm .mfrs-msg-risk-fill,
+  .mes.last_mes .mfrs-msg-risk-item.is-elevated .mfrs-msg-risk-fill,
+  .mes.last_mes .mfrs-msg-risk-item.is-critical .mfrs-msg-risk-fill,
+  .mes.last_mes .mfrs-msg-section-title,
+  .mes.last_mes .mfrs-msg-panel.is-high-risk .mfrs-msg-action-btn {
     animation: none !important;
   }
+  .mfrs-msg-panel::after { opacity: 0 !important; }
+  .mfrs-msg-tab:active,
+  .mfrs-msg-action-btn:active { transform: none; }
 }
 
 @media (max-width: 520px) {
@@ -1023,9 +1054,163 @@ $(() => {
   opacity: 0.58;
 }
 
+.mfrs-msg-panel::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -14%;
+  height: 16%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--mfrs-panel-blood) 30%, transparent) 45%,
+    color-mix(in srgb, var(--mfrs-panel-brass) 35%, transparent) 50%,
+    color-mix(in srgb, var(--mfrs-panel-blood) 30%, transparent) 55%,
+    transparent 100%
+  );
+}
+
 .mfrs-msg-panel > * {
   position: relative;
   z-index: 1;
+}
+
+.mfrs-msg-blood-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.mfrs-msg-blood-drop {
+  position: absolute;
+  top: -8px;
+  width: 3px;
+  height: 0;
+  opacity: 0;
+  background: linear-gradient(180deg, rgba(159, 52, 47, 0.9), rgba(80, 16, 14, 0.2));
+}
+
+.mfrs-msg-blood-drop.d1 { left: 12%; }
+.mfrs-msg-blood-drop.d2 { left: 38%; }
+.mfrs-msg-blood-drop.d3 { left: 64%; }
+.mfrs-msg-blood-drop.d4 { left: 86%; }
+
+.mes.last_mes .mfrs-msg-panel {
+  animation: mfrs-panel-edge-pulse 3s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-panel::before {
+  animation: mfrs-panel-breathe 2.8s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-panel::after {
+  opacity: 1;
+  animation: mfrs-panel-scan 6.5s linear infinite;
+}
+
+.mes.last_mes .mfrs-msg-panel.is-high-risk {
+  animation:
+    mfrs-panel-edge-pulse 1.6s ease-in-out infinite,
+    mfrs-panel-danger-flash 2.4s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-blood-drop.d1 { animation: mfrs-blood-drop 3.2s ease-in infinite; }
+.mes.last_mes .mfrs-msg-blood-drop.d2 { animation: mfrs-blood-drop 3.8s ease-in 0.7s infinite; }
+.mes.last_mes .mfrs-msg-blood-drop.d3 { animation: mfrs-blood-drop 2.9s ease-in 1.2s infinite; }
+.mes.last_mes .mfrs-msg-blood-drop.d4 { animation: mfrs-blood-drop 3.5s ease-in 0.35s infinite; }
+
+.mes.last_mes .mfrs-msg-risk-item.is-calm .mfrs-msg-risk-fill {
+  animation: mfrs-risk-idle 4.5s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-risk-item.is-elevated .mfrs-msg-risk-fill {
+  animation: mfrs-risk-seep 2.2s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-risk-item.is-critical .mfrs-msg-risk-fill {
+  animation: mfrs-risk-pulse 1.1s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-section-title {
+  animation: mfrs-title-flicker 5.5s ease-in-out infinite;
+}
+
+.mes.last_mes .mfrs-msg-col:nth-child(1) .mfrs-msg-section:nth-child(1) .mfrs-msg-section-title { animation-delay: 0.45s; }
+.mes.last_mes .mfrs-msg-col:nth-child(1) .mfrs-msg-section:nth-child(2) .mfrs-msg-section-title { animation-delay: 0.9s; }
+.mes.last_mes .mfrs-msg-col:nth-child(2) .mfrs-msg-section:nth-child(1) .mfrs-msg-section-title { animation-delay: 1.3s; }
+.mes.last_mes .mfrs-msg-col:nth-child(2) .mfrs-msg-section:nth-child(2) .mfrs-msg-section-title { animation-delay: 1.7s; }
+
+.mes.last_mes .mfrs-msg-panel.is-high-risk .mfrs-msg-action-btn {
+  animation: mfrs-action-edge-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes mfrs-panel-edge-pulse {
+  0%, 100% {
+    box-shadow:
+      0 8px 22px rgba(0, 0, 0, 0.34),
+      inset 3px 0 0 rgba(95, 143, 134, 0.22),
+      0 0 0 0 rgba(159, 52, 47, 0);
+  }
+  50% {
+    box-shadow:
+      0 10px 26px rgba(0, 0, 0, 0.4),
+      inset 3px 0 0 rgba(95, 143, 134, 0.34),
+      0 0 14px rgba(159, 52, 47, 0.12);
+  }
+}
+
+@keyframes mfrs-panel-breathe {
+  0%, 100% { opacity: 0.48; }
+  50% { opacity: 0.82; }
+}
+
+@keyframes mfrs-panel-scan {
+  0% { top: -14%; }
+  100% { top: 110%; }
+}
+
+@keyframes mfrs-panel-danger-flash {
+  0%, 100% { border-color: color-mix(in srgb, var(--mfrs-panel-brass) 72%, #111 28%); }
+  45% { border-color: color-mix(in srgb, var(--mfrs-panel-blood) 78%, #111 22%); }
+  55% { border-color: color-mix(in srgb, var(--mfrs-panel-blood) 55%, #111 45%); }
+}
+
+@keyframes mfrs-blood-drop {
+  0% { height: 0; opacity: 0; transform: translateY(0); }
+  18% { height: 16px; opacity: 0.55; }
+  100% { height: 6px; opacity: 0; transform: translateY(72px); }
+}
+
+@keyframes mfrs-risk-idle {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+}
+
+@keyframes mfrs-risk-seep {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  50% { filter: brightness(1.12) saturate(1.15); }
+}
+
+@keyframes mfrs-risk-pulse {
+  0%, 100% { filter: brightness(1); box-shadow: none; }
+  50% { filter: brightness(1.2); box-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-color) 55%, transparent); }
+}
+
+@keyframes mfrs-title-flicker {
+  0%, 90%, 100% { opacity: 1; text-shadow: none; }
+  93% { opacity: 0.55; text-shadow: 0 0 8px rgba(159, 52, 47, 0.55); }
+  96% { opacity: 1; text-shadow: 0 0 4px rgba(156, 120, 74, 0.4); }
+}
+
+@keyframes mfrs-action-edge-glow {
+  0%, 100% { border-color: color-mix(in srgb, var(--mfrs-panel-brass) 55%, transparent); }
+  50% { border-color: color-mix(in srgb, var(--mfrs-panel-blood) 75%, transparent); }
 }
 
 .mfrs-msg-panel .fa-solid {
@@ -1044,7 +1229,9 @@ $(() => {
 }
 
 .mfrs-msg-tab {
-  min-width: 0;
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
   background: transparent;
   color: #8f9d96;
   border: 0;
@@ -1294,6 +1481,9 @@ $(() => {
 .mfrs-msg-action-btn {
   display: flex;
   align-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
   background: rgba(222, 212, 189, 0.035);
   color: var(--mfrs-panel-bone);
   border: 1px solid rgba(156, 120, 74, 0.28);

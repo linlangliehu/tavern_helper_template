@@ -79,6 +79,8 @@ function getSendForm() {
   return doc.querySelector('#send_form') ?? doc.querySelector('#form_sheld');
 }
 
+const fixedHostStyleId = 'mfrs-fixed-status-host-style';
+
 function styleFixedHost(host: HTMLDivElement) {
   host.style.width = '100%';
   host.style.margin = '0 auto 6px';
@@ -92,6 +94,47 @@ function styleFixedHost(host: HTMLDivElement) {
   host.style.display = 'flex';
   host.style.flexDirection = 'column';
   host.style.gap = '6px';
+  host.style.setProperty('--mfrs-host-bone', '#ded4bd');
+  host.style.setProperty('--mfrs-host-copper', '#9c784a');
+  host.style.setProperty('--mfrs-host-blood', '#9f342f');
+  host.style.setProperty('--mfrs-host-teal', 'rgba(12, 20, 18, 0.55)');
+}
+
+function ensureFixedHostStyles() {
+  let style = doc.getElementById(fixedHostStyleId) as HTMLStyleElement | null;
+  if (!style) {
+    style = doc.createElement('style');
+    style.id = fixedHostStyleId;
+    doc.head.appendChild(style);
+  }
+  style.textContent = `
+#${statusContainerId} #${dashboardSlotId}:not(:empty),
+#${statusContainerId} #${frontendSlotId}:not(:empty) {
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--mfrs-host-copper) 55%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--mfrs-host-blood) 18%, transparent);
+  outline-offset: -3px;
+  background:
+    linear-gradient(180deg, rgba(12, 20, 18, 0.42), rgba(8, 10, 10, 0.28)),
+    var(--mfrs-host-teal);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(222, 212, 189, 0.04);
+}
+#${statusContainerId} #${dashboardSlotId}:empty,
+#${statusContainerId} #${frontendSlotId}:empty {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  #${statusContainerId},
+  #${statusContainerId} * {
+    animation: none !important;
+  }
+}
+`;
 }
 
 function styleFixedSlot(slot: HTMLDivElement, order: string) {
@@ -118,6 +161,7 @@ function removeStatusUi(host: HTMLDivElement) {
 
 function ensureFixedStatusLayout(host: HTMLDivElement) {
   styleFixedHost(host);
+  ensureFixedHostStyles();
 
   const dashboardSlot = ensureFixedSlot(host, dashboardSlotId, '10');
   const frontendSlot = ensureFixedSlot(host, frontendSlotId, '20');
@@ -129,6 +173,8 @@ function ensureFixedStatusLayout(host: HTMLDivElement) {
   });
 
   host.append(dashboardSlot, frontendSlot);
+  dashboardSlot.style.order = '10';
+  frontendSlot.style.order = '20';
   removeStatusUi(host);
   return { dashboardSlot, frontendSlot };
 }
@@ -158,6 +204,7 @@ function ensureFixedStatusBar() {
 
 function cleanupFixedStatusBar() {
   doc.getElementById(statusContainerId)?.remove();
+  doc.getElementById(fixedHostStyleId)?.remove();
 }
 
 function retryMount(attempt = 1) {

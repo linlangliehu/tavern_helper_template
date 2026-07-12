@@ -858,9 +858,80 @@ body {
   box-shadow: 4px 0 0 rgba(156,120,74,0.12) !important;
   opacity: 0.64 !important;
 }
+.mfrs-msg-narrative-wrapper::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: -12% !important;
+  height: 18% !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  opacity: 0 !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--mfrs-blood-red) 35%, transparent) 45%,
+    color-mix(in srgb, var(--mfrs-aged-brass) 40%, transparent) 50%,
+    color-mix(in srgb, var(--mfrs-blood-red) 35%, transparent) 55%,
+    transparent 100%
+  ) !important;
+}
 .mfrs-msg-narrative-wrapper > * {
   position: relative !important;
   z-index: 1 !important;
+}
+.mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper {
+  animation:
+    mfrs-frame-breathe 3.2s ease-in-out infinite,
+    mfrs-frame-glitch 3.4s ease-in-out infinite !important;
+}
+.mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper::before {
+  animation: mfrs-grid-pulse 4s ease-in-out infinite !important;
+}
+.mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper::after {
+  opacity: 1 !important;
+  animation: mfrs-scan-h 7s linear infinite !important;
+}
+@keyframes mfrs-frame-breathe {
+  0%, 100% {
+    box-shadow:
+      0 7px 18px rgba(0,0,0,0.34),
+      inset 0 0 26px rgba(0,0,0,0.46),
+      inset 3px 0 0 rgba(95,143,134,0.16) !important;
+  }
+  50% {
+    box-shadow:
+      0 9px 22px rgba(0,0,0,0.4),
+      inset 0 0 28px rgba(0,0,0,0.5),
+      inset 3px 0 0 rgba(95,143,134,0.28),
+      0 0 12px rgba(159,52,47,0.12) !important;
+  }
+}
+@keyframes mfrs-frame-glitch {
+  0%, 90%, 100% { transform: none; filter: none; }
+  92% { transform: translateX(0.4px); filter: contrast(1.05); }
+  94% { transform: translateX(-0.4px); filter: brightness(1.04); }
+  96% { transform: none; filter: none; }
+}
+@keyframes mfrs-grid-pulse {
+  0%, 100% { opacity: 0.64; }
+  50% { opacity: 1; }
+}
+@keyframes mfrs-scan-h {
+  0% { top: -12%; }
+  100% { top: 110%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mfrs-msg-narrative-wrapper,
+  .mfrs-msg-narrative-wrapper::before,
+  .mfrs-msg-narrative-wrapper::after,
+  .mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper,
+  .mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper::before,
+  .mes.last_mes[is_user="false"] .mfrs-msg-narrative-wrapper::after {
+    animation: none !important;
+  }
+  .mfrs-msg-narrative-wrapper::after { opacity: 0 !important; }
 }`;
   const hostDocument = getHostDocument();
   const hostWindow = hostDocument.defaultView as HostWindowWithThemeCleanup | null;

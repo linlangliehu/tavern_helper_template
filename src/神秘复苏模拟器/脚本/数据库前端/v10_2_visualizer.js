@@ -2080,6 +2080,23 @@
                 }
                 .acu-wrapper button, .acu-edit-dialog button, .acu-cell-menu button, .acu-section-header, .acu-dash-ctrl-bar, .acu-opt-ctrl-bar { min-width: 44px; min-height: 44px; }
                 .acu-nav-btn, .acu-action-btn, .acu-opt-btn, .acu-page-btn, .acu-header-btn, .acu-btn-block, .acu-dialog-btn, .acu-dash-interactive, .acu-grid-item, .acu-full-item, .acu-inline-item, .acu-editable-title, .acu-tab-btn, .acu-close-pill, .acu-cell-menu-item, .acu-slot-setting-btn { -webkit-tap-highlight-color: transparent; }
+                @media (prefers-reduced-motion: reduce) {
+                    .acu-wrapper *,
+                    .acu-data-display,
+                    .acu-quick-view-card,
+                    .mfrs-confirm-overlay,
+                    .mfrs-confirm-dialog,
+                    .mfrs-toast {
+                        animation: none !important;
+                    }
+                    .acu-nav-btn:hover,
+                    .acu-action-btn:hover,
+                    .acu-opt-btn:hover,
+                    .acu-header-btn:hover,
+                    .acu-data-card:hover {
+                        transform: none !important;
+                    }
+                }
                 .acu-data-display { contain: layout style; }
                 .acu-data-display:not(.visible) { visibility: hidden; pointer-events: none; position: absolute; }
 

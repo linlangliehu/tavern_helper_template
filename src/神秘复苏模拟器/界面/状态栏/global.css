@@ -30,9 +30,9 @@
   --accent-dark-red-bright: #8b2020;
   --accent-dark-red-glow: rgba(120, 20, 20, 0.3);
   --rivet-highlight: rgba(255, 255, 255, 0.08);
-  --scanline-opacity: 0.008;
-  --noise-opacity: 0.03;
-  --vignette-strength: 0.7;
+  --scanline-opacity: 0.005;
+  --noise-opacity: 0.025;
+  --vignette-strength: 0.65;
   --shadow-panel: 0 0 50px rgba(0, 0, 0, 0.98), inset 0 0 60px rgba(10, 0, 0, 0.8);
   --shadow-inset: inset 0 1px 4px rgba(0, 0, 0, 0.7);
   --shadow-text-red: 0 0 10px rgba(120, 20, 20, 0.4);
@@ -83,12 +83,12 @@ body::before {
     );
   pointer-events: none;
   z-index: 9999;
-  animation: scanline-drift 10s linear infinite;
+  animation: scanline-drift 16s linear infinite;
 }
 
 @keyframes scanline-drift {
   0% { transform: translateY(0); }
-  100% { transform: translateY(2px); }
+  100% { transform: translateY(1px); }
 }
 
 body::after {
@@ -107,17 +107,25 @@ body::after {
 }
 
 @keyframes flicker {
-  0%, 93%, 100% { opacity: 1; }
-  94% { opacity: 0.88; }
-  95% { opacity: 1; }
-  96% { opacity: 0.92; }
-  97% { opacity: 1; }
+  0%, 94%, 100% { opacity: 1; }
+  96% { opacity: 0.94; }
+  98% { opacity: 0.98; }
 }
 
 #app {
   position: relative;
   padding: 16px 12px;
-  animation: flicker 8s ease-in-out infinite;
+  animation: flicker 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  #app {
+    animation: none !important;
+  }
+  body::before {
+    opacity: 0.35;
+  }
 }
 
 ::selection {
