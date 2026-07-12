@@ -24,7 +24,8 @@
 | 项 | 值 |
 |----|-----|
 | 版本 | **8.13.7** |
-| 功能/dist commit | （见 `publish-card.mjs` `CDN_REF`） |
+| 功能/dist commit | `ade4dcfd0ca7` |
+| CDN_REF | `ade4dcfd0ca7…` |
 | cache | `…-v8137-choices-hud-only` |
 
 ## 使用
