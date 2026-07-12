@@ -1076,7 +1076,7 @@ let hudFormRestore: DomRestorePoint | null = null;
 let hudBodyOverflowPrev = '';
 let hudShellEventsBound = false;
 let hudKeydownBound = false;
-let hudActiveView: 'story' | 'dossier' | 'relation' | 'cabinet' = 'story';
+let hudActiveView: 'story' | 'dossier' | 'relation' | 'cabinet' | 'settings' = 'story';
 let hudPanelsRenderKey = '';
 let hudToastTimer: number | null = null;
 let hudMenuOpenTimer: number | null = null;
@@ -1233,7 +1233,59 @@ function ensureHudStyle() {
   background: rgba(8, 10, 10, 0.88);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+#${HUD_SHELL_ID} .mfrs-hud-right-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+/* 方案 A：酒馆原生 8 项放在右栏「设置」二级面板 */
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 2px;
+  padding: 8px 4px 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+}
+#${HUD_SHELL_ID}.is-settings-open .mfrs-hud-settings-panel {
+  display: block;
+}
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel .mfrs-hud-menu-section {
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel .mfrs-hud-menu-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel .mfrs-hud-menu-title {
+  margin: 0 0 6px;
+  padding: 0 2px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 55%, #888);
+}
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel .mfrs-hud-menu-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel .mfrs-hud-menu-item {
+  width: 100%;
+  min-height: 40px;
+  justify-content: flex-start;
+  font-size: 12px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-settings-panel .mfrs-hud-menu-item.is-wide {
+  grid-column: auto;
 }
 #${HUD_SHELL_ID} .mfrs-hud-left-title,
 #${HUD_SHELL_ID} .mfrs-hud-placeholder {
@@ -2014,9 +2066,7 @@ function ensureHudShell(): HTMLElement {
   <div class="mfrs-hud-top-actions">
     <button type="button" class="mfrs-hud-tool-btn mfrs-hud-mobile-only" data-mfrs-hud="toggle-left" aria-label="打开现场档案" title="档案">档案</button>
     <button type="button" class="mfrs-hud-tool-btn mfrs-hud-mobile-only" data-mfrs-hud="toggle-right" aria-label="打开导航" title="导航">导航</button>
-    <button type="button" class="mfrs-hud-tool-btn" data-mfrs-hud="tavern-menu" aria-haspopup="menu" aria-expanded="false" title="酒馆菜单">酒馆菜单</button>
     <button type="button" class="mfrs-hud-exit" data-mfrs-hud="exit" title="退出沉浸 (Ctrl+Shift+G)">退出沉浸</button>
-    <div class="mfrs-hud-tavern-menu" data-mfrs-hud="tavern-menu-panel" role="menu" aria-label="酒馆功能菜单"></div>
   </div>
 </header>
 <aside class="mfrs-hud-left" data-mfrs-hud="left" aria-label="现场档案">
@@ -2032,12 +2082,15 @@ function ensureHudShell(): HTMLElement {
   </details>
   <div class="mfrs-hud-composer" data-mfrs-hud="composer" aria-label="酒馆原生输入区"></div>
 </section>
-<aside class="mfrs-hud-right" data-mfrs-hud="right" aria-label="现场导航">
-  <button type="button" class="mfrs-hud-nav-btn is-active" data-mfrs-hud-nav="story"><i class="fa-solid fa-align-left" aria-hidden="true"></i><span>正文</span></button>
-  <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="dossier"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>档案</span></button>
-  <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="relation"><i class="fa-solid fa-users" aria-hidden="true"></i><span>关系</span></button>
-  <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="cabinet"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>柜</span></button>
-  <button type="button" class="mfrs-hud-nav-btn is-disabled" data-mfrs-hud-nav="settings" disabled aria-disabled="true" title="二期"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>设置</span></button>
+<aside class="mfrs-hud-right" data-mfrs-hud="right" aria-label="现场导航与设置">
+  <div class="mfrs-hud-right-nav">
+    <button type="button" class="mfrs-hud-nav-btn is-active" data-mfrs-hud-nav="story"><i class="fa-solid fa-align-left" aria-hidden="true"></i><span>正文</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="dossier"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>档案</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="relation"><i class="fa-solid fa-users" aria-hidden="true"></i><span>关系</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="cabinet"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>柜</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="settings" title="酒馆原生设置"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>设置</span></button>
+  </div>
+  <div class="mfrs-hud-settings-panel" data-mfrs-hud="settings-panel" role="navigation" aria-label="酒馆原生设置"></div>
 </aside>
 <button type="button" class="mfrs-hud-drawer-mask" data-mfrs-hud="drawer-mask" aria-label="关闭侧栏"></button>
 <button type="button" class="mfrs-hud-cabinet-mask" data-mfrs-hud="cabinet-mask" aria-label="关闭档案柜"></button>
@@ -2193,7 +2246,6 @@ function ensureHudStReturnButton() {
 /** 在沉浸壳上叠加 ST 抽屉/弹窗，不退出全屏 */
 function yieldHudToStUi() {
   if (!isHudMounted()) return;
-  closeHudTavernMenu();
   ensureHudStReturnButton();
   doc.body.classList.add(HUD_ST_UI_CLASS);
 }
@@ -2304,16 +2356,18 @@ function restoreHudFromStUi() {
   }
 }
 
-function closeHudTavernMenu() {
+function closeHudSettingsPanel() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
-  shell.classList.remove('is-tavern-menu-open');
-  const toggle = shell.querySelector('[data-mfrs-hud="tavern-menu"]') as HTMLElement | null;
-  toggle?.setAttribute('aria-expanded', 'false');
+  shell.classList.remove('is-settings-open');
+  if (hudActiveView === 'settings') {
+    hudActiveView = 'story';
+    setHudNavActive('story');
+  }
 }
 
-function renderHudTavernMenu(shell: Element) {
-  const panel = shell.querySelector('[data-mfrs-hud="tavern-menu-panel"]');
+function renderHudSettingsPanel(shell: Element) {
+  const panel = shell.querySelector('[data-mfrs-hud="settings-panel"]');
   if (!panel) return;
   const sections = getHudTavernMenuSections();
   panel.innerHTML = sections
@@ -2333,7 +2387,7 @@ function renderHudTavernMenu(shell: Element) {
           }
           const disabledClass = unavailable ? ' is-disabled' : '';
           const disabledAttr = unavailable ? ' disabled aria-disabled="true"' : '';
-          return `<button type="button" class="mfrs-hud-menu-item${wide}${disabledClass}" data-mfrs-hud-menu-action="${payload}" role="menuitem" title="${_.escape(title)}"${disabledAttr}>${_.escape(item.label)}</button>`;
+          return `<button type="button" class="mfrs-hud-menu-item${wide}${disabledClass}" data-mfrs-hud-menu-action="${payload}" title="${_.escape(title)}"${disabledAttr}>${_.escape(item.label)}</button>`;
         })
         .join('');
       return `<section class="mfrs-hud-menu-section"><p class="mfrs-hud-menu-title">${_.escape(section.title)}</p><div class="mfrs-hud-menu-grid">${items}</div></section>`;
@@ -2341,19 +2395,30 @@ function renderHudTavernMenu(shell: Element) {
     .join('');
 }
 
-function openHudTavernMenu() {
+function openHudSettingsPanel() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
-  renderHudTavernMenu(shell);
-  shell.classList.add('is-tavern-menu-open');
-  shell.querySelector('[data-mfrs-hud="tavern-menu"]')?.setAttribute('aria-expanded', 'true');
+  closeHudCabinetLayer();
+  closeHudSideDrawers();
+  renderHudSettingsPanel(shell);
+  shell.classList.add('is-settings-open');
+  hudActiveView = 'settings';
+  setHudNavActive('settings');
+  applyHudCenterView(shell, 'story');
+  if (hostWindow.matchMedia?.('(max-width: 800px)')?.matches) {
+    openHudSideDrawer('right');
+  }
 }
 
-function toggleHudTavernMenu() {
+function toggleHudSettingsPanel() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
-  if (shell.classList.contains('is-tavern-menu-open')) closeHudTavernMenu();
-  else openHudTavernMenu();
+  if (shell.classList.contains('is-settings-open') && hudActiveView === 'settings') {
+    closeHudSettingsPanel();
+    setHudView('story');
+    return;
+  }
+  openHudSettingsPanel();
 }
 
 function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | null) {
@@ -2362,17 +2427,14 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
     hudMenuOpenTimer = null;
   }
   if (action.kind === 'exit') {
-    closeHudTavernMenu();
     exitHudImmersive();
     return;
   }
   if (action.kind === 'cabinet') {
-    closeHudTavernMenu();
     setHudView('cabinet');
     return;
   }
   if (action.kind === 'continue') {
-    closeHudTavernMenu();
     const target = findHudActionTarget(['#option_continue', '#mes_continue']);
     if (!target) {
       markHudMenuItemFailed(sourceBtn ?? null, action.label || '继续', '未找到入口');
@@ -2382,7 +2444,6 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
     return;
   }
   if (action.kind === 'regenerate') {
-    closeHudTavernMenu();
     const target = findHudActionTarget(['#option_regenerate']);
     if (!target) {
       markHudMenuItemFailed(sourceBtn ?? null, action.label || '重新生成', '未找到入口');
@@ -2392,7 +2453,6 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
     return;
   }
   if (action.kind === 'stop') {
-    closeHudTavernMenu();
     const target = findHudActionTarget(['#mes_stop', '#stscript_stop']);
     if (!target) {
       markHudMenuItemFailed(sourceBtn ?? null, action.label || '停止', '未找到入口');
@@ -2407,7 +2467,6 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
       markHudMenuItemFailed(sourceBtn ?? null, action.label, '当前界面未找到入口');
       return;
     }
-    closeHudTavernMenu();
     // A1：先关已打开的 ST 抽屉，再叠层并打开目标，避免双抽屉叠在一起
     const closedCount = closeOpenStDrawers();
     if (action.yieldUi) yieldHudToStUi();
@@ -2417,7 +2476,6 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
       const live = findHudActionTarget(action.selectors, action.matchText) || target;
       try {
         live.click();
-        // D3：成功打开反馈（与失败 toast 共用通道，短时显示）
         if (action.yieldUi) {
           hostWindow.setTimeout(() => {
             if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
@@ -2427,7 +2485,7 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
         }
       } catch (error) {
         markHudMenuItemFailed(sourceBtn ?? null, action.label, '点击入口失败');
-        console.warn(`[消息内面板] 酒馆菜单点击失败: ${action.label}`, error);
+        console.warn(`[消息内面板] 设置项点击失败: ${action.label}`, error);
       }
     };
     if (typeof hostWindow.requestAnimationFrame === 'function') {
@@ -2672,6 +2730,11 @@ function setHudView(view: typeof hudActiveView) {
   hudActiveView = view;
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
+  if (view === 'settings') {
+    openHudSettingsPanel();
+    return;
+  }
+  shell.classList.remove('is-settings-open');
   setHudNavActive(view === 'cabinet' ? 'cabinet' : view);
   applyHudCenterView(shell, view === 'cabinet' ? 'story' : view);
   if (view === 'story') {
@@ -2731,8 +2794,13 @@ function refreshHudPanels(force = false) {
   const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
   if (relationSlot) relationSlot.innerHTML = buildHudRelationHtml(data);
 
-  applyHudCenterView(shell, hudActiveView === 'cabinet' ? 'story' : hudActiveView);
+  const centerView = hudActiveView === 'cabinet' || hudActiveView === 'settings' ? 'story' : hudActiveView;
+  applyHudCenterView(shell, centerView);
   setHudNavActive(hudActiveView === 'cabinet' ? 'cabinet' : hudActiveView);
+  if (hudActiveView === 'settings') {
+    shell.classList.add('is-settings-open');
+    renderHudSettingsPanel(shell);
+  }
 }
 
 function closeHudCabinetLayer() {
@@ -2753,6 +2821,7 @@ function openHudCabinetLayer() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   const host = doc.getElementById(FIXED_HOST_ID);
   closeHudSideDrawers();
+  shell?.classList.remove('is-settings-open');
   // 即使固定 host 未就绪也标记壳层开启，保证 Esc 分层可关
   shell?.classList.add('is-cabinet-open');
   if (!host) {
@@ -2777,23 +2846,11 @@ function handleHudShellClick(e: Event) {
   if (!target) return;
 
   const shell = target.closest?.(`#${HUD_SHELL_ID}`);
-  if (
-    isHudMounted() &&
-    !target.closest?.('[data-mfrs-hud="tavern-menu"], [data-mfrs-hud="tavern-menu-panel"]')
-  ) {
-    closeHudTavernMenu();
-  }
   if (!shell) return;
 
   if (target.closest('[data-mfrs-hud="exit"]')) {
     e.preventDefault();
     exitHudImmersive();
-    return;
-  }
-  if (target.closest('[data-mfrs-hud="tavern-menu"]')) {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleHudTavernMenu();
     return;
   }
   const menuActionBtn = target.closest('[data-mfrs-hud-menu-action]') as HTMLElement | null;
@@ -2811,8 +2868,8 @@ function handleHudShellClick(e: Event) {
       const action = JSON.parse(decodeURIComponent(raw)) as HudTavernAction;
       runHudTavernAction(action, menuActionBtn);
     } catch (error) {
-      markHudMenuItemFailed(menuActionBtn, '菜单', '动作解析失败');
-      console.warn('[消息内面板] 酒馆菜单动作解析失败', error);
+      markHudMenuItemFailed(menuActionBtn, '设置', '动作解析失败');
+      console.warn('[消息内面板] 设置动作解析失败', error);
     }
     return;
   }
@@ -2845,7 +2902,10 @@ function handleHudShellClick(e: Event) {
   const nav = navBtn.getAttribute('data-mfrs-hud-nav');
   if (!nav) return;
   e.preventDefault();
-  closeHudTavernMenu();
+  if (nav === 'settings') {
+    toggleHudSettingsPanel();
+    return;
+  }
   if (nav === 'story' || nav === 'dossier' || nav === 'relation' || nav === 'cabinet') {
     setHudView(nav);
     if (nav !== 'dossier' && hostWindow.matchMedia?.('(max-width: 800px)')?.matches) {
@@ -2856,12 +2916,13 @@ function handleHudShellClick(e: Event) {
 }
 
 function handleHudKeydown(e: KeyboardEvent) {
-  // A3 Esc 分层：菜单 → ST 抽屉 → 柜 → 侧抽屉；默认不退出沉浸
+  // Esc：设置面板 → ST 抽屉 → 柜 → 侧抽屉；默认不退出沉浸
   if (e.key === 'Escape' && isHudMounted()) {
     const shell = doc.getElementById(HUD_SHELL_ID);
-    if (shell?.classList.contains('is-tavern-menu-open')) {
+    if (shell?.classList.contains('is-settings-open')) {
       e.preventDefault();
-      closeHudTavernMenu();
+      closeHudSettingsPanel();
+      setHudView('story');
       return;
     }
     if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
@@ -2962,7 +3023,7 @@ function unmountHudImmersive() {
   messageObserver?.disconnect();
   historyCatchUpToken += 1;
   closeHudCabinetLayer();
-  closeHudTavernMenu();
+  closeHudSettingsPanel();
   restoreHudFromStUi();
   clearHudToast();
 
@@ -2980,7 +3041,7 @@ function unmountHudImmersive() {
   }
   hudMounted = false;
   hudPanelsRenderKey = '';
-  shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-tavern-menu-open');
+  shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-settings-open', 'is-tavern-menu-open');
   doc.getElementById('mfrs-hud-st-return')?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
   rebindMessageObserverToChat();

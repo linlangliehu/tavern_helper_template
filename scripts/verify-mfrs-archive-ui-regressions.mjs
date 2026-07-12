@@ -510,9 +510,12 @@ addCheck('phase5', 'A2 menu fail feedback toast and disabled items', () => {
   assert.ok(sources.message.includes('is-fail-flash'), 'missing fail flash class');
   assert.ok(sources.message.includes('当前界面未找到入口') || sources.message.includes('未找到入口'), 'missing unavailable copy');
 });
-addCheck('phase5', 'A3 Esc layering menu then ST drawers then cabinet', () => {
+addCheck('phase5', 'A3 Esc layering settings then ST drawers then cabinet', () => {
   const keydown = between(sources.message, 'function handleHudKeydown', 'function bindHudShellEvents');
-  assert.ok(keydown.includes('is-tavern-menu-open'), 'Esc must close tavern menu first');
+  assert.ok(
+    keydown.includes('is-settings-open') || keydown.includes('closeHudSettingsPanel'),
+    'Esc must close settings panel first',
+  );
   assert.ok(
     keydown.includes('hasOpenStDrawers') || keydown.includes('mfrs-hud-st-ui-open') || keydown.includes('HUD_ST_UI_CLASS'),
     'Esc must close ST drawers',
@@ -523,7 +526,7 @@ addCheck('phase5', 'A3 Esc layering menu then ST drawers then cabinet', () => {
 });
 addCheck('phase5', 'A4 close panel restores ST UI and clears open drawers', () => {
   assert.ok(sources.message.includes('function restoreHudFromStUi'), 'missing restoreHudFromStUi');
-  const restore = between(sources.message, 'function restoreHudFromStUi', 'function closeHudTavernMenu');
+  const restore = between(sources.message, 'function restoreHudFromStUi', 'function closeHudSettingsPanel');
   assert.ok(restore.includes('closeOpenStDrawers()'), 'close panel must close drawers');
   assert.ok(
     restore.includes('classList.remove(HUD_ST_UI_CLASS)') ||
@@ -566,26 +569,27 @@ addCheck('phase5', 'C1-C4 hud information density', () => {
   assert.ok(refresh.includes('buildHudRelationHtml'), 'hud refresh uses compact relation html');
 });
 
-// Phase D: tavern menu copy / grouping / success toast / narrow layout.
-addCheck('phase5', 'D1-D4 tavern menu polish', () => {
+// Phase D + 方案A：右栏设置承载酒馆 8 项（去掉顶栏酒馆菜单）
+addCheck('phase5', 'D1-D4 settings panel hosts tavern entries', () => {
   const menu = between(sources.message, 'function getHudTavernMenuSections', 'function findHudActionTarget');
   assert.ok(menu.includes('连接与格式'), 'missing connection section title');
   assert.ok(menu.includes('世界与角色'), 'missing world/character section title');
   assert.ok(menu.includes('扩展设置'), 'D1 rename to 扩展设置');
   assert.equal(menu.includes("label: '扩展程序'"), false, 'must not keep 扩展程序 as menu label');
   assert.ok(sources.message.includes('已打开：'), 'D3 success toast prefix');
-  assert.ok(sources.message.includes('position: fixed') || sources.message.includes('position:fixed'), 'narrow menu can use fixed');
-  // still only 8 click entries
-  const clickLabels = [...menu.matchAll(/label:\s*'([^']+)'/g)].map(m => m[1]);
-  const uniqueItems = clickLabels.filter(
-    (label, index) => clickLabels.indexOf(label) === index && !['连接与格式', '世界与角色'].includes(label),
+  assert.ok(sources.message.includes('function openHudSettingsPanel'), 'settings panel open helper');
+  assert.ok(sources.message.includes('function renderHudSettingsPanel'), 'settings panel render helper');
+  assert.ok(sources.message.includes('data-mfrs-hud="settings-panel"') || sources.message.includes("data-mfrs-hud=\"settings-panel\""), 'settings panel host');
+  assert.ok(sources.message.includes('is-settings-open'), 'settings open class');
+  assert.equal(
+    sources.message.includes('酒馆菜单') && sources.message.includes('data-mfrs-hud="tavern-menu"'),
+    false,
+    'top-bar tavern menu entry must be removed',
   );
-  // action labels appear twice (button label + action.label); count unique action names
   const expected = ['AI 响应配置', 'API 连接', 'AI 回复格式化', '用户设置', '世界书', '角色管理', '用户设定', '扩展设置'];
   for (const label of expected) {
     assert.ok(menu.includes(label), `menu missing item: ${label}`);
   }
-  assert.ok(uniqueItems.length >= 8, `expected at least 8 unique labels, got ${uniqueItems.join(',')}`);
 });
 
 // Phase E: performance + lifecycle harding.
