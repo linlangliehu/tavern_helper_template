@@ -390,14 +390,105 @@ addCheck('phase3', 'message icons restore the Font Awesome font inside the host 
   assert.ok(sources.message.includes('font-weight: 900;'));
 });
 addCheck('phase3', 'action suggestions only fill the textarea and never send', () => {
-  const actionHandler = between(sources.message, 'function handleActionClick', '$(() => {');
+  // End before β HUD block (may contain #send_but for shell send only).
+  const actionHandlerEnd = sources.message.includes('// ─── 路径 β')
+    ? '// ─── 路径 β'
+    : '$(() => {';
+  const actionHandler = between(sources.message, 'function handleActionClick', actionHandlerEnd);
   assert.ok(
     actionHandler.includes("querySelector('#send_textarea')"),
     'action handler must still target send_textarea',
   );
-  for (const forbidden of ['#send_but', 'requestSubmit', '.click()', 'trigger(']) {
+  assert.equal(actionHandler.includes('function triggerNativeSend'), false, 'action handler must not include HUD send helper');
+  for (const forbidden of ['#send_but', 'requestSubmit', "getSendButton()", 'trigger(']) {
     assert.equal(actionHandler.includes(forbidden), false, `action handler must not auto-send via ${forbidden}`);
   }
+});
+
+// Phase β1: fullscreen shell / reparent / input proxy (presentation only).
+addCheck('phase5', 'β1 fullscreen shell id and fixed mount', () => {
+  assert.ok(sources.message.includes("mfrs-hud-shell") || sources.message.includes('mfrs-hud-shell'), 'missing #mfrs-hud-shell');
+  assert.ok(sources.message.includes('position: fixed') || sources.message.includes('position:fixed'), 'shell should be fixed');
+  assert.ok(sources.message.includes('function mountHudImmersive'), 'missing mountHudImmersive');
+  assert.ok(sources.message.includes('function unmountHudImmersive'), 'missing unmountHudImmersive');
+  assert.ok(sources.message.includes('function destroyHudImmersive'), 'missing destroyHudImmersive');
+});
+addCheck('phase5', 'β1 chat reparent restore point', () => {
+  assert.ok(sources.message.includes('hudChatRestore'), 'missing chat restore state');
+  assert.ok(sources.message.includes('nextSibling'), 'restore must track nextSibling');
+  assert.ok(sources.message.includes("getElementById('chat')") || sources.message.includes('getChatElement'), 'must locate #chat');
+});
+addCheck('phase5', 'β1 D1 auto mount on mystery card + exit immersion', () => {
+  assert.ok(sources.message.includes('function syncHudImmersiveWithCard'), 'missing D1 sync');
+  assert.ok(sources.message.includes('hudImmersivePreferred'), 'missing immersive preference flag');
+  assert.ok(sources.message.includes('退出沉浸'), 'missing exit immersion control');
+  assert.ok(sources.message.includes('Ctrl+Shift') || sources.message.includes('ctrlKey && e.shiftKey'), 'missing Ctrl+Shift+G toggle');
+});
+addCheck('phase5', 'β1 hide α tri + fixed host visual hide without remove', () => {
+  assert.ok(sources.message.includes('mfrs-hud-immersive'), 'missing body immersive class');
+  assert.ok(sources.message.includes('mfrs-msg-tri-left'), 'must hide α left in immersive CSS');
+  assert.ok(sources.message.includes('mfrs-fixed-status-host'), 'must target fixed host');
+  assert.ok(sources.message.includes('mfrs-hud-cabinet-open'), 'C1 cabinet open class');
+  assert.equal(
+    /unmountHudImmersive[\s\S]{0,800}getElementById\(FIXED_HOST_ID\)\?\.remove\(/.test(sources.message),
+    false,
+    'must not remove fixed host node on unmount',
+  );
+});
+addCheck('phase5', 'β1 native send_form reparent into shell (same as ST input)', () => {
+  assert.ok(sources.message.includes('function reparentSendFormIntoHud'), 'missing send_form reparent into hud');
+  assert.ok(sources.message.includes('function restoreSendFormFromHud'), 'missing send_form restore');
+  assert.ok(sources.message.includes('hudFormRestore'), 'missing form restore state');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"composer\""), 'missing composer host for native form');
+  assert.ok(sources.message.includes('function getSendFormElement') || sources.message.includes('#send_form'), 'must locate #send_form');
+  assert.equal(sources.message.includes('mfrs-hud-input'), false, 'must not use fake proxy textarea class');
+  const actionOnly = between(sources.message, 'function handleActionClick', '// ─── 路径 β');
+  assert.equal(actionOnly.includes('triggerNativeSend'), false, '拟办 must not call triggerNativeSend');
+  assert.equal(actionOnly.includes('#send_but'), false, '拟办 must not auto-click send');
+});
+
+// Phase β2: top chips / left dossier / actions / relation wired from shared builders.
+addCheck('phase5', 'β2 hud panels refresh from latest AI stat_data', () => {
+  assert.ok(sources.message.includes('function refreshHudPanels'), 'missing refreshHudPanels');
+  assert.ok(sources.message.includes('function readLatestHudStatusData'), 'missing latest status reader');
+  assert.ok(sources.message.includes('function applyHudTopChips'), 'missing top chips apply');
+  assert.ok(sources.message.includes('buildDossierSectionsHtml'), 'must reuse dossier builder');
+  assert.ok(sources.message.includes('buildActionsHtml'), 'must reuse actions builder');
+  assert.ok(sources.message.includes('buildRelationTabHtml'), 'must reuse relation builder');
+  assert.ok(sources.message.includes('refreshHudPanels()'), 'message refresh should call refreshHudPanels');
+});
+addCheck('phase5', 'β2 hud nav views and 拟办 slot', () => {
+  assert.ok(sources.message.includes('function setHudView'), 'missing setHudView');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"actions-slot\""), 'missing actions slot');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"relation-slot\""), 'missing relation slot');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"dossier-slot\""), 'missing dossier slot');
+  assert.ok(sources.message.includes('is-emphasis'), 'dossier emphasis class');
+});
+addCheck('phase5', 'β2 resource readout is display-only structured fields', () => {
+  assert.ok(sources.message.includes('function buildHudResourceSectionsHtml'), 'missing hud resource builder');
+  assert.ok(sources.message.includes('灵异资源.鬼拼图') || sources.message.includes('鬼拼图'), 'puzzle path');
+  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'must not write MVU from hud resource UI');
+});
+
+// Phase β3: cabinet overlay, esc/mask close, narrow drawers, a11y targets.
+addCheck('phase5', 'β3 cabinet overlay chrome and close paths', () => {
+  assert.ok(sources.message.includes('mfrs-hud-cabinet-mask') || sources.message.includes('cabinet-mask'), 'cabinet mask');
+  assert.ok(sources.message.includes('cabinet-close'), 'cabinet close control');
+  assert.ok(sources.message.includes('is-cabinet-open'), 'cabinet open shell class');
+  assert.ok(sources.message.includes("e.key === 'Escape'") || sources.message.includes('Escape'), 'Esc close');
+  assert.ok(sources.message.includes('function closeHudCabinetLayer'), 'close cabinet helper');
+});
+addCheck('phase5', 'β3 narrow side drawers and mobile toggles', () => {
+  assert.ok(sources.message.includes('function openHudSideDrawer'), 'side drawer open');
+  assert.ok(sources.message.includes('function closeHudSideDrawers'), 'side drawer close');
+  assert.ok(sources.message.includes('is-left-open') && sources.message.includes('is-right-open'), 'drawer classes');
+  assert.ok(sources.message.includes('toggle-left') && sources.message.includes('toggle-right'), 'mobile toggles');
+  assert.ok(sources.message.includes('max-width: 800px'), 'narrow breakpoint');
+});
+addCheck('phase5', 'β3 default no half-screen cabinet and 44px targets', () => {
+  assert.ok(sources.message.includes('mfrs-fixed-status-host') && sources.message.includes(':not(.mfrs-hud-cabinet-open)'), 'host hidden unless cabinet open');
+  assert.ok(sources.message.includes('min-height: 44px'), '44px touch targets present');
+  assert.ok(sources.message.includes('prefers-reduced-motion'), 'reduced motion hook');
 });
 
 // Phase 4 target: archive-cabinet tabs/collapsers become keyboard accessible without changing APIs/slots.

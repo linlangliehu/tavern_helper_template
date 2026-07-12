@@ -1,27 +1,41 @@
-# 神秘复苏 · 对照参考图改造 · Phase 0 冻结包
+# 神秘复苏 · 对照参考图改造
 
-**状态：Phase 0 完成（2026-07-12）**  
-**基线：发布版 8.10.0 / CDN `a37fe0b` / cache `...-mvu-v8100-motion`**  
-**代码改动：无（仅本目录文档 + 基线截图）**
+## 当前权威方案
 
-## 文档索引
+**[设计方案-第四版.md](./设计方案-第四版.md)**（v4.0）  
+- 8.11.0 = 路径 α 已发版  
+- 下一目标 = 路径 β 全屏卷宗 HUD（建议 8.12.0）  
+- 参考：途尽信息架构 + 美化 2.0 Game View 挂载 + 参考图构图  
 
-| 文件 | 对应任务 | 说明 |
-|------|----------|------|
-| [BASELINE.md](./BASELINE.md) | T0.1 | 版本、git、hash、实机 DOM、回滚 |
-| [WHITELIST.md](./WHITELIST.md) | T0.2 | 可改/禁改文件 |
-| [DECISION.md](./DECISION.md) | T0.3 | 路径 α 决策 |
-| [CONTRACT_CHECKLIST.md](./CONTRACT_CHECKLIST.md) | T0.5 | 契约回归勾选 |
-| [EVIDENCE.md](./EVIDENCE.md) | T0.4 | 截图与实机证据 |
-| [_regex_names.txt](./_regex_names.txt) | 附件 | 33 条正则名单 |
-| `baseline-screenshots/` | T0.4 | 基线图 |
+## 进度（2026-07-12 · CDP 手测后）
+
+| 阶段 | 状态 |
+|------|------|
+| Phase 0–4 α / **8.11.0** | **完成** → [RELEASE_8.11.0.md](./RELEASE_8.11.0.md) |
+| **β0–β3.5** 全屏 HUD + 原生输入 + 顶栏菜单 | **完成** |
+| **β4A** 门禁+build | **完成**（archive-ui 197） |
+| **β4B** 15 项手测 | **CDP 功能 PASS**（9–10 依赖本地 dist 卡） |
+| **β4C** 8.12.0 | **未开始**（阻塞于用户批准） |
+
+**一句话**：β 功能与手测齐；差你批准发 8.12.0。测试请用 `local-test` 卡（5500），勿用旧 CDN 开发卡。详见 [TASKLIST_BETA.md](./TASKLIST_BETA.md)。
+
+## 冻结包索引
+
+| 文件 | 说明 |
+|------|------|
+| [设计方案-第四版.md](./设计方案-第四版.md) | **现行总方案** |
+| [TASKLIST_BETA.md](./TASKLIST_BETA.md) | **β 完整任务清单**（权威进度） |
+| [DECISION.md](./DECISION.md) | α 历史 + **β 拍板**（D1/C1/本地 dist） |
+| [WHITELIST.md](./WHITELIST.md) | 可改/禁改（含 β 壳/reparent） |
+| [CONTRACT_CHECKLIST.md](./CONTRACT_CHECKLIST.md) | 契约勾选 + **§H β 专节** |
+| [BASELINE.md](./BASELINE.md) | Phase0 基线（α 启动时） |
+| [EVIDENCE.md](./EVIDENCE.md) | 截图证据 |
+| [local-test/](./local-test/) | β 本地验收 PNG + 说明 |
+| [PHASE1_DONE.md](./PHASE1_DONE.md) … [PHASE4_DONE.md](./PHASE4_DONE.md) | α 阶段完成记录 |
+| [RELEASE_8.11.0.md](./RELEASE_8.11.0.md) | 8.11.0 发布链 |
+| `baseline-screenshots/` | 基线与 8.11 实机图 |
 
 ## 下一阶段入口
 
-按任务清单执行 **Phase 1**：
-
-1. T1.1–T1.2 删除 `.mfrs-msg-brand-eye` / `.mfrs-msg-brand-seal` 与「鬼眼封案」主视觉  
-2. T1.3 brand → 公文顶状态条  
-3. T1.4–T1.7 token + 动效 + reduced-motion  
-
-主文件：`src/神秘复苏模拟器/脚本/消息内面板/index.ts`
+**β4C**：确认本地测试卡 → **批准 8.12.0** → `CDN_REF` + `publish-card` + 重导发布版。  
+本地 dist：`http://127.0.0.1:5500/dist/神秘复苏模拟器/脚本/消息内面板/index.js`  

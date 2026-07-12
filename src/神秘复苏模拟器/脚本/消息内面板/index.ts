@@ -787,6 +787,7 @@ function processAllMessages() {
       composeTriCenter(mes);
     });
   });
+  refreshHudPanels();
 }
 
 function processOneMessage(messageId: number | string) {
@@ -800,6 +801,7 @@ function processOneMessage(messageId: number | string) {
     injectPanelForMessage(target);
     composeTriCenter(target);
   });
+  refreshHudPanels();
 }
 
 const refreshTimers = new Set<number>();
@@ -956,6 +958,1373 @@ function handleActionClick(e: Event) {
   textarea.dispatchEvent(new HostInputEvent('input', { bubbles: true, inputType: 'insertText', data: actionText }));
   textarea.dispatchEvent(new HostEvent('change', { bubbles: true }));
   textarea.focus();
+}
+
+// ─── 路径 β · 全屏卷宗 HUD（β1：壳 / reparent / 输入代理 / 生命周期）───
+
+const HUD_SHELL_ID = 'mfrs-hud-shell';
+const HUD_STYLE_ID = 'mfrs-hud-shell-style';
+const HUD_BODY_CLASS = 'mfrs-hud-immersive';
+const FIXED_HOST_ID = 'mfrs-fixed-status-host';
+const HUD_Z_SHELL = 10000;
+const HUD_Z_CABINET = 10020;
+const HUD_Z_MENU = 10040;
+const HUD_Z_ST_YIELD = 50;
+const HUD_ST_UI_CLASS = 'mfrs-hud-st-ui-open';
+
+type DomRestorePoint = {
+  parent: Node;
+  nextSibling: ChildNode | null;
+};
+
+let hudImmersivePreferred = true;
+let hudMounted = false;
+let hudChatRestore: DomRestorePoint | null = null;
+let hudFormRestore: DomRestorePoint | null = null;
+let hudBodyOverflowPrev = '';
+let hudShellEventsBound = false;
+let hudKeydownBound = false;
+let hudActiveView: 'story' | 'dossier' | 'relation' | 'cabinet' = 'story';
+let hudPanelsRenderKey = '';
+
+function isHudMounted() {
+  return hudMounted && Boolean(doc.getElementById(HUD_SHELL_ID)?.classList.contains('is-active'));
+}
+
+function getChatElement() {
+  return doc.getElementById('chat') as HTMLElement | null;
+}
+
+function getSendTextarea() {
+  return doc.querySelector('#send_textarea') as HTMLTextAreaElement | null;
+}
+
+function getSendButton() {
+  return doc.querySelector('#send_but') as HTMLElement | null;
+}
+
+function getSendFormElement() {
+  return (doc.querySelector('#send_form') ?? doc.querySelector('#form_sheld')) as HTMLElement | null;
+}
+
+function captureDomRestore(el: HTMLElement): DomRestorePoint {
+  return {
+    parent: el.parentNode as Node,
+    nextSibling: el.nextSibling,
+  };
+}
+
+function restoreDomNode(el: HTMLElement | null, restore: DomRestorePoint | null) {
+  if (!el || !restore?.parent) return;
+  const { parent, nextSibling } = restore;
+  if (el.parentNode === parent && el.nextSibling === nextSibling) return;
+  if (nextSibling && nextSibling.parentNode === parent) {
+    parent.insertBefore(el, nextSibling);
+  } else {
+    parent.appendChild(el);
+  }
+}
+
+function ensureHudStyle() {
+  let style = doc.getElementById(HUD_STYLE_ID) as HTMLStyleElement | null;
+  if (!style) {
+    style = doc.createElement('style');
+    style.id = HUD_STYLE_ID;
+    doc.head.appendChild(style);
+  }
+  style.textContent = `
+#${HUD_SHELL_ID} {
+  --mfrs-corpse-cyan: #3d6b66;
+  --mfrs-blood-red: #6b2a26;
+  --mfrs-bone-white: #c8c0ae;
+  --mfrs-ink: #0a0b0b;
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  z-index: ${HUD_Z_SHELL};
+  display: none;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(180px, 220px);
+  grid-template-areas:
+    "top top top"
+    "left center right";
+  gap: 0;
+  color: var(--mfrs-bone-white);
+  background:
+    linear-gradient(180deg, rgba(12, 14, 14, 0.98), rgba(8, 10, 10, 0.96)),
+    var(--mfrs-ink);
+  border: 0;
+  font-family: inherit;
+}
+#${HUD_SHELL_ID}.is-active { display: grid; }
+#${HUD_SHELL_ID} *, #${HUD_SHELL_ID} *::before, #${HUD_SHELL_ID} *::after { box-sizing: border-box; }
+#${HUD_SHELL_ID} .mfrs-hud-top {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  background: rgba(6, 8, 8, 0.92);
+}
+#${HUD_SHELL_ID} .mfrs-hud-top-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  min-width: 0;
+  flex: 1;
+}
+#${HUD_SHELL_ID} .mfrs-hud-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 28px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+#${HUD_SHELL_ID} .mfrs-hud-chip span { color: color-mix(in srgb, var(--mfrs-bone-white) 45%, #666); }
+#${HUD_SHELL_ID} .mfrs-hud-chip b { color: var(--mfrs-bone-white); font-weight: 700; }
+#${HUD_SHELL_ID} .mfrs-hud-exit {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 70%, transparent);
+  border-radius: 0;
+  background: rgba(61, 107, 102, 0.12);
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+#${HUD_SHELL_ID} .mfrs-hud-exit:hover {
+  border-color: var(--mfrs-corpse-cyan);
+  background: rgba(61, 107, 102, 0.22);
+}
+#${HUD_SHELL_ID} .mfrs-hud-left,
+#${HUD_SHELL_ID} .mfrs-hud-right {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  outline: 1px solid color-mix(in srgb, var(--mfrs-blood-red) 16%, transparent);
+  outline-offset: -3px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-left {
+  grid-area: left;
+  border-right: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  background: rgba(8, 10, 10, 0.88);
+}
+#${HUD_SHELL_ID} .mfrs-hud-right {
+  grid-area: right;
+  border-left: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  background: rgba(8, 10, 10, 0.88);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-left-title,
+#${HUD_SHELL_ID} .mfrs-hud-placeholder {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 70%, #888);
+}
+#${HUD_SHELL_ID} .mfrs-hud-placeholder-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 55%, #777);
+}
+#${HUD_SHELL_ID} .mfrs-hud-center {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-chat-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+}
+#${HUD_SHELL_ID} .mfrs-hud-chat-host > #chat {
+  height: 100%;
+  max-height: 100%;
+  overflow: auto;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+  background: rgba(8, 10, 10, 0.96);
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel[hidden],
+#${HUD_SHELL_ID} .mfrs-hud-chat-host[hidden] {
+  display: none !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions {
+  flex: 0 0 auto;
+  max-height: 38vh;
+  overflow: auto;
+  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 34%, transparent);
+  background: rgba(7, 9, 9, 0.96);
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 78%, #888);
+  user-select: none;
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions > summary::-webkit-details-marker { display: none; }
+#${HUD_SHELL_ID} .mfrs-hud-actions-body {
+  padding: 0 10px 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-left.is-emphasis {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mfrs-corpse-cyan) 70%, transparent);
+  background: rgba(12, 18, 17, 0.94);
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-fold {
+  margin: 0 0 8px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+  background: rgba(10, 12, 12, 0.55);
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-fold-summary {
+  min-height: 36px;
+  padding: 6px 8px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-fold-body {
+  padding: 6px 8px 8px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions .mfrs-msg-action-btn {
+  width: 100%;
+  margin: 0 0 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer {
+  flex: 0 0 auto;
+  min-width: 0;
+  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: transparent;
+}
+/* 原生 #send_form 嵌进中栏底部，保留酒馆原控件/样式 */
+#${HUD_SHELL_ID} .mfrs-hud-composer > #send_form,
+#${HUD_SHELL_ID} .mfrs-hud-composer > #form_sheld {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  z-index: auto !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #send_textarea {
+  width: 100%;
+  max-width: 100%;
+}
+#${HUD_SHELL_ID} .mfrs-hud-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+#${HUD_SHELL_ID} .mfrs-hud-nav-btn.is-active {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 32%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-nav-btn:disabled,
+#${HUD_SHELL_ID} .mfrs-hud-nav-btn.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#${HUD_SHELL_ID} .mfrs-hud-corner {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--mfrs-corpse-cyan) 70%, transparent);
+  border-style: solid;
+  opacity: 0.55;
+}
+#${HUD_SHELL_ID} .mfrs-hud-corner-tl { top: 6px; left: 6px; border-width: 1px 0 0 1px; }
+#${HUD_SHELL_ID} .mfrs-hud-corner-tr { top: 6px; right: 6px; border-width: 1px 1px 0 0; }
+#${HUD_SHELL_ID} .mfrs-hud-corner-bl { bottom: 6px; left: 6px; border-width: 0 0 1px 1px; }
+#${HUD_SHELL_ID} .mfrs-hud-corner-br { bottom: 6px; right: 6px; border-width: 0 1px 1px 0; }
+#${HUD_SHELL_ID} .mfrs-hud-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  position: relative;
+}
+#${HUD_SHELL_ID} .mfrs-hud-tavern-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: ${HUD_Z_MENU};
+  width: min(360px, 92vw);
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 65%, transparent);
+  background: rgba(8, 10, 10, 0.98);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+#${HUD_SHELL_ID}.is-tavern-menu-open .mfrs-hud-tavern-menu { display: block; }
+#${HUD_SHELL_ID} .mfrs-hud-menu-section {
+  margin: 0 0 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-menu-section:last-child { margin-bottom: 0; }
+#${HUD_SHELL_ID} .mfrs-hud-menu-title {
+  margin: 0 0 6px;
+  padding: 0 2px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 55%, #888);
+}
+#${HUD_SHELL_ID} .mfrs-hud-menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 35%, transparent);
+  border-radius: 0;
+  background: rgba(12, 14, 14, 0.9);
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+#${HUD_SHELL_ID} .mfrs-hud-menu-item:hover {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, #0a0b0b);
+}
+#${HUD_SHELL_ID} .mfrs-hud-menu-item:disabled,
+#${HUD_SHELL_ID} .mfrs-hud-menu-item.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+#${HUD_SHELL_ID} .mfrs-hud-menu-item.is-wide {
+  grid-column: 1 / -1;
+}
+#mfrs-hud-st-return {
+  display: none;
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 2147483000;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #3d6b66;
+  border-radius: 0;
+  background: rgba(8, 10, 10, 0.95);
+  color: #c8c0ae;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+body.${HUD_ST_UI_CLASS} #mfrs-hud-st-return { display: inline-flex; align-items: center; justify-content: center; }
+body.${HUD_ST_UI_CLASS} #${HUD_SHELL_ID}.is-active {
+  z-index: ${HUD_Z_ST_YIELD} !important;
+  opacity: 0.08;
+  pointer-events: none;
+}
+#${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: none; }
+#${HUD_SHELL_ID} .mfrs-hud-tool-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  border-radius: 0;
+  background: rgba(61, 107, 102, 0.1);
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-tool-btn.is-active {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-drawer-mask,
+#${HUD_SHELL_ID} .mfrs-hud-cabinet-mask {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: ${HUD_Z_CABINET - 5};
+  background: rgba(0, 0, 0, 0.55);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+#${HUD_SHELL_ID}.is-left-open .mfrs-hud-drawer-mask,
+#${HUD_SHELL_ID}.is-right-open .mfrs-hud-drawer-mask,
+#${HUD_SHELL_ID}.is-cabinet-open .mfrs-hud-cabinet-mask {
+  display: block;
+}
+#${HUD_SHELL_ID} .mfrs-hud-cabinet-chrome {
+  display: none;
+  position: fixed;
+  left: 6%;
+  right: 6%;
+  bottom: calc(6% + min(58vh, 640px));
+  z-index: ${HUD_Z_CABINET + 1};
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 70%, transparent);
+  border-bottom: 0;
+  background: rgba(8, 10, 10, 0.98);
+  color: var(--mfrs-bone-white);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+#${HUD_SHELL_ID}.is-cabinet-open .mfrs-hud-cabinet-chrome {
+  display: flex;
+}
+#${HUD_SHELL_ID} .mfrs-hud-cabinet-close {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 60%, transparent);
+  border-radius: 0;
+  background: rgba(61, 107, 102, 0.16);
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+}
+body.${HUD_BODY_CLASS} {
+  overflow: hidden !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}:not(.mfrs-hud-cabinet-open) {
+  display: none !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open {
+  display: flex !important;
+  position: fixed !important;
+  left: 6%;
+  right: 6%;
+  bottom: 6%;
+  top: auto;
+  width: auto !important;
+  max-height: min(58vh, 640px);
+  margin: 0 !important;
+  z-index: ${HUD_Z_CABINET};
+  overflow: auto;
+  background: rgba(8, 10, 10, 0.98);
+  border: 1px solid color-mix(in srgb, #3d6b66 70%, transparent);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+}
+body.${HUD_BODY_CLASS} .mfrs-msg-panel.mfrs-msg-tri {
+  display: block !important;
+  grid-template-columns: none !important;
+  grid-template-areas: none !important;
+}
+body.${HUD_BODY_CLASS} .mfrs-msg-tri-left,
+body.${HUD_BODY_CLASS} .mfrs-msg-tri-right,
+body.${HUD_BODY_CLASS} .mfrs-msg-tabs,
+body.${HUD_BODY_CLASS} .mfrs-msg-brand,
+body.${HUD_BODY_CLASS} .mfrs-msg-actions-block {
+  display: none !important;
+}
+body.${HUD_BODY_CLASS} .mfrs-msg-tri-center {
+  display: block !important;
+  min-height: 0;
+}
+@media (max-width: 1100px) {
+  #${HUD_SHELL_ID}.is-active {
+    grid-template-columns: minmax(200px, 220px) minmax(0, 1fr) minmax(140px, 160px);
+  }
+}
+@media (max-width: 800px) {
+  #${HUD_SHELL_ID}.is-active {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "top"
+      "center";
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: inline-flex; align-items: center; justify-content: center; }
+  #${HUD_SHELL_ID} .mfrs-hud-left,
+  #${HUD_SHELL_ID} .mfrs-hud-right {
+    display: none;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: min(86vw, 320px);
+    z-index: ${HUD_Z_CABINET - 2};
+    max-height: none;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-left {
+    left: 0;
+    border-right: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-right {
+    right: 0;
+    border-left: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  }
+  #${HUD_SHELL_ID}.is-left-open .mfrs-hud-left,
+  #${HUD_SHELL_ID}.is-right-open .mfrs-hud-right {
+    display: block;
+  }
+  body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open {
+    left: 3%;
+    right: 3%;
+    bottom: 3%;
+    max-height: 70vh;
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-cabinet-chrome {
+    left: 3%;
+    right: 3%;
+    bottom: calc(3% + min(70vh, 720px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #${HUD_SHELL_ID} *,
+  #${HUD_SHELL_ID} *::before,
+  #${HUD_SHELL_ID} *::after { transition: none !important; animation: none !important; }
+}
+`;
+}
+
+function ensureHudShell(): HTMLElement {
+  ensureHudStyle();
+  let shell = doc.getElementById(HUD_SHELL_ID) as HTMLElement | null;
+  if (shell) return shell;
+
+  shell = doc.createElement('div');
+  shell.id = HUD_SHELL_ID;
+  shell.setAttribute('role', 'application');
+  shell.setAttribute('aria-label', '神秘复苏全屏卷宗');
+  shell.innerHTML = `
+<span class="mfrs-hud-corner mfrs-hud-corner-tl" aria-hidden="true"></span>
+<span class="mfrs-hud-corner mfrs-hud-corner-tr" aria-hidden="true"></span>
+<span class="mfrs-hud-corner mfrs-hud-corner-bl" aria-hidden="true"></span>
+<span class="mfrs-hud-corner mfrs-hud-corner-br" aria-hidden="true"></span>
+<header class="mfrs-hud-top">
+  <div class="mfrs-hud-top-chips" data-mfrs-hud="chips">
+    <div class="mfrs-hud-chip"><span>位置</span><b data-mfrs-hud-chip="location">—</b></div>
+    <div class="mfrs-hud-chip"><span>阶段</span><b data-mfrs-hud-chip="phase">—</b></div>
+    <div class="mfrs-hud-chip"><span>事件</span><b data-mfrs-hud-chip="event">—</b></div>
+    <div class="mfrs-hud-chip"><span>鬼域</span><b data-mfrs-hud-chip="domain">—</b></div>
+    <div class="mfrs-hud-chip"><span>危害</span><b data-mfrs-hud-chip="danger">—</b></div>
+  </div>
+  <div class="mfrs-hud-top-actions">
+    <button type="button" class="mfrs-hud-tool-btn mfrs-hud-mobile-only" data-mfrs-hud="toggle-left" aria-label="打开现场档案" title="档案">档案</button>
+    <button type="button" class="mfrs-hud-tool-btn mfrs-hud-mobile-only" data-mfrs-hud="toggle-right" aria-label="打开导航" title="导航">导航</button>
+    <button type="button" class="mfrs-hud-tool-btn" data-mfrs-hud="tavern-menu" aria-haspopup="menu" aria-expanded="false" title="酒馆菜单">酒馆菜单</button>
+    <button type="button" class="mfrs-hud-exit" data-mfrs-hud="exit" title="退出沉浸 (Ctrl+Shift+G)">退出沉浸</button>
+    <div class="mfrs-hud-tavern-menu" data-mfrs-hud="tavern-menu-panel" role="menu" aria-label="酒馆功能菜单"></div>
+  </div>
+</header>
+<aside class="mfrs-hud-left" data-mfrs-hud="left" aria-label="现场档案">
+  <p class="mfrs-hud-left-title">现场档案</p>
+  <div class="mfrs-hud-dossier" data-mfrs-hud="dossier-slot"></div>
+</aside>
+<section class="mfrs-hud-center">
+  <div class="mfrs-hud-chat-host" data-mfrs-hud="chat-host"></div>
+  <div class="mfrs-hud-relation-panel" data-mfrs-hud="relation-slot" hidden></div>
+  <details class="mfrs-hud-actions" data-mfrs-hud="actions" open>
+    <summary><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></summary>
+    <div class="mfrs-hud-actions-body" data-mfrs-hud="actions-slot"></div>
+  </details>
+  <div class="mfrs-hud-composer" data-mfrs-hud="composer" aria-label="酒馆原生输入区"></div>
+</section>
+<aside class="mfrs-hud-right" data-mfrs-hud="right" aria-label="现场导航">
+  <button type="button" class="mfrs-hud-nav-btn is-active" data-mfrs-hud-nav="story"><i class="fa-solid fa-align-left" aria-hidden="true"></i><span>正文</span></button>
+  <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="dossier"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>档案</span></button>
+  <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="relation"><i class="fa-solid fa-users" aria-hidden="true"></i><span>关系</span></button>
+  <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="cabinet"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>柜</span></button>
+  <button type="button" class="mfrs-hud-nav-btn is-disabled" data-mfrs-hud-nav="settings" disabled aria-disabled="true" title="二期"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>设置</span></button>
+</aside>
+<button type="button" class="mfrs-hud-drawer-mask" data-mfrs-hud="drawer-mask" aria-label="关闭侧栏"></button>
+<button type="button" class="mfrs-hud-cabinet-mask" data-mfrs-hud="cabinet-mask" aria-label="关闭档案柜"></button>
+<div class="mfrs-hud-cabinet-chrome" data-mfrs-hud="cabinet-chrome">
+  <span>档案柜 · 仅沉浸内展开</span>
+  <button type="button" class="mfrs-hud-cabinet-close" data-mfrs-hud="cabinet-close">关闭</button>
+</div>
+`;
+  doc.body.appendChild(shell);
+  return shell;
+}
+
+type HudTavernAction =
+  | { kind: 'click'; selectors: string[]; label: string; yieldUi?: boolean; matchText?: string }
+  | { kind: 'continue' | 'regenerate' | 'stop' | 'cabinet' | 'exit'; label: string };
+
+type HudTavernMenuSection = { title: string; items: Array<{ label: string; action: HudTavernAction; wide?: boolean }> };
+
+/** 仅代理 ST 顶栏抽屉（截图 141154）；☰选项 / ✨扩展 已在原生输入条，不重复 */
+function getHudTavernMenuSections(): HudTavernMenuSection[] {
+  return [
+    {
+      title: '酒馆顶栏',
+      items: [
+        {
+          label: 'AI 响应配置',
+          action: {
+            kind: 'click',
+            selectors: ['#leftNavDrawerIcon', '[title="AI 响应配置"]', '.drawer-icon.fa-sliders'],
+            label: 'AI 响应配置',
+            yieldUi: true,
+          },
+        },
+        {
+          label: 'API 连接',
+          action: {
+            kind: 'click',
+            selectors: ['#API-status-top', '#api_button', '[title="API 连接"]', '.drawer-icon.fa-plug'],
+            label: 'API 连接',
+            yieldUi: true,
+          },
+        },
+        {
+          label: 'AI 回复格式化',
+          action: {
+            kind: 'click',
+            selectors: ['[title="AI 回复格式化"]', '.drawer-icon.fa-font', '#sys-settings-button'],
+            label: 'AI 回复格式化',
+            yieldUi: true,
+          },
+        },
+        {
+          label: '世界书',
+          action: {
+            kind: 'click',
+            selectors: ['#WIDrawerIcon', '[title="世界书"]', '.drawer-icon.fa-book-atlas', '.drawer-icon.fa-globe'],
+            label: '世界书',
+            yieldUi: true,
+          },
+        },
+        {
+          label: '用户设置',
+          action: {
+            kind: 'click',
+            selectors: ['[title="用户设置"]', '.drawer-icon.fa-user-cog', '#user-settings-button'],
+            label: '用户设置',
+            yieldUi: true,
+          },
+        },
+        {
+          label: '扩展程序',
+          action: {
+            kind: 'click',
+            selectors: ['[title="扩展程序"].drawer-icon', '#extensions-settings-button', '.drawer-icon.fa-cubes'],
+            label: '扩展程序',
+            yieldUi: true,
+          },
+        },
+        {
+          label: '用户设定',
+          action: {
+            kind: 'click',
+            selectors: ['[title="用户设定管理"]', '.drawer-icon.fa-face-smile', '#persona-management-button'],
+            label: '用户设定',
+            yieldUi: true,
+          },
+        },
+        {
+          label: '角色管理',
+          action: {
+            kind: 'click',
+            selectors: ['#rightNavDrawerIcon', '[title="角色管理"]', '.drawer-icon.fa-address-card'],
+            label: '角色管理',
+            yieldUi: true,
+          },
+        },
+      ],
+    },
+  ];
+}
+
+function findHudActionTarget(selectors: string[], matchText?: string): HTMLElement | null {
+  for (const selector of selectors) {
+    try {
+      const nodes = Array.from(doc.querySelectorAll(selector)) as HTMLElement[];
+      const filtered = matchText
+        ? nodes.filter(node => (node.textContent || '').replace(/\s+/g, ' ').includes(matchText))
+        : nodes;
+      const visible = filtered.find(node => {
+        if (!node || node.hasAttribute('disabled')) return false;
+        if (node.classList.contains('displayNone')) return false;
+        try {
+          const style = (hostWindow as Window).getComputedStyle?.(node);
+          if (style && (style.display === 'none' || style.visibility === 'hidden')) return false;
+        } catch {
+          // ignore
+        }
+        return true;
+      });
+      if (visible) return visible;
+      if (filtered[0]) return filtered[0];
+    } catch {
+      // ignore invalid selectors
+    }
+  }
+  return null;
+}
+
+function ensureHudStReturnButton() {
+  let btn = doc.getElementById('mfrs-hud-st-return') as HTMLButtonElement | null;
+  if (btn) return btn;
+  btn = doc.createElement('button');
+  btn.type = 'button';
+  btn.id = 'mfrs-hud-st-return';
+  btn.textContent = '返回沉浸';
+  btn.title = '关闭酒馆面板并回到沉浸 HUD';
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    restoreHudFromStUi();
+  });
+  doc.body.appendChild(btn);
+  return btn;
+}
+
+function yieldHudToStUi() {
+  if (!isHudMounted()) return;
+  closeHudTavernMenu();
+  ensureHudStReturnButton();
+  doc.body.classList.add(HUD_ST_UI_CLASS);
+}
+
+function restoreHudFromStUi() {
+  doc.body.classList.remove(HUD_ST_UI_CLASS);
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (shell?.classList.contains('is-active')) {
+    shell.style.removeProperty('z-index');
+    shell.style.removeProperty('opacity');
+    shell.style.removeProperty('pointer-events');
+  }
+}
+
+function closeHudTavernMenu() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  shell.classList.remove('is-tavern-menu-open');
+  const toggle = shell.querySelector('[data-mfrs-hud="tavern-menu"]') as HTMLElement | null;
+  toggle?.setAttribute('aria-expanded', 'false');
+}
+
+function renderHudTavernMenu(shell: Element) {
+  const panel = shell.querySelector('[data-mfrs-hud="tavern-menu-panel"]');
+  if (!panel) return;
+  const sections = getHudTavernMenuSections();
+  panel.innerHTML = sections
+    .map(section => {
+      const items = section.items
+        .map(item => {
+          const wide = item.wide ? ' is-wide' : '';
+          const payload = encodeURIComponent(JSON.stringify(item.action));
+          return `<button type="button" class="mfrs-hud-menu-item${wide}" data-mfrs-hud-menu-action="${payload}" role="menuitem">${_.escape(item.label)}</button>`;
+        })
+        .join('');
+      return `<section class="mfrs-hud-menu-section"><p class="mfrs-hud-menu-title">${_.escape(section.title)}</p><div class="mfrs-hud-menu-grid">${items}</div></section>`;
+    })
+    .join('');
+}
+
+function openHudTavernMenu() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  renderHudTavernMenu(shell);
+  shell.classList.add('is-tavern-menu-open');
+  shell.querySelector('[data-mfrs-hud="tavern-menu"]')?.setAttribute('aria-expanded', 'true');
+}
+
+function toggleHudTavernMenu() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  if (shell.classList.contains('is-tavern-menu-open')) closeHudTavernMenu();
+  else openHudTavernMenu();
+}
+
+function runHudTavernAction(action: HudTavernAction) {
+  if (action.kind === 'exit') {
+    closeHudTavernMenu();
+    exitHudImmersive();
+    return;
+  }
+  if (action.kind === 'cabinet') {
+    closeHudTavernMenu();
+    setHudView('cabinet');
+    return;
+  }
+  if (action.kind === 'continue') {
+    closeHudTavernMenu();
+    const target = findHudActionTarget(['#option_continue', '#mes_continue']);
+    target?.click();
+    return;
+  }
+  if (action.kind === 'regenerate') {
+    closeHudTavernMenu();
+    const target = findHudActionTarget(['#option_regenerate']);
+    target?.click();
+    return;
+  }
+  if (action.kind === 'stop') {
+    closeHudTavernMenu();
+    const target = findHudActionTarget(['#mes_stop', '#stscript_stop']);
+    target?.click();
+    return;
+  }
+  if (action.kind === 'click') {
+    const target = findHudActionTarget(action.selectors, action.matchText);
+    if (!target) {
+      console.warn(`[消息内面板] 酒馆菜单未找到入口: ${action.label}`);
+      return;
+    }
+    closeHudTavernMenu();
+    if (action.yieldUi) yieldHudToStUi();
+    hostWindow.setTimeout(() => {
+      try {
+        target.click();
+      } catch (error) {
+        console.warn(`[消息内面板] 酒馆菜单点击失败: ${action.label}`, error);
+      }
+    }, 0);
+  }
+}
+
+function reparentSendFormIntoHud(shell: HTMLElement) {
+  const form = getSendFormElement();
+  const composer = shell.querySelector('[data-mfrs-hud="composer"]') as HTMLElement | null;
+  if (!form || !composer) return;
+  if (form.parentElement === composer) return;
+  if (!hudFormRestore || form.parentElement !== composer) {
+    hudFormRestore = captureDomRestore(form);
+  }
+  composer.appendChild(form);
+}
+
+function restoreSendFormFromHud() {
+  const form = getSendFormElement();
+  restoreDomNode(form, hudFormRestore);
+  hudFormRestore = null;
+}
+
+function setHudNavActive(nav: string) {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  shell.querySelectorAll('[data-mfrs-hud-nav]').forEach(btn => {
+    btn.classList.toggle('is-active', btn.getAttribute('data-mfrs-hud-nav') === nav);
+  });
+}
+
+function getLatestAiMessageElement(): Element | null {
+  const last = doc.querySelector('.mes.last_mes:not([is_user="true"])');
+  if (last && !isUserMessage(last)) return last;
+  const all = Array.from(doc.querySelectorAll('.mes:not([is_user="true"])'));
+  for (let i = all.length - 1; i >= 0; i -= 1) {
+    const mes = all[i];
+    if (!isUserMessage(mes) && mes.getAttribute('mesid')) return mes;
+  }
+  return null;
+}
+
+function readLatestHudStatusData(): StatusData {
+  const mes = getLatestAiMessageElement();
+  if (!mes) return {};
+  return readStatusForMessage(mes);
+}
+
+function formatResourceField(value: unknown): string {
+  if (value === null || value === undefined || value === '') return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value).trim();
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map(item => {
+        if (item === null || item === undefined) return '';
+        if (typeof item === 'string' || typeof item === 'number') return String(item);
+        if (typeof item === 'object') {
+          const record = item as Record<string, unknown>;
+          return valueText(record.名称 ?? record.name ?? record.代号 ?? record.物品名 ?? JSON.stringify(item), '');
+        }
+        return String(item);
+      })
+      .filter(Boolean)
+      .join('、');
+  }
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+}
+
+function buildHudResourceSectionsHtml(data: StatusData): string {
+  const resourceRoot = data.灵异资源;
+  const puzzle = formatResourceField(
+    _.get(data, '灵异资源.鬼拼图') ?? _.get(data, '灵异资源.拼图') ?? _.get(data, '鬼拼图'),
+  );
+  const items = formatResourceField(
+    _.get(data, '灵异资源.灵异物品') ?? data.灵异物品 ?? _.get(data, '持有物品'),
+  );
+  const gold = formatResourceField(
+    _.get(data, '灵异资源.黄金') ?? _.get(data, '灵异资源.鬼钱') ?? _.get(data, '黄金'),
+  );
+  const rows = [
+    puzzle && `<div class="mfrs-msg-kv"><span>拼图</span><b>${_.escape(puzzle)}</b></div>`,
+    items && `<div class="mfrs-msg-kv"><span>物品</span><b>${_.escape(items)}</b></div>`,
+    gold && `<div class="mfrs-msg-kv"><span>黄金</span><b>${_.escape(gold)}</b></div>`,
+  ].filter(Boolean);
+
+  if (rows.length) {
+    return `<details class="mfrs-msg-fold" data-fold="resource" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>资源</span></summary>
+  <div class="mfrs-msg-fold-body">${rows.join('')}</div>
+</details>`;
+  }
+
+  if (resourceRoot !== null && resourceRoot !== undefined && typeof resourceRoot !== 'object') {
+    const text = formatResourceField(resourceRoot);
+    if (!text) return '';
+    return `<details class="mfrs-msg-fold" data-fold="resource" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>资源</span></summary>
+  <div class="mfrs-msg-fold-body"><div class="mfrs-msg-info-text">${_.escape(text)}</div></div>
+</details>`;
+  }
+
+  const fallback = formatResourceField(data.灵异资源 ?? _.get(data, '资源') ?? _.get(data, '持有资源'));
+  if (!fallback || fallback.startsWith('{') || fallback.startsWith('[')) return '';
+  return `<details class="mfrs-msg-fold" data-fold="resource" open>
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>资源</span></summary>
+  <div class="mfrs-msg-fold-body"><div class="mfrs-msg-info-text">${_.escape(fallback)}</div></div>
+</details>`;
+}
+
+function buildHudDossierHtml(data: StatusData): string {
+  const base = buildDossierSectionsHtml(data).replace(
+    /<details class="mfrs-msg-fold" data-fold="resource"[\s\S]*?<\/details>/,
+    '',
+  );
+  return `${base}${buildHudResourceSectionsHtml(data)}`;
+}
+
+function applyHudTopChips(shell: Element, data: StatusData) {
+  const brand = getBrandViewModel(data, 'hud');
+  const map: Record<string, string> = {
+    location: brand.location || '未知',
+    phase: brand.phase || '开局接入',
+    event: brand.event === '无' ? '未立案灵异事件' : brand.event,
+    domain: brand.domain || '未确认',
+    danger: brand.danger || '未知',
+  };
+  Object.entries(map).forEach(([key, value]) => {
+    const node = shell.querySelector(`[data-mfrs-hud-chip="${key}"]`);
+    if (node) node.textContent = value;
+  });
+}
+
+function applyHudCenterView(shell: Element, view: typeof hudActiveView) {
+  const chatHost = shell.querySelector('[data-mfrs-hud="chat-host"]') as HTMLElement | null;
+  const relation = shell.querySelector('[data-mfrs-hud="relation-slot"]') as HTMLElement | null;
+  const left = shell.querySelector('[data-mfrs-hud="left"]') as HTMLElement | null;
+  const showRelation = view === 'relation';
+  if (chatHost) chatHost.hidden = showRelation;
+  if (relation) relation.hidden = !showRelation;
+  left?.classList.toggle('is-emphasis', view === 'dossier');
+}
+
+function closeHudSideDrawers() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  shell.classList.remove('is-left-open', 'is-right-open');
+  shell.querySelector('[data-mfrs-hud="toggle-left"]')?.classList.remove('is-active');
+  shell.querySelector('[data-mfrs-hud="toggle-right"]')?.classList.remove('is-active');
+}
+
+function openHudSideDrawer(side: 'left' | 'right') {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  closeHudCabinetLayer();
+  shell.classList.toggle('is-left-open', side === 'left');
+  shell.classList.toggle('is-right-open', side === 'right');
+  shell.querySelector('[data-mfrs-hud="toggle-left"]')?.classList.toggle('is-active', side === 'left');
+  shell.querySelector('[data-mfrs-hud="toggle-right"]')?.classList.toggle('is-active', side === 'right');
+}
+
+function isHudCabinetOpen() {
+  return Boolean(doc.getElementById(FIXED_HOST_ID)?.classList.contains('mfrs-hud-cabinet-open'));
+}
+
+function setHudView(view: typeof hudActiveView) {
+  hudActiveView = view;
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  setHudNavActive(view === 'cabinet' ? 'cabinet' : view);
+  applyHudCenterView(shell, view === 'cabinet' ? 'story' : view);
+  if (view === 'story') {
+    closeHudCabinetLayer();
+    closeHudSideDrawers();
+    const chat = getChatElement();
+    if (chat) {
+      const top = chat.scrollHeight;
+      try {
+        chat.scrollTo({ top, behavior: 'smooth' });
+      } catch {
+        chat.scrollTop = top;
+      }
+    }
+    return;
+  }
+  if (view === 'dossier') {
+    closeHudCabinetLayer();
+    if (hostWindow.matchMedia?.('(max-width: 800px)')?.matches) {
+      openHudSideDrawer('left');
+    } else {
+      closeHudSideDrawers();
+    }
+    shell.querySelector('.mfrs-hud-left')?.scrollTo?.({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  if (view === 'relation') {
+    closeHudCabinetLayer();
+    closeHudSideDrawers();
+    return;
+  }
+  if (view === 'cabinet') {
+    closeHudSideDrawers();
+    openHudCabinetLayer();
+  }
+}
+
+function refreshHudPanels(force = false) {
+  if (!isHudMounted()) return;
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  const data = readLatestHudStatusData();
+  const renderKey = getPanelRenderKey(data);
+  if (!force && renderKey === hudPanelsRenderKey) {
+    applyHudCenterView(shell, hudActiveView === 'cabinet' ? 'story' : hudActiveView);
+    return;
+  }
+  hudPanelsRenderKey = renderKey;
+  applyHudTopChips(shell, data);
+
+  const dossierSlot = shell.querySelector('[data-mfrs-hud="dossier-slot"]');
+  if (dossierSlot) dossierSlot.innerHTML = buildHudDossierHtml(data);
+
+  const actionsSlot = shell.querySelector('[data-mfrs-hud="actions-slot"]');
+  if (actionsSlot) actionsSlot.innerHTML = buildActionsHtml(data);
+
+  const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
+  if (relationSlot) relationSlot.innerHTML = buildRelationTabHtml(data);
+
+  applyHudCenterView(shell, hudActiveView === 'cabinet' ? 'story' : hudActiveView);
+  setHudNavActive(hudActiveView === 'cabinet' ? 'cabinet' : hudActiveView);
+}
+
+function closeHudCabinetLayer() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  const host = doc.getElementById(FIXED_HOST_ID);
+  host?.classList.remove('mfrs-hud-cabinet-open');
+  shell?.classList.remove('is-cabinet-open');
+  if (hudActiveView === 'cabinet') {
+    hudActiveView = 'story';
+    if (shell) {
+      setHudNavActive('story');
+      applyHudCenterView(shell, 'story');
+    }
+  }
+}
+
+function openHudCabinetLayer() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  const host = doc.getElementById(FIXED_HOST_ID);
+  if (!host) {
+    openArchiveCabinet();
+    return;
+  }
+  closeHudSideDrawers();
+  host.classList.add('mfrs-hud-cabinet-open');
+  shell?.classList.add('is-cabinet-open');
+  const expandBtn = host.querySelector(
+    'button[aria-expanded="false"]',
+  ) as HTMLElement | null;
+  expandBtn?.click();
+  try {
+    host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch {
+    // ignore
+  }
+}
+
+function handleHudShellClick(e: Event) {
+  const target = e.target as HTMLElement | null;
+  if (!target) return;
+
+  const shell = target.closest?.(`#${HUD_SHELL_ID}`);
+  if (
+    isHudMounted() &&
+    !target.closest?.('[data-mfrs-hud="tavern-menu"], [data-mfrs-hud="tavern-menu-panel"]')
+  ) {
+    closeHudTavernMenu();
+  }
+  if (!shell) return;
+
+  if (target.closest('[data-mfrs-hud="exit"]')) {
+    e.preventDefault();
+    exitHudImmersive();
+    return;
+  }
+  if (target.closest('[data-mfrs-hud="tavern-menu"]')) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleHudTavernMenu();
+    return;
+  }
+  const menuActionBtn = target.closest('[data-mfrs-hud-menu-action]') as HTMLElement | null;
+  if (menuActionBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const raw = menuActionBtn.getAttribute('data-mfrs-hud-menu-action');
+    if (!raw) return;
+    try {
+      const action = JSON.parse(decodeURIComponent(raw)) as HudTavernAction;
+      runHudTavernAction(action);
+    } catch (error) {
+      console.warn('[消息内面板] 酒馆菜单动作解析失败', error);
+    }
+    return;
+  }
+  if (target.closest('[data-mfrs-hud="cabinet-close"], [data-mfrs-hud="cabinet-mask"]')) {
+    e.preventDefault();
+    closeHudCabinetLayer();
+    return;
+  }
+  if (target.closest('[data-mfrs-hud="drawer-mask"]')) {
+    e.preventDefault();
+    closeHudSideDrawers();
+    return;
+  }
+  if (target.closest('[data-mfrs-hud="toggle-left"]')) {
+    e.preventDefault();
+    if (shell.classList.contains('is-left-open')) closeHudSideDrawers();
+    else {
+      setHudView('dossier');
+    }
+    return;
+  }
+  if (target.closest('[data-mfrs-hud="toggle-right"]')) {
+    e.preventDefault();
+    if (shell.classList.contains('is-right-open')) closeHudSideDrawers();
+    else openHudSideDrawer('right');
+    return;
+  }
+  const navBtn = target.closest('[data-mfrs-hud-nav]') as HTMLElement | null;
+  if (!navBtn || navBtn.hasAttribute('disabled')) return;
+  const nav = navBtn.getAttribute('data-mfrs-hud-nav');
+  if (!nav) return;
+  e.preventDefault();
+  closeHudTavernMenu();
+  if (nav === 'story' || nav === 'dossier' || nav === 'relation' || nav === 'cabinet') {
+    setHudView(nav);
+    if (nav !== 'dossier' && hostWindow.matchMedia?.('(max-width: 800px)')?.matches) {
+      if (nav === 'story' || nav === 'relation') closeHudSideDrawers();
+      if (nav === 'cabinet') closeHudSideDrawers();
+    }
+  }
+}
+
+function handleHudKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && isHudMounted()) {
+    if (doc.body.classList.contains(HUD_ST_UI_CLASS)) {
+      e.preventDefault();
+      restoreHudFromStUi();
+      return;
+    }
+    const shell = doc.getElementById(HUD_SHELL_ID);
+    if (shell?.classList.contains('is-tavern-menu-open')) {
+      e.preventDefault();
+      closeHudTavernMenu();
+      return;
+    }
+    if (isHudCabinetOpen()) {
+      e.preventDefault();
+      closeHudCabinetLayer();
+      return;
+    }
+    if (shell?.classList.contains('is-left-open') || shell?.classList.contains('is-right-open')) {
+      e.preventDefault();
+      closeHudSideDrawers();
+      return;
+    }
+  }
+  if (!(e.ctrlKey && e.shiftKey && (e.key === 'G' || e.key === 'g'))) return;
+  if (!isMysteryRevivalCardActive()) return;
+  e.preventDefault();
+  toggleHudImmersive();
+}
+
+function bindHudShellEvents() {
+  if (!hudShellEventsBound) {
+    doc.addEventListener('click', handleHudShellClick, true);
+    hudShellEventsBound = true;
+  }
+  if (!hudKeydownBound) {
+    doc.addEventListener('keydown', handleHudKeydown, true);
+    hudKeydownBound = true;
+  }
+}
+
+function unbindHudShellEvents() {
+  if (hudShellEventsBound) {
+    doc.removeEventListener('click', handleHudShellClick, true);
+    hudShellEventsBound = false;
+  }
+  if (hudKeydownBound) {
+    doc.removeEventListener('keydown', handleHudKeydown, true);
+    hudKeydownBound = false;
+  }
+}
+
+function rebindMessageObserverToChat() {
+  const chat = getChatElement();
+  if (!chat) return;
+  observedChatContainer = chat;
+  if (observerEnabled && messageObserver) {
+    messageObserver.disconnect();
+    resumeMessageObserver();
+  }
+}
+
+function mountHudImmersive() {
+  if (!isMysteryRevivalCardActive()) {
+    unmountHudImmersive();
+    return;
+  }
+  const chat = getChatElement();
+  if (!chat) return;
+
+  const shell = ensureHudShell();
+  const chatHost = shell.querySelector('[data-mfrs-hud="chat-host"]') as HTMLElement | null;
+  if (!chatHost) return;
+
+  if (!hudChatRestore || chat.parentElement !== chatHost) {
+    if (chat.parentElement !== chatHost) {
+      hudChatRestore = captureDomRestore(chat);
+      chatHost.appendChild(chat);
+    }
+  }
+  reparentSendFormIntoHud(shell);
+
+  if (!doc.body.classList.contains(HUD_BODY_CLASS)) {
+    hudBodyOverflowPrev = doc.body.style.overflow;
+  }
+  doc.body.classList.add(HUD_BODY_CLASS);
+  shell.classList.add('is-active');
+  shell.setAttribute('aria-hidden', 'false');
+  hudMounted = true;
+  closeHudCabinetLayer();
+  closeHudSideDrawers();
+  bindHudShellEvents();
+  rebindMessageObserverToChat();
+  if (hudActiveView === 'cabinet') hudActiveView = 'story';
+  refreshHudPanels(true);
+  setHudView(hudActiveView === 'relation' || hudActiveView === 'dossier' ? hudActiveView : 'story');
+}
+
+function unmountHudImmersive() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  const chat = getChatElement();
+  closeHudCabinetLayer();
+  closeHudTavernMenu();
+  restoreHudFromStUi();
+
+  restoreDomNode(chat, hudChatRestore);
+  hudChatRestore = null;
+  restoreSendFormFromHud();
+
+  if (shell) {
+    shell.classList.remove('is-active');
+    shell.setAttribute('aria-hidden', 'true');
+  }
+  doc.body.classList.remove(HUD_BODY_CLASS);
+  if (hudBodyOverflowPrev !== undefined) {
+    doc.body.style.overflow = hudBodyOverflowPrev;
+  }
+  hudMounted = false;
+  hudPanelsRenderKey = '';
+  shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-tavern-menu-open');
+  doc.getElementById('mfrs-hud-st-return')?.remove();
+  rebindMessageObserverToChat();
+}
+
+function exitHudImmersive() {
+  hudImmersivePreferred = false;
+  unmountHudImmersive();
+}
+
+function toggleHudImmersive() {
+  if (isHudMounted()) {
+    exitHudImmersive();
+    return;
+  }
+  hudImmersivePreferred = true;
+  mountHudImmersive();
+}
+
+function syncHudImmersiveWithCard() {
+  if (!isMysteryRevivalCardActive()) {
+    hudImmersivePreferred = true;
+    unmountHudImmersive();
+    return;
+  }
+  if (hudImmersivePreferred) mountHudImmersive();
+  else unmountHudImmersive();
+}
+
+function destroyHudImmersive() {
+  unmountHudImmersive();
+  unbindHudShellEvents();
+  doc.getElementById(HUD_SHELL_ID)?.remove();
+  doc.getElementById(HUD_STYLE_ID)?.remove();
+  hudImmersivePreferred = true;
+  hudActiveView = 'story';
+  hudPanelsRenderKey = '';
 }
 
 $(() => {
@@ -2025,6 +3394,7 @@ $(() => {
     observer.disconnect();
     unsubscribeRefreshEvents();
     clearRefreshTimers();
+    unmountHudImmersive();
     cleanupOwnedMessageUi();
     style.remove();
     if (hostWindow.MysteryMessagePanel === messagePanelApi) {
@@ -2044,6 +3414,7 @@ $(() => {
     observerEnabled = true;
     resumeMessageObserver();
     processAllMessages();
+    syncHudImmersiveWithCard();
     if (!runtimeActive) scheduleBurstRefresh();
     runtimeActive = true;
   }
@@ -2078,6 +3449,7 @@ $(() => {
     disposed = true;
     clearChatChangedTimers();
     deactivateMessagePanelRuntime();
+    destroyHudImmersive();
     chatChangedSubscription?.stop();
     chatChangedSubscription = null;
     doc.removeEventListener('click', handleTabClick, true);
@@ -2095,8 +3467,9 @@ $(() => {
   hostWindow.__mfrsMessagePanelCleanup__ = cleanup;
   window.addEventListener('pagehide', cleanup, { once: true });
   chatChangedSubscription = eventOn(tavern_events.CHAT_CHANGED, handleChatChanged);
+  bindHudShellEvents();
   activateMessagePanelRuntime();
   if (!runtimeActive) handleChatChanged();
 
-  console.info('[消息内面板] 已注入消息内状态面板系统');
+  console.info('[消息内面板] 已注入消息内状态面板系统（含 β 全屏壳）');
 });
