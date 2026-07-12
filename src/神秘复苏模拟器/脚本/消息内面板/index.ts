@@ -1373,10 +1373,29 @@ function ensureHudStyle() {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 body.${HUD_ST_UI_CLASS} #mfrs-hud-st-return { display: inline-flex; align-items: center; justify-content: center; }
+/* 沉浸内叠 ST 配置：不退出壳，只抬高打开的抽屉/弹窗 */
 body.${HUD_ST_UI_CLASS} #${HUD_SHELL_ID}.is-active {
-  z-index: ${HUD_Z_ST_YIELD} !important;
-  opacity: 0.08;
-  pointer-events: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+body.${HUD_ST_UI_CLASS} #top-bar {
+  z-index: ${HUD_Z_SHELL + 55} !important;
+  pointer-events: auto !important;
+}
+body.${HUD_ST_UI_CLASS} .drawer-content.openDrawer,
+body.${HUD_ST_UI_CLASS} #left-nav-panel.openDrawer,
+body.${HUD_ST_UI_CLASS} #right-nav-panel.openDrawer,
+body.${HUD_ST_UI_CLASS} #floatingPrompt,
+body.${HUD_ST_UI_CLASS} #cfgConfig,
+body.${HUD_ST_UI_CLASS} #logprobsViewer,
+body.${HUD_ST_UI_CLASS} #completion_prompt_manager_popup,
+body.${HUD_ST_UI_CLASS} .popup,
+body.${HUD_ST_UI_CLASS} .dialogue_popup {
+  position: fixed !important;
+  z-index: ${HUD_Z_SHELL + 60} !important;
+  pointer-events: auto !important;
+  max-height: 100vh;
+  overflow: auto;
 }
 #${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: none; }
 #${HUD_SHELL_ID} .mfrs-hud-tool-btn {
@@ -1755,8 +1774,8 @@ function ensureHudStReturnButton() {
   btn = doc.createElement('button');
   btn.type = 'button';
   btn.id = 'mfrs-hud-st-return';
-  btn.textContent = '返回沉浸';
-  btn.title = '关闭酒馆面板并回到沉浸 HUD';
+  btn.textContent = '关闭面板';
+  btn.title = '关闭酒馆配置面板（保持沉浸）';
   btn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
@@ -1766,6 +1785,7 @@ function ensureHudStReturnButton() {
   return btn;
 }
 
+/** 在沉浸壳上叠加 ST 抽屉/弹窗，不退出全屏 */
 function yieldHudToStUi() {
   if (!isHudMounted()) return;
   closeHudTavernMenu();
@@ -1773,7 +1793,28 @@ function yieldHudToStUi() {
   doc.body.classList.add(HUD_ST_UI_CLASS);
 }
 
+function closeOpenStDrawers() {
+  const openPanels = Array.from(
+    doc.querySelectorAll(
+      '.drawer-content.openDrawer, #left-nav-panel.openDrawer, #right-nav-panel.openDrawer',
+    ),
+  ) as HTMLElement[];
+  openPanels.forEach(panel => {
+    const drawer = panel.closest('.drawer') as HTMLElement | null;
+    const icon =
+      (drawer?.querySelector('.drawer-icon') as HTMLElement | null) ||
+      (drawer?.querySelector('[data-toggle="drawer"]') as HTMLElement | null);
+    try {
+      icon?.click();
+    } catch {
+      panel.classList.remove('openDrawer');
+      panel.classList.add('closedDrawer');
+    }
+  });
+}
+
 function restoreHudFromStUi() {
+  closeOpenStDrawers();
   doc.body.classList.remove(HUD_ST_UI_CLASS);
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (shell?.classList.contains('is-active')) {
