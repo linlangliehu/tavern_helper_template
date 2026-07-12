@@ -1928,6 +1928,7 @@ body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}:not(.mfrs-hud-cabinet-open) {
 }
 body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open {
   display: flex !important;
+  flex-direction: column !important;
   position: fixed !important;
   left: 6%;
   right: 6%;
@@ -1938,9 +1939,130 @@ body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open {
   margin: 0 !important;
   z-index: ${HUD_Z_CABINET};
   overflow: auto;
+  gap: 8px !important;
   background: rgba(8, 10, 10, 0.98);
   border: 1px solid color-mix(in srgb, #3d6b66 70%, transparent);
   box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.45);
+}
+/* 沉浸柜：多列卡片墙 → 全宽竖向列表（不改 ACU 数据 DOM / 非沉浸布局） */
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open #mfrs-fixed-dashboard-slot,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open #mfrs-fixed-frontend-slot {
+  min-width: 0;
+  width: 100%;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-wrapper {
+  width: 100%;
+  margin: 0 !important;
+  gap: 8px;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open #acu-data-area.acu-data-display,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-data-display {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  top: auto !important;
+  width: 100% !important;
+  max-height: none !important;
+  height: auto !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  animation: none !important;
+  z-index: auto !important;
+  overflow: visible !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-data-display.visible {
+  display: flex !important;
+  flex-direction: column !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-panel-content {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  white-space: normal !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-layout-vertical .acu-card-grid,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-layout-horizontal .acu-card-grid,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-card-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-layout-vertical .acu-data-card,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-layout-horizontal .acu-data-card,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-data-card {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  white-space: normal !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-layout-vertical .acu-data-card:hover {
+  transform: none !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-card-header {
+  border-radius: 0 !important;
+  justify-content: flex-start !important;
+  padding-left: 36px !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-editable-title {
+  text-align: left !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-card-main-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-grid-item,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-full-item,
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-inline-item {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-nav-tabs-area {
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)) !important;
+  gap: 6px !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-nav-container:not(.collapsed) {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  height: auto !important;
+  gap: 8px !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-nav-actions-area {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  justify-content: flex-start !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-embedded-dashboard-container .acu-dash-container {
+  display: flex !important;
+  flex-direction: column !important;
+  grid-template-columns: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  gap: 0 !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-embedded-dashboard-container .acu-dash-col {
+  height: auto !important;
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+  min-height: 0 !important;
+}
+body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}.mfrs-hud-cabinet-open .acu-embedded-dashboard-container .acu-dash-card {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  border-bottom: 1px solid color-mix(in srgb, #3d6b66 28%, transparent) !important;
 }
 body.${HUD_BODY_CLASS} .mfrs-msg-panel.mfrs-msg-tri {
   display: block !important;

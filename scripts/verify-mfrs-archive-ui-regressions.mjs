@@ -498,6 +498,21 @@ addCheck('phase5', 'β3 default no half-screen cabinet and 44px targets', () => 
   assert.ok(sources.message.includes('min-height: 44px'), '44px touch targets present');
   assert.ok(sources.message.includes('prefers-reduced-motion'), 'reduced motion hook');
 });
+addCheck('phase5', 'immersive cabinet uses full-width vertical card stack CSS only', () => {
+  assert.ok(
+    sources.message.includes('mfrs-hud-cabinet-open') && sources.message.includes('.acu-card-grid'),
+    'immersive cabinet must restyle ACU card grid',
+  );
+  assert.ok(
+    sources.message.includes('flex-direction: column') && sources.message.includes('.acu-data-card'),
+    'immersive cabinet cards must stack vertically full-width',
+  );
+  assert.ok(
+    sources.message.includes('#acu-data-area.acu-data-display') || sources.message.includes('.acu-data-display'),
+    'immersive cabinet must un-popover data display into in-flow stack',
+  );
+  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'cabinet layout CSS must not write MVU');
+});
 
 // Phase A (post-8.12.3): tavern menu stable open/close + fail feedback + Esc layering.
 addCheck('phase5', 'A1 close prior ST drawers before opening menu target', () => {
