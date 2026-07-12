@@ -603,14 +603,22 @@ addCheck('phase5', 'B1-B4 composer dossier skin scoped to shell', () => {
 addCheck('phase5', 'C1-C4 hud information density', () => {
   assert.ok(sources.message.includes('function clipHudChipText'), 'missing chip clip helper');
   assert.ok(sources.message.includes('function buildHudRelationHtml'), 'missing compact relation builder');
-  assert.ok(sources.message.includes('max-height: min(28vh, 220px)') || sources.message.includes('max-height:min(28vh, 220px)'), 'actions height cap');
-  assert.ok(sources.message.includes('data-mfrs-hud="actions"'), 'actions details host');
-  // default collapsed: shell template must not force open on actions
-  assert.equal(
-    /data-mfrs-hud="actions"\s+open/.test(sources.message) || /data-mfrs-hud="actions" open/.test(sources.message),
-    false,
-    'actions must default collapsed (no open attribute)',
+  assert.ok(
+    sources.message.includes('max-height: min(36vh, 280px)') ||
+      sources.message.includes('max-height:min(36vh, 280px)') ||
+      sources.message.includes('max-height: min(28vh, 220px)') ||
+      sources.message.includes('max-height:min(28vh, 220px)'),
+    'actions height cap',
   );
+  assert.ok(sources.message.includes('data-mfrs-hud="actions"'), 'actions details host');
+  // 本轮选项默认展开，摘要下另有 inline 4 键
+  assert.ok(
+    /data-mfrs-hud="actions"\s+open/.test(sources.message) || /data-mfrs-hud="actions" open/.test(sources.message),
+    'actions must default open for A/B/C/D',
+  );
+  assert.ok(sources.message.includes('function resolveActionSuggestions'), 'fixed A-D action resolver');
+  assert.ok(sources.message.includes('function injectInlineChoicesUnderSummary'), 'inline choices under summary');
+  assert.ok(sources.message.includes('mfrs-msg-inline-choices'), 'inline choices host class');
   assert.ok(sources.message.includes('data-fold="event">') || sources.message.includes("data-fold=\"event\">"), 'event fold can collapse in hud');
   assert.ok(sources.message.includes('-webkit-line-clamp: 1') || sources.message.includes('line-clamp: 1'), 'relation one-line clamp');
   assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'density pass must remain read-only');
@@ -664,6 +672,26 @@ addCheck('phase5', 'E1-E4 immersive perf and card lifecycle', () => {
 });
 
 // Phase F: release-contract gates for A–E ship.
+addCheck('phase5', 'immersive yields z-index for SP database III shell', () => {
+  assert.ok(sources.message.includes('function maybeYieldHudForExternalOverlay'), 'must yield when opening SP menu');
+  assert.ok(sources.message.includes('function isSpDatabaseUiOpen'), 'must detect SP shell open');
+  assert.ok(sources.message.includes('acu-v2-app__shell'), 'must lift SP v2 shell above HUD');
+  assert.ok(sources.message.includes('yieldHudToStUi'), 'must reuse ST yield path');
+  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'SP yield must remain presentation-only');
+});
+addCheck('phase5', 'immersive overlay scan + extension menu unified yield', () => {
+  assert.ok(sources.message.includes('function scanAndYieldHudOverlays'), 'overlay scan helper');
+  assert.ok(sources.message.includes('function collectHudCoverableOverlays'), 'overlay collector');
+  assert.ok(sources.message.includes('function ensureHudOverlayObserver'), 'mutation observer for overlays');
+  assert.ok(sources.message.includes('function scheduleHudOverlayWatch'), 'timed overlay watch');
+  assert.ok(sources.message.includes('function stopHudOverlayWatch'), 'overlay watch cleanup');
+  assert.ok(sources.message.includes('data-mfrs-hud-overlay-lift'), 'lift attribute marker');
+  assert.ok(sources.message.includes('HUD_EXTENSION_ENTRY_SELECTOR') || sources.message.includes('#extensionsMenu'), 'extension menu entry');
+  assert.ok(sources.message.includes('function isHudExtensionEntryClick'), 'extension entry click detector');
+  const unbind = between(sources.message, 'function unbindHudShellEvents', 'function rebindMessageObserverToChat');
+  assert.ok(unbind.includes('stopHudOverlayWatch'), 'unbind must stop overlay watch');
+  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'overlay yield must remain presentation-only');
+});
 addCheck('phase5', 'F1 composer native form + ST overlay stacking contract', () => {
   assert.ok(sources.message.includes('function reparentSendFormIntoHud'), 'composer reparent required');
   assert.ok(sources.message.includes('function restoreSendFormFromHud'), 'composer restore required');

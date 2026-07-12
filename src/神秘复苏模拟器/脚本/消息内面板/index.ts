@@ -144,25 +144,149 @@ function buildGhostListHtml(data: StatusData): string {
     : '<div class="mfrs-msg-empty">暂无驾驭厉鬼</div>';
 }
 
+type ActionSuggestion = {
+  key: string;
+  text: string;
+  meta: string;
+  fill: string;
+  provisional?: boolean;
+};
+
+/** 固定 A/B/C/D；MVU/表优先，缺省时用安全占位（只填输入框，不自动发送） */
+function resolveActionSuggestions(data: StatusData): ActionSuggestion[] {
+  const fromStat = Array.isArray(data.行动建议) ? data.行动建议 : [];
+  const list: ActionSuggestion[] = [];
+  const pushItem = (s: any, i: number) => {
+    const key = valueText(s.选项 ?? s.option ?? s.key ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
+    const text = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '');
+    if (!text) return;
+    const metaParts = [
+      valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
+      valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
+      valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
+      valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
+    ].filter(Boolean);
+    list.push({ key, text, meta: metaParts.join('｜'), fill: text });
+  };
+  fromStat.forEach((s, i) => pushItem(s, i));
+  if (!list.length) {
+    const table = findHudTable(readHudDatabaseTables(), '行动建议');
+    if (table) {
+      table.rows.slice(0, 4).forEach((row, i) => {
+        const key = hudRowField(table.headers, row, '选项', 'option', 'key') || String.fromCharCode(65 + i);
+        const text = hudRowField(table.headers, row, '思路', '行动', 'text', 'label');
+        if (!text) return;
+        const metaParts = [
+          hudRowField(table.headers, row, '主要风险') && `风险：${hudRowField(table.headers, row, '主要风险')}`,
+          hudRowField(table.headers, row, '预期收益') && `收益：${hudRowField(table.headers, row, '预期收益')}`,
+          hudRowField(table.headers, row, '死亡风险') && `死亡：${hudRowField(table.headers, row, '死亡风险')}`,
+          hudRowField(table.headers, row, '复苏风险') && `复苏：${hudRowField(table.headers, row, '复苏风险')}`,
+        ].filter(Boolean);
+        list.push({ key, text, meta: metaParts.join('｜'), fill: text });
+      });
+    }
+  }
+  const byKey = new Map(list.map(item => [item.key.toUpperCase(), item]));
+  const defaults: ActionSuggestion[] = [
+    {
+      key: 'A',
+      text: '先观察走廊敲门声与教室反应，不主动接触媒介',
+      meta: '占位·低风险观察',
+      fill: '先观察走廊敲门声与教室反应，不主动接触媒介',
+      provisional: true,
+    },
+    {
+      key: 'B',
+      text: '靠近周正或可信同学，确认是否也听到异常',
+      meta: '占位·求证/求援',
+      fill: '靠近周正或可信同学，确认是否也听到异常',
+      provisional: true,
+    },
+    {
+      key: 'C',
+      text: '拉开与门口距离，准备撤离或保护身边人',
+      meta: '占位·规避/保护',
+      fill: '拉开与门口距离，准备撤离或保护身边人',
+      provisional: true,
+    },
+    {
+      key: 'D',
+      text: '自定义行动',
+      meta: '自由输入',
+      fill: '',
+      provisional: true,
+    },
+  ];
+  return ['A', 'B', 'C', 'D'].map((key, i) => {
+    const hit = byKey.get(key) || list[i];
+    if (hit && hit.text) {
+      return {
+        key,
+        text: hit.text,
+        meta: hit.meta,
+        fill: hit.fill || hit.text,
+        provisional: false,
+      };
+    }
+    return defaults[i];
+  });
+}
+
+function buildActionButtonsHtml(data: StatusData, opts?: { compact?: boolean; showProvisionalHint?: boolean }): string {
+  const items = resolveActionSuggestions(data);
+  const provisional = items.some(item => item.provisional);
+  const hint =
+    opts?.showProvisionalHint && provisional
+      ? '<div class="mfrs-msg-actions-hint">本轮未落库行动建议，以下为临时 4 键（点选只填输入框）</div>'
+      : '';
+  const buttons = items
+    .map(item => {
+      const fill = item.key === 'D' && !item.fill ? '' : item.fill;
+      const meta = item.meta ? `<span class="mfrs-msg-action-meta">${_.escape(item.meta)}</span>` : '';
+      return `<button type="button" class="mfrs-msg-action-btn${item.provisional ? ' is-provisional' : ''}" data-action="${_.escape(fill)}" data-option-key="${_.escape(item.key)}"><span class="mfrs-msg-action-key">${_.escape(item.key)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(item.text)}</span>${meta}</span></button>`;
+    })
+    .join('');
+  return `${hint}<div class="mfrs-msg-actions${opts?.compact ? ' is-compact' : ''}">${buttons}</div>`;
+}
+
 function buildActionsHtml(data: StatusData): string {
-  const suggestions = Array.isArray(data.行动建议) ? data.行动建议 : [];
-  const actionsBody = !suggestions.length
-    ? '<div class="mfrs-msg-empty">暂无拟办意见</div>'
-    : suggestions
-        .map((s: any, i: number) => {
-          const optionKey = valueText(s.选项 ?? s.option ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
-          const actionText = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '未知行动');
-          const metaParts = [
-            valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
-            valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
-            valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
-            valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
-          ].filter(Boolean);
-          const actionValue = actionText === '未知行动' ? '' : actionText;
-          return `<button type="button" class="mfrs-msg-action-btn" data-action="${_.escape(actionValue)}"><span class="mfrs-msg-action-key">${_.escape(optionKey)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(actionText)}</span>${metaParts.length ? `<span class="mfrs-msg-action-meta">${_.escape(metaParts.join('｜'))}</span>` : ''}</span></button>`;
-        })
-        .join('');
-  return `${actionsBody}${buildCheckSuggestionsFoldHtml(data)}`;
+  return `${buildActionButtonsHtml(data, { showProvisionalHint: true })}${buildCheckSuggestionsFoldHtml(data)}`;
+}
+
+/** 摘要下直接挂 4 键（最新 AI 楼叙事区） */
+function injectInlineChoicesUnderSummary(mesElement: Element) {
+  if (isUserMessage(mesElement)) return;
+  const mesText = mesElement.querySelector('.mes_text');
+  if (!mesText) return;
+  const data = readStatusForMessage(mesElement);
+  const html = buildActionButtonsHtml(data, { compact: true, showProvisionalHint: true });
+  const host =
+    mesText.querySelector(':scope > .mfrs-msg-panel .mfrs-msg-center-host') ??
+    mesText.querySelector('.mfrs-msg-center-host') ??
+    mesText;
+  let block = host.querySelector(':scope > .mfrs-msg-inline-choices') as HTMLElement | null;
+  if (!block) {
+    block = doc.createElement('div');
+    block.className = 'mfrs-msg-inline-choices';
+    block.setAttribute('data-mfrs-inline-choices', '1');
+  }
+  block.innerHTML = `<div class="mfrs-msg-inline-choices-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>本轮选项</span></div>${html}`;
+
+  const narrative =
+    host.querySelector(':scope > .mfrs-msg-narrative-wrapper') ??
+    mesText.querySelector('.mfrs-msg-narrative-wrapper');
+  // 挂在叙事包装末尾（紧贴【本轮摘要】后的视觉位置）
+  if (narrative && narrative.parentElement === host) {
+    if (block.parentElement !== host || block.previousElementSibling !== narrative) {
+      narrative.after(block);
+    }
+  } else if (narrative) {
+    narrative.appendChild(block);
+  } else {
+    const panel = host.querySelector(':scope > .mfrs-msg-panel');
+    if (panel) host.insertBefore(block, panel);
+    else host.appendChild(block);
+  }
 }
 
 /** 组 D：检定建议暂挂拟办下，默认折叠 */
@@ -877,7 +1001,7 @@ function unwrapNarrativeWrapper(wrapper: Element) {
 
 function cleanupOwnedMessageUi(root: ParentNode = doc) {
   root.querySelectorAll('.mfrs-msg-panel.mfrs-msg-tri').forEach(panel => dismantleTriPanel(panel));
-  root.querySelectorAll('.mfrs-msg-panel, .mfrs-msg-brand').forEach(element => element.remove());
+  root.querySelectorAll('.mfrs-msg-panel, .mfrs-msg-brand, .mfrs-msg-inline-choices').forEach(element => element.remove());
   root.querySelectorAll('.mfrs-msg-narrative-wrapper').forEach(unwrapNarrativeWrapper);
 }
 
@@ -933,6 +1057,7 @@ function processMessageElement(mes: Element) {
   wrapNarrativeText(mes);
   injectPanelForMessage(mes);
   composeTriCenter(mes);
+  injectInlineChoicesUnderSummary(mes);
 }
 
 function processLatestAiMessageOnly() {
@@ -1159,14 +1284,23 @@ function handleTabKeydown(e: KeyboardEvent) {
   nextTab.focus({ preventScroll: true });
 }
 
-/** 处理行动建议按钮点击事件 */
+/** 处理行动建议按钮点击事件（含摘要下 4 键） */
 function handleActionClick(e: Event) {
   const target = e.target as HTMLElement;
   const btn = target.closest?.('.mfrs-msg-action-btn') as HTMLElement | null;
   if (!btn) return;
 
-  const actionText = btn.getAttribute('data-action');
-  if (!actionText) return;
+  const key = btn.getAttribute('data-option-key') || '';
+  let actionText = btn.getAttribute('data-action') || '';
+  // D / 空 fill：聚焦输入框，不覆盖玩家正在写的内容
+  if (!actionText) {
+    const textareaEmpty = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null;
+    textareaEmpty?.focus();
+    if (key === 'D') {
+      // keep empty for free input
+    }
+    return;
+  }
 
   // 找到聊天输入框并填充
   const textarea = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null;
@@ -1634,10 +1768,10 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-nav-btn span {
   white-space: nowrap;
 }
-/* Phase C2：拟办默认折叠 + 展开限高，不霸屏 */
+/* 本轮选项：默认展开，摘要下/拟办区同构 4 键 */
 #${HUD_SHELL_ID} .mfrs-hud-actions {
   flex: 0 0 auto;
-  max-height: min(28vh, 220px);
+  max-height: min(36vh, 280px);
   overflow: auto;
   border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 34%, transparent);
   background: rgba(7, 9, 9, 0.96);
@@ -1645,6 +1779,13 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-actions:not([open]) {
   max-height: none;
   overflow: visible;
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions-body .mfrs-msg-actions {
+  gap: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions-body .mfrs-msg-action-btn {
+  min-height: 40px;
+  padding: 8px 10px;
 }
 #${HUD_SHELL_ID} .mfrs-hud-actions > summary {
   list-style: none;
@@ -2074,11 +2215,25 @@ body.${HUD_ST_UI_CLASS} #cfgConfig,
 body.${HUD_ST_UI_CLASS} #logprobsViewer,
 body.${HUD_ST_UI_CLASS} #completion_prompt_manager_popup,
 body.${HUD_ST_UI_CLASS} .popup,
-body.${HUD_ST_UI_CLASS} .dialogue_popup {
+body.${HUD_ST_UI_CLASS} .dialogue_popup,
+body.${HUD_ST_UI_CLASS} .acu-v2-app__shell,
+body.${HUD_ST_UI_CLASS} .acu-v2-app,
+body.${HUD_ST_UI_CLASS} #acu-v2-root,
+body.${HUD_ST_UI_CLASS} [class*="acu-v2-app"] {
   z-index: ${HUD_Z_SHELL + 80} !important;
   pointer-events: auto !important;
   max-height: 100vh;
   overflow: auto;
+}
+/* SP·数据库 III 自挂 body 的 fixed 壳默认 z≈9000，必须抬到沉浸壳之上 */
+body.${HUD_ST_UI_CLASS} .acu-v2-app__shell {
+  position: fixed !important;
+  inset: 0 !important;
+}
+/* 兜底扫描标记的外置大面板：强制抬到壳上 */
+body.${HUD_ST_UI_CLASS} [data-mfrs-hud-overlay-lift="1"] {
+  z-index: ${HUD_Z_SHELL + 80} !important;
+  pointer-events: auto !important;
 }
 body.${HUD_ST_UI_CLASS} .drawer-content.openDrawer,
 body.${HUD_ST_UI_CLASS} #left-nav-panel.openDrawer,
@@ -2518,8 +2673,8 @@ function ensureHudShell(): HTMLElement {
   <div class="mfrs-hud-center-panel" data-mfrs-hud="memory-slot" hidden></div>
   <div class="mfrs-hud-center-panel" data-mfrs-hud="gacha-slot" hidden></div>
   <div class="mfrs-hud-center-panel" data-mfrs-hud="system-slot" hidden></div>
-  <details class="mfrs-hud-actions" data-mfrs-hud="actions">
-    <summary><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></summary>
+  <details class="mfrs-hud-actions" data-mfrs-hud="actions" open>
+    <summary><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>本轮选项 · A/B/C/D</span></summary>
     <div class="mfrs-hud-actions-body" data-mfrs-hud="actions-slot"></div>
   </details>
   <div class="mfrs-hud-composer" data-mfrs-hud="composer" aria-label="酒馆原生输入区"></div>
@@ -2687,15 +2842,285 @@ function ensureHudStReturnButton() {
   return btn;
 }
 
-/** 在沉浸壳上叠加 ST 抽屉/弹窗，不退出全屏 */
+/** 在沉浸壳上叠加 ST 抽屉/弹窗 / 扩展面板，不退出全屏 */
 function yieldHudToStUi() {
   if (!isHudMounted()) return;
   ensureHudStReturnButton();
   doc.body.classList.add(HUD_ST_UI_CLASS);
+  scheduleHudOverlayWatch();
 }
 
+const SP_DB_UI_SELECTOR = '.acu-v2-app__shell, .acu-v2-app, #acu-v2-root, [data-acu-v2-root]';
+const HUD_OVERLAY_LIFT_ATTR = 'data-mfrs-hud-overlay-lift';
 const ST_OPEN_DRAWER_SELECTOR =
   '.drawer-content.openDrawer, #left-nav-panel.openDrawer, #right-nav-panel.openDrawer';
+/** 扩展菜单与常见入口：点了几乎总会弹出 z&lt;10000 的面板 */
+const HUD_EXTENSION_ENTRY_SELECTOR = [
+  '#extensionsMenu',
+  '#extensionsMenuButton',
+  '#options_button',
+  '#options',
+  '.options-content',
+  '#acu-v2-menu-item',
+  '[title*="SP·数据库"]',
+  '[aria-label*="SP·数据库"]',
+  '[title*="打开数据库"]',
+  '[aria-label*="打开数据库"]',
+].join(', ');
+
+let hudOverlayObserver: MutationObserver | null = null;
+let hudOverlayWatchTimer: number | null = null;
+let hudOverlayScanTimer: number | null = null;
+let hudOverlayLastToastAt = 0;
+
+function isElementVisiblyLarge(el: HTMLElement, minW = 120, minH = 80) {
+  if (!el.isConnected) return false;
+  const cs = hostWindow.getComputedStyle?.(el);
+  if (!cs) return el.offsetWidth >= minW && el.offsetHeight >= minH;
+  if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) return false;
+  const r = el.getBoundingClientRect();
+  return r.width >= minW && r.height >= minH;
+}
+
+function isSpDatabaseUiOpen() {
+  return Array.from(doc.querySelectorAll(SP_DB_UI_SELECTOR)).some(el =>
+    isElementVisiblyLarge(el as HTMLElement, 40, 40),
+  );
+}
+
+function parseCssZIndex(value: string | null | undefined): number | null {
+  if (!value || value === 'auto') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** 是否为应抬到壳上的外置大面板（排除 HUD 自身与已极高 z 的 ACU 弹层） */
+function isHudCoverableExternalOverlay(el: HTMLElement): boolean {
+  if (!el?.isConnected || el.id === HUD_SHELL_ID || el.closest?.(`#${HUD_SHELL_ID}`)) return false;
+  if (el.id === 'mfrs-hud-st-return' || el.id === 'mfrs-hud-toast' || el.id === FIXED_HOST_ID) return false;
+  if (el.classList?.contains('mfrs-hud-cabinet-mask') || el.classList?.contains('mfrs-hud-cabinet-chrome')) return false;
+  // 已在极高层的确认框/toast 不需要再抬
+  if (el.classList?.contains('acu-edit-overlay') || el.classList?.contains('mfrs-confirm-overlay')) return false;
+  if (el.classList?.contains('mfrs-toast-container') || el.classList?.contains('acu-quick-view-overlay')) return false;
+  const cs = hostWindow.getComputedStyle?.(el);
+  if (!cs) return false;
+  if (cs.position !== 'fixed' && cs.position !== 'absolute') return false;
+  if (cs.pointerEvents === 'none') return false;
+  const z = parseCssZIndex(cs.zIndex);
+  // 无 z 或低于壳(10000) 才可能被盖；>=10080 视为已抬/已安全
+  if (z !== null && z >= HUD_Z_SHELL + 80) return false;
+  if (z !== null && z > 0 && z < 20) return false; // 忽略底层装饰
+  if (!isElementVisiblyLarge(el, 160, 100)) return false;
+  const r = el.getBoundingClientRect();
+  const vw = hostWindow.innerWidth || doc.documentElement.clientWidth || 1;
+  const vh = hostWindow.innerHeight || doc.documentElement.clientHeight || 1;
+  const areaRatio = (r.width * r.height) / (vw * vh);
+  // 半屏级面板，或已知 SP 壳
+  if (el.matches?.(SP_DB_UI_SELECTOR) || el.closest?.(SP_DB_UI_SELECTOR)) return true;
+  if (el.classList?.contains('drawer-content') && el.classList.contains('openDrawer')) return true;
+  if (el.classList?.contains('popup') || el.classList?.contains('dialogue_popup')) return true;
+  if (el.id === 'floatingPrompt' || el.id === 'cfgConfig' || el.id === 'logprobsViewer') return true;
+  if (areaRatio >= 0.18) return true;
+  if (r.width >= vw * 0.42 && r.height >= vh * 0.35) return true;
+  return false;
+}
+
+function collectHudCoverableOverlays(): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  const seen = new Set<Element>();
+  const push = (el: Element | null) => {
+    if (!el || seen.has(el)) return;
+    const node = el as HTMLElement;
+    if (!isHudCoverableExternalOverlay(node)) return;
+    seen.add(el);
+    out.push(node);
+  };
+  // 已知名单
+  doc.querySelectorAll(
+    [
+      SP_DB_UI_SELECTOR,
+      ST_OPEN_DRAWER_SELECTOR,
+      '.popup',
+      '.dialogue_popup',
+      '#floatingPrompt',
+      '#cfgConfig',
+      '#logprobsViewer',
+      '#completion_prompt_manager_popup',
+      '[role="dialog"]',
+      '[aria-modal="true"]',
+    ].join(', '),
+  ).forEach(push);
+  // 兜底：body 直接子级 fixed/absolute
+  Array.from(doc.body?.children || []).forEach(child => {
+    if (!(child instanceof hostWindow.HTMLElement || child instanceof HTMLElement)) return;
+    push(child as HTMLElement);
+  });
+  return out;
+}
+
+function hasHudCoverableOverlays() {
+  return collectHudCoverableOverlays().length > 0;
+}
+
+function liftHudCoverableOverlays() {
+  const overlays = collectHudCoverableOverlays();
+  overlays.forEach(el => {
+    el.setAttribute(HUD_OVERLAY_LIFT_ATTR, '1');
+  });
+  // 清理已关闭节点上的标记
+  doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}="1"]`).forEach(el => {
+    if (!overlays.includes(el as HTMLElement) && !isElementVisiblyLarge(el as HTMLElement, 40, 40)) {
+      el.removeAttribute(HUD_OVERLAY_LIFT_ATTR);
+    }
+  });
+  return overlays.length;
+}
+
+function clearHudOverlayLifts() {
+  doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}]`).forEach(el => el.removeAttribute(HUD_OVERLAY_LIFT_ATTR));
+}
+
+function scanAndYieldHudOverlays(opts?: { toast?: string }) {
+  if (!isHudMounted()) return 0;
+  const count = liftHudCoverableOverlays();
+  if (count > 0 || hasOpenStDrawers() || isSpDatabaseUiOpen()) {
+    yieldHudToStUi();
+    if (opts?.toast) {
+      const now = Date.now();
+      if (now - hudOverlayLastToastAt > 1600) {
+        hudOverlayLastToastAt = now;
+        showHudToast(opts.toast, 1200);
+      }
+    }
+  }
+  return count;
+}
+
+function scheduleHudOverlayWatch() {
+  if (!isHudMounted()) return;
+  if (hudOverlayWatchTimer !== null) {
+    hostWindow.clearTimeout(hudOverlayWatchTimer);
+    hudOverlayWatchTimer = null;
+  }
+  // 打开动画期间多次扫描
+  const delays = [0, 50, 120, 280, 500, 900, 1600];
+  delays.forEach((ms, i) => {
+    hostWindow.setTimeout(() => {
+      if (!isHudMounted()) return;
+      scanAndYieldHudOverlays();
+      if (i === delays.length - 1) maybeRestoreHudAfterOverlayClose();
+    }, ms);
+  });
+  ensureHudOverlayObserver();
+  if (hudOverlayScanTimer === null) {
+    hudOverlayScanTimer = hostWindow.setInterval(() => {
+      if (!isHudMounted()) {
+        stopHudOverlayWatch();
+        return;
+      }
+      if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasHudCoverableOverlays() || hasOpenStDrawers()) {
+        scanAndYieldHudOverlays();
+        maybeRestoreHudAfterOverlayClose();
+      }
+    }, 900);
+  }
+}
+
+function ensureHudOverlayObserver() {
+  if (hudOverlayObserver || !doc.body) return;
+  hudOverlayObserver = new MutationObserver(() => {
+    if (!isHudMounted()) return;
+    if (hudOverlayWatchTimer !== null) hostWindow.clearTimeout(hudOverlayWatchTimer);
+    hudOverlayWatchTimer = hostWindow.setTimeout(() => {
+      hudOverlayWatchTimer = null;
+      scanAndYieldHudOverlays();
+      maybeRestoreHudAfterOverlayClose();
+    }, 60);
+  });
+  hudOverlayObserver.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style', 'open'] });
+}
+
+function stopHudOverlayWatch() {
+  if (hudOverlayObserver) {
+    hudOverlayObserver.disconnect();
+    hudOverlayObserver = null;
+  }
+  if (hudOverlayWatchTimer !== null) {
+    hostWindow.clearTimeout(hudOverlayWatchTimer);
+    hudOverlayWatchTimer = null;
+  }
+  if (hudOverlayScanTimer !== null) {
+    hostWindow.clearInterval(hudOverlayScanTimer);
+    hudOverlayScanTimer = null;
+  }
+  clearHudOverlayLifts();
+}
+
+function isHudExtensionEntryClick(el: Element | null): boolean {
+  if (!el?.closest) return false;
+  if (el.closest(HUD_EXTENSION_ENTRY_SELECTOR)) return true;
+  // 扩展菜单内任意可点项
+  if (el.closest('#extensionsMenu .list-group-item, #extensionsMenu .interactable, #extensionsMenu button, #extensionsMenu a')) {
+    return true;
+  }
+  // 顶栏抽屉图标（非壳内）
+  if (el.closest('#top-bar .drawer-icon, #top-settings-holder .drawer-icon, #top-bar [data-toggle="drawer"]')) {
+    return true;
+  }
+  const label = `${el.getAttribute?.('title') || ''} ${el.getAttribute?.('aria-label') || ''} ${el.textContent || ''}`.trim();
+  if (/SP·数据库|打开数据库|扩展程序|变量管理|世界书|API 连接|用户设置/.test(label) && el.closest('button, a, .list-group-item, .interactable, .drawer-icon')) {
+    return true;
+  }
+  return false;
+}
+
+function maybeYieldHudForExternalOverlay(target: EventTarget | null) {
+  if (!isHudMounted() || !target || !(target as Node).nodeType) return;
+  const el = (target as Node).nodeType === 1 ? (target as Element) : (target as Node).parentElement;
+  if (!el) return;
+  if (!isHudExtensionEntryClick(el)) {
+    // 已有被盖面板时，任意点击也再抬一次
+    if (hasHudCoverableOverlays() && !doc.body.classList.contains(HUD_ST_UI_CLASS)) {
+      scanAndYieldHudOverlays();
+    }
+    return;
+  }
+  const label = `${el.getAttribute?.('title') || ''} ${el.textContent || ''}`.replace(/\s+/g, ' ').trim().slice(0, 24);
+  yieldHudToStUi();
+  scheduleHudOverlayWatch();
+  hostWindow.setTimeout(() => {
+    const n = scanAndYieldHudOverlays();
+    if (n > 0 || isSpDatabaseUiOpen() || hasOpenStDrawers()) {
+      const tip = label.includes('SP') || label.includes('数据库') ? '已打开外部面板（已抬到沉浸之上）' : '已让层：外部面板可交互';
+      scanAndYieldHudOverlays({ toast: tip });
+    }
+  }, 100);
+}
+
+function maybeRestoreHudAfterOverlayClose() {
+  if (!isHudMounted()) return;
+  if (!doc.body.classList.contains(HUD_ST_UI_CLASS)) return;
+  if (hasOpenStDrawers() || isSpDatabaseUiOpen() || hasHudCoverableOverlays()) {
+    liftHudCoverableOverlays();
+    return;
+  }
+  // 无抽屉、无外置大面板时收回叠层（保留沉浸）
+  restoreHudFromStUi();
+}
+
+function maybeHandleSpDatabaseCloseClick(target: EventTarget | null) {
+  if (!isHudMounted() || !target) return;
+  const el = (target as Node).nodeType === 1 ? (target as Element) : (target as Node).parentElement;
+  if (!el) return;
+  const label = (el.textContent || el.getAttribute?.('title') || el.getAttribute?.('aria-label') || '').trim();
+  const inSp = Boolean(el.closest?.('.acu-v2-app__shell, .acu-v2-app, #acu-v2-root'));
+  const isClose =
+    (inSp && /关闭新 UI|关闭面板|关闭/.test(label) && Boolean(el.closest?.('button, [role="button"], .interactable'))) ||
+    Boolean(el.closest?.('[title*="关闭新 UI"], [aria-label*="关闭新 UI"]'));
+  if (!isClose) return;
+  hostWindow.setTimeout(() => maybeRestoreHudAfterOverlayClose(), 80);
+  hostWindow.setTimeout(() => maybeRestoreHudAfterOverlayClose(), 240);
+}
 
 function hasOpenStDrawers() {
   return Boolean(doc.querySelector(ST_OPEN_DRAWER_SELECTOR));
@@ -2791,6 +3216,7 @@ function restoreHudFromStUi() {
   // ST 抽屉 click 可能异步回写 openDrawer，延迟再清两次
   hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 50);
   hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 160);
+  clearHudOverlayLifts();
   doc.body.classList.remove(HUD_ST_UI_CLASS);
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (shell?.classList.contains('is-active')) {
@@ -3587,6 +4013,13 @@ function handleHudShellClick(e: Event) {
   const target = e.target as HTMLElement | null;
   if (!target) return;
 
+  // 扩展菜单 / 顶栏入口：统一让层；关闭 SP 时收回；兜底扫描已开面板
+  maybeYieldHudForExternalOverlay(target);
+  maybeHandleSpDatabaseCloseClick(target);
+  if (hasHudCoverableOverlays() || isSpDatabaseUiOpen() || hasOpenStDrawers()) {
+    scanAndYieldHudOverlays();
+  }
+
   const shell = target.closest?.(`#${HUD_SHELL_ID}`);
   if (!shell) return;
 
@@ -3689,8 +4122,20 @@ function handleHudKeydown(e: KeyboardEvent) {
       setHudView('story');
       return;
     }
-    if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
+    if (
+      doc.body.classList.contains(HUD_ST_UI_CLASS) ||
+      hasOpenStDrawers() ||
+      isSpDatabaseUiOpen() ||
+      hasHudCoverableOverlays()
+    ) {
       e.preventDefault();
+      // SP 自带关闭；叠层类先收回，避免 Esc 卡在让层状态
+      if (isSpDatabaseUiOpen()) {
+        const closeBtn = doc.querySelector(
+          '.acu-v2-app__shell button[title*="关闭"], .acu-v2-app__shell button[aria-label*="关闭"], .acu-v2-app button[title*="关闭新 UI"]',
+        ) as HTMLElement | null;
+        closeBtn?.click();
+      }
       restoreHudFromStUi();
       return;
     }
@@ -3725,6 +4170,8 @@ function bindHudShellEvents() {
     doc.addEventListener('keydown', handleHudKeydown, true);
     hudKeydownBound = true;
   }
+  ensureHudOverlayObserver();
+  scheduleHudOverlayWatch();
 }
 
 function unbindHudShellEvents() {
@@ -3736,6 +4183,7 @@ function unbindHudShellEvents() {
     doc.removeEventListener('keydown', handleHudKeydown, true);
     hudKeydownBound = false;
   }
+  stopHudOverlayWatch();
 }
 
 function rebindMessageObserverToChat() {
@@ -4532,11 +4980,43 @@ $(() => {
 }
 .mfrs-msg-npc-desc { color: #9ba59f; line-height: 1.6; }
 
-/* 行动建议：档案选项条，只填充输入框 */
+/* 摘要下 / 拟办区：固定 A–D 四键，只填充输入框 */
+.mfrs-msg-inline-choices {
+  margin: 10px 0 4px;
+  padding: 10px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-panel-corpse, #3d6b66) 42%, transparent);
+  background:
+    linear-gradient(180deg, rgba(61, 107, 102, 0.08), transparent 48%),
+    rgba(8, 10, 10, 0.92);
+}
+.mfrs-msg-inline-choices-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  color: var(--mfrs-panel-corpse, #3d6b66);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-family: "Noto Serif SC", serif;
+}
+.mfrs-msg-actions-hint {
+  margin: 0 0 8px;
+  color: #8f9b95;
+  font-size: 11px;
+  line-height: 1.45;
+}
 .mfrs-msg-actions {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.mfrs-msg-actions.is-compact {
+  gap: 6px;
+}
+.mfrs-msg-action-btn.is-provisional {
+  border-left-color: color-mix(in srgb, var(--mfrs-panel-brass, #9c784a) 70%, transparent);
+  opacity: 0.96;
 }
 
 .mfrs-msg-action-btn {
