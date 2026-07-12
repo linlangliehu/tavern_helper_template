@@ -468,6 +468,32 @@ addCheck('phase5', 'β2 hud nav views and 拟办 slot', () => {
   assert.ok(sources.message.includes("data-mfrs-hud=\"dossier-slot\""), 'missing dossier slot');
   assert.ok(sources.message.includes('is-emphasis'), 'dossier emphasis class');
 });
+// Path β IA v2.1: 7-key nav, no cabinet primary, center panels, full-library secondary.
+addCheck('phase5', 'IA v2.1 seven-key nav without cabinet primary', () => {
+  for (const nav of ['story', 'dossier', 'relation', 'memory', 'gacha', 'system', 'settings']) {
+    assert.ok(
+      sources.message.includes(`data-mfrs-hud-nav="${nav}"`),
+      `missing immersive nav key: ${nav}`,
+    );
+  }
+  assert.equal(
+    /data-mfrs-hud-nav="cabinet"><i class="fa-solid/.test(sources.message) ||
+      /data-mfrs-hud-nav="cabinet"[^>]*>[\s\S]*?<span>柜<\/span>/.test(sources.message),
+    false,
+    'cabinet must not be a primary right-rail nav button',
+  );
+  assert.ok(sources.message.includes("data-mfrs-hud=\"memory-slot\""), 'missing memory center slot');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"gacha-slot\""), 'missing gacha center slot');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"system-slot\""), 'missing system center slot');
+  assert.ok(sources.message.includes('function openHudFullLibrary'), 'full library secondary entry required');
+  assert.ok(sources.message.includes('function buildHudMemoryPanelHtml'), 'memory panel builder');
+  assert.ok(sources.message.includes('function buildHudGachaPanelHtml'), 'gacha panel builder');
+  assert.ok(sources.message.includes('function buildHudSystemPanelHtml'), 'system panel builder');
+  assert.ok(sources.message.includes('function buildHudInvestigationSectionsHtml'), 'investigation summary builder');
+  assert.ok(sources.message.includes('function buildCheckSuggestionsFoldHtml'), 'check suggestions fold builder');
+  assert.ok(sources.message.includes('function migrateHudShellDom'), 'shell migration for hot reload');
+  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'IA panels must remain read-only');
+});
 addCheck('phase5', 'β2 resource readout is display-only structured fields', () => {
   assert.ok(sources.message.includes('function buildHudResourceSectionsHtml'), 'missing hud resource builder');
   assert.ok(sources.message.includes('灵异资源.鬼拼图') || sources.message.includes('鬼拼图'), 'puzzle path');
@@ -540,6 +566,10 @@ addCheck('phase5', 'A3 Esc layering settings then ST drawers then cabinet', () =
     'Esc must close ST drawers',
   );
   assert.ok(keydown.includes('closeHudCabinetLayer'), 'Esc must close cabinet');
+  assert.ok(
+    keydown.includes('isHudCenterBusinessView') || keydown.includes("setHudView('story')"),
+    'Esc must dismiss center business panels',
+  );
   assert.ok(keydown.includes('closeHudSideDrawers'), 'Esc must close side drawers');
   assert.equal(keydown.includes('exitHudImmersive()'), false, 'Esc must not exit immersion by default');
 });

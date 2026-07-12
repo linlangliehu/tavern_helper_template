@@ -146,19 +146,151 @@ function buildGhostListHtml(data: StatusData): string {
 
 function buildActionsHtml(data: StatusData): string {
   const suggestions = Array.isArray(data.行动建议) ? data.行动建议 : [];
-  if (!suggestions.length) return '<div class="mfrs-msg-empty">暂无拟办意见</div>';
-  return suggestions
-    .map((s: any, i: number) => {
-      const optionKey = valueText(s.选项 ?? s.option ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
-      const actionText = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '未知行动');
-      const metaParts = [
-        valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
-        valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
-        valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
-        valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
-      ].filter(Boolean);
-      const actionValue = actionText === '未知行动' ? '' : actionText;
-      return `<button type="button" class="mfrs-msg-action-btn" data-action="${_.escape(actionValue)}"><span class="mfrs-msg-action-key">${_.escape(optionKey)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(actionText)}</span>${metaParts.length ? `<span class="mfrs-msg-action-meta">${_.escape(metaParts.join('｜'))}</span>` : ''}</span></button>`;
+  const actionsBody = !suggestions.length
+    ? '<div class="mfrs-msg-empty">暂无拟办意见</div>'
+    : suggestions
+        .map((s: any, i: number) => {
+          const optionKey = valueText(s.选项 ?? s.option ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
+          const actionText = valueText(s.思路 ?? s.text ?? s.label ?? s.行动, '未知行动');
+          const metaParts = [
+            valueText(s.主要风险 ?? s.risk, '') && `风险：${valueText(s.主要风险 ?? s.risk, '')}`,
+            valueText(s.预期收益 ?? s.gain, '') && `收益：${valueText(s.预期收益 ?? s.gain, '')}`,
+            valueText(s.死亡风险, '') && `死亡：${valueText(s.死亡风险, '')}`,
+            valueText(s.复苏风险, '') && `复苏：${valueText(s.复苏风险, '')}`,
+          ].filter(Boolean);
+          const actionValue = actionText === '未知行动' ? '' : actionText;
+          return `<button type="button" class="mfrs-msg-action-btn" data-action="${_.escape(actionValue)}"><span class="mfrs-msg-action-key">${_.escape(optionKey)}</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(actionText)}</span>${metaParts.length ? `<span class="mfrs-msg-action-meta">${_.escape(metaParts.join('｜'))}</span>` : ''}</span></button>`;
+        })
+        .join('');
+  return `${actionsBody}${buildCheckSuggestionsFoldHtml(data)}`;
+}
+
+/** 组 D：检定建议暂挂拟办下，默认折叠 */
+function buildCheckSuggestionsFoldHtml(data: StatusData): string {
+  const fromStat = Array.isArray(data.检定建议) ? data.检定建议 : [];
+  const rows: Array<{ text: string; type: string; basis: string; dice: string }> = [];
+  if (fromStat.length) {
+    fromStat.forEach((item: any) => {
+      const text = valueText(item.展示文本 ?? item.display_text ?? item.内容 ?? item.text, '');
+      if (!text) return;
+      rows.push({
+        text,
+        type: valueText(item.检定类型 ?? item.check_type ?? item.类型, ''),
+        basis: valueText(item.检定依据 ?? item.check_basis ?? item.依据, ''),
+        dice: valueText(item.骰子命令 ?? item.dice_command ?? item.命令, ''),
+      });
+    });
+  } else {
+    const table = findHudTable(readHudDatabaseTables(), '检定建议');
+    if (table) {
+      table.rows.slice(0, 5).forEach(row => {
+        const text = hudRowField(table.headers, row, '展示文本', 'display_text', '内容');
+        if (!text) return;
+        rows.push({
+          text,
+          type: hudRowField(table.headers, row, '检定类型', 'check_type', '类型'),
+          basis: hudRowField(table.headers, row, '检定依据', 'check_basis', '依据'),
+          dice: hudRowField(table.headers, row, '骰子命令', 'dice_command', '命令'),
+        });
+      });
+    }
+  }
+  if (!rows.length) return '';
+  const body = rows
+    .map(row => {
+      const meta = [row.type && `类型：${row.type}`, row.basis && `依据：${row.basis}`, row.dice && `命令：${row.dice}`]
+        .filter(Boolean)
+        .join('｜');
+      const action = row.dice || row.text;
+      return `<button type="button" class="mfrs-msg-action-btn mfrs-msg-check-btn" data-action="${_.escape(action)}"><span class="mfrs-msg-action-key">检</span><span class="mfrs-msg-action-body"><span class="mfrs-msg-action-label">${_.escape(row.text)}</span>${meta ? `<span class="mfrs-msg-action-meta">${_.escape(meta)}</span>` : ''}</span></button>`;
+    })
+    .join('');
+  return `<details class="mfrs-msg-check-fold"><summary class="mfrs-msg-check-summary"><i class="fa-solid fa-dice" aria-hidden="true"></i><span>检定建议</span><span class="mfrs-msg-check-count">${rows.length}</span></summary><div class="mfrs-msg-check-body">${body}</div></details>`;
+}
+
+type HudTableBundle = { name: string; headers: string[]; rows: unknown[][] };
+
+function readHudDatabaseTables(): Record<string, HudTableBundle> {
+  try {
+    const api = (hostWindow as any).AutoCardUpdaterAPI;
+    if (!api || typeof api.exportTableAsJson !== 'function') return {};
+    let raw = api.exportTableAsJson();
+    if (typeof raw === 'string') {
+      try {
+        raw = JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    }
+    if (!raw || typeof raw !== 'object') return {};
+    const tables: Record<string, HudTableBundle> = {};
+    for (const sheetId of Object.keys(raw as Record<string, any>)) {
+      const sheet = (raw as Record<string, any>)[sheetId];
+      if (!sheet?.name || !Array.isArray(sheet.content)) continue;
+      tables[String(sheet.name)] = {
+        name: String(sheet.name),
+        headers: (sheet.content[0] || []).map((h: unknown) => String(h ?? '')),
+        rows: sheet.content.slice(1) || [],
+      };
+    }
+    return tables;
+  } catch {
+    return {};
+  }
+}
+
+function findHudTable(tables: Record<string, HudTableBundle>, ...names: string[]): HudTableBundle | null {
+  for (const name of names) {
+    if (tables[name]) return tables[name];
+  }
+  const keys = Object.keys(tables);
+  for (const name of names) {
+    const hit = keys.find(k => k.includes(name));
+    if (hit) return tables[hit];
+  }
+  return null;
+}
+
+function hudRowField(headers: string[], row: unknown[], ...names: string[]): string {
+  for (const name of names) {
+    const idx = headers.findIndex(h => h === name || h.includes(name));
+    if (idx >= 0) {
+      const text = String(row[idx] ?? '').trim();
+      if (text) return text;
+    }
+  }
+  return '';
+}
+
+function clipHudLine(value: string, max = 42): string {
+  const text = String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, Math.max(1, max - 1))}…`;
+}
+
+function buildHudTableSummaryListHtml(
+  table: HudTableBundle | null,
+  titleHeaders: string[],
+  tagHeaders: string[],
+  limit = 3,
+): string {
+  if (!table || !table.rows.length) return '<div class="mfrs-msg-empty">暂无记录</div>';
+  return table.rows
+    .slice(-limit)
+    .reverse()
+    .map(row => {
+      const title =
+        titleHeaders.map(h => hudRowField(table.headers, row, h)).find(Boolean) ||
+        String(row[1] ?? row[0] ?? '未命名').trim() ||
+        '未命名';
+      const tags = tagHeaders
+        .map(h => hudRowField(table.headers, row, h))
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(' · ');
+      return `<div class="mfrs-hud-summary-item" title="${_.escape(title)}"><span class="mfrs-hud-summary-title">${_.escape(clipHudLine(title, 28))}</span>${tags ? `<span class="mfrs-hud-summary-tags">${_.escape(clipHudLine(tags, 36))}</span>` : ''}</div>`;
     })
     .join('');
 }
@@ -264,7 +396,9 @@ function buildNavHtml(panelId: string): string {
     { id: 'story', label: '正文', icon: 'fa-align-left' },
     { id: 'dossier', label: '档案', icon: 'fa-folder-open' },
     { id: 'relation', label: '关系', icon: 'fa-users' },
-    { id: 'cabinet', label: '柜', icon: 'fa-box-archive' },
+    { id: 'memory', label: '记忆', icon: 'fa-clock-rotate-left' },
+    { id: 'gacha', label: '抽卡', icon: 'fa-gift' },
+    { id: 'system', label: '系统', icon: 'fa-screwdriver-wrench' },
     { id: 'settings', label: '设置', icon: 'fa-gear', disabled: true },
   ];
   return `
@@ -993,7 +1127,7 @@ function handleNavClick(e: Event) {
     setTriView(panel, 'relation');
     return;
   }
-  if (nav === 'cabinet') {
+  if (nav === 'memory' || nav === 'gacha' || nav === 'system' || nav === 'cabinet') {
     openArchiveCabinet();
   }
 }
@@ -1075,7 +1209,12 @@ let hudFixedHostRestore: DomRestorePoint | null = null;
 let hudBodyOverflowPrev = '';
 let hudShellEventsBound = false;
 let hudKeydownBound = false;
-let hudActiveView: 'story' | 'dossier' | 'relation' | 'cabinet' | 'settings' = 'story';
+type HudView = 'story' | 'dossier' | 'relation' | 'memory' | 'gacha' | 'system' | 'settings' | 'cabinet';
+const HUD_CENTER_VIEWS: HudView[] = ['relation', 'memory', 'gacha', 'system'];
+const HUD_NAV_VIEWS: HudView[] = ['story', 'dossier', 'relation', 'memory', 'gacha', 'system', 'settings'];
+let hudActiveView: HudView = 'story';
+/** 全库关闭后回到的视图（系统/档案摘要入口） */
+let hudCabinetReturnView: HudView = 'system';
 let hudPanelsRenderKey = '';
 let hudToastTimer: number | null = null;
 let hudMenuOpenTimer: number | null = null;
@@ -1239,8 +1378,10 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-right-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 0 0 auto;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 /* 方案 A：酒馆原生 8 项放在右栏「设置」二级面板 */
 #${HUD_SHELL_ID} .mfrs-hud-settings-panel {
@@ -1319,12 +1460,132 @@ function ensureHudStyle() {
   max-height: 100%;
   overflow: auto;
 }
-#${HUD_SHELL_ID} .mfrs-hud-relation-panel {
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel,
+#${HUD_SHELL_ID} .mfrs-hud-center-panel {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
   padding: 10px 12px;
   background: rgba(8, 10, 10, 0.96);
+}
+#${HUD_SHELL_ID} .mfrs-hud-panel-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 78%, #888);
+}
+#${HUD_SHELL_ID} .mfrs-hud-panel-sub {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 52%, #777);
+}
+#${HUD_SHELL_ID} .mfrs-hud-panel-section {
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-panel-section:last-child {
+  border-bottom: 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-panel-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 80%, var(--mfrs-bone-white));
+}
+#${HUD_SHELL_ID} .mfrs-hud-summary-item,
+#${HUD_SHELL_ID} .mfrs-hud-memory-item {
+  display: grid;
+  gap: 2px;
+  padding: 7px 0 7px 8px;
+  border-left: 2px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 45%, transparent);
+  margin-bottom: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-summary-title,
+#${HUD_SHELL_ID} .mfrs-hud-memory-title {
+  font-size: 12px;
+  color: var(--mfrs-bone-white);
+}
+#${HUD_SHELL_ID} .mfrs-hud-summary-tags,
+#${HUD_SHELL_ID} .mfrs-hud-memory-meta {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 48%, #777);
+}
+#${HUD_SHELL_ID} .mfrs-hud-system-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-system-btn {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: transparent;
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+#${HUD_SHELL_ID} .mfrs-hud-system-btn:hover {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-embed {
+  min-height: 120px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+#${HUD_SHELL_ID} .mfrs-msg-check-fold {
+  margin-top: 8px;
+  border-top: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+  padding-top: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-msg-check-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 72%, #888);
+  min-height: 32px;
+}
+#${HUD_SHELL_ID} .mfrs-msg-check-summary::-webkit-details-marker { display: none; }
+#${HUD_SHELL_ID} .mfrs-msg-check-count {
+  margin-left: auto;
+  opacity: 0.7;
+}
+#${HUD_SHELL_ID} .mfrs-msg-check-body {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier-group-title {
+  margin: 12px 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 70%, #888);
+}
+#${HUD_SHELL_ID} .mfrs-hud-open-full {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 35%, transparent);
+  background: transparent;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 75%, #888);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
 }
 /* Phase C3：关系卡扫读 — 名 + 一行描述 */
 #${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-header {
@@ -1366,8 +1627,12 @@ function ensureHudStyle() {
   overflow: hidden;
 }
 #${HUD_SHELL_ID} .mfrs-hud-relation-panel[hidden],
+#${HUD_SHELL_ID} .mfrs-hud-center-panel[hidden],
 #${HUD_SHELL_ID} .mfrs-hud-chat-host[hidden] {
   display: none !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-nav-btn span {
+  white-space: nowrap;
 }
 /* Phase C2：拟办默认折叠 + 展开限高，不霸屏 */
 #${HUD_SHELL_ID} .mfrs-hud-actions {
@@ -1603,17 +1868,17 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-nav-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: 7px 10px;
   border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
   border-radius: 0;
   background: transparent;
   color: var(--mfrs-bone-white);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   text-align: left;
 }
 #${HUD_SHELL_ID} .mfrs-hud-nav-btn.is-active {
@@ -2162,10 +2427,63 @@ function syncHudMotionPreference() {
   doc.body.classList.toggle('mfrs-hud-reduced-motion', reduce);
 }
 
+function migrateHudShellDom(shell: HTMLElement) {
+  const center = shell.querySelector('.mfrs-hud-center');
+  if (center) {
+    const ensureSlot = (attr: string, className: string, after: string) => {
+      if (shell.querySelector(`[data-mfrs-hud="${attr}"]`)) return;
+      const el = doc.createElement('div');
+      el.className = className;
+      el.setAttribute('data-mfrs-hud', attr);
+      el.hidden = true;
+      const anchor = center.querySelector(`[data-mfrs-hud="${after}"]`);
+      if (anchor?.nextSibling) center.insertBefore(el, anchor.nextSibling);
+      else if (anchor) anchor.after(el);
+      else center.insertBefore(el, center.firstChild);
+    };
+    ensureSlot('memory-slot', 'mfrs-hud-center-panel', 'relation-slot');
+    ensureSlot('gacha-slot', 'mfrs-hud-center-panel', 'memory-slot');
+    ensureSlot('system-slot', 'mfrs-hud-center-panel', 'gacha-slot');
+    shell.querySelector('[data-mfrs-hud="relation-slot"]')?.classList.add('mfrs-hud-center-panel');
+  }
+  const nav = shell.querySelector('.mfrs-hud-right-nav');
+  if (nav) {
+    const order: Array<{ id: string; label: string; icon: string; title?: string }> = [
+      { id: 'story', label: '正文', icon: 'fa-align-left' },
+      { id: 'dossier', label: '档案', icon: 'fa-folder-open' },
+      { id: 'relation', label: '关系', icon: 'fa-users' },
+      { id: 'memory', label: '记忆', icon: 'fa-clock-rotate-left' },
+      { id: 'gacha', label: '抽卡', icon: 'fa-gift' },
+      { id: 'system', label: '系统', icon: 'fa-screwdriver-wrench' },
+      { id: 'settings', label: '设置', icon: 'fa-gear', title: '酒馆原生设置' },
+    ];
+    const needRebuild =
+      Boolean(nav.querySelector('[data-mfrs-hud-nav="cabinet"]')) ||
+      !nav.querySelector('[data-mfrs-hud-nav="memory"]') ||
+      !nav.querySelector('[data-mfrs-hud-nav="gacha"]') ||
+      !nav.querySelector('[data-mfrs-hud-nav="system"]');
+    if (needRebuild) {
+      nav.innerHTML = order
+        .map(
+          item =>
+            `<button type="button" class="mfrs-hud-nav-btn${item.id === 'story' ? ' is-active' : ''}" data-mfrs-hud-nav="${item.id}"${item.title ? ` title="${item.title}"` : ''}><i class="fa-solid ${item.icon}" aria-hidden="true"></i><span>${item.label}</span></button>`,
+        )
+        .join('');
+    }
+  }
+  const chrome = shell.querySelector('[data-mfrs-hud="cabinet-chrome"] span');
+  if (chrome && chrome.textContent?.includes('档案柜')) {
+    chrome.textContent = '全库编辑 · 系统入口';
+  }
+}
+
 function ensureHudShell(): HTMLElement {
   ensureHudStyle();
   let shell = doc.getElementById(HUD_SHELL_ID) as HTMLElement | null;
-  if (shell) return shell;
+  if (shell) {
+    migrateHudShellDom(shell);
+    return shell;
+  }
 
   shell = doc.createElement('div');
   shell.id = HUD_SHELL_ID;
@@ -2196,7 +2514,10 @@ function ensureHudShell(): HTMLElement {
 </aside>
 <section class="mfrs-hud-center">
   <div class="mfrs-hud-chat-host" data-mfrs-hud="chat-host"></div>
-  <div class="mfrs-hud-relation-panel" data-mfrs-hud="relation-slot" hidden></div>
+  <div class="mfrs-hud-relation-panel mfrs-hud-center-panel" data-mfrs-hud="relation-slot" hidden></div>
+  <div class="mfrs-hud-center-panel" data-mfrs-hud="memory-slot" hidden></div>
+  <div class="mfrs-hud-center-panel" data-mfrs-hud="gacha-slot" hidden></div>
+  <div class="mfrs-hud-center-panel" data-mfrs-hud="system-slot" hidden></div>
   <details class="mfrs-hud-actions" data-mfrs-hud="actions">
     <summary><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></summary>
     <div class="mfrs-hud-actions-body" data-mfrs-hud="actions-slot"></div>
@@ -2208,15 +2529,17 @@ function ensureHudShell(): HTMLElement {
     <button type="button" class="mfrs-hud-nav-btn is-active" data-mfrs-hud-nav="story"><i class="fa-solid fa-align-left" aria-hidden="true"></i><span>正文</span></button>
     <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="dossier"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span>档案</span></button>
     <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="relation"><i class="fa-solid fa-users" aria-hidden="true"></i><span>关系</span></button>
-    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="cabinet"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>柜</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="memory"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>记忆</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="gacha"><i class="fa-solid fa-gift" aria-hidden="true"></i><span>抽卡</span></button>
+    <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="system"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i><span>系统</span></button>
     <button type="button" class="mfrs-hud-nav-btn" data-mfrs-hud-nav="settings" title="酒馆原生设置"><i class="fa-solid fa-gear" aria-hidden="true"></i><span>设置</span></button>
   </div>
   <div class="mfrs-hud-settings-panel" data-mfrs-hud="settings-panel" role="navigation" aria-label="酒馆原生设置"></div>
 </aside>
 <button type="button" class="mfrs-hud-drawer-mask" data-mfrs-hud="drawer-mask" aria-label="关闭侧栏"></button>
-<button type="button" class="mfrs-hud-cabinet-mask" data-mfrs-hud="cabinet-mask" aria-label="关闭档案柜"></button>
+<button type="button" class="mfrs-hud-cabinet-mask" data-mfrs-hud="cabinet-mask" aria-label="关闭全库"></button>
 <div class="mfrs-hud-cabinet-chrome" data-mfrs-hud="cabinet-chrome">
-  <span>档案柜 · 仅沉浸内展开</span>
+  <span>全库编辑 · 系统入口</span>
   <button type="button" class="mfrs-hud-cabinet-close" data-mfrs-hud="cabinet-close">关闭</button>
 </div>
 `;
@@ -2552,7 +2875,7 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
     return;
   }
   if (action.kind === 'cabinet') {
-    setHudView('cabinet');
+    openHudFullLibrary(undefined, 'system');
     return;
   }
   if (action.kind === 'continue') {
@@ -2731,8 +3054,61 @@ function buildHudResourceSectionsHtml(data: StatusData): string {
 </details>`;
 }
 
+function buildHudInvestigationSectionsHtml(): string {
+  const tables = readHudDatabaseTables();
+  const sections: Array<{ key: string; title: string; icon: string; tableNames: string[]; titleHeaders: string[]; tagHeaders: string[] }> = [
+    {
+      key: 'clue',
+      title: '线索',
+      icon: 'fa-magnifying-glass',
+      tableNames: ['线索'],
+      titleHeaders: ['线索编号', '内容', '关联事件'],
+      tagHeaders: ['可信度', '验证状态', '来源'],
+    },
+    {
+      key: 'ghost-archive',
+      title: '厉鬼档案',
+      icon: 'fa-book-skull',
+      tableNames: ['厉鬼档案'],
+      titleHeaders: ['档案编号', '厉鬼称呼'],
+      tagHeaders: ['关押状态', '关联事件', '拼图关系'],
+    },
+    {
+      key: 'people',
+      title: '人物',
+      icon: 'fa-address-book',
+      tableNames: ['人物'],
+      titleHeaders: ['姓名', '身份'],
+      tagHeaders: ['在场状态', '阵营', '所在地点'],
+    },
+    {
+      key: 'place',
+      title: '地点',
+      icon: 'fa-map-location-dot',
+      tableNames: ['地点'],
+      titleHeaders: ['地点名', '城市'],
+      tagHeaders: ['灵异状态', '封锁状态', '地点类型'],
+    },
+  ];
+  const body = sections
+    .map(section => {
+      const table = findHudTable(tables, ...section.tableNames);
+      const list = buildHudTableSummaryListHtml(table, section.titleHeaders, section.tagHeaders, 3);
+      const openTable = section.tableNames[0];
+      return `<details class="mfrs-msg-fold" data-fold="invest-${section.key}">
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid ${section.icon}" aria-hidden="true"></i><span>${section.title}</span></summary>
+  <div class="mfrs-msg-fold-body">
+    ${list}
+    <button type="button" class="mfrs-hud-open-full" data-mfrs-hud-open-table="${_.escape(openTable)}">打开全库 · ${_.escape(openTable)}</button>
+  </div>
+</details>`;
+    })
+    .join('');
+  return `<p class="mfrs-hud-dossier-group-title">调查档案</p>${body}`;
+}
+
 function buildHudDossierHtml(data: StatusData): string {
-  // C4：身份/风险默认展开；事件/厉鬼默认折叠；资源用结构化只读块
+  // C4：身份/风险默认展开；事件/厉鬼默认折叠；资源用结构化只读块；下挂调查 4 表摘要
   let base = buildDossierSectionsHtml(data).replace(
     /<details class="mfrs-msg-fold" data-fold="resource"[\s\S]*?<\/details>/,
     '',
@@ -2751,7 +3127,127 @@ function buildHudDossierHtml(data: StatusData): string {
     /<details class="mfrs-msg-fold" data-fold="resource" open>/g,
     '<details class="mfrs-msg-fold" data-fold="resource">',
   );
-  return `${base}${resource}`;
+  const sceneTitle = `<p class="mfrs-hud-dossier-group-title">现场摘要</p>`;
+  const openPlayer = `<button type="button" class="mfrs-hud-open-full" data-mfrs-hud-open-table="玩家状态">打开全库 · 玩家状态</button>`;
+  return `${sceneTitle}${base}${resource}${openPlayer}${buildHudInvestigationSectionsHtml()}`;
+}
+
+function buildHudMemoryPanelHtml(): string {
+  const tables = readHudDatabaseTables();
+  const chronicle = findHudTable(tables, '事件纪要', '纪要');
+  const archives = findHudTable(tables, '收录档案');
+  const rules = findHudTable(tables, '收录规律');
+  const section = (title: string, icon: string, table: HudTableBundle | null, titleHeaders: string[], tagHeaders: string[], openName: string) => `
+<section class="mfrs-hud-panel-section">
+  <div class="mfrs-hud-panel-section-title"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${title}</span></div>
+  ${buildHudTableSummaryListHtml(table, titleHeaders, tagHeaders, 6)}
+  <button type="button" class="mfrs-hud-open-full" data-mfrs-hud-open-table="${_.escape(openName)}">在全库中编辑</button>
+</section>`;
+  return `
+<p class="mfrs-hud-panel-title">记忆与收录</p>
+<p class="mfrs-hud-panel-sub">事件纪要 · 收录档案 · 收录规律（只读摘要，编辑走全库）</p>
+${section('事件纪要', 'fa-clock-rotate-left', chronicle, ['纪要编号', '概览', '关联事件'], ['时间跨度', '关联事件'], '事件纪要')}
+${section('收录档案', 'fa-folder-open', archives, ['档案厉鬼名称', '收录状态'], ['收录进度', '档案完整度', '可调用范围'], '收录档案')}
+${section('收录规律', 'fa-book-open', rules, ['来源厉鬼', '规律类型'], ['获取方式', '完整度', '风险备注'], '收录规律')}
+`;
+}
+
+function buildHudGachaPanelHtml(): string {
+  const mfrs = (hostWindow as any).MFRS;
+  let currency = '—';
+  let pity = '—';
+  let fragments = '—';
+  let historyCount = '—';
+  try {
+    if (typeof mfrs?.getCurrency === 'function') currency = String(mfrs.getCurrency());
+    if (typeof mfrs?.getPity === 'function') {
+      const p = mfrs.getPity();
+      pity = typeof p === 'object' ? JSON.stringify(p) : String(p);
+      if (typeof p === 'object' && p) {
+        const soft = p.soft ?? p.count ?? p.current;
+        const hard = p.hard ?? p.guarantee;
+        pity = [soft != null && `软保底 ${soft}`, hard != null && `硬保底 ${hard}`].filter(Boolean).join(' · ') || pity;
+      }
+    }
+    if (typeof mfrs?.getFragments === 'function') fragments = String(mfrs.getFragments());
+    if (typeof mfrs?.getHistory === 'function') {
+      const h = mfrs.getHistory();
+      historyCount = Array.isArray(h) ? String(h.length) : '—';
+    }
+  } catch {
+    // ignore gacha api errors
+  }
+  const ready = typeof mfrs?.showPanel === 'function';
+  return `
+<p class="mfrs-hud-panel-title">抽卡</p>
+<p class="mfrs-hud-panel-sub">中栏摘要；完整抽卡 UI 在下方打开（正文已隐藏）</p>
+<div class="mfrs-hud-gacha-embed">
+  <div class="mfrs-msg-kv"><span>调查点</span><b>${_.escape(currency)}</b></div>
+  <div class="mfrs-msg-kv"><span>保底</span><b>${_.escape(clipHudLine(String(pity), 40))}</b></div>
+  <div class="mfrs-msg-kv"><span>残屑</span><b>${_.escape(fragments)}</b></div>
+  <div class="mfrs-msg-kv"><span>历史</span><b>${_.escape(historyCount)}</b></div>
+</div>
+<div class="mfrs-hud-gacha-actions">
+  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-gacha" ${ready ? '' : 'disabled'}>${ready ? '打开抽卡面板' : '抽卡 API 未就绪'}</button>
+</div>
+`;
+}
+
+function buildHudSystemPanelHtml(data: StatusData): string {
+  const tables = readHudDatabaseTables();
+  const tableNames = Object.keys(tables);
+  const name = valueText(data.姓名, '—');
+  const location = valueText(data.所在位置, '—');
+  const phase = valueText(_.get(data, '主线进度.当前阶段'), '—');
+  const eventCode = valueText(_.get(data, '当前灵异事件.事件代号'), '无');
+  const consistency = [
+    { label: '玩家', ok: Boolean(valueText(data.姓名, '')) },
+    { label: '事件', ok: eventCode !== '无' },
+    { label: '表数量', ok: tableNames.length > 0 },
+    { label: '线索表', ok: Boolean(findHudTable(tables, '线索')) },
+    { label: '纪要表', ok: Boolean(findHudTable(tables, '事件纪要', '纪要')) },
+  ];
+  const consHtml = consistency
+    .map(
+      item =>
+        `<div class="mfrs-msg-kv"><span>${_.escape(item.label)}</span><b>${item.ok ? '对齐' : '待核'}</b></div>`,
+    )
+    .join('');
+  const recallPreview = tableNames.length
+    ? tableNames
+        .slice(0, 8)
+        .map(n => {
+          const t = tables[n];
+          return `<div class="mfrs-hud-summary-item"><span class="mfrs-hud-summary-title">${_.escape(n)}</span><span class="mfrs-hud-summary-tags">${t.rows.length} 行</span></div>`;
+        })
+        .join('')
+    : '<div class="mfrs-msg-empty">数据库表未导出</div>';
+  return `
+<p class="mfrs-hud-panel-title">系统</p>
+<p class="mfrs-hud-panel-sub">总览 · 召回索引 · 一致性快检 · 全库编辑入口</p>
+<section class="mfrs-hud-panel-section">
+  <div class="mfrs-hud-panel-section-title"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i><span>总览</span></div>
+  <div class="mfrs-msg-kv"><span>姓名</span><b>${_.escape(name)}</b></div>
+  <div class="mfrs-msg-kv"><span>位置</span><b>${_.escape(location)}</b></div>
+  <div class="mfrs-msg-kv"><span>阶段</span><b>${_.escape(phase)}</b></div>
+  <div class="mfrs-msg-kv"><span>事件</span><b>${_.escape(eventCode)}</b></div>
+  <div class="mfrs-msg-kv"><span>数据表</span><b>${tableNames.length}</b></div>
+</section>
+<section class="mfrs-hud-panel-section">
+  <div class="mfrs-hud-panel-section-title"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>召回索引</span></div>
+  ${recallPreview}
+</section>
+<section class="mfrs-hud-panel-section">
+  <div class="mfrs-hud-panel-section-title"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i><span>一致性</span></div>
+  ${consHtml}
+</section>
+<div class="mfrs-hud-system-actions">
+  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-full-library">打开全库编辑</button>
+  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_global_search">全库 · 总览页</button>
+  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_recall">全库 · 召回页</button>
+  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_consistency">全库 · 一致性</button>
+</div>
+`;
 }
 
 function clipHudChipText(value: string, max = 22): string {
@@ -2812,13 +3308,23 @@ function buildHudRelationHtml(data: StatusData): string {
 `;
 }
 
-function applyHudCenterView(shell: Element, view: typeof hudActiveView) {
+function isHudCenterBusinessView(view: HudView) {
+  return HUD_CENTER_VIEWS.includes(view);
+}
+
+function applyHudCenterView(shell: Element, view: HudView) {
   const chatHost = shell.querySelector('[data-mfrs-hud="chat-host"]') as HTMLElement | null;
   const relation = shell.querySelector('[data-mfrs-hud="relation-slot"]') as HTMLElement | null;
+  const memory = shell.querySelector('[data-mfrs-hud="memory-slot"]') as HTMLElement | null;
+  const gacha = shell.querySelector('[data-mfrs-hud="gacha-slot"]') as HTMLElement | null;
+  const system = shell.querySelector('[data-mfrs-hud="system-slot"]') as HTMLElement | null;
   const left = shell.querySelector('[data-mfrs-hud="left"]') as HTMLElement | null;
-  const showRelation = view === 'relation';
-  if (chatHost) chatHost.hidden = showRelation;
-  if (relation) relation.hidden = !showRelation;
+  const showBusiness = isHudCenterBusinessView(view);
+  if (chatHost) chatHost.hidden = showBusiness;
+  if (relation) relation.hidden = view !== 'relation';
+  if (memory) memory.hidden = view !== 'memory';
+  if (gacha) gacha.hidden = view !== 'gacha';
+  if (system) system.hidden = view !== 'system';
   left?.classList.toggle('is-emphasis', view === 'dossier');
 }
 
@@ -2847,17 +3353,21 @@ function isHudCabinetOpen() {
   );
 }
 
-function setHudView(view: typeof hudActiveView) {
-  hudActiveView = view;
+function setHudView(view: HudView) {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
   if (view === 'settings') {
     openHudSettingsPanel();
     return;
   }
+  if (view === 'cabinet') {
+    openHudFullLibrary();
+    return;
+  }
+  hudActiveView = view;
   shell.classList.remove('is-settings-open');
-  setHudNavActive(view === 'cabinet' ? 'cabinet' : view);
-  applyHudCenterView(shell, view === 'cabinet' ? 'story' : view);
+  setHudNavActive(view);
+  applyHudCenterView(shell, view);
   if (view === 'story') {
     closeHudCabinetLayer();
     closeHudSideDrawers();
@@ -2882,15 +3392,69 @@ function setHudView(view: typeof hudActiveView) {
     shell.querySelector('.mfrs-hud-left')?.scrollTo?.({ top: 0, behavior: 'smooth' });
     return;
   }
-  if (view === 'relation') {
+  if (isHudCenterBusinessView(view)) {
     closeHudCabinetLayer();
     closeHudSideDrawers();
+    if (view === 'memory' || view === 'gacha' || view === 'system') {
+      refreshHudBusinessPanels(shell, readLatestHudStatusData());
+    }
+  }
+}
+
+function refreshHudBusinessPanels(shell: Element, data: StatusData) {
+  const memorySlot = shell.querySelector('[data-mfrs-hud="memory-slot"]');
+  if (memorySlot) memorySlot.innerHTML = buildHudMemoryPanelHtml();
+  const gachaSlot = shell.querySelector('[data-mfrs-hud="gacha-slot"]');
+  if (gachaSlot) gachaSlot.innerHTML = buildHudGachaPanelHtml();
+  const systemSlot = shell.querySelector('[data-mfrs-hud="system-slot"]');
+  if (systemSlot) systemSlot.innerHTML = buildHudSystemPanelHtml(data);
+}
+
+function activateAcuNavTarget(tableOrTab: string) {
+  const host = doc.getElementById(FIXED_HOST_ID);
+  if (!host || !tableOrTab) return;
+  const exact = host.querySelector(`.acu-nav-btn[data-table="${tableOrTab}"]`) as HTMLElement | null;
+  if (exact) {
+    exact.click();
     return;
   }
-  if (view === 'cabinet') {
-    closeHudSideDrawers();
-    openHudCabinetLayer();
+  const buttons = Array.from(host.querySelectorAll('.acu-nav-btn[data-table]')) as HTMLElement[];
+  const fuzzy = buttons.find(btn => {
+    const key = btn.getAttribute('data-table') || '';
+    const label = (btn.textContent || '').trim();
+    return key.includes(tableOrTab) || label.includes(tableOrTab);
+  });
+  fuzzy?.click();
+}
+
+/** 全库编辑（原柜能力）；无右栏主键，由系统/摘要唤起 */
+function openHudFullLibrary(tableOrTab?: string, returnView?: HudView) {
+  hudCabinetReturnView =
+    returnView && returnView !== 'cabinet' && returnView !== 'settings' ? returnView : hudActiveView === 'cabinet' ? 'system' : hudActiveView;
+  if (hudCabinetReturnView === 'settings') hudCabinetReturnView = 'system';
+  closeHudSideDrawers();
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  shell?.classList.remove('is-settings-open');
+  openHudCabinetLayer();
+  hudActiveView = 'cabinet';
+  setHudNavActive(hudCabinetReturnView === 'story' ? 'system' : hudCabinetReturnView);
+  if (tableOrTab) {
+    hostWindow.setTimeout(() => activateAcuNavTarget(tableOrTab), 80);
+    hostWindow.setTimeout(() => activateAcuNavTarget(tableOrTab), 240);
   }
+}
+
+function openHudGachaUi() {
+  try {
+    const show = (hostWindow as any).MFRS?.showPanel;
+    if (typeof show === 'function') {
+      show();
+      return;
+    }
+  } catch {
+    // fall through
+  }
+  showHudToast('抽卡面板未就绪：请确认数据库前端已加载');
 }
 
 function refreshHudPanels(force = false) {
@@ -2899,8 +3463,10 @@ function refreshHudPanels(force = false) {
   if (!shell) return;
   const data = readLatestHudStatusData();
   const renderKey = getPanelRenderKey(data);
+  const centerView: HudView =
+    hudActiveView === 'cabinet' || hudActiveView === 'settings' ? 'story' : hudActiveView;
   if (!force && renderKey === hudPanelsRenderKey) {
-    applyHudCenterView(shell, hudActiveView === 'cabinet' ? 'story' : hudActiveView);
+    applyHudCenterView(shell, centerView);
     return;
   }
   hudPanelsRenderKey = renderKey;
@@ -2915,9 +3481,14 @@ function refreshHudPanels(force = false) {
   const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
   if (relationSlot) relationSlot.innerHTML = buildHudRelationHtml(data);
 
-  const centerView = hudActiveView === 'cabinet' || hudActiveView === 'settings' ? 'story' : hudActiveView;
+  refreshHudBusinessPanels(shell, data);
+
   applyHudCenterView(shell, centerView);
-  setHudNavActive(hudActiveView === 'cabinet' ? 'cabinet' : hudActiveView);
+  if (hudActiveView === 'cabinet') {
+    setHudNavActive(hudCabinetReturnView === 'story' ? 'system' : hudCabinetReturnView);
+  } else {
+    setHudNavActive(hudActiveView);
+  }
   if (hudActiveView === 'settings') {
     shell.classList.add('is-settings-open');
     renderHudSettingsPanel(shell);
@@ -2968,10 +3539,17 @@ function closeHudCabinetLayer() {
   restoreFixedHostFromHudCabinet();
   shell?.classList.remove('is-cabinet-open');
   if (hudActiveView === 'cabinet') {
-    hudActiveView = 'story';
+    const back: HudView =
+      hudCabinetReturnView && hudCabinetReturnView !== 'cabinet' && hudCabinetReturnView !== 'settings'
+        ? hudCabinetReturnView
+        : 'system';
+    hudActiveView = back;
     if (shell) {
-      setHudNavActive('story');
-      applyHudCenterView(shell, 'story');
+      setHudNavActive(back);
+      applyHudCenterView(shell, isHudCenterBusinessView(back) ? back : 'story');
+      if (back === 'memory' || back === 'gacha' || back === 'system') {
+        refreshHudBusinessPanels(shell, readLatestHudStatusData());
+      }
     }
   }
 }
@@ -3042,6 +3620,29 @@ function handleHudShellClick(e: Event) {
     closeHudCabinetLayer();
     return;
   }
+  const openFullBtn = target.closest('[data-mfrs-hud="open-full-library"]') as HTMLElement | null;
+  if (openFullBtn) {
+    e.preventDefault();
+    openHudFullLibrary(undefined, 'system');
+    return;
+  }
+  const openGachaBtn = target.closest('[data-mfrs-hud="open-gacha"]') as HTMLElement | null;
+  if (openGachaBtn) {
+    e.preventDefault();
+    openHudGachaUi();
+    return;
+  }
+  const openTableBtn = target.closest('[data-mfrs-hud-open-table]') as HTMLElement | null;
+  if (openTableBtn) {
+    e.preventDefault();
+    const table = openTableBtn.getAttribute('data-mfrs-hud-open-table') || '';
+    const returnView: HudView =
+      hudActiveView === 'memory' || hudActiveView === 'system' || hudActiveView === 'dossier'
+        ? hudActiveView
+        : 'system';
+    openHudFullLibrary(table, returnView);
+    return;
+  }
   if (target.closest('[data-mfrs-hud="drawer-mask"]')) {
     e.preventDefault();
     closeHudSideDrawers();
@@ -3063,24 +3664,23 @@ function handleHudShellClick(e: Event) {
   }
   const navBtn = target.closest('[data-mfrs-hud-nav]') as HTMLElement | null;
   if (!navBtn || navBtn.hasAttribute('disabled')) return;
-  const nav = navBtn.getAttribute('data-mfrs-hud-nav');
+  const nav = navBtn.getAttribute('data-mfrs-hud-nav') as HudView | null;
   if (!nav) return;
   e.preventDefault();
   if (nav === 'settings') {
     toggleHudSettingsPanel();
     return;
   }
-  if (nav === 'story' || nav === 'dossier' || nav === 'relation' || nav === 'cabinet') {
+  if (HUD_NAV_VIEWS.includes(nav) || nav === 'cabinet') {
     setHudView(nav);
     if (nav !== 'dossier' && hostWindow.matchMedia?.('(max-width: 800px)')?.matches) {
-      if (nav === 'story' || nav === 'relation') closeHudSideDrawers();
-      if (nav === 'cabinet') closeHudSideDrawers();
+      if (nav === 'story' || isHudCenterBusinessView(nav)) closeHudSideDrawers();
     }
   }
 }
 
 function handleHudKeydown(e: KeyboardEvent) {
-  // Esc：设置面板 → ST 抽屉 → 柜 → 侧抽屉；默认不退出沉浸
+  // Esc：设置 → ST 抽屉 → 全库 → 中栏业务面板 → 侧抽屉；默认不退出沉浸
   if (e.key === 'Escape' && isHudMounted()) {
     const shell = doc.getElementById(HUD_SHELL_ID);
     if (shell?.classList.contains('is-settings-open')) {
@@ -3097,6 +3697,11 @@ function handleHudKeydown(e: KeyboardEvent) {
     if (isHudCabinetOpen()) {
       e.preventDefault();
       closeHudCabinetLayer();
+      return;
+    }
+    if (isHudCenterBusinessView(hudActiveView)) {
+      e.preventDefault();
+      setHudView('story');
       return;
     }
     if (shell?.classList.contains('is-left-open') || shell?.classList.contains('is-right-open')) {
@@ -3177,7 +3782,13 @@ function mountHudImmersive() {
   rebindMessageObserverToChat();
   if (hudActiveView === 'cabinet') hudActiveView = 'story';
   refreshHudPanels(true);
-  setHudView(hudActiveView === 'relation' || hudActiveView === 'dossier' ? hudActiveView : 'story');
+  setHudView(
+    hudActiveView === 'relation' ||
+      hudActiveView === 'dossier' ||
+      isHudCenterBusinessView(hudActiveView)
+      ? hudActiveView
+      : 'story',
+  );
 }
 
 function unmountHudImmersive() {
