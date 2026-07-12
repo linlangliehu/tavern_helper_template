@@ -344,7 +344,11 @@ addCheck('phase3', 'narrative uses one archive border and a binding line', () =>
   assert.ok(narrativeCss.includes('.mfrs-msg-narrative-wrapper::before'), 'narrative needs a binding-line layer');
 });
 addCheck('phase3', 'message sections are continuous archive divisions instead of nested cards', () => {
-  const sectionCss = between(sources.message, '.mfrs-msg-section {', '.mfrs-msg-section-title {');
+  // Prefer the α panel section rule (not shell-scoped relation density overrides).
+  const sectionStart = sources.message.indexOf('\n.mfrs-msg-section {') !== -1
+    ? '\n.mfrs-msg-section {'
+    : '.mfrs-msg-section {';
+  const sectionCss = between(sources.message, sectionStart, '.mfrs-msg-section-title {');
   for (const marker of ['background:', 'clip-path:', 'box-shadow:']) {
     assert.equal(sectionCss.includes(marker), false, `continuous section must not contain ${marker}`);
   }
@@ -489,6 +493,143 @@ addCheck('phase5', 'β3 default no half-screen cabinet and 44px targets', () => 
   assert.ok(sources.message.includes('mfrs-fixed-status-host') && sources.message.includes(':not(.mfrs-hud-cabinet-open)'), 'host hidden unless cabinet open');
   assert.ok(sources.message.includes('min-height: 44px'), '44px touch targets present');
   assert.ok(sources.message.includes('prefers-reduced-motion'), 'reduced motion hook');
+});
+
+// Phase A (post-8.12.3): tavern menu stable open/close + fail feedback + Esc layering.
+addCheck('phase5', 'A1 close prior ST drawers before opening menu target', () => {
+  assert.ok(sources.message.includes('function closeOpenStDrawers'), 'missing closeOpenStDrawers');
+  assert.ok(sources.message.includes('function hasOpenStDrawers'), 'missing hasOpenStDrawers');
+  const runAction = between(sources.message, 'function runHudTavernAction', 'function reparentSendFormIntoHud');
+  assert.ok(runAction.includes('closeOpenStDrawers()'), 'menu click must close open drawers first');
+  assert.ok(runAction.includes('yieldHudToStUi()'), 'menu click must still yield ST UI overlay');
+});
+addCheck('phase5', 'A2 menu fail feedback toast and disabled items', () => {
+  assert.ok(sources.message.includes('function markHudMenuItemFailed'), 'missing fail marker helper');
+  assert.ok(sources.message.includes('function showHudToast'), 'missing toast helper');
+  assert.ok(sources.message.includes('mfrs-hud-toast'), 'missing toast element id');
+  assert.ok(sources.message.includes('is-fail-flash'), 'missing fail flash class');
+  assert.ok(sources.message.includes('当前界面未找到入口') || sources.message.includes('未找到入口'), 'missing unavailable copy');
+});
+addCheck('phase5', 'A3 Esc layering menu then ST drawers then cabinet', () => {
+  const keydown = between(sources.message, 'function handleHudKeydown', 'function bindHudShellEvents');
+  assert.ok(keydown.includes('is-tavern-menu-open'), 'Esc must close tavern menu first');
+  assert.ok(
+    keydown.includes('hasOpenStDrawers') || keydown.includes('mfrs-hud-st-ui-open') || keydown.includes('HUD_ST_UI_CLASS'),
+    'Esc must close ST drawers',
+  );
+  assert.ok(keydown.includes('closeHudCabinetLayer'), 'Esc must close cabinet');
+  assert.ok(keydown.includes('closeHudSideDrawers'), 'Esc must close side drawers');
+  assert.equal(keydown.includes('exitHudImmersive()'), false, 'Esc must not exit immersion by default');
+});
+addCheck('phase5', 'A4 close panel restores ST UI and clears open drawers', () => {
+  assert.ok(sources.message.includes('function restoreHudFromStUi'), 'missing restoreHudFromStUi');
+  const restore = between(sources.message, 'function restoreHudFromStUi', 'function closeHudTavernMenu');
+  assert.ok(restore.includes('closeOpenStDrawers()'), 'close panel must close drawers');
+  assert.ok(
+    restore.includes('classList.remove(HUD_ST_UI_CLASS)') ||
+      restore.includes("classList.remove('mfrs-hud-st-ui-open')") ||
+      restore.includes('HUD_ST_UI_CLASS'),
+    'close panel must drop st-ui class',
+  );
+  assert.ok(sources.message.includes('关闭面板'), 'missing close-panel control label');
+});
+
+// Phase B: immersive composer skin only (scoped, no fake proxy).
+addCheck('phase5', 'B1-B4 composer dossier skin scoped to shell', () => {
+  assert.ok(sources.message.includes('mfrs-hud-composer'), 'missing composer host');
+  assert.ok(sources.message.includes(':focus-within'), 'composer focus-within skin');
+  assert.ok(sources.message.includes('max-height: min(34vh, 220px)') || sources.message.includes('max-height:min(34vh, 220px)'), 'composer height cap');
+  assert.ok(sources.message.includes('#send_but'), 'send button skin in shell');
+  assert.ok(sources.message.includes('#options_button'), 'options button kept/styled in shell');
+  assert.ok(sources.message.includes('#extensionsMenuButton'), 'extensions button kept/styled in shell');
+  assert.ok(sources.message.includes('background: transparent'), 'textarea transparent skin');
+  assert.equal(sources.message.includes('mfrs-hud-input'), false, 'must not introduce fake input proxy class');
+  assert.ok(sources.message.includes('function reparentSendFormIntoHud'), 'must keep native form reparent');
+});
+
+// Phase C: info density (top chips / actions / relation / dossier).
+addCheck('phase5', 'C1-C4 hud information density', () => {
+  assert.ok(sources.message.includes('function clipHudChipText'), 'missing chip clip helper');
+  assert.ok(sources.message.includes('function buildHudRelationHtml'), 'missing compact relation builder');
+  assert.ok(sources.message.includes('max-height: min(28vh, 220px)') || sources.message.includes('max-height:min(28vh, 220px)'), 'actions height cap');
+  assert.ok(sources.message.includes('data-mfrs-hud="actions"'), 'actions details host');
+  // default collapsed: shell template must not force open on actions
+  assert.equal(
+    /data-mfrs-hud="actions"\s+open/.test(sources.message) || /data-mfrs-hud="actions" open/.test(sources.message),
+    false,
+    'actions must default collapsed (no open attribute)',
+  );
+  assert.ok(sources.message.includes('data-fold="event">') || sources.message.includes("data-fold=\"event\">"), 'event fold can collapse in hud');
+  assert.ok(sources.message.includes('-webkit-line-clamp: 1') || sources.message.includes('line-clamp: 1'), 'relation one-line clamp');
+  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'density pass must remain read-only');
+  const refresh = between(sources.message, 'function refreshHudPanels', 'function closeHudCabinetLayer');
+  assert.ok(refresh.includes('buildHudRelationHtml'), 'hud refresh uses compact relation html');
+});
+
+// Phase D: tavern menu copy / grouping / success toast / narrow layout.
+addCheck('phase5', 'D1-D4 tavern menu polish', () => {
+  const menu = between(sources.message, 'function getHudTavernMenuSections', 'function findHudActionTarget');
+  assert.ok(menu.includes('连接与格式'), 'missing connection section title');
+  assert.ok(menu.includes('世界与角色'), 'missing world/character section title');
+  assert.ok(menu.includes('扩展设置'), 'D1 rename to 扩展设置');
+  assert.equal(menu.includes("label: '扩展程序'"), false, 'must not keep 扩展程序 as menu label');
+  assert.ok(sources.message.includes('已打开：'), 'D3 success toast prefix');
+  assert.ok(sources.message.includes('position: fixed') || sources.message.includes('position:fixed'), 'narrow menu can use fixed');
+  // still only 8 click entries
+  const clickLabels = [...menu.matchAll(/label:\s*'([^']+)'/g)].map(m => m[1]);
+  const uniqueItems = clickLabels.filter(
+    (label, index) => clickLabels.indexOf(label) === index && !['连接与格式', '世界与角色'].includes(label),
+  );
+  // action labels appear twice (button label + action.label); count unique action names
+  const expected = ['AI 响应配置', 'API 连接', 'AI 回复格式化', '用户设置', '世界书', '角色管理', '用户设定', '扩展设置'];
+  for (const label of expected) {
+    assert.ok(menu.includes(label), `menu missing item: ${label}`);
+  }
+  assert.ok(uniqueItems.length >= 8, `expected at least 8 unique labels, got ${uniqueItems.join(',')}`);
+});
+
+// Phase E: performance + lifecycle harding.
+addCheck('phase5', 'E1-E4 immersive perf and card lifecycle', () => {
+  assert.ok(sources.message.includes('function isOwnedOrShellChrome'), 'E2 shell chrome filter');
+  assert.ok(sources.message.includes('function syncHudMotionPreference'), 'E3 motion preference sync');
+  assert.ok(sources.message.includes('mfrs-hud-reduced-motion'), 'E3 reduced-motion body class');
+  assert.ok(sources.message.includes('mfrs_hud_low_motion'), 'E3 optional localStorage low motion');
+  assert.ok(sources.message.includes('characterData: false'), 'observer should not watch characterData');
+  assert.ok(sources.message.includes("closest('#chat')") || sources.message.includes('closest("#chat")'), 'mutations must prefer #chat scope');
+  const process = between(sources.message, 'function processAllMessages', 'function processOneMessage');
+  assert.ok(process.includes('getLatestAiMessageElement'), 'immersive path must process latest AI only');
+  assert.ok(process.includes('fullHistory'), 'fullHistory option for exit/activate');
+  const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');
+  assert.ok(unmount.includes('fullHistory: true') || unmount.includes('fullHistory:true'), 'unmount must full-history reprocess');
+  const deactivate = between(sources.message, 'function deactivateMessagePanelRuntime', 'function activateMessagePanelRuntime');
+  assert.ok(deactivate.includes('destroyHudImmersive'), 'E4 deactivate must destroy shell');
+  assert.equal(deactivate.includes('unmountHudImmersive()') && !deactivate.includes('destroyHudImmersive'), false, 'prefer destroy over bare unmount on deactivate');
+});
+
+// Phase F: release-contract gates for A–E ship.
+addCheck('phase5', 'F1 composer native form + ST overlay stacking contract', () => {
+  assert.ok(sources.message.includes('function reparentSendFormIntoHud'), 'composer reparent required');
+  assert.ok(sources.message.includes('function restoreSendFormFromHud'), 'composer restore required');
+  assert.ok(sources.message.includes("data-mfrs-hud=\"composer\""), 'composer host marker');
+  assert.ok(sources.message.includes('#send_form') || sources.message.includes('getSendFormElement'), 'must locate native send_form');
+  assert.ok(sources.message.includes('mfrs-hud-st-ui-open') || sources.message.includes('HUD_ST_UI_CLASS'), 'st-ui open class');
+  assert.ok(sources.message.includes('#top-settings-holder'), 'must lift top-settings-holder for ST drawers');
+  assert.ok(sources.message.includes('#top-bar'), 'must lift top-bar stacking with drawers');
+  assert.equal(sources.message.includes('mfrs-hud-input'), false, 'no fake input proxy');
+  assert.equal(sources.message.includes('generate()'), false, 'no generate() from message panel');
+});
+addCheck('phase5', 'F1 post-A-E feature markers still present', () => {
+  for (const marker of [
+    'function closeOpenStDrawers',
+    'function showHudToast',
+    'function buildHudRelationHtml',
+    '连接与格式',
+    '扩展设置',
+    'function destroyHudImmersive',
+    'mfrs-hud-reduced-motion',
+  ]) {
+    assert.ok(sources.message.includes(marker), `missing ship marker: ${marker}`);
+  }
 });
 
 // Phase 4 target: archive-cabinet tabs/collapsers become keyboard accessible without changing APIs/slots.

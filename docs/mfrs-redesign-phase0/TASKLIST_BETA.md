@@ -202,6 +202,57 @@
 - [x] **T3.5.5** 门禁 197 + build 通过；CDP 已见原生底栏（☰✨·输入·✈）  
 - [ ] **T3.5.6** 实机：顶栏 8 项 + 输入条功能逐项点验
 
+### Phase A · 菜单稳定与反馈（post-8.12.3）— **完成 2026-07-12（CDP 实机）**
+
+- [x] **A1** 点新菜单项前 `closeOpenStDrawers()`，再叠层/click（避免双抽屉）  
+- [x] **A2** 找不到入口：灰显 + toast + title；控制台 warn  
+- [x] **A3** Esc 分层：菜单 → ST 抽屉 → 柜 → 侧抽屉（**不**默认退出沉浸）；强制清 drawer class 防 toggle 竞态  
+- [x] **A4**「关闭面板」关全部 openDrawer + 去 `mfrs-hud-st-ui-open`  
+- [x] **A5** CDP 实机回归：**8/8 菜单**可开可关；原生 `#send_form` 在 composer；柜 Esc 可关；失败 toast PASS  
+
+**CDP 验收（127.0.0.1:8000 神秘复苏发布版卡 + 本地 dist 注入）**  
+A1/A2/A3/A4/A5 全部 **PASS**；世界书→API 切换仅 1 抽屉；关闭面板后 drawers=[]。
+
+### Phase B · 输入条卷宗皮（只做皮）— **完成 2026-07-12（CDP）**
+
+- [x] **B1** composer / `#send_form` 卷宗底 + 顶线 + `focus-within` 描边  
+- [x] **B2** textarea 透明；`#send_but` 强调；`#options_button` / `#extensionsMenuButton` 弱化**不藏**  
+- [x] **B3** composer `max-height: min(34vh, 220px)`；textarea `max-height: min(22vh, 140px)`  
+- [x] **B4** 全部选择器限在 `#mfrs-hud-shell .mfrs-hud-composer`（覆盖界面美化，退出沉浸后不残留）  
+- [x] **B5** CDP：form 在 composer；ta 透明；☰✨ 可见；composerH≈78 / chatH≈771；退出 form 回 `form_sheld`  
+
+### Phase C · 信息架构密度 — **完成 2026-07-12（CDP）**
+
+- [x] **C1** 顶条：更紧 padding、chip 截断 + title 全文、窄屏换行规则  
+- [x] **C2** 拟办：默认折叠；展开 `max-height: min(28vh, 220px)`  
+- [x] **C3** 关系：`buildHudRelationHtml` 名 + 一句描述（line-clamp）  
+- [x] **C4** 左栏：身份/风险展开；事件/厉鬼/资源默认折叠；风险文案隐藏、kv 更紧  
+- [x] **C5** CDP：topH≈57；拟办默认关 actionsH≈37 / chat≈808；关系 clamp=1；identity/risk 开、event/ghost 关  
+
+### Phase D · 酒馆菜单打磨 — **完成 2026-07-12（CDP）**
+
+- [x] **D1** 「扩展程序」→「扩展设置」（与输入条 ✨ 区分）  
+- [x] **D2** 分组：`连接与格式` / `世界与角色`  
+- [x] **D3** 打开成功 toast「已打开：…」  
+- [x] **D4** ≤800：菜单 fixed 贴底 + 单列 44px  
+- [x] **D5** CDP：两组标题；8 项含扩展设置；toast「已打开：世界书/扩展设置」；窄屏 CSS 规则在  
+
+### Phase E · 性能与生命周期 — **完成 2026-07-12（CDP）**
+
+- [x] **E1** 沉浸 latest-only + burst 2 段；退出 `processAllMessages({ fullHistory: true })`  
+- [x] **E2** Mutation 忽略壳内 chrome；优先 `#chat`；关 characterData/attributes  
+- [x] **E3** `prefers-reduced-motion` + `localStorage.mfrs_hud_low_motion=1` → `mfrs-hud-reduced-motion`  
+- [x] **E4** 切非神秘复苏卡：`deactivate` → `destroyHudImmersive`（无孤儿壳）  
+- [x] **E5** CDP：latest 面板在；低动效 class 生效；destroy 后 shell/style/immersive 全清；form 回 `form_sheld`  
+
+### Phase F · 工程与发版 — **准备完成 2026-07-12**
+
+- [x] **F1** archive-ui 门禁：composer reparent + st-ui 抬 `#top-settings-holder` + A–E 特征串  
+- [x] **F2** `prepare-mfrs-beta-local-test.mjs` 再生 β 本地验收 PNG（5500 + 当前 dist）  
+- [x] **F3 配置** `publish-card` → `releaseVersion: '8.13.0'`，cache `…-v8130-ux-polish`（**CDN_REF 待 push 后填**）  
+- [x] **F4** `RELEASE_8.13.0.md` + README/TASKLIST 进度  
+- [ ] **F5 发版执行** 用户批准后：commit → push → 写 `CDN_REF` → `pnpm publish-card` → 校验 PNG → 用户重导  
+
 ---
 
 ### Phase β4 · 门禁 + 本地 dist 验收（**发版前必过**）

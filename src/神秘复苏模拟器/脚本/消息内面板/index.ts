@@ -760,7 +760,13 @@ let isProcessingMessages = false;
 
 function resumeMessageObserver() {
   if (!observerEnabled || !messageObserver || !observedChatContainer) return;
-  messageObserver.observe(observedChatContainer, { childList: true, subtree: true });
+  // E2：尽量只观察 #chat；沉浸态同样挂在 chat 节点上
+  messageObserver.observe(observedChatContainer, {
+    childList: true,
+    subtree: true,
+    characterData: false,
+    attributes: false,
+  });
 }
 
 function withMessageObserverPaused(callback: () => void) {
@@ -789,6 +795,7 @@ function processAllMessages(options: { fullHistory?: boolean } = {}) {
         composeTriCenter(mes);
       });
     } else {
+      // E1：沉浸只刷最新 AI 楼
       const last = getLatestAiMessageElement();
       if (last) {
         injectBrandForMessage(last);
@@ -827,18 +834,18 @@ function clearRefreshTimers() {
   }
 }
 
-function scheduleProcessAllMessages(delay = 200) {
+function scheduleProcessAllMessages(delay = 200, options: { fullHistory?: boolean } = {}) {
   const timer = hostWindow.setTimeout(() => {
     refreshTimers.delete(timer);
-    processAllMessages();
+    processAllMessages(options);
   }, delay);
   refreshTimers.add(timer);
 }
 
 function scheduleBurstRefresh() {
-  // 沉浸态少打几轮全量刷新，降低生成结束时的主线程尖峰
+  // E1：沉浸态 2 段 latest-only；非沉浸 4 段全量
   const delays = isHudMounted() ? [250, 1200] : [200, 800, 2000, 4000];
-  delays.forEach(scheduleProcessAllMessages);
+  delays.forEach(delay => scheduleProcessAllMessages(delay));
 }
 
 function scheduleIdleRefresh(delay = 800) {
@@ -853,12 +860,30 @@ function scheduleIdleRefresh(delay = 800) {
   }, wait);
 }
 
+function isOwnedOrShellChrome(node: Element | null) {
+  if (!node) return false;
+  if (node.closest(ownedMessageUiSelector)) return true;
+  // 壳内自建节点（菜单/拟办/档案槽）变更不触发消息刷新；#chat 内楼层除外
+  const inShell = node.closest(`#${HUD_SHELL_ID}`);
+  if (inShell && !node.closest('#chat')) return true;
+  if (node.id === 'mfrs-hud-toast' || node.id === 'mfrs-hud-st-return') return true;
+  return false;
+}
+
 function mutationTouchesChatMessage(mutation: MutationRecord) {
   const targetElement = isElementNode(mutation.target) ? mutation.target : mutation.target.parentElement;
-  if (targetElement?.closest(ownedMessageUiSelector)) return false;
+  if (isOwnedOrShellChrome(targetElement)) return false;
+  // 必须落在 #chat 内，避免观察误绑 body 时扫到全站
+  if (targetElement && !targetElement.closest('#chat')) {
+    const addedInChat = Array.from(mutation.addedNodes).some(node => {
+      if (!isElementNode(node)) return false;
+      return node.id === 'chat' || Boolean(node.closest?.('#chat')) || Boolean(node.querySelector?.('#chat'));
+    });
+    if (!addedInChat) return false;
+  }
   if (targetElement?.closest('.mes')) return true;
   return Array.from(mutation.addedNodes).some(node => {
-    if (!isElementNode(node) || node.closest(ownedMessageUiSelector)) return false;
+    if (!isElementNode(node) || isOwnedOrShellChrome(node)) return false;
     return node.matches('.mes,.mes_text') || Boolean(node.querySelector('.mes,.mes_text'));
   });
 }
@@ -1001,6 +1026,8 @@ let hudShellEventsBound = false;
 let hudKeydownBound = false;
 let hudActiveView: 'story' | 'dossier' | 'relation' | 'cabinet' = 'story';
 let hudPanelsRenderKey = '';
+let hudToastTimer: number | null = null;
+let hudMenuOpenTimer: number | null = null;
 
 function isHudMounted() {
   return hudMounted && Boolean(doc.getElementById(HUD_SHELL_ID)?.classList.contains('is-active'));
@@ -1073,34 +1100,50 @@ function ensureHudStyle() {
 }
 #${HUD_SHELL_ID}.is-active { display: grid; }
 #${HUD_SHELL_ID} *, #${HUD_SHELL_ID} *::before, #${HUD_SHELL_ID} *::after { box-sizing: border-box; }
+/* Phase C1：顶条密度 — 单行优先、过长截断、窄屏换行 */
 #${HUD_SHELL_ID} .mfrs-hud-top {
   grid-area: top;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 44px;
-  padding: 8px 14px;
+  gap: 8px 12px;
+  min-height: 40px;
+  padding: 6px 10px 6px 12px;
   border-bottom: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
   background: rgba(6, 8, 8, 0.92);
 }
 #${HUD_SHELL_ID} .mfrs-hud-top-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  align-items: center;
+  gap: 4px 10px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  max-height: 4.6em;
+  overflow: hidden;
 }
 #${HUD_SHELL_ID} .mfrs-hud-chip {
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
-  min-height: 28px;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  gap: 4px;
+  min-height: 0;
+  max-width: min(100%, 18em);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
 }
-#${HUD_SHELL_ID} .mfrs-hud-chip span { color: color-mix(in srgb, var(--mfrs-bone-white) 45%, #666); }
-#${HUD_SHELL_ID} .mfrs-hud-chip b { color: var(--mfrs-bone-white); font-weight: 700; }
+#${HUD_SHELL_ID} .mfrs-hud-chip span {
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 45%, #666);
+}
+#${HUD_SHELL_ID} .mfrs-hud-chip b {
+  min-width: 0;
+  color: var(--mfrs-bone-white);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 #${HUD_SHELL_ID} .mfrs-hud-exit {
   flex: 0 0 auto;
   min-width: 44px;
@@ -1177,19 +1220,63 @@ function ensureHudStyle() {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: rgba(8, 10, 10, 0.96);
+}
+/* Phase C3：关系卡扫读 — 名 + 一行描述 */
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-header {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+  padding: 8px 0 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-section {
+  padding: 10px 0 12px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-section-title {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-npc-list {
+  gap: 4px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-npc-item {
+  display: grid;
+  grid-template-columns: minmax(4.5em, auto) minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 5px 0 5px 8px;
+  border-left-width: 2px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-npc-name {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-npc-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
 }
 #${HUD_SHELL_ID} .mfrs-hud-relation-panel[hidden],
 #${HUD_SHELL_ID} .mfrs-hud-chat-host[hidden] {
   display: none !important;
 }
+/* Phase C2：拟办默认折叠 + 展开限高，不霸屏 */
 #${HUD_SHELL_ID} .mfrs-hud-actions {
   flex: 0 0 auto;
-  max-height: 38vh;
+  max-height: min(28vh, 220px);
   overflow: auto;
   border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 34%, transparent);
   background: rgba(7, 9, 9, 0.96);
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions:not([open]) {
+  max-height: none;
+  overflow: visible;
 }
 #${HUD_SHELL_ID} .mfrs-hud-actions > summary {
   list-style: none;
@@ -1197,44 +1284,104 @@ function ensureHudStyle() {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 6px 12px;
   font-size: 12px;
   letter-spacing: 0.1em;
   color: color-mix(in srgb, var(--mfrs-bone-white) 78%, #888);
   user-select: none;
 }
 #${HUD_SHELL_ID} .mfrs-hud-actions > summary::-webkit-details-marker { display: none; }
+#${HUD_SHELL_ID} .mfrs-hud-actions > summary::after {
+  content: '▸';
+  margin-left: auto;
+  color: #7f8e87;
+  font-size: 11px;
+  transition: transform 0.15s ease;
+}
+#${HUD_SHELL_ID} .mfrs-hud-actions[open] > summary::after { transform: rotate(90deg); }
 #${HUD_SHELL_ID} .mfrs-hud-actions-body {
-  padding: 0 10px 10px;
+  padding: 0 10px 8px;
+  max-height: min(22vh, 170px);
+  overflow: auto;
 }
 #${HUD_SHELL_ID} .mfrs-hud-left.is-emphasis {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mfrs-corpse-cyan) 70%, transparent);
   background: rgba(12, 18, 17, 0.94);
 }
+/* Phase C4：左栏档案更紧凑，折叠块保留 */
+#${HUD_SHELL_ID} .mfrs-hud-left {
+  padding: 8px 8px 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-left-title {
+  margin: 0 0 6px;
+  font-size: 11px;
+}
 #${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-fold {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
   background: rgba(10, 12, 12, 0.55);
 }
 #${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-fold-summary {
-  min-height: 36px;
-  padding: 6px 8px;
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 12px;
 }
 #${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-fold-body {
-  padding: 6px 8px 8px;
+  padding: 2px 8px 8px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-kv {
+  font-size: 12px;
+  line-height: 1.65;
+  padding: 1px 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-risk-copy {
+  display: none;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-risk-item {
+  margin-bottom: 8px;
 }
 #${HUD_SHELL_ID} .mfrs-hud-actions .mfrs-msg-action-btn {
   width: 100%;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
+  min-height: 40px;
+  padding: 8px 10px;
 }
+#${HUD_SHELL_ID} .mfrs-hud-actions .mfrs-msg-action-meta {
+  font-size: 11px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
+}
+@media (max-width: 1100px) {
+  #${HUD_SHELL_ID} .mfrs-hud-chip { max-width: min(100%, 14em); font-size: 10px; }
+  #${HUD_SHELL_ID} .mfrs-hud-top { padding: 5px 8px; }
+}
+@media (max-width: 800px) {
+  #${HUD_SHELL_ID} .mfrs-hud-top-chips { max-height: 5.8em; gap: 3px 8px; }
+  #${HUD_SHELL_ID} .mfrs-hud-chip { max-width: calc(50% - 6px); }
+  #${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-npc-item {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-relation-panel .mfrs-msg-npc-desc {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+}
+/* Phase B：壳内原生输入只做卷宗皮，不拆控件 / 不假代理 */
 #${HUD_SHELL_ID} .mfrs-hud-composer {
   flex: 0 0 auto;
   min-width: 0;
-  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
-  background: transparent;
+  max-height: min(34vh, 220px);
+  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 48%, transparent);
+  background:
+    linear-gradient(180deg, rgba(10, 12, 12, 0.98), rgba(8, 10, 10, 0.96));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, transparent);
+  padding: 6px 8px 8px;
 }
-/* 原生 #send_form 嵌进中栏底部，保留酒馆原控件/样式 */
 #${HUD_SHELL_ID} .mfrs-hud-composer > #send_form,
 #${HUD_SHELL_ID} .mfrs-hud-composer > #form_sheld {
   position: relative !important;
@@ -1245,10 +1392,110 @@ function ensureHudStyle() {
   max-width: 100% !important;
   margin: 0 !important;
   z-index: auto !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 38%, transparent) !important;
+  border-radius: 0 !important;
+  background:
+    linear-gradient(180deg, rgba(12, 14, 14, 0.96), rgba(9, 11, 11, 0.94)) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(61, 107, 102, 0.08),
+    0 -2px 12px rgba(0, 0, 0, 0.22) !important;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer > #send_form:focus-within,
+#${HUD_SHELL_ID} .mfrs-hud-composer > #form_sheld:focus-within {
+  border-color: color-mix(in srgb, var(--mfrs-corpse-cyan) 78%, #fff 6%) !important;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mfrs-corpse-cyan) 35%, transparent),
+    0 0 14px rgba(61, 107, 102, 0.18) !important;
 }
 #${HUD_SHELL_ID} .mfrs-hud-composer #send_textarea {
-  width: 100%;
-  max-width: 100%;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 44px !important;
+  max-height: min(22vh, 140px) !important;
+  margin: 0 !important;
+  padding: 10px 12px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--mfrs-bone-white) !important;
+  caret-color: var(--mfrs-corpse-cyan) !important;
+  font: inherit !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  resize: vertical !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #send_textarea::placeholder {
+  color: color-mix(in srgb, var(--mfrs-bone-white) 42%, #666) !important;
+  font-style: italic !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #send_textarea:focus {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* 发送钮强调；左右工具钮弱化但不隐藏（☰ / ✨ 等） */
+#${HUD_SHELL_ID} .mfrs-hud-composer #send_but {
+  flex: 0 0 auto !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 75%, #fff 10%) !important;
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 18%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent) !important;
+  border-radius: 0 !important;
+  text-shadow: none !important;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #send_but:hover,
+#${HUD_SHELL_ID} .mfrs-hud-composer #send_but:focus-visible {
+  color: #e8e0d0 !important;
+  background: color-mix(in srgb, var(--mfrs-blood-red) 28%, var(--mfrs-corpse-cyan) 18%) !important;
+  border-color: color-mix(in srgb, var(--mfrs-blood-red) 55%, var(--mfrs-corpse-cyan)) !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #leftSendForm,
+#${HUD_SHELL_ID} .mfrs-hud-composer #rightSendForm {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  flex: 0 0 auto !important;
+  opacity: 0.78;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #options_button,
+#${HUD_SHELL_ID} .mfrs-hud-composer #extensionsMenuButton,
+#${HUD_SHELL_ID} .mfrs-hud-composer #mes_continue,
+#${HUD_SHELL_ID} .mfrs-hud-composer #mes_impersonate,
+#${HUD_SHELL_ID} .mfrs-hud-composer .menu_button,
+#${HUD_SHELL_ID} .mfrs-hud-composer .fa-solid {
+  color: color-mix(in srgb, var(--mfrs-bone-white) 58%, #6a6a6a) !important;
+  text-shadow: none !important;
+  background: transparent !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #options_button:hover,
+#${HUD_SHELL_ID} .mfrs-hud-composer #extensionsMenuButton:hover,
+#${HUD_SHELL_ID} .mfrs-hud-composer #mes_continue:hover,
+#${HUD_SHELL_ID} .mfrs-hud-composer #mes_impersonate:hover,
+#${HUD_SHELL_ID} .mfrs-hud-composer .menu_button:hover {
+  color: var(--mfrs-bone-white) !important;
+  text-shadow: 0 0 8px rgba(61, 107, 102, 0.35) !important;
+}
+#${HUD_SHELL_ID} .mfrs-hud-composer #options_button,
+#${HUD_SHELL_ID} .mfrs-hud-composer #extensionsMenuButton {
+  min-width: 36px !important;
+  min-height: 36px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 #${HUD_SHELL_ID} .mfrs-hud-nav-btn {
   display: flex;
@@ -1295,13 +1542,14 @@ function ensureHudStyle() {
   flex: 0 0 auto;
   position: relative;
 }
+/* Phase D：菜单分组 / 窄屏全宽 */
 #${HUD_SHELL_ID} .mfrs-hud-tavern-menu {
   display: none;
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
   z-index: ${HUD_Z_MENU};
-  width: min(360px, 92vw);
+  width: min(380px, 92vw);
   max-height: min(70vh, 640px);
   overflow: auto;
   padding: 10px;
@@ -1311,9 +1559,15 @@ function ensureHudStyle() {
 }
 #${HUD_SHELL_ID}.is-tavern-menu-open .mfrs-hud-tavern-menu { display: block; }
 #${HUD_SHELL_ID} .mfrs-hud-menu-section {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
 }
-#${HUD_SHELL_ID} .mfrs-hud-menu-section:last-child { margin-bottom: 0; }
+#${HUD_SHELL_ID} .mfrs-hud-menu-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
 #${HUD_SHELL_ID} .mfrs-hud-menu-title {
   margin: 0 0 6px;
   padding: 0 2px;
@@ -1341,6 +1595,29 @@ function ensureHudStyle() {
   font-size: 12px;
   text-align: left;
 }
+@media (max-width: 800px) {
+  #${HUD_SHELL_ID} .mfrs-hud-tavern-menu {
+    position: fixed;
+    top: auto;
+    right: 8px;
+    left: 8px;
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-height: min(62vh, 520px);
+    padding: 12px 10px;
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-menu-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-menu-item {
+    min-height: 44px;
+    font-size: 13px;
+  }
+  #${HUD_SHELL_ID} .mfrs-hud-menu-item.is-wide {
+    grid-column: auto;
+  }
+}
 #${HUD_SHELL_ID} .mfrs-hud-menu-item:hover {
   border-color: var(--mfrs-corpse-cyan);
   background: color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, #0a0b0b);
@@ -1349,10 +1626,37 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-menu-item.is-disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  border-color: color-mix(in srgb, #666 50%, transparent);
+  background: rgba(20, 20, 20, 0.75);
+  color: color-mix(in srgb, var(--mfrs-bone-white) 45%, #666);
 }
 #${HUD_SHELL_ID} .mfrs-hud-menu-item.is-wide {
   grid-column: 1 / -1;
 }
+#${HUD_SHELL_ID} .mfrs-hud-menu-item.is-fail-flash {
+  border-color: color-mix(in srgb, var(--mfrs-blood-red) 70%, #888);
+  background: color-mix(in srgb, var(--mfrs-blood-red) 28%, #0a0b0b);
+}
+#mfrs-hud-toast {
+  display: none;
+  position: fixed;
+  left: 50%;
+  bottom: 88px;
+  z-index: 2147483600;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan, #3d6b66) 55%, transparent);
+  border-radius: 0;
+  background: rgba(8, 10, 10, 0.96);
+  color: #c8c0ae;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+#mfrs-hud-toast.is-visible { display: block; }
 #mfrs-hud-st-return {
   display: none;
   position: fixed;
@@ -1599,12 +1903,38 @@ body.${HUD_BODY_CLASS} .mfrs-msg-tri-center {
     bottom: calc(3% + min(70vh, 720px));
   }
 }
+/* E3：系统低动效 + 可选 body 标记 */
 @media (prefers-reduced-motion: reduce) {
   #${HUD_SHELL_ID} *,
   #${HUD_SHELL_ID} *::before,
   #${HUD_SHELL_ID} *::after { transition: none !important; animation: none !important; }
 }
+body.mfrs-hud-reduced-motion #${HUD_SHELL_ID} *,
+body.mfrs-hud-reduced-motion #${HUD_SHELL_ID} *::before,
+body.mfrs-hud-reduced-motion #${HUD_SHELL_ID} *::after {
+  transition: none !important;
+  animation: none !important;
+}
+body.mfrs-hud-reduced-motion #${HUD_SHELL_ID} .mfrs-hud-chat-host > #chat {
+  scroll-behavior: auto !important;
+}
 `;
+}
+
+function syncHudMotionPreference() {
+  let reduce = false;
+  try {
+    reduce = Boolean(hostWindow.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+  } catch {
+    reduce = false;
+  }
+  // 可选：localStorage.mfrs_hud_low_motion = '1' 强制低动效
+  try {
+    if (hostWindow.localStorage?.getItem?.('mfrs_hud_low_motion') === '1') reduce = true;
+  } catch {
+    // ignore storage access errors
+  }
+  doc.body.classList.toggle('mfrs-hud-reduced-motion', reduce);
 }
 
 function ensureHudShell(): HTMLElement {
@@ -1644,7 +1974,7 @@ function ensureHudShell(): HTMLElement {
 <section class="mfrs-hud-center">
   <div class="mfrs-hud-chat-host" data-mfrs-hud="chat-host"></div>
   <div class="mfrs-hud-relation-panel" data-mfrs-hud="relation-slot" hidden></div>
-  <details class="mfrs-hud-actions" data-mfrs-hud="actions" open>
+  <details class="mfrs-hud-actions" data-mfrs-hud="actions">
     <summary><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></summary>
     <div class="mfrs-hud-actions-body" data-mfrs-hud="actions-slot"></div>
   </details>
@@ -1674,11 +2004,11 @@ type HudTavernAction =
 
 type HudTavernMenuSection = { title: string; items: Array<{ label: string; action: HudTavernAction; wide?: boolean }> };
 
-/** 仅代理 ST 顶栏抽屉（截图 141154）；☰选项 / ✨扩展 已在原生输入条，不重复 */
+/** 仅代理 ST 顶栏 8 抽屉；☰选项 / ✨扩展工具在原生输入条，不重复 */
 function getHudTavernMenuSections(): HudTavernMenuSection[] {
   return [
     {
-      title: '酒馆顶栏',
+      title: '连接与格式',
       items: [
         {
           label: 'AI 响应配置',
@@ -1706,15 +2036,7 @@ function getHudTavernMenuSections(): HudTavernMenuSection[] {
             label: 'AI 回复格式化',
             yieldUi: true,
           },
-        },
-        {
-          label: '世界书',
-          action: {
-            kind: 'click',
-            selectors: ['#WIDrawerIcon', '[title="世界书"]', '.drawer-icon.fa-book-atlas', '.drawer-icon.fa-globe'],
-            label: '世界书',
-            yieldUi: true,
-          },
+          wide: true,
         },
         {
           label: '用户设置',
@@ -1725,12 +2047,26 @@ function getHudTavernMenuSections(): HudTavernMenuSection[] {
             yieldUi: true,
           },
         },
+      ],
+    },
+    {
+      title: '世界与角色',
+      items: [
         {
-          label: '扩展程序',
+          label: '世界书',
           action: {
             kind: 'click',
-            selectors: ['[title="扩展程序"].drawer-icon', '#extensions-settings-button', '.drawer-icon.fa-cubes'],
-            label: '扩展程序',
+            selectors: ['#WIDrawerIcon', '[title="世界书"]', '.drawer-icon.fa-book-atlas', '.drawer-icon.fa-globe'],
+            label: '世界书',
+            yieldUi: true,
+          },
+        },
+        {
+          label: '角色管理',
+          action: {
+            kind: 'click',
+            selectors: ['#rightNavDrawerIcon', '[title="角色管理"]', '.drawer-icon.fa-address-card'],
+            label: '角色管理',
             yieldUi: true,
           },
         },
@@ -1744,11 +2080,12 @@ function getHudTavernMenuSections(): HudTavernMenuSection[] {
           },
         },
         {
-          label: '角色管理',
+          // D1：与输入条 ✨「扩展工具」区分 —— 此处是扩展设置面板
+          label: '扩展设置',
           action: {
             kind: 'click',
-            selectors: ['#rightNavDrawerIcon', '[title="角色管理"]', '.drawer-icon.fa-address-card'],
-            label: '角色管理',
+            selectors: ['[title="扩展程序"].drawer-icon', '#extensions-settings-button', '.drawer-icon.fa-cubes'],
+            label: '扩展设置',
             yieldUi: true,
           },
         },
@@ -1809,28 +2146,103 @@ function yieldHudToStUi() {
   doc.body.classList.add(HUD_ST_UI_CLASS);
 }
 
-function closeOpenStDrawers() {
-  const openPanels = Array.from(
-    doc.querySelectorAll(
-      '.drawer-content.openDrawer, #left-nav-panel.openDrawer, #right-nav-panel.openDrawer',
-    ),
-  ) as HTMLElement[];
-  openPanels.forEach(panel => {
+const ST_OPEN_DRAWER_SELECTOR =
+  '.drawer-content.openDrawer, #left-nav-panel.openDrawer, #right-nav-panel.openDrawer';
+
+function hasOpenStDrawers() {
+  return Boolean(doc.querySelector(ST_OPEN_DRAWER_SELECTOR));
+}
+
+/** 强制收起 ST 抽屉 class（不依赖 click 时序） */
+function forceCloseStDrawerClasses() {
+  Array.from(doc.querySelectorAll(ST_OPEN_DRAWER_SELECTOR)).forEach(panel => {
+    panel.classList.remove('openDrawer');
+    panel.classList.add('closedDrawer');
     const drawer = panel.closest('.drawer') as HTMLElement | null;
-    const icon =
-      (drawer?.querySelector('.drawer-icon') as HTMLElement | null) ||
-      (drawer?.querySelector('[data-toggle="drawer"]') as HTMLElement | null);
-    try {
-      icon?.click();
-    } catch {
-      panel.classList.remove('openDrawer');
-      panel.classList.add('closedDrawer');
-    }
+    drawer?.querySelectorAll('.drawer-icon.openIcon').forEach(icon => {
+      icon.classList.remove('openIcon');
+      icon.classList.add('closedIcon');
+    });
   });
 }
 
+/** 关闭所有已打开的 ST 顶栏抽屉（A1/A4） */
+function closeOpenStDrawers() {
+  const openPanels = Array.from(doc.querySelectorAll(ST_OPEN_DRAWER_SELECTOR)) as HTMLElement[];
+  openPanels.forEach(panel => {
+    const drawer = panel.closest('.drawer') as HTMLElement | null;
+    const icon =
+      (drawer?.querySelector('.drawer-icon.openIcon') as HTMLElement | null) ||
+      (drawer?.querySelector('.drawer-icon') as HTMLElement | null) ||
+      (drawer?.querySelector('[data-toggle="drawer"]') as HTMLElement | null) ||
+      (panel.previousElementSibling as HTMLElement | null);
+    try {
+      // 仅点已打开的 icon，避免与强制 class 清理形成 toggle 竞态
+      if (icon?.classList.contains('openIcon') && typeof icon.click === 'function') {
+        icon.click();
+      }
+    } catch {
+      // ignore and force below
+    }
+  });
+  forceCloseStDrawerClasses();
+  return openPanels.length;
+}
+
+function showHudToast(message: string, ms = 2200) {
+  let toast = doc.getElementById('mfrs-hud-toast') as HTMLElement | null;
+  if (!toast) {
+    toast = doc.createElement('div');
+    toast.id = 'mfrs-hud-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    doc.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('is-visible');
+  if (hudToastTimer !== null) {
+    hostWindow.clearTimeout(hudToastTimer);
+    hudToastTimer = null;
+  }
+  hudToastTimer = hostWindow.setTimeout(() => {
+    toast?.classList.remove('is-visible');
+    hudToastTimer = null;
+  }, ms);
+}
+
+function clearHudToast() {
+  if (hudToastTimer !== null) {
+    hostWindow.clearTimeout(hudToastTimer);
+    hudToastTimer = null;
+  }
+  doc.getElementById('mfrs-hud-toast')?.classList.remove('is-visible');
+}
+
+function markHudMenuItemFailed(btn: HTMLElement | null, label: string, detail: string) {
+  const tip = `${label}：${detail}`;
+  console.warn(`[消息内面板] ${tip}`);
+  showHudToast(tip);
+  if (!btn) return;
+  btn.classList.add('is-disabled', 'is-fail-flash');
+  btn.setAttribute('aria-disabled', 'true');
+  btn.setAttribute('title', tip);
+  btn.setAttribute('disabled', 'true');
+  hostWindow.setTimeout(() => {
+    btn.classList.remove('is-fail-flash');
+  }, 900);
+}
+
+/** 关闭 ST 配置叠层 + 全部 open 抽屉（A4） */
 function restoreHudFromStUi() {
+  if (hudMenuOpenTimer !== null) {
+    hostWindow.clearTimeout(hudMenuOpenTimer);
+    hudMenuOpenTimer = null;
+  }
   closeOpenStDrawers();
+  forceCloseStDrawerClasses();
+  // ST 抽屉 click 可能异步回写 openDrawer，延迟再清两次
+  hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 50);
+  hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 160);
   doc.body.classList.remove(HUD_ST_UI_CLASS);
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (shell?.classList.contains('is-active')) {
@@ -1858,7 +2270,18 @@ function renderHudTavernMenu(shell: Element) {
         .map(item => {
           const wide = item.wide ? ' is-wide' : '';
           const payload = encodeURIComponent(JSON.stringify(item.action));
-          return `<button type="button" class="mfrs-hud-menu-item${wide}" data-mfrs-hud-menu-action="${payload}" role="menuitem">${_.escape(item.label)}</button>`;
+          let unavailable = false;
+          let title = item.label;
+          if (item.action.kind === 'click') {
+            const target = findHudActionTarget(item.action.selectors, item.action.matchText);
+            if (!target) {
+              unavailable = true;
+              title = `${item.label}：当前界面未找到入口`;
+            }
+          }
+          const disabledClass = unavailable ? ' is-disabled' : '';
+          const disabledAttr = unavailable ? ' disabled aria-disabled="true"' : '';
+          return `<button type="button" class="mfrs-hud-menu-item${wide}${disabledClass}" data-mfrs-hud-menu-action="${payload}" role="menuitem" title="${_.escape(title)}"${disabledAttr}>${_.escape(item.label)}</button>`;
         })
         .join('');
       return `<section class="mfrs-hud-menu-section"><p class="mfrs-hud-menu-title">${_.escape(section.title)}</p><div class="mfrs-hud-menu-grid">${items}</div></section>`;
@@ -1881,7 +2304,11 @@ function toggleHudTavernMenu() {
   else openHudTavernMenu();
 }
 
-function runHudTavernAction(action: HudTavernAction) {
+function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | null) {
+  if (hudMenuOpenTimer !== null) {
+    hostWindow.clearTimeout(hudMenuOpenTimer);
+    hudMenuOpenTimer = null;
+  }
   if (action.kind === 'exit') {
     closeHudTavernMenu();
     exitHudImmersive();
@@ -1895,41 +2322,68 @@ function runHudTavernAction(action: HudTavernAction) {
   if (action.kind === 'continue') {
     closeHudTavernMenu();
     const target = findHudActionTarget(['#option_continue', '#mes_continue']);
-    target?.click();
+    if (!target) {
+      markHudMenuItemFailed(sourceBtn ?? null, action.label || '继续', '未找到入口');
+      return;
+    }
+    target.click();
     return;
   }
   if (action.kind === 'regenerate') {
     closeHudTavernMenu();
     const target = findHudActionTarget(['#option_regenerate']);
-    target?.click();
+    if (!target) {
+      markHudMenuItemFailed(sourceBtn ?? null, action.label || '重新生成', '未找到入口');
+      return;
+    }
+    target.click();
     return;
   }
   if (action.kind === 'stop') {
     closeHudTavernMenu();
     const target = findHudActionTarget(['#mes_stop', '#stscript_stop']);
-    target?.click();
+    if (!target) {
+      markHudMenuItemFailed(sourceBtn ?? null, action.label || '停止', '未找到入口');
+      return;
+    }
+    target.click();
     return;
   }
   if (action.kind === 'click') {
     const target = findHudActionTarget(action.selectors, action.matchText);
     if (!target) {
-      console.warn(`[消息内面板] 酒馆菜单未找到入口: ${action.label}`);
+      markHudMenuItemFailed(sourceBtn ?? null, action.label, '当前界面未找到入口');
       return;
     }
     closeHudTavernMenu();
+    // A1：先关已打开的 ST 抽屉，再叠层并打开目标，避免双抽屉叠在一起
+    const closedCount = closeOpenStDrawers();
     if (action.yieldUi) yieldHudToStUi();
-    // 先应用叠层样式再点 ST 图标，避免抽屉在壳下打开
+    const openDelay = closedCount > 0 || hasOpenStDrawers() ? 80 : 0;
     const fire = () => {
+      hudMenuOpenTimer = null;
+      const live = findHudActionTarget(action.selectors, action.matchText) || target;
       try {
-        target.click();
+        live.click();
+        // D3：成功打开反馈（与失败 toast 共用通道，短时显示）
+        if (action.yieldUi) {
+          hostWindow.setTimeout(() => {
+            if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
+              showHudToast(`已打开：${action.label}`, 1400);
+            }
+          }, 120);
+        }
       } catch (error) {
+        markHudMenuItemFailed(sourceBtn ?? null, action.label, '点击入口失败');
         console.warn(`[消息内面板] 酒馆菜单点击失败: ${action.label}`, error);
       }
     };
     if (typeof hostWindow.requestAnimationFrame === 'function') {
-      hostWindow.requestAnimationFrame(() => hostWindow.setTimeout(fire, 0));
+      hostWindow.requestAnimationFrame(() => {
+        hudMenuOpenTimer = hostWindow.setTimeout(fire, openDelay);
+      });
     } else {
-      hostWindow.setTimeout(fire, 0);
+      hudMenuOpenTimer = hostWindow.setTimeout(fire, openDelay);
     }
   }
 }
@@ -2047,11 +2501,32 @@ function buildHudResourceSectionsHtml(data: StatusData): string {
 }
 
 function buildHudDossierHtml(data: StatusData): string {
-  const base = buildDossierSectionsHtml(data).replace(
+  // C4：身份/风险默认展开；事件/厉鬼默认折叠；资源用结构化只读块
+  let base = buildDossierSectionsHtml(data).replace(
     /<details class="mfrs-msg-fold" data-fold="resource"[\s\S]*?<\/details>/,
     '',
   );
-  return `${base}${buildHudResourceSectionsHtml(data)}`;
+  base = base
+    .replace(
+      /<details class="mfrs-msg-fold" data-fold="event" open>/,
+      '<details class="mfrs-msg-fold" data-fold="event">',
+    )
+    .replace(
+      /<details class="mfrs-msg-fold" data-fold="ghost" open>/,
+      '<details class="mfrs-msg-fold" data-fold="ghost">',
+    );
+  let resource = buildHudResourceSectionsHtml(data);
+  resource = resource.replace(
+    /<details class="mfrs-msg-fold" data-fold="resource" open>/g,
+    '<details class="mfrs-msg-fold" data-fold="resource">',
+  );
+  return `${base}${resource}`;
+}
+
+function clipHudChipText(value: string, max = 22): string {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (text.length <= max) return text;
+  return `${text.slice(0, Math.max(1, max - 1))}…`;
 }
 
 function applyHudTopChips(shell: Element, data: StatusData) {
@@ -2064,9 +2539,46 @@ function applyHudTopChips(shell: Element, data: StatusData) {
     danger: brand.danger || '未知',
   };
   Object.entries(map).forEach(([key, value]) => {
-    const node = shell.querySelector(`[data-mfrs-hud-chip="${key}"]`);
-    if (node) node.textContent = value;
+    const node = shell.querySelector(`[data-mfrs-hud-chip="${key}"]`) as HTMLElement | null;
+    if (!node) return;
+    const full = value;
+    const shown = clipHudChipText(full, key === 'event' || key === 'location' ? 18 : 14);
+    node.textContent = shown;
+    node.title = full;
   });
+}
+
+/** C3：关系视图扫读版（名 + 一句描述） */
+function buildHudRelationHtml(data: StatusData): string {
+  const location = valueText(data.所在位置);
+  const phase = valueText(_.get(data, '主线进度.当前阶段'));
+  const npcs = data.在场人物 || [];
+  const npcsHtml = npcs.length
+    ? npcs
+        .map((npc: unknown) => {
+          const raw = String(npc ?? '').trim();
+          const m = raw.match(/^([^-—－:：]+)[-—－:：]\s*(.+)$/);
+          if (m) {
+            const name = m[1].trim();
+            const desc = m[2].trim().replace(/\s+/g, ' ');
+            const short = desc.length > 48 ? `${desc.slice(0, 47)}…` : desc;
+            return `<div class="mfrs-msg-npc-item" title="${_.escape(raw)}"><span class="mfrs-msg-npc-name">${_.escape(name)}</span><span class="mfrs-msg-npc-desc">${_.escape(short)}</span></div>`;
+          }
+          return `<div class="mfrs-msg-npc-item" title="${_.escape(raw)}"><span class="mfrs-msg-npc-name">${_.escape(raw)}</span></div>`;
+        })
+        .join('')
+    : '<div class="mfrs-msg-empty">暂无在场人物</div>';
+
+  return `
+<div class="mfrs-msg-header">
+  <div class="mfrs-msg-header-item"><i class="fa-solid fa-location-dot mfrs-msg-header-ico" aria-hidden="true"></i><span class="mfrs-msg-header-lbl">位置</span><span class="mfrs-msg-header-val" title="${_.escape(location)}">${_.escape(clipHudChipText(location, 20))}</span></div>
+  <div class="mfrs-msg-header-item"><i class="fa-solid fa-layer-group mfrs-msg-header-ico" aria-hidden="true"></i><span class="mfrs-msg-header-lbl">阶段</span><span class="mfrs-msg-header-val" title="${_.escape(phase)}">${_.escape(clipHudChipText(phase, 16))}</span></div>
+</div>
+<div class="mfrs-msg-section">
+  <div class="mfrs-msg-section-title"><i class="fa-solid fa-users" aria-hidden="true"></i><span>在场人物</span></div>
+  <div class="mfrs-msg-npc-list">${npcsHtml}</div>
+</div>
+`;
 }
 
 function applyHudCenterView(shell: Element, view: typeof hudActiveView) {
@@ -2098,7 +2610,10 @@ function openHudSideDrawer(side: 'left' | 'right') {
 }
 
 function isHudCabinetOpen() {
-  return Boolean(doc.getElementById(FIXED_HOST_ID)?.classList.contains('mfrs-hud-cabinet-open'));
+  return Boolean(
+    doc.getElementById(FIXED_HOST_ID)?.classList.contains('mfrs-hud-cabinet-open') ||
+      doc.getElementById(HUD_SHELL_ID)?.classList.contains('is-cabinet-open'),
+  );
 }
 
 function setHudView(view: typeof hudActiveView) {
@@ -2162,7 +2677,7 @@ function refreshHudPanels(force = false) {
   if (actionsSlot) actionsSlot.innerHTML = buildActionsHtml(data);
 
   const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
-  if (relationSlot) relationSlot.innerHTML = buildRelationTabHtml(data);
+  if (relationSlot) relationSlot.innerHTML = buildHudRelationHtml(data);
 
   applyHudCenterView(shell, hudActiveView === 'cabinet' ? 'story' : hudActiveView);
   setHudNavActive(hudActiveView === 'cabinet' ? 'cabinet' : hudActiveView);
@@ -2185,13 +2700,15 @@ function closeHudCabinetLayer() {
 function openHudCabinetLayer() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   const host = doc.getElementById(FIXED_HOST_ID);
+  closeHudSideDrawers();
+  // 即使固定 host 未就绪也标记壳层开启，保证 Esc 分层可关
+  shell?.classList.add('is-cabinet-open');
   if (!host) {
     openArchiveCabinet();
+    showHudToast('档案柜未就绪：请确认固定状态栏脚本已加载');
     return;
   }
-  closeHudSideDrawers();
   host.classList.add('mfrs-hud-cabinet-open');
-  shell?.classList.add('is-cabinet-open');
   const expandBtn = host.querySelector(
     'button[aria-expanded="false"]',
   ) as HTMLElement | null;
@@ -2231,12 +2748,18 @@ function handleHudShellClick(e: Event) {
   if (menuActionBtn) {
     e.preventDefault();
     e.stopPropagation();
+    if (menuActionBtn.hasAttribute('disabled') || menuActionBtn.classList.contains('is-disabled')) {
+      const tip = menuActionBtn.getAttribute('title') || '该项当前不可用';
+      showHudToast(tip);
+      return;
+    }
     const raw = menuActionBtn.getAttribute('data-mfrs-hud-menu-action');
     if (!raw) return;
     try {
       const action = JSON.parse(decodeURIComponent(raw)) as HudTavernAction;
-      runHudTavernAction(action);
+      runHudTavernAction(action, menuActionBtn);
     } catch (error) {
+      markHudMenuItemFailed(menuActionBtn, '菜单', '动作解析失败');
       console.warn('[消息内面板] 酒馆菜单动作解析失败', error);
     }
     return;
@@ -2281,16 +2804,17 @@ function handleHudShellClick(e: Event) {
 }
 
 function handleHudKeydown(e: KeyboardEvent) {
+  // A3 Esc 分层：菜单 → ST 抽屉 → 柜 → 侧抽屉；默认不退出沉浸
   if (e.key === 'Escape' && isHudMounted()) {
-    if (doc.body.classList.contains(HUD_ST_UI_CLASS)) {
-      e.preventDefault();
-      restoreHudFromStUi();
-      return;
-    }
     const shell = doc.getElementById(HUD_SHELL_ID);
     if (shell?.classList.contains('is-tavern-menu-open')) {
       e.preventDefault();
       closeHudTavernMenu();
+      return;
+    }
+    if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
+      e.preventDefault();
+      restoreHudFromStUi();
       return;
     }
     if (isHudCabinetOpen()) {
@@ -2369,6 +2893,7 @@ function mountHudImmersive() {
   shell.classList.add('is-active');
   shell.setAttribute('aria-hidden', 'false');
   hudMounted = true;
+  syncHudMotionPreference();
   closeHudCabinetLayer();
   closeHudSideDrawers();
   bindHudShellEvents();
@@ -2384,6 +2909,7 @@ function unmountHudImmersive() {
   closeHudCabinetLayer();
   closeHudTavernMenu();
   restoreHudFromStUi();
+  clearHudToast();
 
   restoreDomNode(chat, hudChatRestore);
   hudChatRestore = null;
@@ -2401,9 +2927,10 @@ function unmountHudImmersive() {
   hudPanelsRenderKey = '';
   shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-tavern-menu-open');
   doc.getElementById('mfrs-hud-st-return')?.remove();
+  doc.getElementById('mfrs-hud-toast')?.remove();
   rebindMessageObserverToChat();
-  // 退出沉浸后补一次全历史 α 面板（沉浸态只维护最新楼）
-  scheduleProcessAllMessages(0);
+  // E1/E4：退出沉浸立即补全历史 α 面板（不走 debounce）
+  processAllMessages({ fullHistory: true });
 }
 
 function exitHudImmersive() {
@@ -2433,8 +2960,11 @@ function syncHudImmersiveWithCard() {
 function destroyHudImmersive() {
   unmountHudImmersive();
   unbindHudShellEvents();
+  clearHudToast();
   doc.getElementById(HUD_SHELL_ID)?.remove();
   doc.getElementById(HUD_STYLE_ID)?.remove();
+  doc.getElementById('mfrs-hud-toast')?.remove();
+  doc.getElementById('mfrs-hud-st-return')?.remove();
   hudImmersivePreferred = true;
   hudActiveView = 'story';
   hudPanelsRenderKey = '';
@@ -3507,9 +4037,11 @@ $(() => {
     observer.disconnect();
     unsubscribeRefreshEvents();
     clearRefreshTimers();
-    unmountHudImmersive();
+    // E4：切非神秘复苏卡销毁壳，避免孤儿 #mfrs-hud-shell / toast / st-return
+    destroyHudImmersive();
     cleanupOwnedMessageUi();
     style.remove();
+    doc.body.classList.remove('mfrs-hud-reduced-motion');
     if (hostWindow.MysteryMessagePanel === messagePanelApi) {
       delete hostWindow.MysteryMessagePanel;
     }
@@ -3523,10 +4055,12 @@ $(() => {
     mountStyle();
     mountApi();
     subscribeRefreshEvents();
+    // E2：优先绑 #chat，禁止默认挂 body 扫全站
     observedChatContainer = doc.querySelector('#chat') || doc.body;
     observerEnabled = true;
     resumeMessageObserver();
-    processAllMessages();
+    syncHudMotionPreference();
+    processAllMessages({ fullHistory: true });
     syncHudImmersiveWithCard();
     if (!runtimeActive) scheduleBurstRefresh();
     runtimeActive = true;
@@ -3562,6 +4096,7 @@ $(() => {
     disposed = true;
     clearChatChangedTimers();
     deactivateMessagePanelRuntime();
+    // destroy 已在 deactivate 内调用；再清一次防竞态残留
     destroyHudImmersive();
     chatChangedSubscription?.stop();
     chatChangedSubscription = null;
@@ -3572,6 +4107,10 @@ $(() => {
     window.removeEventListener('pagehide', cleanup);
     messageObserver = null;
     observedChatContainer = null;
+    doc.body.classList.remove(HUD_BODY_CLASS, 'mfrs-hud-reduced-motion');
+    if (hostWindow.MysteryMessagePanel === messagePanelApi) {
+      delete hostWindow.MysteryMessagePanel;
+    }
     if (hostWindow.__mfrsMessagePanelCleanup__ === cleanup) {
       delete hostWindow.__mfrsMessagePanelCleanup__;
     }

@@ -26,9 +26,10 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-const CDN_REF = '5b22070bc6dc6b77d1a6180aaac5c5b1e50003be';  // v8.12.3: fix ST drawer z-index under immersive shell
+// v8.13.0: A–E UX polish (menu/input/density/perf). Set CDN_REF to the commit that contains dist/src after push.
+const CDN_REF = 'PENDING_SET_AFTER_PUSH_8_13_0';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8123-st-zfix';
+const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8130-ux-polish';
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -55,7 +56,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.12.3',
+    releaseVersion: '8.13.0',
   },
 ];
 
