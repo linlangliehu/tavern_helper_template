@@ -775,17 +775,28 @@ function withMessageObserverPaused(callback: () => void) {
   }
 }
 
-/** 处理所有 AI 消息（注入面板 + 包装叙事） */
-function processAllMessages() {
+/** 处理 AI 消息（注入面板 + 包装叙事）。沉浸态只维护最新楼，避免长聊天全量 DOM 重建卡顿 */
+function processAllMessages(options: { fullHistory?: boolean } = {}) {
+  const fullHistory = options.fullHistory === true || !isHudMounted();
   withMessageObserverPaused(() => {
     cleanupUserMessages();
-    const messages = doc.querySelectorAll('.mes:not(.user)');
-    messages.forEach(mes => {
-      injectBrandForMessage(mes);
-      wrapNarrativeText(mes);
-      injectPanelForMessage(mes);
-      composeTriCenter(mes);
-    });
+    if (fullHistory) {
+      const messages = doc.querySelectorAll('.mes:not(.user)');
+      messages.forEach(mes => {
+        injectBrandForMessage(mes);
+        wrapNarrativeText(mes);
+        injectPanelForMessage(mes);
+        composeTriCenter(mes);
+      });
+    } else {
+      const last = getLatestAiMessageElement();
+      if (last) {
+        injectBrandForMessage(last);
+        wrapNarrativeText(last);
+        injectPanelForMessage(last);
+        composeTriCenter(last);
+      }
+    }
   });
   refreshHudPanels();
 }
@@ -825,17 +836,21 @@ function scheduleProcessAllMessages(delay = 200) {
 }
 
 function scheduleBurstRefresh() {
-  [200, 800, 2000, 4000].forEach(scheduleProcessAllMessages);
+  // 沉浸态少打几轮全量刷新，降低生成结束时的主线程尖峰
+  const delays = isHudMounted() ? [250, 1200] : [200, 800, 2000, 4000];
+  delays.forEach(scheduleProcessAllMessages);
 }
 
 function scheduleIdleRefresh(delay = 800) {
   if (idleRefreshTimer !== undefined) {
     hostWindow.clearTimeout(idleRefreshTimer);
   }
+  // 沉浸态 Mutation 更密，加长 debounce
+  const wait = isHudMounted() ? Math.max(delay, 1200) : delay;
   idleRefreshTimer = hostWindow.setTimeout(() => {
     idleRefreshTimer = undefined;
     processAllMessages();
-  }, delay);
+  }, wait);
 }
 
 function mutationTouchesChatMessage(mutation: MutationRecord) {
@@ -1432,6 +1447,39 @@ body.${HUD_ST_UI_CLASS} #${HUD_SHELL_ID}.is-active {
 }
 body.${HUD_BODY_CLASS} {
   overflow: hidden !important;
+}
+/* 沉浸态性能：关掉 α 楼层高成本动画，历史楼 content-visibility */
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-panel,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-panel::before,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-panel::after,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-blood-drop,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-risk-item .mfrs-msg-risk-fill,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-section-title,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-action-btn,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-brand,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-brand::after {
+  animation: none !important;
+}
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-panel::after,
+body.${HUD_BODY_CLASS} .mes.last_mes .mfrs-msg-blood-layer {
+  display: none !important;
+}
+body.${HUD_BODY_CLASS} #chat {
+  contain: layout style;
+}
+body.${HUD_BODY_CLASS} #chat > .mes {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
+}
+body.${HUD_BODY_CLASS} #chat > .mes.last_mes {
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+}
+#${HUD_SHELL_ID} .mfrs-hud-chat-host,
+#${HUD_SHELL_ID} .mfrs-hud-left,
+#${HUD_SHELL_ID} .mfrs-hud-right,
+#${HUD_SHELL_ID} .mfrs-hud-actions {
+  contain: layout style;
 }
 body.${HUD_BODY_CLASS} #${FIXED_HOST_ID}:not(.mfrs-hud-cabinet-open) {
   display: none !important;
@@ -2291,6 +2339,8 @@ function unmountHudImmersive() {
   shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-tavern-menu-open');
   doc.getElementById('mfrs-hud-st-return')?.remove();
   rebindMessageObserverToChat();
+  // 退出沉浸后补一次全历史 α 面板（沉浸态只维护最新楼）
+  scheduleProcessAllMessages(0);
 }
 
 function exitHudImmersive() {
