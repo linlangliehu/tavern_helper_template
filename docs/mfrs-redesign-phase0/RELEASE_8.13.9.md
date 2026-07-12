@@ -18,7 +18,8 @@
 | 项 | 值 |
 |----|-----|
 | 版本 | **8.13.9** |
-| 功能/dist commit | （见 `publish-card.mjs` `CDN_REF`） |
+| 功能/dist commit | `55adbd8f32a2` |
+| CDN_REF | `55adbd8f32a2…` |
 | cache | `…-v8139-close-sp-panel` |
 
 ## 使用
