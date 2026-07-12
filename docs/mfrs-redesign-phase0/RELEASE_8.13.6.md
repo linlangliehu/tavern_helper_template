@@ -19,6 +19,8 @@
 | 项 | 值 |
 |----|-----|
 | 版本 | **8.13.6** |
+| 功能/dist commit | `d719faa` |
+| CDN_REF | `d719faa…` |
 | cache | `…-v8136-overlay-fix` |
 
 ## 使用
