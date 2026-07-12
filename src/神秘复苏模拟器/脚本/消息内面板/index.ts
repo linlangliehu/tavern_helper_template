@@ -152,7 +152,90 @@ type ActionSuggestion = {
   provisional?: boolean;
 };
 
-/** 仅收集 MVU/表中的真实行动建议；无数据返回空（不注入开局占位） */
+/** 最新 AI 楼原始正文（含被正则隐藏的 UpdateVariable；优先 chat 原始 mes） */
+function getLatestAiMessageRawText(): string {
+  const mes = getLatestAiMessageElement();
+  if (!mes) return '';
+  try {
+    const mesid = mes.getAttribute('mesid');
+    if (mesid != null) {
+      const messageId = parseInt(mesid, 10);
+      if (!Number.isNaN(messageId)) {
+        const msgs = getChatMessages(messageId);
+        const hit = Array.isArray(msgs) ? msgs[0] : null;
+        const raw = String((hit as any)?.message ?? (hit as any)?.mes ?? '').trim();
+        if (raw) return raw;
+      }
+    }
+  } catch {
+    // fall through to DOM
+  }
+  return String(mes.querySelector('.mes_text')?.textContent ?? '').trim();
+}
+
+/**
+ * 从 AI 正文 UpdateVariable/JSONPatch 回退解析行动建议。
+ * MVU 未写回时仍可展示（只读，不写库）。
+ */
+function parseActionSuggestionsFromMessageText(message: string): ActionSuggestion[] {
+  if (!message || !/行动建议|"选项"/.test(message)) return [];
+  const byKey = new Map<string, ActionSuggestion>();
+  const push = (keyRaw: string, textRaw: string, metaRaw = '') => {
+    const key = valueText(keyRaw, '').toUpperCase();
+    const text = valueText(textRaw, '');
+    if (!key || !/^[A-D]$/.test(key) || !text || byKey.has(key)) return;
+    byKey.set(key, { key, text, meta: valueText(metaRaw, ''), fill: key === 'D' && text === '自定义行动' ? '' : text });
+  };
+
+  // 1) JSONPatch replace /行动建议 value 数组
+  try {
+    const patchBlocks = message.match(/<JSONPatch\b[^>]*>[\s\S]*?<\/JSONPatch>/gi) || [];
+    for (const block of patchBlocks) {
+      const inner = block.replace(/<\/?JSONPatch\b[^>]*>/gi, '').trim();
+      if (!inner) continue;
+      const parsed = JSON.parse(inner);
+      const ops = Array.isArray(parsed) ? parsed : [parsed];
+      for (const op of ops) {
+        if (!op || typeof op !== 'object') continue;
+        const path = String((op as any).path ?? '');
+        const root = path.replace(/^\/+/, '').split('/')[0];
+        if (root !== '行动建议') continue;
+        const value = (op as any).value;
+        if (!Array.isArray(value)) continue;
+        value.forEach((item: any, i: number) => {
+          if (!item || typeof item !== 'object') return;
+          const key = valueText(item.选项 ?? item.option ?? item.key ?? String.fromCharCode(65 + i), '');
+          const text = valueText(item.思路 ?? item.text ?? item.行动 ?? item.label, '');
+          const metaParts = [
+            valueText(item.主要风险 ?? item.risk, '') && `风险：${valueText(item.主要风险 ?? item.risk, '')}`,
+            valueText(item.预期收益 ?? item.gain, '') && `收益：${valueText(item.预期收益 ?? item.gain, '')}`,
+            valueText(item.死亡风险, '') && `死亡：${valueText(item.死亡风险, '')}`,
+            valueText(item.复苏风险, '') && `复苏：${valueText(item.复苏风险, '')}`,
+          ].filter(Boolean);
+          push(key, text, metaParts.join('｜'));
+        });
+      }
+    }
+  } catch {
+    // ignore JSON parse failures; fall through to regex
+  }
+
+  // 2) 宽松正则：正文中散落的 {"选项":"A","思路":"..."}
+  if (!byKey.size) {
+    const re =
+      /\{\s*"选项"\s*:\s*"([A-D])"\s*,\s*"思路"\s*:\s*"((?:\\.|[^"\\])*)"(?:[\s\S]*?"主要风险"\s*:\s*"((?:\\.|[^"\\])*)")?/g;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(message))) {
+      const text = match[2].replace(/\\"/g, '"').replace(/\\n/g, ' ').trim();
+      const risk = match[3] ? match[3].replace(/\\"/g, '"').trim() : '';
+      push(match[1], text, risk ? `风险：${risk}` : '');
+    }
+  }
+
+  return ['A', 'B', 'C', 'D'].map(k => byKey.get(k)).filter((x): x is ActionSuggestion => Boolean(x));
+}
+
+/** 仅收集真实行动建议：MVU → 表 → 最新 AI 楼 UpdateVariable 回退；无数据返回空 */
 function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
   const fromStat = Array.isArray(data.行动建议) ? data.行动建议 : [];
   const list: ActionSuggestion[] = [];
@@ -185,6 +268,9 @@ function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
         list.push({ key, text, meta: metaParts.join('｜'), fill: text });
       });
     }
+  }
+  if (!list.length) {
+    list.push(...parseActionSuggestionsFromMessageText(getLatestAiMessageRawText()));
   }
   return list;
 }

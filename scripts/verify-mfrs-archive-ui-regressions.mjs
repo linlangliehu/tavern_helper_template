@@ -622,6 +622,14 @@ addCheck('phase5', 'C1-C4 hud information density', () => {
   assert.ok(sources.message.includes('function hasRealActionSuggestions'), 'gate HUD on real 行动建议');
   assert.ok(sources.message.includes('function collectRealActionSuggestions'), 'collect real actions only');
   assert.ok(
+    sources.message.includes('function parseActionSuggestionsFromMessageText'),
+    'fallback parse 行动建议 from UpdateVariable when MVU empty',
+  );
+  assert.ok(
+    sources.message.includes('function getLatestAiMessageRawText'),
+    'must read raw AI mes for UpdateVariable fallback',
+  );
+  assert.ok(
     sources.message.includes('actionsSlot.innerHTML = buildActionsHtml(data)') ||
       sources.message.includes('actionsSlot.innerHTML=buildActionsHtml(data)'),
     'HUD actions slot filled with buildActionsHtml',
