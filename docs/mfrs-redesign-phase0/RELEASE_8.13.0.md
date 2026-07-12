@@ -37,27 +37,21 @@
 - 不改世界书 / schema / SQL / 拟办不 `generate()`
 - 固定 host 挂载契约不变
 
-## CDN（发版时填写）
+## CDN
 
 | 项 | 值 |
 |----|-----|
-| 资源 `CDN_REF` | *commit after push* |
-| cache | `…-v8130-ux-polish` |
+| 资源 `CDN_REF` | `6996f0e808e87fdad4b72b2b459955a3782c8bc6` |
+| cache | `phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v8130-ux-polish` |
 | 版本 | **8.13.0** |
 
-## 校验清单
+## 校验
 
 ```text
-node scripts/verify-mfrs-archive-ui-regressions.mjs --stage phase5
-pnpm build
-# commit + push → 将 CDN_REF 改为该 commit
-pnpm publish-card
-node scripts/verify-mfrs-release-png.mjs   # 若仓库有此脚本
+verify-mfrs-release-png 8.13.0 / 6996f0e / …-v8130-ux-polish PASS (regex=33, scripts=8)
 ```
-
-期望：version 8.13.0 / CDN_REF / cache / regex=33 / scripts=8 PASS
 
 ## 用户注意
 
-- 必须**重新导入** 8.13.0 发布版 PNG（旧 CDN 不会自动更新脚本）
-- 开发验收可用：`docs/mfrs-redesign-phase0/local-test/神秘复苏模拟器-β本地验收.png` + `127.0.0.1:5500`
+- 必须**重新导入** `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（8.13.0）
+- 旧 8.12.3 卡仍指向 `@5b22070`，不会自动获得 A–E
