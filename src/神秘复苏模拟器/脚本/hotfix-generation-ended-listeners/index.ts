@@ -63,7 +63,14 @@ type HostWindow = Window & {
       saveChat?: () => unknown | Promise<unknown>;
       characterId?: string | number;
       event_types?: Record<string, string>;
+      activateSendButtons?: () => void;
+      deactivateSendButtons?: () => void;
+      stopGeneration?: () => void;
     };
+  };
+  toastr?: {
+    warning?: (message: string, title?: string, options?: Record<string, unknown>) => void;
+    info?: (message: string, title?: string, options?: Record<string, unknown>) => void;
   };
   Mvu?: {
     parseMessage?: (message: string, oldData: MvuData) => Promise<MvuData | undefined>;
@@ -528,6 +535,47 @@ async function handleMessageReceived(eventMessageId?: unknown) {
   await cleanProtocolBlocks(lastMessageIndex);
 }
 
+function recoverSendUiAfterEmptyGeneration(
+  hostWindow: HostWindow,
+  lastMessage: ChatMessage | undefined,
+  lastMessageIndex: number,
+  reason: string,
+) {
+  if (!lastMessage || lastMessage.is_user) return false;
+  const text = typeof lastMessage.mes === 'string' ? lastMessage.mes.trim() : '';
+  if (text) return false;
+
+  const context = getSillyTavernContext(hostWindow);
+  try {
+    context?.activateSendButtons?.();
+  } catch (error) {
+    console.debug('[Hotfix] activateSendButtons 失败', error);
+  }
+
+  try {
+    const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
+    if (stopButton && getComputedStyle(stopButton).display !== 'none') {
+      stopButton.click();
+    }
+  } catch {
+    // ignore
+  }
+
+  try {
+    hostWindow.toastr?.warning?.('本轮 AI 回复为空，请重试或重新生成。', '神秘复苏', {
+      timeOut: 5000,
+    });
+  } catch {
+    // ignore
+  }
+
+  console.warn('[Hotfix] 检测到空 AI 回复，已尝试恢复发送按钮', {
+    messageIndex: lastMessageIndex,
+    reason,
+  });
+  return true;
+}
+
 async function handleGenerationEnded(eventMessageId?: unknown) {
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
@@ -535,6 +583,11 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
 
   if (!chat || chat.length === 0) {
     console.debug('[Hotfix] GENERATION_ENDED: 聊天记录为空，跳过处理');
+    try {
+      context?.activateSendButtons?.();
+    } catch {
+      // ignore
+    }
     return;
   }
 
@@ -548,6 +601,9 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
     hasUpdateVariable: lastMessage.mes?.includes('<UpdateVariable>'),
     hasChoices: lastMessage.mes?.includes('<choices>'),
   });
+
+  // 假流式/上游空 content：先恢复发送态，避免停在「停止生成」
+  recoverSendUiAfterEmptyGeneration(hostWindow, lastMessage, lastMessageIndex, 'generation_ended');
 
   // 1. 触发 MVU 解析
   try {
@@ -568,6 +624,26 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
   } else {
     console.warn('[Hotfix] AutoCardUpdaterAPI 不可用，数据库自动更新可能失败');
   }
+
+  // 清洗后若正文被剥空，再恢复一次发送态
+  recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_ended_after_clean');
+}
+
+async function handleGenerationStopped(eventMessageId?: unknown) {
+  const hostWindow = getHostWindow();
+  const context = getSillyTavernContext(hostWindow);
+  const chat = context?.chat;
+  if (!chat || chat.length === 0) {
+    try {
+      context?.activateSendButtons?.();
+    } catch {
+      // ignore
+    }
+    return;
+  }
+  const lastMessageIndex = resolveMessageIndex(chat, eventMessageId);
+  if (lastMessageIndex < 0) return;
+  recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_stopped');
 }
 
 function registerEventListeners() {
@@ -582,6 +658,7 @@ function registerEventListeners() {
   // 检查是否已经注册过（避免重复注册）
   const messageReceivedEvent = getTavernEventName(hostWindow, 'MESSAGE_RECEIVED', 'message_received');
   const generationEndedEvent = getTavernEventName(hostWindow, 'GENERATION_ENDED', 'generation_ended');
+  const generationStoppedEvent = getTavernEventName(hostWindow, 'GENERATION_STOPPED', 'generation_stopped');
   const events = eventSource.events || {};
   const existingGenerationEndedListeners = events[generationEndedEvent] || events.GENERATION_ENDED || events.generation_ended || [];
   const existingMessageReceivedListeners = events[messageReceivedEvent] || events.MESSAGE_RECEIVED || events.message_received || [];
@@ -589,6 +666,7 @@ function registerEventListeners() {
   console.info('[Hotfix] 当前监听器数量', {
     messageReceivedEvent,
     generationEndedEvent,
+    generationStoppedEvent,
     GENERATION_ENDED: Array.isArray(existingGenerationEndedListeners) ? existingGenerationEndedListeners.length : 0,
     MESSAGE_RECEIVED: Array.isArray(existingMessageReceivedListeners) ? existingMessageReceivedListeners.length : 0,
     allEvents: Object.keys(events).length,
@@ -616,6 +694,15 @@ function registerEventListeners() {
     hostWindow.eventOn(generationEndedEvent, handleGenerationEnded);
     console.info('[Hotfix] 已注册 GENERATION_ENDED 监听器（tavern eventOn）', { eventName: generationEndedEvent });
     successCount++;
+  }
+
+  // 注册 GENERATION_STOPPED：空回复/手动停止时恢复发送按钮
+  if (typeof eventSource.on === 'function') {
+    eventSource.on(generationStoppedEvent, handleGenerationStopped);
+    console.info('[Hotfix] 已注册 GENERATION_STOPPED 监听器（eventSource.on）', { eventName: generationStoppedEvent });
+  } else if (typeof hostWindow.eventOn === 'function') {
+    hostWindow.eventOn(generationStoppedEvent, handleGenerationStopped);
+    console.info('[Hotfix] 已注册 GENERATION_STOPPED 监听器（tavern eventOn）', { eventName: generationStoppedEvent });
   }
 
   if (successCount === 0) {

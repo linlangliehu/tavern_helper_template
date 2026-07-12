@@ -412,6 +412,8 @@ assert.ok(statusAppSource.includes('spStatusKeyMap'), 'status bar should map Eng
 assert.ok(statusAppSource.includes('displayLocation'), 'status bar should display MVU/sp_status location fallback');
 assert.ok(statusAppSource.includes('item.id'), 'status bar should accept id as a structured choices key alias');
 assert.ok(statusAppSource.includes('parseUpdateVariableActionSuggestions'), 'status bar should parse /行动建议 from UpdateVariable when <choices> is missing');
+assert.ok(statusAppSource.includes('function mirrorActionSuggestionsToMvu'), 'status bar should write parsed 行动建议 back to MVU as dual insurance');
+assert.ok(statusAppSource.includes('mirrorActionSuggestionsToMvu(nextOptions)'), 'status bar watchEffect should call MVU action suggestion writeback');
 assert.ok(statusAppSource.includes('function stripThinkingBlocks'), 'status bar should strip thinking blocks before parsing protocol tags');
 assert.ok(statusAppSource.includes('extractUpdateVariableJsonPatchArrayText'), 'status bar should prefer nested JSONPatch inside UpdateVariable');
 assert.ok(statusAppSource.includes('coerceDirectActionOptionsPatchArray'), 'status bar should coerce direct action-option arrays inside UpdateVariable');

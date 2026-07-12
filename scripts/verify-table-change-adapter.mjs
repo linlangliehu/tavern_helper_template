@@ -1047,6 +1047,27 @@ for (const testCase of p5CrudAliasCases) {
 
 const clueMetadata = p5SparseMetadata.find(sheet => sheet.sqlName === 'clues');
 assert.equal(clueMetadata?.columns.find(column => column.physicalName === 'clue_code')?.checkGlob, 'C[0-9][0-9][0-9][0-9]');
+// AI 近义列名 inference 应映射到 inference_text，避免 COLUMN_NOT_FOUND + NOT_NULL 推断
+const clueAliasPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: '线索',
+  data: {
+    clue_code: 'C0099',
+    event_code: 'EVT_湿脚印',
+    source_text: '走廊观察',
+    clue_text: '门缝渗出湿气',
+    reliability: '中',
+    inference: '疑似水迹媒介',
+    verification_status: '未验证',
+    visibility: '玩家可见',
+  },
+}, p5SparseRuntimeData, mysteryTemplateData);
+assert.equal(
+  clueAliasPreview.ok,
+  true,
+  `clue inference alias should pass preview: ${JSON.stringify(clueAliasPreview.errors)}`,
+);
+assert.ok(!clueAliasPreview.errors.some(error => error.code === 'COLUMN_NOT_FOUND'));
 const invalidClueCodePreview = previewTableChangePlan({
   ...p5CrudAliasCases.find(testCase => testCase.sqlName === 'clues').physicalPlan,
   data: {

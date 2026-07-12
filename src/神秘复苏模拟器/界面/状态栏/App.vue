@@ -388,6 +388,7 @@ const optionRiskOpenTagPattern = /<risk\b[^>]*\/?>/i
 const optionRiskTagPattern = /<\/?risk\b[^>]*>/gi
 const actionSuggestionKeys = ['A', 'B', 'C', 'D'] as const
 let lastMirroredChoicesSignature = ''
+let lastMirroredMvuChoicesSignature = ''
 let lastMirroredCoreStateSignature = ''
 let choicesMirrorQueue: Promise<unknown> = Promise.resolve()
 let choicesMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null
@@ -809,6 +810,69 @@ async function applyActionSuggestionPlan(
     reason: '状态栏推演选项镜像补行',
     confidence: 1,
   })
+}
+
+function buildMvuActionSuggestionPayload(sourceOptions: OptionItem[]) {
+  const normalizedOptions = normalizeOptionsForDatabase(sourceOptions)
+  if (normalizedOptions.length === 0) return []
+  return normalizedOptions.map(option => {
+    const set = buildActionSuggestionSet(option)
+    return {
+      选项: set.option_key,
+      思路: set.idea_text,
+      主要风险: set.main_risk,
+      预期收益: set.expected_gain,
+    }
+  })
+}
+
+/** 解析成功后的双保险：把 A–D 写回 MVU，供 HUD/后续轮次读取（不替代 hotfix parseMessage） */
+function mirrorActionSuggestionsToMvu(sourceOptions: OptionItem[]) {
+  const payload = buildMvuActionSuggestionPayload(sourceOptions)
+  if (payload.length === 0) return
+
+  const signature = JSON.stringify({ messageId: getCurrentMessageId(), payload })
+  if (signature === lastMirroredMvuChoicesSignature) return
+
+  const current = Array.isArray(d().行动建议) ? d().行动建议 : []
+  const currentSignature = JSON.stringify(
+    current.map(item => ({
+      选项: String(item?.选项 ?? ''),
+      思路: String(item?.思路 ?? ''),
+      主要风险: String(item?.主要风险 ?? ''),
+      预期收益: String(item?.预期收益 ?? ''),
+    })),
+  )
+  if (currentSignature === JSON.stringify(payload)) {
+    lastMirroredMvuChoicesSignature = signature
+    return
+  }
+
+  if (!data.value) data.value = { ...defaults }
+  data.value.行动建议 = payload
+  if (!Object.prototype.hasOwnProperty.call(data.value, '最近行动判定') || !data.value.最近行动判定) {
+    data.value.最近行动判定 = {
+      类型: '未判定',
+      行动: '',
+      依据: [],
+      结果: '未结算',
+      代价: '无',
+      死亡风险变化: '无变化',
+      复苏风险变化: '无变化',
+      可见结论: '',
+    }
+  }
+
+  try {
+    const statData = normalizeStatData(data.value)
+    updateVariablesWith(variables => {
+      _.set(variables, 'stat_data', statData)
+      return variables
+    }, { type: 'message', message_id: getCurrentMessageId() })
+    lastMirroredMvuChoicesSignature = signature
+  } catch (error) {
+    console.warn('[MFRS Status] 行动建议 MVU 回写失败。', error)
+  }
 }
 
 function mirrorActionSuggestionsToDatabase(sourceOptions: OptionItem[]) {
@@ -1444,6 +1508,7 @@ watchEffect(() => {
   void statusPanel.value
   const nextOptions = extractOptions()
   options.value = nextOptions
+  mirrorActionSuggestionsToMvu(nextOptions)
   mirrorActionSuggestionsToDatabase(nextOptions)
   parseAIMarkers()
 })

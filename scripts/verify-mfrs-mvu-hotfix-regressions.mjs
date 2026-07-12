@@ -56,6 +56,18 @@ assert.ok(
   /最近行动判定:[\s\S]*?类型:\s*未判定/.test(initvarSource),
   'initvar must seed 最近行动判定 defaults',
 );
+assert.ok(
+  hotfixSource.includes('function recoverSendUiAfterEmptyGeneration'),
+  'hotfix must recover send UI after empty AI reply',
+);
+assert.ok(
+  hotfixSource.includes('activateSendButtons'),
+  'hotfix empty-reply recovery must call activateSendButtons',
+);
+assert.ok(
+  hotfixSource.includes('handleGenerationStopped'),
+  'hotfix must listen for GENERATION_STOPPED empty-reply recovery',
+);
 
 function extractPatchArrayText(message) {
   const updateMatch = String(message).match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);

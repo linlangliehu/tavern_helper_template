@@ -1436,6 +1436,29 @@ function addBuiltInColumnAliases(table: TableMeta) {
       addColumnAlias(table, 'time', gameTimeColumn);
     }
   }
+
+  // 线索：物理列 / 中文表头 / AI 近义列名互通，避免 COLUMN_NOT_FOUND + NOT_NULL 推断
+  if (isTableNamed(table, ['clues', 'sheet_clues', '线索'])) {
+    const aliasPairs: Array<[string[], string[]]> = [
+      [['clue_code', '线索编号', '线索编码', '编号'], ['clue_code', '线索编号']],
+      [['event_code', '关联事件', '事件代号', '所属事件'], ['event_code', '关联事件']],
+      [['source_text', '来源', '线索来源'], ['source_text', '来源']],
+      [['clue_text', '内容', '线索内容', '正文'], ['clue_text', '内容']],
+      [['reliability', '可信度'], ['reliability', '可信度']],
+      [['inference_text', 'inference', '推断', '推断结论', '推理'], ['inference_text', '推断']],
+      [['verification_status', '验证状态'], ['verification_status', '验证状态']],
+      [['visibility', '可见性'], ['visibility', '可见性']],
+    ];
+    for (const [aliases, targets] of aliasPairs) {
+      let column: ColumnMeta | undefined;
+      for (const name of [...targets, ...aliases]) {
+        column = findColumnByAlias(table, name);
+        if (column) break;
+      }
+      if (!column) continue;
+      for (const alias of aliases) addColumnAlias(table, alias, column);
+    }
+  }
 }
 
 function normalizeColumnValueForColumn(table: TableMeta, column: ColumnMeta, value: Primitive): Primitive {
