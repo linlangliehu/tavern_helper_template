@@ -22,8 +22,8 @@ MagVar 的 `replace`→`set` 要求路径已存在，缺键时静默 skip，MVU 
 | 项 | 值 |
 |----|-----|
 | 版本 | **8.13.11** |
-| 功能/dist commit | （发版时回填） |
-| CDN_REF | （发版时回填） |
+| 功能/dist commit | `55fbd271c84d` |
+| CDN_REF | `55fbd271c84d…` |
 | cache | `…-v81311-seed-action-paths` |
 
 ## 使用
