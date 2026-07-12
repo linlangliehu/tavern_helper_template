@@ -575,7 +575,9 @@ addCheck('phase5', 'A3 Esc layering settings then ST drawers then cabinet', () =
 });
 addCheck('phase5', 'A4 close panel restores ST UI and clears open drawers', () => {
   assert.ok(sources.message.includes('function restoreHudFromStUi'), 'missing restoreHudFromStUi');
+  assert.ok(sources.message.includes('function closeSpDatabaseUi'), 'close panel must close SP·数据库 III');
   const restore = between(sources.message, 'function restoreHudFromStUi', 'function closeHudSettingsPanel');
+  assert.ok(restore.includes('closeSpDatabaseUi()'), 'restore must call closeSpDatabaseUi');
   assert.ok(restore.includes('closeOpenStDrawers()'), 'close panel must close drawers');
   assert.ok(
     restore.includes('classList.remove(HUD_ST_UI_CLASS)') ||
@@ -584,6 +586,10 @@ addCheck('phase5', 'A4 close panel restores ST UI and clears open drawers', () =
     'close panel must drop st-ui class',
   );
   assert.ok(sources.message.includes('关闭面板'), 'missing close-panel control label');
+  assert.ok(
+    sources.message.includes('关闭新 UI') && sources.message.includes('关闭数据库编辑器'),
+    'must target SP native close labels',
+  );
 });
 
 // Phase B: immersive composer skin only (scoped, no fake proxy).

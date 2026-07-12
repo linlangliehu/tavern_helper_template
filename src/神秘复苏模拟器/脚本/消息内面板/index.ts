@@ -3250,12 +3250,48 @@ function markHudMenuItemFailed(btn: HTMLElement | null, label: string, detail: s
   }, 900);
 }
 
-/** 关闭 ST 配置叠层 + 全部 open 抽屉（A4） */
+/** 关掉 SP·数据库 III（优先点原生「关闭新 UI」，失败则隐藏根节点） */
+function closeSpDatabaseUi() {
+  if (!isSpDatabaseUiOpen()) return false;
+  const nativeClose = Array.from(
+    doc.querySelectorAll(
+      '.acu-v2-app__shell button, .acu-v2-app button, #acu-v2-root button, button[title*="关闭新 UI"], button[aria-label*="关闭新 UI"], button[title*="关闭数据库"]',
+    ),
+  ).find(el => {
+    const label = (
+      (el as HTMLElement).getAttribute('title') ||
+      (el as HTMLElement).getAttribute('aria-label') ||
+      el.textContent ||
+      ''
+    ).trim();
+    return /关闭新 UI|关闭数据库编辑器/.test(label);
+  }) as HTMLElement | undefined;
+  if (nativeClose) {
+    try {
+      nativeClose.click();
+    } catch {
+      // fall through to hard hide
+    }
+  }
+  // 原生 close 可能被确认框挡住；再兜底隐藏根壳，避免「关闭面板」无效
+  hostWindow.setTimeout(() => {
+    if (!isSpDatabaseUiOpen()) return;
+    doc.querySelectorAll(SP_DB_UI_SELECTOR).forEach(node => {
+      const el = node as HTMLElement;
+      el.style.setProperty('display', 'none', 'important');
+      el.setAttribute('hidden', '');
+    });
+  }, 60);
+  return true;
+}
+
+/** 关闭 ST 配置叠层 + SP 数据库 + 全部 open 抽屉（A4） */
 function restoreHudFromStUi() {
   if (hudMenuOpenTimer !== null) {
     hostWindow.clearTimeout(hudMenuOpenTimer);
     hudMenuOpenTimer = null;
   }
+  closeSpDatabaseUi();
   closeOpenStDrawers();
   forceCloseStDrawerClasses();
   // ST 抽屉 click 可能异步回写 openDrawer，延迟再清两次
@@ -3263,6 +3299,8 @@ function restoreHudFromStUi() {
   hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 160);
   clearHudOverlayLifts();
   doc.body.classList.remove(HUD_ST_UI_CLASS);
+  const ret = doc.getElementById('mfrs-hud-st-return');
+  ret?.remove();
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (shell?.classList.contains('is-active')) {
     shell.style.removeProperty('z-index');
