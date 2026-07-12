@@ -481,6 +481,10 @@ addCheck('phase5', 'β3 cabinet overlay chrome and close paths', () => {
   assert.ok(sources.message.includes('is-cabinet-open'), 'cabinet open shell class');
   assert.ok(sources.message.includes("e.key === 'Escape'") || sources.message.includes('Escape'), 'Esc close');
   assert.ok(sources.message.includes('function closeHudCabinetLayer'), 'close cabinet helper');
+  assert.ok(sources.message.includes('function parkFixedHostForHudCabinet'), 'cabinet must park fixed host into shell');
+  assert.ok(sources.message.includes('function restoreFixedHostFromHudCabinet'), 'cabinet must restore fixed host on close');
+  assert.ok(sources.message.includes('function expandArchiveCabinetUi'), 'cabinet must expand nav/dashboard UI');
+  assert.ok(sources.message.includes('shell.appendChild(host)'), 'park host inside shell so shell cannot cover it');
 });
 addCheck('phase5', 'β3 narrow side drawers and mobile toggles', () => {
   assert.ok(sources.message.includes('function openHudSideDrawer'), 'side drawer open');

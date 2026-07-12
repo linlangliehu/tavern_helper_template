@@ -966,10 +966,7 @@ function openArchiveCabinet() {
   target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   target.classList.add('mfrs-msg-cabinet-flash');
   hostWindow.setTimeout(() => target.classList.remove('mfrs-msg-cabinet-flash'), 1200);
-  const expandBtn = doc.querySelector(
-    '#mfrs-fixed-frontend-slot button[aria-expanded="false"], .acu-wrapper button[aria-expanded="false"]',
-  ) as HTMLElement | null;
-  expandBtn?.click();
+  expandArchiveCabinetUi(host ?? target);
 }
 
 function handleNavClick(e: Event) {
@@ -1073,6 +1070,8 @@ let hudImmersivePreferred = true;
 let hudMounted = false;
 let hudChatRestore: DomRestorePoint | null = null;
 let hudFormRestore: DomRestorePoint | null = null;
+/** 沉浸开柜时把固定 host 暂挂进 shell，避免 #sheld(z=30) stacking 被壳层盖住 */
+let hudFixedHostRestore: DomRestorePoint | null = null;
 let hudBodyOverflowPrev = '';
 let hudShellEventsBound = false;
 let hudKeydownBound = false;
@@ -2803,10 +2802,48 @@ function refreshHudPanels(force = false) {
   }
 }
 
+function restoreFixedHostFromHudCabinet() {
+  const host = doc.getElementById(FIXED_HOST_ID) as HTMLElement | null;
+  host?.classList.remove('mfrs-hud-cabinet-open');
+  if (hudFixedHostRestore) {
+    restoreDomNode(host, hudFixedHostRestore);
+    hudFixedHostRestore = null;
+  }
+}
+
+/** 沉浸态：固定 host 常落在 #send_form 原父级 stacking 内，会被 z=10000 全屏壳盖住；开柜时挂进壳内 */
+function parkFixedHostForHudCabinet(host: HTMLElement) {
+  if (!isHudMounted()) return;
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  if (host.parentElement === shell) return;
+  if (!hudFixedHostRestore) {
+    hudFixedHostRestore = captureDomRestore(host);
+  }
+  // 挂在壳内末尾：与 mask/chrome 同 stacking，z-index 10020 才能压在中栏之上且低于 chrome
+  shell.appendChild(host);
+}
+
+function expandArchiveCabinetUi(root: ParentNode) {
+  const collapsedNav = root.querySelector('.acu-nav-container.collapsed') as HTMLElement | null;
+  if (collapsedNav) {
+    const trigger = collapsedNav.querySelector(
+      '.acu-collapsed-trigger, #acu-btn-toggle',
+    ) as HTMLElement | null;
+    (trigger ?? collapsedNav).click();
+  } else {
+    const toggle = root.querySelector('#acu-btn-toggle[aria-expanded="false"]') as HTMLElement | null;
+    toggle?.click();
+  }
+  const dashBar = root.querySelector(
+    '.acu-dash-ctrl-bar[aria-expanded="false"]',
+  ) as HTMLElement | null;
+  dashBar?.click();
+}
+
 function closeHudCabinetLayer() {
   const shell = doc.getElementById(HUD_SHELL_ID);
-  const host = doc.getElementById(FIXED_HOST_ID);
-  host?.classList.remove('mfrs-hud-cabinet-open');
+  restoreFixedHostFromHudCabinet();
   shell?.classList.remove('is-cabinet-open');
   if (hudActiveView === 'cabinet') {
     hudActiveView = 'story';
@@ -2819,7 +2856,7 @@ function closeHudCabinetLayer() {
 
 function openHudCabinetLayer() {
   const shell = doc.getElementById(HUD_SHELL_ID);
-  const host = doc.getElementById(FIXED_HOST_ID);
+  const host = doc.getElementById(FIXED_HOST_ID) as HTMLElement | null;
   closeHudSideDrawers();
   shell?.classList.remove('is-settings-open');
   // 即使固定 host 未就绪也标记壳层开启，保证 Esc 分层可关
@@ -2829,11 +2866,16 @@ function openHudCabinetLayer() {
     showHudToast('档案柜未就绪：请确认固定状态栏脚本已加载');
     return;
   }
+  parkFixedHostForHudCabinet(host);
   host.classList.add('mfrs-hud-cabinet-open');
-  const expandBtn = host.querySelector(
-    'button[aria-expanded="false"]',
-  ) as HTMLElement | null;
-  expandBtn?.click();
+  expandArchiveCabinetUi(host);
+  // 无表导航 / 无仪表盘时给明确反馈（避免只剩空壳）
+  const hasCabinetUi = Boolean(
+    host.querySelector('.acu-wrapper, .acu-nav-container, .acu-embedded-dashboard-container'),
+  );
+  if (!hasCabinetUi) {
+    showHudToast('档案柜内容未挂载：请退出沉浸后确认输入框上方档案柜已显示');
+  }
   try {
     host.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   } catch {
