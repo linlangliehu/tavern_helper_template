@@ -6613,7 +6613,7 @@
       启用: true
       类型: 脚本
       内容: |-
-        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81316-bf05-core-mirror';
+        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@0.171.0/artifact/bundle.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81316-bf05-core-mirror';
 
     - 名称: hotfix-generation-ended-listeners
       id: hotfix-generation-ended-001

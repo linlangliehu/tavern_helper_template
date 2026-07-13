@@ -54,3 +54,4 @@
 - 当前发布版：**8.13.16**（`…-v81316-bf05-core-mirror` / `@91154c7`）  
   PNG：`src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`  
 - 回滚：8.13.15 `@107b3ff…`（BF0 契约，无 core mirror）
+- **禁止**导入 `src/神秘复苏模拟器/神秘复苏模拟器.json.deprecated-2026-06-03`（H9 旧打包卡；见同目录 `DO_NOT_IMPORT_PACK_JSON.md`）

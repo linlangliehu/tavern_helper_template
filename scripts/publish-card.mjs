@@ -42,7 +42,11 @@ const CURRENT_CDN_DIST_ENTRY_PATTERN = new RegExp(
   `(${escapeRegExp(CDN)}dist/[^'"\\s]+?/index\\.(?:js|html))(?:\\?v=[^'"\\s]+)?`,
   'g',
 );
-const MAGVAR_BUNDLE_PATTERN = /(https:\/\/(?:(?:testingcf|cdn)\.)?jsdelivr\.net\/gh\/MagicalAstrogy\/MagVarUpdate\/artifact\/bundle\.js)(?:\?v=[^'"\s]+)?/g;
+// MagVar 钉上游版本（L1）；?v= 仅作本项目 cache bust，不锁内容
+const MAGVAR_PIN = '0.171.0';
+const MAGVAR_BUNDLE_URL = `https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@${MAGVAR_PIN}/artifact/bundle.js`;
+const MAGVAR_BUNDLE_PATTERN =
+  /https:\/\/(?:(?:testingcf|cdn)\.)?jsdelivr\.net\/gh\/MagicalAstrogy\/MagVarUpdate(?:@[0-9A-Za-z._-]+)?\/artifact\/bundle\.js(?:\?v=[^'"\s]+)?/g;
 
 const cards = [
   {
@@ -142,7 +146,7 @@ function syncYaml(srcYaml, dstYaml, replacements, releaseVersion) {
   const magvarCacheResult = replaceAndCount(
     next,
     MAGVAR_BUNDLE_PATTERN,
-    (_match, entryUrl) => `${entryUrl}?v=${CDN_CACHE_VERSION}`,
+    () => `${MAGVAR_BUNDLE_URL}?v=${CDN_CACHE_VERSION}`,
   );
   next = magvarCacheResult.next;
   count += magvarCacheResult.count;

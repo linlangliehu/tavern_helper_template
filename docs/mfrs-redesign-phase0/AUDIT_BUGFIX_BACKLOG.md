@@ -191,11 +191,10 @@
 
 ---
 
-### H9 · 源与打包卡协议漂移 — **待修**
+### H9 · 源与打包卡协议漂移 — **已处置（废弃旧 JSON，不复活）**
 
-- [ ] **H9.1** Diff 并同步：变量列表 EJS、initvar、变量输出格式、变量更新规则、系统提示
-- [ ] **H9.2** 打包卡去掉旧 `Analysis` / `{{format_message_variable}}` / 旧【推演选项】强制块（若源已废弃）
-- [ ] **H9.3** `pnpm publish-card` 后校验发布版 PNG 与源契约一致
+- [x] **H9.1–H9.2** 旧 `神秘复苏模拟器.json`（2026-06-03）移出可用名：`神秘复苏模拟器.json.deprecated-2026-06-03` + `DO_NOT_IMPORT_PACK_JSON.md`
+- [x] **H9.3** 发布真源仍为 `publish-card` PNG；不把 deprecated JSON 当同步目标
 
 ---
 
@@ -216,7 +215,7 @@
 
 ## 一轮 · P3 Low（L*）
 
-- [ ] **L1** MagVar CDN 版本 pin 与 `脚本/MVU/index.ts` / index.yaml 一致
+- [x] **L1** MagVar pin `MagVarUpdate@0.171.0`；mvu_zod pin `tavern_resource@0.3.446`；`脚本/MVU` 标死代码对照 — **BF1 2026-07-13**
 - [ ] **L2** 正则/注释中「由 sp 面板替代」→ **并入 RH1 关单**
 - [ ] **L3** 系统提示注明仅开局允许 `sp_start`/`sp_input`
 - [ ] **L4** 可选：EJS `<%-` 过滤模板定界符防二次注入
@@ -354,7 +353,7 @@
 | **SH5** | 双源 → **三源**：欢迎页 txt / live 正则表单 / App.vue 表单，身份枚举三套互不一致 | ST-05 |
 | **W3** | 扩容：常驻短索引**自身**也几乎不激活（绿灯+触发词全是元词汇+递归禁止被拉起） | WB-05 |
 | **WM3** | 扩容：`mfrs_roll` 完整语法只在绿灯条目，首骰前触发词不出现 → 首骰格式无来源（冷启动） | WB-18 |
-| **H9** | 扩为打包卡整体处置：`神秘复苏模拟器.json` 为 6月3日旧协议快照（旧推演选项/状态面板/Analysis/`format_message_variable`/9 条旧正则/3 个 localhost 脚本/世界书 342 vs 383 条），游离于发布链与全部门禁之外 → 重新导出或明确废弃+警示 | DR-03/07、ST-13 |
+| **H9** | 扩为打包卡整体处置：已 **废弃** `神秘复苏模拟器.json.deprecated-2026-06-03` + 警示文档；发布仍只走 PNG | DR-03/07、ST-13 |
 | **H1/D1** | 补充：App.vue 行动建议镜像 all-or-nothing、中途失败残留旧值、无清空机制（若 App.vue 保留则同批修） | DB-14 |
 | **H4** | 补充：`GENERATION_STOPPED` 超联合类型 as-cast，同样无去重卸载 | SA-15 |
 | **D2** | 补充：归一化两层语义分叉（App.vue `未接触→调查中` vs adapter `待处理→未处理`），修复时两层同修 | DB-22 |

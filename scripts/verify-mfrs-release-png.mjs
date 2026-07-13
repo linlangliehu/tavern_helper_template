@@ -108,7 +108,7 @@ function summarizeCard(card, jsonText, label, options) {
   assert.equal(forbiddenLinks.length, 0, `${label}: forbidden local/branch links: ${forbiddenLinks.join(', ')}`);
 
   const mvuContent = String(scripts[0]?.content || '');
-  assert.ok(mvuContent.includes('MagVarUpdate/artifact/bundle.js'), `${label}: first script must load MagVarUpdate`);
+  assert.ok(mvuContent.includes('MagVarUpdate@0.171.0/artifact/bundle.js'), `${label}: first script must load pinned MagVarUpdate@0.171.0`);
   for (const [index, script] of scripts.entries()) {
     const content = String(script?.content || '');
     if (index === 0) {
@@ -159,7 +159,7 @@ function makeSyntheticCard(options) {
     type: 'script',
     content:
       index === 0
-        ? `import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate/artifact/bundle.js?v=${options.expectedCache}';`
+        ? `import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@0.171.0/artifact/bundle.js?v=${options.expectedCache}';`
         : `import 'https://testingcf.jsdelivr.net/gh/${PROJECT_REPO}@${options.expectedRef}/dist/script-${index}.js?v=${options.expectedCache}';`,
   }));
   return {
