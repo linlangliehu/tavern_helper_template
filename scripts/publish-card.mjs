@@ -26,10 +26,10 @@ import { fileURLToPath } from 'node:url';
 // 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
 // 如换了 fork 主、改了仓库名，只需要改这一处
 const REPO = 'linlangliehu/tavern_helper_template';
-// v8.13.19: BF3 DB handling/guards/seeds + opening validation (dist @5b105251e4e5)
-const CDN_REF = '5b105251e4e50a04de3ddbf985039553011b2c6a';
+// v8.13.20: BF4 worldbook cleanup + stub deprecation (dist @de42f2c2de8e)
+const CDN_REF = 'de42f2c2de8ede196fb059a622afd312b9be48ab';
 const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81319-bf3-db-open';
+const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81320-bf4-worldbook';
 
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -61,7 +61,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.13.19',
+    releaseVersion: '8.13.20',
   },
 ];
 

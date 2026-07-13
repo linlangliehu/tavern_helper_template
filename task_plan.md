@@ -12,15 +12,15 @@
 **阶段 BF1 — complete（8.13.17：C3/C4/H9/L1）**  
 **阶段 BF2 — complete（8.13.18）**  
 **阶段 BF3 — complete（8.13.19）**  
-**阶段 BF4 — complete（源码；待 dist/publish）**  
+**阶段 BF4 — complete（8.13.20）**  
 **当前阶段：阶段 BF5 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF4 源码完成**；线上仍 **8.13.19** |
-| 我要去哪里？ | **BF4 dist/publish** 或 **BF5** 回归门禁 |
+| 我在哪里？ | **BF4 已发 8.13.20**；线上请重导 PNG |
+| 我要去哪里？ | **BF5** 回归门禁 G2–G5 + 残余缺陷 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -38,10 +38,10 @@
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.19** |
-| 资源 | `5b10525` / cache `…-v81319-bf3-db-open` |
-| 功能 | BF3 DB 守卫/种子 + 开局校验 |
-| 发布 | 见 `chore(release) publish 8.13.19` |
+| 版本 | **8.13.20** |
+| 资源 | `de42f2c` / cache `…-v81320-bf4-worldbook` |
+| 功能 | BF4 世界书清理 + stub 废弃 |
+| 发布 | 见 `chore(release) publish 8.13.20` |
 | 分支 | **`main`** |
 
 ## 各阶段
@@ -106,12 +106,13 @@
 - [x] **S1 + SH1–SH4 + SH6**；**SH5** 欢迎页已禁用，分叉清理可挂后
 - **状态：** complete（8.13.19 @ `5b10525`）
 
-### 阶段 F / BF4：世界书与清理 — **complete（源码）**
+### 阶段 F / BF4：世界书与清理 — **complete（8.13.20）**
 - [x] **W1+M3** 伪路径根治（休眠锚点+规范）
 - [x] **W2–W4+M4** 蓝灯子集/短索引/死亡裁定真源；事件MVU 去 UpdateVariable 自锁
 - [x] **WM3–WM8** mfrs_roll 例外、孤儿头、八音盒、恐怖等级最小点名
 - [x] **M1/M2/L6/RH1/DH2/SH5/C5** 余项
-- **状态：** complete（源码）；待 production dist + publish
+- [x] production dist + publish **8.13.20**（CDN `de42f2c`）
+- **状态：** complete（8.13.20）
 
 ### 阶段 G / BF5：回归与发版 — **pending**
 - [ ] `verify-mfrs-mvu-hotfix-regressions` / `verify-output-cleaning` / `verify-table-change-adapter`

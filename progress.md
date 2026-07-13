@@ -1,12 +1,13 @@
 # 进度日志
 
-## 会话：2026-07-13（BF4 世界书与清理）— **complete（源码）**
+## 会话：2026-07-13（BF4 世界书与清理 + 8.13.20）— **complete**
 
 - **W1/M3**：148 伪路径清零（休眠锚点+规范）
 - **W2–W4/M4**：死亡/摘要/选项蓝灯；短索引蓝灯+已启用路由；死亡裁定真源主线进度；事件MVU 去 UpdateVariable
 - **WM3–8 / M1–2 / L6 / RH1 / DH2 / SH5 / C5**：见 backlog
-- 门禁：hotfix/output-cleaning 应无感（世界书/yaml 文案为主）
-- **待：** production dist + publish（建议 8.13.20）→ BF5
+- 功能 commit：`de42f2c`（含 production dist）已 push
+- **8.13.20** pin `de42f2c` / cache `…-v81320-bf4-worldbook`；G1 + release-png 通过
+- **下一步：** 用户重导 PNG → BF5
 
 ## 会话：2026-07-13（BF3 + 8.13.19）— **complete**
 
