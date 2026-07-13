@@ -12,14 +12,15 @@
 **阶段 BF1 — complete（8.13.17：C3/C4/H9/L1）**  
 **阶段 BF2 — complete（8.13.18）**  
 **阶段 BF3 — complete（8.13.19）**  
-**当前阶段：阶段 BF4 — pending**
+**阶段 BF4 — complete（源码；待 dist/publish）**  
+**当前阶段：阶段 BF5 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF3 发版中：8.13.19**（CDN `5b10525`） |
-| 我要去哪里？ | **BF4**（W*/WM*/DH2/SH5 余项）→ BF5 |
+| 我在哪里？ | **BF4 源码完成**；线上仍 **8.13.19** |
+| 我要去哪里？ | **BF4 dist/publish** 或 **BF5** 回归门禁 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -105,12 +106,12 @@
 - [x] **S1 + SH1–SH4 + SH6**；**SH5** 欢迎页已禁用，分叉清理可挂后
 - **状态：** complete（8.13.19 @ `5b10525`）
 
-### 阶段 F / BF4：世界书与清理 — **pending**
-- [ ] **W1**（关 **M3**）伪路径 `规律推理记录.*`（休眠但模板根治）
-- [ ] **W2–W4**（关 **M4**）蓝灯/短索引/阶段双源（W2 注意触发词自锁死环）
-- [ ] **WM4–WM8**：阶段7记录矛盾、模拟结束值域、恐怖程度→恐怖等级 75 处、孤儿文件、八音盒
-- [ ] **M\*** **L\*** **RH\*** **DM9** **DL\*** **SL\*** 余项
-- **状态：** pending
+### 阶段 F / BF4：世界书与清理 — **complete（源码）**
+- [x] **W1+M3** 伪路径根治（休眠锚点+规范）
+- [x] **W2–W4+M4** 蓝灯子集/短索引/死亡裁定真源；事件MVU 去 UpdateVariable 自锁
+- [x] **WM3–WM8** mfrs_roll 例外、孤儿头、八音盒、恐怖等级最小点名
+- [x] **M1/M2/L6/RH1/DH2/SH5/C5** 余项
+- **状态：** complete（源码）；待 production dist + publish
 
 ### 阶段 G / BF5：回归与发版 — **pending**
 - [ ] `verify-mfrs-mvu-hotfix-regressions` / `verify-output-cleaning` / `verify-table-change-adapter`

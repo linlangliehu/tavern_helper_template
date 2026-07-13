@@ -1,5 +1,13 @@
 # 进度日志
 
+## 会话：2026-07-13（BF4 世界书与清理）— **complete（源码）**
+
+- **W1/M3**：148 伪路径清零（休眠锚点+规范）
+- **W2–W4/M4**：死亡/摘要/选项蓝灯；短索引蓝灯+已启用路由；死亡裁定真源主线进度；事件MVU 去 UpdateVariable
+- **WM3–8 / M1–2 / L6 / RH1 / DH2 / SH5 / C5**：见 backlog
+- 门禁：hotfix/output-cleaning 应无感（世界书/yaml 文案为主）
+- **待：** production dist + publish（建议 8.13.20）→ BF5
+
 ## 会话：2026-07-13（BF3 + 8.13.19）— **complete**
 
 - **D2/DH1/DH3–5/DM7/S1/SH1–4/SH6** 源码 + production dist

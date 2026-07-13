@@ -1,3 +1,4 @@
+<!-- 【禁用分叉 · SH5】index.yaml 本条启用:false。运行时开局真源 = 正则「渲染神秘复苏开局页」+ 界面美化 fillWelcomeStart。勿再启用本文件。 -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
