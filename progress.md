@@ -1,5 +1,19 @@
 # 进度日志
 
+## 会话：2026-07-13（8.13.21 上线后只读审查）— **complete**
+
+双路独立只读审查（主会话 + 子代理），**结论一致：8.13.21 可安全上线**。
+
+- **A git**：本地 `main` behind origin/main 1 个 `fcd4a82 [bot] bundle`（可 FF）；工作树仅 dev PNG，哈希 = origin/main 完全一致（`b7696690…`，bot 产物非手改）；**无未提交业务代码**。
+- **B 变更/硬约束**：范围 `d2f8ae7..077b0b2`；业务源码仅 3 txt（WM1 偏移 0–5 / WM2 引用 / L8 示例 `medium→investigate`+`死亡风险低`），余为新增只读门禁脚本。`index.yaml` 8 项**仅 pin 更新**（`de42f2c`→`f2b7db2`、cache `v81320`→`v81321`），名称/id/启用/顺序未动；正则 33 未动；`table-change-adapter.ts` 本体未改（DM8 是新增测试覆盖）。L8 改动合法（`类型`=z.string()、`死亡风险`枚举含"低"）。**4 条硬约束全未破坏**。
+- **C 门禁**：`pnpm verify:mfrs-gates` **6/6 PASS**（initvar-schema rootKeys=36 / regex-ids 33-33 / mvu-hotfix / output-cleaning / table-adapter / release-png version=8.13.21 refs=7 cache=8 regex=33 scripts=8）。G1 dist-freshness 只读模式无法跑（缺 `--ref` + 内部 build）。
+- **新增质量项**（入 backlog「BF5 上线后审查」区）：
+  - **P1**（Medium）release-png 门禁未接入 publish-card/CI，靠人工
+  - **P2**（Low）release-png `--from-publish-card` 自证式，抓不出常量写错
+  - **P3**（Low）initvar-schema 校验对 `$ref` 子节点跳过 → 将来假阴
+  - **P0**（Low）package `verify:mfrs-dist-freshness` 裸跑必错 + 内部 build，非只读门禁
+- **下一步**：本地 `git pull` FF；用户重导 8.13.21 PNG；可选 8.13.22 = H2 + RM7–9/RH3–5，顺带 P1 流程加固。
+
 ## 会话：2026-07-13（BF5 门禁 G2–G5 + DM8）— **complete（门禁）**
 
 - **G2** `verify-mfrs-initvar-schema.mjs`：initvar↔schema 36 根键 + 层级/C1 回归

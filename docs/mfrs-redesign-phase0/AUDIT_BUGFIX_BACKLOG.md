@@ -455,6 +455,29 @@
 
 ---
 
+## BF5 上线后审查（2026-07-13，8.13.21 只读双路复核）
+
+两路独立只读审查（主会话 + 子代理）结论一致：**8.13.21 可安全上线**。
+
+- Git：本地仅 behind origin/main 1 个 `[bot] bundle`（可 FF）；工作树 dev PNG 哈希 = origin/main 完全一致（bot 产物，非手改）；无未提交业务代码。
+- 变更面（`d2f8ae7..077b0b2`）：仅门禁脚本 G2–G5/DM8 + 3 处文案（WM1/WM2/L8）+ pin 更新；`table-change-adapter.ts`/`schema`/`initvar` 本体未改。
+- 硬约束 4 条全未破坏：脚本库 8 项仅 pin 更新（名称/id/启用/顺序不变）；正则 33/33；PNG 只走 publish-card；无自动发送。
+- 门禁：`pnpm verify:mfrs-gates` 6/6 PASS（release-png：version=8.13.21 refs=7 cache=8 regex=33 scripts=8）。
+- L8 示例 `medium→investigate`/`死亡风险未结算→死亡风险低`：`类型`=`z.string()`、`死亡风险`枚举含"低"，均不会被 schema strip。
+
+### 新增流程/门禁质量项（非阻塞）
+
+| ID | 严重度 | 位置 | 现象 | 修复方向 | 状态 |
+|----|--------|------|------|----------|------|
+| **P1** | Medium | `scripts/publish-card.mjs` | release-png 门禁未被 publish-card/CI 调用，仅靠人工跑 `verify:mfrs-gates`；publish-card 仅内联调 G1 dist-freshness。理论上可 publish 出 ref/cache 未对齐的 PNG 而不被自动拦截 | build 后追加 `verify-mfrs-release-png --from-publish-card` 的 spawnSync 硬门禁，与 G1 同级 die-on-fail | open |
+| **P2** | Low | `scripts/verify-mfrs-release-png.mjs:47-56` | `--from-publish-card` 为自证式校验：能抓 PNG 陈旧，但常量本身写错抓不出（G4 单真源固有局限） | 可选：额外校验 CDN_REF == HEAD/dist 实际 commit | open |
+| **P3** | Low | `scripts/verify-mfrs-initvar-schema.mjs:60-66` | `$ref` 子节点 `resolved=null` 直接跳过；将来 initvar 实例化 `$ref` 嵌套对象时会假阴（误判"未知路径"） | schema 含 `$ref` 时先解引用 `$defs` 再收集键 | open |
+| **P0** | Low | `package.json` `verify:mfrs-dist-freshness` | 该 script 未带 `--ref`，独立/CI 裸跑在参数校验阶段即报错；且脚本内部 `runProductionBuild()` 会触发 `pnpm build`，非只读 | 说明其为 publish-card 发布时守卫（非独立门禁），或补默认 `--ref`+`--no-build` 只读模式 | open |
+
+> 备注：P0/P1 同域（发布链门禁接入不完整）。release-png 是唯一能拦"PNG 与 pin 不一致"的守卫，却不在自动发布路径上——建议 8.13.22 顺带流程加固。
+
+---
+
 ## 明确不在本清单（除非另开）
 
 - 世界书剧情正文润色、厉鬼档案扩写（文案质量）  
@@ -474,5 +497,6 @@
 | 2026-07-12 | 整理：总览索引、合并关单、补 DL/DM5–6/SL1 |
 | 2026-07-13 | **三轮 A2**：7 轨盲审差分入库——新增 C7/H10/RH6/SH6/M11 + 32 项 + 门禁 G1–G5；修正 C4 降级、C5 误报关闭、M6/L1 升级、W1 休眠标注、多项证据扩容 |
 | 2026-07-13 | **BF-1 关单**：C7+G1 → 8.13.14（`d5cd98f`/`de29b4a`，分支 `codex/bf1-recovery`，待合 main） |
+| 2026-07-13 | **BF5 上线后审查**：8.13.21 双路只读复核通过（6 门禁全绿/硬约束未破坏）；新增流程门禁质量项 P0–P3（release-png/dist-freshness 接入 + $ref 假阴 + 自证式局限） |
 
 *关联：`TASKLIST_BETA.md`、`RELEASE_8.13.14.md`、`task_plan.md`。*
