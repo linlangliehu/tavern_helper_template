@@ -238,8 +238,8 @@
 
 ### Medium
 
-- [ ] **RM1** 裸 choices / 裸 JSONPatch 显示清理：锚到文末/摘要后，降低正文假阳性
-- [ ] **RM2** 关键词高亮勿改写 `【本轮摘要】` 内字段
+- [x] **RM1** 裸 choices / 裸 JSONPatch 显示清理：尾 lookahead 加 CJK `[一-鿿]`，中文正文跟随时仍剥离（commit `4ffc47f`，devtools 验证）
+- [x] **RM2** 关键词高亮勿改写 `【本轮摘要】` 内字段：高亮 #6 加值区后视 + 标签名前瞻（方案 A 正则近似；commit `4ffc47f`，devtools 验证）
 
 ---
 
@@ -400,7 +400,7 @@
 - [ ] **L9** 版本叙事脱节：更新日志停 v0.0.1，与 dev `2.0`/发布 `8.13.13`/cache `v81313` 四套并存
 - [x] **RM7** #14/#15（JSONPatch/draft/pacing_rules/修改确认）只有显示隐藏、无 prompt 去除、hotfix 也不洗 → 残渣全深度回传 AI（token 膨胀+固化坏习惯）— **done（BF6，实机验证）**：cleanProtocolBlocks 追加删 draft/pacing_rules/修改确认/独立 JSONPatch；英文调试摘要不删（避误删正文）。**实机抓 bug**：`<修改确认>` 中文标签 `\b` 匹配失败已修（去 \b + 属性容错）
 - [x] **RM8** #10/#11 与 hotfix L491/L493 逐字符重复清洗：维护时两处清单必须同步（RH6 即不同步后果）；注释互指 — **done（BF6）**：hotfix cleanProtocolBlocks 加白名单互指注释；G3 断言守护同步。**副发现**：hotfix 白名单含 mfrs_roll 而显示正则 #10 不含属**无害**（掷骰条实际输出自闭合 `<mfrs_roll .../>`，成对显示正则天然不匹配）
-- [ ] **RM9** #3/#4 召回清洗 `$` 兜底：截断注入时删到消息尾
+- [x] **RM9** #3/#4 召回清洗 `$` 兜底：结尾锚加空行段界/下一编号分支，未闭合块不再删到消息尾（commit `4ffc47f`，devtools 验证）
 - [x] **WM7** `音乐盒诅咒` 伪路径改 `灵异资源.灵异物品` — **BF4**
 - [x] **WM8** 7 孤儿文件头加「维护/勿接入运行时」— **BF4**
 - [ ] **DL4** chronicle 修订三方矛盾：模板 note 禁 updateNode vs adapter 放行正文 updateCell vs verify 断言修订通过 → 契约文字与实现择一
