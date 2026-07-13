@@ -16,8 +16,8 @@
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF0.5 方案 B 已落源码**（未 commit）；8.13.15 仍为线上版 |
-| 我要去哪里？ | commit BF0.5 → dist/publish 可选 → BF1–BF5 |
+| 我在哪里？ | **8.13.16 已发**；BF1 的 C3/C4 完成；H9/L1 仍开 |
+| 我要去哪里？ | BF1 余项 H9/L1 → BF2–BF5 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -35,11 +35,10 @@
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.15** |
-| 资源 | `107b3ff` / cache `…-v81315-bf0-initvar-schema` |
-| 功能源 | `5eaa533` BF0 initvar/schema |
-| dist commit | `107b3ff` production dist BF0 |
-| 发布 | 见最新 `chore(release) publish 8.13.15` |
+| 版本 | **8.13.16** |
+| 资源 | `91154c7` / cache `…-v81316-bf05-core-mirror` |
+| 功能 | BF0.5 mirror `9c8c61b` + C3/C4 pin |
+| 发布 | `33ad4ab` chore(release) publish 8.13.16 |
 | 分支 | **`main`**（已 push） |
 
 ## 各阶段
@@ -168,7 +167,7 @@
 ```
 继续神秘复苏审计缺陷修复。
 先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md
-BF0.5 源码已落（H10 方案 B：mvu-core-mirror）。待 commit/dist 后从 BF1 开工，勿重审。
+8.13.16 已发（BF0.5+C3/C4）。从 BF1 余项（H9/L1）或 BF2 开工，勿重审。
 ```
 
 ## 备注
