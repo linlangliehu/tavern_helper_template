@@ -9,7 +9,9 @@
 - **DM8** adapter：characters/items/rules 插入+别名；禁删 collected_rules；items/characters 可删；非法枚举；混合 LENGTH 拒绝；chronicle 真模板
 - 快修：**WM1** 偏移 0–5；**WM2** 交叉引用；**L8** medium→investigate + 摘要死亡风险
 - `pnpm verify:mfrs-gates`；hotfix/cleaning/adapter/release-png 全绿
-- **下一步：** 可选 8.13.21 publish 交付 WM/L8；继续残余 H2/RM7–9 等
+- 功能 commit：`ddd2676`；status dist pin：`f2b7db2`
+- **8.13.21** pin `f2b7db2` / cache `…-v81321-bf5-gates`；G1 + release-png 通过
+- **下一步：** 用户重导 PNG；继续残余 H2/RM7–9 等
 
 ## 会话：2026-07-13（BF4 世界书与清理 + 8.13.20）— **complete**
 
