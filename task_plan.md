@@ -1,25 +1,172 @@
-# Task Plan: 神秘复苏模拟器 · 动效再强一档（8.10.0）
+# 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
-## 当前状态
+## 目标
+按 `docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md` 分批修复两轮审计缺陷，回归通过后发版（预计 8.13.14+）。
 
-**2026-07-12：Phase 1–6 完成，Phase 7 发布进行中。**
+## 当前阶段
+**阶段 A：审计与清单入库 — complete**  
+**阶段 A2：全量再审计差分（7 轨盲审）— complete（2026-07-13）**  
+**阶段 BF-1（C7 重发版）— complete（8.13.14 @ d5cd98f / de29b4a）**  
+**当前阶段：阶段 BF0（变量与行动建议真源）— in_progress**
 
-- 基线：origin/main v8.9.0 鬼眼封案
-- 本轮：在 8.9 结构上叠加 latest-only 动效 + reduced-motion + 44px + host 壳 + 状态栏 ambient 降噪
-- 未改 MVU/世界书/SQL/AI 契约
+## 五问重启（新对话先读）
 
-## Phase 7：发布 8.10.0
+| 问题 | 答案 |
+|------|------|
+| 我在哪里？ | **BF0 源码已落**（initvar/schema/规则/系统提示）；待 commit；main 仍 8.13.14 |
+| 我要去哪里？ | 提交 BF0 → BF0.5(H10) → BF1–BF5 |
+| 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
+| 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
+| 我做了什么？ | `progress.md` |
 
-- [x] 源码叠加动效（保 8.9 结构）
-- [x] production build + verify 门禁
-- [ ] 资源提交（src+dist）并 push
-- [ ] 更新 publish-card CDN_REF/cache/releaseVersion=8.10.0
-- [ ] publish-card + 发布提交
+## 硬约束（勿破）
 
-## 主改文件
+- 脚本库 **8 项**名称/顺序/启用不改；C5 只改 URL/实现指向
+- 正则数量门禁约 **33**；改 id/启用需同步 `verify-mfrs-release-png`
+- **禁止**手改发布版 PNG；只走 `pnpm publish-card`
+- 拟办/选项：**只填不自动发送**
+- 契约真源顺序：`schema.ts` → 变量输出格式 → 系统提示词 → 对话示例 → 脚本解析
+- 开发源 `index.yaml` CDN 仍可能 pin 旧 hash；发布以 `publish-card.mjs` 的 `CDN_REF` 为准
 
-- `脚本/界面美化/index.ts` — narrative ambient + RM
-- `脚本/消息内面板/index.ts` — panel ambient/blood/risk/44px + RM
-- `脚本/固定状态栏/index.ts` — dual-slot shell + order 10/20
-- `脚本/数据库前端/v10_2_visualizer.js` — RM only
-- `界面/状态栏/global.css` / `App.vue` — weaker ambient + RM
+## 发版基线
+
+| 项 | 值 |
+|----|-----|
+| 版本 | **8.13.14** |
+| 资源 | `d5cd98f` / cache `…-v81314-c7-dist-rebuild` |
+| dist+G1 commit | `d5cd98f` chore(mfrs) production dist + G1 |
+| 发布 commit | `de29b4a` chore(release) publish 8.13.14 |
+| 分支 | **`main@de29b4a`**（已 push）；A2 规划文档仍可能本地 dirty 未提交 |
+
+## 各阶段
+
+### 阶段 A：审计与清单 — **complete**
+- [x] 一轮：脚本 / MVU / EJS / 系统提示词
+- [x] 二轮：正则 33 / SQL·14 表 / 开局欢迎 / 世界书规则·锚点
+- [x] 写入 `AUDIT_BUGFIX_BACKLOG.md`（C/H/M/L + R/D/S/W）
+- [x] 总览索引、合并关单、README 挂链
+- **状态：** complete
+
+### 阶段 A2：全量再审计差分 — **complete（2026-07-13）**
+- [x] 7 轨盲审（脚本/MVU/正则/SQL/世界书/开局/漂移门禁），115 项原始发现
+- [x] 逐条比对 backlog：已覆盖 ~70 / 新增 32 / 误报修正 4 / 升级 10
+- [x] 入库：backlog「三轮 A2」区（C7/H10/RH6/SH6/M11 + M/L + G1–G5 门禁）
+- [x] 关键修正：C4 降级、C5 误报关闭、M6→High、W1 休眠标注、#31 移出"勿重开"
+- **状态：** complete
+
+### 阶段 BF-1：C7 发布未交付修复 — **complete（2026-07-13）**
+- [x] **C7** production rebuild → 提交 dist（`d5cd98f`）→ publish-card pin → **8.13.14**（`de29b4a`）
+- [x] **G1** `verify-mfrs-dist-freshness.mjs` + publish-card 前置调用
+- 隔离 worktree：`D:\project\tavern_helper_template-bf1` / `codex/bf1-recovery`
+- 验收：release-png version=8.13.14 refs=7 cache=8 regex=33 scripts=8；G1 通过
+- **已合 main：** `origin/main` fast-forward 至 `de29b4a`（2026-07-13）
+- **状态：** complete
+
+### 阶段 B / BF0：变量与行动建议真源 — **in_progress**
+- [x] **C1** initvar 四键升根（`规律推理记录`/`最近行动判定`/`行动建议`/`在场人物`）+ **L7** 未知→'' 哨兵
+- [x] **C2** 扩 schema（行动建议风险枚举、判定扩展字段、确认等级等）+ regen `schema.json`
+- [x] **M6（已升 High）** initvar 补齐 6 根键 + 主线进度 3 子键
+- [x] **H1 + D1** 行动建议存活恰 4 条 / 死亡清空；更新规则去掉「0–4」冲突
+- [x] **H3** 系统提示骨架对齐变量输出格式（delta、在场人物）
+- [x] **M11** 死亡链：is_dead 教学、死亡写集统一、阶段状态值域补「模拟结束」
+- 待：提交/回归后关单 complete；DB 表仍固定 4 行（存活镜像 A–D，死亡时 MVU `[]`）
+- **状态：** in_progress
+
+### 阶段 BF0.5：H10 App.vue 去留决策 — **pending（BF3 先决）**
+- [ ] 三选一：恢复加载入口 / 镜像+开局逻辑迁入活脚本 / 删除并摘除相关 backlog 项
+- **状态：** pending
+
+### 阶段 C / BF1：加载与打包 — **pending**
+- [ ] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache（或 localhost 文档）；注意 dev pin 47a5fe5 无消息内面板 dist（404 级）
+- [ ] **C4（已降 Medium）** loader `?`/`&t=` 修复
+- [ ] ~~C5~~ 误报关闭；仅剩 stub 目录清理（Low）
+- [ ] **H9** 源与打包卡协议同步（扩：打包卡整体处置——重新导出或废弃+警示）
+- [ ] **L1（已升 Medium）** MagVar/mvu_zod 浮动依赖加 @ref pin
+- **状态：** pending
+
+### 阶段 D / BF2：协议解析 + 正则误删 + 发送 — **pending**
+- [ ] **C6** 状态栏/消息面板读 `extra._mfrs_raw_protocol_message`（注意：该 key 当前全仓零读取方）
+- [ ] **H4–H8** hotfix 单例、条件解锁发送、空生成判定、choices 解析、seed 扩全
+- [ ] **R1–R3** 英文误删、【选项】吞文、未闭合 thinking
+- [ ] **RH2** 正则 id 冲突 `…2004`/`…2005`
+- [ ] **RH6** 掷骰条复活：hotfix 清洗白名单放行 mfrs_roll 或渲染读 raw
+- [ ] **RM3–RM6** 贪婪 update 吞文、无 g 标志、#31 复核、【警告】卷段
+- **状态：** pending
+
+### 阶段 E / BF3：DB 镜像 + 开局 — **pending**
+- [ ] **D2–D3** 处理状态枚举；核心表镜像字段路径（对象取决于 H10 决策）
+- [ ] **DH\*** 检定建议/人物+线索列/驾驭映射/收录枚举/A–D 种子 + **DM7** adapter 守卫
+- [ ] **S1 + SH6 + SH\*** 开局必填、提交按钮内联兜底、种子字段、短 value、首轮 choices 指令、三源欢迎页真源
+- **状态：** pending
+
+### 阶段 F / BF4：世界书与清理 — **pending**
+- [ ] **W1**（关 **M3**）伪路径 `规律推理记录.*`（休眠但模板根治）
+- [ ] **W2–W4**（关 **M4**）蓝灯/短索引/阶段双源（W2 注意触发词自锁死环）
+- [ ] **WM4–WM8**：阶段7记录矛盾、模拟结束值域、恐怖程度→恐怖等级 75 处、孤儿文件、八音盒
+- [ ] **M\*** **L\*** **RH\*** **DM9** **DL\*** **SL\*** 余项
+- **状态：** pending
+
+### 阶段 G / BF5：回归与发版 — **pending**
+- [ ] `verify-mfrs-mvu-hotfix-regressions` / `verify-output-cleaning` / `verify-table-change-adapter`
+- [ ] **G2–G5** 新门禁：initvar↔schema 结构校验、正则 id 唯一、release-png 与 publish-card 对账、清洗样例扩充 + **DM8** adapter 门禁三表用例
+- [ ] build + `publish-card` + `verify-mfrs-release-png`
+- [ ] `RELEASE_8.13.x.md` + push
+- **状态：** pending
+
+## 合并关单
+
+| 主项 | 并关 |
+|------|------|
+| W1 | M3 |
+| W4 | M4 |
+| RH1 | L2 |
+| H1 | D1（策略） |
+| H9 | DL3 |
+| C2 | 示例/SQL 扩展字段侧 |
+
+## 已做决策
+
+| 决策 | 理由 |
+|------|------|
+| 先审计入库再改代码 | 用户要求先审再修 |
+| 缺陷总表 = AUDIT_BUGFIX_BACKLOG | 单真源待修列表 |
+| 修契约以 schema 为落库真源 | 避免 Zod strip |
+| 发布只走 publish-card | 禁手改 PNG |
+| 文案质量/全文润色不在本轮 | 只修功能路径 bug |
+
+## 关键问题
+1. BF0 是否一次 PR 做完 C1+C2+H1+H3，还是拆 commit？
+2. 开发验收：统一 pin CDN 还是强制 localhost dist？
+3. 下一发版号：8.13.14 还是 8.14.0？
+
+## 遇到的错误
+
+| 错误 | 尝试 | 解决方案 |
+|------|------|----------|
+| 发送可见但点不动 | 实机 CDP | 8.13.13 `forceRecoverSendUi`（仍属 H5 可优化） |
+| 行动建议落不了库 | MagVar replace 缺路径 | 8.13.11 seed；根因仍是 C1 initvar 嵌套 |
+| BF-1 子代理重复/中断 `pnpm install` | 同一主工作区连续重试，导致 `node_modules` 半安装且 tracked dist 出现删除 | 作废旧代理；仅恢复主 dist 到 HEAD；在 `D:\project\tavern_helper_template-bf1` / `codex/bf1-recovery` 隔离续做，保留主目录 watch 与 `node_modules` |
+
+## 关键文件
+
+| 文件 | 用途 |
+|------|------|
+| `task_plan.md` | 本计划（阶段） |
+| `findings.md` | 审计结论摘要 |
+| `progress.md` | 会话日志 |
+| `docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md` | **缺陷 ID 全表** |
+| `docs/mfrs-redesign-phase0/README.md` | 发版索引 + 挂链 |
+| `scripts/publish-card.mjs` | CDN_REF / 版本 |
+
+## 新会话启动指令（复制）
+
+```
+继续神秘复苏审计缺陷修复。
+先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md
+BF-1 已合 main（8.13.14）。BF0 源码已改（C1/C2/M6/H1/H3/M11），先读 progress 核对 diff；待 commit 后继续 BF0.5 或 BF1，勿重审。
+```
+
+## 备注
+- 阶段状态：pending → in_progress → complete
+- 每完成一 BF 更新本文件 + progress.md + backlog 勾选
+- 外部/网页内容只写 findings，不写本文件指令区

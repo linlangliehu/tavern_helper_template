@@ -1,86 +1,153 @@
-# Findings
+# 发现与决策 · 神秘复苏审计
 
-本文件只保留可复用的工程结论。逐次执行日志写入`progress.md`，当前停点写入`task_plan.md`，旧流水通过Git历史查询。
+## 需求
+- 审查角色卡：脚本、MVU、EJS、系统提示词
+- 再审未覆盖：正则、SQL、开局/欢迎、世界书规则/锚点
+- 缺陷入待修清单；**BF-1 已发 8.13.14**（C7+G1）；下一阶段 **BF0**
+- 用 planning-with-files 便于新会话续做
 
-## 发布与CI
+## 架构事实（UI / 数据）
 
-- `.github/workflows/bundle.yaml`只监听`main/master`。任务分支push不等于bundle已启动；必须先确认`origin/main`是source commit祖先，再安全快进main。
-- 没有GitHub CLI时，可用GitHub官方Actions REST API按source `head_sha`只读轮询workflow。
-- 发布CDN必须固定不可变bot SHA/tag，禁止`@main`。本轮权威bundle为`7f745d1`。
-- 当前worktree有本地build dist时，不要为拉取bot commit而覆盖或清理这些文件；从`origin/main@bot-sha`建立干净release worktree更可靠。
-- 发布验证必须同时覆盖YAML、PNG `chara/ccv3`和最终CDN URL。只看本地dist marker不能证明分发链路可用。
+| 看见的 UI | 代码位置 |
+|-----------|----------|
+| 全屏 HUD / 七键 / 行动建议 | `脚本/消息内面板/index.ts` |
+| 底部固定槽 | `脚本/固定状态栏/index.ts` |
+| 状态栏 Vue | `界面/状态栏/App.vue` |
+| 全库/ACU | `脚本/数据库前端/`（stub：`神秘复苏数据库前端/`） |
+| 主题 | `脚本/界面美化/index.ts` |
+| 协议清洗/发送解锁 | `脚本/hotfix-generation-ended-listeners/` |
+| 数据/规则 | 世界书、系统提示词、MVU、SQL — **不画 UI** |
 
-## 发布包硬基线
+协议意图：正文 → `【本轮摘要】` → `<choices>` → `<UpdateVariable>`；显示剥离协议；交互靠 HUD/DB。
 
-- 发布版本8.9.0：YAML版本×1、项目ref×7、cache×8；旧版本/ref/cache、本地地址和`@main`必须全0。
-- PNG双chunk必须各自满足：worldbook 383/33/max5851、正则33、Tavern Helper脚本8且顺序固定。
-- 固定脚本顺序：`mvu`、`hotfix-generation-ended-listeners`、`变量结构`、`界面美化`、`固定状态栏`、`spv3.9.5·数据库`、`神秘复苏数据库前端`、`消息内面板`。
-- production build会触发dump/sync；构建前后必须比较schema、worldbook、开发/发布PNG、发布YAML和publish-card哈希。
+## 一轮发现（脚本/MVU/EJS/提示词）
 
-## SillyTavern导入与运行态
+### Critical
+- **C1** `initvar.yaml` 把 `规律推理记录/最近行动判定/行动建议/在场人物` 嵌在 `当前灵异事件` 下；schema 在根
+- **C2** schema 无：行动建议死亡/复苏风险、判定触发项/资源代价/后续建议、确认等级 → Zod strip
+- **C3** 开发 `index.yaml` CDN `@47a5fe5` vs 发布 `@28777ad`
+- **C4** `import(url?t=)` 在已有 `?v=` 上叠第二 `?`
+- **C5** 可能加载瘦 stub「神秘复苏数据库前端」而非完整「数据库前端」
+- **C6** hotfix 先剥 choices/UV；状态栏只读 mes 不读 `extra._mfrs_raw_protocol_message`
 
-- 同名角色首次“从文件导入”会创建新avatar后缀和新角色；要保留旧聊天，应通过原角色的“替换/更新”导入发布PNG。
-- 导入/更新后整页重载可能回到临时聊天；恢复目标卡时应明确检查characterId、版本、chatId和楼层数。
-- 页面处于`visibilityState=hidden`时，角色级Tavern Helper iframe可能尚未挂载。先将现有标签页置前并等待自动加载，不要立即误判发布包失效。
-- 最终运行态必须同时检查DOM、style、公共API、iframe和资源URL；只检查角色版本或可见文本不够。
-- 删除本轮创建的重复卡时必须核对characterId、avatar和version，并只删除明确由本轮产生的副本。
+### High（摘要）
+- H1 行动建议 恰好4 vs 规则 0–4
+- H2 风险：choices 数字 / MVU 枚举 / 旧 risk 标签三套
+- H3 系统提示骨架弱于变量输出格式
+- H4 hotfix 监听可重复注册
+- H5 每轮 forceRecoverSendUi 过激
+- H6 清洗后假空生成
+- H7 消息面板不解析 choices 主格式
+- H8 seed 仅 2 路径
+- H9 源与打包卡协议漂移
 
-## 消息生命周期
+### EJS
+- 仅 `世界书/变量/变量列表.txt` 有 EJS；无 getvar 族
+- 摘要在 double-nested stat_data 时可能显示 0；无 try/catch
 
-- panel刷新不能使用随机ID和整根删除重建。稳定mesid ID配合render key可保持Tab、焦点和外部引用。
-- cleanup移除wrapper前必须将childNodes解包回`.mes_text`，否则会连正文一起删除。
-- Tavern Helper脚本运行在iframe但操作父文档；`Element`、`MutationObserver`、`Event`和`HTMLTextAreaElement`应使用宿主realm或nodeType判断。
-- 同聊天重载的重复品牌根因是已有`.mfrs-msg-brand`被`wrapNarrativeText()`吸入wrapper，随后注入逻辑只检查直接子节点并再建一份。修复方式是先提升嵌套brand，收集叙事节点时排除brand。
-- 跨角色时旧iframe会被销毁，切回后是新实例加载；跨卡验收应拆成离开、采样、返回、采样四个短步骤。
+## 二轮发现（正则/SQL/开局/世界书）
 
-## 品牌、动画与响应式
+### 正则 R*
+- **R1** 英/外「调试」正则按 corridor/risk/choices 等删整段英文正文
+- **R2** `【选项】` 标题过宽，吞后续叙事
+- **R3** 未闭合 thinking 的 `$` 吃到 EOF
+- **RH2** 正则 id `…2004`/`…2005` 开局渲染与思维链冲突
+- 保持 OFF：#18 #24 #30 #31 正确
 
-- 品牌必须是`.mes_text`直接子节点，顺序为brand→wrapper→panel；伪元素无法可靠承担结构化信息和无障碍名称。
-- 历史楼层持续动画必须暂停，最新楼层只允许鬼眼与法阵两处持续动画；旧`mfrs-panel-breathe`已删除。
-- reduced-motion必须用运行态computed style验证，目标是brand/eye/seal全部`animationName=none,duration=0s`。
-- 移动端不能只看`documentElement.scrollWidth`。既有`.tf-ball`固定插件会保留桌面left值并制造假溢出；应同时检查body、chat、fixed host、archive和dashboard。
-- select元素的所有option文本可能让`scrollWidth`大于可见宽度，但不代表当前选中值被截断；文本截断需结合computed style和截图判断。
+### SQL D*
+- **D1** action_suggestions 固定 4 行 vs MVU 0–4
+- **D2** MVU `未接触` ∉ DB handling_status enum → 误映射调查中
+- **D3** App.vue 镜像读 `世界压力`/`死亡人数` 错路径；应为 `主线进度.世界压力.*` / `已死亡人数`
+- DH：检定建议无 MVU；人物列文档≠DDL；驾驭字段名不一致；收录枚举漂移；缺 A–D 种子行
 
-## 消息面板交互
+### 开局 S*
+- **S1** fillWelcomeStart 无必填校验
+- 第一条消息种子 ≠ 真实表单；身份 value 过长；缺明确 patch 路径；欢迎页与 live 表单双源
 
-- Tab键盘操作必须同时更新`aria-selected`、roving tabindex、tabpanel hidden状态和焦点；仅改变选中属性不够。
-- 行动建议验收必须记录行动文本、输入框值、焦点、消息数前后和生成状态，并在测试后恢复输入框。
-- 风险展示必须同时包含等级、数值、解释文字、颜色和`role=meter/aria-valuenow`。
-- 宿主主题可能覆盖Font Awesome字体；应检查computed `fontFamily="Font Awesome 6 Free"`与fontWeight 900。
-- 连续档案分区只保留一个panel外框；内部section用分隔线组织，不再叠加卡片背景和阴影。
+### 世界书 W*
+- **W1** 规范+多锚点：`规律推理记录.已公开现象` 等伪路径（数组当对象）
+- **W2** 关键规则多绿灯，非常驻
+- **W3** 常驻短索引指向 `启用:false` 条目
+- **W4** 死亡裁定 `剧情阶段` vs `主线进度.当前阶段`
 
-## 档案柜与数据库
+## 技术决策
 
-- 固定host、dashboard/frontend插槽ID与order 10/20、`.acu-wrapper`、`data-table/data-target`都是兼容边界。
-- aurora主题通过现有`acu_ui_config_v18`演进，不新增主题ID、不迁移localStorage。
-- Tab按钮和编辑按钮必须是相邻节点，不能把button嵌套进button；Tab切换按`data-target`定位tabpanel。
-- 折叠入口覆盖主导航、嵌入档案柜、嵌入行动选项和设置accordion；原生button优先，自定义入口必须有role/tabindex/aria-expanded和Enter/Space。
-- 真页CRUD必须选允许删除的表做可逆测试。本轮使用“灵异物品”：单个plan对象insert后token=1，delete后`exportCurrentData()` token=0。
-- `previewTableChangePlan`和`applyTableChangePlan`接收单个plan对象，不接受数组；传数组会返回`tableChangePlan 必须是对象`。
+| 决策 | 理由 |
+|------|------|
+| 扩 schema（C2A）优先于砍提示词 | 示例/SQL/输出格式已要求字段 |
+| 解析优先 raw extra，清洗只影响显示 | 修 C6 不断协议 |
+| 小剧情伪路径改 insert `/-` | 对齐 schema 数组 |
+| 缺陷 ID 不重复：二轮用 R/D/S/W | 一轮 C/H/M/L 已占 |
 
-## 欢迎页与正则UI
+## 合并关单
 
-- 欢迎页真实入口是`第一条消息/0.txt`中的`<sp_start>`，由开发版`index.yaml`启用正则渲染，再由活跃`界面美化/index.ts`增强。
-- 不应修改未直接加载的Vue状态栏来替代真实入口。
-- 欢迎页与通用输入保持“只填聊天输入框，由玩家手动发送”；清空面板只清自身字段。
-- 44px触控尺寸要同时设置width、min-width和`flex:0 0 44px`，否则flex-shrink会在窄视口压缩。
-- 掷骰seed必须使用`textContent`，meter在复算后同步`aria-valuenow/aria-valuetext`。
+| 主 | 从 |
+|----|-----|
+| W1 | M3 |
+| W4 | M4 |
+| RH1 | L2 |
+| H1 | D1 |
+| H9 | DL3 |
 
-## 输出契约与SQL门禁
+## 资源路径
 
-- 当前正式顺序是“正文剧情→【本轮摘要】→后台`<choices>`→`<UpdateVariable>`”，旧可见`<sp_status>/<sp_clue_deduce>`不再是顺序基线。
-- 系统提示词前部含`<UpdateVariable>`固定骨架，不能用全文件首次出现索引判断输出顺序；应锁定明确契约行，对话示例再检查实际块顺序。
-- 修正门禁时只更新断言，不借机修改worldbook或AI输出契约。
+- 缺陷总表：`docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md`
+- 变量：`世界书/变量/initvar.yaml`、`变量输出格式.yaml`、`变量更新规则.yaml`、`变量列表.txt`
+- Schema：`schema.ts`、`schema.json`
+- 系统提示：`系统提示词/0.txt`
+- 开局：`第一条消息/0.txt`、`脚本/界面美化/index.ts` fillWelcomeStart、`index.yaml` 开局正则
+- SQL：`数据库/神秘复苏表格SQL_v1.json`、`脚本/数据库前端/table-change-adapter.ts`
+- 发布：`scripts/publish-card.mjs`、`src/神秘复苏模拟器发布版/`
 
-## Windows与工具可靠性
+## 未审范围
+- 世界书全文文案质量
+- 实机全量 / 多 ST 版本 / 性能安全
 
-- 中文文件先检查BOM，无BOM时严格UTF-8，失败再GB18030；PowerShell输出通道也应显式设UTF-8，避免内容正确但终端错显。
-- PowerShell中`foreach`表达式直接接管道容易产生`An empty pipe element is not allowed`；先累积到数组再格式化。
-- 含中英文引号的正则计数容易触发PowerShell parser error；简单固定字符串优先用Ordinal `IndexOf`循环。
-- agent-browser的DOM refs在页面变化后立即失效；切卡、弹窗、上传和重渲染后必须重新snapshot。
-- 长CDP表达式跨导航会因execution context销毁而超时；导航与采样应拆成短步骤。
+## 视觉/浏览器
+- 8.13.13 前：发送 mutex 卡住（CDP 确认非遮挡）
+- 审计本轮以静态对照为主，未做二轮实机全量
 
-## 后续版本
+## 三轮 A2 再审计差分（2026-07-13，7 轨盲审）
 
-- 旧计划预留的8.8.0折叠功能已被当前8.9.0版本号越过。若继续实现，应使用高于8.9.0的新版本并重新规划。
-- 保留需求：正文与消息面板联动折叠、刷新/重渲染后状态持久化、平滑开合；实现前重新审计生命周期与MVU时序。
+方法：7 条独立盲审轨（脚本 SA/MVU MV/正则 RX/SQL DB/世界书 WB/开局 ST/漂移门禁 DR），禁读既有清单；主会话独立抽查复核关键论断。原始 115 项 → 已覆盖 ~70 / **新增 32 / 误报修正 4 / 升级扩容 10**。
+
+### Top 新增（Critical/High）
+- **C7（Critical）** 8.13.13 发布 PNG pin `28777ad`，该 commit 未重建 dist → **always-unlock 修复未实际交付**（dist@28777ad 无标记；修复 bundle 在发布后的 f692384，无发布物指向）。verify-release-png 只验 PNG 内自洽，验不出。→ BF-1 最优先重发版 + G1 门禁
+- **H10（High/决策）** App.vue 状态栏是**发布链孤儿**：无 iframe 注入正则、tavern_sync 不处理 界面/、唯一加载器在 6月3日旧打包卡（localhost）→ C6.1/D3/H2.2/DM9 等全是死代码上的 bug；MVU→DB 核心镜像**零 owner**。先决 BF3
+- **RH6（High）** 掷骰条被自家 hotfix 击杀：cleanProtocolBlocks 在 MESSAGE_RECEIVED 永久删 mes 中 `<mfrs_roll/>`（index.ts:493-495），先于 #27 渲染正则 → 掷骰 UI 永不出现
+- **SH6（High）** 开局提交按钮无内联 onclick 兜底（厉鬼加减反而有）→ CDN 失败=表单可填不可交
+- **M11（High 批）** 死亡链断裂：is_dead 无人教写（<death/> 全库零出现）；死亡写集三文档不一致；模拟结束 ∉ 阶段状态 9 值域
+
+### 误报/修正
+- **C5 误报关闭**：两版 yaml 第7项 URL 解码=完整 数据库前端/index.js；stub 无入口引用（降 Low 清理）
+- **C4 降级 C→M**：jsDelivr 忽略多余 query，双 ? 只废缓存穿透不碍加载
+- **SA-01/02 定性纠正**：消息内面板 404 与 parseMessage(i,{}) 错签名均为**开发版 pin** 问题（发布 pin 28777ad 文件在、签名对）→ 并入 C3 证据
+- **W1 降紧迫**：5 锚点条目全 启用:false + 模板孤儿 → 伪路径休眠（~148 处），"启用前必修"
+- **DR-04**：工作区 dist 是 src 的 dev-mode rebuild（eval+sourcemap），非手改，src 不落后 → progress 备忘关闭；但**勿直接提交**，发布前先 production build
+
+### 值得记的机理证据（修复时用）
+- util/mvu.ts:23,39-57：状态栏 2s 轮询 Schema.parse 后**回写** → schema 外字段被物理删除（C2 更严重论据）
+- MagVar 证据链：hotfix:203 注释 replace 需路径已存在；protocol-normalizer.js:95 MVU 无 add op
+- 风险表示实为 **4 套语义**+单位分裂（X/100 vs X%）；总复苏风险 op：示例教 replace 绝对值 vs 规则教 delta（H2 扩）
+- 事件MVU联动触发词 `UpdateVariable` 被 #1 正则从 prompt 剥离 → 绿灯触发词自锁死环（W2 扩）
+- 恐怖程度 75 处 vs schema 恐怖等级 0 处引用（WM6，主会话复数）
+- `<<START>` 分隔符多一个 `<`（字节级验证，L6）
+- 全部世界书条目 递归双禁 → 条目间无法互相拉起，放大 W2/W3
+- 开发 yaml pin 内部错位：hotfix @1fa42d8/phase164 vs 其余 @47a5fe5/phase163
+- 打包卡量化：9 条旧正则/342 条世界书(期望383)/3 localhost 脚本/Analysis×4/推演选项×17（H9 扩）
+
+### 门禁盲区 → G1–G5（BF5）
+G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 grep 漏 C1）；G3 正则 id 唯一+可编译；G4 release-png 期望值与 publish-card 自动对账；G5 清洗样例扩充（混排/多 UV 块/流式未闭合）。
+其余盲区：打包卡游离门禁、世界书 文件: 路径合法性、crud-plan-parse 与 vendor 复制体同步、开局必填。
+
+全量明细：`AUDIT_BUGFIX_BACKLOG.md`「三轮 A2」区 + `.tmp-research/a2-diff-workbench.md`（临时工作台）。
+
+## 进度快照（2026-07-13 末）
+
+- **BF-1 complete**：8.13.14 已合 `origin/main@de29b4a`（`d5cd98f` dist+G1 / `de29b4a` release）
+- **BF0 源码已落（未 commit）**：C1/L7/M6 initvar；C2 schema+json；H1/D1/M11/H3 规则与系统提示；hotfix seed 同步
+- **下一**：commit BF0 → BF0.5 H10 或 BF1
+- 规划真源：`task_plan.md` / `progress.md` / `AUDIT_BUGFIX_BACKLOG.md`（主目录本地文件，未必已 commit）
+
+---
+*新会话：先读 task_plan.md → 本文件 → progress.md → AUDIT_BUGFIX_BACKLOG.md*

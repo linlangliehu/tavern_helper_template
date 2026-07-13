@@ -14,11 +14,15 @@ const EventSchema = z.object({
   处理状态: z.string().default('未接触'),
 });
 
+const RiskLevelSchema = z.enum(['无', '低', '中', '高', '致命', '未知']).default('未知');
+const ConfirmLevelSchema = z.enum(['猜测', '疑似', '部分确认', '已验证', '可执行应对']).default('猜测');
+
 const ReasoningRecordSchema = z.object({
   时间点: z.string().default('未知'),
   行为: z.string().default(''),
   观察结果: z.string().default(''),
   推断: z.string().default(''),
+  确认等级: ConfirmLevelSchema,
   是否触发规律: z.boolean().default(false),
   风险等级: z.string().default('未知'),
 });
@@ -27,10 +31,13 @@ const ActionJudgementSchema = z.object({
   类型: z.string().default('未判定'),
   行动: z.string().default(''),
   依据: z.array(z.string()).default([]),
+  触发项: z.array(z.string()).default([]),
   结果: z.string().default('未结算'),
   代价: z.string().default('无'),
   死亡风险变化: z.string().default('无变化'),
   复苏风险变化: z.string().default('无变化'),
+  资源代价: z.string().default('无'),
+  后续建议: z.string().default(''),
   可见结论: z.string().default(''),
 });
 
@@ -39,6 +46,8 @@ const ActionSuggestionSchema = z.object({
   思路: z.string().default(''),
   主要风险: z.string().default('未知'),
   预期收益: z.string().default('未知'),
+  死亡风险: RiskLevelSchema,
+  复苏风险: RiskLevelSchema,
 });
 
 const ControlledGhostSchema = z.object({
@@ -172,10 +181,13 @@ export const Schema = z.object({
     类型: '未判定',
     行动: '',
     依据: [],
+    触发项: [],
     结果: '未结算',
     代价: '无',
     死亡风险变化: '无变化',
     复苏风险变化: '无变化',
+    资源代价: '无',
+    后续建议: '',
     可见结论: '',
   }),
   行动建议: z.array(ActionSuggestionSchema).default([]),

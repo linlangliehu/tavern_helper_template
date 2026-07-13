@@ -29,7 +29,7 @@ update_output_contract:
     - Death danger uses /风险值 only. Ghost revival risk uses /驭鬼者状态/总复苏风险. Do not write /死亡风险; /厉鬼复苏程度 is legacy mirror only.
     - Every resolved player action must replace /最近行动判定. Whenever A/B/C/D options are output or refreshed, replace /行动建议.
     - /在场人物 is a string array of NPCs currently in the scene with the player. Whenever the set of on-scene NPCs changes (someone appears, leaves, dies, or is revealed), replace /在场人物 with the full current roster. Each entry is "名字-简述" (name then a short player-visible role/state, e.g. "周正-七中带队的驭鬼者"). Use only characters actually present this turn; use [] when the player is truly alone. Never leave /在场人物 stale when NPCs are clearly present in the narration.
-    - When <choices> is output or refreshed, /行动建议 must contain exactly A, B, C, and D, and must match <choices>. D is always 自定义行动. Do not require <sp_choices> or visible A/B/C/D options.
+    - When alive and <choices> is output or refreshed, /行动建议 must contain exactly A, B, C, and D, and must match <choices>. D is always 自定义行动. When dead or /风险值 >= 100, omit <choices>, replace /行动建议 with [], set /is_dead true, /状态 to 死亡, and /主线进度/阶段状态 to 模拟结束. Do not require <sp_choices> or visible A/B/C/D options.
     - /最近行动判定, /行动建议, /收录档案, and /收录规律 may contain only player-visible evidence. Never reveal hidden files, complete killing laws, key survival routes, or true ghost locations.
     - Insert objects, not strings, into /规律推理记录/-. Required fields: 时间点, 行为, 观察结果, 推断, 确认等级, 是否触发规律, 风险等级. 确认等级 is one of 猜测, 疑似, 部分确认, 已验证, 可执行应对.
     - When ghost power, ghost domain, medium contact, body testing, wrong deduction, supernatural item cost, or faction intervention occurs, update the matching risk/resource/event/rule/worldline fields.
