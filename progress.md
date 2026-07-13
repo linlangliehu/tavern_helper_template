@@ -1,5 +1,25 @@
 # 进度日志
 
+## 会话：2026-07-13（BF2 协议/正则/发送）— **complete（源码）**
+
+- **C6** raw extra：消息面板 + App.vue 优先读；hotfix 清洗后 `saveChat`
+- **H4** `__mfrsHotfixInstalled__` + `__mfrsHotfixCleanup__` 幂等
+- **H5** `forceRecoverSendUi` 仅卡住时 force stop
+- **H6/C6.4** 空生成看 raw；**H6.2** 系统提示正文+摘要不可省略
+- **H7** `parseStructuredChoices`；回退 MVU→表→choices→JSONPatch
+- **H8** seed 扩数组/flags/可见档案/主线进度
+- **RH6** 不再 strip `mfrs_roll`
+- **R1–R3 / RH2 / RM3–RM6** index.yaml 正则收窄 + 思维链新 UUID
+- 门禁：`verify-mfrs-mvu-hotfix-regressions` + `verify-output-cleaning-regressions` 通过
+- **待：** production dist + publish-card（建议 8.13.18）→ BF3
+
+## 会话：2026-07-13（BF1 H9/L1 + 8.13.17）— **complete**
+
+- H9：旧打包 JSON 改名为 `.deprecated-2026-06-03` + `DO_NOT_IMPORT_PACK_JSON.md`
+- L1：MagVar `@0.171.0`；mvu_zod `@0.3.446`；publish/verify 同步
+- **8.13.17** `21fecba` dist / release push；G1 + release-png 通过
+- BF1 仅余 C5 stub 清理（Low）
+
 ## 会话：2026-07-13（8.13.16 + BF1 C3/C4）— **complete**
 
 - pin `CDN_REF=91154c7`；cache `v81316-bf05-core-mirror`

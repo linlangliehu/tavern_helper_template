@@ -49,6 +49,27 @@ assert.ok(
   'hotfix seed must cover 最近行动判定',
 );
 assert.ok(
+  hotfixSource.includes('在场人物') && hotfixSource.includes('规律推理记录') && hotfixSource.includes('可见档案'),
+  'hotfix seed must cover H8 array roots (在场人物/规律推理记录/可见档案)',
+);
+assert.ok(
+  hotfixSource.includes('__mfrsHotfixInstalled__') && hotfixSource.includes('__mfrsHotfixCleanup__'),
+  'hotfix must install idempotently with cleanup hook (H4)',
+);
+assert.ok(
+  hotfixSource.includes('messageHasDisplayableContent') || hotfixSource.includes('RAW_PROTOCOL_EXTRA_KEY'),
+  'hotfix empty-generation recovery must consider raw protocol (H6/C6.4)',
+);
+assert.ok(
+  !hotfixSource.includes(".replace(/<mfrs_roll\\b[^>]*\\/>/gi, '')") &&
+    hotfixSource.includes('mfrs_roll'),
+  'hotfix must whitelist mfrs_roll for display dice bar (RH6)',
+);
+assert.ok(
+  hotfixSource.includes('isSendUiStuck') || hotfixSource.includes('force: isSendUiStuck'),
+  'hotfix must only force stop/send unlock when send UI is stuck (H5)',
+);
+assert.ok(
   /行动建议:\s*\[\]/.test(initvarSource),
   'initvar must seed 行动建议: [] so MagVar replace path exists on new chats',
 );
@@ -259,6 +280,14 @@ assert.ok(messagePanelSource.includes('mfrs-msg-action-meta'), 'message panel ac
 assert.ok(messagePanelSource.includes('MutationObserver'), 'message panel should observe final message DOM replacements');
 assert.ok(messagePanelSource.includes('scheduleBurstRefresh'), 'message panel should retry refresh after generation/render events');
 assert.ok(messagePanelSource.includes('tavern_events.GENERATION_ENDED'), 'message panel should refresh after generation ended');
+assert.ok(
+  messagePanelSource.includes('_mfrs_raw_protocol_message') && messagePanelSource.includes('readMessageProtocolText'),
+  'message panel must prefer raw protocol extra (C6.2)',
+);
+assert.ok(
+  messagePanelSource.includes('function parseStructuredChoices') && messagePanelSource.includes('parseStructuredChoices(rawText)'),
+  'message panel must parse <choices> primary format (H7)',
+);
 
 // ── v8.7.4 static gates ──
 

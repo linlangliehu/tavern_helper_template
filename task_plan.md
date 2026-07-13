@@ -9,15 +9,16 @@
 **阶段 BF-1（C7 重发版）— complete（8.13.14 @ d5cd98f / de29b4a）**  
 **阶段 BF0 — complete（8.13.15）**  
 **阶段 BF0.5 — complete**  
-**阶段 BF1（C3/C4 pin+loader）— complete（8.13.16）**  
-**当前阶段：阶段 BF1 余项 / BF2 — pending**
+**阶段 BF1 — complete（8.13.17：C3/C4/H9/L1）**  
+**阶段 BF2 — complete（源码；待 dist/publish）**  
+**当前阶段：阶段 BF3 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **8.13.16 已发**；BF1 的 C3/C4 完成；H9/L1 仍开 |
-| 我要去哪里？ | BF1 余项 H9/L1 → BF2–BF5 |
+| 我在哪里？ | **BF2 源码完成**；8.13.17 仍是已发基线（待 BF2 发版） |
+| 我要去哪里？ | **BF2 dist/publish** 或 **BF3**（D2–D3/DH*/S1/SH6） |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -35,10 +36,10 @@
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.16** |
-| 资源 | `91154c7` / cache `…-v81316-bf05-core-mirror` |
-| 功能 | BF0.5 mirror `9c8c61b` + C3/C4 pin |
-| 发布 | `33ad4ab` chore(release) publish 8.13.16 |
+| 版本 | **8.13.17** |
+| 资源 | `21fecba` / cache `…-v81317-h9-l1-pins` |
+| 功能 | H9 废弃旧 JSON + L1 MagVar/mvu_zod pin |
+| 发布 | 见最新 `chore(release) publish 8.13.17` |
 | 分支 | **`main`**（已 push） |
 
 ## 各阶段
@@ -80,22 +81,22 @@
 - [x] D3 字段路径在新镜像中修正；App.vue 标孤儿注释
 - **状态：** complete
 
-### 阶段 C / BF1：加载与打包 — **partial complete**
-- [x] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache（8.13.16 `@91154c7`）
+### 阶段 C / BF1：加载与打包 — **complete（8.13.17）**
+- [x] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache
 - [x] **C4** loader `?`/`&t=` 修复
-- [ ] ~~C5~~ 误报关闭；仅剩 stub 目录清理（Low）
-- [ ] **H9** 源与打包卡协议同步（扩：打包卡整体处置——重新导出或废弃+警示）
-- [ ] **L1（已升 Medium）** MagVar/mvu_zod 浮动依赖加 @ref pin
-- **状态：** C3/C4 complete；H9/L1 pending
+- [ ] ~~C5~~ 误报关闭；仅剩 stub 目录清理（Low，可挂 BF4）
+- [x] **H9** 旧打包 JSON 废弃+警示（不复活）
+- [x] **L1** MagVar `@0.171.0` + mvu_zod `@0.3.446`
+- **状态：** complete
 
-### 阶段 D / BF2：协议解析 + 正则误删 + 发送 — **pending**
-- [ ] **C6** 状态栏/消息面板读 `extra._mfrs_raw_protocol_message`（注意：该 key 当前全仓零读取方）
-- [ ] **H4–H8** hotfix 单例、条件解锁发送、空生成判定、choices 解析、seed 扩全
-- [ ] **R1–R3** 英文误删、【选项】吞文、未闭合 thinking
-- [ ] **RH2** 正则 id 冲突 `…2004`/`…2005`
-- [ ] **RH6** 掷骰条复活：hotfix 清洗白名单放行 mfrs_roll 或渲染读 raw
-- [ ] **RM3–RM6** 贪婪 update 吞文、无 g 标志、#31 复核、【警告】卷段
-- **状态：** pending
+### 阶段 D / BF2：协议解析 + 正则误删 + 发送 — **complete（源码）**
+- [x] **C6** 状态栏/消息面板读 `extra._mfrs_raw_protocol_message` + saveChat 持久化 raw
+- [x] **H4–H8** hotfix 单例、条件解锁发送、空生成判定、choices 解析、seed 扩全
+- [x] **R1–R3** 英文误删、【选项】吞文、未闭合 thinking
+- [x] **RH2** 正则 id 冲突：思维链换新 UUID `e8f1…`
+- [x] **RH6** 掷骰条复活：hotfix 白名单放行 mfrs_roll
+- [x] **RM3–RM6** 贪婪 update 吞文、无 g 标志、#9 扩 sp_/mfrs_、【警告】卷段
+- **状态：** complete（源码）；待 production rebuild + publish-card
 
 ### 阶段 E / BF3：DB 镜像 + 开局 — **pending**
 - [ ] **D2–D3** 处理状态枚举；核心表镜像字段路径（对象取决于 H10 决策）
@@ -167,7 +168,7 @@
 ```
 继续神秘复苏审计缺陷修复。
 先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md
-8.13.16 已发（BF0.5+C3/C4）。从 BF1 余项（H9/L1）或 BF2 开工，勿重审。
+8.13.17 已发（BF1 H9/L1 完成）。从 BF2（C6 raw / R1–R3 / RH6）开工，勿重审。
 ```
 
 ## 备注

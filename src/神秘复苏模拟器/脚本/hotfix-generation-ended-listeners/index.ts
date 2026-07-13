@@ -12,8 +12,8 @@ import * as protocolNormalizer from './protocol-normalizer.js';
  * 3. 触发数据库自动更新逻辑
  * 4. 清洗 mes 字段：
  *    - 整段删除 <UpdateVariable> 和 <choices>（纯内部协议）
- *    - 整段删除 <sp_*> / <mfrs_*> 旧文本面板（保留开局/输入交互面板）
- *    - 删除自闭合 <mfrs_roll ... />（无内部文本）
+ *    - 整段删除 <sp_*> / <mfrs_*> 旧文本面板（保留开局/输入交互面板与掷骰条 mfrs_roll）
+ *    - raw 协议写入 extra._mfrs_raw_protocol_message 供 UI/MVU 读取
  */
 
 type MvuData = Record<string, unknown> & {
@@ -56,6 +56,8 @@ type HostWindow = Window & {
     getContext?: () => {
       eventSource?: {
         on?: (event: string, handler: (...args: unknown[]) => void) => void;
+        off?: (event: string, handler: (...args: unknown[]) => void) => void;
+        removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
         emit?: (event: string, ...args: unknown[]) => void;
         events?: Record<string, unknown[]>;
       };
@@ -85,10 +87,14 @@ type HostWindow = Window & {
   };
   eventSource?: {
     on?: (event: string, handler: (...args: unknown[]) => void) => void;
+    off?: (event: string, handler: (...args: unknown[]) => void) => void;
+    removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
     emit?: (event: string, ...args: unknown[]) => void;
     events?: Record<string, unknown[]>;
   };
   eventOn?: (event: string, handler: (...args: unknown[]) => void) => void;
+  __mfrsHotfixInstalled__?: boolean;
+  __mfrsHotfixCleanup__?: () => void;
   tavern_events?: Record<string, string>;
   getVariables?: (options: MessageVariableOption) => Record<string, unknown>;
   updateVariablesWith?: (
@@ -215,6 +221,16 @@ const DEFAULT_ACTION_JUDGEMENT = {
   可见结论: '',
 };
 
+function hasOwn(obj: Record<string, unknown>, key: string) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function seedIfMissing(stat: Record<string, unknown>, key: string, value: unknown): boolean {
+  if (hasOwn(stat, key)) return false;
+  stat[key] = value;
+  return true;
+}
+
 function seedMissingStatPaths(data: MvuData): MvuData {
   const next = cloneMvuData(data);
   if (!next.stat_data || typeof next.stat_data !== 'object' || Array.isArray(next.stat_data)) {
@@ -223,19 +239,98 @@ function seedMissingStatPaths(data: MvuData): MvuData {
   const stat = next.stat_data as Record<string, unknown>;
   let seeded = false;
 
-  if (!Object.prototype.hasOwnProperty.call(stat, '行动建议')) {
-    stat['行动建议'] = [];
+  seeded = seedIfMissing(stat, '行动建议', []) || seeded;
+  seeded = seedIfMissing(stat, '最近行动判定', { ...DEFAULT_ACTION_JUDGEMENT, 依据: [] }) || seeded;
+  seeded = seedIfMissing(stat, '在场人物', []) || seeded;
+  seeded = seedIfMissing(stat, '规律推理记录', []) || seeded;
+  seeded = seedIfMissing(stat, '收录档案', []) || seeded;
+  seeded = seedIfMissing(stat, '收录规律', []) || seeded;
+  seeded = seedIfMissing(stat, '世界线记录', []) || seeded;
+  seeded = seedIfMissing(stat, 'is_dead', false) || seeded;
+  seeded = seedIfMissing(stat, 'is_supernatural_scene', false) || seeded;
+  seeded = seedIfMissing(stat, 'has_entered_supernatural', false) || seeded;
+  seeded = seedIfMissing(stat, 'revive_streak', 0) || seeded;
+
+  if (!hasOwn(stat, '灵异资源') || typeof stat['灵异资源'] !== 'object' || Array.isArray(stat['灵异资源'])) {
+    stat['灵异资源'] = { 鬼拼图: [], 灵异物品: [], 黄金储备: '未准备' };
     seeded = true;
+  } else {
+    const res = stat['灵异资源'] as Record<string, unknown>;
+    seeded = seedIfMissing(res, '鬼拼图', []) || seeded;
+    seeded = seedIfMissing(res, '灵异物品', []) || seeded;
   }
-  if (!Object.prototype.hasOwnProperty.call(stat, '最近行动判定')) {
-    stat['最近行动判定'] = { ...DEFAULT_ACTION_JUDGEMENT, 依据: [] };
+
+  if (!hasOwn(stat, '势力关系') || typeof stat['势力关系'] !== 'object' || Array.isArray(stat['势力关系'])) {
+    stat['势力关系'] = {
+      总部备案状态: '未备案',
+      所属城市: '未知',
+      联系人: [],
+      敌对势力: [],
+      可调用资源: [],
+    };
     seeded = true;
+  } else {
+    const force = stat['势力关系'] as Record<string, unknown>;
+    seeded = seedIfMissing(force, '联系人', []) || seeded;
+    seeded = seedIfMissing(force, '敌对势力', []) || seeded;
+    seeded = seedIfMissing(force, '可调用资源', []) || seeded;
+  }
+
+  if (!hasOwn(stat, '可见档案') || typeof stat['可见档案'] !== 'object' || Array.isArray(stat['可见档案'])) {
+    stat['可见档案'] = { 玩家已知: [], NPC已知: [], 已验证线索: [], 未验证猜测: [] };
+    seeded = true;
+  } else {
+    const visible = stat['可见档案'] as Record<string, unknown>;
+    seeded = seedIfMissing(visible, '玩家已知', []) || seeded;
+    seeded = seedIfMissing(visible, 'NPC已知', []) || seeded;
+    seeded = seedIfMissing(visible, '已验证线索', []) || seeded;
+    seeded = seedIfMissing(visible, '未验证猜测', []) || seeded;
+  }
+
+  if (!hasOwn(stat, '主线进度') || typeof stat['主线进度'] !== 'object' || Array.isArray(stat['主线进度'])) {
+    stat['主线进度'] = {
+      当前阶段: '开局接入',
+      阶段序号: 0,
+      权限层级: '玩家可见层',
+      已开放主题: [],
+      锁定主题: [],
+      阶段状态: '未启动',
+      已完成节点: [],
+      可触发节点: [],
+      偏移等级: 0,
+      正史锚点: { 当前锚点: '自定义开局', 默认走向: '', 玩家偏移: [] },
+      世界压力: { 灵异复苏强度: 0, 总部关注度: 0, 社会公开度: 0 },
+      下一步推进提示: '',
+    };
+    seeded = true;
+  } else {
+    const progress = stat['主线进度'] as Record<string, unknown>;
+    seeded = seedIfMissing(progress, '已开放主题', []) || seeded;
+    seeded = seedIfMissing(progress, '锁定主题', []) || seeded;
+    seeded = seedIfMissing(progress, '已完成节点', []) || seeded;
+    seeded = seedIfMissing(progress, '可触发节点', []) || seeded;
+    if (!hasOwn(progress, '正史锚点') || typeof progress['正史锚点'] !== 'object' || Array.isArray(progress['正史锚点'])) {
+      progress['正史锚点'] = { 当前锚点: '自定义开局', 默认走向: '', 玩家偏移: [] };
+      seeded = true;
+    } else {
+      const anchor = progress['正史锚点'] as Record<string, unknown>;
+      seeded = seedIfMissing(anchor, '玩家偏移', []) || seeded;
+    }
+  }
+
+  if (hasOwn(stat, '当前灵异事件') && typeof stat['当前灵异事件'] === 'object' && !Array.isArray(stat['当前灵异事件'])) {
+    const event = stat['当前灵异事件'] as Record<string, unknown>;
+    seeded = seedIfMissing(event, '已知杀人规律', []) || seeded;
+    seeded = seedIfMissing(event, '猜测杀人规律', []) || seeded;
+    seeded = seedIfMissing(event, '错误推断', []) || seeded;
   }
 
   if (seeded) {
     console.info('[Hotfix] 已补种缺失 MVU 路径', {
-      hasActionSuggestions: Object.prototype.hasOwnProperty.call(stat, '行动建议'),
-      hasActionJudgement: Object.prototype.hasOwnProperty.call(stat, '最近行动判定'),
+      hasActionSuggestions: hasOwn(stat, '行动建议'),
+      hasActionJudgement: hasOwn(stat, '最近行动判定'),
+      hasPeople: hasOwn(stat, '在场人物'),
+      hasRuleRecords: hasOwn(stat, '规律推理记录'),
     });
   }
   return next;
@@ -262,11 +357,22 @@ function readMessageTextForMvu(message: { mes?: string; extra?: Record<string, u
 }
 
 function snapshotRawProtocolMessage(message: { mes?: string; extra?: Record<string, unknown> }) {
-  if (!message.mes || !hasInternalProtocol(message.mes)) return;
+  if (!message.mes || !hasInternalProtocol(message.mes)) return false;
   message.extra = message.extra || {};
   if (typeof message.extra[RAW_PROTOCOL_EXTRA_KEY] !== 'string') {
     message.extra[RAW_PROTOCOL_EXTRA_KEY] = message.mes;
+    return true;
   }
+  return false;
+}
+
+function messageHasDisplayableContent(message: ChatMessage | undefined) {
+  if (!message) return false;
+  const mes = typeof message.mes === 'string' ? message.mes.trim() : '';
+  if (mes) return true;
+  const raw = message.extra?.[RAW_PROTOCOL_EXTRA_KEY];
+  if (typeof raw === 'string' && raw.trim()) return true;
+  return false;
 }
 
 function readOldMvuData(hostWindow: HostWindow, messageOption: MessageVariableOption): MvuData {
@@ -486,22 +592,21 @@ async function cleanProtocolBlocks(messageIndex: number) {
   if (!message || !message.mes) return;
 
   const originalMes = message.mes;
-  snapshotRawProtocolMessage(message);
+  const snapshotted = snapshotRawProtocolMessage(message);
 
-  // 清洗内部协议和旧文本面板。正文只保留剧情与【本轮摘要】。
-  let cleanedMes = originalMes
-    .replace(/<UpdateVariable>[\s\S]*?<\/UpdateVariable>/gi, '')
-    .replace(/<choices>[\s\S]*?<\/choices>/gi, '')
-    // 删除旧 <sp_*> / <mfrs_*> 文本面板，保留可交互的开局/输入面板。
-    .replace(/<((?!(?:sp_start|sp_input)\b)(?:sp|mfrs)_[a-z_]+)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
-    // 删除自闭合的 <mfrs_roll ... />（掷骰展示，无内部文本）
-    .replace(/<mfrs_roll\b[^>]*\/>/gi, '');
+  // 清洗内部协议和旧文本面板。正文保留剧情、【本轮摘要】与掷骰条 <mfrs_roll/>。
+  const cleanedMes = originalMes
+    .replace(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi, '')
+    .replace(/<choices\b[^>]*>[\s\S]*?<\/choices>/gi, '')
+    // 删除旧 <sp_*> / <mfrs_*> 文本面板，保留开局/输入/掷骰。
+    .replace(/<((?!(?:sp_start|sp_input|mfrs_roll)\b)(?:sp|mfrs)_[a-z_]+)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
 
-  // 如果清洗后有变化，更新 mes 并标记清洗时间
+  let changed = snapshotted;
   if (cleanedMes !== originalMes) {
     message.mes = cleanedMes;
     message.extra = message.extra || {};
     message.extra._mfrs_raw_protocol_cleaned_at = Date.now();
+    changed = true;
 
     console.info('[Hotfix] 已清洗消息协议块', {
       messageIndex,
@@ -509,6 +614,14 @@ async function cleanProtocolBlocks(messageIndex: number) {
       cleanedLength: cleanedMes.length,
       removedBytes: originalMes.length - cleanedMes.length,
     });
+  }
+
+  if (changed && typeof context?.saveChat === 'function') {
+    try {
+      await context.saveChat();
+    } catch (error) {
+      console.debug('[Hotfix] 清洗后 saveChat 失败', error);
+    }
   }
 }
 
@@ -559,9 +672,19 @@ function isSendButtonHidden(hostWindow: HostWindow) {
   }
 }
 
-/** 强制恢复发送态：清 ST 发送互斥 / 停止钮残留，避免「能看到发送但点不动」 */
-function forceRecoverSendUi(hostWindow: HostWindow, reason: string, options?: { hideStop?: boolean; toastEmpty?: boolean }) {
+function isSendUiStuck(hostWindow: HostWindow) {
+  return isStopButtonVisible(hostWindow) || isSendButtonHidden(hostWindow);
+}
+
+/** 恢复发送态：默认仅 activate；卡住时才点 stop / 强制露出发送钮 */
+function forceRecoverSendUi(
+  hostWindow: HostWindow,
+  reason: string,
+  options?: { hideStop?: boolean; toastEmpty?: boolean; force?: boolean },
+) {
   const context = getSillyTavernContext(hostWindow);
+  const stuck = isSendUiStuck(hostWindow);
+  const force = options?.force === true || stuck;
   let activated = false;
   let stopped = false;
 
@@ -572,7 +695,7 @@ function forceRecoverSendUi(hostWindow: HostWindow, reason: string, options?: { 
     console.debug('[Hotfix] activateSendButtons 失败', error);
   }
 
-  if (options?.hideStop !== false && isStopButtonVisible(hostWindow)) {
+  if (force && options?.hideStop !== false && isStopButtonVisible(hostWindow)) {
     try {
       const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
       stopButton?.click?.();
@@ -580,7 +703,6 @@ function forceRecoverSendUi(hostWindow: HostWindow, reason: string, options?: { 
     } catch {
       // ignore
     }
-    // 再解锁一次，避免 stop 点击把发送态又关掉
     try {
       context?.activateSendButtons?.();
     } catch {
@@ -588,18 +710,19 @@ function forceRecoverSendUi(hostWindow: HostWindow, reason: string, options?: { 
     }
   }
 
-  // 部分 ST 版本仅改 display；兜底直接露出发送钮
-  try {
-    const sendButton = hostWindow.document?.querySelector?.('#send_but') as HTMLElement | null;
-    if (sendButton && getComputedStyle(sendButton).display === 'none') {
-      sendButton.style.display = '';
+  if (force) {
+    try {
+      const sendButton = hostWindow.document?.querySelector?.('#send_but') as HTMLElement | null;
+      if (sendButton && getComputedStyle(sendButton).display === 'none') {
+        sendButton.style.display = '';
+      }
+      const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
+      if (stopButton && getComputedStyle(stopButton).display !== 'none' && options?.hideStop !== false) {
+        stopButton.style.display = 'none';
+      }
+    } catch {
+      // ignore
     }
-    const stopButton = hostWindow.document?.querySelector?.('#mes_stop, #stscript_stop') as HTMLElement | null;
-    if (stopButton && getComputedStyle(stopButton).display !== 'none' && options?.hideStop !== false) {
-      stopButton.style.display = 'none';
-    }
-  } catch {
-    // ignore
   }
 
   if (options?.toastEmpty) {
@@ -616,6 +739,8 @@ function forceRecoverSendUi(hostWindow: HostWindow, reason: string, options?: { 
     reason,
     activated,
     stopped,
+    force,
+    stuck,
     sendHidden: isSendButtonHidden(hostWindow),
     stopVisible: isStopButtonVisible(hostWindow),
   });
@@ -629,10 +754,10 @@ function recoverSendUiAfterEmptyGeneration(
   reason: string,
 ) {
   if (!lastMessage || lastMessage.is_user) return false;
-  const text = typeof lastMessage.mes === 'string' ? lastMessage.mes.trim() : '';
-  if (text) return false;
+  // 清洗后 mes 可能为空，但 raw 协议仍在 → 不算空生成
+  if (messageHasDisplayableContent(lastMessage)) return false;
 
-  forceRecoverSendUi(hostWindow, reason, { toastEmpty: true });
+  forceRecoverSendUi(hostWindow, reason, { toastEmpty: true, force: true });
   console.warn('[Hotfix] 检测到空 AI 回复，已尝试恢复发送按钮', {
     messageIndex: lastMessageIndex,
     reason,
@@ -688,11 +813,11 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
     console.warn('[Hotfix] AutoCardUpdaterAPI 不可用，数据库自动更新可能失败');
   }
 
-  // 清洗后若正文被剥空，再恢复一次发送态
+  // 清洗后若正文+raw 皆空，再恢复一次发送态
   recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_ended_after_clean');
 
-  // 无论是否有正文：GENERATION_ENDED 后必须解锁发送互斥（假流式常见「有回复但点不动」）
-  forceRecoverSendUi(hostWindow, 'generation_ended_always', { hideStop: true });
+  // 每轮轻量解锁；仅发送卡住时强制点 stop / 露出发送钮
+  forceRecoverSendUi(hostWindow, 'generation_ended_always', { hideStop: true, force: isSendUiStuck(hostWindow) });
 }
 
 async function handleGenerationStopped(eventMessageId?: unknown) {
@@ -700,14 +825,59 @@ async function handleGenerationStopped(eventMessageId?: unknown) {
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
   if (!chat || chat.length === 0) {
-    forceRecoverSendUi(hostWindow, 'generation_stopped_empty_chat');
+    forceRecoverSendUi(hostWindow, 'generation_stopped_empty_chat', { force: true });
     return;
   }
   const lastMessageIndex = resolveMessageIndex(chat, eventMessageId);
   if (lastMessageIndex >= 0) {
     recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_stopped');
   }
-  forceRecoverSendUi(hostWindow, 'generation_stopped_always', { hideStop: true });
+  forceRecoverSendUi(hostWindow, 'generation_stopped_always', { hideStop: true, force: true });
+}
+
+type HotfixListenerBinding = {
+  eventName: string;
+  handler: (...args: unknown[]) => void;
+  off?: () => void;
+};
+
+const hotfixListenerBindings: HotfixListenerBinding[] = [];
+
+function unbindHotfixListeners() {
+  for (const binding of hotfixListenerBindings) {
+    try {
+      binding.off?.();
+    } catch {
+      // ignore
+    }
+  }
+  hotfixListenerBindings.length = 0;
+}
+
+function bindHotfixListener(
+  hostWindow: HostWindow,
+  eventSource: NonNullable<ReturnType<typeof getEventSource>>,
+  eventName: string,
+  handler: (...args: unknown[]) => void,
+) {
+  if (typeof eventSource.on === 'function') {
+    eventSource.on(eventName, handler);
+    hotfixListenerBindings.push({
+      eventName,
+      handler,
+      off: () => {
+        if (typeof eventSource.off === 'function') eventSource.off(eventName, handler);
+        else if (typeof eventSource.removeListener === 'function') eventSource.removeListener(eventName, handler);
+      },
+    });
+    return true;
+  }
+  if (typeof hostWindow.eventOn === 'function') {
+    hostWindow.eventOn(eventName, handler);
+    hotfixListenerBindings.push({ eventName, handler });
+    return true;
+  }
+  return false;
 }
 
 function registerEventListeners() {
@@ -719,7 +889,8 @@ function registerEventListeners() {
     return false;
   }
 
-  // 检查是否已经注册过（避免重复注册）
+  unbindHotfixListeners();
+
   const messageReceivedEvent = getTavernEventName(hostWindow, 'MESSAGE_RECEIVED', 'message_received');
   const generationEndedEvent = getTavernEventName(hostWindow, 'GENERATION_ENDED', 'generation_ended');
   const generationStoppedEvent = getTavernEventName(hostWindow, 'GENERATION_STOPPED', 'generation_stopped');
@@ -737,36 +908,16 @@ function registerEventListeners() {
   });
 
   let successCount = 0;
-
-  // 注册 MESSAGE_RECEIVED 监听器（优先清洗，确保在界面渲染前完成）
-  if (typeof eventSource.on === 'function') {
-    eventSource.on(messageReceivedEvent, handleMessageReceived);
-    console.info('[Hotfix] 已注册 MESSAGE_RECEIVED 监听器（eventSource.on）', { eventName: messageReceivedEvent });
-    successCount++;
-  } else if (typeof hostWindow.eventOn === 'function') {
-    hostWindow.eventOn(messageReceivedEvent, handleMessageReceived);
-    console.info('[Hotfix] 已注册 MESSAGE_RECEIVED 监听器（tavern eventOn）', { eventName: messageReceivedEvent });
+  if (bindHotfixListener(hostWindow, eventSource, messageReceivedEvent, handleMessageReceived)) {
+    console.info('[Hotfix] 已注册 MESSAGE_RECEIVED 监听器', { eventName: messageReceivedEvent });
     successCount++;
   }
-
-  // 注册 GENERATION_ENDED 监听器（触发 MVU + 防御性二次清洗）
-  if (typeof eventSource.on === 'function') {
-    eventSource.on(generationEndedEvent, handleGenerationEnded);
-    console.info('[Hotfix] 已注册 GENERATION_ENDED 监听器（eventSource.on）', { eventName: generationEndedEvent });
-    successCount++;
-  } else if (typeof hostWindow.eventOn === 'function') {
-    hostWindow.eventOn(generationEndedEvent, handleGenerationEnded);
-    console.info('[Hotfix] 已注册 GENERATION_ENDED 监听器（tavern eventOn）', { eventName: generationEndedEvent });
+  if (bindHotfixListener(hostWindow, eventSource, generationEndedEvent, handleGenerationEnded)) {
+    console.info('[Hotfix] 已注册 GENERATION_ENDED 监听器', { eventName: generationEndedEvent });
     successCount++;
   }
-
-  // 注册 GENERATION_STOPPED：空回复/手动停止时恢复发送按钮
-  if (typeof eventSource.on === 'function') {
-    eventSource.on(generationStoppedEvent, handleGenerationStopped);
-    console.info('[Hotfix] 已注册 GENERATION_STOPPED 监听器（eventSource.on）', { eventName: generationStoppedEvent });
-  } else if (typeof hostWindow.eventOn === 'function') {
-    hostWindow.eventOn(generationStoppedEvent, handleGenerationStopped);
-    console.info('[Hotfix] 已注册 GENERATION_STOPPED 监听器（tavern eventOn）', { eventName: generationStoppedEvent });
+  if (bindHotfixListener(hostWindow, eventSource, generationStoppedEvent, handleGenerationStopped)) {
+    console.info('[Hotfix] 已注册 GENERATION_STOPPED 监听器', { eventName: generationStoppedEvent });
   }
 
   if (successCount === 0) {
@@ -796,8 +947,21 @@ async function waitForDependencies(maxAttempts = 30, interval = 500) {
   return false;
 }
 
+function cleanupHotfix(hostWindow: HostWindow = getHostWindow()) {
+  unbindHotfixListeners();
+  hostWindow.__mfrsHotfixInstalled__ = false;
+  delete hostWindow.__mfrsHotfixCleanup__;
+  console.info('[Hotfix] 已卸载 GENERATION_ENDED 监听器补丁');
+}
+
 // 主入口
 async function installHotfix() {
+  const hostWindow = getHostWindow();
+  if (hostWindow.__mfrsHotfixInstalled__) {
+    console.info('[Hotfix] 已安装，跳过重复注册');
+    return;
+  }
+
   console.info('[Hotfix] 开始安装 GENERATION_ENDED 监听器补丁');
 
   const ready = await waitForDependencies();
@@ -808,6 +972,8 @@ async function installHotfix() {
 
   const success = registerEventListeners();
   if (success) {
+    hostWindow.__mfrsHotfixInstalled__ = true;
+    hostWindow.__mfrsHotfixCleanup__ = () => cleanupHotfix(hostWindow);
     console.info('[Hotfix] GENERATION_ENDED 监听器补丁安装成功');
     window.setTimeout(() => {
       recoverRecentRawProtocolMessages().catch(error => {

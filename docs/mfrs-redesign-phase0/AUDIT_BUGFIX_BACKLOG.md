@@ -117,12 +117,12 @@
 
 ---
 
-### C6 · 协议清洗早于 UI 解析且状态栏不读 raw — **待修**
+### C6 · 协议清洗早于 UI 解析且状态栏不读 raw — **已修（BF2）**
 
-- [ ] **C6.1** `界面/状态栏/App.vue` `extractOptions()` 优先读 `extra._mfrs_raw_protocol_message`，再 mes，再 MVU `行动建议`
-- [ ] **C6.2** `消息内面板` `getLatestAiMessageRawText` 同样优先 raw extra
-- [ ] **C6.3** 可选：hotfix 延后 strip 至 MVU 写回 + 镜像完成；或保证 raw 持久化 `saveChat`
-- [ ] **C6.4** 空生成判定用清洗前快照 / raw，不用清洗后空 `mes`
+- [x] **C6.1** `界面/状态栏/App.vue` `extractOptions()` 优先读 `extra._mfrs_raw_protocol_message`，再 mes，再 MVU `行动建议`
+- [x] **C6.2** `消息内面板` `getLatestAiMessageRawText` 同样优先 raw extra
+- [x] **C6.3** 可选：hotfix 延后 strip 至 MVU 写回 + 镜像完成；或保证 raw 持久化 `saveChat`
+- [x] **C6.4** 空生成判定用清洗前快照 / raw，不用清洗后空 `mes`
 
 **验收**：仅输出 `<choices>`+`<UpdateVariable>` 时，HUD/状态栏仍能出 A–D；清洗后显示无协议块。
 
@@ -152,42 +152,42 @@
 
 ---
 
-### H4 · Hotfix 监听器可重复注册 — **待修**
+### H4 · Hotfix 监听器可重复注册 — **已修（BF2）**
 
-- [ ] **H4.1** 幂等安装：`off` 再 `on`，或 `__mfrsHotfixInstalled__` 硬门闩
-- [ ] **H4.2** 提供 `__mfrsHotfixCleanup__`，CHAT_CHANGED / 重载可卸
+- [x] **H4.1** 幂等安装：`off` 再 `on`，或 `__mfrsHotfixInstalled__` 硬门闩
+- [x] **H4.2** 提供 `__mfrsHotfixCleanup__`，CHAT_CHANGED / 重载可卸
 
 文件：`脚本/hotfix-generation-ended-listeners/index.ts`
 
 ---
 
-### H5 · `forceRecoverSendUi` 过激 — **待修**
+### H5 · `forceRecoverSendUi` 过激 — **已修（BF2）**
 
-- [ ] **H5.1** 仅在发送卡住时恢复（send 隐/stop 显、空 mes、超时），非每轮盲点 stop
-- [ ] **H5.2** 与 H4 叠加后防 thrash；可 debounce
-
----
-
-### H6 · 清洗后假空生成 — **待修**
-
-- [ ] **H6.1** `recoverSendUiAfterEmptyGeneration` 基于清洗前 / raw 判定
-- [ ] **H6.2** 系统提示强调正文+【本轮摘要】不可省略
+- [x] **H5.1** 仅在发送卡住时恢复（send 隐/stop 显、空 mes、超时），非每轮盲点 stop
+- [x] **H5.2** 与 H4 叠加后防 thrash；可 debounce
 
 ---
 
-### H7 · 消息内面板不解析 `<choices>` 主格式 — **待修**
+### H6 · 清洗后假空生成 — **已修（BF2）**
 
-- [ ] **H7.1** 增加与 `App.vue` 同构的 `parseStructuredChoices`（key/text/risk）
-- [ ] **H7.2** 回退链：MVU → 表 → raw `<choices>` → mes JSONPatch
+- [x] **H6.1** `recoverSendUiAfterEmptyGeneration` 基于清洗前 / raw 判定
+- [x] **H6.2** 系统提示强调正文+【本轮摘要】不可省略
+
+---
+
+### H7 · 消息内面板不解析 `<choices>` 主格式 — **已修（BF2）**
+
+- [x] **H7.1** 增加与 `App.vue` 同构的 `parseStructuredChoices`（key/text/risk）
+- [x] **H7.2** 回退链：MVU → 表 → raw `<choices>` → mes JSONPatch
 
 文件：`脚本/消息内面板/index.ts`
 
 ---
 
-### H8 · Hotfix seed 覆盖不全 — **待修**
+### H8 · Hotfix seed 覆盖不全 — **已修（BF2）**
 
-- [ ] **H8.1** `seedMissingStatPaths` 扩到 schema 默认全集（至少：在场人物、规律推理记录、收录*、可见档案、主线进度数组、运行期 flags）
-- [ ] **H8.2** 与 C1 修完后的 initvar 对齐，避免双源默认值
+- [x] **H8.1** `seedMissingStatPaths` 扩到 schema 默认全集（至少：在场人物、规律推理记录、收录*、可见档案、主线进度数组、运行期 flags）
+- [x] **H8.2** 与 C1 修完后的 initvar 对齐，避免双源默认值
 
 ---
 
@@ -226,14 +226,14 @@
 
 ### Critical
 
-- [ ] **R1** 收窄/禁用 `[显示]隐藏英文调试摘要` / `[显示]隐藏外语中间稿`：勿按 corridor/risk/choices 等词整段删英文正文
-- [ ] **R2** `#8`/`#2` 面板隐藏：禁止裸 `【选项】` 标题匹配；仅 `【推演选项` / `【状态面板` / 带冒号标题；限制吞到 EOF
-- [ ] **R3** `#33` 未闭合思维链：禁止 `$` 吃掉整段正文/摘要/协议；与 hotfix `stripThinkingBlocks` 对齐
+- [x] **R1** 收窄/禁用 `[显示]隐藏英文调试摘要` / `[显示]隐藏外语中间稿`：勿按 corridor/risk/choices 等词整段删英文正文 — **BF2**
+- [x] **R2** `#8`/`#2` 面板隐藏：禁止裸 `【选项】` 标题匹配；仅 `【推演选项` / `【状态面板` / 带冒号标题；限制吞到 EOF — **BF2**
+- [x] **R3** `#33` 未闭合思维链：禁止 `$` 吃掉整段正文/摘要/协议；与 hotfix `stripThinkingBlocks` 对齐 — **BF2**
 
 ### High
 
 - [ ] **RH1** 正则名「由正文 sp 面板替代」→「由 HUD/数据库前端消费」
-- [ ] **RH2** 正则 **id 冲突**：`…2004` / `…2005` 被开局渲染与思维链共用 → 换新 UUID 后发版
+- [x] **RH2** 正则 **id 冲突**：`…2004` / `…2005` 被开局渲染与思维链共用 → 换新 UUID 后发版 — **BF2**（思维链 → `e8f1…f60/f61`）
 - [ ] **RH3** prompt 侧协议 strip `最大深度: 3`：评估提高或依赖 hotfix 持久清洗 mes
 - [ ] **RH4** `#25` sp 标签列表与 `#11` 广义 `(sp|mfrs)_` 对齐
 - [ ] **RH5** 禁用或收窄 `#19–22` Name/Status/Location 英行改写（短标签 UI 已关）
@@ -375,16 +375,16 @@
   - 决策：不恢复 App.vue 加载；核心镜像迁入 `脚本/数据库前端/mvu-core-mirror.ts`（GENERATION_ENDED/MESSAGE_RECEIVED）
   - 开局：界面美化；选项 UI：消息内面板；App.vue 保留源码但标注孤儿（`界面/状态栏/index.ts` 注释）
   - 仍开：C6.1/D3/H2.2/DM9 等对 App.vue 死代码的细修可降优先或随删除批次；镜像路径已按 D3 正确字段实现
-- [ ] **RH6 · 掷骰条被自家 hotfix 击杀**：`cleanProtocolBlocks`（MESSAGE_RECEIVED 即永久删 mes 中 `<mfrs_roll/>` 自闭合+成对，index.ts:493-495）先于 #27 显示正则渲染（index.yaml:5629）→ 掷骰条 UI 永不出现/闪现即消失；世界书规定骰条自闭合输出。修法：hotfix 清洗白名单放行 mfrs_roll，或渲染改读 raw extra
+- [x] **RH6 · 掷骰条被自家 hotfix 击杀** — **BF2**：hotfix 白名单放行 `mfrs_roll`（不再 strip 自闭合骰条）；#27 显示正则可渲染
 - [ ] **SH6 · 开局提交按钮无内联兜底（单点故障）**：`class="mfrs-submit"` 无 onclick，全靠 界面美化 CDN 脚本委托；同表单厉鬼加减/预设 select 反而有内联兜底 → CDN 失败/被墙时表单可填但永远无法提交（开发卡因 C3 必现）
 - [x] **M11 · 死亡链断裂（与 W4/H1 同批）** — **BF0 文档侧**：系统提示/必须输出推演选项/变量更新规则统一写集 `状态+is_dead+阶段状态=模拟结束+行动建议[]`；主线阶段推进规则值域补「模拟结束」；`<death/>` 仍仅 App.vue（H10 后处理）
 
 ### A2 新增 Medium
 
-- [ ] **RM3** 正则 #1/#6 `s` 标志贪婪 `.*<\/update>`：一消息多 UpdateVariable 块时吞块间正文 → 改懒惰 `.*?`
-- [ ] **RM4** #7 关键词高亮/#23 警告渲染查找为裸字符串**无 g 标志** → 每条消息只命中第一个
-- [ ] **RM5** **复核"#31 OFF 正确"立场**：#31 关闭后无流式兜底（#11 只匹配闭合对、#9 清单不含 sp_/mfrs_）→ 生成中未闭合 sp_ 标签 JSON 裸露给玩家。三选一：重开 #31 / #9 清单扩 sp_/mfrs_ / 接受裸露
-- [ ] **RM6** #23 警告渲染终止 lookahead 兜底 `$`：【警告】后全部正文卷进红框（视觉吞段）
+- [x] **RM3** 正则 #1/#6 改非贪婪闭合标签匹配 — **BF2**
+- [x] **RM4** #7 关键词高亮/#23 警告渲染加 `g` — **BF2**
+- [x] **RM5** **复核"#31 OFF 正确"立场**：#9 未闭合结构块扩 `sp_/mfrs_`（排除 start/input/roll）；#31 保持 OFF — **BF2**
+- [x] **RM6** #23 警告渲染终止 lookahead 对齐本轮摘要/choices/UV — **BF2**
 - [ ] **WM4** `阶段7实机测试记录.txt:17` 断言蓝灯清单与 index.yaml 实配矛盾（4 条实为绿灯、偏移规则禁用）；该记录为孤儿文件
 - [x] **WM5** 死亡写 `阶段状态=模拟结束` ∉ 推进规则封闭值域（并入 M11，值域已补）— **BF0**
 - [ ] **WM6** **「恐怖程度」全世界书 75 处 vs schema 字段名「恐怖等级」0 处引用** → `已驾驭厉鬼[].恐怖等级` 永远停留默认"未知"；变量更新规则自警"不要写恐怖程度"却无人说真名。修法：规则统一改"恐怖等级"或 schema 加别名
@@ -429,7 +429,7 @@
 | **BF0（源码已落）** | C1 + C2 + M6 + H1 + H3 + D1 + M11 + L7 | initvar/schema/规则/系统提示已改；待 commit + 下次 publish |
 | **BF0.5（决策）** | H10 | App.vue 去留（决定 D3/H2.2/DM9/DL5 修复对象） |
 | **BF1** | C3 + C4 + H9（含打包卡处置） + L1 | 加载/pin/打包（C5 已改误报关闭，仅余 stub 清理） |
-| **BF2** | C6 + H4–H8 + R1–R3 + RH2 + RH6 + RM3–RM6 | 协议解析 + 正则误删 + 掷骰复活 + 发送态 |
+| **BF2** | C6 + H4–H8 + R1–R3 + RH2 + RH6 + RM3–RM6 | **源码完成**；待 production dist + publish |
 | **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | DB 镜像/守卫 + 开局流 |
 | **BF4** | W1–W4 + WM4–WM8 + M* + L* + RM7–RM9 + DM9 + DL* + SL* | 世界书/清理/别名 |
 | **BF5** | 回归门禁 + G2–G5 + publish | `verify-mfrs-*` 扩充 + `publish-card` + RELEASE |

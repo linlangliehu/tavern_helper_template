@@ -434,7 +434,12 @@ assert.ok(themeScriptSource.includes('hideRawProtocolParagraphs'), 'theme script
 assert.ok(themeScriptSource.includes('/行动建议'), 'theme script should hide visible UpdateVariable action suggestion JSON paths');
 assert.ok(themeScriptSource.includes('MFRS_INLINE_PROTOCOL_TAG_PATTERN'), 'theme script should catch inline protocol tag names in natural-language paragraphs');
 assert.ok(themeScriptSource.includes('choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis'), 'theme script should hide natural-language mentions of internal protocol tag names');
-assert.ok(hotfixSource.includes('(?!(?:sp_start|sp_input)\\b)'), 'hotfix runtime cleanup should preserve opening and input panels');
+assert.ok(
+  hotfixSource.includes('(?!(?:sp_start|sp_input|mfrs_roll)\\b)') || hotfixSource.includes('(?!(?:sp_start|sp_input)\\b)'),
+  'hotfix runtime cleanup should preserve opening and input panels (and mfrs_roll dice bar)',
+);
+assert.ok(!hotfixSource.includes(".replace(/<mfrs_roll\\b[^>]*\\/>/gi, '')"), 'hotfix must not strip self-closing mfrs_roll (RH6)');
+assert.ok(statusAppSource.includes('_mfrs_raw_protocol_message'), 'status bar extractOptions should prefer raw protocol extra (C6.1)');
 const inlineProtocolLeakSample = '行动建议：按 A/B/C/D 写入 4 行，风险与 <choices> 一致。';
 assert.ok(/<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i.test(inlineProtocolLeakSample), 'inline display guard should catch natural-language <choices> leaks');
 assert.ok(vendorSource.includes('sanitizeLatestAiMessageRawProtocol_ACU'), 'vendor should sanitize latest AI raw message before auto table update');

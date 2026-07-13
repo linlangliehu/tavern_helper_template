@@ -1132,11 +1132,42 @@ function splitOptionLines(rawBlock: string) {
 
 function extractOptions(): OptionItem[] {
   try {
-    const mes = getChatMessages(getCurrentMessageId())[0]?.message ?? ''
+    const msg = getChatMessages(getCurrentMessageId())[0] as any
+    const rawExtra = typeof msg?.extra?._mfrs_raw_protocol_message === 'string' ? msg.extra._mfrs_raw_protocol_message : ''
+    const mes = (rawExtra && /<choices\b|<UpdateVariable\b/i.test(rawExtra) ? rawExtra : '') || String(msg?.message ?? msg?.mes ?? '')
     const structured = parseStructuredChoices(mes)
     if (structured.length > 0) return structured
     const fromUpdateVariable = parseUpdateVariableActionSuggestions(mes)
     if (fromUpdateVariable.length > 0) return fromUpdateVariable
+
+    // MVU 行动建议回退
+    try {
+      const mvuSuggestions = Array.isArray(d()?.行动建议) ? d().行动建议 : []
+      if (mvuSuggestions.length > 0) {
+        const out: OptionItem[] = []
+        const seen = new Set<string>()
+        mvuSuggestions.forEach((item: any, i: number) => {
+          const key = normalizeOptionKey(String(item?.选项 ?? item?.option ?? item?.key ?? String.fromCharCode(65 + i)))
+          if (!key || seen.has(key)) return
+          const text = String(item?.思路 ?? item?.text ?? item?.行动 ?? '').replace(/\s+/g, ' ').trim()
+          if (!text) return
+          out.push({
+            key,
+            text,
+            risk: {
+              death: clampRiskDelta(item?.死亡风险 ?? 0),
+              revive: clampRiskDelta(item?.复苏风险 ?? 0),
+              source: String(item?.主要风险 ?? 'MVU行动建议').replace(/\s+/g, ' ').trim() || 'MVU行动建议',
+              tagged: true,
+            },
+          })
+          seen.add(key)
+        })
+        if (out.length > 0) return out
+      }
+    } catch {
+      // ignore MVU fallback
+    }
 
     // 优先解析本卡格式；同时兼容常见预设的“行动/选择/Options/Choices”标题和数字序号。
     const blockRe = /【[^】]*(?:选项|行动|选择|Options|Choices)[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/gi

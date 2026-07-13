@@ -152,7 +152,20 @@ type ActionSuggestion = {
   provisional?: boolean;
 };
 
-/** 最新 AI 楼原始正文（含被正则隐藏的 UpdateVariable；优先 chat 原始 mes） */
+const RAW_PROTOCOL_EXTRA_KEY = '_mfrs_raw_protocol_message';
+
+function readMessageProtocolText(msg: any): string {
+  const rawExtra = msg?.extra?.[RAW_PROTOCOL_EXTRA_KEY];
+  if (typeof rawExtra === 'string' && rawExtra.trim()) {
+    if (/<choices\b|<UpdateVariable\b|<JSONPatch\b/i.test(rawExtra)) return rawExtra.trim();
+  }
+  const mes = String(msg?.message ?? msg?.mes ?? '').trim();
+  if (mes) return mes;
+  if (typeof rawExtra === 'string' && rawExtra.trim()) return rawExtra.trim();
+  return '';
+}
+
+/** 最新 AI 楼协议正文：优先 extra._mfrs_raw_protocol_message，再 mes，再 DOM */
 function getLatestAiMessageRawText(): string {
   const mes = getLatestAiMessageElement();
   if (!mes) return '';
@@ -163,7 +176,7 @@ function getLatestAiMessageRawText(): string {
       if (!Number.isNaN(messageId)) {
         const msgs = getChatMessages(messageId);
         const hit = Array.isArray(msgs) ? msgs[0] : null;
-        const raw = String((hit as any)?.message ?? (hit as any)?.mes ?? '').trim();
+        const raw = readMessageProtocolText(hit);
         if (raw) return raw;
       }
     }
@@ -171,6 +184,82 @@ function getLatestAiMessageRawText(): string {
     // fall through to DOM
   }
   return String(mes.querySelector('.mes_text')?.textContent ?? '').trim();
+}
+
+function stripThinkingBlocksForChoices(message: string): string {
+  let source = String(message || '')
+    .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<thought[^>]*>[\s\S]*?<\/thought>/gi, '')
+    .replace(/<reasoning[^>]*>[\s\S]*?<\/reasoning>/gi, '')
+    .replace(/<\/(?:think|thinking|thought|reasoning)>/gi, '');
+  const openPattern = /<(?:think|thinking|thought|reasoning)\b[^>]*>/i;
+  let openMatch = openPattern.exec(source);
+  while (openMatch) {
+    const prefix = source.slice(0, openMatch.index);
+    const rest = source.slice(openMatch.index + openMatch[0].length);
+    const protocolPatterns = [
+      /<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/i,
+      /<choices\b[^>]*>[\s\S]*?<\/choices>/i,
+      /【本轮摘要】/i,
+    ];
+    let keepIndex = -1;
+    for (const pattern of protocolPatterns) {
+      const protocolMatch = pattern.exec(rest);
+      if (protocolMatch && (keepIndex < 0 || protocolMatch.index < keepIndex)) keepIndex = protocolMatch.index;
+    }
+    source = keepIndex >= 0 ? `${prefix}${rest.slice(keepIndex)}` : prefix;
+    openMatch = openPattern.exec(source);
+  }
+  return source.replace(/<\/?(?:think|thinking|thought|reasoning)[^>]*>/gi, '').trim();
+}
+
+/** 解析主格式 <choices> JSON → 行动建议（与状态栏 parseStructuredChoices 同构） */
+function parseStructuredChoices(message: string): ActionSuggestion[] {
+  const match = stripThinkingBlocksForChoices(message).match(/<choices\b[^>]*>\s*([\s\S]*?)\s*<\/choices>/i);
+  if (!match) return [];
+  try {
+    const source = match[1]
+      .replace(/^\s*```(?:json)?\s*/i, '')
+      .replace(/\s*```\s*$/i, '')
+      .trim();
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(source);
+    } catch {
+      parsed = JSON.parse(source.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"));
+    }
+    if (!Array.isArray(parsed)) return [];
+    const byKey = new Map<string, ActionSuggestion>();
+    for (const item of parsed) {
+      if (!item || typeof item !== 'object') continue;
+      const key = valueText((item as any).key ?? (item as any).id ?? (item as any).option ?? (item as any).选项, '').toUpperCase();
+      if (!key || !/^[A-D]$/.test(key) || byKey.has(key)) continue;
+      const text = valueText((item as any).text ?? (item as any).思路 ?? (item as any).行动 ?? (item as any).label, '').replace(
+        /\s+/g,
+        ' ',
+      );
+      if (!text) continue;
+      const risk = (item as any).risk && typeof (item as any).risk === 'object' ? (item as any).risk : {};
+      const death = valueText(risk.death ?? (item as any).death ?? (item as any).death_risk ?? (item as any).死亡风险, '');
+      const revive = valueText(risk.revive ?? (item as any).revive ?? (item as any).revival_risk ?? (item as any).复苏风险, '');
+      const sourceLabel = valueText(risk.source ?? '结构化选项', '结构化选项');
+      const metaParts = [
+        death !== '' && death !== '0' ? `死亡：${death}` : '',
+        revive !== '' && revive !== '0' ? `复苏：${revive}` : '',
+        sourceLabel && sourceLabel !== '结构化选项' ? sourceLabel : '',
+      ].filter(Boolean);
+      byKey.set(key, {
+        key,
+        text,
+        meta: metaParts.join('｜'),
+        fill: key === 'D' && text === '自定义行动' ? '' : text,
+      });
+    }
+    return ['A', 'B', 'C', 'D'].map(k => byKey.get(k)).filter((x): x is ActionSuggestion => Boolean(x));
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -235,7 +324,7 @@ function parseActionSuggestionsFromMessageText(message: string): ActionSuggestio
   return ['A', 'B', 'C', 'D'].map(k => byKey.get(k)).filter((x): x is ActionSuggestion => Boolean(x));
 }
 
-/** 仅收集真实行动建议：MVU → 表 → 最新 AI 楼 UpdateVariable 回退；无数据返回空 */
+/** 仅收集真实行动建议：MVU → 表 → raw `<choices>` → UpdateVariable/JSONPatch；无数据返回空 */
 function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
   const fromStat = Array.isArray(data.行动建议) ? data.行动建议 : [];
   const list: ActionSuggestion[] = [];
@@ -270,7 +359,9 @@ function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
     }
   }
   if (!list.length) {
-    list.push(...parseActionSuggestionsFromMessageText(getLatestAiMessageRawText()));
+    const rawText = getLatestAiMessageRawText();
+    list.push(...parseStructuredChoices(rawText));
+    if (!list.length) list.push(...parseActionSuggestionsFromMessageText(rawText));
   }
   return list;
 }
