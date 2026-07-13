@@ -10,7 +10,8 @@
     "sync": "node tavern_sync.mjs",
     "publish-card": "node scripts/publish-card.mjs",
     "verify:mfrs-frontend": "node scripts/verify-mfrs-database-frontend-p3.mjs",
-    "verify:mfrs-mvu-hotfix": "node scripts/verify-mfrs-mvu-hotfix-regressions.mjs"
+    "verify:mfrs-mvu-hotfix": "node scripts/verify-mfrs-mvu-hotfix-regressions.mjs",
+    "verify:mfrs-dist-freshness": "node scripts/verify-mfrs-dist-freshness.mjs"
   },
   "browserslist": [
     "defaults and partially supports es6-module"

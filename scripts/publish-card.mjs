@@ -52,6 +52,7 @@ const cards = [
     yamlFile: 'index.yaml',
     syncDirs: ['第一条消息', '系统提示词', '对话示例', '世界书', '数据库'],
     syncFiles: ['神秘复苏模拟器.png'],            // 头像图
+    distDir: 'dist/神秘复苏模拟器',               // publish 前由 G1 校验 production dist 新鲜度
     urlReplacements: [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
@@ -167,6 +168,27 @@ function runBundle(syncName) {
   if (r.status !== 0) die(`tavern_sync 退出码 ${r.status}`);
 }
 
+function verifyDistFreshness(card) {
+  if (!card.distDir) return;
+  log(`运行 G1 dist 新鲜度门禁 (${card.distDir}) ...`);
+  const r = spawnSync(
+    'node',
+    [
+      join(ROOT, 'scripts', 'verify-mfrs-dist-freshness.mjs'),
+      '--ref',
+      CDN_REF,
+      '--dist-dir',
+      card.distDir,
+    ],
+    {
+      stdio: 'inherit',
+      cwd: ROOT,
+      shell: false,
+    },
+  );
+  if (r.status !== 0) die(`G1 dist 新鲜度门禁失败，退出码 ${r.status}`);
+}
+
 // ─────────────────────────────── 主流程 ───────────────────────────────
 const pickedCards = targets.length === 0
   ? cards
@@ -176,7 +198,11 @@ if (pickedCards.length === 0) {
   die(`没有匹配的卡。可用配置名: ${cards.map(c => c.syncName).join(', ')}`);
 }
 
-if (DRY_RUN) log('** DRY RUN（不会改文件） **');
+if (DRY_RUN) {
+  log('** DRY RUN（不会改文件；跳过需 fetch/build 的 G1 门禁） **');
+} else {
+  for (const card of pickedCards) verifyDistFreshness(card);
+}
 
 for (const card of pickedCards) {
   log(`────── 处理 ${card.syncName} ──────`);
