@@ -192,6 +192,31 @@ function verifyDistFreshness(card) {
   if (r.status !== 0) die(`G1 dist 新鲜度门禁失败，退出码 ${r.status}`);
 }
 
+// P1（BF6）：bundle 生成发布版 PNG 后，硬门禁校验 PNG 内 version/ref/cache/regex/scripts
+// 与 CDN_REF/RELEASE_VERSION/CDN_CACHE_VERSION 单真源对齐，防止发出 pin 未对齐的 PNG。
+function verifyReleasePng(card) {
+  const png = join(ROOT, card.pubDir, `${card.syncName}.png`);
+  if (!existsSync(png)) {
+    log(`  - 跳过 release-png 门禁：未找到 ${png}`);
+    return;
+  }
+  log(`运行 release-png 门禁 (${card.syncName}.png) ...`);
+  const r = spawnSync(
+    'node',
+    [
+      join(ROOT, 'scripts', 'verify-mfrs-release-png.mjs'),
+      '--from-publish-card',
+      png,
+    ],
+    {
+      stdio: 'inherit',
+      cwd: ROOT,
+      shell: false,
+    },
+  );
+  if (r.status !== 0) die(`release-png 门禁失败，退出码 ${r.status}`);
+}
+
 // ─────────────────────────────── 主流程 ───────────────────────────────
 const pickedCards = targets.length === 0
   ? cards
@@ -236,7 +261,11 @@ for (const card of pickedCards) {
   const versionNote = card.releaseVersion ? `，保留版本 ${card.releaseVersion}` : '';
   log(`  ✓ 同步 ${card.yamlFile} 并替换 ${totalReplaced} 处链接${versionNote}`);
 
-  if (!NO_BUNDLE) runBundle(card.syncName);
+  if (!NO_BUNDLE) {
+    runBundle(card.syncName);
+    // bundle 已生成新 PNG → 立即校验其 pin/version 与常量对齐（P1 硬门禁）
+    if (!DRY_RUN) verifyReleasePng(card);
+  }
 }
 
 log('');

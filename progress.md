@@ -1,5 +1,13 @@
 # 进度日志
 
+## 会话：2026-07-13（BF6 · P1 release-png 接入 publish-card）— **in_progress**
+
+- **P1（done）**：`scripts/publish-card.mjs` 加 `verifyReleasePng(card)`——每卡 `runBundle` 后校验发布 PNG 的 version/ref/cache/regex/scripts 与 `mfrs-release-constants.mjs` 单真源对齐；失败 `die`。
+  - 位置：仿既有 `verifyDistFreshness`（G1）；调用点在每卡 `if (!NO_BUNDLE){ runBundle(); if(!DRY_RUN) verifyReleasePng(card); }`。
+  - 验证：`node --check` 通过；`--dry-run` 正确跳过（不改文件）；门禁真值测试——正常 exit=0 / 错 ref(`--expect-ref deadbeef`) exit=1；聚合 `verify:mfrs-gates` 6/6 全绿无回归。
+  - 效果：发布链现自动拦"PNG 与 pin 不一致"，消除人工遗漏（原只 G1 自动）。
+- **下一**：批 β 正则残余（RM7–9/RH3–5/RM1–2）；P0/P2/P3 可捎带。BF6 未发版。
+
 ## 会话：2026-07-13（8.13.21 上线后只读审查）— **complete**
 
 双路独立只读审查（主会话 + 子代理），**结论一致：8.13.21 可安全上线**。

@@ -469,7 +469,7 @@
 
 | ID | 严重度 | 位置 | 现象 | 修复方向 | 状态 |
 |----|--------|------|------|----------|------|
-| **P1** | Medium | `scripts/publish-card.mjs` | release-png 门禁未被 publish-card/CI 调用，仅靠人工跑 `verify:mfrs-gates`；publish-card 仅内联调 G1 dist-freshness。理论上可 publish 出 ref/cache 未对齐的 PNG 而不被自动拦截 | build 后追加 `verify-mfrs-release-png --from-publish-card` 的 spawnSync 硬门禁，与 G1 同级 die-on-fail | open |
+| **P1** | Medium | `scripts/publish-card.mjs` | release-png 门禁未被 publish-card/CI 调用，仅靠人工跑 `verify:mfrs-gates`；publish-card 仅内联调 G1 dist-freshness。理论上可 publish 出 ref/cache 未对齐的 PNG 而不被自动拦截 | build 后追加 `verify-mfrs-release-png --from-publish-card` 的 spawnSync 硬门禁，与 G1 同级 die-on-fail | **done（BF6）** — `verifyReleasePng(card)` 每卡 bundle 后调用，错 ref→exit1→die；dry-run/no-bundle 跳过 |
 | **P2** | Low | `scripts/verify-mfrs-release-png.mjs:47-56` | `--from-publish-card` 为自证式校验：能抓 PNG 陈旧，但常量本身写错抓不出（G4 单真源固有局限） | 可选：额外校验 CDN_REF == HEAD/dist 实际 commit | open |
 | **P3** | Low | `scripts/verify-mfrs-initvar-schema.mjs:60-66` | `$ref` 子节点 `resolved=null` 直接跳过；将来 initvar 实例化 `$ref` 嵌套对象时会假阴（误判"未知路径"） | schema 含 `$ref` 时先解引用 `$defs` 再收集键 | open |
 | **P0** | Low | `package.json` `verify:mfrs-dist-freshness` | 该 script 未带 `--ref`，独立/CI 裸跑在参数校验阶段即报错；且脚本内部 `runProductionBuild()` 会触发 `pnpm build`，非只读 | 说明其为 publish-card 发布时守卫（非独立门禁），或补默认 `--ref`+`--no-build` 只读模式 | open |

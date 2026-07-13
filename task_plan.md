@@ -14,7 +14,8 @@
 **阶段 BF3 — complete（8.13.19）**  
 **阶段 BF4 — complete（8.13.20）**  
 **阶段 BF5 — complete（门禁 G2–G5 + DM8；部分残余）**  
-**当前阶段：残余缺陷 / 可选 8.13.21 发版**
+**阶段 BF5.5：8.13.21 上线后只读审查 — complete（双路复核通过，`84df0b5` 已 push）**  
+**当前阶段：BF6 — 正则/清洗残余 + 发布链流程加固（目标 8.13.22；批 β+δ）**
 
 ## 五问重启（新对话先读）
 
@@ -125,6 +126,43 @@
 - [x] `pnpm verify:mfrs-gates` 聚合
 - 残余仍开：H2、M5/M7–M10、RH3–5、RM1–2/RM7–9、DM1–6/DM9、DL*、SM* 等
 - **状态：** complete（门禁）；发版见 progress
+
+### 阶段 BF5.5：8.13.21 上线后只读审查 — **complete**
+- [x] A git：behind 1 bot bundle（已 FF）；dev PNG 哈希=origin/main（非手改）；无未提交业务码
+- [x] B 变更/硬约束：范围 `d2f8ae7..077b0b2`；4 条硬约束全未破坏；index.yaml 8 项仅 pin 更新；正则 33 未动
+- [x] C 门禁：`verify:mfrs-gates` 6/6 PASS（release-png version=8.13.21 refs=7 cache=8 regex=33 scripts=8）
+- [x] 结论入库 backlog「BF5 上线后审查」区 + progress；提交 push `84df0b5`
+- **状态：** complete
+
+### 阶段 BF6：正则/清洗残余 + 发布链加固 — **in_progress（目标 8.13.22，批 β+δ）**
+
+**批 β · 正则/清洗残余（与 G3 同域，风险低）**
+- [ ] **RM7** #14/#15（JSONPatch/draft/pacing/修改确认）补 prompt 去除 + hotfix 清洗，止残渣回传 AI
+- [ ] **RM8** #10/#11 ↔ hotfix L491/493 逐字清单同步（防 RH6 式不同步）；注释互指
+- [ ] **RM9** #3/#4 `$` 兜底截断时勿删到消息尾
+- [ ] **RH3** hotfix `recoverRecentRawProtocolMessages` 补调 `cleanProtocolBlocks`（导入旧档漏洗）
+- [ ] **RH4** #25 sp 标签列表 ↔ #11 广义 `(sp|mfrs)_` 对齐
+- [ ] **RH5** 收窄/禁 #19–22 Name/Status/Location 英行改写（短标签 UI 已关）
+- [ ] **RM1** 裸 choices/JSONPatch 锚文末，降正文假阳性
+- [ ] **RM2** 关键词高亮勿改写 `【本轮摘要】` 内字段
+
+**批 δ · 发布链流程加固（本次审查产出）**
+- [x] **P1** publish-card build 后加 `verify-mfrs-release-png --from-publish-card` 硬门禁（与 G1 同级 die-on-fail）— **done**：`verifyReleasePng(card)` 每卡 bundle 后调用；错 ref→exit1→die；dry-run 验证跳过；聚合门禁 6/6 绿
+- [ ] **P0** `verify:mfrs-dist-freshness` script 补默认 `--ref` 或标注为发布守卫（非独立门禁）
+- [ ] **P2** 可选：release-png 额外校验 CDN_REF == HEAD 实际 commit
+- [ ] **P3** initvar-schema 校验解引用 `$defs` 再收集键（防将来 `$ref` 假阴）
+
+**硬约束（本批必守）**
+- 正则总数仍须=33（RM/RH 只改现有 id 的表达式/启用，不增删条目；改后同步 `verify:mfrs-regex-ids` + `verify:mfrs-release-png`）
+- 脚本库 8 项名称/顺序/启用不动
+- 清洗改动必过 `verify-output-cleaning-regressions`（G5）+ hotfix 回归
+- 发版只走 `pnpm publish-card`；禁手改 PNG
+
+**回归门槛**：改完跑 `pnpm verify:mfrs-gates` 全绿 → production build → publish 8.13.22
+- **状态：** in_progress
+
+**留待 8.13.23（批 α）**：H2 风险语义统一——真源落点 `mvu-core-mirror.ts`（非 App.vue 孤儿）+ ~8 世界书契约；工程量大，单独发版
+
 
 ## 合并关单
 
