@@ -430,7 +430,7 @@
 | **BF0.5（决策）** | H10 | App.vue 去留（决定 D3/H2.2/DM9/DL5 修复对象） |
 | **BF1** | C3 + C4 + H9（含打包卡处置） + L1 | 加载/pin/打包（C5 已改误报关闭，仅余 stub 清理） |
 | **BF2** | C6 + H4–H8 + R1–R3 + RH2 + RH6 + RM3–RM6 | **已发 8.13.18**（`dc27b52`） |
-| **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | **源码完成**（DH2/SH5 余项可挂后）；待 dist/publish |
+| **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | **已发 8.13.19**（`5b10525`；DH2/SH5 余项可挂后） |
 | **BF4** | W1–W4 + WM4–WM8 + M* + L* + RM7–RM9 + DM9 + DL* + SL* | 世界书/清理/别名 |
 | **BF5** | 回归门禁 + G2–G5 + publish | `verify-mfrs-*` 扩充 + `publish-card` + RELEASE |
 

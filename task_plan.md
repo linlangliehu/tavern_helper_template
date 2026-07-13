@@ -11,15 +11,15 @@
 **阶段 BF0.5 — complete**  
 **阶段 BF1 — complete（8.13.17：C3/C4/H9/L1）**  
 **阶段 BF2 — complete（8.13.18）**  
-**阶段 BF3 — complete（源码；待 dist/publish）**  
+**阶段 BF3 — complete（8.13.19）**  
 **当前阶段：阶段 BF4 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF3 源码完成**；线上仍 **8.13.18** |
-| 我要去哪里？ | **BF3 dist/publish** 或 **BF4**（W*/WM*/余项） |
+| 我在哪里？ | **BF3 发版中：8.13.19**（CDN `5b10525`） |
+| 我要去哪里？ | **BF4**（W*/WM*/DH2/SH5 余项）→ BF5 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -37,10 +37,10 @@
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.18** |
-| 资源 | `dc27b52` / cache `…-v81318-bf2-protocol` |
-| 功能 | BF2 协议 raw / hotfix / 正则 |
-| 发布 | 见 `chore(release) publish 8.13.18` |
+| 版本 | **8.13.19** |
+| 资源 | `5b10525` / cache `…-v81319-bf3-db-open` |
+| 功能 | BF3 DB 守卫/种子 + 开局校验 |
+| 发布 | 见 `chore(release) publish 8.13.19` |
 | 分支 | **`main`** |
 
 ## 各阶段
@@ -103,7 +103,7 @@
 - [x] **D2** 处理状态 `未接触→未处理`（adapter/App；mirror 已有）；**D3** 已在 BF0.5
 - [x] **DH1/DH3/DH4/DH5 + DM7**；**DH2** 人物列契约仍开（可挂 BF4）
 - [x] **S1 + SH1–SH4 + SH6**；**SH5** 欢迎页已禁用，分叉清理可挂后
-- **状态：** complete（源码）；待 production dist + publish
+- **状态：** complete（8.13.19 @ `5b10525`）
 
 ### 阶段 F / BF4：世界书与清理 — **pending**
 - [ ] **W1**（关 **M3**）伪路径 `规律推理记录.*`（休眠但模板根治）

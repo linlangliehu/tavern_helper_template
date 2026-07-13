@@ -1,14 +1,11 @@
 # 进度日志
 
-## 会话：2026-07-13（BF3 DB 镜像 + 开局）— **complete（源码）**
+## 会话：2026-07-13（BF3 + 8.13.19）— **complete**
 
-- **D2**：adapter/App `未接触→未处理`
-- **DH1**：检定建议 SQL-only；HUD 只读表
-- **DH3/DH4/DH5**：驾驭 path+别名；收录状态 CHECK；行动建议 A–D 种子
-- **DM7**：禁删/固定表 insert 守卫
-- **S1/SH1–4/SH6**：开局必填、短 identity、报文路径、首轮协议、submit 内联
-- 门禁：`verify-table-change-adapter` + hotfix/output-cleaning 通过
-- **待：** production dist + publish（建议 8.13.19）→ BF4
+- **D2/DH1/DH3–5/DM7/S1/SH1–4/SH6** 源码 + production dist
+- 功能 commit：`5b10525` 已 push
+- **8.13.19** pin `5b10525` / cache `…-v81319-bf3-db-open`；G1 + release-png 通过
+- **下一步：** 用户重导 PNG → BF4
 
 ## 会话：2026-07-13（BF2 协议/正则/发送 + 8.13.18）— **complete**
 
