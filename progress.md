@@ -1,5 +1,17 @@
 # 进度日志
 
+## 会话：2026-07-13（BF6 批 β 续 · RM7/RH3 运行时清洗）— **实机验证通过（含 bug 修复）**
+
+- **RM7（done）**：`cleanProtocolBlocks` 追加删除 `<draft>`/`<pacing_rules>`/`<修改确认>`/独立 `<JSONPatch>` 块，止残渣回传 AI。仅删闭合标签块；英文/外语调试摘要不删（避免误删正文英文对白）。
+- **RH3（done）**：`recoverRecentRawProtocolMessages` 补写 MVU 后加 `cleanProtocolBlocks(index)`，导入旧档也清洗 mes；snapshot 幂等保 raw。
+- **⭐ 实机验证抓到并修复真 bug（chrome-devtools 运行时注入验证）**：
+  - `<修改确认>` 中文标签用 `\b` 匹配**失败**（中文非 `\w`，word boundary 不成立）→ 块删不掉。已改为 `<修改确认(?:\s[^>]*)?>` 去 `\b` + 属性容错。draft/pacing 是 ASCII，`\b` 正常无需改。
+  - 修复后 devtools 复验：12 项全绿——6 类协议块（draft/pacing/修改确认[含带属性]/独立JSONPatch/choices/UpdateVariable）全删；4 类正文（中文头/英文对白/本轮摘要/结尾）全留；无残留标签。
+  - RH3 验证：新旧档首次快照写 raw+清洗 mes+正文留 ✓；已有 raw 时快照幂等不覆盖 ✓。
+  - **注**：真机 CDN pin 仍是 8.13.21（f2b7db2，不含 RM7/RH3），故用本地 production 源码的清洗链在 devtools 运行时验证，未改用户卡、未发版。
+- **验证价值**：静态门禁（G5/mvu-hotfix）测不到运行时清洗，实机验证在提交前抓到中文 `\b` bug。
+- **production dist 重建**（eval=0）；`pnpm verify:mfrs-gates` 6/6 绿。提交仅含 hotfix src+dist+progress（状态栏 html 的 module-id 噪声已弃）。BF6 仍未发版。
+
 ## 会话：2026-07-13（BF6 批 β 低风险子集 · RM8/RH4）— **done（未发版）**
 
 用户选"先做低风险子集"（不改运行时清洗行为）。

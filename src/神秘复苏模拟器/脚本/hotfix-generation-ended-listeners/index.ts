@@ -572,6 +572,10 @@ async function recoverRecentRawProtocolMessages() {
     candidates += 1;
     try {
       await parseAndWriteMvuMessage(index);
+      // RH3（BF6）：导入旧档/历史 raw 消息补写 MVU 后，同样清洗 mes 里的协议残块。
+      // 此前只补 MVU 不洗 mes → 导入旧档时协议块仍留在正文并回传 AI。
+      // cleanProtocolBlocks 内部会先 snapshot raw（幂等，不覆盖已存 raw），故 UI/MVU 仍可读原文。
+      await cleanProtocolBlocks(index);
     } catch (error) {
       console.warn('[Hotfix] 历史 raw protocol 消息补写失败', { messageIndex: index, error });
     }
@@ -603,6 +607,15 @@ async function cleanProtocolBlocks(messageIndex: number) {
   const cleanedMes = originalMes
     .replace(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi, '')
     .replace(/<choices\b[^>]*>[\s\S]*?<\/choices>/gi, '')
+    // RM7（BF6）：删除内部草稿/节奏/确认块与独立 JSONPatch 残渣。
+    // 这些块在显示层已被正则隐藏，但此前未从 mes 清除 → 深度回传 AI（token 膨胀+固化坏习惯）。
+    // 仅删明确闭合标签块；英文/外语调试摘要（启发式正则 #15/#16）不在此删，避免误删正文英文对白。
+    // 顺序：UpdateVariable 已先删（含其内部 <JSONPatch>），故此处独立 JSONPatch 删除不会误伤协议内块。
+    .replace(/<draft\b[^>]*>[\s\S]*?<\/draft>/gi, '')
+    .replace(/<pacing_rules\b[^>]*>[\s\S]*?<\/pacing_rules>/gi, '')
+    // 注意：中文标签名不能用 \b（中文非 \w，word boundary 匹配失败 → 删不掉）；用可选属性组容错。
+    .replace(/<修改确认(?:\s[^>]*)?>[\s\S]*?<\/修改确认>/gi, '')
+    .replace(/<JSON[P]atch\b[^>]*>[\s\S]*?<\/JSON[P]atch>/gi, '')
     // 删除旧 <sp_*> / <mfrs_*> 文本面板，保留开局/输入/掷骰。
     .replace(/<((?!(?:sp_start|sp_input|mfrs_roll)\b)(?:sp|mfrs)_[a-z_]+)\b[^>]*>[\s\S]*?<\/\1>/gi, '');
 
