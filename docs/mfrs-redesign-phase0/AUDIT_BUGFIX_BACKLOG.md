@@ -250,18 +250,18 @@
 ### Critical
 
 - [x] **D1** `action_suggestions` 固定 4 行 vs MVU：策略对齐——**存活** MVU 恰 4 条与表 4 行一致；**死亡** MVU `[]` + 无 choices（表可仍占位，镜像层后续随 H10）— **BF0 规则侧**
-- [ ] **D2** `处理状态`：MVU 默认 `未接触` ∉ DB enum → 映射 `未接触→未处理` 或扩 DDL；禁静默写成「调查中」
-  - 文件：`神秘复苏表格SQL_v1.json`、`table-change-adapter.ts`、`App.vue` normalizeHandlingStatus
+- [x] **D2** `处理状态`：`未接触→未处理` 对齐 mirror/adapter/App；禁默认「调查中」— **BF3**
+  - 文件：`table-change-adapter.ts`、`App.vue` normalizeHandlingStatus；mirror 已正确
 - [x] **D3** 核心表镜像字段路径 — **BF0.5 在 mvu-core-mirror 正确实现**（`主线进度.世界压力.*`、`已死亡人数`、`势力关系.所属城市`、`最近行动判定.行动`）；App.vue 死代码未改
 
 ### High
 
-- [ ] **DH1** `检定建议`：schema 无路径，HUD 读 `data.检定建议`；明确 SQL-only 或补 MVU
+- [x] **DH1** `检定建议`：明确 **SQL-only**；HUD 只读 `check_suggestions` 表 — **BF3**
 - [ ] **DH2** 联动规则「人物」列（态度/信息权限/可见备注）与 DDL 不一致 → 改规则或加列
   - 文件：`世界书/规则/数据库联动规则.txt` vs `characters` DDL
-- [ ] **DH3** 驾驭厉鬼：MVU 字段名 vs DB 表头映射 + adapter 别名；修错误 path `驭鬼者状态.驾驭厉鬼`→`已驾驭厉鬼`
-- [ ] **DH4** `收录档案.archive_status` 枚举统一入 DDL（禁「收录成功」漂移）
-- [ ] **DH5** 行动建议模板 content 补 A–D 种子行（对齐检定建议）
+- [x] **DH3** 驾驭厉鬼：修 frontend-config 错 path；adapter 别名 恐怖等级/使用能力/是否死机 — **BF3**
+- [x] **DH4** `收录档案.archive_status` DDL CHECK + 禁「收录成功」→已收录；规则同步 — **BF3**
+- [x] **DH5** 行动建议模板 content 补 A–D 种子行 — **BF3**
 
 ### Medium
 
@@ -284,16 +284,16 @@
 
 ### Critical
 
-- [ ] **S1** `fillWelcomeStart` 必填校验（姓名/身份/背景/锚点等）；`type=button` 不靠 HTML required
+- [x] **S1** `fillWelcomeStart` 必填校验（姓名/身份/背景/锚点等）；`type=button` 不靠 HTML required — **BF3**
   - 文件：`脚本/界面美化/index.ts`；开局 HTML 在 `index.yaml` 正则「渲染神秘复苏开局页」
 
 ### High
 
-- [ ] **SH1** `第一条消息/0.txt` 种子清单与真实表单字段对齐（锚点/背景/特殊能力；去掉过时拼图/副作用 checklist）
-- [ ] **SH2** 身份 option 用短 `value`（如 `普通学生`），勿整段长标签当 value
-- [ ] **SH3** 开局报文写明 JSONPatch 目标：`/性别` `/初始年龄` `/特殊能力描述` `/灵异资源/*` 等
-- [ ] **SH4** 开局确认后首轮强制：`【本轮摘要】`+`<choices>`+`<UpdateVariable>`，禁旧面板
-- [ ] **SH5** `欢迎页.txt` 与 live regex 表单二选一真源；禁用/删除分叉或自动同步
+- [x] **SH1** `第一条消息/0.txt` 种子清单与真实表单字段对齐 — **BF3**
+- [x] **SH2** 身份 option 用短 `value` — **BF3**
+- [x] **SH3** 开局报文写明 JSONPatch 合法路径；勿写 `/当前时间` — **BF3**
+- [x] **SH4** 开局确认后首轮强制：`【本轮摘要】`+`<choices>`+`<UpdateVariable>` — **BF3**
+- [ ] **SH5** `欢迎页.txt` 与 live regex 表单二选一真源；禁用/删除分叉或自动同步（欢迎页已 `启用:false`，词表统一待清理）
 
 ### Medium
 
@@ -376,7 +376,7 @@
   - 开局：界面美化；选项 UI：消息内面板；App.vue 保留源码但标注孤儿（`界面/状态栏/index.ts` 注释）
   - 仍开：C6.1/D3/H2.2/DM9 等对 App.vue 死代码的细修可降优先或随删除批次；镜像路径已按 D3 正确字段实现
 - [x] **RH6 · 掷骰条被自家 hotfix 击杀** — **BF2**：hotfix 白名单放行 `mfrs_roll`（不再 strip 自闭合骰条）；#27 显示正则可渲染
-- [ ] **SH6 · 开局提交按钮无内联兜底（单点故障）**：`class="mfrs-submit"` 无 onclick，全靠 界面美化 CDN 脚本委托；同表单厉鬼加减/预设 select 反而有内联兜底 → CDN 失败/被墙时表单可填但永远无法提交（开发卡因 C3 必现）
+- [x] **SH6 · 开局提交按钮无内联兜底** — **BF3**：`mfrs-submit` 加 onclick 内联校验+填入（与 ghost 加减同级兜底）
 - [x] **M11 · 死亡链断裂（与 W4/H1 同批）** — **BF0 文档侧**：系统提示/必须输出推演选项/变量更新规则统一写集 `状态+is_dead+阶段状态=模拟结束+行动建议[]`；主线阶段推进规则值域补「模拟结束」；`<death/>` 仍仅 App.vue（H10 后处理）
 
 ### A2 新增 Medium
@@ -388,7 +388,7 @@
 - [ ] **WM4** `阶段7实机测试记录.txt:17` 断言蓝灯清单与 index.yaml 实配矛盾（4 条实为绿灯、偏移规则禁用）；该记录为孤儿文件
 - [x] **WM5** 死亡写 `阶段状态=模拟结束` ∉ 推进规则封闭值域（并入 M11，值域已补）— **BF0**
 - [ ] **WM6** **「恐怖程度」全世界书 75 处 vs schema 字段名「恐怖等级」0 处引用** → `已驾驭厉鬼[].恐怖等级` 永远停留默认"未知"；变量更新规则自警"不要写恐怖程度"却无人说真名。修法：规则统一改"恐怖等级"或 schema 加别名
-- [ ] **DM7** adapter 守卫缺口：模板禁删/单行约束仅 chronicle 强制——其余"禁止删除"表可 deleteRow；单行表 insertRow 省略 row_id 可产生第二行（无 CHECK(row_id=1) 范围校验）
+- [x] **DM7** adapter 守卫：禁删表 `TABLE_DELETE_FORBIDDEN`；固定/单行表 `TABLE_INSERT_FORBIDDEN`（已有 row 时）— **BF3**
 - [ ] **DM8** 门禁缺口（BF5 执行）：`verify-table-change-adapter` 对 characters/supernatural_items/collected_rules 三表零用例；无"禁删表 deleteRow"/枚举近义词/GLOB 违规/混合合法+非法列整体拒绝用例；chronicle 用内联 DDL 非真模板
 - [ ] **DM9** [App.vue] `visibleSummary` 回退链末尾 `getCurrentMessageId()` → `public_summary`/`clue_text` 可能被写成楼层号（数字字符串化非空，兜底文案永不生效）
 - [ ] **WB-06 附注（并入 W2）** 事件MVU联动规则触发词 `UpdateVariable` 恰被 #1 正则从 prompt 剥离 → 触发词自锁死环；灵异对抗判定触发词在最需要的回合（接触媒介/进鬼域）不出现
@@ -430,7 +430,7 @@
 | **BF0.5（决策）** | H10 | App.vue 去留（决定 D3/H2.2/DM9/DL5 修复对象） |
 | **BF1** | C3 + C4 + H9（含打包卡处置） + L1 | 加载/pin/打包（C5 已改误报关闭，仅余 stub 清理） |
 | **BF2** | C6 + H4–H8 + R1–R3 + RH2 + RH6 + RM3–RM6 | **已发 8.13.18**（`dc27b52`） |
-| **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | DB 镜像/守卫 + 开局流 |
+| **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | **源码完成**（DH2/SH5 余项可挂后）；待 dist/publish |
 | **BF4** | W1–W4 + WM4–WM8 + M* + L* + RM7–RM9 + DM9 + DL* + SL* | 世界书/清理/别名 |
 | **BF5** | 回归门禁 + G2–G5 + publish | `verify-mfrs-*` 扩充 + `publish-card` + RELEASE |
 

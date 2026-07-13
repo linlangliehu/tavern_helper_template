@@ -36,6 +36,8 @@ export type TableChangeErrorCode =
   | 'LENGTH_VIOLATION'
   | 'CHRONICLE_APPEND_ONLY'
   | 'CHRONICLE_CODE_IMMUTABLE'
+  | 'TABLE_DELETE_FORBIDDEN'
+  | 'TABLE_INSERT_FORBIDDEN'
   | 'API_UNAVAILABLE'
   | 'API_MUTATION_FAILED';
 
@@ -659,6 +661,7 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
 
   let rowIndex = plan.action === 'insertRow' ? undefined : resolveRowIndex(table, plan.match, errors);
 
+  validateTableMutationPolicy(table, plan, values, errors);
   validateChronicleAppendOnly(table, plan, values, rowIndex, errors);
 
   const promoted = tryPromoteMissingFixedRowUpdateToInsert(table, plan, values, rowIndex, errors);
@@ -1250,9 +1253,22 @@ function normalizeEnumAliasValue(table: TableMeta, column: ColumnMeta, rawText: 
       未处置: '未处理',
       未开始: '未处理',
       待处理: '未处理',
+      未接触: '未处理',
     };
     const mapped = aliases[rawText.trim()];
     if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'collected_archives' && columnName === 'archive_status') {
+    const aliases: Record<string, string> = {
+      收录成功: '已收录',
+      已收录成功: '已收录',
+      收录完成: '已收录',
+      未开始: '未收录',
+      待收录: '未收录',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped) return mapped;
   }
 
   const direct = allowed.find(value => normalizeAlias(value) === normalizedText);
@@ -1380,6 +1396,91 @@ function nextChronicleCodeIndex(table: TableMeta, codeIndexColumn: ColumnMeta) {
   return `SP${String(maxIndex + 1).padStart(4, '0')}`;
 }
 
+const FORBIDDEN_DELETE_TABLES = [
+  'global_state',
+  'sheet_global_state',
+  '全局状态',
+  'player_state',
+  'sheet_player_state',
+  '玩家状态',
+  'supernatural_events',
+  'sheet_supernatural_events',
+  '灵异事件',
+  'action_suggestions',
+  'sheet_action_suggestions',
+  '行动建议',
+  'check_suggestions',
+  'sheet_check_suggestions',
+  '检定建议',
+  'ghost_archives',
+  'sheet_ghost_archives',
+  '厉鬼档案',
+  'controlled_ghosts',
+  'sheet_controlled_ghosts',
+  '驾驭厉鬼',
+  'collected_archives',
+  'sheet_collected_archives',
+  '收录档案',
+  'collected_rules',
+  'sheet_collected_rules',
+  '收录规律',
+  'clues',
+  'sheet_clues',
+  '线索',
+  'locations',
+  'sheet_locations',
+  '地点',
+  'chronicle',
+  'sheet_chronicle',
+  '事件纪要',
+];
+
+const FORBIDDEN_INSERT_TABLES = [
+  'global_state',
+  'sheet_global_state',
+  '全局状态',
+  'player_state',
+  'sheet_player_state',
+  '玩家状态',
+  'action_suggestions',
+  'sheet_action_suggestions',
+  '行动建议',
+  'check_suggestions',
+  'sheet_check_suggestions',
+  '检定建议',
+];
+
+function validateTableMutationPolicy(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+  errors: TableChangeError[],
+) {
+  if (plan.action === 'deleteRow' && isTableNamed(table, FORBIDDEN_DELETE_TABLES)) {
+    errors.push({
+      code: 'TABLE_DELETE_FORBIDDEN',
+      message: `表「${table.name}」禁止删除行；请用 updateCell 修正内容，或按模板规则追加新行。`,
+      table: table.name,
+    });
+  }
+
+  if (plan.action === 'insertRow' && isTableNamed(table, FORBIDDEN_INSERT_TABLES)) {
+    // 固定/单行表：仅当目标 row_id 尚不存在时允许 insert（补种）；已有行应 update
+    const rowIdColumn = findColumnByAlias(table, 'row_id') ?? findColumnByAlias(table, '行号');
+    const requested = rowIdColumn ? Number(values[rowIdColumn.header] ?? NaN) : NaN;
+    const existing = rowIdColumn
+      ? table.rows.slice(1).some(row => Number(row[rowIdColumn.index]) === requested)
+      : table.rows.length > 1;
+    if (!Number.isFinite(requested) || existing) {
+      errors.push({
+        code: 'TABLE_INSERT_FORBIDDEN',
+        message: `表「${table.name}」禁止新增行；请 updateCell 刷新既有 row_id，或先确保目标 row_id 缺失后再补种。`,
+        table: table.name,
+      });
+    }
+  }
+}
+
 function validateChronicleAppendOnly(
   table: TableMeta,
   plan: TableChangePlan,
@@ -1448,6 +1549,26 @@ function addBuiltInColumnAliases(table: TableMeta) {
       [['inference_text', 'inference', '推断', '推断结论', '推理'], ['inference_text', '推断']],
       [['verification_status', '验证状态'], ['verification_status', '验证状态']],
       [['visibility', '可见性'], ['visibility', '可见性']],
+    ];
+    for (const [aliases, targets] of aliasPairs) {
+      let column: ColumnMeta | undefined;
+      for (const name of [...targets, ...aliases]) {
+        column = findColumnByAlias(table, name);
+        if (column) break;
+      }
+      if (!column) continue;
+      for (const alias of aliases) addColumnAlias(table, alias, column);
+    }
+  }
+
+  // 驾驭厉鬼：MVU ControlledGhost 字段名 ↔ DB 表头
+  if (isTableNamed(table, ['controlled_ghosts', 'sheet_controlled_ghosts', '驾驭厉鬼'])) {
+    const aliasPairs: Array<[string[], string[]]> = [
+      [['ghost_code', '厉鬼代号', '代号', '厉鬼名称'], ['ghost_code', '厉鬼代号']],
+      [['terror_level', '恐怖程度', '恐怖等级'], ['terror_level', '恐怖程度']],
+      [['usable_power', '可用能力', '使用能力'], ['usable_power', '可用能力']],
+      [['death_machine_status', '死机状态', '是否死机'], ['death_machine_status', '死机状态']],
+      [['public_summary', '可见摘要', '摘要'], ['public_summary', '可见摘要']],
     ];
     for (const [aliases, targets] of aliasPairs) {
       let column: ColumnMeta | undefined;

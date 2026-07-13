@@ -118,7 +118,7 @@
         consistencyRules: [
             { label: '玩家状态', statPaths: ['姓名', '身份', '所在位置', '状态', '驭鬼者状态'], tableNames: ['玩家状态', '人物'] },
             { label: '当前事件', statPaths: ['当前灵异事件', '当前事件'], tableNames: ['灵异事件', '事件纪要'] },
-            { label: '驾驭厉鬼', statPaths: ['驭鬼者状态.驾驭厉鬼', '驭鬼者状态.已驾驭厉鬼', '驾驭厉鬼'], tableNames: ['驾驭厉鬼', '厉鬼档案'] },
+            { label: '驾驭厉鬼', statPaths: ['驭鬼者状态.已驾驭厉鬼', '驾驭厉鬼'], tableNames: ['驾驭厉鬼', '厉鬼档案'] },
             { label: '灵异物品', statPaths: ['灵异资源.持有物品', '背包', '物品', '灵异物品'], tableNames: ['灵异物品'] },
             { label: '线索', statPaths: ['线索', '当前线索', '调查线索'], tableNames: ['线索'] },
             { label: '事件纪要', statPaths: ['事件纪要', '剧情纪要', '记忆'], tableNames: ['事件纪要'] },

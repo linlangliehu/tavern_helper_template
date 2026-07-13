@@ -651,6 +651,42 @@
         "预期收益",
         "死亡风险",
         "复苏风险"
+      ],
+      [
+        1,
+        "A",
+        "观察现场并收集线索",
+        "停留过久可能被标记",
+        "确认事件规律",
+        "中",
+        "无"
+      ],
+      [
+        2,
+        "B",
+        "立刻撤离危险区域",
+        "遗漏关键线索",
+        "降低死亡风险",
+        "低",
+        "无"
+      ],
+      [
+        3,
+        "C",
+        "联系可用势力求援",
+        "暴露自身位置",
+        "获得外部资源",
+        "中",
+        "无"
+      ],
+      [
+        4,
+        "D",
+        "自定义行动",
+        "未知",
+        "取决于行动",
+        "未知",
+        "未知"
       ]
     ],
     "updateConfig": {
@@ -778,7 +814,7 @@
       "note": "记录每轮可选的检定建议。全表固定 5 行，禁止新增或删除。\n\n【列定义】\n列1=row_id（仅允许 1-5）\n列2=展示文本 display_text\n列3=检定类型 check_type\n列4=检定依据 check_basis\n列5=骰子命令 dice_command\n\n【神秘复苏适配】\n检定不能让普通人杀死鬼；检定只决定调查、撤离、观察、谈判、资源使用、对抗时机等行动成败。面对明确无解的厉鬼正面对抗，应使用“必败”或高风险提示。",
       "initNode": "初始化 5 条检定建议。\nSQL示例: INSERT INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '观察走廊动静，判断敲门声是否正在靠近。', '观察', '需要在恐慌中分辨声音来源', '检定 <user> 感知'), (2, '带领附近学生从侧门撤离。', '撤离', '人群混乱且路线不明', '检定 <user> 判断'), (3, '询问目击学生，确认最早听到敲门声的人。', '调查', '证词可能混乱', '检定 <user> 交涉'), (4, '强行打开声音来源处的门。', '高危试探', '可能直接触发杀人规律', '必败'), (5, '使用明确资源隔绝灵异影响。', '资源使用', '有资源且时机正确时可成立', '必成');",
       "deleteNode": "禁止。",
-      "updateNode": "每轮必须用 INSERT OR REPLACE 同时刷新 5 行。\nSQL示例: INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '<展示文本1>', '<类型1>', '<依据1>', '<命令1>'), (2, '<展示文本2>', '<类型2>', '<依据2>', '<命令2>'), (3, '<展示文本3>', '<类型3>', '<依据3>', '<命令3>'), (4, '<展示文本4>', '<类型4>', '<命令依据4>', '<命令4>'), (5, '<展示文本5>', '<类型5>', '<依据5>', '<命令5>');",
+      "updateNode": "每轮必须用 INSERT OR REPLACE 同时刷新 5 行。\nSQL示例: INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '<展示文本1>', '<类型1>', '<依据1>', '<命令1>'), (2, '<展示文本2>', '<类型2>', '<依据2>', '<命令2>'), (3, '<展示文本3>', '<类型3>', '<依据3>', '<命令3>'), (4, '<展示文本4>', '<类型4>', '<依据4>', '<命令4>'), (5, '<展示文本5>', '<类型5>', '<依据5>', '<命令5>');",
       "insertNode": "禁止。",
       "ddl": "CREATE TABLE check_suggestions ( -- 检定建议\n  row_id INTEGER PRIMARY KEY CHECK(row_id BETWEEN 1 AND 5), -- 行号，仅允许 1-5\n  display_text TEXT NOT NULL CHECK(TRIM(display_text) <> ''), -- 展示文本\n  check_type TEXT NOT NULL, -- 检定类型\n  check_basis TEXT NOT NULL, -- 检定依据\n  dice_command TEXT NOT NULL CHECK(TRIM(dice_command) <> '') -- 骰子命令\n);"
     },
@@ -955,12 +991,12 @@
     "uid": "sheet_collected_archives",
     "name": "收录档案",
     "sourceData": {
-      "note": "适配开局厉鬼“鬼档案”，记录所有进入鬼档案视野的档案厉鬼，包括未收录、收录中和已收录条目。\n\n【列定义】\n列1=row_id\n列2=档案厉鬼名称 archive_ghost_name，全表唯一\n列3=收录状态 archive_status（未收录/收录中/已收录/污染档案/错误档案）\n列4=厉鬼信息 ghost_info\n列5=已知规律 known_law\n列6=猜测规律 suspected_law\n列7=鬼域 ghost_domain\n列8=收录进度 archive_progress，0-100 整数\n列9=档案完整度 archive_completeness，文本摘要，可与收录进度一致或补充缺失字段\n列10=可调用范围 callable_scope\n列11=可见摘要 public_summary\n\n【规则】\n未收录厉鬼也必须保留条目，用收录状态和收录进度显示推进情况；收录进度达到 100 时，才能把收录状态改为“已收录/收录成功”，并根据已验证字段开放可调用范围。只有玩家通过观察、死亡案例、试探、档案权限或灵异档案视野得到的可见信息才能写入。完整隐藏规律、真实源头位置、关键生路和无条件关押方案不得写入。",
+      "note": "适配开局厉鬼“鬼档案”，记录所有进入鬼档案视野的档案厉鬼，包括未收录、收录中和已收录条目。\n\n【列定义】\n列1=row_id\n列2=档案厉鬼名称 archive_ghost_name，全表唯一\n列3=收录状态 archive_status（未收录/收录中/已收录/污染档案/错误档案；禁止写“收录成功”，应写“已收录”）\n列4=厉鬼信息 ghost_info\n列5=已知规律 known_law\n列6=猜测规律 suspected_law\n列7=鬼域 ghost_domain\n列8=收录进度 archive_progress，0-100 整数\n列9=档案完整度 archive_completeness，文本摘要，可与收录进度一致或补充缺失字段\n列10=可调用范围 callable_scope\n列11=可见摘要 public_summary\n\n【规则】\n未收录厉鬼也必须保留条目，用收录状态和收录进度显示推进情况；收录进度达到 100 时，才能把收录状态改为“已收录”，并根据已验证字段开放可调用范围。只有玩家通过观察、死亡案例、试探、档案权限或灵异档案视野得到的可见信息才能写入。完整隐藏规律、真实源头位置、关键生路和无条件关押方案不得写入。",
       "initNode": "开局通常保持空表；若玩家已经发现但未收录某只厉鬼，也可插入未收录条目并把收录进度设为 0-30。",
       "deleteNode": "禁止。档案收录错误时更新收录状态、收录进度或新增修正备注，不直接删除历史痕迹。",
-      "updateNode": "按档案厉鬼名称更新收录状态、规律、鬼域、收录进度、档案完整度和可调用范围。收录进度未达到 100 时不得写“已收录/收录成功”。",
+      "updateNode": "按档案厉鬼名称更新收录状态、规律、鬼域、收录进度、档案完整度和可调用范围。收录进度未达到 100 时不得写“已收录”。",
       "insertNode": "鬼档案视野发现新的档案厉鬼时新增，即使尚未收录也要记录为“未收录”或“收录中”。",
-      "ddl": "CREATE TABLE collected_archives ( -- 收录档案\n  row_id INTEGER PRIMARY KEY, -- 行号\n  archive_ghost_name TEXT NOT NULL UNIQUE, -- 档案厉鬼名称\n  archive_status TEXT NOT NULL, -- 收录状态\n  ghost_info TEXT NOT NULL CHECK(LENGTH(ghost_info) <= 180), -- 厉鬼信息\n  known_law TEXT NOT NULL, -- 已知规律\n  suspected_law TEXT NOT NULL, -- 猜测规律\n  ghost_domain TEXT NOT NULL, -- 鬼域\n  archive_progress INTEGER NOT NULL CHECK(archive_progress BETWEEN 0 AND 100), -- 收录进度\n  archive_completeness TEXT NOT NULL, -- 档案完整度\n  callable_scope TEXT NOT NULL, -- 可调用范围\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
+      "ddl": "CREATE TABLE collected_archives ( -- 收录档案\n  row_id INTEGER PRIMARY KEY, -- 行号\n  archive_ghost_name TEXT NOT NULL UNIQUE, -- 档案厉鬼名称\n  archive_status TEXT NOT NULL CHECK(archive_status IN ('未收录', '收录中', '已收录', '污染档案', '错误档案')), -- 收录状态\n  ghost_info TEXT NOT NULL CHECK(LENGTH(ghost_info) <= 180), -- 厉鬼信息\n  known_law TEXT NOT NULL, -- 已知规律\n  suspected_law TEXT NOT NULL, -- 猜测规律\n  ghost_domain TEXT NOT NULL, -- 鬼域\n  archive_progress INTEGER NOT NULL CHECK(archive_progress BETWEEN 0 AND 100), -- 收录进度\n  archive_completeness TEXT NOT NULL, -- 档案完整度\n  callable_scope TEXT NOT NULL, -- 可调用范围\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
     },
     "content": [
       [

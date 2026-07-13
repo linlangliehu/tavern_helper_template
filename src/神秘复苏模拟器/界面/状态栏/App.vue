@@ -952,12 +952,13 @@ function nextClueCode(messageId: number) {
 function normalizeHandlingStatusForDatabase(value: unknown) {
   const text = String(value ?? '').trim()
   if (['未处理', '调查中', '对抗中', '已压制', '已关押', '失控扩散', '结束'].includes(text)) return text
+  if (text === '未接触' || text === '待处理' || text === '未处置' || text === '未开始') return '未处理'
   if (/爆发|扩散|失控|蔓延/.test(text)) return '失控扩散'
   if (/压制|控制/.test(text)) return '已压制'
   if (/关押|收容/.test(text)) return '已关押'
   if (/结束|解决|完结/.test(text)) return '结束'
   if (/对抗|处理中|处置|交战|应对/.test(text)) return '对抗中'
-  return '调查中'
+  return '未处理'
 }
 
 function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanInput[] {

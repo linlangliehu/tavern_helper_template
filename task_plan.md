@@ -11,14 +11,15 @@
 **阶段 BF0.5 — complete**  
 **阶段 BF1 — complete（8.13.17：C3/C4/H9/L1）**  
 **阶段 BF2 — complete（8.13.18）**  
-**当前阶段：阶段 BF3 — pending**
+**阶段 BF3 — complete（源码；待 dist/publish）**  
+**当前阶段：阶段 BF4 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF2 发版中：8.13.18**（CDN `dc27b52`） |
-| 我要去哪里？ | **BF3**（D2–D3/DH*/S1/SH6）→ BF4–BF5 |
+| 我在哪里？ | **BF3 源码完成**；线上仍 **8.13.18** |
+| 我要去哪里？ | **BF3 dist/publish** 或 **BF4**（W*/WM*/余项） |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -98,11 +99,11 @@
 - [x] **RM3–RM6** 贪婪 update 吞文、无 g 标志、#9 扩 sp_/mfrs_、【警告】卷段
 - **状态：** complete（8.13.18 @ `dc27b52`）
 
-### 阶段 E / BF3：DB 镜像 + 开局 — **pending**
-- [ ] **D2–D3** 处理状态枚举；核心表镜像字段路径（对象取决于 H10 决策）
-- [ ] **DH\*** 检定建议/人物+线索列/驾驭映射/收录枚举/A–D 种子 + **DM7** adapter 守卫
-- [ ] **S1 + SH6 + SH\*** 开局必填、提交按钮内联兜底、种子字段、短 value、首轮 choices 指令、三源欢迎页真源
-- **状态：** pending
+### 阶段 E / BF3：DB 镜像 + 开局 — **complete（源码）**
+- [x] **D2** 处理状态 `未接触→未处理`（adapter/App；mirror 已有）；**D3** 已在 BF0.5
+- [x] **DH1/DH3/DH4/DH5 + DM7**；**DH2** 人物列契约仍开（可挂 BF4）
+- [x] **S1 + SH1–SH4 + SH6**；**SH5** 欢迎页已禁用，分叉清理可挂后
+- **状态：** complete（源码）；待 production dist + publish
 
 ### 阶段 F / BF4：世界书与清理 — **pending**
 - [ ] **W1**（关 **M3**）伪路径 `规律推理记录.*`（休眠但模板根治）

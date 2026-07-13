@@ -1,5 +1,15 @@
 # 进度日志
 
+## 会话：2026-07-13（BF3 DB 镜像 + 开局）— **complete（源码）**
+
+- **D2**：adapter/App `未接触→未处理`
+- **DH1**：检定建议 SQL-only；HUD 只读表
+- **DH3/DH4/DH5**：驾驭 path+别名；收录状态 CHECK；行动建议 A–D 种子
+- **DM7**：禁删/固定表 insert 守卫
+- **S1/SH1–4/SH6**：开局必填、短 identity、报文路径、首轮协议、submit 内联
+- 门禁：`verify-table-change-adapter` + hotfix/output-cleaning 通过
+- **待：** production dist + publish（建议 8.13.19）→ BF4
+
 ## 会话：2026-07-13（BF2 协议/正则/发送 + 8.13.18）— **complete**
 
 - **C6** raw extra：消息面板 + App.vue 优先读；hotfix 清洗后 `saveChat`

@@ -6012,12 +6012,12 @@
               <input data-mfrs="ageGender" aria-label="年龄和性别" placeholder="年龄/性别（例：18/男）" required>
               <select data-mfrs="identity" aria-label="身份" required>
                 <option value="">选择身份</option>
-                <option>普通学生（无驭鬼能力）</option>
-                <option>普通人（卷入灵异事件）</option>
-                <option>初级驭鬼者（刚获得鬼的力量）</option>
-                <option>总部成员（官方驭鬼者）</option>
-                <option>民间驭鬼者（独立行动）</option>
-                <option>异类（状态异常但仍可行动）</option>
+                <option value="普通学生">普通学生（无驭鬼能力）</option>
+                <option value="普通人">普通人（卷入灵异事件）</option>
+                <option value="初级驭鬼者">初级驭鬼者（刚获得鬼的力量）</option>
+                <option value="总部成员">总部成员（官方驭鬼者）</option>
+                <option value="民间驭鬼者">民间驭鬼者（独立行动）</option>
+                <option value="异类">异类（状态异常但仍可行动）</option>
               </select>
               <div class="mfrs-span-2 mfrs-ghost-list" data-mfrs-ghost-list>
                 <div class="mfrs-ghost-slot" data-mfrs-ghost-slot="1">
@@ -6122,7 +6122,7 @@
               <textarea class="mfrs-span-2" data-mfrs="resources" aria-label="初始资源" placeholder="初始资源（例：鬼烛一根、黄金一块、卫星电话）"></textarea>
               <textarea class="mfrs-span-2" data-mfrs="background" aria-label="背景与情报权限" placeholder="背景与情报权限（例：穿越者，知晓部分原著剧情；或土著，对灵异一无所知）" required></textarea>
             </div>
-            <button type="button" class="mfrs-submit">进入神秘复苏世界</button>
+            <button type="button" class="mfrs-submit" id="mfrs-submit" onclick="(function(btn){try{var root=btn.closest('#mfrs-welcome-root');if(!root)return;function v(k){var el=root.querySelector('[data-mfrs=&quot;'+k+'&quot;]');return el&amp;&amp;el.value?String(el.value).trim():'';}var need=[['name','姓名'],['ageGender','年龄/性别'],['identity','身份'],['anchor','剧情节点'],['background','背景与情报权限']];var miss=need.filter(function(p){return !v(p[0]);}).map(function(p){return p[1];});if(miss.length){alert('请填写：'+miss.join('、'));return;}var ag=v('ageGender').split(/[\/\uff0f|\uff5c]/);var age=(ag[0]||v('ageGender')).trim()||'未知';var gender=(ag[1]||'').trim()||'未知';var parts=v('anchor').split('|');var has=parts.length&gt;=7;var anchor=parts[0]||'未选择节点';var storyTime=has?parts[1]:'由当前剧情节点决定';var storyLocation=(has?parts[2]:parts[1])||'由当前剧情节点决定';var storyPhase=(has?parts[3]:parts[2])||'未定阶段';var eventPressure=(has?parts[4]:parts[3])||'请根据身份与剧情节点判断接入边界';var visibleIntel=(has?parts[5]:parts[4])||'仅依据当前选择与背景设定';var spoilerBoundary=(has?parts[6]:parts[5])||'不得直接揭露隐藏规律、关键生路和幕后真相';var ghosts=[];var preset=v('ghostPreset1');if(preset)ghosts.push('第1只：预设厉鬼：'+preset);for(var i=1;i&lt;=2;i++){if(i===1&amp;&amp;preset)continue;var gn=v('ghostName'+i);var gl=v('ghostLaw'+i);if(!gn&amp;&amp;!gl)continue;ghosts.push('第'+i+'只：'+(gn||'未命名')+'；可见杀人规律：'+(gl||'未填写'));}var ghostText=ghosts.length?ghosts.join('\n     '):'无';var message='【神秘复苏·开局设定】\n\n1. 基本信息\n   - 姓名：'+v('name')+'\n   - 年龄/性别：'+v('ageGender')+'\n   - 剧情节点：'+anchor+'\n   - 节点时间（仅叙事参考，勿写非法 MVU 路径）：'+storyTime+'\n   - 开局地点：'+storyLocation+'\n   - 原著阶段：'+storyPhase+'\n   - 事件压力：'+eventPressure+'\n   - 玩家可见情报：'+visibleIntel+'\n   - 禁止泄露边界：'+spoilerBoundary+'\n\n2. 身份与能力\n   - 身份：'+v('identity')+'\n   - 开局厉鬼选择（第1只可选预设或自定义，第2只可自定义）：\n     '+ghostText+'\n   - 特殊能力（上限1个）：'+(v('specialAbility')||'无')+'\n\n3. 初始资源\n   '+(v('resources')||'无')+'\n\n4. 背景设定\n   '+v('background')+'\n\n5. 推演边界与初始化建议\n   - JSONPatch 目标（合法路径）：/姓名、/性别、/初始年龄、/身份、/开局地点、/所在位置、/原著阶段、/剧情锚点、/角色背景、/特殊能力描述、/驾驭厉鬼、/灵异资源/灵异物品、/灵异资源/黄金储备。勿发明 /当前时间。\n   - 建议初值：姓名='+v('name')+'；性别='+gender+'；初始年龄='+age+'；身份='+v('identity')+'；开局地点/所在位置='+storyLocation+'；原著阶段='+storyPhase+'；剧情锚点='+anchor+'。\n   - 开局确认后首轮强制输出：正文剧情 → 【本轮摘要】 → &lt;choices&gt;A–D&lt;/choices&gt; → &lt;UpdateVariable&gt;…JSONPatch…&lt;/UpdateVariable&gt;；禁止旧 sp_* 文本面板与未要求的 mfrs_* 面板（mfrs_roll 除外）。';var doc=(function(){try{return parent.document||document;}catch(e){return document;}})();var ta=doc.getElementById('send_textarea');if(!ta){alert('未找到发送输入框');return;}var setter=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,'value').set;setter.call(ta,message);ta.dispatchEvent(new Event('input',{bubbles:true}));}catch(err){console.error(err);alert('开局提交失败，请检查界面美化脚本是否加载');}})(this)">进入神秘复苏世界</button>
           </div>
         </div>
       </div>

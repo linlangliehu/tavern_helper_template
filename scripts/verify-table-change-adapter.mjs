@@ -1212,6 +1212,19 @@ assert.ok(
   !playerDeleteApply.errors.some(error => error.code === 'CHRONICLE_APPEND_ONLY'),
   'chronicle append-only guard must not fire on non-chronicle deleteRow',
 );
+assert.ok(
+  playerDeleteApply.errors.some(error => error.code === 'TABLE_DELETE_FORBIDDEN'),
+  'player_state deleteRow must be blocked by table mutation policy (DM7)',
+);
+assert.equal(playerDeleteCalls.length, 0, 'forbidden deleteRow must not call API');
+
+const uncontactedEventPreview = previewTableChangePlan({
+  action: 'updateCell',
+  table: 'supernatural_events',
+  match: { row_id: 1 },
+  set: { handling_status: '未接触' },
+}, eventsCurrentData);
+assert.equal(uncontactedEventPreview.ok, true, `未接触 should map to 未处理: ${JSON.stringify(uncontactedEventPreview.errors)}`);
 
 const duplicateEventPreview = previewTableChangePlan({
   action: 'insertRow',
@@ -1383,6 +1396,34 @@ assert.equal(failedButAppliedUpdateImports.length, 0);
 assert.equal(failedButAppliedUpdateData.sheet_action_suggestions.content[1][2], 'verified update');
 assert.equal(failedButAppliedUpdateData.sheet_action_suggestions.content[1][3], 'verified update risk');
 
+// DM7: 行动建议固定表禁止 delete；import fallback 用例改用允许删除的灵异物品表
+const deletableItemsTable = {
+  uid: 'sheet_supernatural_items',
+  name: '灵异物品',
+  sourceData: {
+    ddl: `CREATE TABLE supernatural_items (
+  row_id INTEGER PRIMARY KEY,
+  item_name TEXT NOT NULL,
+  item_type TEXT NOT NULL,
+  owner_name TEXT NOT NULL,
+  location_name TEXT NOT NULL,
+  quantity_status TEXT NOT NULL,
+  effect_text TEXT NOT NULL,
+  side_effect TEXT NOT NULL,
+  usage_limit TEXT NOT NULL
+);`,
+  },
+  content: [
+    ['row_id', '物品名称', '类型', '持有人', '地点', '数量状态', '效果', '副作用', '使用限制'],
+    [1, '鬼烛', '保命资源', '测试', '七中', '1支', '隔绝', '燃尽', '有限'],
+    [2, '黄金', '资源', '测试', '七中', '1块', '隔绝', '无', '无'],
+  ],
+};
+const deletableItemsData = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_supernatural_items: deletableItemsTable,
+};
+
 const deleteFallbackImports = [];
 const deleteFallbackApi = {
   async deleteRow() {
@@ -1395,18 +1436,18 @@ const deleteFallbackApi = {
 };
 const fallbackDelete = await applyTableChangePlan(deleteFallbackApi, {
   action: 'deleteRow',
-  table: table.name,
+  table: '灵异物品',
   match: { row_id: 1 },
-}, updateFallbackImports[0]);
-assert.equal(fallbackDelete.ok, true);
+}, deletableItemsData);
+assert.equal(fallbackDelete.ok, true, `deletable table delete fallback: ${JSON.stringify(fallbackDelete.errors)}`);
 assert.equal(deleteFallbackImports.length, 1);
-assert.equal(deleteFallbackImports[0].sheet_action_suggestions.content.length, 1);
+assert.equal(deleteFallbackImports[0].sheet_supernatural_items.content.length, 2);
 
-const failedButAppliedDeleteData = JSON.parse(JSON.stringify(currentData));
+const failedButAppliedDeleteData = JSON.parse(JSON.stringify(deletableItemsData));
 const failedButAppliedDeleteImports = [];
 const failedButAppliedDeleteApi = {
   async deleteRow(options) {
-    failedButAppliedDeleteData.sheet_action_suggestions.content.splice(options.rowIndex, 1);
+    failedButAppliedDeleteData.sheet_supernatural_items.content.splice(options.rowIndex, 1);
     return false;
   },
   async exportTableAsJson() {
@@ -1419,19 +1460,19 @@ const failedButAppliedDeleteApi = {
 };
 const failedButAppliedDelete = await applyTableChangePlan(failedButAppliedDeleteApi, {
   action: 'deleteRow',
-  table: TABLE_ACTION,
+  table: '灵异物品',
   match: { row_id: 1 },
-}, currentData);
+}, deletableItemsData);
 assert.equal(failedButAppliedDelete.ok, true);
 assert.equal(failedButAppliedDeleteImports.length, 0);
-assert.equal(failedButAppliedDeleteData.sheet_action_suggestions.content.length, currentData.sheet_action_suggestions.content.length - 1);
-assert.equal(failedButAppliedDeleteData.sheet_action_suggestions.content.some(row => Array.isArray(row) && row[0] === 1), false);
+assert.equal(failedButAppliedDeleteData.sheet_supernatural_items.content.length, deletableItemsData.sheet_supernatural_items.content.length - 1);
+assert.equal(failedButAppliedDeleteData.sheet_supernatural_items.content.some(row => Array.isArray(row) && row[0] === 1), false);
 
-const failedButMutatedInputDeleteData = JSON.parse(JSON.stringify(currentData));
+const failedButMutatedInputDeleteData = JSON.parse(JSON.stringify(deletableItemsData));
 const failedButMutatedInputDeleteImports = [];
 const failedButMutatedInputDeleteApi = {
   async deleteRow(options) {
-    failedButMutatedInputDeleteData.sheet_action_suggestions.content.splice(options.rowIndex, 1);
+    failedButMutatedInputDeleteData.sheet_supernatural_items.content.splice(options.rowIndex, 1);
     return false;
   },
   async exportTableAsJson() {
@@ -1444,16 +1485,16 @@ const failedButMutatedInputDeleteApi = {
 };
 const failedButMutatedInputDelete = await applyTableChangePlan(failedButMutatedInputDeleteApi, {
   action: 'deleteRow',
-  table: TABLE_ACTION,
+  table: '灵异物品',
   match: { row_id: 1 },
 }, failedButMutatedInputDeleteData);
 assert.equal(failedButMutatedInputDelete.ok, true);
 assert.equal(failedButMutatedInputDeleteImports.length, 0);
 assert.equal(
-  failedButMutatedInputDeleteData.sheet_action_suggestions.content.length,
-  currentData.sheet_action_suggestions.content.length - 1,
+  failedButMutatedInputDeleteData.sheet_supernatural_items.content.length,
+  deletableItemsData.sheet_supernatural_items.content.length - 1,
 );
-assert.equal(failedButMutatedInputDeleteData.sheet_action_suggestions.content.some(row => Array.isArray(row) && row[0] === 1), false);
+assert.equal(failedButMutatedInputDeleteData.sheet_supernatural_items.content.some(row => Array.isArray(row) && row[0] === 1), false);
 
 const beforeDeleteCalls = calls.length;
 const blockedDelete = await applyTableChangePlan(api, {
@@ -1461,7 +1502,7 @@ const blockedDelete = await applyTableChangePlan(api, {
   table: TABLE_ACTION,
   match: { death_risk_level: RISK_LOW },
 }, currentData);
-assertError(blockedDelete, 'MULTIPLE_ROWS_MATCHED');
+assertError(blockedDelete, 'TABLE_DELETE_FORBIDDEN');
 assert.equal(calls.length, beforeDeleteCalls);
 
 console.log('verify-table-change-adapter: passed');

@@ -421,35 +421,21 @@ function stripInlineChoicesFromMessage(mesElement: Element) {
   });
 }
 
-/** 组 D：检定建议暂挂拟办下，默认折叠 */
-function buildCheckSuggestionsFoldHtml(data: StatusData): string {
-  const fromStat = Array.isArray(data.检定建议) ? data.检定建议 : [];
+/** 组 D：检定建议（SQL-only `check_suggestions`；schema 无 MVU 路径） */
+function buildCheckSuggestionsFoldHtml(_data: StatusData): string {
   const rows: Array<{ text: string; type: string; basis: string; dice: string }> = [];
-  if (fromStat.length) {
-    fromStat.forEach((item: any) => {
-      const text = valueText(item.展示文本 ?? item.display_text ?? item.内容 ?? item.text, '');
+  const table = findHudTable(readHudDatabaseTables(), '检定建议');
+  if (table) {
+    table.rows.slice(0, 5).forEach(row => {
+      const text = hudRowField(table.headers, row, '展示文本', 'display_text', '内容');
       if (!text) return;
       rows.push({
         text,
-        type: valueText(item.检定类型 ?? item.check_type ?? item.类型, ''),
-        basis: valueText(item.检定依据 ?? item.check_basis ?? item.依据, ''),
-        dice: valueText(item.骰子命令 ?? item.dice_command ?? item.命令, ''),
+        type: hudRowField(table.headers, row, '检定类型', 'check_type', '类型'),
+        basis: hudRowField(table.headers, row, '检定依据', 'check_basis', '依据'),
+        dice: hudRowField(table.headers, row, '骰子命令', 'dice_command', '命令'),
       });
     });
-  } else {
-    const table = findHudTable(readHudDatabaseTables(), '检定建议');
-    if (table) {
-      table.rows.slice(0, 5).forEach(row => {
-        const text = hudRowField(table.headers, row, '展示文本', 'display_text', '内容');
-        if (!text) return;
-        rows.push({
-          text,
-          type: hudRowField(table.headers, row, '检定类型', 'check_type', '类型'),
-          basis: hudRowField(table.headers, row, '检定依据', 'check_basis', '依据'),
-          dice: hudRowField(table.headers, row, '骰子命令', 'dice_command', '命令'),
-        });
-      });
-    }
   }
   if (!rows.length) return '';
   const body = rows

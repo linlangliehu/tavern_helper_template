@@ -1270,6 +1270,18 @@ body {
         root.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(selectors)?.value.trim() ?? ''
       );
     };
+    const requiredFields: Array<{ key: string; label: string }> = [
+      { key: 'name', label: '姓名' },
+      { key: 'ageGender', label: '年龄/性别' },
+      { key: 'identity', label: '身份' },
+      { key: 'anchor', label: '剧情节点' },
+      { key: 'background', label: '背景与情报权限' },
+    ];
+    const missing = requiredFields.filter(field => !getValue(field.key));
+    if (missing.length) {
+      hostWindow?.toastr?.warning?.(`请填写：${missing.map(field => field.label).join('、')}`, '神秘复苏');
+      return;
+    }
     const getPresetGhost = () => getValue('ghostPreset1');
     const getCustomGhosts = () => {
       const ghosts: string[] = [];
@@ -1284,6 +1296,10 @@ body {
       }
       return ghosts.length ? ghosts.join('\n     ') : '无';
     };
+    const ageGender = getValue('ageGender');
+    const ageGenderParts = ageGender.split(/[\/／|｜]/);
+    const initialAge = (ageGenderParts[0] || ageGender).trim() || '未知';
+    const gender = (ageGenderParts[1] || '').trim() || '未知';
     const anchorParts = getValue('anchor').split('|');
     const hasTimeField = anchorParts.length >= 7;
     const anchor = anchorParts[0] || '未选择节点';
@@ -1298,10 +1314,10 @@ body {
       `【神秘复苏·开局设定】\n\n` +
       `1. 基本信息\n` +
       `   - 姓名：${getValue('name')}\n` +
-      `   - 年龄/性别：${getValue('ageGender')}\n` +
+      `   - 年龄/性别：${ageGender}\n` +
       `   - 剧情节点：${anchor}\n` +
-      `   - 当前时间：${storyTime}\n` +
-      `   - 当前地点：${storyLocation}\n` +
+      `   - 节点时间（仅叙事参考，勿写非法 MVU 路径）：${storyTime}\n` +
+      `   - 开局地点：${storyLocation}\n` +
       `   - 原著阶段：${storyPhase}\n` +
       `   - 事件压力：${eventPressure}\n` +
       `   - 玩家可见情报：${visibleIntel}\n` +
@@ -1317,11 +1333,13 @@ body {
       `   ${getValue('background')}\n\n` +
       `5. 推演边界与初始化建议\n` +
       `   - 可见信息层级：请依据身份、背景、当前证据和剧情节点动态判断；没有证据时只给眼前现象、传闻或不确定推断。\n` +
-      `   - 初始变量建议：将姓名、身份、当前时间、当前地点、原著阶段、剧情锚点写入玩家/全局状态；若节点已处于灵异事件中，应按玩家可见情报立案当前灵异事件。\n` +
+      `   - JSONPatch 目标（合法路径）：/姓名、/性别、/初始年龄、/身份、/开局地点、/所在位置、/原著阶段、/剧情锚点、/角色背景、/特殊能力描述、/驾驭厉鬼、/灵异资源/灵异物品、/灵异资源/黄金储备。勿发明 /当前时间 等 schema 不存在路径；节点时间只可写入 DB game_time。\n` +
+      `   - 建议初值：姓名=${getValue('name')}；性别=${gender}；初始年龄=${initialAge}；身份=${getValue('identity')}；开局地点/所在位置=${storyLocation}；原著阶段=${storyPhase}；剧情锚点=${anchor}；角色背景=表单背景；特殊能力描述=表单能力或无。\n` +
       `   - 调查起点：从“遭遇异常”或“收集线索”阶段开始，不直接跳到完整规律或最终生路。\n` +
-      `   - 开局厉鬼判定：若玩家在第1只厉鬼选择预设，只能把预设资料当作开局可见档案和成长方向，不得直接明牌隐藏规律、关键生路或完整拼图；若玩家自定义厉鬼，只提供厉鬼名称和可见杀人规律，影响范围、灾害等级、恐怖程度、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断。第1只厉鬼只能读取预设或自定义之一，第2只仅读取自定义，超出部分无效。\n` +
+      `   - 开局厉鬼判定：若玩家在第1只厉鬼选择预设，只能把预设资料当作开局可见档案和成长方向，不得直接明牌隐藏规律、关键生路或完整拼图；若玩家自定义厉鬼，只提供厉鬼名称和可见杀人规律，影响范围、灾害等级、恐怖等级、真实代价、限制和可关押条件必须由AI依据现场证据、规律表现、媒介、鬼域、成长性、衍生物和神秘复苏铁律自行推断。第1只厉鬼只能读取预设或自定义之一，第2只仅读取自定义，超出部分无效。\n` +
       `   - 特殊能力判定：特殊能力为主角独有外挂，最多读取1个；对玩家自身按声明效果生效且无自身代价，但不自动提供完整隐藏规律、最终生路、源头鬼位置或无条件关押结果。若选择“强外挂模式（非默认）·永久死机驾驭”，视为主动开启高强度辅助模式：玩家已经成功驾驭的所有厉鬼本体都会死机，包括开局厉鬼和后续驾驭的新厉鬼；但新厉鬼仍必须按灵异对抗、关押、平衡、异类或诅咒等规则完成驾驭，不能凭空获得或跳过驾驭过程。通过拼图、档案、残片、鬼奴、媒介或交易调用的外来灵异仍需判定污染、冲突、反噬和失控风险。\n` +
-      `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。`;
+      `   - 隐藏边界：真实杀人规律、关键生路、鬼的真实位置、后续重大转折只写入隐藏档案，不进入正文、状态栏或选项。\n` +
+      `   - 开局确认后首轮强制输出：正文剧情 → 【本轮摘要】 → <choices>A–D</choices> → <UpdateVariable>…JSONPatch…</UpdateVariable>；禁止旧 sp_* 文本面板与未要求的 mfrs_* 面板（mfrs_roll 除外）。`;
     const input = getSendTextarea(hostDocument);
     if (!input) return;
     setTextareaValue(input, message);
