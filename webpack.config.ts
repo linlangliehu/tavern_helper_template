@@ -84,12 +84,17 @@ let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
   if (compiler.options.watch) {
     const port = config.port ?? 6621;
+<<<<<<< HEAD
 
     if (!io) {
       const hmrServer = http.createServer();
       io = new Server(hmrServer, { cors: { origin: '*' } });
       hmrServer.listen(port);
       console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动 HMR 服务 (端口 ${port})`);
+=======
+      io = new Server(port, { cors: { origin: '*' } });
+      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
+>>>>>>> 563a54227d547b8c7ade58fb3242b38f89cefd18
       io.on('connect', socket => {
         console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
@@ -557,6 +562,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         vue: 'Vue',
         'vue-router': 'VueRouter',
         yaml: 'YAML',
+<<<<<<< HEAD
+=======
+        zod: 'z',
+>>>>>>> 563a54227d547b8c7ade58fb3242b38f89cefd18
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
