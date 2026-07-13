@@ -321,8 +321,8 @@
 
 ### Medium
 
-- [ ] **WM1** 偏移等级 0–4 vs 0–5 统一
-- [ ] **WM2** 世界线偏移交叉引用「主线阶段推进规则 第五节」修正
+- [x] **WM1** 偏移等级 0–4 vs 0–5 统一 — **BF5**（锚点规范补 5 级）
+- [x] **WM2** 世界线偏移交叉引用「主线阶段推进规则 第五节」修正 — **BF5**
 - [x] **WM3** `mfrs_*` 禁面板 vs 允许 `mfrs_roll` 写清例外 — **BF4**（短标签协议已有/强化）
 
 ---
@@ -387,7 +387,7 @@
 - [x] **WM5** 死亡写 `阶段状态=模拟结束` ∉ 推进规则封闭值域（并入 M11，值域已补）— **BF0**
 - [x] **WM6** 最小：变量更新规则点名 `已驾驭厉鬼[].恐怖等级`；DB 规则旁注 MVU 字段名 — **BF4**（不机械替换原著「恐怖程度」叙述词）
 - [x] **DM7** adapter 守卫：禁删表 `TABLE_DELETE_FORBIDDEN`；固定/单行表 `TABLE_INSERT_FORBIDDEN`（已有 row 时）— **BF3**
-- [ ] **DM8** 门禁缺口（BF5 执行）：`verify-table-change-adapter` 对 characters/supernatural_items/collected_rules 三表零用例；无"禁删表 deleteRow"/枚举近义词/GLOB 违规/混合合法+非法列整体拒绝用例；chronicle 用内联 DDL 非真模板
+- [x] **DM8** 门禁缺口：`verify-table-change-adapter` 补 characters/supernatural_items/collected_rules；禁删 collected_rules；非法枚举 CHECK；混合 LENGTH 整计划拒绝；chronicle 真模板 — **BF5**
 - [ ] **DM9** [App.vue] `visibleSummary` 回退链末尾 `getCurrentMessageId()` → `public_summary`/`clue_text` 可能被写成楼层号（数字字符串化非空，兜底文案永不生效）
 - [ ] **WB-06 附注（并入 W2）** 事件MVU联动规则触发词 `UpdateVariable` 恰被 #1 正则从 prompt 剥离 → 触发词自锁死环；灵异对抗判定触发词在最需要的回合（接触媒介/进鬼域）不出现
 
@@ -396,7 +396,7 @@
 - [ ] **L5** schema.json 为有损投影：丢 default/0-100 夹取/`revive_streak` 下界（`z.toJSONSchema({io:'input'})` 局限）→ 以 schema.json 做校验会放过越界值；文档化或换 dump 方式
 - [x] **L6** `对话示例/0.txt:1` `<<START>` → `<START>` — **BF4**
 - [x] **L7** initvar `姓名`/`开局地点` 改为 `''`（随 C1）— **BF0**
-- [ ] **L8** 对话示例 `类型:"medium"` 不在输出格式教的类型枚举内；摘要行"死亡风险未结算"偏离固定格式（随 H9 示例同步顺修）
+- [x] **L8** 对话示例 `类型:"medium"`→`investigate`；摘要死亡风险改为「低」— **BF5**
 - [ ] **L9** 版本叙事脱节：更新日志停 v0.0.1，与 dev `2.0`/发布 `8.13.13`/cache `v81313` 四套并存
 - [ ] **RM7** #14/#15（JSONPatch/draft/pacing_rules/修改确认）只有显示隐藏、无 prompt 去除、hotfix 也不洗 → 残渣全深度回传 AI（token 膨胀+固化坏习惯）
 - [ ] **RM8** #10/#11 与 hotfix L491/L493 逐字符重复清洗：维护时两处清单必须同步（RH6 即不同步后果）；注释互指
@@ -411,11 +411,11 @@
 
 ### A2 新增门禁（BF5 落地，对应盲区）
 
-- [x] **G1** dist 新鲜度：publish-card 前置校验（CDN_REF commit 存在且已推送；其 dist == 当前 src production 构建产物 hash；工作区 dist 干净）— **已落地** `scripts/verify-mfrs-dist-freshness.mjs` + publish-card 调用
-- [ ] **G2** initvar↔schema 结构校验：schema 驱动（Zod parse initvar 后 diff 键集与层级），替代现有字符串 grep
-- [ ] **G3** 正则 id 唯一性 + 查找表达式可编译性（两版 index.yaml）
-- [ ] **G4** `verify-mfrs-release-png` 期望值与 `publish-card.mjs` 常量自动对账（消除人肉传参漂移）
-- [ ] **G5** 输出清洗门禁扩样例：中英混排正文、长英文对白、多 UpdateVariable 块、【警告】后长正文、未闭合 sp_ 流式态
+- [x] **G1** dist 新鲜度：publish-card 前置校验 — **已落地** `scripts/verify-mfrs-dist-freshness.mjs`
+- [x] **G2** initvar↔schema 结构校验 — **BF5** `scripts/verify-mfrs-initvar-schema.mjs`
+- [x] **G3** 正则 id 唯一性 + 查找表达式可编译 — **BF5** `scripts/verify-mfrs-regex-ids.mjs`
+- [x] **G4** release-png ↔ publish-card 对账 — **BF5** `scripts/mfrs-release-constants.mjs` + `--from-publish-card`
+- [x] **G5** 输出清洗门禁扩样例 — **BF5** `verify-output-cleaning-regressions.mjs`
 
 ---
 
@@ -430,7 +430,7 @@
 | **BF2** | C6 + H4–H8 + R1–R3 + RH2 + RH6 + RM3–RM6 | **已发 8.13.18**（`dc27b52`） |
 | **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | **已发 8.13.19**（`5b10525`） |
 | **BF4** | W1–W4 + WM3–WM8 + M1–M4 + RH1 + DH2 + SH5 + C5 + L6 | **已发 8.13.20**（`de42f2c`）；余 RM7–9/DM9/DL*/WM1–2 可挂 BF5 |
-| **BF5** | 回归门禁 + G2–G5 + publish | `verify-mfrs-*` 扩充 + `publish-card` + RELEASE |
+| **BF5** | 回归门禁 + G2–G5 + DM8 + WM1/2/L8 | **门禁完成**；`pnpm verify:mfrs-gates`；可选 8.13.21 交付文案 |
 
 ---
 

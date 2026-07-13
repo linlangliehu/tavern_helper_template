@@ -13,14 +13,15 @@
 **阶段 BF2 — complete（8.13.18）**  
 **阶段 BF3 — complete（8.13.19）**  
 **阶段 BF4 — complete（8.13.20）**  
-**当前阶段：阶段 BF5 — pending**
+**阶段 BF5 — complete（门禁 G2–G5 + DM8；部分残余）**  
+**当前阶段：残余缺陷 / 可选 8.13.21 发版**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF4 已发 8.13.20**；线上请重导 PNG |
-| 我要去哪里？ | **BF5** 回归门禁 G2–G5 + 残余缺陷 |
+| 我在哪里？ | **BF5 门禁已落地**；线上基线仍 **8.13.20**（若已 publish 则为 8.13.21） |
+| 我要去哪里？ | 用户重导 PNG；继续残余 H2/M5/M7–10/RM7–9/DM* 等 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -114,12 +115,16 @@
 - [x] production dist + publish **8.13.20**（CDN `de42f2c`）
 - **状态：** complete（8.13.20）
 
-### 阶段 G / BF5：回归与发版 — **pending**
-- [ ] `verify-mfrs-mvu-hotfix-regressions` / `verify-output-cleaning` / `verify-table-change-adapter`
-- [ ] **G2–G5** 新门禁：initvar↔schema 结构校验、正则 id 唯一、release-png 与 publish-card 对账、清洗样例扩充 + **DM8** adapter 门禁三表用例
-- [ ] build + `publish-card` + `verify-mfrs-release-png`
-- [ ] `RELEASE_8.13.x.md` + push
-- **状态：** pending
+### 阶段 G / BF5：回归与发版 — **complete（门禁）**
+- [x] `verify-mfrs-mvu-hotfix-regressions` / `verify-output-cleaning` / `verify-table-change-adapter`
+- [x] **G2** `scripts/verify-mfrs-initvar-schema.mjs`
+- [x] **G3** `scripts/verify-mfrs-regex-ids.mjs`
+- [x] **G4** `scripts/mfrs-release-constants.mjs` + release-png `--from-publish-card`
+- [x] **G5** cleaning 扩样例；**DM8** adapter 三表 + 禁删/混合拒绝/真模板 chronicle
+- [x] 快修：**WM1/WM2/L8**
+- [x] `pnpm verify:mfrs-gates` 聚合
+- 残余仍开：H2、M5/M7–M10、RH3–5、RM1–2/RM7–9、DM1–6/DM9、DL*、SM* 等
+- **状态：** complete（门禁）；发版见 progress
 
 ## 合并关单
 

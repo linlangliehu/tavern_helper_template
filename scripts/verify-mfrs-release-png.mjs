@@ -1,7 +1,14 @@
 /* eslint-disable import-x/no-nodejs-modules */
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { basename } from 'node:path';
+import { basename, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  CDN_CACHE_VERSION,
+  CDN_REF,
+  RELEASE_VERSION,
+  REPO as PROJECT_REPO,
+} from './mfrs-release-constants.mjs';
 
 const EXPECTED_SCRIPT_NAMES = [
   'mvu',
@@ -13,8 +20,14 @@ const EXPECTED_SCRIPT_NAMES = [
   '\u795e\u79d8\u590d\u82cf\u6570\u636e\u5e93\u524d\u7aef',
   '\u6d88\u606f\u5185\u9762\u677f',
 ];
-const PROJECT_REPO = 'linlangliehu/tavern_helper_template';
 const REQUIRED_CHUNKS = ['chara', 'ccv3'];
+const DEFAULT_RELEASE_PNG = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'src',
+  '神秘复苏模拟器发布版',
+  '神秘复苏模拟器发布版.png',
+);
 
 function parseArgs(argv) {
   const options = {
@@ -24,16 +37,27 @@ function parseArgs(argv) {
     expectedCache: '',
     selfTest: false,
     printJson: false,
+    usePublishDefaults: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--expect-version') options.expectedVersion = argv[++index] || '';
     else if (arg === '--expect-ref') options.expectedRef = argv[++index] || '';
     else if (arg === '--expect-cache') options.expectedCache = argv[++index] || '';
+    else if (arg === '--from-publish-card') options.usePublishDefaults = true;
     else if (arg === '--self-test') options.selfTest = true;
     else if (arg === '--json') options.printJson = true;
     else if (arg.startsWith('--')) throw new Error(`Unknown option: ${arg}`);
     else options.files.push(arg);
+  }
+  // G4：未显式传 expect 时默认对齐 publish-card 常量；self-test 仍用合成值
+  if (!options.selfTest && (options.usePublishDefaults || !options.expectedVersion || !options.expectedRef || !options.expectedCache)) {
+    if (!options.expectedVersion) options.expectedVersion = RELEASE_VERSION;
+    if (!options.expectedRef) options.expectedRef = CDN_REF;
+    if (!options.expectedCache) options.expectedCache = CDN_CACHE_VERSION;
+  }
+  if (!options.selfTest && options.files.length === 0 && existsSync(DEFAULT_RELEASE_PNG)) {
+    options.files.push(DEFAULT_RELEASE_PNG);
   }
   return options;
 }
@@ -294,7 +318,7 @@ function main() {
   if (options.files.length === 0) {
     if (options.selfTest) return;
     throw new Error(
-      `Usage: node ${basename(process.argv[1])} --expect-version <version> --expect-ref <sha> --expect-cache <marker> <png>`,
+      `Usage: node ${basename(process.argv[1])} [--from-publish-card] [--expect-version v] [--expect-ref sha] [--expect-cache marker] [png]`,
     );
   }
   const results = options.files.map(file => {

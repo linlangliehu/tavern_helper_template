@@ -1,5 +1,16 @@
 # 进度日志
 
+## 会话：2026-07-13（BF5 门禁 G2–G5 + DM8）— **complete（门禁）**
+
+- **G2** `verify-mfrs-initvar-schema.mjs`：initvar↔schema 36 根键 + 层级/C1 回归
+- **G3** `verify-mfrs-regex-ids.mjs`：33 条 id 唯一 + 查找表达式可编译（dev+pub）
+- **G4** `mfrs-release-constants.mjs` 单真源；publish-card / release-png 共用；`--from-publish-card`
+- **G5** cleaning 扩：中英混排、长英文对白、双 UV、【警告】长正文、未闭合 sp_
+- **DM8** adapter：characters/items/rules 插入+别名；禁删 collected_rules；items/characters 可删；非法枚举；混合 LENGTH 拒绝；chronicle 真模板
+- 快修：**WM1** 偏移 0–5；**WM2** 交叉引用；**L8** medium→investigate + 摘要死亡风险
+- `pnpm verify:mfrs-gates`；hotfix/cleaning/adapter/release-png 全绿
+- **下一步：** 可选 8.13.21 publish 交付 WM/L8；继续残余 H2/RM7–9 等
+
 ## 会话：2026-07-13（BF4 世界书与清理 + 8.13.20）— **complete**
 
 - **W1/M3**：148 伪路径清零（休眠锚点+规范）

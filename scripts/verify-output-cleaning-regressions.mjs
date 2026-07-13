@@ -364,8 +364,97 @@ assert.equal(
   'raw sanitizer should reject protocol-only output when a complete reply contains visible narration',
 );
 
+// G5: 扩清洗样例
+const g5MixedCnEnToken = 'G5_MIXED_CN_EN_STORY';
+const g5MixedCnEnSample = [
+  `${g5MixedCnEnToken}: 走廊尽头有三声敲击，then a wet footprint slides past the door frame.`,
+  'He whispered "don\'t open it" while 手机屏幕只剩 23% 电量。',
+  '【本轮摘要】',
+  '位置：旧教学楼三层',
+  '事件：敲门；观察中；鬼域未确认',
+  '状态：存活；死亡风险低；复苏风险0',
+  '线索：湿脚印与敲门声同步',
+  '资源：手电筒',
+  '下一步：保持距离并记录间隔',
+].join('\n');
+
+const g5LongEnglishDialogueToken = 'G5_LONG_EN_DIALOGUE';
+const g5LongEnglishDialogueSample = [
+  `${g5LongEnglishDialogueToken}: "Stay against the wall," Lin said, counting each knock.`,
+  '"If the sound skips a beat, we leave. If it doubles, we freeze."',
+  'The corridor smelled of damp concrete and chalk dust; only the stairwell fan hummed.',
+  'They waited through twenty-seven knocks before the far door sighed open by itself.',
+].join('\n');
+
+const g5MultiUpdateVariableSample = [
+  '第一段正文：你先听见远处的脚步停了。',
+  '<UpdateVariable>',
+  '<JSONPatch>',
+  '[{ "op": "replace", "path": "/状态", "value": "观察中" }]',
+  '</JSONPatch>',
+  '</UpdateVariable>',
+  '中间正文必须保留：湿脚印在灯下反光，像有人刚走过去。',
+  '<UpdateVariable>',
+  '<JSONPatch>',
+  '[{ "op": "replace", "path": "/风险值", "value": 12 }]',
+  '</JSONPatch>',
+  '</UpdateVariable>',
+  '收尾正文：你把后背贴紧墙面，继续数敲门声。',
+].join('\n');
+
+const g5WarningLongBodySample = [
+  '【警告】门后有不属于活人的呼吸声，不要伸手去摸门把。',
+  '长正文继续：你能听见走廊尽头的水滴声，以及更远处像有人用指甲刮墙的细响。',
+  '第二段长正文：手机手电筒只照亮三米，光斑外全是黑。',
+  '【本轮摘要】',
+  '位置：走廊中段',
+  '事件：警告后继续观察',
+  '状态：存活；死亡风险中；复苏风险0',
+  '线索：门后呼吸声',
+  '资源：手电筒',
+  '下一步：后撤并记录呼吸间隔',
+  '<choices>',
+  '[{ "key": "A", "text": "后撤", "risk": { "death": 4, "revive": 0, "source": "retreat" } }]',
+  '</choices>',
+].join('\n');
+
+const g5UnclosedSpStreamSample = [
+  '流式正文：你刚抬起手电筒。',
+  '<sp_status>',
+  'Name: Lin',
+  'Location: corridor',
+  // 未闭合 sp_status：模拟流式截断
+  'Status: aliv',
+].join('\n');
+
 const displayRegexes = loadDisplayRegexes();
 const displayed = applyDisplayFormatting(sample, displayRegexes);
+const g5MixedDisplayed = applyDisplayFormatting(g5MixedCnEnSample, displayRegexes);
+assert.ok(g5MixedDisplayed.includes(g5MixedCnEnToken), 'G5 mixed CN/EN narration should remain');
+assert.ok(g5MixedDisplayed.includes('【本轮摘要】'), 'G5 mixed sample summary should remain');
+assert.ok(g5MixedDisplayed.includes('wet footprint'), 'G5 mixed English phrase in narration should remain');
+
+const g5LongEnDisplayed = applyDisplayFormatting(g5LongEnglishDialogueSample, displayRegexes);
+assert.ok(g5LongEnDisplayed.includes(g5LongEnglishDialogueToken), 'G5 long English dialogue token should remain');
+assert.ok(g5LongEnDisplayed.includes('twenty-seven knocks'), 'G5 long English dialogue body should not be eaten by debug/foreign regexes');
+assert.ok(g5LongEnDisplayed.includes('Stay against the wall'), 'G5 English quotes should remain when not protocol blocks');
+
+const g5MultiUvDisplayed = applyDisplayFormatting(g5MultiUpdateVariableSample, displayRegexes);
+assert.ok(g5MultiUvDisplayed.includes('第一段正文'), 'G5 multi-UV: leading narration remains');
+assert.ok(g5MultiUvDisplayed.includes('中间正文必须保留'), 'G5 multi-UV: middle narration must not be swallowed by greedy UpdateVariable');
+assert.ok(g5MultiUvDisplayed.includes('收尾正文'), 'G5 multi-UV: trailing narration remains');
+assert.equal(g5MultiUvDisplayed.includes('<UpdateVariable>'), false, 'G5 multi-UV: UpdateVariable tags hidden');
+assert.equal(g5MultiUvDisplayed.includes('/状态'), false, 'G5 multi-UV: patch payload hidden');
+
+const g5WarningDisplayed = applyDisplayFormatting(g5WarningLongBodySample, displayRegexes);
+assert.ok(g5WarningDisplayed.includes('长正文继续'), 'G5 warning: long body after warning remains');
+assert.ok(g5WarningDisplayed.includes('第二段长正文'), 'G5 warning: second long paragraph remains');
+assert.ok(g5WarningDisplayed.includes('【本轮摘要】'), 'G5 warning: summary remains');
+assert.equal(g5WarningDisplayed.includes('<choices>'), false, 'G5 warning: choices still hidden');
+
+const g5StreamDisplayed = applyDisplayFormatting(g5UnclosedSpStreamSample, displayRegexes);
+assert.ok(g5StreamDisplayed.includes('流式正文'), 'G5 unclosed sp_*: story prefix remains');
+// 未闭合块可能残留标签文本；至少不得删掉正文
 const statusAppSource = readFileSync(statusAppPath, 'utf8');
 const visualizerSource = readFileSync(visualizerPath, 'utf8');
 const dbFrontendSource = readFileSync(dbFrontendPath, 'utf8');

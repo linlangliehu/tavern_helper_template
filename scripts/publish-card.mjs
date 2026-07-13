@@ -21,16 +21,18 @@ import { existsSync, rmSync, cpSync, readFileSync, writeFileSync, mkdirSync, rea
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  CDN,
+  CDN_CACHE_VERSION,
+  CDN_REF,
+  MAGVAR_BUNDLE_URL,
+  MAGVAR_PIN,
+  RELEASE_VERSION,
+  REPO,
+} from './mfrs-release-constants.mjs';
 
 // ─────────────────────────────── 配置 ───────────────────────────────
-// 仓库标识：用于把开发版的 localhost 或旧 jsdelivr 链接替换为当前 CDN 链接
-// 如换了 fork 主、改了仓库名，只需要改这一处
-const REPO = 'linlangliehu/tavern_helper_template';
-// v8.13.20: BF4 worldbook cleanup + stub deprecation (dist @de42f2c2de8e)
-const CDN_REF = 'de42f2c2de8ede196fb059a622afd312b9be48ab';
-const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-const CDN_CACHE_VERSION = 'phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81320-bf4-worldbook';
-
+// CDN_REF / cache / version 真源：scripts/mfrs-release-constants.mjs（G4）
 const escapeRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // 把任意 http(s)://localhost(:port)/ 或 http(s)://127.0.0.1(:port)/ 替换为 CDN
@@ -42,9 +44,6 @@ const CURRENT_CDN_DIST_ENTRY_PATTERN = new RegExp(
   `(${escapeRegExp(CDN)}dist/[^'"\\s]+?/index\\.(?:js|html))(?:\\?v=[^'"\\s]+)?`,
   'g',
 );
-// MagVar 钉上游版本（L1）；?v= 仅作本项目 cache bust，不锁内容
-const MAGVAR_PIN = '0.171.0';
-const MAGVAR_BUNDLE_URL = `https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@${MAGVAR_PIN}/artifact/bundle.js`;
 const MAGVAR_BUNDLE_PATTERN =
   /https:\/\/(?:(?:testingcf|cdn)\.)?jsdelivr\.net\/gh\/MagicalAstrogy\/MagVarUpdate(?:@[0-9A-Za-z._-]+)?\/artifact\/bundle\.js(?:\?v=[^'"\s]+)?/g;
 
@@ -61,7 +60,7 @@ const cards = [
       { from: LOCALHOST_PATTERN, to: CDN },
       { from: EXISTING_CDN_PATTERN, to: CDN },
     ],
-    releaseVersion: '8.13.20',
+    releaseVersion: RELEASE_VERSION,
   },
 ];
 

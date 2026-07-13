@@ -1505,4 +1505,213 @@ const blockedDelete = await applyTableChangePlan(api, {
 assertError(blockedDelete, 'TABLE_DELETE_FORBIDDEN');
 assert.equal(calls.length, beforeDeleteCalls);
 
+// ─── DM8: characters / supernatural_items / collected_rules + 禁删矩阵 + 混合拒绝 ───
+const dm8CrudCases = [
+  {
+    key: 'sheet_characters',
+    sqlName: 'characters',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'characters',
+      data: {
+        name: '杨间',
+        identity_text: '学生',
+        faction_text: '无',
+        location_name: '七中',
+        presence_status: '在场',
+        life_status: '存活',
+        supernatural_ability: '未觉醒',
+        relations_text: '同学',
+        known_info: '七中学生，尚未正式接触总部。',
+      },
+    },
+  },
+  {
+    key: 'sheet_supernatural_items',
+    sqlName: 'supernatural_items',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'supernatural_items',
+      data: {
+        item_name: '鬼烛',
+        item_type: '保命资源',
+        owner_name: '测试',
+        location_name: '七中',
+        quantity_status: '1支',
+        effect_text: '点燃后可短时间隔绝厉鬼袭击',
+        side_effect: '燃尽后失效',
+        usage_limit: '强灵异可能加速燃烧',
+      },
+    },
+  },
+  {
+    key: 'sheet_collected_rules',
+    sqlName: 'collected_rules',
+    physicalPlan: {
+      action: 'insertRow',
+      table: 'collected_rules',
+      data: {
+        source_ghost: '敲门鬼',
+        acquire_method: '现场观察',
+        law_type: '媒介规律',
+        law_content: '敲门声与湿脚印同步出现时，媒介可能是声音或水迹。',
+        law_advance: '未确认进阶',
+        law_decompose: '声音间隔/水迹残留',
+        completeness: '低',
+        risk_note: '误判媒介会导致高死亡风险',
+        public_summary: '仅确认敲门与脚印相关，规律未验证。',
+      },
+    },
+  },
+];
+
+const dm8SparseRuntime = { mate: { type: 'chatSheets', version: 1 } };
+for (const { key } of dm8CrudCases) {
+  dm8SparseRuntime[key] = { content: [['row_id']] };
+}
+const dm8Metadata = listTableMetadata(dm8SparseRuntime, mysteryTemplateData);
+for (const testCase of dm8CrudCases) {
+  const metadata = dm8Metadata.find(sheet => sheet.sqlName === testCase.sqlName);
+  assert.ok(metadata, `DM8 ${testCase.sqlName} metadata should exist from true template`);
+  const physicalPreview = previewTableChangePlan(testCase.physicalPlan, dm8SparseRuntime, mysteryTemplateData);
+  assertNoColumnNotFound(physicalPreview, `DM8 ${testCase.sqlName} physical insert`);
+  const sheetName = mysteryTemplateData[testCase.key].name;
+  const dm8HeaderData = {};
+  for (const [physicalName, value] of Object.entries(testCase.physicalPlan.data)) {
+    const column = metadata.columns.find(item => item.physicalName === physicalName || item.header === physicalName);
+    assert.ok(column, `DM8 ${testCase.sqlName}.${physicalName} column`);
+    dm8HeaderData[column.commentAlias ?? column.header] = value;
+  }
+  const commentPreview = previewTableChangePlan({
+    action: 'insertRow',
+    table: sheetName,
+    data: dm8HeaderData,
+  }, dm8SparseRuntime, mysteryTemplateData);
+  assertNoColumnNotFound(commentPreview, `DM8 ${testCase.sqlName} comment aliases`);
+}
+
+// 枚举近义词：presence/life（若 adapter 支持）或硬枚举拒绝
+const characterEnumSynonymPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'characters',
+  data: {
+    ...dm8CrudCases[0].physicalPlan.data,
+    name: '近义人物甲',
+    presence_status: '现场',
+  },
+}, dm8SparseRuntime, mysteryTemplateData);
+// 近义词要么映射成功，要么 CHECK 拒绝；不得 COLUMN_NOT_FOUND 静默通过非法值
+assert.ok(
+  characterEnumSynonymPreview.ok === true
+    || characterEnumSynonymPreview.errors.some(error => error.code === 'CHECK_IN_VIOLATION' || error.code === 'ENUM_VIOLATION'),
+  `DM8 character presence synonym should map or CHECK fail: ${JSON.stringify(characterEnumSynonymPreview.errors)}`,
+);
+
+const characterInvalidEnumPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'characters',
+  data: {
+    ...dm8CrudCases[0].physicalPlan.data,
+    name: '非法枚举人物',
+    life_status: '活得很好',
+  },
+}, dm8SparseRuntime, mysteryTemplateData);
+assertError(characterInvalidEnumPreview, 'CHECK_IN_VIOLATION');
+
+// 禁删表矩阵：collected_rules 禁删；characters/supernatural_items 可删（模板 deleteNode）
+const dm8SeededRules = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_collected_rules: {
+    ...mysteryTemplateData.sheet_collected_rules,
+    content: [
+      mysteryTemplateData.sheet_collected_rules.content[0],
+      [1, '敲门鬼', '观察', '媒介', '内容', '进阶', '分解', '低', '风险', '摘要'],
+    ],
+  },
+};
+assertError(
+  previewTableChangePlan({ action: 'deleteRow', table: 'collected_rules', match: { row_id: 1 } }, dm8SeededRules, mysteryTemplateData),
+  'TABLE_DELETE_FORBIDDEN',
+);
+const dm8SeededCharacters = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_characters: {
+    ...mysteryTemplateData.sheet_characters,
+    content: [
+      mysteryTemplateData.sheet_characters.content[0],
+      [1, '杨间', '学生', '无', '七中', '在场', '存活', '未觉醒', '同学', '测试'],
+    ],
+  },
+};
+const charactersDeletePreview = previewTableChangePlan({
+  action: 'deleteRow',
+  table: 'characters',
+  match: { row_id: 1 },
+}, dm8SeededCharacters, mysteryTemplateData);
+assert.equal(
+  charactersDeletePreview.ok,
+  true,
+  `DM8 characters delete should remain allowed by template: ${JSON.stringify(charactersDeletePreview.errors)}`,
+);
+const itemsDeletePreview = previewTableChangePlan({
+  action: 'deleteRow',
+  table: '灵异物品',
+  match: { row_id: 1 },
+}, deletableItemsData, mysteryTemplateData);
+assert.equal(itemsDeletePreview.ok, true, `DM8 supernatural_items delete should remain allowed: ${JSON.stringify(itemsDeletePreview.errors)}`);
+
+// 混合合法+非法列：整计划拒绝
+const mixedLegalIllegalPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'characters',
+  data: {
+    ...dm8CrudCases[0].physicalPlan.data,
+    name: '混合拒绝人物',
+    life_status: '存活',
+    known_info: 'x'.repeat(500),
+  },
+}, dm8SparseRuntime, mysteryTemplateData);
+assert.equal(mixedLegalIllegalPreview.ok, false, 'DM8 mixed legal+illegal should reject whole plan');
+assert.ok(
+  mixedLegalIllegalPreview.errors.some(error => error.code === 'LENGTH_VIOLATION' || error.code === 'CHECK_PATTERN_VIOLATION'),
+  `DM8 mixed plan should report length/check error: ${JSON.stringify(mixedLegalIllegalPreview.errors)}`,
+);
+
+// chronicle 真模板 DDL（非仅内联）
+const templateChronicleSheet = mysteryTemplateData.sheet_chronicle;
+assert.ok(templateChronicleSheet?.sourceData?.ddl, 'DM8 chronicle template ddl must exist');
+const templateChronicleRuntime = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_chronicle: {
+    ...templateChronicleSheet,
+    content: [
+      templateChronicleSheet.content[0],
+      [1, 'SP0001', '2004-07-01 09:00 ~ 09:30', '七中敲门事件', '开局纪要', chronicleText],
+    ],
+  },
+};
+const templateChronicleInsertPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 10:00 ~ 10:30',
+    related_event: '七中敲门事件',
+    summary: '模板DDL追加纪要',
+    chronicle_text: chronicleText,
+  },
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(
+  templateChronicleInsertPreview.ok,
+  true,
+  `DM8 chronicle via true template should pass: ${JSON.stringify(templateChronicleInsertPreview.errors)}`,
+);
+assertError(
+  previewTableChangePlan({
+    action: 'deleteRow',
+    table: 'chronicle',
+    match: { code_index: 'SP0001' },
+  }, templateChronicleRuntime, mysteryTemplateData),
+  'CHRONICLE_APPEND_ONLY',
+);
+
 console.log('verify-table-change-adapter: passed');
