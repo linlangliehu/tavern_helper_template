@@ -8,8 +8,9 @@
 **阶段 A2：全量再审计差分（7 轨盲审）— complete（2026-07-13）**  
 **阶段 BF-1（C7 重发版）— complete（8.13.14 @ d5cd98f / de29b4a）**  
 **阶段 BF0 — complete（8.13.15）**  
-**阶段 BF0.5（H10 方案 B）— complete（源码，待 commit）**  
-**当前阶段：阶段 BF1 — pending**
+**阶段 BF0.5 — complete**  
+**阶段 BF1（C3/C4 pin+loader）— complete（8.13.16）**  
+**当前阶段：阶段 BF1 余项 / BF2 — pending**
 
 ## 五问重启（新对话先读）
 
@@ -80,13 +81,13 @@
 - [x] D3 字段路径在新镜像中修正；App.vue 标孤儿注释
 - **状态：** complete
 
-### 阶段 C / BF1：加载与打包 — **pending**
-- [ ] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache（或 localhost 文档）；注意 dev pin 47a5fe5 无消息内面板 dist（404 级）
-- [ ] **C4（已降 Medium）** loader `?`/`&t=` 修复
+### 阶段 C / BF1：加载与打包 — **partial complete**
+- [x] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache（8.13.16 `@91154c7`）
+- [x] **C4** loader `?`/`&t=` 修复
 - [ ] ~~C5~~ 误报关闭；仅剩 stub 目录清理（Low）
 - [ ] **H9** 源与打包卡协议同步（扩：打包卡整体处置——重新导出或废弃+警示）
 - [ ] **L1（已升 Medium）** MagVar/mvu_zod 浮动依赖加 @ref pin
-- **状态：** pending
+- **状态：** C3/C4 complete；H9/L1 pending
 
 ### 阶段 D / BF2：协议解析 + 正则误删 + 发送 — **pending**
 - [ ] **C6** 状态栏/消息面板读 `extra._mfrs_raw_protocol_message`（注意：该 key 当前全仓零读取方）

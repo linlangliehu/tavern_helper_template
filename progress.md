@@ -1,5 +1,12 @@
 # 进度日志
 
+## 会话：2026-07-13（8.13.16 + BF1 C3/C4）— **complete**
+
+- pin `CDN_REF=91154c7`；cache `v81316-bf05-core-mirror`
+- 开发源 `index.yaml` 全脚本同 pin + C4 loader 双 `?` 修复
+- publish 8.13.16；G1 + release-png 通过
+- H9/L1 仍开
+
 ## 会话：2026-07-13（BF0.5 · H10 方案 B）— **complete（源码）**
 
 ### H10 决策：方案 B

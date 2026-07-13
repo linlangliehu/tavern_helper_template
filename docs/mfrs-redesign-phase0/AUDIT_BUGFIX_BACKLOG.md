@@ -88,21 +88,19 @@
 
 ---
 
-### C3 · 开发源 `index.yaml` CDN 过期 — **待修**
+### C3 · 开发源 `index.yaml` CDN 过期 — **已修 8.13.16**
 
-- [ ] **C3.1** 源 `src/神秘复苏模拟器/index.yaml` 脚本 URL 与 `scripts/publish-card.mjs` 对齐同一 `CDN_REF` + cache
-  - 现状：源 pin `@47a5fe5…` / phase163；发布 `@28777ad…` / v81313
-- [ ] **C3.2** 开发验收路径文档化：localhost dist **或** 同步 pin，禁止混用旧 CDN 误判
+- [x] **C3.1** 源 `index.yaml` 与 `publish-card` 对齐同一 `CDN_REF` `@91154c7` + cache `v81316` — **BF1/8.13.16**
+- [x] **C3.2** 开发卡与发布卡同 pin；localhost 仍可用（手动改 URL）
 
 **验收**：开发卡与发布卡加载同一代 dist（或明确本地 5500）；改源可见效果。
 
 ---
 
-### C4 · CDN loader 双 `?` 破坏 query — **待修**
+### C4 · CDN loader 双 `?` 破坏 query — **已修 8.13.16**
 
-- [ ] **C4.1** 所有脚本库 loader：`url.includes('?') ? '&' : '?'` 再拼 `t=`
-  - 文件：`index.yaml` 各 `loadLocalModule`（hotfix / 界面美化 / 固定状态栏 / 数据库 / 前端 / 消息内面板 等）
-- [ ] **C4.2** 发布版同步后的 loader 同样修复（走 publish 模板优先）
+- [x] **C4.1** 开发源脚本库 loader：`url.includes('?') ? '&' : '?'` + `t=` — **BF1/8.13.16**
+- [x] **C4.2** 发布版经 publish-card 从开发源镜像同步
 
 **验收**：运行时 `import` URL 仅为 `...?v=cache&t=ts`，无第二 `?`。
 
