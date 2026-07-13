@@ -11,7 +11,7 @@
     "publish-card": "node scripts/publish-card.mjs",
     "verify:mfrs-frontend": "node scripts/verify-mfrs-database-frontend-p3.mjs",
     "verify:mfrs-mvu-hotfix": "node scripts/verify-mfrs-mvu-hotfix-regressions.mjs",
-    "verify:mfrs-dist-freshness": "node scripts/verify-mfrs-dist-freshness.mjs",
+    "verify:mfrs-dist-freshness": "node scripts/verify-mfrs-dist-freshness.mjs --no-build",
     "verify:mfrs-initvar-schema": "node scripts/verify-mfrs-initvar-schema.mjs",
     "verify:mfrs-regex-ids": "node scripts/verify-mfrs-regex-ids.mjs",
     "verify:mfrs-release-png": "node scripts/verify-mfrs-release-png.mjs --from-publish-card",

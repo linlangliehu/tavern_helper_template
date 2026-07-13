@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   CDN_CACHE_VERSION,
@@ -334,6 +335,31 @@ function main() {
       );
     }
   }
+  // P2（BF6）：软警告——CDN_REF 与本地 HEAD 分叉时提醒（不 fail）。
+  // 常见正常态：发版 pin 后又来 [bot] bundle 重建 dist，HEAD 领先 pin。
+  // 仅当 pin↔HEAD 间存在非 bundle 提交时值得人工确认 dist 是否有实质变化。
+  warnIfPinDivergesFromHead(options.expectedRef || CDN_REF);
+}
+
+function warnIfPinDivergesFromHead(pinRef) {
+  const git = args => {
+    const r = spawnSync('git', args, { encoding: 'utf8', shell: false, timeout: 20_000 });
+    return r.status === 0 ? String(r.stdout || '').trim() : null;
+  };
+  const head = git(['rev-parse', 'HEAD']);
+  const pin = git(['rev-parse', '--verify', `${pinRef}^{commit}`]);
+  if (!head || !pin || head === pin) return; // 无 git / pin 不在本地 / 完全一致 → 静默
+  // pin 是否为 HEAD 祖先（正常发版后：HEAD 领先 pin）
+  const isAncestor = spawnSync('git', ['merge-base', '--is-ancestor', pin, 'HEAD'], { shell: false }).status === 0;
+  const between = isAncestor ? git(['log', '--oneline', `${pin}..HEAD`]) : null;
+  const lines = between ? between.split(/\r?\n/).filter(Boolean) : [];
+  const nonBundle = lines.filter(l => !/\[bot\] bundle/i.test(l));
+  console.warn(
+    `verify-mfrs-release-png: [warn] CDN_REF ${pin.slice(0, 12)} != HEAD ${head.slice(0, 12)}` +
+      (isAncestor
+        ? `（pin 落后 HEAD ${lines.length} 个提交${nonBundle.length ? `，含 ${nonBundle.length} 个非 bundle 提交，请确认 pin dist 无实质遗漏` : '，均为 [bot] bundle，通常安全'}）`
+        : '（pin 不在 HEAD 历史上，请确认发版 pin 指向已 push 的 dist 提交）'),
+  );
 }
 
 try {

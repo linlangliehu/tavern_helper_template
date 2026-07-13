@@ -470,9 +470,9 @@
 | ID | 严重度 | 位置 | 现象 | 修复方向 | 状态 |
 |----|--------|------|------|----------|------|
 | **P1** | Medium | `scripts/publish-card.mjs` | release-png 门禁未被 publish-card/CI 调用，仅靠人工跑 `verify:mfrs-gates`；publish-card 仅内联调 G1 dist-freshness。理论上可 publish 出 ref/cache 未对齐的 PNG 而不被自动拦截 | build 后追加 `verify-mfrs-release-png --from-publish-card` 的 spawnSync 硬门禁，与 G1 同级 die-on-fail | **done（BF6）** — `verifyReleasePng(card)` 每卡 bundle 后调用，错 ref→exit1→die；dry-run/no-bundle 跳过 |
-| **P2** | Low | `scripts/verify-mfrs-release-png.mjs:47-56` | `--from-publish-card` 为自证式校验：能抓 PNG 陈旧，但常量本身写错抓不出（G4 单真源固有局限） | 可选：额外校验 CDN_REF == HEAD/dist 实际 commit | open |
-| **P3** | Low | `scripts/verify-mfrs-initvar-schema.mjs:60-66` | `$ref` 子节点 `resolved=null` 直接跳过；将来 initvar 实例化 `$ref` 嵌套对象时会假阴（误判"未知路径"） | schema 含 `$ref` 时先解引用 `$defs` 再收集键 | open |
-| **P0** | Low | `package.json` `verify:mfrs-dist-freshness` | 该 script 未带 `--ref`，独立/CI 裸跑在参数校验阶段即报错；且脚本内部 `runProductionBuild()` 会触发 `pnpm build`，非只读 | 说明其为 publish-card 发布时守卫（非独立门禁），或补默认 `--ref`+`--no-build` 只读模式 | open |
+| **P2** | Low | `scripts/verify-mfrs-release-png.mjs:47-56` | `--from-publish-card` 为自证式校验：能抓 PNG 陈旧，但常量本身写错抓不出（G4 单真源固有局限） | 可选：额外校验 CDN_REF == HEAD/dist 实际 commit | **done（BF6）** — 改为**软警告**（不 fail）：pin≠HEAD 时报落后提交数+非 bundle 数；硬校验会误伤"发版 pin 后又 bot bundle"正常态，故软化 |
+| **P3** | Low | `scripts/verify-mfrs-initvar-schema.mjs:60-66` | `$ref` 子节点 `resolved=null` 直接跳过；将来 initvar 实例化 `$ref` 嵌套对象时会假阴（误判"未知路径"） | schema 含 `$ref` 时先解引用 `$defs` 再收集键 | **done（BF6）** — 加 `resolveRef`（本地 `$defs`/`definitions` 指针+防循环）；当前 $defs 均标量无行为变化，属前瞻防御 |
+| **P0** | Low | `package.json` `verify:mfrs-dist-freshness` | 该 script 未带 `--ref`，独立/CI 裸跑在参数校验阶段即报错；且脚本内部 `runProductionBuild()` 会触发 `pnpm build`，非只读 | 说明其为 publish-card 发布时守卫（非独立门禁），或补默认 `--ref`+`--no-build` 只读模式 | **done（BF6）** — 加 `--no-build` 只读模式；`--ref` 默认回退 CDN_REF；package script 带 `--no-build`；publish-card 仍走完整 build 校验。**副产**：只读模式揭示 HEAD dist≠pin dist（纯 webpack module-id `672↔248`，功能等价，Low/无害） |
 
 > 备注：P0/P1 同域（发布链门禁接入不完整）。release-png 是唯一能拦"PNG 与 pin 不一致"的守卫，却不在自动发布路径上——建议 8.13.22 顺带流程加固。
 

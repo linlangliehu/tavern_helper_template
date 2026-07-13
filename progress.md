@@ -6,7 +6,15 @@
   - 位置：仿既有 `verifyDistFreshness`（G1）；调用点在每卡 `if (!NO_BUNDLE){ runBundle(); if(!DRY_RUN) verifyReleasePng(card); }`。
   - 验证：`node --check` 通过；`--dry-run` 正确跳过（不改文件）；门禁真值测试——正常 exit=0 / 错 ref(`--expect-ref deadbeef`) exit=1；聚合 `verify:mfrs-gates` 6/6 全绿无回归。
   - 效果：发布链现自动拦"PNG 与 pin 不一致"，消除人工遗漏（原只 G1 自动）。
-- **下一**：批 β 正则残余（RM7–9/RH3–5/RM1–2）；P0/P2/P3 可捎带。BF6 未发版。
+- **下一**：批 β 正则残余（RM7–9/RH3–5/RM1–2）。BF6 未发版。
+
+### 追加（同会话）· P0/P2/P3 流程门禁质量项 — **done**
+
+- **P0**（`verify-mfrs-dist-freshness.mjs` + `package.json`）：加 `--no-build` 只读模式（跳 `runProductionBuild`，仅比对 committed dist ↔ CDN_REF）；`--ref` 默认回退 `CDN_REF`；package script 带 `--no-build`。publish-card 仍传完整参数走 build 校验，未受影响。self-test 加 2 断言。
+  - **副产发现（Low/无害）**：只读模式揭示仓库 HEAD 已提交 dist ≠ CDN_REF(`f2b7db2`) dist。字符级比对确认唯一差异是 webpack module-id `672↔248`（全局替换后字节全等，功能 100% 等价）；`[bot] bundle fcd4a82` 在 pin 后 3 分钟重建所致。线上 CDN 拉 pin 版，用户不受影响。
+- **P2**（`verify-mfrs-release-png.mjs`）：加 `warnIfPinDivergesFromHead`——pin≠HEAD 时 `console.warn` 报落后提交数 + 非 bundle 数，**不 fail**（exit 0）。原设想的硬校验 `CDN_REF==HEAD` 会误伤"发版 pin 后又 bot bundle"正常态（P0 已证实），故改软警告。现状实测：warn "pin 落后 HEAD 4 提交含 3 非 bundle" + exit 0。
+- **P3**（`verify-mfrs-initvar-schema.mjs`）：加 `resolveRef`（解本地 `$defs`/`definitions` 指针 + 防循环）；`schemaObjectKeys` 传 root 并解引用。当前 schema.json 的 3 个 `$defs` 均标量（number/string），无行为变化——前瞻防御，防将来 `$defs` 含 object 时假阴。
+- 回归：`node --check` 三脚本 OK；各 self-test 过；`pnpm verify:mfrs-gates` **6/6 全绿**（release-png 带 P2 warn，exit 0）。未发版。
 
 ## 会话：2026-07-13（8.13.21 上线后只读审查）— **complete**
 

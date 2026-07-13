@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { CDN_REF } from './mfrs-release-constants.mjs';
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '../..');
 const DEFAULT_DIST_DIR = 'dist/神秘复苏模拟器';
@@ -22,6 +23,7 @@ function parseArgs(argv) {
     remote: DEFAULT_REMOTE,
     distDir: DEFAULT_DIST_DIR,
     selfTest: false,
+    noBuild: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -29,8 +31,12 @@ function parseArgs(argv) {
     else if (arg === '--remote') options.remote = argv[++index] || '';
     else if (arg === '--dist-dir') options.distDir = argv[++index] || '';
     else if (arg === '--self-test') options.selfTest = true;
+    else if (arg === '--no-build') options.noBuild = true;
     else fail(`未知参数: ${arg}`);
   }
+  // P0（BF6）：未显式传 --ref 时默认对齐 publish-card 单真源 CDN_REF，
+  // 使 `pnpm verify:mfrs-dist-freshness` 裸跑/CI 可只读校验，而非在参数阶段报错。
+  if (!options.ref && !options.selfTest) options.ref = CDN_REF;
   return options;
 }
 
@@ -127,6 +133,10 @@ function verify(options) {
 
   ensureCleanDist(pathspec, '构建前');
   ensurePinnedDistMatches(commit, pathspec);
+  if (options.noBuild) {
+    log(`只读模式（--no-build）：跳过 production build；已校验 ${pathspec} == CDN_REF 提交 dist`);
+    return;
+  }
   runProductionBuild();
   ensureCleanDist(pathspec, 'production build 后');
   ensurePinnedDistMatches(commit, pathspec);
@@ -139,7 +149,11 @@ function runSelfTest() {
     remote: DEFAULT_REMOTE,
     distDir: DEFAULT_DIST_DIR,
     selfTest: false,
+    noBuild: false,
   });
+  // P0：裸跑（无 --ref）默认回退 CDN_REF；--no-build 只读开关
+  assert.equal(parseArgs([]).ref, CDN_REF);
+  assert.equal(parseArgs(['--no-build']).noBuild, true);
   assert.equal(normalizeDistPath(DEFAULT_DIST_DIR).pathspec, DEFAULT_DIST_DIR);
   assert.throws(() => normalizeDistPath('../outside'), /仓库内/);
   assert.throws(() => validateOptions({ ref: 'main', remote: 'origin', distDir: DEFAULT_DIST_DIR }), /commit SHA/);

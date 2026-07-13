@@ -148,9 +148,9 @@
 
 **批 δ · 发布链流程加固（本次审查产出）**
 - [x] **P1** publish-card build 后加 `verify-mfrs-release-png --from-publish-card` 硬门禁（与 G1 同级 die-on-fail）— **done**：`verifyReleasePng(card)` 每卡 bundle 后调用；错 ref→exit1→die；dry-run 验证跳过；聚合门禁 6/6 绿
-- [ ] **P0** `verify:mfrs-dist-freshness` script 补默认 `--ref` 或标注为发布守卫（非独立门禁）
-- [ ] **P2** 可选：release-png 额外校验 CDN_REF == HEAD 实际 commit
-- [ ] **P3** initvar-schema 校验解引用 `$defs` 再收集键（防将来 `$ref` 假阴）
+- [x] **P0** `verify:mfrs-dist-freshness` script 补默认 `--ref` 或标注为发布守卫（非独立门禁）— **done**：加 `--no-build` 只读模式 + `--ref` 默认 CDN_REF；副产揭示 HEAD dist≠pin（webpack module-id，功能等价，Low）
+- [x] **P2** 可选：release-png 额外校验 CDN_REF == HEAD 实际 commit — **done**：改软警告（不 fail），避免误伤"pin 后又 bot bundle"正常态
+- [x] **P3** initvar-schema 校验解引用 `$defs` 再收集键（防将来 `$ref` 假阴）— **done**：加 `resolveRef`；当前 $defs 均标量，前瞻防御无行为变化
 
 **硬约束（本批必守）**
 - 正则总数仍须=33（RM/RH 只改现有 id 的表达式/启用，不增删条目；改后同步 `verify:mfrs-regex-ids` + `verify:mfrs-release-png`）

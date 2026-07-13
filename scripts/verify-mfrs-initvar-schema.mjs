@@ -53,15 +53,32 @@ function collectObjectKeys(node, prefix = '') {
   return keys;
 }
 
-function schemaObjectKeys(schemaNode, prefix = '') {
+// P3（BF6）：解引用 `#/$defs/<name>` 或 `#/definitions/<name>` 本地指针。
+// 仅处理本地指针；防循环引用。当前 schema.json 的 $defs 均为标量，暂无行为变化。
+function resolveRef(node, root) {
+  let cur = node;
+  const seen = new Set();
+  while (cur && typeof cur === 'object' && typeof cur.$ref === 'string') {
+    if (seen.has(cur.$ref)) return null;
+    seen.add(cur.$ref);
+    const m = /^#\/(\$defs|definitions)\/(.+)$/.exec(cur.$ref);
+    if (!m) return null;
+    cur = (root[m[1]] || {})[m[2]];
+  }
+  return cur;
+}
+
+function schemaObjectKeys(schemaNode, root = schemaNode, prefix = '') {
   if (!schemaNode || schemaNode.type !== 'object' || !schemaNode.properties) return [];
   const keys = [];
   for (const [key, child] of Object.entries(schemaNode.properties)) {
     const path = prefix ? `${prefix}.${key}` : key;
     keys.push(path);
-    const resolved = child?.$ref ? null : child;
+    // P3（BF6）：解引用本地 $ref 再判断类型；当前 $defs 均为标量，无行为变化，
+    // 属前瞻防御——将来 $defs 若含 object，避免漏收其子键造成假阴。
+    const resolved = child?.$ref ? resolveRef(child, root) : child;
     if (resolved?.type === 'object' && resolved.properties) {
-      keys.push(...schemaObjectKeys(resolved, path));
+      keys.push(...schemaObjectKeys(resolved, root, path));
     }
   }
   return keys;
