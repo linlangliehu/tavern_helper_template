@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 神秘复苏模拟器.png
-版本: '8.13.17'
+版本: '8.13.18'
 作者: 琳琅
 备注: ''
 
@@ -5096,7 +5096,7 @@
   - 正则名称: '[不发送]去除变量更新'
     id: 2d2018ae-c085-4916-af05-6830110a8293
     启用: true
-    查找表达式: /<update(?:variable)?>(?:(?!.*<\/update(?:variable)?>).*$|.*<\/update(?:variable)?>)/gsi
+    查找表达式: /<(?:UpdateVariable|updatevariable|update)\b[^>]*>[\s\S]*?<\/(?:UpdateVariable|updatevariable|update)>/gi
     替换为: ''
     来源:
       用户输入: true
@@ -5111,7 +5111,7 @@
   - 正则名称: '[不发送]去除界面展示块'
     id: 7d6a8e3b-2f4c-4c5e-9a11-9f7b2d3e6c41
     启用: true
-    查找表达式: "/(?:<choices>[\\s\\S]*?<\\/choices>|<(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>[\\s\\S]*?<\\/(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>|(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)|<StatusPlaceHolderI[m]pl\\/>)/g"
+    查找表达式: "/(?:<choices>[\\s\\S]*?<\\/choices>|<(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>[\\s\\S]*?<\\/(?:rule_check|ghost_suppress|survival_route|revival_cost|action_options)>|(?:\\*\\*)*?【(?:推演选项|状态面板)[：:][^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<(?:choices|UpdateVariable|update)|\\n\\s*【本轮摘要】)|<StatusPlaceHolderI[m]pl\\/>)/g"
     替换为: ''
     来源:
       用户输入: false
@@ -5170,7 +5170,7 @@
   - 正则名称: '[显示]隐藏完整变量更新'
     id: 06dec31f-c0a9-456c-8b88-1f9176a73039
     启用: true
-    查找表达式: /<update(?:variable)?>\s*(.*)\s*<\/update(?:variable)?>/gsi
+    查找表达式: /<(?:UpdateVariable|updatevariable|update)\b[^>]*>[\s\S]*?<\/(?:UpdateVariable|updatevariable|update)>/gi
     替换为: ''
     来源:
       用户输入: true
@@ -5184,7 +5184,7 @@
   - 正则名称: 关键词暗红高亮
     id: a1b2c3d4-0004-4000-8000-000000000004
     启用: true
-    查找表达式: "(厉鬼|杀人规律|灵异物品|灵魂烙印|拼图|鬼域|复苏|驭鬼者|鬼烛|替死娃娃)"
+    查找表达式: "/(厉鬼|杀人规律|灵异物品|灵魂烙印|拼图|鬼域|复苏|驭鬼者|鬼烛|替死娃娃)/g"
     替换为: <span class="horror-keyword">$1</span>
     来源:
       用户输入: true
@@ -5195,10 +5195,10 @@
       仅格式显示: true
       仅格式提示词: false
 
-  - 正则名称: '[显示]隐藏推演选项与状态面板（由正文 sp 面板替代）'
+  - 正则名称: '[显示]隐藏推演选项与状态面板（由 HUD/数据库前端消费）'
     id: a1b2c3d4-0007-4000-8000-000000000007
     启用: true
-    查找表达式: "/(?:\\*\\*)*?【(?:推演选项|选项|状态面板)[^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<[\\w\\/]|$)/g"
+    查找表达式: "/(?:\\*\\*)*?【(?:推演选项|状态面板)[：:][^】]*】[\\s\\S]*?(?=\\n\\s*```|\\n\\s*(?:\\*\\*|◇|◆)*\\s*【|\\n\\s*<(?:choices|UpdateVariable|update)|\\n\\s*【本轮摘要】)/g"
     替换为: ""
     来源:
       用户输入: true
@@ -5212,7 +5212,7 @@
   - 正则名称: '[显示]隐藏未闭合结构块'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2013
     启用: true
-    查找表达式: "/<(choices|UpdateVariable|updatevariable|update|JSONPatch|jsonpatch)>(?![\\s\\S]*?<\\/\\1>)[\\s\\S]*$/gi"
+    查找表达式: "/<(choices|UpdateVariable|updatevariable|update|JSONPatch|jsonpatch|(?!(?:sp_start|sp_input|mfrs_roll)\\b)(?:sp|mfrs)_[a-z_]+)\\b[^>]*>(?![\\s\\S]*?<\\/\\1>)[\\s\\S]*$/gi"
     替换为: ""
     来源:
       用户输入: false
@@ -5310,7 +5310,7 @@
   - 正则名称: '[显示]隐藏英文调试摘要'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2016
     启用: true
-    查找表达式: "/(?:^|\\n)\\s*(?=(?:[A-Z][A-Za-z'\\-]*\\s+){3,})(?=[^\\n]{40,})(?=[\\s\\S]{0,700}\\b(?:wakes?|observes?|corridor|anomaly|primary|risk|summary|database|choices|patch|status|visible evidence|transition)\\b)[A-Za-z0-9 ,.'\";:()\\[\\]\\/\\-]+(?:\\n(?!\\s*(?:<|【|\\{|\\[|$))[A-Za-z0-9 ,.'\";:()\\[\\]\\/\\-]+){0,4}\\s*(?=\\n\\s*(?:<|【|$)|$)/gi"
+    查找表达式: "/(?:^|\\n)\\s*(?=(?:[A-Z][A-Za-z'\\-]*\\s+){3,})(?=[^\\n]{40,})(?!\\s*[\\u4e00-\\u9fff])(?=[\\s\\S]{0,400}\\b(?:JSONPatch|UpdateVariable|visible evidence|database summary|Title:|primary anomaly)\\b)[A-Za-z0-9 ,.'\";:()\\[\\]\\/\\-]+(?:\\n(?!\\s*(?:<|【|\\{|\\[|$))[A-Za-z0-9 ,.'\";:()\\[\\]\\/\\-]+){0,2}\\s*(?=\\n\\s*(?:<|【|$)|$)/gi"
     替换为: ""
     来源:
       用户输入: false
@@ -5324,7 +5324,7 @@
   - 正则名称: '[显示]隐藏外语中间稿'
     id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2019
     启用: true
-    查找表达式: "/(?:^|\\n)\\s*(?=(?:[A-Za-zÀ-ÿ'\\-]+\\s+){5,})(?=[^\\n]{40,})(?=[\\s\\S]{0,700}\\b(?:tel[eé]fono|m[oó]vil|luz|pasillo|pared|sombra|riesgo|opciones|estado|parche|corridor|anomaly|risk|choices|patch|status)\\b)[A-Za-zÀ-ÿ0-9 ,.'\";:()\\[\\]\\/\\-¿¡]+(?:\\n(?!\\s*(?:<|【|\\{|\\[|$))[A-Za-zÀ-ÿ0-9 ,.'\";:()\\[\\]\\/\\-¿¡]+){0,4}\\s*(?=\\n\\s*(?:<|【|$)|$)/gi"
+    查找表达式: "/(?:^|\\n)\\s*(?=(?:[A-Za-zÀ-ÿ'\\-]+\\s+){5,})(?=[^\\n]{40,})(?!\\s*[\\u4e00-\\u9fff])(?=[\\s\\S]{0,400}\\b(?:JSONPatch|UpdateVariable|database summary|Title:|tel[eé]fono|m[oó]vil|pasillo|pared|sombra)\\b)[A-Za-zÀ-ÿ0-9 ,.'\";:()\\[\\]\\/\\-¿¡]+(?:\\n(?!\\s*(?:<|【|\\{|\\[|$))[A-Za-zÀ-ÿ0-9 ,.'\";:()\\[\\]\\/\\-¿¡]+){0,2}\\s*(?=\\n\\s*(?:<|【|$)|$)/gi"
     替换为: ""
     来源:
       用户输入: false
@@ -5408,7 +5408,7 @@
   - 正则名称: 渲染警告与系统提示
     id: a1b2c3d4-0001-4000-8000-000000000001
     启用: true
-    查找表达式: "(?:\\*\\*)*?(【(?:警告|系统提示).*?】)(?:\\*\\*)*?\\s*\\n([\\s\\S]*?)(?=\\n+(?:\\*\\*)*?【状态面板|\\n+摘要|\\n*小猫之神|$)"
+    查找表达式: "/(?:\\*\\*)*?(【(?:警告|系统提示)[^】]*】)(?:\\*\\*)*?\\s*\\n([\\s\\S]*?)(?=\\n+(?:\\*\\*)*?【(?:本轮摘要|模拟结局|状态面板)|\\n+<choices\\b|\\n+<UpdateVariable\\b|\\n+```|$)/gi"
     替换为: |-
       <style>
        .horror-options {
@@ -6579,7 +6579,7 @@
       仅格式提示词: false
 
   - 正则名称: '[不发送]去除思维链与内部推理'
-    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2004
+    id: e8f1a2b3-c4d5-4e6f-8a90-1b2c3d4e5f60
     启用: true
     查找表达式: "/<(thinking|think|reasoning|inner_thoughts|scratchpad|hidden_reasoning|mfrs_internal)>[\\s\\S]*?<\\/\\1>/gi"
     替换为: ""
@@ -6593,9 +6593,9 @@
       仅格式提示词: true
 
   - 正则名称: '[显示]隐藏思维链与内部推理'
-    id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2005
+    id: e8f1a2b3-c4d5-4e6f-8a90-1b2c3d4e5f61
     启用: true
-    查找表达式: "/<(thinking|think|reasoning|inner_thoughts|scratchpad|hidden_reasoning|mfrs_internal)>[\\s\\S]*?(?:<\\/\\1>|$)/gi"
+    查找表达式: "/<(thinking|think|reasoning|inner_thoughts|scratchpad|hidden_reasoning|mfrs_internal)>[\\s\\S]*?(?:<\\/\\1>|(?=\\n\\s*<(?:choices|UpdateVariable|update)|\\n\\s*【(?:本轮摘要|模拟结局)))/gi"
     替换为: ""
     来源:
       用户输入: false
@@ -6613,7 +6613,7 @@
       启用: true
       类型: 脚本
       内容: |-
-        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@0.171.0/artifact/bundle.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins';
+        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@0.171.0/artifact/bundle.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol';
 
     - 名称: hotfix-generation-ended-listeners
       id: hotfix-generation-ended-001
@@ -6635,7 +6635,7 @@
           console.error(`[${label}] 加载失败，请检查 CDN 可用性`);
         };
 
-        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');
 
     - 名称: 变量结构
       id: f65ab164-4268-4366-8228-16af904c2251
@@ -6656,7 +6656,7 @@
           }
         };
 
-        loadLocalModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadLocalModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');
 
     - 名称: 界面美化
       id: a1b2c3d4-0006-4000-8000-000000000006
@@ -6677,7 +6677,7 @@
           }
         };
 
-        loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');
 
     - 名称: 固定状态栏
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001
@@ -6699,7 +6699,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和固定状态栏脚本入口可用`);
         };
 
-        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');
 
     - 名称: spv3.9.5·数据库
       id: 93648737-21db-406c-8aab-3ef8f3af1238
@@ -6728,7 +6728,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库脚本入口可用`);
         };
 
-        loadLocalModule('spv3.9.5·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadLocalModule('spv3.9.5·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');
 
     - 名称: 神秘复苏数据库前端
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3002
@@ -6757,7 +6757,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库前端脚本入口可用`);
         };
 
-        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');
 
     - 名称: 消息内面板
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3003
@@ -6779,4 +6779,4 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和消息内面板脚本入口可用`);
         };
 
-        loadLocalModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@21fecba5098157ea6f6144dcb138bc989cc070bc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%B6%88%E6%81%AF%E5%86%85%E9%9D%A2%E6%9D%BF/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81317-h9-l1-pins');
+        loadLocalModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@dc27b52fd6aaf56cb862d28c4a43e5357e9a841b/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%B6%88%E6%81%AF%E5%86%85%E9%9D%A2%E6%9D%BF/index.js?v=phase168-4-0-final-baseline-6-28-p5-4-hotfix14-mvu-v81318-bf2-protocol');

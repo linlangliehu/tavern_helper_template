@@ -1,17 +1,12 @@
 # 进度日志
 
-## 会话：2026-07-13（BF2 协议/正则/发送）— **complete（源码）**
+## 会话：2026-07-13（BF2 协议/正则/发送 + 8.13.18）— **complete**
 
 - **C6** raw extra：消息面板 + App.vue 优先读；hotfix 清洗后 `saveChat`
-- **H4** `__mfrsHotfixInstalled__` + `__mfrsHotfixCleanup__` 幂等
-- **H5** `forceRecoverSendUi` 仅卡住时 force stop
-- **H6/C6.4** 空生成看 raw；**H6.2** 系统提示正文+摘要不可省略
-- **H7** `parseStructuredChoices`；回退 MVU→表→choices→JSONPatch
-- **H8** seed 扩数组/flags/可见档案/主线进度
-- **RH6** 不再 strip `mfrs_roll`
-- **R1–R3 / RH2 / RM3–RM6** index.yaml 正则收窄 + 思维链新 UUID
-- 门禁：`verify-mfrs-mvu-hotfix-regressions` + `verify-output-cleaning-regressions` 通过
-- **待：** production dist + publish-card（建议 8.13.18）→ BF3
+- **H4–H8 / RH6 / R1–R3 / RH2 / RM3–RM6** 见 backlog 勾选
+- 功能 commit：`dc27b52`（含 production dist）已 push
+- **8.13.18** pin `dc27b52` / cache `…-v81318-bf2-protocol`；G1 + release-png 通过
+- **下一步：** 用户重导 PNG → BF3
 
 ## 会话：2026-07-13（BF1 H9/L1 + 8.13.17）— **complete**
 

@@ -10,15 +10,15 @@
 **阶段 BF0 — complete（8.13.15）**  
 **阶段 BF0.5 — complete**  
 **阶段 BF1 — complete（8.13.17：C3/C4/H9/L1）**  
-**阶段 BF2 — complete（源码；待 dist/publish）**  
+**阶段 BF2 — complete（8.13.18）**  
 **当前阶段：阶段 BF3 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF2 源码完成**；8.13.17 仍是已发基线（待 BF2 发版） |
-| 我要去哪里？ | **BF2 dist/publish** 或 **BF3**（D2–D3/DH*/S1/SH6） |
+| 我在哪里？ | **BF2 发版中：8.13.18**（CDN `dc27b52`） |
+| 我要去哪里？ | **BF3**（D2–D3/DH*/S1/SH6）→ BF4–BF5 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -36,11 +36,11 @@
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.17** |
-| 资源 | `21fecba` / cache `…-v81317-h9-l1-pins` |
-| 功能 | H9 废弃旧 JSON + L1 MagVar/mvu_zod pin |
-| 发布 | 见最新 `chore(release) publish 8.13.17` |
-| 分支 | **`main`**（已 push） |
+| 版本 | **8.13.18** |
+| 资源 | `dc27b52` / cache `…-v81318-bf2-protocol` |
+| 功能 | BF2 协议 raw / hotfix / 正则 |
+| 发布 | 见 `chore(release) publish 8.13.18` |
+| 分支 | **`main`** |
 
 ## 各阶段
 
@@ -96,7 +96,7 @@
 - [x] **RH2** 正则 id 冲突：思维链换新 UUID `e8f1…`
 - [x] **RH6** 掷骰条复活：hotfix 白名单放行 mfrs_roll
 - [x] **RM3–RM6** 贪婪 update 吞文、无 g 标志、#9 扩 sp_/mfrs_、【警告】卷段
-- **状态：** complete（源码）；待 production rebuild + publish-card
+- **状态：** complete（8.13.18 @ `dc27b52`）
 
 ### 阶段 E / BF3：DB 镜像 + 开局 — **pending**
 - [ ] **D2–D3** 处理状态枚举；核心表镜像字段路径（对象取决于 H10 决策）
