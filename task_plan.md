@@ -137,7 +137,7 @@
 ### 阶段 BF6：正则/清洗残余 + 发布链加固 — **in_progress（目标 8.13.22，批 β+δ）**
 
 **批 β · 正则/清洗残余（与 G3 同域，风险低）**
-- [ ] **RM7** #14/#15（JSONPatch/draft/pacing/修改确认）补 prompt 去除 + hotfix 清洗，止残渣回传 AI
+- [x] **RM7** #14/#15（JSONPatch/draft/pacing/修改确认）补 prompt 去除 + hotfix 清洗，止残渣回传 AI
 - [x] **RM8** #10/#11 ↔ hotfix L491/493 逐字清单同步（防 RH6 式不同步）；注释互指 — **done（BF6 低风险子集）**：G3 加白名单同步断言（display⊆hotfix 不变式）+ hotfix 互指注释；负向测试验证漂移→fail
 - [ ] **RM9** #3/#4 `$` 兜底截断时勿删到消息尾 — 留下一批（改运行时清洗）
 - [ ] **RH3** hotfix `recoverRecentRawProtocolMessages` 补调 `cleanProtocolBlocks`（导入旧档漏洗）— 留下一批（改运行时行为）
