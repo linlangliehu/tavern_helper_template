@@ -10,6 +10,7 @@ import {
   type TableChangeResult,
   type TableMetaSummary,
 } from './table-change-adapter';
+import { installMvuCoreMirror } from './mvu-core-mirror';
 
 type AutoCardUpdaterAPI = {
   __mfrsDatabaseScriptMarker__?: string;
@@ -868,13 +869,26 @@ async function installCompatibilityApi() {
 
   console.info('[神秘复苏数据库前端] 已切换为 v10.2 原始可视化前端，并保留 MysteryDatabaseFrontend 兼容 API。');
   void ensureMysteryTemplate(hostWindow);
+  const uninstallCoreMirror = installMvuCoreMirror(hostWindow);
+  const previousCleanup = hostWindow.__mfrsDatabaseFrontendCleanup__;
+  hostWindow.__mfrsDatabaseFrontendCleanup__ = options => {
+    try {
+      uninstallCoreMirror();
+    } catch {
+      // ignore
+    }
+    previousCleanup?.(options);
+  };
 
   const handleChatChanged = () => {
     for (const delay of [0, 250, 1000]) {
       window.setTimeout(() => {
         if (!isMysteryRevivalCardActive(hostWindow)) {
-          cleanupMfrsDatabaseFrontend(hostDocument, hostWindow);
-          delete hostWindow.__mfrsDatabaseFrontendCleanup__;
+          hostWindow.__mfrsDatabaseFrontendCleanup__?.({
+            removeFixedStatusHost: true,
+            removeGlobals: true,
+            unregisterNativeListener: true,
+          });
           return;
         }
         keepAcuConfigEmbedded(hostWindow);

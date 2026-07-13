@@ -7,14 +7,16 @@
 **阶段 A：审计与清单入库 — complete**  
 **阶段 A2：全量再审计差分（7 轨盲审）— complete（2026-07-13）**  
 **阶段 BF-1（C7 重发版）— complete（8.13.14 @ d5cd98f / de29b4a）**  
-**当前阶段：阶段 BF0（变量与行动建议真源）— in_progress**
+**阶段 BF0 — complete（8.13.15）**  
+**阶段 BF0.5（H10 方案 B）— complete（源码，待 commit）**  
+**当前阶段：阶段 BF1 — pending**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF0 源码已落**（initvar/schema/规则/系统提示）；待 commit；main 仍 8.13.14 |
-| 我要去哪里？ | 提交 BF0 → BF0.5(H10) → BF1–BF5 |
+| 我在哪里？ | **BF0.5 方案 B 已落源码**（未 commit）；8.13.15 仍为线上版 |
+| 我要去哪里？ | commit BF0.5 → dist/publish 可选 → BF1–BF5 |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -32,11 +34,12 @@
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.14** |
-| 资源 | `d5cd98f` / cache `…-v81314-c7-dist-rebuild` |
-| dist+G1 commit | `d5cd98f` chore(mfrs) production dist + G1 |
-| 发布 commit | `de29b4a` chore(release) publish 8.13.14 |
-| 分支 | **`main@de29b4a`**（已 push）；A2 规划文档仍可能本地 dirty 未提交 |
+| 版本 | **8.13.15** |
+| 资源 | `107b3ff` / cache `…-v81315-bf0-initvar-schema` |
+| 功能源 | `5eaa533` BF0 initvar/schema |
+| dist commit | `107b3ff` production dist BF0 |
+| 发布 | 见最新 `chore(release) publish 8.13.15` |
+| 分支 | **`main`**（已 push） |
 
 ## 各阶段
 
@@ -62,19 +65,20 @@
 - **已合 main：** `origin/main` fast-forward 至 `de29b4a`（2026-07-13）
 - **状态：** complete
 
-### 阶段 B / BF0：变量与行动建议真源 — **in_progress**
-- [x] **C1** initvar 四键升根（`规律推理记录`/`最近行动判定`/`行动建议`/`在场人物`）+ **L7** 未知→'' 哨兵
-- [x] **C2** 扩 schema（行动建议风险枚举、判定扩展字段、确认等级等）+ regen `schema.json`
-- [x] **M6（已升 High）** initvar 补齐 6 根键 + 主线进度 3 子键
-- [x] **H1 + D1** 行动建议存活恰 4 条 / 死亡清空；更新规则去掉「0–4」冲突
-- [x] **H3** 系统提示骨架对齐变量输出格式（delta、在场人物）
-- [x] **M11** 死亡链：is_dead 教学、死亡写集统一、阶段状态值域补「模拟结束」
-- 待：提交/回归后关单 complete；DB 表仍固定 4 行（存活镜像 A–D，死亡时 MVU `[]`）
-- **状态：** in_progress
+### 阶段 B / BF0：变量与行动建议真源 — **complete（源码）**
+- [x] **C1** initvar 四键升根 + **L7** 未知→'' 哨兵
+- [x] **C2** 扩 schema + regen `schema.json`
+- [x] **M6** initvar 补齐 6 根键 + 主线进度 3 子键
+- [x] **H1 + D1** 行动建议存活恰 4 条 / 死亡清空
+- [x] **H3** 系统提示骨架对齐变量输出格式
+- [x] **M11** 死亡链写集 + `模拟结束` 值域
+- commit：`5eaa533`（未 push；未 publish；C1.3 打包卡/C2.4 可见摘要仍开）
+- **状态：** complete
 
-### 阶段 BF0.5：H10 App.vue 去留决策 — **pending（BF3 先决）**
-- [ ] 三选一：恢复加载入口 / 镜像+开局逻辑迁入活脚本 / 删除并摘除相关 backlog 项
-- **状态：** pending
+### 阶段 BF0.5：H10 App.vue 去留决策 — **complete（方案 B）**
+- [x] 决策：镜像迁入数据库前端 `mvu-core-mirror.ts`；不恢复 App.vue iframe
+- [x] D3 字段路径在新镜像中修正；App.vue 标孤儿注释
+- **状态：** complete
 
 ### 阶段 C / BF1：加载与打包 — **pending**
 - [ ] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache（或 localhost 文档）；注意 dev pin 47a5fe5 无消息内面板 dist（404 级）
@@ -163,7 +167,7 @@
 ```
 继续神秘复苏审计缺陷修复。
 先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md
-BF-1 已合 main（8.13.14）。BF0 源码已改（C1/C2/M6/H1/H3/M11），先读 progress 核对 diff；待 commit 后继续 BF0.5 或 BF1，勿重审。
+BF0.5 源码已落（H10 方案 B：mvu-core-mirror）。待 commit/dist 后从 BF1 开工，勿重审。
 ```
 
 ## 备注

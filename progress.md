@@ -1,19 +1,30 @@
 # 进度日志
 
-## 会话：2026-07-13（BF0 · 变量与行动建议真源）— **in_progress → 代码已落**
+## 会话：2026-07-13（BF0.5 · H10 方案 B）— **complete（源码）**
 
-### 阶段 BF0 — 源码已改（待 commit / 发版）
+### H10 决策：方案 B
+- 不恢复 App.vue 加载
+- 新增 `脚本/数据库前端/mvu-core-mirror.ts`：GENERATION_ENDED/MESSAGE_RECEIVED 后镜像 global/player/event/clue/行动建议
+- 字段路径按 D3 修正；处理状态 `未接触→未处理`
+- `界面/状态栏/index.ts` 孤儿注释
+
+**待：** commit + production dist（数据库前端）+ 可选 8.13.16
+
+## 会话：2026-07-13（BF0 · 变量与行动建议真源）— **complete（源码）**
+
+### 阶段 BF0 — **committed `5eaa533`**
 
 **改动：**
-- C1+L7+M6：`initvar.yaml` 四键升根；姓名/开局地点 `''`；补 `剧情阶段`/scene flags/`is_dead`/`可见档案`/主线 `权限层级` 等
-- C2：`schema.ts` 扩 ActionSuggestion 风险枚举、Judgement 触发项/资源代价/后续建议、Reasoning 确认等级；`pnpm dump` → `schema.json`
-- H1+D1+M11：变量更新/输出格式/事件MVU/主线阶段/必须输出推演选项/系统提示 — 存活恰 4 条、死亡清空与写集统一、`模拟结束` 入值域
-- H3：系统提示骨架对齐 delta + 在场人物 + 扩展字段
-- hotfix seed：`DEFAULT_ACTION_JUDGEMENT` 同步扩展字段
+- C1+L7+M6：`initvar.yaml` 四键升根；姓名/开局地点 `''`；补 flags/`可见档案`/主线权限键
+- C2：`schema.ts` + `schema.json` 扩展字段
+- H1+D1+M11+H3：规则/系统提示/输出格式统一
+- hotfix seed 同步；`AUDIT_BUGFIX_BACKLOG.md` 入库并勾选
 
-**未做：** commit/push；publish 8.13.15；C1.3 打包卡；C2.4 可见摘要；H10 死代码路径
+**已完成后续：** push `5eaa533`；dist `107b3ff`；**8.13.15** publish（G1 通过，release-png pass）
 
-**下一步：** 用户确认后 commit；或直接 BF0.5/BF1
+**未做：** C1.3 旧打包卡；C2.4 可见摘要
+
+**下一步：** 用户重导 8.13.15 → BF0.5 H10 或 BF1
 
 ## 会话：2026-07-13（BF-1 · C7 重发版 + G1 门禁）— **complete**
 

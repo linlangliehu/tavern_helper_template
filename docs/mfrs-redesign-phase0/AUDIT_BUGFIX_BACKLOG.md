@@ -255,8 +255,7 @@
 - [x] **D1** `action_suggestions` 固定 4 行 vs MVU：策略对齐——**存活** MVU 恰 4 条与表 4 行一致；**死亡** MVU `[]` + 无 choices（表可仍占位，镜像层后续随 H10）— **BF0 规则侧**
 - [ ] **D2** `处理状态`：MVU 默认 `未接触` ∉ DB enum → 映射 `未接触→未处理` 或扩 DDL；禁静默写成「调查中」
   - 文件：`神秘复苏表格SQL_v1.json`、`table-change-adapter.ts`、`App.vue` normalizeHandlingStatus
-- [ ] **D3** 状态栏核心表镜像错读字段：`世界压力`/`总部关注度`/`社会公开度` 应从 `主线进度.世界压力.*`；`死亡人数`→`已死亡人数`  
-  - 文件：`界面/状态栏/App.vue` `buildCoreStatePlansForDatabase`
+- [x] **D3** 核心表镜像字段路径 — **BF0.5 在 mvu-core-mirror 正确实现**（`主线进度.世界压力.*`、`已死亡人数`、`势力关系.所属城市`、`最近行动判定.行动`）；App.vue 死代码未改
 
 ### High
 
@@ -375,10 +374,10 @@
 
 ### A2 新增 High
 
-- [ ] **H10 · App.vue 状态栏是发布链孤儿；MVU→DB 核心镜像零 owner（决策项，BF3 先决）**
-  - index.yaml 无 iframe 注入正则（grep=0）、tavern_sync 不处理 `界面/`、唯一加载器在 6月3日旧打包卡（localhost）
-  - 后果：C6.1、D3、H2.2、DB-04/12/14/20 全是死代码上的 bug；`global_state`/`player_state` 核心镜像当前无人执行
-  - [ ] 三选一：恢复加载入口（iframe 正则/脚本挂载）/ 镜像与开局逻辑迁入活脚本（消息内面板或数据库前端）/ 正式删除并从 backlog 摘除相关项
+- [x] **H10 · App.vue 状态栏是发布链孤儿；MVU→DB 核心镜像零 owner** — **BF0.5 方案 B（2026-07-13）**
+  - 决策：不恢复 App.vue 加载；核心镜像迁入 `脚本/数据库前端/mvu-core-mirror.ts`（GENERATION_ENDED/MESSAGE_RECEIVED）
+  - 开局：界面美化；选项 UI：消息内面板；App.vue 保留源码但标注孤儿（`界面/状态栏/index.ts` 注释）
+  - 仍开：C6.1/D3/H2.2/DM9 等对 App.vue 死代码的细修可降优先或随删除批次；镜像路径已按 D3 正确字段实现
 - [ ] **RH6 · 掷骰条被自家 hotfix 击杀**：`cleanProtocolBlocks`（MESSAGE_RECEIVED 即永久删 mes 中 `<mfrs_roll/>` 自闭合+成对，index.ts:493-495）先于 #27 显示正则渲染（index.yaml:5629）→ 掷骰条 UI 永不出现/闪现即消失；世界书规定骰条自闭合输出。修法：hotfix 清洗白名单放行 mfrs_roll，或渲染改读 raw extra
 - [ ] **SH6 · 开局提交按钮无内联兜底（单点故障）**：`class="mfrs-submit"` 无 onclick，全靠 界面美化 CDN 脚本委托；同表单厉鬼加减/预设 select 反而有内联兜底 → CDN 失败/被墙时表单可填但永远无法提交（开发卡因 C3 必现）
 - [x] **M11 · 死亡链断裂（与 W4/H1 同批）** — **BF0 文档侧**：系统提示/必须输出推演选项/变量更新规则统一写集 `状态+is_dead+阶段状态=模拟结束+行动建议[]`；主线阶段推进规则值域补「模拟结束」；`<death/>` 仍仅 App.vue（H10 后处理）
