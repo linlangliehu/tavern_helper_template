@@ -595,6 +595,11 @@ async function cleanProtocolBlocks(messageIndex: number) {
   const snapshotted = snapshotRawProtocolMessage(message);
 
   // 清洗内部协议和旧文本面板。正文保留剧情、【本轮摘要】与掷骰条 <mfrs_roll/>。
+  // RM8（BF6）：本段旧 sp/mfrs 面板清洗白名单 = {sp_start, sp_input, mfrs_roll}，
+  // 必须与显示正则 index.yaml #「[显示]隐藏旧 sp/mfrs 文本面板」(id …2025) 保持同步。
+  // 该显示正则白名单为 {sp_start, sp_input}（不含 mfrs_roll）——因掷骰条实际输出为自闭合
+  // <mfrs_roll .../>，成对匹配的显示正则天然不误伤，故此处多列 mfrs_roll 无害且更保险。
+  // 改动任一方白名单时，务必同步另一方；G3(verify-mfrs-regex-ids) 有断言守护此关系（防 RH6 式漂移）。
   const cleanedMes = originalMes
     .replace(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi, '')
     .replace(/<choices\b[^>]*>[\s\S]*?<\/choices>/gi, '')

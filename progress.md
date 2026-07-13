@@ -1,5 +1,17 @@
 # 进度日志
 
+## 会话：2026-07-13（BF6 批 β 低风险子集 · RM8/RH4）— **done（未发版）**
+
+用户选"先做低风险子集"（不改运行时清洗行为）。
+
+- **RM8/RH4（done）**：hotfix 清洗白名单 ↔ 显示正则同步守护。
+  - `hotfix-generation-ended-listeners/index.ts`：cleanProtocolBlocks 前加互指注释（白名单 {sp_start,sp_input,mfrs_roll}，与显示正则 id …2025 同步）。纯注释。
+  - `verify-mfrs-regex-ids.mjs`（G3）：加 `extractSpMfrsWhitelist` + `verifySpMfrsWhitelistSync`——从 hotfix 源与显示正则各提取白名单，断言**不变式 display ⊆ hotfix**（hotfix 可多列自闭合的 mfrs_roll）。任一方漂移→fail（防 RH6 式）。
+  - 验证：插桩确认断言真执行（hotfixSet={sp_start,sp_input,mfrs_roll}）；**负向测试**：篡改显示正则加 sp_FAKE→G3 exit=1 fail，还原→pass。聚合门禁 6/6 绿。
+  - **副发现（已记 backlog）**：hotfix 白名单含 mfrs_roll 而显示正则 #10 不含属**无害**——掷骰条实际输出自闭合 `<mfrs_roll .../>`（成对匹配的显示正则天然不碰）；文档里的成对 `<mfrs_roll>` 全是行内代码引用非协议。
+- **留下一批（改运行时清洗，需实机验证）**：RM7（hotfix 补删 draft/pacing/修改确认/JSONPatch 残渣）、RM9（`$` 兜底截断勿删到尾）、RH3（导入旧档补洗）、RH5（收窄 #19–22 英行改写）、RM1/RM2。
+- **待办**：hotfix .ts 仅注释改动，dist 重建留发版前统一做（G1 强制 production build）。BF6 未发版。
+
 ## 会话：2026-07-13（BF6 · P1 release-png 接入 publish-card）— **in_progress**
 
 - **P1（done）**：`scripts/publish-card.mjs` 加 `verifyReleasePng(card)`——每卡 `runBundle` 后校验发布 PNG 的 version/ref/cache/regex/scripts 与 `mfrs-release-constants.mjs` 单真源对齐；失败 `die`。

@@ -24,6 +24,42 @@ const ID = 'id';
 const FIND = '查找表达式';
 const ENABLED = '启用';
 
+// RM8/RH4（BF6）：hotfix 清洗白名单 ↔ 显示正则 #「旧 sp/mfrs 面板」白名单同步守护。
+const HOTFIX_PATH = join(
+  ROOT, 'src', CARD, '脚本', 'hotfix-generation-ended-listeners', 'index.ts',
+);
+const DISPLAY_SPMFRS_REGEX_ID = 'd0f6b2d4-4b25-4b8c-9b54-2f7b6c8a2025';
+
+// 从形如 (?!(?:sp_start|sp_input|mfrs_roll)\b) 的负向前瞻里提取白名单标签集合。
+function extractSpMfrsWhitelist(expression) {
+  const m = /\(\?!\(\?:([a-z_|]+)\)\\b\)/i.exec(String(expression ?? ''));
+  if (!m) return null;
+  return new Set(m[1].split('|').map(s => s.trim()).filter(Boolean));
+}
+
+function verifySpMfrsWhitelistSync(entries) {
+  if (!existsSync(HOTFIX_PATH)) {
+    console.log('verify-mfrs-regex-ids: skip 白名单同步（hotfix 源缺失）');
+    return;
+  }
+  const hotfixSrc = readFileSync(HOTFIX_PATH, 'utf8');
+  const hotfixSet = extractSpMfrsWhitelist(hotfixSrc);
+  assert.ok(hotfixSet && hotfixSet.size, 'RM8: 未能从 hotfix 源提取 sp/mfrs 清洗白名单');
+
+  const displayEntry = entries.find(e => e?.[ID]?.trim() === DISPLAY_SPMFRS_REGEX_ID);
+  assert.ok(displayEntry, `RH4: 未找到显示正则 id ${DISPLAY_SPMFRS_REGEX_ID}`);
+  const displaySet = extractSpMfrsWhitelist(displayEntry[FIND]);
+  assert.ok(displaySet && displaySet.size, 'RH4: 未能从显示正则提取 sp/mfrs 白名单');
+
+  // 不变式：显示正则白名单 ⊆ hotfix 白名单（hotfix 可多列自闭合的 mfrs_roll）。
+  // 任一方新增/删除保留标签而另一方漏改，此断言即失败（防 RH6 式漂移）。
+  const missing = [...displaySet].filter(tag => !hotfixSet.has(tag));
+  assert.deepEqual(
+    missing, [],
+    `RM8/RH4: 显示正则白名单含 hotfix 未保留的标签: ${missing.join(', ')}（两处白名单已漂移）`,
+  );
+}
+
 function parseRegexExpression(expression, label) {
   const value = String(expression ?? '').trim();
   if (!value) throw new Error(`${label}: 空查找表达式`);
@@ -69,6 +105,11 @@ function verifyIndex(path) {
   assert.equal(idSet.size, ids.length, `${path}: 正则 id 冲突: ${ids.filter((id, i) => ids.indexOf(id) !== i).join(', ')}`);
   const nameSet = new Set(names);
   assert.equal(nameSet.size, names.length, `${path}: 正则名称冲突`);
+
+  // RM8/RH4：hotfix 清洗白名单 ↔ 显示正则白名单同步（对含该显示正则的卡校验一次）
+  if (entries.some(e => e?.[ID]?.trim() === DISPLAY_SPMFRS_REGEX_ID)) {
+    verifySpMfrsWhitelistSync(entries);
+  }
 
   const label = path.replace(/\\/g, '/').split('/src/').pop() || path;
   console.log(`verify-mfrs-regex-ids: ${label} passed (count=${entries.length}, uniqueIds=${idSet.size})`);
