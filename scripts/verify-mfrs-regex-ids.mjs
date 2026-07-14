@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import YAML from 'yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,7 +23,10 @@ const REGEX = '正则';
 const NAME = '正则名称';
 const ID = 'id';
 const FIND = '查找表达式';
+const REPLACE = '替换为';
 const ENABLED = '启用';
+const SOURCE = '来源';
+const APPLIES_TO = '作用于';
 
 // RM8/RH4（BF6）：hotfix 清洗白名单 ↔ 显示正则 #「旧 sp/mfrs 面板」白名单同步守护。
 const HOTFIX_PATH = join(
@@ -94,6 +98,7 @@ function verifyIndex(path) {
     const name = entry?.[NAME] ?? `#${index}`;
     const id = entry?.[ID];
     assert.ok(typeof id === 'string' && id.trim(), `${path}: [${name}] 缺少 id`);
+    assert.equal(id, id.trim(), `${path}: [${name}] id 不应包含首尾空白`);
     assert.ok(typeof name === 'string' && name.trim(), `${path}: 第 ${index} 条缺少 正则名称`);
     ids.push(id.trim());
     names.push(name);
@@ -113,15 +118,54 @@ function verifyIndex(path) {
 
   const label = path.replace(/\\/g, '/').split('/src/').pop() || path;
   console.log(`verify-mfrs-regex-ids: ${label} passed (count=${entries.length}, uniqueIds=${idSet.size})`);
-  return true;
+  return entries;
+}
+
+function verifyDevReleaseRegexSync(devEntries, releaseEntries) {
+  const devById = new Map(devEntries.map(entry => [entry[ID].trim(), entry]));
+  const releaseById = new Map(releaseEntries.map(entry => [entry[ID].trim(), entry]));
+  const missingInRelease = [...devById.keys()].filter(id => !releaseById.has(id));
+  const extraInRelease = [...releaseById.keys()].filter(id => !devById.has(id));
+
+  assert.deepEqual(
+    { missingInRelease, extraInRelease },
+    { missingInRelease: [], extraInRelease: [] },
+    `开发版/发布版正则 id 集合不一致: missingInRelease=[${missingInRelease.join(', ')}], extraInRelease=[${extraInRelease.join(', ')}]`,
+  );
+
+  const devOrder = devEntries.map(entry => ({ id: entry[ID], name: entry[NAME] }));
+  const releaseOrder = releaseEntries.map(entry => ({ id: entry[ID], name: entry[NAME] }));
+  assert.deepEqual(
+    releaseOrder,
+    devOrder,
+    '开发版/发布版正则 id 顺序或 id-name 映射不一致',
+  );
+
+  const drift = [];
+  for (const [id, devEntry] of devById) {
+    const releaseEntry = releaseById.get(id);
+    for (const field of [NAME, FIND, REPLACE, ENABLED, SOURCE, APPLIES_TO]) {
+      if (!isDeepStrictEqual(devEntry[field], releaseEntry[field])) {
+        drift.push(`${id}[${field}]`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    drift,
+    [],
+    `开发版/发布版同 id 正则行为漂移: ${drift.join(', ')}`,
+  );
+  console.log(
+    `verify-mfrs-regex-ids: dev/release sync passed `
+    + `(ids=${devById.size}, ordered=true, fields=${NAME}/${FIND}/${REPLACE}/${ENABLED}/${SOURCE}/${APPLIES_TO})`,
+  );
 }
 
 function main() {
-  let checked = 0;
-  for (const path of indexPaths) {
-    if (verifyIndex(path)) checked += 1;
-  }
-  assert.ok(checked >= 1, '至少应校验一份 index.yaml');
+  const entriesByIndex = indexPaths.map(verifyIndex);
+  assert.ok(entriesByIndex.every(Boolean), '开发版和发布版 index.yaml 都必须存在');
+  verifyDevReleaseRegexSync(entriesByIndex[0], entriesByIndex[1]);
   console.log('verify-mfrs-regex-ids: passed');
 }
 
