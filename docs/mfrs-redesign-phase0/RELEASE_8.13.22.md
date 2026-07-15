@@ -26,18 +26,19 @@
 - [x] BF6 功能与 RH5 范围修复已恢复并进入 `main`。
 - [x] 最终候选 production dist commit 已推送并在 `origin/main` 可达；该提交为纯 dist 更新，`bundle.yaml` 忽略 `dist/**`，不会再触发 `[bot] bundle`。
 - [x] 发布常量与开发版 YAML 已切换到 8.13.22 ref/cache。
-- [ ] 运行 verification 代理的独立门禁与发布前检查。
-- [ ] 运行 `pnpm publish-card 神秘复苏模拟器发布版`，由开发源镜像发布版 YAML 并生成 PNG。
-- [ ] 验证 release PNG、提交发布文件、推送并打 `v8.13.22` 标签。
+- [x] 运行 verification 代理的独立门禁与发布前检查。
+- [x] 运行 `pnpm publish-card 神秘复苏模拟器发布版`，由开发源镜像发布版 YAML 并生成 PNG。
+- [x] 验证 release PNG、提交发布文件、推送并打 `v8.13.22` 标签。
+- [x] 发布提交 `e568cce`、bot bundle `6f336f3`（仅 dist module-id）、tag `v8.13.22` → `e568cce`。
 
 ## 验证清单
 
 - [x] 元数据静态检查：开发版 ref 7 次、cache 8 次、版本 8.13.22；正则 33、脚本 8，结构无漂移。
 - [x] 旧 pin 下 freshness 预检按预期失败；其余既有 gates 已通过（发布 PNG 仍为旧版时不重复声明最终通过）。
-- [ ] `pnpm verify:mfrs-dist-freshness`。
-- [ ] `pnpm verify:mfrs-gates`。
-- [ ] `node scripts/verify-mfrs-release-png.mjs --json`。
-- [ ] 发布 PNG：version=8.13.22、refs=7、cache=8、regex=33、scripts=8、chara/ccv3 一致。
+- [x] `pnpm verify:mfrs-dist-freshness`。
+- [x] `pnpm verify:mfrs-gates`。
+- [x] `node scripts/verify-mfrs-release-png.mjs --json`。
+- [x] 发布 PNG：version=8.13.22、refs=7、cache=8、regex=33、scripts=8、chara/ccv3 一致。
 
 ## 分阶段精确暂存白名单
 

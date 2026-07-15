@@ -1,5 +1,18 @@
 # 进度日志
 
+## 会话：2026-07-15（8.13.22 发布完成）
+
+- **publish-card**：`pnpm publish-card 神秘复苏模拟器发布版` 成功；内置 G1 dist freshness + release PNG 门禁通过。
+- **发布后验证全绿**：
+  - `pnpm verify:mfrs-dist-freshness`：PASS
+  - `pnpm verify:mfrs-gates`：6/6 PASS（initvar-schema/regex-ids/RH5-scoped/hotfix/output-cleaning/table-adapter/release-png）
+  - `node scripts/verify-mfrs-release-png.mjs --json`：version=8.13.22、refs=7、cache=8、regex=33、scripts=8、chara+ccv3 一致
+  - 不含 localhost/127.0.0.1/@main
+- **发布提交**：`e568cce7dd7a5f41537c879976160de160272a8a`（12 文件，精确暂存）
+- **bot bundle**：`6f336f3ec94e03bab15e1b35af773cf03a785b76`（仅 dist 状态栏 module-id，符合预期）
+- **标签**：`v8.13.22` → `e568cce`，本地+远端确认
+- **backlog 清理**：RH5 已完成；C1.3 publish-card 镜像验收关单；DL3 并入 H9 关单；DM9 孤儿 App.vue 归档；WB-06 W2 自锁部分关单（冷启动问题拆独立项）；M7 直接回归验证通过关单；M5/SM2/DM6 保持 open 符合源码事实；H2.2/SM1/SL3/DL5 改写指向 live owner
+
 ## 会话：2026-07-14（8.13.22 Phase B · 元数据与发布记录准备）— **implementation complete / publish pending**
 
 - **恢复与任务 1–4**：37 个用户文件误入历史提交后已由前序阶段恢复为 untracked，并建立备份分支 `backup/pre-release-recovery-v8.13.22-bd75694-20260714-01`；BF6/RH5 功能链已进入 `main`。

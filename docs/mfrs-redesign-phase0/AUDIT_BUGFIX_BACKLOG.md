@@ -69,7 +69,7 @@
   - 文件：`世界书/变量/initvar.yaml`
   - 对照：`schema.ts` L170–182
 - [x] **C1.2** 确认 `当前灵异事件` 内仅保留事件字段（事件代号、危害等级、规律列表等）
-- [ ] **C1.3** 同步打包卡 initvar（`神秘复苏模拟器.json` / 发布版）与源文件一致（下次 publish-card 镜像；打包卡整体见 H9）
+- [x] **C1.3** 同步打包卡 initvar（`神秘复苏模拟器.json` / 发布版）与源文件一致 — **8.13.22 publish-card 镜像已验证**
 
 **验收**：新开局 `stat_data` 根上存在 `/行动建议`、`/最近行动判定`；MagVar `replace` 不依赖 hotfix 也能写中。
 
@@ -138,7 +138,7 @@
 ### H2 · 风险表示三套并行 — **待修**
 
 - [ ] **H2.1** 唯一主格式：`<choices>.risk` 数字 + MVU 枚举映射表（文档化）
-- [ ] **H2.2** 改 `App.vue` `commitStartData` 开局注入：禁止可见【推演选项】与 `<risk>` 旧标签，改为 `<choices>` + `<UpdateVariable>`
+- [ ] **H2.2** 开局注入改写：禁止可见【推演选项】与 `<risk>` 旧标签，改为 `<choices>` + `<UpdateVariable>`（live owner：`脚本/界面美化/index.ts` commitStartData + `脚本/数据库前端/mvu-core-mirror.ts`；App.vue 为孤儿，不再作为修复目标）
 - [ ] **H2.3** 对齐 `normalizeOptionRiskDelta` 与枚举→数字映射
 
 ---
@@ -204,7 +204,7 @@
 - [x] **M4** 统一阶段真源 → **并入 W4 关单** — **BF4**
 - [ ] **M5** 双驾驭厉鬼 / 双灵异物品：提示词明确运行期只写 `驭鬼者状态.已驾驭厉鬼`、`灵异资源.灵异物品`
 - [x] **M6** initvar 补种：`可见档案`、`剧情阶段`、`is_dead` / scene flags、主线 `权限层级`/`已开放主题`/`锁定主题` — **BF0**
-- [ ] **M7** 固定状态栏 vs 数据库前端 cleanup：CHAT_CHANGED 勿互撕 host（`removeFixedStatusHost: false` 当仍在本卡）
+- [x] **M7** 固定状态栏 vs 数据库前端 cleanup：CHAT_CHANGED 勿互撕 host（`removeFixedStatusHost: false` 当仍在本卡）— **已验证**：数据库前端 `cleanup()` 传 `removeFixedStatusHost: false`（index.ts:478），仅 `openDashboard` 传 `true`（:888）；固定状态栏 CHAT_CHANGED 处理器不调数据库清理；无互撕回归
 - [ ] **M8** 明确 `<choices>`→MVU/DB 镜像唯一 owner（hotfix 或真实前端或挂载 Vue 状态栏）
 - [ ] **M9** `protocol-normalizer`：`/行动建议` 禁止当 array-append；`add`→`replace` 整表
 - [ ] **M10** 消息内面板 `getVariables`/`getChatMessages` 与 hotfix 同解析链；关键 catch 打 warn
@@ -274,7 +274,7 @@
 
 - [ ] **DL1** 联动规则「14 表」列表编号/第 15 条措辞清理
 - [ ] **DL2** `ghost_archives.archive_code` G#### 与 `controlled_ghosts.ghost_code` 自由名：文档勿混用规则
-- [ ] **DL3** 打包卡旧【推演选项】/状态面板 blob → **并入 H9 关单**
+- [x] **DL3** 打包卡旧【推演选项】/状态面板 blob → **并入 H9 关单**
 
 ---
 
@@ -295,7 +295,7 @@
 
 ### Medium
 
-- [ ] **SM1** 欢迎页 CSS 变量缺失、外链 CDN、parent textarea 假设
+- [ ] **SM1** 欢迎页 CSS 变量缺失、外链 CDN、parent textarea 假设（live owner：`脚本/界面美化/index.ts` 开局正则渲染；App.vue 为孤儿）
 - [ ] **SM2** 时空锚点改为必选或强制自定义说明
 - [ ] **SM3** 欢迎时自动弹数据库仪表盘：延后或可关
 - [ ] **SM4** `sp_input` 标明遗留/可选，不依赖模型自发
@@ -388,8 +388,8 @@
 - [x] **WM6** 最小：变量更新规则点名 `已驾驭厉鬼[].恐怖等级`；DB 规则旁注 MVU 字段名 — **BF4**（不机械替换原著「恐怖程度」叙述词）
 - [x] **DM7** adapter 守卫：禁删表 `TABLE_DELETE_FORBIDDEN`；固定/单行表 `TABLE_INSERT_FORBIDDEN`（已有 row 时）— **BF3**
 - [x] **DM8** 门禁缺口：`verify-table-change-adapter` 补 characters/supernatural_items/collected_rules；禁删 collected_rules；非法枚举 CHECK；混合 LENGTH 整计划拒绝；chronicle 真模板 — **BF5**
-- [ ] **DM9** [App.vue] `visibleSummary` 回退链末尾 `getCurrentMessageId()` → `public_summary`/`clue_text` 可能被写成楼层号（数字字符串化非空，兜底文案永不生效）
-- [ ] **WB-06 附注（并入 W2）** 事件MVU联动规则触发词 `UpdateVariable` 恰被 #1 正则从 prompt 剥离 → 触发词自锁死环；灵异对抗判定触发词在最需要的回合（接触媒介/进鬼域）不出现
+- [ ] **DM9** `visibleSummary` 回退链末尾 `getCurrentMessageId()` → `public_summary`/`clue_text` 可能被写成楼层号（数字字符串化非空，兜底文案永不生效）— **归档**：App.vue 已确认为孤儿（H10），此 bug 不影响 live 路径；待 App.vue 删除或复活时一并处理
+- [x] **WB-06 附注（并入 W2）** 事件MVU联动规则触发词 `UpdateVariable` 恰被 #1 正则从 prompt 剥离 → 触发词自锁死环 — **W2 已修（BF4）**：自锁触发词已移除；灵异对抗判定冷启动问题仍存在，若需修复请拆独立项
 
 ### A2 新增 Low
 
@@ -404,10 +404,10 @@
 - [x] **WM7** `音乐盒诅咒` 伪路径改 `灵异资源.灵异物品` — **BF4**
 - [x] **WM8** 7 孤儿文件头加「维护/勿接入运行时」— **BF4**
 - [ ] **DL4** chronicle 修订三方矛盾：模板 note 禁 updateNode vs adapter 放行正文 updateCell vs verify 断言修订通过 → 契约文字与实现择一
-- [ ] **DL5** [App.vue] `nextClueCode='C'+messageId%10000` 可撞 AI 已建编号 → duplicate-insert 静默覆盖旧线索
+- [ ] **DL5** `nextClueCode='C'+messageId%10000` 可撞 AI 已建编号 → duplicate-insert 静默覆盖旧线索（live owner：`脚本/数据库前端/index.ts`；App.vue 为孤儿，不再作为修复目标）
 - [ ] **DL6** 驾驭厉鬼/收录档案/收录规律三表模板无 SQL 示例（其余 11 表有）→ AI 生成列序无锚
 - [ ] **SL2** `openDashboard({welcome:true})` 参数被实现丢弃（签名无参），welcome 分支行为不存在（SM3 修时一并）
-- [ ] **SL3** 开局杂项：App.vue 身份词表不识别 sp_start 轨身份（全落 default）；`getValue('ghostName')` 查不存在选择器；锚点空地点回退文案自相矛盾
+- [ ] **SL3** 开局杂项：身份词表应改写到 live 路径（`脚本/界面美化/index.ts` 开局正则；App.vue 为孤儿，不再作为修复目标）；`getValue('ghostName')` 查不存在选择器；锚点空地点回退文案自相矛盾
 
 ### A2 新增门禁（BF5 落地，对应盲区）
 
@@ -431,7 +431,7 @@
 | **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | **已发 8.13.19**（`5b10525`） |
 | **BF4** | W1–W4 + WM3–WM8 + M1–M4 + RH1 + DH2 + SH5 + C5 + L6 | **已发 8.13.20**（`de42f2c`）；余 RM7–9/DM9/DL*/WM1–2 可挂 BF5 |
 | **BF5** | 回归门禁 + G2–G5 + DM8 + WM1/2/L8 | **已发 8.13.21**（`f2b7db2`） |
-| **BF6** | RM1/2/7/8/9 + RH3/4/5 + P0–P3 | **源码与 production dist 已完成**；8.13.22 元数据已准备，publish/PNG/提交/标签待完成（候选 `158dcc29107f`） |
+| **BF6** | RM1/2/7/8/9 + RH3/4/5 + P0–P3 | **已发 8.13.22**（`e568cce`，tag `v8.13.22`；CDN_REF `158dcc29107f`，cache `v81322_20260714_01`） |
 
 ---
 
@@ -500,5 +500,6 @@
 | 2026-07-13 | **BF-1 关单**：C7+G1 → 8.13.14（`d5cd98f`/`de29b4a`，分支 `codex/bf1-recovery`，待合 main） |
 | 2026-07-13 | **BF5 上线后审查**：8.13.21 双路只读复核通过（6 门禁全绿/硬约束未破坏）；新增流程门禁质量项 P0–P3（release-png/dist-freshness 接入 + $ref 假阴 + 自证式局限） |
 | 2026-07-14 | **BF6/8.13.22 准备**：RM1/2/7/8/9、RH3/4/5、P0–P3 已完成；RH5 仅作用于闭合 `<sp_status>`；候选 CDN_REF `158dcc29107f`，publish/PNG/tag 仍 pending |
+| 2026-07-15 | **8.13.22 发布完成**：tag `v8.13.22` → `e568cce`；CDN_REF `158dcc29107f`、cache `v81322_20260714_01`；门禁全绿；关单 C1.3/DL3/M7/DM9(归档)/WB-06(W2部分)；改写 H2.2/SM1/SL3/DL5 指向 live owner |
 
 *关联：`TASKLIST_BETA.md`、`RELEASE_8.13.14.md`、`task_plan.md`。*
