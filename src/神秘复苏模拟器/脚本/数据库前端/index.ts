@@ -816,6 +816,7 @@ async function installCompatibilityApi() {
       await openAcuFrontend(hostWindow);
     },
     async openDashboard() {
+      // options.welcome 参数为预留接口，当前实现中未做差异化处理。
       await openAcuFrontend(hostWindow);
     },
     async openStatus() {

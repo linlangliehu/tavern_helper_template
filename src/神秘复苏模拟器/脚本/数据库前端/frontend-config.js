@@ -3,6 +3,7 @@
 
     const CONFIG_KEY = 'MFRS_DATABASE_FRONTEND_CONFIG';
     const config = {
+        // dashboardSlots 有意排除固定行表（行动建议 action_suggestions / 检定建议 check_suggestions）和汇总表（全局状态 / 玩家状态），这些表通过镜像或 AI 直接维护，不需要 dashboard 胶囊展示。
         dashboardSlots: [
             { id: 'slot_2_1', kw: '玩家状态', title: '玩家状态', rule: 'kv' },
             { id: 'slot_3_1', kw: '全局状态', title: '全局状态', rule: 'kv' },
@@ -13,6 +14,7 @@
             { id: 'slot_6_2', kw: '地点', title: '地点', rule: 'capsule', col: 1, capCols: 2 },
         ],
         legacyDashboardKeywords: ['主角信息', '全局数据', '全局数据表', '重要人物', '重要人物表', '背包', '背包物品', '背包物品表', '技能', '主角任务栏', '任务'],
+        // recallTableRules 覆盖 10 个内容表，有意排除行动建议和检定建议（固定行数交互表，不参与 keyword 召回）。
         recallTableRules: [
             {
                 key: 'sheet_chronicle',

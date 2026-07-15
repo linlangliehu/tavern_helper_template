@@ -394,7 +394,7 @@ assertError(previewTableChangePlan({
   action: 'updateCell',
   table: TABLE_ACTION,
   match: { row_id: 1 },
-  set: { death_risk_level: '\u6781\u9ad8' },
+  set: { death_risk_level: '\u8d85\u7ea7\u65e0\u654c\u5371\u9669' },
 }, currentData), 'CHECK_IN_VIOLATION');
 
 assertError(previewTableChangePlan({

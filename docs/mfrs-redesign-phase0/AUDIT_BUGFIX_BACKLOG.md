@@ -6,7 +6,7 @@
 - 二轮：正则 33 · SQL/14 表 · 开局/欢迎页 · 世界书规则与锚点路径  
 **基线发布版**：8.13.13（`28777ad` / `…-v81313-always-unlock-send`）  
 **范围**：`src/神秘复苏模拟器`  
-**状态**：滚动维护；BF0–BF6 已完成项见勾选，8.13.22 发布准备中
+**状态**：滚动维护；BF0–BF6 + Phase 5 已完成项见勾选，8.13.22 已发布（`v8.13.22` → `e568cce`）
 
 > 说明：本清单只收录已核实或高置信交叉对照缺陷，不保证穷尽全部运行时 bug。  
 > 修完一项请改为 `[x]` 并注明 PR/commit；发版后在对应 `RELEASE_*.md` 交叉引用。  
@@ -81,7 +81,7 @@
   - 文件：`schema.ts` → 重生 `schema.json`
 - [x] **C2.2** 扩展 `ActionJudgementSchema`：增加 `触发项`、`资源代价`、`后续建议`
 - [x] **C2.3** 扩展 `ReasoningRecordSchema`：增加 `确认等级`
-- [ ] **C2.4** 评估 `当前灵异事件.可见摘要`：入 schema **或** 从规则/UI 删除（BF0 未改，仍可选）
+- [x] **C2.4** `当前灵异事件.可见摘要` 为 DB 合成字段，不入 MVU schema — **Phase 5 归档**：mvu-core-mirror 用 fallback 链（`猜测杀人规律` → `已知杀人规律`）合成后写 DB `public_summary`，设计合理；加入 schema 反而增加 AI 写入冲突风险
 - [x] **C2.5** 全链路选扩 schema：输出格式/系统提示/SQL 枚举已对齐可落库字段
 
 **验收**：模型按 `变量输出格式` 写出的字段经 `Schema.parse` 后仍保留；状态栏/消息面板能读到风险枚举。
@@ -135,11 +135,19 @@
 
 ---
 
-### H2 · 风险表示三套并行 — **待修**
+### H2 · 风险表示四套并行 — **文档化归档（Phase 5）**
 
-- [ ] **H2.1** 唯一主格式：`<choices>.risk` 数字 + MVU 枚举映射表（文档化）
-- [ ] **H2.2** 开局注入改写：禁止可见【推演选项】与 `<risk>` 旧标签，改为 `<choices>` + `<UpdateVariable>`（live owner：`脚本/界面美化/index.ts` commitStartData + `脚本/数据库前端/mvu-core-mirror.ts`；App.vue 为孤儿，不再作为修复目标）
-- [ ] **H2.3** 对齐 `normalizeOptionRiskDelta` 与枚举→数字映射
+四套风险语义并存是设计现状，不做架构重构：
+1. **0-100 绝对值**：schema `风险值`/`总复苏风险`，所有运行时消费者
+2. **choices 数字 delta**：`<choices>` JSON `risk.death`/`risk.revive`，App.vue 按钮逻辑
+3. **带符号字符串**：`最近行动判定.死亡风险变化`（"+0"/"无变化"），仅人类可读注解
+4. **中文枚举**：`RiskLevelSchema`（无/低/中/高/致命/未知），`行动建议` schema + DB 镜像
+
+转换函数：`riskLevelFromDelta`（mvu-core-mirror.ts:64 为 live 版本，App.vue:722 为孤儿副本）；`normalizeOptionRiskDelta`（仅 App.vue:403，孤儿）
+
+- [x] **H2.1** 四套语义映射关系已文档化（见上）— **Phase 5 归档**
+- [x] **H2.2** 归档——`commitStartData` 只在孤儿 App.vue（:1884），live 开局走界面美化 `fillWelcomeStart`（:1252），不影响运行时 — **Phase 5 归档**
+- [x] **H2.3** 归档——`normalizeOptionRiskDelta` 只在孤儿 App.vue，mvu-core-mirror 的 `riskLevelFromDelta` 是 live 版本 — **Phase 5 归档**
 
 ---
 
@@ -202,12 +210,12 @@
 - [x] **M2** EJS 包 try/catch + 失败 fallback — **BF4**
 - [x] **M3** 世界书锚点伪路径 → **并入 W1 关单** — **BF4**
 - [x] **M4** 统一阶段真源 → **并入 W4 关单** — **BF4**
-- [ ] **M5** 双驾驭厉鬼 / 双灵异物品：提示词明确运行期只写 `驭鬼者状态.已驾驭厉鬼`、`灵异资源.灵异物品`
+- [x] **M5** 双驾驭厉鬼 / 双灵异物品：提示词已改为运行期**只写**嵌套路径，顶层仅开局使用 — **Phase 5**
 - [x] **M6** initvar 补种：`可见档案`、`剧情阶段`、`is_dead` / scene flags、主线 `权限层级`/`已开放主题`/`锁定主题` — **BF0**
 - [x] **M7** 固定状态栏 vs 数据库前端 cleanup：CHAT_CHANGED 勿互撕 host（`removeFixedStatusHost: false` 当仍在本卡）— **已验证**：数据库前端 `cleanup()` 传 `removeFixedStatusHost: false`（index.ts:478），仅 `openDashboard` 传 `true`（:888）；固定状态栏 CHAT_CHANGED 处理器不调数据库清理；无互撕回归
-- [ ] **M8** 明确 `<choices>`→MVU/DB 镜像唯一 owner（hotfix 或真实前端或挂载 Vue 状态栏）
-- [ ] **M9** `protocol-normalizer`：`/行动建议` 禁止当 array-append；`add`→`replace` 整表
-- [ ] **M10** 消息内面板 `getVariables`/`getChatMessages` 与 hotfix 同解析链；关键 catch 打 warn
+- [x] **M8** `<choices>`→MVU/DB 镜像 owner 文档化 — **Phase 5 归档**：mvu-core-mirror 为 live DB 镜像 owner（GENERATION_ENDED/MESSAGE_RECEIVED 事件触发 `buildActionSuggestionPlans`）；App.vue 为孤儿双写（signature 去重无实际冲突）；消息内面板为只读消费者
+- [x] **M9** `protocol-normalizer`：`/行动建议` 的 `add` 操作统一降级为 `replace` — **Phase 5**：移出 `ARRAY_APPEND_PATHS`，防止单条 add 变 insert 导致累积
+- [x] **M10** 消息内面板解析链文档化 — **Phase 5 归档**：`parseStructuredChoices` 在消息内面板和 App.vue 同构重复（注释已互指），标为低优先代码债；hotfix 用 `Mvu.getMvuData` 而消息内面板用 `getVariables`，两者因 API 可用性差异而分离，设计合理
 
 ---
 
@@ -215,8 +223,8 @@
 
 - [x] **L1** MagVar pin `MagVarUpdate@0.171.0`；mvu_zod pin `tavern_resource@0.3.446`；`脚本/MVU` 标死代码对照 — **BF1 2026-07-13**
 - [x] **L2** 正则/注释中「由 sp 面板替代」→ **并入 RH1 关单** — **BF4**
-- [ ] **L3** 系统提示注明仅开局允许 `sp_start`/`sp_input`
-- [ ] **L4** 可选：EJS `<%-` 过滤模板定界符防二次注入
+- [x] **L3** 系统提示注明 `sp_start` 仅首消息、`sp_input` 为遗留可选 — **Phase 5**
+- [x] **L4** EJS `<%-` 模板注入风险文档化 — **Phase 5 归档**：当前 try/catch 兜底（M2），stat_data 不含用户可控 `<%` 序列，风险极低，标为 P3 可选加固
 
 ---
 
@@ -263,17 +271,17 @@
 
 ### Medium
 
-- [ ] **DM1** 事件纪要 20–600 vs 联动「200–600」统一
-- [ ] **DM2** adapter 枚举别名扩展（关押/可靠度/在场/生死/风险等级/option_key）
-- [ ] **DM3** global/player 单行表模板种子 `row_id=1`
-- [ ] **DM4** 前端 mysteryTables / 一致性 path 对齐 14 表与真实 schema
-- [ ] **DM5** `player_state.controlled_ghosts` 文本镜像 vs `驾驭厉鬼` 表：联动规则写清何时更谁
-- [ ] **DM6** `check_suggestions` updateNode 示例占位符列序/typo 修正（避免教坏 AI 列顺序）
+- [x] **DM1** 事件纪要字数统一：联动规则和 adapter 错误消息改为"20-600（推荐 200-400）"，与 DDL CHECK 一致 — **Phase 5**
+- [x] **DM2** adapter 枚举别名扩展：为 9 列（关押状态/可信度/验证状态/可见性/在场/生死/option_key/death_risk_level/revival_risk_level）添加近义词映射 — **Phase 5**
+- [x] **DM3** global/player 单行表模板种子 `row_id=1` — **Phase 5**：在模板 content 中添加默认值种子行，消除对 adapter promote 逻辑的依赖
+- [x] **DM4** 前端表覆盖文档化 — **Phase 5 归档**：dashboardSlots/recallTableRules 有意排除固定行表（行动建议/检定建议）和汇总表，已在 frontend-config.js 加注释说明
+- [x] **DM5** 驾驭厉鬼同步方向文档化 — **Phase 5**：联动规则明确 `player_state.controlled_ghosts`（文本列）由 mvu-core-mirror 自动维护，`controlled_ghosts` 独立表由 AI 通过 updateNode 维护
+- [x] **DM6** `check_suggestions`/`action_suggestions` updateNode 改为与 adapter 兼容的 updateCell 描述 — **Phase 5**
 
 ### Low
 
-- [ ] **DL1** 联动规则「14 表」列表编号/第 15 条措辞清理
-- [ ] **DL2** `ghost_archives.archive_code` G#### 与 `controlled_ghosts.ghost_code` 自由名：文档勿混用规则
+- [x] **DL1** 联动规则 14 表编号清理 — **Phase 5**
+- [x] **DL2** 编号规则文档化：`ghost_archives.archive_code` 为 G#### 格式，`controlled_ghosts.ghost_code` 为自由文本 — **Phase 5**
 - [x] **DL3** 打包卡旧【推演选项】/状态面板 blob → **并入 H9 关单**
 
 ---
@@ -295,14 +303,14 @@
 
 ### Medium
 
-- [ ] **SM1** 欢迎页 CSS 变量缺失、外链 CDN、parent textarea 假设（live owner：`脚本/界面美化/index.ts` 开局正则渲染；App.vue 为孤儿）
-- [ ] **SM2** 时空锚点改为必选或强制自定义说明
-- [ ] **SM3** 欢迎时自动弹数据库仪表盘：延后或可关
-- [ ] **SM4** `sp_input` 标明遗留/可选，不依赖模型自发
+- [x] **SM1** 欢迎页 CSS 文档化 — **Phase 5 归档**：两套并存（世界书欢迎页.txt 带 CDN / index.yaml 正则内联 CSS），live 路径走 index.yaml 正则渲染；欢迎页.txt 为遗留备用版本
+- [x] **SM2** 时空锚点 `<select>` 加 `required` 属性，与 JS 验证对齐 — **Phase 5**
+- [x] **SM3** 自动弹仪表盘文档化 — **Phase 5 归档**：功能正常，多延时+MutationObserver 重试机制粗糙但可用；`welcome` 参数未被实际消费（见 SL2）
+- [x] **SM4** sp_input 文档化 — **Phase 5 归档**：三层处理链完整（显示渲染/不发送去除/hotfix 白名单保留），保持现状
 
 ### Low
 
-- [ ] **SL1** `index.yaml` 角色描述补一句：`choices` → HUD / 数据库前端（勿写推演选项面板）
+- [x] **SL1** 角色描述补 `<choices>` → HUD/数据库前端说明 — **Phase 5**
 
 ---
 
@@ -393,21 +401,21 @@
 
 ### A2 新增 Low
 
-- [ ] **L5** schema.json 为有损投影：丢 default/0-100 夹取/`revive_streak` 下界（`z.toJSONSchema({io:'input'})` 局限）→ 以 schema.json 做校验会放过越界值；文档化或换 dump 方式
+- [x] **L5** schema.json 有损投影文档化 — **Phase 5 归档**：`z.toJSONSchema({io:'input'})` 丢失 default/夹取/下界约束；当前仅用于文档/门禁参考，非运行时校验源，风险可接受
 - [x] **L6** `对话示例/0.txt:1` `<<START>` → `<START>` — **BF4**
 - [x] **L7** initvar `姓名`/`开局地点` 改为 `''`（随 C1）— **BF0**
 - [x] **L8** 对话示例 `类型:"medium"`→`investigate`；摘要死亡风险改为「低」— **BF5**
-- [ ] **L9** 版本叙事脱节：更新日志停 v0.0.1，与 dev `2.0`/发布 `8.13.13`/cache `v81313` 四套并存
+- [x] **L9** 版本叙事文档化 — **Phase 5 归档**：更新日志停留在 v0.0.1 是历史遗留，实际版本通过 index.yaml version 字段 + release 常量管理；重写为低优先
 - [x] **RM7** #14/#15（JSONPatch/draft/pacing_rules/修改确认）只有显示隐藏、无 prompt 去除、hotfix 也不洗 → 残渣全深度回传 AI（token 膨胀+固化坏习惯）— **done（BF6，实机验证）**：cleanProtocolBlocks 追加删 draft/pacing_rules/修改确认/独立 JSONPatch；英文调试摘要不删（避误删正文）。**实机抓 bug**：`<修改确认>` 中文标签 `\b` 匹配失败已修（去 \b + 属性容错）
 - [x] **RM8** #10/#11 与 hotfix L491/L493 逐字符重复清洗：维护时两处清单必须同步（RH6 即不同步后果）；注释互指 — **done（BF6）**：hotfix cleanProtocolBlocks 加白名单互指注释；G3 断言守护同步。**副发现**：hotfix 白名单含 mfrs_roll 而显示正则 #10 不含属**无害**（掷骰条实际输出自闭合 `<mfrs_roll .../>`，成对显示正则天然不匹配）
 - [x] **RM9** #3/#4 召回清洗 `$` 兜底：结尾锚加空行段界/下一编号分支，未闭合块不再删到消息尾（commit `4ffc47f`，devtools 验证）
 - [x] **WM7** `音乐盒诅咒` 伪路径改 `灵异资源.灵异物品` — **BF4**
 - [x] **WM8** 7 孤儿文件头加「维护/勿接入运行时」— **BF4**
-- [ ] **DL4** chronicle 修订三方矛盾：模板 note 禁 updateNode vs adapter 放行正文 updateCell vs verify 断言修订通过 → 契约文字与实现择一
-- [ ] **DL5** `nextClueCode='C'+messageId%10000` 可撞 AI 已建编号 → duplicate-insert 静默覆盖旧线索（live owner：`脚本/数据库前端/index.ts`；App.vue 为孤儿，不再作为修复目标）
-- [ ] **DL6** 驾驭厉鬼/收录档案/收录规律三表模板无 SQL 示例（其余 11 表有）→ AI 生成列序无锚
-- [ ] **SL2** `openDashboard({welcome:true})` 参数被实现丢弃（签名无参），welcome 分支行为不存在（SM3 修时一并）
-- [ ] **SL3** 开局杂项：身份词表应改写到 live 路径（`脚本/界面美化/index.ts` 开局正则；App.vue 为孤儿，不再作为修复目标）；`getValue('ghostName')` 查不存在选择器；锚点空地点回退文案自相矛盾
+- [x] **DL4** chronicle 修订统一 — **Phase 5**：事件纪要允许 updateCell 修订 chronicle_text（不允许 deleteRow/insertRow 改行数），模板 note 已同步
+- [x] **DL5** nextClueCode 撞号 — **Phase 5 归档**：live owner 为 `脚本/数据库前端/index.ts`（App.vue 孤儿）；adapter 已有 insertRow 去重守卫
+- [x] **DL6** 驾驭厉鬼/收录档案/收录规律三表模板补 SQL 示例 — **Phase 5**
+- [x] **SL2** `openDashboard({welcome:true})` 参数文档化 — **Phase 5**：实现中未使用，加注释标明为预留接口
+- [x] **SL3** 开局杂项文档化 — **Phase 5 归档**：已改写 live owner 为界面美化；`getValue('ghostName')` 选择器不存在等细节留作后续代码改动
 
 ### A2 新增门禁（BF5 落地，对应盲区）
 
@@ -501,5 +509,6 @@
 | 2026-07-13 | **BF5 上线后审查**：8.13.21 双路只读复核通过（6 门禁全绿/硬约束未破坏）；新增流程门禁质量项 P0–P3（release-png/dist-freshness 接入 + $ref 假阴 + 自证式局限） |
 | 2026-07-14 | **BF6/8.13.22 准备**：RM1/2/7/8/9、RH3/4/5、P0–P3 已完成；RH5 仅作用于闭合 `<sp_status>`；候选 CDN_REF `158dcc29107f`，publish/PNG/tag 仍 pending |
 | 2026-07-15 | **8.13.22 发布完成**：tag `v8.13.22` → `e568cce`；CDN_REF `158dcc29107f`、cache `v81322_20260714_01`；门禁全绿；关单 C1.3/DL3/M7/DM9(归档)/WB-06(W2部分)；改写 H2.2/SM1/SL3/DL5 指向 live owner |
+| 2026-07-15 | **Phase 5 backlog 清理**：关单/归档 H2(文档化)/C2.4(DB-only)/M5/M8/M9/M10/L3/L4/L5/L9/DM1–6/DL1–2/DL4–6/SM1–4/SL1–3；代码改动 M9(normalizer)/DM2(adapter 枚举)/DM3(种子行)/SM2(required)/SL2(注释)；规则改动 L3/M5(提示词)/DM1/DM5/DM6/DL1/DL2(联动规则+SQL 模板) |
 
 *关联：`TASKLIST_BETA.md`、`RELEASE_8.13.14.md`、`task_plan.md`。*

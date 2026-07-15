@@ -1,5 +1,14 @@
 # 进度日志
 
+## 会话：2026-07-15（Phase 5 · backlog 全面清理）
+
+- **归档/文档化 15 项**：H2(风险四套语义)/C2.4(DB-only)/M8(owner)/M10(解析链)/L4/L5/L9/SM1/SM3/SM4/DM4/DM9/DL5/SL3/WB-06
+- **规则/提示词修改 7 项**：L3(sp_start 限制)/M5(双路径禁写)/DM1(字数统一)/DM5(同步方向)/DL1(14表编号)/DL2(编号规则)/SL1(角色描述)
+- **代码改动 5 项**：M9(normalizer ARRAY_APPEND_PATHS 移除行动建议等)/DM2(adapter 9列枚举别名)/SM2(anchor required)/DM4注释/SL2注释
+- **数据改动 3 项**：DM3(种子行)/DM6(updateNode)/DL4(chronicle note)/DL6(三表 SQL 示例)
+- **门禁修正**：verify-table-change-adapter 测试用例"极高"改为"超级无敌危险"（因 DM2 别名已覆盖"极高→致命"）
+- **门禁**：`pnpm verify:mfrs-gates` 全绿；pin 落后 HEAD 软警告（无 dist 变更，预期）
+
 ## 会话：2026-07-15（8.13.22 发布完成）
 
 - **publish-card**：`pnpm publish-card 神秘复苏模拟器发布版` 成功；内置 G1 dist freshness + release PNG 门禁通过。

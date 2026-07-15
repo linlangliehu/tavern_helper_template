@@ -39,6 +39,18 @@
         "世界压力",
         "总部关注度",
         "社会公开度"
+      ],
+      [
+        1,
+        "2004-07-01 08:00",
+        "七中",
+        "大昌市",
+        "敲门鬼事件前",
+        "七中开局",
+        "开局接入",
+        10,
+        0,
+        0
       ]
     ],
     "updateConfig": {
@@ -109,6 +121,19 @@
         "持有拼图",
         "灵异资源",
         "最近行动"
+      ],
+      [
+        1,
+        "{{user}}",
+        "普通人",
+        "七中",
+        "正常",
+        0,
+        0,
+        "无",
+        "无",
+        "无",
+        "开局"
       ]
     ],
     "updateConfig": {
@@ -638,7 +663,7 @@
       "note": "记录每轮给玩家展示的 A/B/C/D 行动建议。全表固定 4 行，禁止新增或删除。\n\n【列定义】\n列1=row_id（仅允许 1-4）\n列2=选项 option_key（A/B/C/D）\n列3=思路 idea_text\n列4=主要风险 main_risk\n列5=预期收益 expected_gain\n列6=死亡风险 death_risk_level\n列7=复苏风险 revival_risk_level\n\n【枚举硬约束】\noption_key 只允许以下值：A、B、C、D；death_risk_level 与 revival_risk_level 只允许以下值：无、低、中、高、致命、未知。禁止写选项A、方案B、极低、很低、极高、严重、极重等非枚举值；不确定时写未知。\n\n【规则】\n行动建议只能基于玩家可见信息，不得泄露隐藏杀人规律、关键生路或后期档案。需要与 MVU /行动建议 保持语义一致，但不替代 MVU。",
       "initNode": "初始化 A/B/C/D 四行。\nSQL示例: INSERT INTO action_suggestions (row_id, option_key, idea_text, main_risk, expected_gain, death_risk_level, revival_risk_level) VALUES (1, 'A', '观察现场并收集线索', '停留过久可能被标记', '确认事件规律', '中', '无'), (2, 'B', '立刻撤离危险区域', '遗漏关键线索', '降低死亡风险', '低', '无'), (3, 'C', '联系可用势力求援', '暴露自身位置', '获得外部资源', '中', '无'), (4, 'D', '自定义行动', '未知', '取决于行动', '未知', '未知');",
       "deleteNode": "禁止。",
-      "updateNode": "每轮刷新时必须使用 INSERT OR REPLACE 同时写满 4 行，避免旧选项残留。option_key 必须只使用 A/B/C/D；death_risk_level 与 revival_risk_level 必须只使用 无/低/中/高/致命/未知；不确定写未知，不要写选项A、极低、极高、严重等非枚举值。\nSQL示例: INSERT OR REPLACE INTO action_suggestions (row_id, option_key, idea_text, main_risk, expected_gain, death_risk_level, revival_risk_level) VALUES (1, 'A', '检查敲门声来源', '可能触发规律', '确认媒介', '高', '无'), (2, 'B', '离开教学楼', '丢失现场线索', '暂时脱离', '中', '无'), (3, 'C', '寻找幸存学生询问', '接触潜在标记者', '获得证词', '中', '无'), (4, 'D', '自定义行动', '未知', '取决于行动', '未知', '未知');",
+      "updateNode": "每轮用 updateCell 刷新 4 行（match row_id 1-4），替换 display_text/option_key/action_text/death_risk_level/revival_risk_level 列。option_key 必须只使用 A/B/C/D；death_risk_level 与 revival_risk_level 必须只使用 无/低/中/高/致命/未知；不确定写未知，不要写选项A、极低、极高、严重等非枚举值。",
       "insertNode": "禁止。",
       "ddl": "CREATE TABLE action_suggestions ( -- 行动建议\n  row_id INTEGER PRIMARY KEY CHECK(row_id BETWEEN 1 AND 4), -- 行号，仅允许 1-4\n  option_key TEXT NOT NULL CHECK(option_key IN ('A', 'B', 'C', 'D')), -- 选项\n  idea_text TEXT NOT NULL CHECK(LENGTH(idea_text) <= 80), -- 思路\n  main_risk TEXT NOT NULL CHECK(LENGTH(main_risk) <= 80), -- 主要风险\n  expected_gain TEXT NOT NULL CHECK(LENGTH(expected_gain) <= 80), -- 预期收益\n  death_risk_level TEXT NOT NULL CHECK(death_risk_level IN ('无', '低', '中', '高', '致命', '未知')), -- 死亡风险\n  revival_risk_level TEXT NOT NULL CHECK(revival_risk_level IN ('无', '低', '中', '高', '致命', '未知')) -- 复苏风险\n);"
     },
@@ -741,7 +766,7 @@
       "note": "记录每轮或多轮合并后的客观纪要。\n\n【列定义】\n列1=row_id\n列2=纪要编号 code_index（SP0001 起递增，全表唯一）\n列3=时间跨度 time_span\n列4=关联事件 related_event\n列5=概览 summary（≤40 字）\n列6=纪要 chronicle_text（20-600 字，推荐 200-400 字）\n\n【表名硬约束】\n本表 SQL 表名固定为 chronicle。旧表名 log_summary、simulation_summary、summary_logs、event_summary 都不存在，禁止对这些旧表名执行 INSERT/UPDATE/DELETE；如果想写事件总结，只能写入 chronicle。\n\n【规则】\n只写正文明确发生的事实，不补充未出现的隐藏真相。用于高楼层召回。chronicle_text 不足 20 字时禁止输出 SQL。禁止把 SP0001、SP0002 等纪要编号写入 chronicle_text；第 6 列必须是正文纪要，不是编号。",
       "initNode": "插入首条记录，记录开局场景。row_id 和 code_index 都按当前表递增生成，chronicle_text 必须写满 20-600 字，推荐 200-400 字，不能填 SP0001/SP0002 等编号。\nSQL示例: INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), (SELECT printf('SP%04d', COALESCE(MAX(CAST(substr(code_index, 3) AS INTEGER)), 0) + 1) FROM chronicle), '2004-07-01 08:00 ~ 2004-07-01 08:30', '七中敲门事件', '七中出现异常敲门声。', '<请写20到600字、推荐200到400字的客观纪要；不足20字禁止输出SQL；不能填SP编号>');",
       "deleteNode": "禁止。",
-      "updateNode": "禁止。纪要写错时新增修正纪要，不改旧纪要。",
+      "updateNode": "事件纪要允许通过 updateCell 修订 chronicle_text（不允许 deleteRow 或增加超出固定范围的行），adapter 和 verify 已按此放行。",
       "insertNode": "每轮或多轮合并后插入一条新纪要，编号递增。只能写入 chronicle，禁止使用旧表名 log_summary、simulation_summary、summary_logs、event_summary。chronicle_text 必须 20-600 字，推荐 200-400 字；不足 20 字时先扩写再输出 SQL；禁止把 SP0001/SP0002 等纪要编号当成第 6 列内容。\nSQL示例: INSERT INTO chronicle (row_id, code_index, time_span, related_event, summary, chronicle_text) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM chronicle), (SELECT printf('SP%04d', COALESCE(MAX(CAST(substr(code_index, 3) AS INTEGER)), 0) + 1) FROM chronicle), '2004-07-01 08:30 ~ 2004-07-01 09:10', '七中敲门事件', '玩家撤离并获得证词。', '<请写20到600字、推荐200到400字的客观纪要；不足20字禁止输出SQL；不能填SP编号>');",
       "ddl": "CREATE TABLE chronicle ( -- 事件纪要\n  row_id INTEGER PRIMARY KEY, -- 行号\n  code_index TEXT NOT NULL UNIQUE CHECK(code_index GLOB 'SP[0-9][0-9][0-9][0-9]'), -- 纪要编号\n  time_span TEXT NOT NULL, -- 时间跨度\n  related_event TEXT NOT NULL, -- 关联事件\n  summary TEXT NOT NULL CHECK(LENGTH(summary) <= 40), -- 概览\n  chronicle_text TEXT NOT NULL CHECK(LENGTH(chronicle_text) >= 20 AND LENGTH(chronicle_text) <= 600) -- 纪要\n);"
     },
@@ -814,7 +839,7 @@
       "note": "记录每轮可选的检定建议。全表固定 5 行，禁止新增或删除。\n\n【列定义】\n列1=row_id（仅允许 1-5）\n列2=展示文本 display_text\n列3=检定类型 check_type\n列4=检定依据 check_basis\n列5=骰子命令 dice_command\n\n【神秘复苏适配】\n检定不能让普通人杀死鬼；检定只决定调查、撤离、观察、谈判、资源使用、对抗时机等行动成败。面对明确无解的厉鬼正面对抗，应使用“必败”或高风险提示。",
       "initNode": "初始化 5 条检定建议。\nSQL示例: INSERT INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '观察走廊动静，判断敲门声是否正在靠近。', '观察', '需要在恐慌中分辨声音来源', '检定 <user> 感知'), (2, '带领附近学生从侧门撤离。', '撤离', '人群混乱且路线不明', '检定 <user> 判断'), (3, '询问目击学生，确认最早听到敲门声的人。', '调查', '证词可能混乱', '检定 <user> 交涉'), (4, '强行打开声音来源处的门。', '高危试探', '可能直接触发杀人规律', '必败'), (5, '使用明确资源隔绝灵异影响。', '资源使用', '有资源且时机正确时可成立', '必成');",
       "deleteNode": "禁止。",
-      "updateNode": "每轮必须用 INSERT OR REPLACE 同时刷新 5 行。\nSQL示例: INSERT OR REPLACE INTO check_suggestions (row_id, display_text, check_type, check_basis, dice_command) VALUES (1, '<展示文本1>', '<类型1>', '<依据1>', '<命令1>'), (2, '<展示文本2>', '<类型2>', '<依据2>', '<命令2>'), (3, '<展示文本3>', '<类型3>', '<依据3>', '<命令3>'), (4, '<展示文本4>', '<类型4>', '<依据4>', '<命令4>'), (5, '<展示文本5>', '<类型5>', '<依据5>', '<命令5>');",
+      "updateNode": "每轮用 updateCell 刷新 5 行（match row_id 1-5），替换 display_text/check_type/check_basis/dice_command 列。",
       "insertNode": "禁止。",
       "ddl": "CREATE TABLE check_suggestions ( -- 检定建议\n  row_id INTEGER PRIMARY KEY CHECK(row_id BETWEEN 1 AND 5), -- 行号，仅允许 1-5\n  display_text TEXT NOT NULL CHECK(TRIM(display_text) <> ''), -- 展示文本\n  check_type TEXT NOT NULL, -- 检定类型\n  check_basis TEXT NOT NULL, -- 检定依据\n  dice_command TEXT NOT NULL CHECK(TRIM(dice_command) <> '') -- 骰子命令\n);"
     },
@@ -915,7 +940,7 @@
       "initNode": "开局确认玩家已驾驭厉鬼时插入；普通人开局保持空表。",
       "deleteNode": "允许删除：玩家失去驾驭、厉鬼脱离、交易解除或该条被证明不再属于玩家。删除时应先在事件纪要中留下原因。",
       "updateNode": "按厉鬼代号更新恐怖程度、拼图特征、杀人规律、可用能力、代价、复苏进度、死机状态和压制关系。UPDATE 的 SET 列表最后一项后禁止保留尾逗号，WHERE 前不能写逗号。",
-      "insertNode": "玩家新驾驭一只厉鬼、拼图被纳入本体或通过诅咒绑定形成可调用能力时新增。",
+      "insertNode": "玩家新驾驭一只厉鬼、拼图被纳入本体或通过诅咒绑定形成可调用能力时新增。\nSQL示例: INSERT INTO controlled_ghosts (row_id, ghost_code, terror_level, puzzle_trait, killing_law, usable_power, cost_text, revival_progress, dead_state, suppression_relation, public_summary) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM controlled_ghosts), '敲门鬼', '未知', '未确认', '无', '无', '无', '无异常', '正常', '无', '刚驾驭，能力未知。');",
       "ddl": "CREATE TABLE controlled_ghosts ( -- 驾驭厉鬼\n  row_id INTEGER PRIMARY KEY, -- 行号\n  ghost_code TEXT NOT NULL UNIQUE, -- 厉鬼代号\n  terror_level TEXT NOT NULL, -- 恐怖程度\n  puzzle_trait TEXT NOT NULL, -- 拼图特征\n  killing_law TEXT NOT NULL, -- 杀人规律\n  usable_power TEXT NOT NULL, -- 可用能力\n  cost_text TEXT NOT NULL, -- 使用代价\n  revival_progress TEXT NOT NULL, -- 复苏进度\n  dead_state TEXT NOT NULL, -- 死机状态\n  suppression_relation TEXT NOT NULL, -- 压制关系\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
     },
     "content": [
@@ -995,7 +1020,7 @@
       "initNode": "开局通常保持空表；若玩家已经发现但未收录某只厉鬼，也可插入未收录条目并把收录进度设为 0-30。",
       "deleteNode": "禁止。档案收录错误时更新收录状态、收录进度或新增修正备注，不直接删除历史痕迹。",
       "updateNode": "按档案厉鬼名称更新收录状态、规律、鬼域、收录进度、档案完整度和可调用范围。收录进度未达到 100 时不得写“已收录”。",
-      "insertNode": "鬼档案视野发现新的档案厉鬼时新增，即使尚未收录也要记录为“未收录”或“收录中”。",
+      "insertNode": "鬼档案视野发现新的档案厉鬼时新增，即使尚未收录也要记录为“未收录”或“收录中”。\nSQL示例: INSERT INTO collected_archives (row_id, archive_ghost_name, archive_status, ghost_info, known_law, suspected_law, ghost_domain, archive_progress, archive_completeness, callable_scope, public_summary) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM collected_archives), '敲门鬼', '未收录', '七中出现的敲门声厉鬼', '无', '听到敲门声后可能被标记', '未确认', 0, '仅知表象', '无', '刚发现，尚未收录。');",
       "ddl": "CREATE TABLE collected_archives ( -- 收录档案\n  row_id INTEGER PRIMARY KEY, -- 行号\n  archive_ghost_name TEXT NOT NULL UNIQUE, -- 档案厉鬼名称\n  archive_status TEXT NOT NULL CHECK(archive_status IN ('未收录', '收录中', '已收录', '污染档案', '错误档案')), -- 收录状态\n  ghost_info TEXT NOT NULL CHECK(LENGTH(ghost_info) <= 180), -- 厉鬼信息\n  known_law TEXT NOT NULL, -- 已知规律\n  suspected_law TEXT NOT NULL, -- 猜测规律\n  ghost_domain TEXT NOT NULL, -- 鬼域\n  archive_progress INTEGER NOT NULL CHECK(archive_progress BETWEEN 0 AND 100), -- 收录进度\n  archive_completeness TEXT NOT NULL, -- 档案完整度\n  callable_scope TEXT NOT NULL, -- 可调用范围\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
     },
     "content": [
@@ -1075,7 +1100,7 @@
       "initNode": "开局通常保持空表；若玩家设定已拓印或窃取一段可见规律，可插入。",
       "deleteNode": "允许删除：规律片段被消耗、污染清除、融合为新条目或被证明不再可调用。删除前应在事件纪要或风险备注留下原因。",
       "updateNode": "按来源厉鬼和规律类型更新内容、进阶、分解、完整度和风险备注。",
-      "insertNode": "鬼拓本拓印、鬼手印窃取、同类规律融合成新阶段或异类规律分解为新片段时新增。",
+      "insertNode": "鬼拓本拓印、鬼手印窃取、同类规律融合成新阶段或异类规律分解为新片段时新增。\nSQL示例: INSERT INTO collected_rules (row_id, source_ghost, acquire_method, law_type, law_content, law_advance, law_decompose, completeness, risk_note, public_summary) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM collected_rules), '敲门鬼', '拓印', '声音类', '听到敲门声后会被标记', '无', '无', '片段', '拓印时可能引起注意', '拓印获得的敲门规律片段。');",
       "ddl": "CREATE TABLE collected_rules ( -- 收录规律\n  row_id INTEGER PRIMARY KEY, -- 行号\n  source_ghost TEXT NOT NULL, -- 来源厉鬼\n  acquire_method TEXT NOT NULL, -- 获取方式\n  law_type TEXT NOT NULL, -- 规律类型\n  law_content TEXT NOT NULL CHECK(LENGTH(law_content) <= 180), -- 规律内容\n  law_advance TEXT NOT NULL, -- 规律进阶\n  law_decompose TEXT NOT NULL, -- 规律分解\n  completeness TEXT NOT NULL, -- 完整度\n  risk_note TEXT NOT NULL CHECK(LENGTH(risk_note) <= 160), -- 风险备注\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
     },
     "content": [

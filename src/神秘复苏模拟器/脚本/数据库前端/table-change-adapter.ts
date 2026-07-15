@@ -1137,7 +1137,7 @@ function validateColumnValues(
     if (isChronicleTable(table) && isChronicleTextColumn(column) && /^SP\d{4}$/i.test(text.trim())) {
       errors.push({
         code: 'LENGTH_VIOLATION',
-        message: `列「${column.header}」不能只填写纪要编号，必须是 200-600 字客观纪要。`,
+        message: `列「${column.header}」不能只填写纪要编号，必须是 20-600 字（推荐 200-400 字）客观纪要。`,
         table: table.name,
         column: column.header,
         value,
@@ -1269,6 +1269,111 @@ function normalizeEnumAliasValue(table: TableMeta, column: ColumnMeta, rawText: 
     };
     const mapped = aliases[rawText.trim()];
     if (mapped) return mapped;
+  }
+
+  if (tableName === 'ghost_archives' && columnName === 'containment_status') {
+    const aliases: Record<string, string> = {
+      已收容: '已关押',
+      临时控制: '暂时压制',
+      控制中: '暂时压制',
+      逃脱: '失控',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'clues' && columnName === 'reliability') {
+    const aliases: Record<string, string> = {
+      不可靠: '低',
+      高可信: '高',
+      可信: '高',
+      假线索: '误导',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'clues' && columnName === 'verification_status') {
+    const aliases: Record<string, string> = {
+      已证实: '已验证',
+      已排除: '已否定',
+      待验证: '未验证',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'clues' && columnName === 'visibility') {
+    const aliases: Record<string, string> = {
+      公开: '玩家可见',
+      后台记录: '内部记录',
+      可见: '玩家可见',
+      隐藏: '内部记录',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'characters' && columnName === 'presence_status') {
+    const aliases: Record<string, string> = {
+      现场: '在场',
+      已离开: '离场',
+      不在场: '离场',
+      在附近: '可联系',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'characters' && columnName === 'life_status') {
+    const aliases: Record<string, string> = {
+      活着: '存活',
+      下落不明: '失踪',
+      复苏: '厉鬼复苏',
+      已死: '死亡',
+      死了: '死亡',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'action_suggestions' && columnName === 'option_key') {
+    const aliases: Record<string, string> = {
+      选项A: 'A',
+      方案A: 'A',
+      选项B: 'B',
+      方案B: 'B',
+      选项C: 'C',
+      方案C: 'C',
+      选项D: 'D',
+      方案D: 'D',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'action_suggestions' && columnName === 'death_risk_level') {
+    const aliases: Record<string, string> = {
+      极低: '低',
+      极高: '致命',
+      严重: '高',
+      安全: '无',
+      危险: '高',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
+  }
+
+  if (tableName === 'action_suggestions' && columnName === 'revival_risk_level') {
+    const aliases: Record<string, string> = {
+      极低: '低',
+      极高: '致命',
+      严重: '高',
+      安全: '无',
+      危险: '高',
+    };
+    const mapped = aliases[rawText.trim()];
+    if (mapped && allowed.includes(mapped)) return mapped;
   }
 
   const direct = allowed.find(value => normalizeAlias(value) === normalizedText);
