@@ -6,7 +6,7 @@
 - 二轮：正则 33 · SQL/14 表 · 开局/欢迎页 · 世界书规则与锚点路径  
 **基线发布版**：8.13.13（`28777ad` / `…-v81313-always-unlock-send`）  
 **范围**：`src/神秘复苏模拟器`  
-**状态**：滚动维护；BF0–BF6 + Phase 5 已完成项见勾选，8.13.22 已发布（`v8.13.22` → `e568cce`）
+**状态**：历史总表；BF0–BF6 + Phase 5 已完成，8.13.22 已发布（`v8.13.22` → `e568cce`）；当前无已排期待修项
 
 > 说明：本清单只收录已核实或高置信交叉对照缺陷，不保证穷尽全部运行时 bug。  
 > 修完一项请改为 `[x]` 并注明 PR/commit；发版后在对应 `RELEASE_*.md` 交叉引用。  
@@ -15,7 +15,7 @@
 
 ---
 
-## 0. 总览索引（待修 = 未勾选）
+## 0. 总览索引（历史编号；实施状态以各条 `[x]` / 归档说明为准）
 
 | 前缀 | 领域 | Critical | High | Medium | Low | 合计项（约） |
 |------|------|----------|------|--------|-----|--------------|
@@ -128,7 +128,7 @@
 
 ## 一轮 · P1 High（H*）
 
-### H1 · `/行动建议` 条数契约冲突 — **待修**
+### H1 · `/行动建议` 条数契约冲突 — **已修（BF0）**
 
 - [x] **H1.1** 统一：存活时 **恰好 A–D 4 条**；死亡时禁止 `<choices>`，`/行动建议` 置 `[]` — **BF0**
 - [x] **H1.2** 改 `变量更新规则.yaml`、`事件MVU联动规则.txt`、`变量输出格式.yaml` 中「0–4」表述
@@ -151,7 +151,7 @@
 
 ---
 
-### H3 · 系统提示骨架弱于变量输出格式 — **待修**
+### H3 · 系统提示骨架弱于变量输出格式 — **已修（BF0）**
 
 - [x] **H3.1** 系统提示骨架并入：`delta` 风险、`/在场人物`、完整 `最近行动判定` / `行动建议` 字段 — **BF0**
 - [x] **H3.2** 与 `变量输出格式.yaml` 同源（示例已含扩展字段，未再改示例）
@@ -396,7 +396,7 @@
 - [x] **WM6** 最小：变量更新规则点名 `已驾驭厉鬼[].恐怖等级`；DB 规则旁注 MVU 字段名 — **BF4**（不机械替换原著「恐怖程度」叙述词）
 - [x] **DM7** adapter 守卫：禁删表 `TABLE_DELETE_FORBIDDEN`；固定/单行表 `TABLE_INSERT_FORBIDDEN`（已有 row 时）— **BF3**
 - [x] **DM8** 门禁缺口：`verify-table-change-adapter` 补 characters/supernatural_items/collected_rules；禁删 collected_rules；非法枚举 CHECK；混合 LENGTH 整计划拒绝；chronicle 真模板 — **BF5**
-- [ ] **DM9** `visibleSummary` 回退链末尾 `getCurrentMessageId()` → `public_summary`/`clue_text` 可能被写成楼层号（数字字符串化非空，兜底文案永不生效）— **归档**：App.vue 已确认为孤儿（H10），此 bug 不影响 live 路径；待 App.vue 删除或复活时一并处理
+- [x] **DM9（归档）** `visibleSummary` 回退链末尾 `getCurrentMessageId()` 可能把楼层号写入摘要 — App.vue 已确认为孤儿（H10），不影响 live 路径；仅在未来删除或复活 App.vue 时重新评估
 - [x] **WB-06 附注（并入 W2）** 事件MVU联动规则触发词 `UpdateVariable` 恰被 #1 正则从 prompt 剥离 → 触发词自锁死环 — **W2 已修（BF4）**：自锁触发词已移除；灵异对抗判定冷启动问题仍存在，若需修复请拆独立项
 
 ### A2 新增 Low
@@ -443,13 +443,15 @@
 
 ---
 
-## 门禁 / 回归（修完对应项后跑）
+## 门禁 / 回归模板（未来修改对应功能时重跑）
 
-- [ ] `node scripts/verify-mfrs-mvu-hotfix-regressions.mjs`
-- [ ] `node scripts/verify-output-cleaning-regressions.mjs`（含英文正文/思维链/选项标题用例）
-- [ ] `node scripts/verify-table-change-adapter.mjs`
-- [ ] `node scripts/verify-mfrs-release-png.mjs`（发版时；regex=33 若改 id/启用需同步门禁）
-- [ ] 实机：新开局校验 → 一轮生成 → A–D → 发送不卡 → DB 全局/事件镜像正确 → 英文正文不被正则吃掉
+- [x] 8.13.22 发布时：`node scripts/verify-mfrs-mvu-hotfix-regressions.mjs`
+- [x] 8.13.22 发布时：`node scripts/verify-output-cleaning-regressions.mjs`（含英文正文/思维链/选项标题用例）
+- [x] 8.13.22 发布时：`node scripts/verify-table-change-adapter.mjs`
+- [x] 8.13.22 发布时：`node scripts/verify-mfrs-release-png.mjs`（version=8.13.22、refs=7、cache=8、regex=33、scripts=8）
+- [x] BF2–BF6 分批实机：新开局、生成、A–D、发送解锁、DB 镜像、英文正文与正则关键路径已分别验证
+
+> 以上为历史发布验收记录，也是未来相关改动的回归模板；不是当前待办。
 
 ---
 
@@ -510,5 +512,6 @@
 | 2026-07-14 | **BF6/8.13.22 准备**：RM1/2/7/8/9、RH3/4/5、P0–P3 已完成；RH5 仅作用于闭合 `<sp_status>`；候选 CDN_REF `158dcc29107f`，publish/PNG/tag 仍 pending |
 | 2026-07-15 | **8.13.22 发布完成**：tag `v8.13.22` → `e568cce`；CDN_REF `158dcc29107f`、cache `v81322_20260714_01`；门禁全绿；关单 C1.3/DL3/M7/DM9(归档)/WB-06(W2部分)；改写 H2.2/SM1/SL3/DL5 指向 live owner |
 | 2026-07-15 | **Phase 5 backlog 清理**：关单/归档 H2(文档化)/C2.4(DB-only)/M5/M8/M9/M10/L3/L4/L5/L9/DM1–6/DL1–2/DL4–6/SM1–4/SL1–3；代码改动 M9(normalizer)/DM2(adapter 枚举)/DM3(种子行)/SM2(required)/SL2(注释)；规则改动 L3/M5(提示词)/DM1/DM5/DM6/DL1/DL2(联动规则+SQL 模板) |
+| 2026-07-15 | **维护收尾**：修正 H1/H3 旧“待修”标题、将 DM9 明确勾选为归档、把门禁清单改为已完成的历史验收/未来回归模板；当前无已排期 backlog |
 
 *关联：`TASKLIST_BETA.md`、`RELEASE_8.13.14.md`、`task_plan.md`。*

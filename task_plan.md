@@ -1,7 +1,7 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
 ## 目标
-按 `docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md` 分批修复两轮审计缺陷，回归通过后发版（预计 8.13.14+）。
+审计缺陷修复、回归与 8.13.22 发布均已完成；本文件作为历史计划保留，当前项目处于待命维护状态。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -15,17 +15,18 @@
 **阶段 BF4 — complete（8.13.20）**  
 **阶段 BF5 — complete（门禁 G2–G5 + DM8；部分残余）**  
 **阶段 BF5.5：8.13.21 上线后只读审查 — complete（双路复核通过，`84df0b5` 已 push）**  
-**Phase 5 已完成 — 所有 High/Medium/Low backlog 已关单/归档；8.13.22 已发布（`v8.13.22` → `e568cce`）；暂无活跃开发阶段**
+**Phase 5 已完成 — 审计 backlog 已全部修复、关单或明确归档；8.13.22 已发布（`v8.13.22` → `e568cce`）**
+**当前维护状态 — 本地 `main` 已推送 `origin/main@74f74b7`；沉浸式按键审查 5 个问题已修复 4 个（ISSUE-001 随发版自动解决）；待发版**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **Phase 5 已完成**；8.13.22 已发布（`v8.13.22` → `e568cce`），所有 backlog 已关单/归档 |
-| 我要去哪里？ | **暂无活跃开发阶段**；下一步由用户决定 |
-| 目标是什么？ | 审计缺陷修复全部完成；后续可按需开启新功能开发 |
-| 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
-| 我做了什么？ | `progress.md` |
+| 我在哪里？ | **修复已提交推送**；`origin/main@74f74b7`，含 4 个沉浸式按键修复 |
+| 我要去哪里？ | **待发版**；需 `pnpm publish-card` 生成新 CDN pin，ISSUE-001 随之解决 |
+| 目标是什么？ | 发布包含修复的新版本（8.13.2x） |
+| 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；ISSUE-003 根因=click 发在 .drawer-icon 而非 .drawer-toggle |
+| 我做了什么？ | `progress.md`；修复 ISSUE-002/003/004/005 → `779b9d7` + dist `74f74b7` |
 
 ## 硬约束（勿破）
 
@@ -36,15 +37,15 @@
 - 契约真源顺序：`schema.ts` → 变量输出格式 → 系统提示词 → 对话示例 → 脚本解析
 - 开发源 `index.yaml` CDN 仍可能 pin 旧 hash；发布以 `publish-card.mjs` 的 `CDN_REF` 为准
 
-## 发版基线
+## 当前基线
 
 | 项 | 值 |
 |----|-----|
-| 版本 | **8.13.21** |
-| 资源 | `f2b7db2` / cache `…-v81321-bf5-gates` |
-| 功能 | BF5 门禁 G2–G5 + DM8 + WM1/2/L8 |
-| 发布 | 见 `chore(release) publish 8.13.21` |
-| 分支 | **`main`** |
+| 发布内容版本 | **8.13.22**（`e568cce`；CDN_REF `158dcc29107f`；cache `v81322_20260714_01`） |
+| 仓库运行时基线 | **`b8213f7`**（`v8.13.26`，`07051d7` 后的 bot bundle） |
+| 最近修复 | 档案资源区嵌套对象不再显示 `[object Object]`（`07051d7`） |
+| 分支 | **`main` = `origin/main`** |
+| 状态 | **待命；无已排期任务** |
 
 ## 各阶段
 
@@ -88,7 +89,7 @@
 ### 阶段 C / BF1：加载与打包 — **complete（8.13.17）**
 - [x] **C3** 源 index.yaml CDN = publish-card 同一 ref/cache
 - [x] **C4** loader `?`/`&t=` 修复
-- [ ] ~~C5~~ 误报关闭；仅剩 stub 目录清理（Low，可挂 BF4）
+- [x] ~~C5~~ 误报关闭；stub 目录已在 BF4 加废弃头注释
 - [x] **H9** 旧打包 JSON 废弃+警示（不复活）
 - [x] **L1** MagVar `@0.171.0` + mvu_zod `@0.3.446`
 - **状态：** complete
@@ -124,7 +125,7 @@
 - [x] **G5** cleaning 扩样例；**DM8** adapter 三表 + 禁删/混合拒绝/真模板 chronicle
 - [x] 快修：**WM1/WM2/L8**
 - [x] `pnpm verify:mfrs-gates` 聚合
-- 残余仍开：H2、M5/M7–M10、RH3–5、RM1–2/RM7–9、DM1–6/DM9、DL*、SM* 等
+- 历史残余 H2、M5/M7–M10、RH3–5、RM1–2/RM7–9、DM1–6/DM9、DL*、SM* 等已在 BF6 与 Phase 5 完成、关单或归档
 - **状态：** complete（门禁）；发版见 progress
 
 ### 阶段 BF5.5：8.13.21 上线后只读审查 — **complete**
@@ -134,7 +135,7 @@
 - [x] 结论入库 backlog「BF5 上线后审查」区 + progress；提交 push `84df0b5`
 - **状态：** complete
 
-### 阶段 BF6：正则/清洗残余 + 发布链加固 — **implementation complete（8.13.22 发布准备中）**
+### 阶段 BF6：正则/清洗残余 + 发布链加固 — **complete（8.13.22）**
 
 **批 β · 正则/清洗残余（与 G3 同域，风险低）**
 - [x] **RM7** #14/#15（JSONPatch/draft/pacing/修改确认）补 prompt 去除 + hotfix 清洗，止残渣回传 AI
@@ -158,19 +159,19 @@
 - 清洗改动必过 `verify-output-cleaning-regressions`（G5）+ hotfix 回归
 - 发版只走 `pnpm publish-card`；禁手改 PNG
 
-**回归门槛**：改完跑 `pnpm verify:mfrs-gates` 全绿 → production build → publish 8.13.22
-- **状态：** implementation complete；候选 production dist=`158dcc29107f`，元数据已准备；publish/PNG/release commit/tag 仍 pending
+**回归门槛（已完成）**：`pnpm verify:mfrs-gates` 全绿 → production build → publish 8.13.22
+- **状态：** complete；production dist=`158dcc29107f`，发布提交=`e568cce`，tag=`v8.13.22`
 
-**当前执行：正在完成 8.13.22 发布清单，完成后再进入 Phase 5（Phase B）**
-- [x] `CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达；纯 `dist/**` push 不触发 bundle workflow）
+**8.13.22 发布清单 — complete**
+- [x] `CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达）
 - [x] cache=`v81322_20260714_01`，版本=`8.13.22`
-- [x] 开发版 YAML：7 refs / 8 markers；33 regex / 8 scripts 结构保持
-- [x] `RELEASE_8.13.22.md` 与 README/backlog/planning 记录已准备
-- [ ] verification 代理复核独立门禁
-- [ ] publish-card 生成发布版 YAML/PNG
-- [ ] release commit/push/tag 与最终验收
+- [x] 开发/发布 YAML：7 refs / 8 markers；33 regex / 8 scripts 结构保持
+- [x] `RELEASE_8.13.22.md` 与 README/backlog/planning 记录完成
+- [x] 独立门禁及发布后聚合门禁通过
+- [x] publish-card 生成发布版 YAML/PNG
+- [x] release commit/push/tag 与最终验收（`e568cce` / `v8.13.22`）
 
-**留待 8.13.23（批 α）**：H2 风险语义统一——真源落点 `mvu-core-mirror.ts`（非 App.vue 孤儿）+ ~8 世界书契约；工程量大，单独发版
+**H2 后续处理**：Phase 5 已完成四套风险语义文档化；live 路径无需为此另开 8.13.23 重构。
 
 
 ## 合并关单
@@ -194,10 +195,12 @@
 | 发布只走 publish-card | 禁手改 PNG |
 | 文案质量/全文润色不在本轮 | 只修功能路径 bug |
 
-## 关键问题
-1. BF0 是否一次 PR 做完 C1+C2+H1+H3，还是拆 commit？
-2. 开发验收：统一 pin CDN 还是强制 localhost dist？
-3. 下一发版号：8.13.14 还是 8.14.0？
+## 当前待命状态
+
+1. 审计 backlog 已无待实施项；DM9 为明确归档的孤儿 App.vue 条目，不属于当前任务。
+2. 世界书全文文案、性能安全、多 ST 全量回归等从未纳入本轮，若需要必须作为新任务单独立项。
+3. 新功能或新缺陷到来时：从最新 `origin/main` 新建 worktree，并新建 planning-with-files 阶段；不要续用已完成的 BF 阶段。
+4. 现有 5 项 untracked 用户文件不纳入任务，也不自动修改、提交或删除。
 
 ## 遇到的错误
 
@@ -221,9 +224,9 @@
 ## 新会话启动指令（复制）
 
 ```
-继续神秘复苏审计缺陷修复。
-先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md
-8.13.17 已发（BF1 H9/L1 完成）。从 BF2（C6 raw / R1–R3 / RH6）开工，勿重审。
+恢复当前项目状态。
+先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md。
+当前审计/Phase 5 已完成，本地 main 应与 origin/main@b8213f7（v8.13.26）同步；暂无已排期任务。新工作请另建阶段或 worktree，不要重跑旧审计。
 ```
 
 ## 备注

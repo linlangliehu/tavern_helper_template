@@ -1,5 +1,38 @@
 # 进度日志
 
+## 会话：2026-07-15（沉浸式按键审查缺陷修复）— **complete**
+
+- 修复 4 个问题（ISSUE-002/003/004/005），源码 commit `779b9d7`，dist commit `74f74b7`，已 push `origin/main`。
+- **ISSUE-003 (High)**：`runHudTavernAction` 的 `fire()` 中 `live.click()` 点击 `.drawer-icon` 父容器，ST 的 `doNavbarIconClick` 绑在 `.drawer-toggle` 子元素上不会触发。改为查找 `.drawer-toggle` 子元素并用 jQuery trigger，fallback 保留原生 click。
+- **ISSUE-002 (Medium)**：`buildHudGachaPanelHtml` 读取 pity 对象用了不存在的键 `soft/hard/count`，实际键为 `{total, rare, epic}`。改为 `★4 还需X抽 · ★6 还需Y抽` 格式，与完整抽卡面板对齐。
+- **ISSUE-004 (Low)**：`unmountHudImmersive` 在退出按钮仍持焦点时设 `aria-hidden="true"`。改为先 blur/focus `#send_textarea`，再隐藏 shell。
+- **ISSUE-005 (Low)**：`runMirrorOnce` 在 `AutoCardUpdaterAPI` 未就绪时走到 `requireApi` 抛异常。加守卫 `if (!AutoCardUpdaterAPI) return`，静默跳过等下次 schedule。
+- **ISSUE-001 (Medium)**：`[object Object]` 修复已在仓库 `07051d7`，本次 push 包含；发版后 CDN pin 自动覆盖。
+- 门禁：`pnpm verify:mfrs-gates` 6/6 全绿（initvar-schema/regex-ids/RH5-scoped/hotfix/output-cleaning/table-adapter/release-png）。
+- 改动范围：`index.ts` +19/-5、`mvu-core-mirror.ts` +3/-0；无正则/脚本库/世界书变动。
+
+## 会话：2026-07-15（发布版沉浸式按键真机审查）— **complete**
+
+- 已通过 chrome-devtools MCP 连接用户以远程调试模式启动的独立 Chrome；当前目标页为 `http://127.0.0.1:8000/` 的 SillyTavern，未连接或操作主 Chrome。
+- 目标聊天已确认显示”神秘复苏模拟器发布版”，CDN 确认为 `@158dcc29107f` / `v81322_20260714_01`（8.13.22）。
+- 逐项验证 21 项：正文/档案/关系/记忆/抽卡/系统/设置/退出沉浸/快捷键/Esc/窄屏/开局表单交互/全库入口等，16 项通过，5 项发现问题。
+- **发现 5 个问题**：
+  - **ISSUE-001 (Medium)**：退出沉浸后现场档案”资源”折叠区显示 `[object Object]`。
+  - **ISSUE-002 (Medium)**：抽卡中栏摘要”保底”直接显示原始 JSON `{“total”:0,”rare”:0,”epic”:0}`。
+  - **ISSUE-003 (High)**：沉浸模式内”设置”8 个酒馆原生入口点击后 ST drawer 未打开——HUD click→jQuery trigger 链路存在 yield/drawer 竞争。手动 jQuery trigger 可正常打开；退出沉浸后点击也正常。
+  - **ISSUE-004 (Low)**：退出沉浸按钮触发 aria-hidden/focus 冲突警告。
+  - **ISSUE-005 (Low)**：CoreMirror 运行失败（缺 AutoCardUpdaterAPI），2 个 CDN 404（storage/script.js, extensions.js）。
+- 报告和 19 张截图保存在 `dogfood-output/mfrs-immersive-buttons-2026-07-15/`。
+
+## 会话：2026-07-15（维护收尾与待命）
+
+- 本地 `main` 以 `git pull --ff-only` 同步至 `origin/main@b8213f7`（tag `v8.13.26`）；仅 fast-forward 了自动 bundle 的状态栏 dist。
+- 复核最新业务修复 `07051d7`：档案资源区改用 `buildHudResourceSectionsHtml` 渲染嵌套资源，解决 `[object Object]`；随后 `b8213f7` 自动 bundle 已在远端。
+- 清理规划过时状态：8.13.21 基线、BF6 publish pending、H2 留待 8.13.23、旧启动指令均改为完成/历史状态。
+- backlog 复核：实施项已完成；DM9 为明确归档的孤儿 App.vue 条目；门禁/实机列表保留为未来相关改动的回归模板。
+- 当前进入待命维护状态：暂无已排期的新功能或缺陷；新任务须从最新 `origin/main` 新建 worktree/阶段。
+- 5 项 untracked 用户文件保持未处理。
+
 ## 会话：2026-07-15（Phase 5 · backlog 全面清理）
 
 - **归档/文档化 15 项**：H2(风险四套语义)/C2.4(DB-only)/M8(owner)/M10(解析链)/L4/L5/L9/SM1/SM3/SM4/DM4/DM9/DL5/SL3/WB-06
@@ -22,7 +55,7 @@
 - **标签**：`v8.13.22` → `e568cce`，本地+远端确认
 - **backlog 清理**：RH5 已完成；C1.3 publish-card 镜像验收关单；DL3 并入 H9 关单；DM9 孤儿 App.vue 归档；WB-06 W2 自锁部分关单（冷启动问题拆独立项）；M7 直接回归验证通过关单；M5/SM2/DM6 保持 open 符合源码事实；H2.2/SM1/SL3/DL5 改写指向 live owner
 
-## 会话：2026-07-14（8.13.22 Phase B · 元数据与发布记录准备）— **implementation complete / publish pending**
+## 会话：2026-07-14（8.13.22 Phase B · 元数据与发布记录准备）— **历史记录：当时 implementation complete / publish pending；现已发布**
 
 - **恢复与任务 1–4**：37 个用户文件误入历史提交后已由前序阶段恢复为 untracked，并建立备份分支 `backup/pre-release-recovery-v8.13.22-bd75694-20260714-01`；BF6/RH5 功能链已进入 `main`。
 - **最终候选**：`CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达）。`4fcd23c` 是 RH5 后 bot bundle；`158dcc2` 在其后补齐 production 状态栏 dist，故选后者。该纯 dist push 不会触发后续 `[bot] bundle`，因为 `bundle.yaml` 忽略 `dist/**`。
