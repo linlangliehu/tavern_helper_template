@@ -60,4 +60,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           with-v: true
       - if: ${{ github.repository != 'StageDog/tavern_helper_template' && steps.autotag.outputs.tag != '0.0.0' && steps.autotag.outputs.new-tag != steps.autotag.outputs.tag }}
-        run: git push --delete origin ${{ steps.autotag.outputs.tag }}
+        run: |
+          # 删除旧的自动模板标签，但保留手动发布标签（v8.13.* 等）
+          OLD_TAG="${{ steps.autotag.outputs.tag }}"
+          if echo "$OLD_TAG" | grep -qE '^8\.13\.'; then
+            echo "Skipping delete of release tag v$OLD_TAG"
+          else
+            git push --delete origin "$OLD_TAG" || true
+          fi

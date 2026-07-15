@@ -39,3 +39,10 @@ et --hard
 
 # 本地构建 sourcemap
 /dist/**/*.map
+
+# 审计临时研究文件（会话产生，审计完成后可删）
+.tmp-research/
+
+# 用户本地截图
+屏幕截图*.png
+2026-*.png
