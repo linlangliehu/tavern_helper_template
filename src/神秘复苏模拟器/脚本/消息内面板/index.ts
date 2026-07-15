@@ -544,8 +544,6 @@ function buildDossierSectionsHtml(data: StatusData): string {
   const ability = valueText(data.特殊能力描述, '无');
   const cost = valueText(data.消耗代价, '无');
   const playerStatus = valueText(data.状态, '健康');
-  const resources = valueText(data.灵异资源 ?? _.get(data, '资源') ?? _.get(data, '持有资源'), '');
-
   const deathRisk = riskPresentation(data.风险值, 'death');
   const reviveRisk = riskPresentation(
     toNumber(_.get(data, '驭鬼者状态.总复苏风险')) ?? toNumber(data.厉鬼复苏程度) ?? 0,
@@ -559,12 +557,8 @@ function buildDossierSectionsHtml(data: StatusData): string {
   const eventDomain = valueText(event.鬼域状态, '未知');
   const eventHandle = valueText(event.处理状态, '未知');
 
-  const resourceBlock = resources
-    ? `<details class="mfrs-msg-fold" data-fold="resource" open>
-  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>资源</span></summary>
-  <div class="mfrs-msg-fold-body"><div class="mfrs-msg-info-text">${_.escape(resources)}</div></div>
-</details>`
-    : '';
+  // 委托 buildHudResourceSectionsHtml 处理嵌套对象，避免 String({}) → [object Object]
+  const resourceBlock = buildHudResourceSectionsHtml(data);
 
   return `
 <details class="mfrs-msg-fold" data-fold="identity" open>
