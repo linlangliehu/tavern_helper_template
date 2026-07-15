@@ -319,6 +319,9 @@ function buildActionSuggestionPlans(stat: StatData): TableChangePlan[] {
 async function runMirrorOnce(hostWindow: HostWindow) {
   const api = hostWindow.MysteryDatabaseFrontend;
   if (!api?.applyTableChangePlan || !api.exportCurrentData) return;
+  // AutoCardUpdaterAPI 是底层依赖；数据库脚本可能晚于本模块加载，
+  // 未就绪时静默跳过本次，等下次 schedule 重试。
+  if (!(hostWindow as any).AutoCardUpdaterAPI) return;
 
   const stat = readMvuStat(hostWindow);
   if (!Object.keys(stat).length) return;

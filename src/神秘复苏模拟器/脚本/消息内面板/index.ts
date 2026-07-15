@@ -3585,7 +3585,15 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
       hudMenuOpenTimer = null;
       const live = findHudActionTarget(action.selectors, action.matchText) || target;
       try {
-        live.click();
+        // ST 的 doNavbarIconClick 绑在 .drawer-toggle 子元素上，
+        // 原生 .click() 发在 .drawer-icon 父容器不会向下传播。
+        // 优先找 .drawer-toggle 并走 jQuery trigger。
+        const toggle = live.querySelector?.('.drawer-toggle') as HTMLElement | null;
+        if (toggle && typeof (hostWindow as any).jQuery === 'function') {
+          (hostWindow as any).jQuery(toggle).trigger('click');
+        } else {
+          live.click();
+        }
         if (action.yieldUi) {
           hostWindow.setTimeout(() => {
             if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
@@ -3828,11 +3836,13 @@ function buildHudGachaPanelHtml(): string {
     if (typeof mfrs?.getCurrency === 'function') currency = String(mfrs.getCurrency());
     if (typeof mfrs?.getPity === 'function') {
       const p = mfrs.getPity();
-      pity = typeof p === 'object' ? JSON.stringify(p) : String(p);
       if (typeof p === 'object' && p) {
-        const soft = p.soft ?? p.count ?? p.current;
-        const hard = p.hard ?? p.guarantee;
-        pity = [soft != null && `软保底 ${soft}`, hard != null && `硬保底 ${hard}`].filter(Boolean).join(' · ') || pity;
+        // getPity() 返回 { total, rare, epic }，与完整抽卡面板对齐
+        const epic = Number(p.epic) || 0;
+        const total = Number(p.total) || 0;
+        pity = `★4 还需${Math.max(0, 50 - epic)}抽 · ★6 还需${Math.max(0, 100 - total)}抽`;
+      } else {
+        pity = String(p ?? '—');
       }
     }
     if (typeof mfrs?.getFragments === 'function') fragments = String(mfrs.getFragments());
@@ -4511,6 +4521,12 @@ function unmountHudImmersive() {
   restoreSendFormFromHud();
 
   if (shell) {
+    // 先移焦点再隐藏，避免 aria-hidden 与 focus 冲突（Chrome a11y warning）
+    if (shell.contains(doc.activeElement)) {
+      const textarea = doc.getElementById('send_textarea');
+      if (textarea) textarea.focus();
+      else (doc.activeElement as HTMLElement)?.blur();
+    }
     shell.classList.remove('is-active');
     shell.setAttribute('aria-hidden', 'true');
   }
