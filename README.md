@@ -15,7 +15,7 @@
 
 ### 玩家使用
 
-1. 下载最新角色卡：[神秘复苏模拟器发布版.png](src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png)（v6.28.3）
+1. 下载最新已发布角色卡：[神秘复苏模拟器发布版.png](src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png)（8.13.21；8.13.22 发布准备中）
 2. 在 SillyTavern 中导入角色卡
 3. 选择支持的 AI 模型（推荐 Claude Opus/Sonnet）
 4. 开始游玩
@@ -51,7 +51,16 @@ pnpm install
 
 ## 版本历史
 
-### v6.28.3（2026-06-22）- 当前版本
+### v8.13.22（2026-07-14）- 发布准备中
+- **范围**：BF6 正则/清洗残余、RH5 范围收窄、P0–P3 发布链加固
+- **候选资源**：CDN ref `@158dcc29107f`，cache `v81322_20260714_01`
+- **状态**：开发版元数据已准备；发布版 YAML/PNG、提交、推送和标签仍待完成
+
+### v8.13.21（2026-07-13）- 当前已发布
+- **范围**：BF5 门禁 G2–G5、DM8、WM1/WM2/L8
+- **技术细节**：CDN ref `@f2b7db2cab55`
+
+### v6.28.3（2026-06-22）
 - **修复**：优化协议块清洗时机，确保内存与界面同步
   - 新增 MESSAGE_RECEIVED 监听器，在消息保存时立即清洗
   - 防止界面渲染时内存仍含协议块的问题
@@ -194,7 +203,7 @@ git push origin --delete fix-something
 #### 5. bot 自动构建
 - push 到 main 后，GitHub Actions 自动运行 `bundle.yaml`
 - bot 提交 `[bot] bundle` 并打 tag（如 `v0.0.236`）
-- 更新 `scripts/publish-card.mjs` 的 `CDN_REF` 为 bot bundle commit
+- 更新 `scripts/mfrs-release-constants.mjs` 的 `CDN_REF` 为 bot bundle commit
 
 #### 6. CDN 验证
 ```bash
@@ -315,7 +324,7 @@ import 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@18
 
 1. 提交 source 改动到 main
 2. 等待 bot 自动构建（commit `[bot] bundle`）
-3. 更新 `scripts/publish-card.mjs` 的 `CDN_REF` 为 bot bundle commit
+3. 更新 `scripts/mfrs-release-constants.mjs` 的 `CDN_REF` 为最终 production dist commit
 4. 运行 `pnpm run publish-card`，会自动：
    - 镜像开发版到发布版
    - 替换所有 localhost/127.0.0.1 为 CDN

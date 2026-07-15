@@ -146,8 +146,18 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 - **BF-1 complete**：8.13.14 已合 `origin/main@de29b4a`（`d5cd98f` dist+G1 / `de29b4a` release）
 - **BF0 源码已落（未 commit）**：C1/L7/M6 initvar；C2 schema+json；H1/D1/M11/H3 规则与系统提示；hotfix seed 同步
-- **下一**：commit BF0 → BF0.5 H10 或 BF1
+- **当前真实状态（2026-07-14）**：正在完成 8.13.22 发布清单，完成后再进入 Phase 5
 - 规划真源：`task_plan.md` / `progress.md` / `AUDIT_BUGFIX_BACKLOG.md`（主目录本地文件，未必已 commit）
+
+
+## 8.13.22 发布准备结论（2026-07-14）
+
+- **恢复结果**：误纳 37 个用户文件的旧发布提交已隔离到 `backup/pre-release-recovery-v8.13.22-bd75694-20260714-01`；共享 `main` 已恢复到干净功能链，37 文件继续保持 untracked。
+- **任务 1–4**：BF6 功能与 RH5 范围修复已进入 `main`；`[bot] bundle` 后补做状态栏 production rebuild，最终候选为 `158dcc29107fe17db1a89b8ca6e92585c2acbe8b`，且在 `origin/main` 可达。
+- **门禁事实**：旧 `f2b7db2` pin 下 dist freshness 会失败（当前 committed dist 已前进）；功能 gates 已通过。常量切到新 pin 后，发布 PNG 仍是 8.13.21，故最终 release-PNG/聚合门禁必须留给 publish 后验证，不提前宣称完成。
+- **无 post-dist bundle**：最终候选 `158dcc2` 本身只重建 production 状态栏 dist；`bundle.yaml` 对 `dist/**` 配置 `paths-ignore`，因此纯 dist push 不会再触发 `[bot] bundle`。直接以该远端可达 commit 为 CDN_REF，避免 pin 到更早的 `4fcd23c` 而漏掉最终状态栏产物。
+- **Phase B 元数据**：`RELEASE_VERSION=8.13.22`、cache=`v81322_20260714_01`；开发版 YAML 7 个项目 ref/8 个 cache marker 已统一。发布版 YAML/PNG 保持旧内容，等待 publish-card 生成。
+- **仍未关闭**：H2、M5/M7–M10、DM1–6/DM9、DL*、SM* 及 C1.3 等最终账务项继续保持 open；本阶段未扩大实现范围。
 
 ---
 *新会话：先读 task_plan.md → 本文件 → progress.md → AUDIT_BUGFIX_BACKLOG.md*

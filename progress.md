@@ -1,5 +1,14 @@
 # 进度日志
 
+## 会话：2026-07-14（8.13.22 Phase B · 元数据与发布记录准备）— **implementation complete / publish pending**
+
+- **恢复与任务 1–4**：37 个用户文件误入历史提交后已由前序阶段恢复为 untracked，并建立备份分支 `backup/pre-release-recovery-v8.13.22-bd75694-20260714-01`；BF6/RH5 功能链已进入 `main`。
+- **最终候选**：`CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达）。`4fcd23c` 是 RH5 后 bot bundle；`158dcc2` 在其后补齐 production 状态栏 dist，故选后者。该纯 dist push 不会触发后续 `[bot] bundle`，因为 `bundle.yaml` 忽略 `dist/**`。
+- **元数据**：常量版本改为 `8.13.22`，cache=`v81322_20260714_01`；开发版 `index.yaml` 版本同步，7 个项目资源 ref 与 8 个 cache marker 全部统一。
+- **文档**：创建 `RELEASE_8.13.22.md`；同步 README、backlog、task plan、findings/progress。`task_plan.md` 第 18 行用户预存的 `Phase 5` 修改原样保留。
+- **门禁事实**：旧 pin `f2b7db2` 下 freshness 预检失败（committed dist 已更新）属预期；功能 gates 已通过。未运行完整 gates；发布版 YAML/PNG 仍为 8.13.21，待 publish-card 后由 verification 代理做最终门禁。
+- **保护与反模式记录**：本轮元数据及发布文件尚未提交/推送/tag；Phase B 曾误执行一次 `publish-card --dry-run`，没有写入、没有 build，属已发生的反模式，后续不再重复。未修改发布 PNG、发布版 YAML 或 dist；未启动/停止 watch；37 个 untracked 文件保持原哈希。
+
 ## 会话：2026-07-13（BF6 批 β 续 · RM9/RM1/RM2 显示正则）— **实机验证通过（commit `4ffc47f`）**
 
 - **RM9（done）**：召回索引块（`[不发送]去除` + `[显示]隐藏` 两条）结尾锚 `(?=\n\s*#\d+|$))` → `(?=\n\s*#\d+)|(?=\n\s*\n)|$)`。未闭合 `<supplement>` 时按「下一编号 / 空行段界」停，不再吞到 EOF 删掉后续正文。

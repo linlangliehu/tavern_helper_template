@@ -15,14 +15,14 @@
 **阶段 BF4 — complete（8.13.20）**  
 **阶段 BF5 — complete（门禁 G2–G5 + DM8；部分残余）**  
 **阶段 BF5.5：8.13.21 上线后只读审查 — complete（双路复核通过，`84df0b5` 已 push）**  
-**当前阶段：BF6 — 正则/清洗残余 + 发布链流程加固（目标 8.13.22；批 β+δ）**
+**当前阶段：Phase 5 — 清理剩余 backlog（H2、M5/M7‑M10、RH3‑5、RM1‑2/RM7‑9、DM1‑6/DM9、DL*、SM* 等）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | **BF5 已发 8.13.21**；线上请重导 PNG |
-| 我要去哪里？ | 用户重导 PNG；继续残余 H2/M5/M7–10/RM7–9/DM* 等 |
+| 我在哪里？ | **正在完成 8.13.22 发布清单**；BF6 源码/production dist 与元数据已准备，发布版生成和终验仍 pending |
+| 我要去哪里？ | **完成 8.13.22 发布清单后再进入 Phase 5**，清理剩余 backlog |
 | 目标是什么？ | 变量/协议/正则/DB/开局契约对齐，回归后继续发版 |
 | 我学到了什么？ | `findings.md` + `AUDIT_BUGFIX_BACKLOG.md`；C7 根因=发版未 pin 含 dist 的 commit |
 | 我做了什么？ | `progress.md` |
@@ -134,17 +134,17 @@
 - [x] 结论入库 backlog「BF5 上线后审查」区 + progress；提交 push `84df0b5`
 - **状态：** complete
 
-### 阶段 BF6：正则/清洗残余 + 发布链加固 — **in_progress（目标 8.13.22，批 β+δ）**
+### 阶段 BF6：正则/清洗残余 + 发布链加固 — **implementation complete（8.13.22 发布准备中）**
 
 **批 β · 正则/清洗残余（与 G3 同域，风险低）**
 - [x] **RM7** #14/#15（JSONPatch/draft/pacing/修改确认）补 prompt 去除 + hotfix 清洗，止残渣回传 AI
 - [x] **RM8** #10/#11 ↔ hotfix L491/493 逐字清单同步（防 RH6 式不同步）；注释互指 — **done（BF6 低风险子集）**：G3 加白名单同步断言（display⊆hotfix 不变式）+ hotfix 互指注释；负向测试验证漂移→fail
-- [ ] **RM9** #3/#4 `$` 兜底截断时勿删到消息尾 — 留下一批（改运行时清洗）
-- [ ] **RH3** hotfix `recoverRecentRawProtocolMessages` 补调 `cleanProtocolBlocks`（导入旧档漏洗）— 留下一批（改运行时行为）
+- [x] **RM9** #3/#4 `$` 兜底截断时勿删到消息尾 — **done（commit `4ffc47f`，实机验证）**
+- [x] **RH3** hotfix `recoverRecentRawProtocolMessages` 补调 `cleanProtocolBlocks`（导入旧档漏洗）— **done（实机验证）**
 - [x] **RH4** #25 sp 标签列表 ↔ #11 广义 `(sp|mfrs)_` 对齐 — **done**（并入 RM8 的 G3 断言）
-- [ ] **RH5** 收窄/禁 #19–22 Name/Status/Location 英行改写（短标签 UI 已关）
-- [ ] **RM1** 裸 choices/JSONPatch 锚文末，降正文假阳性
-- [ ] **RM2** 关键词高亮勿改写 `【本轮摘要】` 内字段
+- [x] **RH5** 收窄 #20–22 Name/Status/Location 英行改写：仅闭合 `<sp_status>` 内中文化，标签外正文不改 — **done（`baf44da`）**
+- [x] **RM1** 裸 choices/JSONPatch 锚加入 CJK 正文边界 — **done（`4ffc47f`）**
+- [x] **RM2** 关键词高亮勿改写 `【本轮摘要】` 内字段 — **done（`4ffc47f`）**
 
 **批 δ · 发布链流程加固（本次审查产出）**
 - [x] **P1** publish-card build 后加 `verify-mfrs-release-png --from-publish-card` 硬门禁（与 G1 同级 die-on-fail）— **done**：`verifyReleasePng(card)` 每卡 bundle 后调用；错 ref→exit1→die；dry-run 验证跳过；聚合门禁 6/6 绿
@@ -159,7 +159,16 @@
 - 发版只走 `pnpm publish-card`；禁手改 PNG
 
 **回归门槛**：改完跑 `pnpm verify:mfrs-gates` 全绿 → production build → publish 8.13.22
-- **状态：** in_progress
+- **状态：** implementation complete；候选 production dist=`158dcc29107f`，元数据已准备；publish/PNG/release commit/tag 仍 pending
+
+**当前执行：正在完成 8.13.22 发布清单，完成后再进入 Phase 5（Phase B）**
+- [x] `CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达；纯 `dist/**` push 不触发 bundle workflow）
+- [x] cache=`v81322_20260714_01`，版本=`8.13.22`
+- [x] 开发版 YAML：7 refs / 8 markers；33 regex / 8 scripts 结构保持
+- [x] `RELEASE_8.13.22.md` 与 README/backlog/planning 记录已准备
+- [ ] verification 代理复核独立门禁
+- [ ] publish-card 生成发布版 YAML/PNG
+- [ ] release commit/push/tag 与最终验收
 
 **留待 8.13.23（批 α）**：H2 风险语义统一——真源落点 `mvu-core-mirror.ts`（非 App.vue 孤儿）+ ~8 世界书契约；工程量大，单独发版
 

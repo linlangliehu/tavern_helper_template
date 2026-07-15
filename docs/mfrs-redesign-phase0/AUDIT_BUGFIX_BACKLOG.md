@@ -6,7 +6,7 @@
 - 二轮：正则 33 · SQL/14 表 · 开局/欢迎页 · 世界书规则与锚点路径  
 **基线发布版**：8.13.13（`28777ad` / `…-v81313-always-unlock-send`）  
 **范围**：`src/神秘复苏模拟器`  
-**状态**：全部 **待修**（未开工）
+**状态**：滚动维护；BF0–BF6 已完成项见勾选，8.13.22 发布准备中
 
 > 说明：本清单只收录已核实或高置信交叉对照缺陷，不保证穷尽全部运行时 bug。  
 > 修完一项请改为 `[x]` 并注明 PR/commit；发版后在对应 `RELEASE_*.md` 交叉引用。  
@@ -234,7 +234,7 @@
 - [x] **RH2** 正则 **id 冲突**：`…2004` / `…2005` 被开局渲染与思维链共用 → 换新 UUID 后发版 — **BF2**（思维链 → `e8f1…f60/f61`）
 - [x] **RH3** prompt 侧协议 strip `最大深度: 3`：评估提高或依赖 hotfix 持久清洗 mes — **done（BF6，实机验证）**：`recoverRecentRawProtocolMessages` 补写 MVU 后调 `cleanProtocolBlocks`，导入旧档也清洗；snapshot 幂等保 raw（devtools 验证首次写 raw+已有不覆盖）
 - [x] **RH4** `#25` sp 标签列表与 `#11` 广义 `(sp|mfrs)_` 对齐 — **done（BF6）**：G3 加白名单同步断言（hotfix 清洗白名单 ↔ 显示正则 …2025 白名单，不变式 display⊆hotfix）；负向测试验证漂移→fail
-- [ ] **RH5** 禁用或收窄 `#19–22` Name/Status/Location 英行改写（短标签 UI 已关）
+- [x] **RH5** 收窄 `#20–22` Name/Status/Location 英行改写：仅在闭合 `<sp_status>` 内中文化，标签外与闭合后正文保持原样；开发/发布两版行为与顺序同步 — **BF6，commit `baf44da`，8.13.22 待发布**
 
 ### Medium
 
@@ -430,7 +430,8 @@
 | **BF2** | C6 + H4–H8 + R1–R3 + RH2 + RH6 + RM3–RM6 | **已发 8.13.18**（`dc27b52`） |
 | **BF3** | D2–D3 + DH* + DM7 + S1 + SH6 + SH* | **已发 8.13.19**（`5b10525`） |
 | **BF4** | W1–W4 + WM3–WM8 + M1–M4 + RH1 + DH2 + SH5 + C5 + L6 | **已发 8.13.20**（`de42f2c`）；余 RM7–9/DM9/DL*/WM1–2 可挂 BF5 |
-| **BF5** | 回归门禁 + G2–G5 + DM8 + WM1/2/L8 | **门禁完成**；`pnpm verify:mfrs-gates`；可选 8.13.21 交付文案 |
+| **BF5** | 回归门禁 + G2–G5 + DM8 + WM1/2/L8 | **已发 8.13.21**（`f2b7db2`） |
+| **BF6** | RM1/2/7/8/9 + RH3/4/5 + P0–P3 | **源码与 production dist 已完成**；8.13.22 元数据已准备，publish/PNG/提交/标签待完成（候选 `158dcc29107f`） |
 
 ---
 
@@ -498,5 +499,6 @@
 | 2026-07-13 | **三轮 A2**：7 轨盲审差分入库——新增 C7/H10/RH6/SH6/M11 + 32 项 + 门禁 G1–G5；修正 C4 降级、C5 误报关闭、M6/L1 升级、W1 休眠标注、多项证据扩容 |
 | 2026-07-13 | **BF-1 关单**：C7+G1 → 8.13.14（`d5cd98f`/`de29b4a`，分支 `codex/bf1-recovery`，待合 main） |
 | 2026-07-13 | **BF5 上线后审查**：8.13.21 双路只读复核通过（6 门禁全绿/硬约束未破坏）；新增流程门禁质量项 P0–P3（release-png/dist-freshness 接入 + $ref 假阴 + 自证式局限） |
+| 2026-07-14 | **BF6/8.13.22 准备**：RM1/2/7/8/9、RH3/4/5、P0–P3 已完成；RH5 仅作用于闭合 `<sp_status>`；候选 CDN_REF `158dcc29107f`，publish/PNG/tag 仍 pending |
 
 *关联：`TASKLIST_BETA.md`、`RELEASE_8.13.14.md`、`task_plan.md`。*
