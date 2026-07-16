@@ -1,5 +1,16 @@
 # 发现与决策 · 神秘复苏审计
 
+## 沉浸 HUD 中栏发版基线（2026-07-16）
+
+- 功能分支含 3 个已推送提交：`7155b09`（Task #1/#2/#5）、`a8244ae`（Task #3/#4）、`116612e`（真页发现的精确字段匹配修复）。
+- `origin/main` 与功能分支共同基线为 `9a9da19`，当前无需 rebase；发布前必须先让 production dist commit 在远端可达，再将其完整 SHA 写入 `CDN_REF`。
+- release constants 和角色卡内版本仍为 8.13.31 / `8ee8c58` / `v81331_20260716_01`。
+- Git 标签已存在 `v8.13.32`、`v8.13.33`、`v8.13.34`、`v8.13.35`；新内容版本必须避开这些已占用标签，并核对 bot bundle 的标签行为。
+- `.github/workflows/bundle.yaml` 仅在 `main` 的非 `dist/**` 推送触发，并由 `phish108/autotag-action` 根据最新标签自动递增；仓库 `package.json` 没有 version 字段。因此本轮使用 **8.13.36**，最后一次性推送完整发布链到 `main`，再核对/纠正自动 tag 指向。
+- 最终发布物只能由 `pnpm publish-card 神秘复苏模拟器发布版` 生成，不手改发布版 YAML 或 PNG。
+- production dist 候选为 `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`；已在 `origin/worktree-feat-immersive-center-workspaces` 可达并通过 G1 production 重构建一致性验证。
+- 2026-07-16 最终 CDN 实测：发布卡中的 7 个 `testingcf.jsdelivr.net` URL 全部 HTTP 200，下载字节 SHA256 与本地 `dist/` 对应文件逐项完全一致。
+
 ## 需求
 - 审查角色卡：脚本、MVU、EJS、系统提示词
 - 再审未覆盖：正则、SQL、开局/欢迎、世界书规则/锚点

@@ -1,5 +1,23 @@
 # 进度日志
 
+## 会话：沉浸 HUD 中栏改造 · 发布准备 — **in_progress**
+
+- 用户要求按项目既有流程提交、推送、更新角色卡版本与 CDN，并验收最终角色卡。
+- 功能分支 `worktree-feat-immersive-center-workspaces` 已推送；本地/远端 HEAD 均为 `116612e`，相对 `origin/main@9a9da19` 领先 3 个提交。
+- Task #1–#5 已完成真页验收；`pnpm verify:mfrs-gates` 通过（archive-ui phase5=232 checks），`verify:mfrs-frontend` / database frontend P3 通过，`git diff --check` 干净。
+- 当前发布内容仍为 8.13.31（CDN_REF `8ee8c58`），但仓库 tag 已存在至 `v8.13.35`；新版本号须先核对 tag/自动 bundle 约定，避免重用已占用标签。
+- 已确认 `.github/workflows/bundle.yaml` 只监听 `main` 非 dist 推送，并用 autotag 递增最新标签；仓库无 `package.json.version`。本轮确定发布 **8.13.36**，在功能分支完成全部发布提交后仅一次 fast-forward 到 `main`，避免中途消耗多个自动标签。
+- 发布前门禁复跑通过：聚合 gates 7/7（archive-ui 232 checks）、database frontend P3、`git diff --check` 均通过。
+- `pnpm build` production 成功；仅 `dist/神秘复苏模拟器` 4 个文件变化（消息内面板、数据库前端、旧前端兼容包、状态栏 module-id），schema/开发卡/发布卡未变化。G1 校验整个目标 dist，因此 4 个产物作为同一 CDN 候选提交。
+- production dist 提交 `9c5a467` 已推送远端功能分支；完整 SHA `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`。G1 确认该 SHA 远端可达、dist 与提交一致、从当前源码重构建后零差异。
+- 发布元数据已切换为 8.13.36 / cache `v81336_20260716_01` / CDN_REF `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`；发布版目录尚未镜像或打包。
+- `pnpm publish-card 神秘复苏模拟器发布版` 已成功：G1 再次通过，镜像第一条消息 1、系统提示词 1、对话示例 1、世界书 386、数据库 1，并生成发布版 PNG。
+- publish-card 内置 release-png 门禁通过：发布 PNG chara/ccv3 均为 version=8.13.36、refs=7、cache=8、regex=33、scripts=8。
+- 独立复验通过：聚合 gates 7/7（archive-ui 232 checks）、database frontend P3、开发卡与发布卡双 PNG JSON 验证；两张卡的 chara/ccv3 元数据完全一致。
+- 数据镜像逐文件 SHA256 校验通过：第一条消息/系统提示词/对话示例/世界书 386 文件/数据库及头像均与开发版一致；dist 保持 clean。
+- **暂停断点**：README 与发布/规划记录已更新；7 个实际 CDN URL 均 HTTP 200，远端字节 SHA256 与 `CDN_REF=9c5a467...` 对应本地 dist 完全一致。尚未提交当前发布元数据与角色卡产物，尚未推送最新 release commit 到功能分支/main，尚未创建或纠正 `v8.13.36` tag。
+- 本轮硬约束：不安装依赖、不动 `node_modules`、不启动 watch、不手改 PNG；production dist 与发布物分阶段提交，发布只走 `pnpm publish-card`。
+
 ## 会话：沉浸 HUD 中栏改造 · Task #3/#4 真页验收 + hudRowField 修复 — **完成**
 
 承接 Task #3/#4 源码提交（`a8244ae`）。本轮进行 CDP 真页验收，发现并修复 `hudRowField` 的 `includes` 匹配优先级 bug。
