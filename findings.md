@@ -175,18 +175,16 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
   - toggle 解析检查 self / closest / descendant 三个方向。
 - **验证**：archive-ui phase5 **212 checks PASS**，聚合门禁 **7/7 PASS**；ST 真机 8 个 drawer 均保持 >2.5s，快速切换 last-action-wins，原生关闭后 HUD 自动释放且不二次关闭，主动关闭路径仍正常。
 
-### 发布边界
+### 发布结果
 
-- 已发布内容：**8.13.29**（release `410454b`；CDN dist `95981c9` / cache `v81329_20260715_01`）。
-- 仓库头：`origin/main@ec14755` / tag `v8.13.30`，只是发布后的 bot bundle。
-- 本节两项修复目前仅存在于隔离 worktree 与本地 production dist，**未 commit、push、publish 或写入发布 PNG**。
+- **8.13.31 已发布**（release `4c94a4e`；CDN_REF `8ee8c58` / cache `v81331_20260716_01`；tag `v8.13.31`）。
+- publish-card 门禁通过：G1 dist 新鲜度 ✓；release-png version=8.13.31 refs=7 cache=8 regex=33 scripts=8 ✓。
 
-## 当前状态快照（2026-07-15）
+## 当前状态快照（2026-07-16）
 
-- **审计与历史发布**：BF0–BF6、Phase 5 已完成；8.13.22 是该审计周期的历史发布结点。沉浸式按键审查修复随后已发布为 **8.13.29**（release `410454b`，CDN dist `95981c9`）。
-- **仓库最新基线**：当前 worktree 基于 `origin/main@ec14755`（tag `v8.13.30`）；它是 8.13.29 发布后的自动 bundle，不包含本地未提交 MAINT-29 修复。
-- **当前任务状态**：MAINT-29-01/02 已完成源码、production build、静态门禁和 SillyTavern 真机验证；等待用户决定后续提交/推送/发布。
-- **发布边界**：未运行 publish-card，未改发布 PNG，不能把黄金储备与 watcher 修复描述为已进入 8.13.29。
+- **审计与历史发布**：BF0–BF6、Phase 5 已完成；8.13.22 是该审计周期的历史发布结点。沉浸式按键审查修复发布为 8.13.29；MAINT-29 黄金储备与 drawer watcher 修复发布为 **8.13.31**。
+- **当前发布版本**：**8.13.31**（release `4c94a4e`，CDN_REF `8ee8c58`，cache `v81331_20260716_01`，tag `v8.13.31`）。
+- **当前任务状态**：审计与维护周期已完成；暂无已排期新任务。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）

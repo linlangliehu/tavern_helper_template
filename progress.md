@@ -1,6 +1,18 @@
 # 进度日志
 
-## 会话：2026-07-15（8.13.29 发布后维护：黄金储备 + drawer watcher）— **complete / unpublished**
+## 会话：2026-07-16（8.13.31 发布）— **complete**
+
+- 将 MAINT-29 修复提交、推送并发布为 **8.13.31**。
+- 源码提交 `5e52dcb`：MAINT-29-01 黄金储备正式路径 + MAINT-29-02 drawer watcher 生命周期，含 production dist、门禁脚本、文档。
+- production dist 提交 `8ee8c58`：状态栏 module-id rebuild（CDN_REF 指向此 commit）。
+- release constants 更新：`RELEASE_VERSION=8.13.31`，`CDN_REF=8ee8c58`，`CDN_CACHE_VERSION=v81331_20260716_01`。
+- 开发版 index.yaml：版本 8.13.31，7 个脚本 URL ref + 8 个 cache marker 全部更新。
+- `pnpm publish-card 神秘复苏模拟器发布版` 完成：G1 dist 新鲜度通过；release-png 门禁 version=8.13.31 refs=7 cache=8 regex=33 scripts=8 通过。
+- release commit `4c94a4e`：含 constants、开发版/发布版 YAML、开发版/发布版 PNG。
+- 推送 `origin/main`；tag `v8.13.31` → `4c94a4e`（force push 修正 bot bundle 自动创建的旧 tag）。
+- 发布后远端状态：`992d922 [bot] Bump deps` → `e35d6c7 [bot] bundle` → `4c94a4e release 8.13.31` → ...。
+
+## 会话：2026-07-15（8.13.29 发布后维护：黄金储备 + drawer watcher）— **complete / published as 8.13.31**
 
 - 基线：隔离 worktree `worktree-fix-mfrs-drawer-gold` 从 `origin/main@ec14755`（tag `v8.13.30` bot bundle）实施；已发布内容仍为 **8.13.29**（release `410454b`，CDN dist `95981c9`，cache `v81329_20260715_01`）。
 - **MAINT-29-01**：消息内面板资源 builder 读取优先级改为 `灵异资源.黄金储备` → `灵异资源.黄金` → `灵异资源.鬼钱` → 顶层 `黄金`；保留对象格式化与 HTML escape，标准 schema 数据不再漏掉黄金区。

@@ -1,7 +1,7 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
 ## 目标
-BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布后的两项本地维护修复（黄金储备正式路径、drawer overlay watcher 生命周期），已通过 production build 与 SillyTavern 真机验证，但**尚未发布、提交或推送**。
+BF0–BF6、Phase 5、8.13.29 与 **8.13.31** 发布均已完成。MAINT-29 黄金储备正式路径与 drawer watcher 生命周期修复已发布为 **8.13.31**（release `4c94a4e`；CDN_REF `8ee8c58`；cache `v81331_20260716_01`；tag `v8.13.31`）。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -17,17 +17,17 @@ BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布
 **阶段 BF5.5：8.13.21 上线后只读审查 — complete（双路复核通过，`84df0b5` 已 push）**  
 **Phase 5 已完成 — 审计 backlog 已全部修复、关单或明确归档；8.13.22 已发布（`v8.13.22` → `e568cce`）**
 **8.13.29 已发布 — 沉浸式按键审查修复已进入角色卡（release `410454b`；CDN dist `95981c9`）**
-**阶段 MAINT-29：黄金储备 + drawer watcher 发布后维护 — complete（本地源码/build/真机）；unpublished**
+**8.13.31 已发布 — MAINT-29 黄金储备 + drawer watcher（release `4c94a4e`；CDN_REF `8ee8c58`；tag `v8.13.31`）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 隔离 worktree 基于 `origin/main@ec14755`（tag `v8.13.30` bot bundle）；MAINT-29 两项本地修复已完成并验证 |
-| 我要去哪里？ | 等用户决定是否提交/推送/发版；本轮不得自行 publish、commit、push 或 tag |
-| 目标是什么？ | 保留 8.13.29 已发布基线，后续发布时交付黄金储备正式路径与稳定的 drawer 生命周期 |
+| 我在哪里？ | 8.13.31 已发布（release `4c94a4e`，tag `v8.13.31`）；审计与维护周期完成 |
+| 我要去哪里？ | 待命；暂无已排期新任务 |
+| 目标是什么？ | 8.13.31 已交付黄金储备正式路径与稳定的 drawer 生命周期 |
 | 我学到了什么？ | `灵异资源.黄金储备` 才是 schema 正式字段；drawer 自动关闭根因是 watcher 自重入、瞬时假阴与破坏性自动恢复叠加 |
-| 我做了什么？ | 修源码与 production dist；archive-ui 212 项、聚合 7/7 通过；8 个 drawer >2.5s、快速切换、原生关闭与黄金显示均经 ST 真机验证 |
+| 我做了什么？ | 修源码与 production dist；archive-ui 212 项、聚合 7/7 通过；8 个 drawer >2.5s 真机验证；publish-card 生成 8.13.31 PNG 并推送 |
 
 ## 硬约束（勿破）
 
@@ -42,11 +42,10 @@ BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.13.29**（release `410454b`；CDN_REF `95981c9`；cache `v81329_20260715_01`） |
-| 仓库运行时基线 | **`ec14755`**（tag `v8.13.30`，8.13.29 发布后的 bot bundle） |
-| 当前本地维护 | **MAINT-29-01** 黄金储备正式路径；**MAINT-29-02** drawer watcher epoch/稳定关闭/非破坏性释放 |
-| 分支 | 隔离 worktree `worktree-fix-mfrs-drawer-gold`，基于 `origin/main@ec14755` |
-| 状态 | **实现、production build、门禁与真机已完成；尚未 commit/push/publish** |
+| 发布内容版本 | **8.13.31**（release `4c94a4e`；CDN_REF `8ee8c58`；cache `v81331_20260716_01`；tag `v8.13.31`） |
+| 仓库运行时基线 | **`992d922`**（8.13.31 发布后的 bot bundle） |
+| 分支 | 隔离 worktree `worktree-fix-mfrs-drawer-gold` |
+| 状态 | **8.13.31 已发布、推送并打 tag** |
 
 ## 各阶段
 
@@ -175,7 +174,7 @@ BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布
 **H2 后续处理**：Phase 5 已完成四套风险语义文档化；live 路径无需为此另开 8.13.23 重构。
 
 
-### 阶段 MAINT-29：8.13.29 发布后维护 — **complete（本地未发布）**
+### 阶段 MAINT-29：8.13.29 发布后维护 — **complete（8.13.31 已发布）**
 
 - [x] **MAINT-29-01**：`buildHudResourceSectionsHtml()` 优先读取 schema 正式字段 `灵异资源.黄金储备`，保留 `黄金/鬼钱/顶层黄金` 旧存档 alias。
 - [x] **MAINT-29-02**：统一已知 drawer selector；overlay watcher 改为 epoch + timer ownership + opening grace + stable-close debounce；自动恢复只做非破坏性 release，显式关闭仍保留主动关闭语义。
@@ -183,8 +182,8 @@ BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布
 - [x] `verify:mfrs-archive-ui` 独立门禁新增，phase5 共 **212 checks**；接入 `verify:mfrs-gates` 后聚合 **7/7 PASS**。
 - [x] production `pnpm build` 完成；目标 dist 已更新。
 - [x] SillyTavern 真机：8 个 drawer 均保持 >2.5s；快速切换 last-action-wins；原生关闭后 HUD 自动非破坏性释放；“关闭面板”主动关闭正常；黄金显示无 `[object Object]`。
-- [ ] commit / push / publish / tag — **不在本轮授权范围，未执行**。
-- **状态：** complete（源码/build/真机）；unpublished
+- [x] commit / push / publish / tag — **8.13.31 已发布（release `4c94a4e`；tag `v8.13.31`）**。
+- **状态：** complete（8.13.31 已发布）
 
 ## 合并关单
 
@@ -207,13 +206,12 @@ BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布
 | 发布只走 publish-card | 禁手改 PNG |
 | 文案质量/全文润色不在本轮 | 只修功能路径 bug |
 
-## 当前维护状态
+## 当前待命状态
 
-1. **MAINT-29-01/02 已在隔离 worktree 完成并通过门禁、production build 与真机验收，但尚未发布。**
-2. 已发布内容仍是 8.13.29（release `410454b`，CDN dist `95981c9`）；`origin/main@ec14755` / `v8.13.30` 是发布后的自动 bundle，不代表本地 MAINT-29 修复已上线。
-3. 后续若用户要求发布：先精确审查/提交当前 4 个业务文件，再按既定 publish-card 流程生成新 pin；不得手改发布 PNG。
-4. 世界书全文文案、性能安全、多 ST 全量回归等从未纳入本轮，若需要必须作为新任务单独立项。
-5. 主工作树既有 dirty/untracked 用户文件不纳入任务，也不自动修改、提交或删除。
+1. **8.13.31 已发布**：MAINT-29-01/02 修复已进入角色卡（release `4c94a4e`，CDN_REF `8ee8c58`，tag `v8.13.31`）。
+2. 审计周期（BF0–BF6、Phase 5）与后续维护（8.13.23–8.13.31）已全部完成。
+3. 世界书全文文案、性能安全、多 ST 全量回归等从未纳入本轮，若需要必须作为新任务单独立项。
+4. 主工作树既有 dirty/untracked 用户文件不纳入任务，也不自动修改、提交或删除。
 
 ## 遇到的错误
 
@@ -239,7 +237,7 @@ BF0–BF6、Phase 5 与 8.13.29 发布均已完成；当前完成 8.13.29 发布
 ```
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md、docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md。
-已发布内容为 8.13.29（410454b，CDN 95981c9）；仓库基线 origin/main@ec14755 / v8.13.30 是后续 bot bundle。MAINT-29 黄金储备与 drawer watcher 修复已在 worktree 完成 build/门禁/真机，但未 commit、push 或 publish；继续前先看当前 diff，勿把本地修复误写成已上线。
+当前已发布内容为 8.13.31（release 4c94a4e，CDN_REF 8ee8c58，tag v8.13.31）；暂无已排期新任务。
 ```
 
 ## 备注
