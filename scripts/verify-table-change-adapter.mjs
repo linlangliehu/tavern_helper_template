@@ -41,6 +41,7 @@ function loadAdapter() {
 
 const {
   applyTableChangePlan,
+  createMemoryMutationExecutor,
   listTableMetadata,
   previewTableChangePlan,
 } = loadAdapter();
@@ -58,6 +59,8 @@ const RISK_LOW = '\u4f4e';
 const RISK_MID = '\u4e2d';
 const RISK_UNKNOWN = '\u672a\u77e5';
 const TABLE_CHRONICLE = '\u4e8b\u4ef6\u7eaa\u8981';
+const TABLE_COLLECTED_ARCHIVES = '\u6536\u5f55\u6863\u6848';
+const TABLE_COLLECTED_RULES = '\u6536\u5f55\u89c4\u5f8b';
 const COL_CODE_INDEX = '\u7eaa\u8981\u7f16\u53f7';
 const COL_TIME_SPAN = '\u65f6\u95f4\u8de8\u5ea6';
 const COL_RELATED_EVENT = '\u5173\u8054\u4e8b\u4ef6';
@@ -1713,5 +1716,151 @@ assertError(
   }, templateChronicleRuntime, mysteryTemplateData),
   'CHRONICLE_APPEND_ONLY',
 );
+
+// 沉浸记忆工作台：严格新增/修改，不允许公开 plan 伪造人工删除确认。
+const memoryExecutor = createMemoryMutationExecutor();
+assert.equal(typeof memoryExecutor.applyConfirmedMemoryDelete, 'function', 'private memory executor must expose confirmed delete only to its owner');
+const memoryDeleteCapability = memoryExecutor.confirmedMemoryDeleteCapability;
+const forgeDeletePlan = previewTableChangePlan({
+  action: 'deleteRow',
+  table: 'chronicle',
+  match: { row_id: 1 },
+  confirmed: true,
+  capability: 'human',
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(forgeDeletePlan.ok, false, 'forged plan fields must not unlock chronicle deletion');
+assert.ok(
+  forgeDeletePlan.errors.some(error => error.code === 'TABLE_DELETE_FORBIDDEN' || error.code === 'CHRONICLE_APPEND_ONLY'),
+  `forged chronicle delete should remain blocked: ${JSON.stringify(forgeDeletePlan.errors)}`,
+);
+
+const strictDuplicateInsert = memoryExecutor.previewMemoryChange({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    code_index: 'SP0001',
+    time_span: '2004-07-01 10:30 ~ 11:00',
+    related_event: '七中敲门事件',
+    summary: '严格模式重复插入',
+    chronicle_text: chronicleText,
+  },
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(strictDuplicateInsert.ok, false, 'strict memory insert must not promote duplicate insert to update');
+assert.ok(strictDuplicateInsert.errors.some(error => error.code === 'UNIQUE_VIOLATION'), `strict duplicate should be unique error: ${JSON.stringify(strictDuplicateInsert.errors)}`);
+const publicDuplicateMemoryInsert = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    code_index: 'SP0001',
+    time_span: '2004-07-01 10:30 ~ 11:00',
+    related_event: '七中敲门事件',
+    summary: '公开路径重复插入',
+    chronicle_text: chronicleText,
+  },
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(publicDuplicateMemoryInsert.ok, false, 'public memory plan must also use strict duplicate semantics');
+assert.ok(publicDuplicateMemoryInsert.errors.some(error => error.code === 'UNIQUE_VIOLATION'));
+
+const strictChronicleInsert = memoryExecutor.previewMemoryChange({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 10:30 ~ 11:00',
+    related_event: '七中敲门事件',
+    summary: '严格模式自动编号',
+    chronicle_text: chronicleText,
+  },
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(strictChronicleInsert.ok, true, `strict chronicle insert should generate row_id/code: ${JSON.stringify(strictChronicleInsert.errors)}`);
+assert.ok(strictChronicleInsert.affectedColumns.includes('row_id'), 'strict chronicle insert must generate row_id');
+assert.ok(strictChronicleInsert.affectedColumns.includes(COL_CODE_INDEX), 'strict chronicle insert must generate SP code');
+
+const strictNoFallbackCalls = [];
+const strictNoFallback = await memoryExecutor.applyMemoryChange({
+  async insertRow() { return -1; },
+  async importTableAsJson() { strictNoFallbackCalls.push('import'); return true; },
+}, {
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 10:30 ~ 11:00',
+    related_event: '七中敲门事件',
+    summary: '严格模式失败',
+    chronicle_text: chronicleText,
+  },
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(strictNoFallback.ok, false, 'strict memory failure must surface instead of snapshot fallback');
+assert.deepEqual(strictNoFallbackCalls, [], 'strict memory mutation must never import snapshot fallback');
+
+const strictCollectedArchivesRuntime = {
+  mate: { type: 'chatSheets', version: 1 },
+  sheet_collected_archives: {
+    ...mysteryTemplateData.sheet_collected_archives,
+    content: [
+      mysteryTemplateData.sheet_collected_archives.content[0],
+      [1, '敲门鬼', '未收录', '鬼信息', '已知', '猜测', '未知', 30, '不完整', '无', '摘要'],
+    ],
+  },
+};
+assertError(memoryExecutor.previewMemoryChange({
+  action: 'updateCell',
+  table: 'collected_archives',
+  match: { row_id: 1 },
+  set: { archive_status: '已收录' },
+}, strictCollectedArchivesRuntime, mysteryTemplateData), 'CHECK_RANGE_VIOLATION');
+const strictArchiveInsert = memoryExecutor.previewMemoryChange({
+  action: 'insertRow',
+  table: 'collected_archives',
+  data: {
+    archive_ghost_name: '鬼影',
+    archive_status: '未收录',
+    ghost_info: '新的厉鬼信息',
+    known_law: '未知',
+    suspected_law: '未知',
+    ghost_domain: '未知',
+    archive_progress: 0,
+    archive_completeness: '不完整',
+    callable_scope: '无',
+    public_summary: '新档案',
+  },
+}, strictCollectedArchivesRuntime, mysteryTemplateData);
+assert.equal(strictArchiveInsert.ok, true, `strict collected archive insert should generate row_id: ${JSON.stringify(strictArchiveInsert.errors)}`);
+assert.ok(strictArchiveInsert.affectedColumns.includes('row_id'), 'strict collected archive insert must generate row_id');
+
+const strictDeleteCalls = [];
+const confirmedMemoryDelete = await memoryExecutor.applyConfirmedMemoryDelete({
+  async deleteRow(options) { strictDeleteCalls.push(options); return true; },
+}, {
+  action: 'deleteRow',
+  table: 'chronicle',
+  match: { row_id: 1 },
+}, templateChronicleRuntime, mysteryTemplateData, memoryDeleteCapability);
+assert.equal(confirmedMemoryDelete.ok, true, `confirmed executor delete should pass: ${JSON.stringify(confirmedMemoryDelete.errors)}`);
+assert.equal(strictDeleteCalls.length, 1, 'confirmed executor should call deleteRow exactly once');
+assert.equal(strictDeleteCalls[0].rowIndex, 1, 'confirmed executor must resolve current row_id to authoritative row index');
+const confirmedNonMemoryDelete = await memoryExecutor.applyConfirmedMemoryDelete({
+  async deleteRow() { throw new Error('non-memory delete must never reach vendor'); },
+}, {
+  action: 'deleteRow',
+  table: 'global_state',
+  match: { row_id: 1 },
+}, templateChronicleRuntime, mysteryTemplateData, memoryDeleteCapability);
+assert.equal(confirmedNonMemoryDelete.ok, false, 'confirmed executor must retain non-memory delete ban');
+assertError(confirmedNonMemoryDelete, 'TABLE_DELETE_FORBIDDEN');
+
+// 收紧可达性：缺少闭包令牌的裸调（含伪造 plan 字段）必须被拒，绝不触达 vendor。
+const unauthorizedDeleteCalls = [];
+const unauthorizedMemoryDelete = await memoryExecutor.applyConfirmedMemoryDelete({
+  async deleteRow() { unauthorizedDeleteCalls.push('delete'); throw new Error('bare executor delete must never reach vendor'); },
+}, {
+  action: 'deleteRow',
+  table: 'chronicle',
+  match: { row_id: 1 },
+  confirmed: true,
+  capability: 'human',
+}, templateChronicleRuntime, mysteryTemplateData);
+assert.equal(unauthorizedMemoryDelete.ok, false, 'bare executor delete without closure capability must be rejected');
+assertError(unauthorizedMemoryDelete, 'UNAUTHORIZED');
+assert.deepEqual(unauthorizedDeleteCalls, [], 'unauthorized delete must never reach vendor');
 
 console.log('verify-table-change-adapter: passed');

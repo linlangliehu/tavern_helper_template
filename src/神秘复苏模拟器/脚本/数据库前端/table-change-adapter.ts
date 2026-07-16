@@ -34,10 +34,12 @@ export type TableChangeErrorCode =
   | 'CHECK_RANGE_VIOLATION'
   | 'CHECK_PATTERN_VIOLATION'
   | 'LENGTH_VIOLATION'
+  | 'UNIQUE_VIOLATION'
   | 'CHRONICLE_APPEND_ONLY'
   | 'CHRONICLE_CODE_IMMUTABLE'
   | 'TABLE_DELETE_FORBIDDEN'
   | 'TABLE_INSERT_FORBIDDEN'
+  | 'UNAUTHORIZED'
   | 'API_UNAVAILABLE'
   | 'API_MUTATION_FAILED';
 
@@ -82,6 +84,23 @@ export type AutoCardUpdaterCrudApi = {
     rowIndex?: number,
     colIdentifier?: string,
     value?: Primitive,
+  ) => boolean | Promise<boolean>;
+  updateRow?: (
+    tableNameOrOptions:
+      | string
+      | {
+          tableName?: string;
+          table?: string;
+          rowIndex?: number;
+          row?: number;
+          data?: Record<string, Primitive>;
+          values?: Record<string, Primitive>;
+          skipChatSave?: boolean;
+          skipNotify?: boolean;
+          silent?: boolean;
+        },
+    rowIndex?: number,
+    data?: Record<string, Primitive>,
   ) => boolean | Promise<boolean>;
   insertRow?: (
     tableNameOrOptions:
@@ -178,6 +197,23 @@ type ResolvedPlan = {
   errors: TableChangeError[];
 };
 
+type InternalMutationOptions = {
+  strictMemory?: boolean;
+  allowConfirmedMemoryDelete?: boolean;
+};
+
+const MEMORY_MUTATION_TABLES = [
+  'chronicle',
+  'sheet_chronicle',
+  '事件纪要',
+  'collected_archives',
+  'sheet_collected_archives',
+  '收录档案',
+  'collected_rules',
+  'sheet_collected_rules',
+  '收录规律',
+];
+
 export const tableChangePlanSchemaDescription = {
   action: ['updateCell', 'insertRow', 'deleteRow', 'noop'],
   table: '用户可见表名、sheet uid 或 DDL 物理表名',
@@ -235,8 +271,70 @@ export function previewTableChangePlan(
   currentData: unknown,
   templateData?: unknown,
 ): TableChangeResult {
-  const resolved = resolvePlan(planInput, currentData, templateData);
-  return toResult(resolved);
+  return toResult(resolvePublicPlan(planInput, currentData, templateData));
+}
+
+function resolvePublicPlan(planInput: unknown, currentData: unknown, templateData?: unknown) {
+  const firstPass = resolvePlan(planInput, currentData, templateData);
+  // 三张记忆表无论从 HUD 还是普通 AI plan 进入，均使用严格写入语义：
+  // 不做 insert↔update 自动提升，也绝不以 importTableAsJson 覆盖快照回退。
+  if (firstPass && isMemoryMutationTable(firstPass.table)) {
+    return resolvePlan(planInput, currentData, templateData, { strictMemory: true });
+  }
+  return firstPass;
+}
+
+/**
+ * 仅供数据库前端内部创建的记忆工作台 executor。
+ * capability 保持在闭包内，既不进入 TableChangePlan，也不暴露给 window/UI。
+ */
+export function createMemoryMutationExecutor() {
+  const confirmedMemoryDeleteCapability = Symbol('mfrs-confirmed-memory-delete');
+
+  const previewMemoryChange = (planInput: unknown, currentData: unknown, templateData?: unknown) =>
+    toResult(resolvePlan(planInput, currentData, templateData, { strictMemory: true }));
+
+  const applyMemoryChange = async (
+    api: AutoCardUpdaterCrudApi,
+    planInput: unknown,
+    currentData: unknown,
+    templateData?: unknown,
+  ) => applyResolvedTableChange(
+    api,
+    resolvePlan(planInput, currentData, templateData, { strictMemory: true }),
+    currentData,
+    { strictMemory: true },
+  );
+
+  const applyConfirmedMemoryDelete = async (
+    api: AutoCardUpdaterCrudApi,
+    planInput: unknown,
+    currentData: unknown,
+    templateData?: unknown,
+    capability?: unknown,
+  ) => {
+    const plan = isRecord(planInput) ? planInput : null;
+    const tableRef = typeof plan?.table === 'string' ? plan.table : '';
+    if (plan?.action !== 'deleteRow' || !isMemoryMutationTableRef(tableRef)) {
+      return makeInvalidMemoryDeleteResult(tableRef);
+    }
+    // capability 必须等于本闭包内的 Symbol；调用者无法从 plan 字段或任何序列化数据伪造它。
+    // 仅数据库前端在人工确认后传入，避免 import 方拿到 executor 后裸调即可删除记忆行。
+    if (capability !== confirmedMemoryDeleteCapability) {
+      return makeUnauthorizedMemoryDeleteResult(tableRef);
+    }
+    return applyResolvedTableChange(
+      api,
+      resolvePlan(planInput, currentData, templateData, {
+        strictMemory: true,
+        allowConfirmedMemoryDelete: true,
+      }),
+      currentData,
+      { strictMemory: true },
+    );
+  };
+
+  return { previewMemoryChange, applyMemoryChange, applyConfirmedMemoryDelete, confirmedMemoryDeleteCapability };
 }
 
 export async function applyTableChangePlan(
@@ -245,7 +343,15 @@ export async function applyTableChangePlan(
   currentData: unknown,
   templateData?: unknown,
 ): Promise<TableChangeResult> {
-  const resolved = resolvePlan(planInput, currentData, templateData);
+  return applyResolvedTableChange(api, resolvePublicPlan(planInput, currentData, templateData), currentData);
+}
+
+async function applyResolvedTableChange(
+  api: AutoCardUpdaterCrudApi,
+  resolved: ResolvedPlan | null,
+  currentData: unknown,
+  options: InternalMutationOptions = {},
+): Promise<TableChangeResult> {
   const preview = toResult(resolved);
   if (!preview.ok || !resolved) return preview;
   if (resolved.plan.action === 'noop') return preview;
@@ -253,9 +359,11 @@ export async function applyTableChangePlan(
 
   if (resolved.plan.action === 'insertRow') {
     if (!api.insertRow) {
-      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, currentData);
-      if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
-        return { ...preview, insertedRowIndex: fallbackRowIndex };
+      if (!options.strictMemory) {
+        const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, currentData);
+        if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
+          return { ...preview, insertedRowIndex: fallbackRowIndex };
+        }
       }
       return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 insertRow。');
     }
@@ -281,20 +389,24 @@ export async function applyTableChangePlan(
       if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
         return { ...preview, insertedRowIndex: verifiedRowIndex };
       }
-      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, baselineData);
-      if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
-        return { ...preview, insertedRowIndex: fallbackRowIndex };
+      if (!options.strictMemory) {
+        const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, baselineData);
+        if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
+          return { ...preview, insertedRowIndex: fallbackRowIndex };
+        }
       }
       return withError(preview, 'API_MUTATION_FAILED', 'insertRow 执行失败。');
     }
 
-    const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, baselineData);
-    if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
-      return { ...preview, insertedRowIndex: verifiedRowIndex };
-    }
-    const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, baselineData);
-    if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
-      return { ...preview, insertedRowIndex: fallbackRowIndex };
+    if (!options.strictMemory) {
+      const verifiedRowIndex = await verifyInsertAppliedAfterFailedResult(api, resolved, baselineData);
+      if (typeof verifiedRowIndex === 'number' && verifiedRowIndex >= 0) {
+        return { ...preview, insertedRowIndex: verifiedRowIndex };
+      }
+      const fallbackRowIndex = await tryImportJsonInsertFallback(api, resolved, baselineData);
+      if (typeof fallbackRowIndex === 'number' && fallbackRowIndex >= 0) {
+        return { ...preview, insertedRowIndex: fallbackRowIndex };
+      }
     }
     return { ...preview, insertedRowIndex };
   }
@@ -305,7 +417,7 @@ export async function applyTableChangePlan(
 
   if (resolved.plan.action === 'deleteRow') {
     if (!api.deleteRow) {
-      if (await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
+      if (!options.strictMemory && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
       return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 deleteRow。');
     }
     const ok = await api.deleteRow({
@@ -315,12 +427,28 @@ export async function applyTableChangePlan(
       silent: resolved.plan.silent,
     });
     if (!ok && await verifyDeleteAppliedAfterFailedResult(api, resolved, baselineData)) return preview;
-    if (!ok && await tryImportJsonDeleteFallback(api, resolved, baselineData)) return preview;
+    if (!ok && !options.strictMemory && await tryImportJsonDeleteFallback(api, resolved, baselineData)) return preview;
     return ok ? preview : withError(preview, 'API_MUTATION_FAILED', 'deleteRow 执行失败。');
   }
 
+  if (api.updateRow) {
+    const ok = await api.updateRow({
+      tableName: resolved.table.name,
+      rowIndex: resolved.rowIndex,
+      data: Object.fromEntries(resolved.columns.map(column => [column.header, resolved.values[column.header]])),
+      skipChatSave: resolved.plan.skipChatSave,
+      skipNotify: resolved.plan.silent,
+      silent: resolved.plan.silent,
+    });
+    if (ok) return preview;
+    if (await verifyUpdateAppliedAfterFailedResult(api, resolved)) return preview;
+    if (options.strictMemory) {
+      return withError(preview, 'API_MUTATION_FAILED', 'updateRow 执行失败。');
+    }
+  }
+
   if (!api.updateCell) {
-    if (await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
+    if (!options.strictMemory && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
     return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 updateCell。');
   }
   for (const column of resolved.columns) {
@@ -334,7 +462,7 @@ export async function applyTableChangePlan(
     });
     if (!ok) {
       if (await verifyUpdateAppliedAfterFailedResult(api, resolved, column)) continue;
-      if (await tryImportJsonUpdateFallback(api, resolved, baselineData)) return preview;
+      if (!options.strictMemory && await tryImportJsonUpdateFallback(api, resolved, baselineData)) return preview;
       return withError(preview, 'API_MUTATION_FAILED', `updateCell 执行失败：${column.header}。`, column.header);
     }
   }
@@ -391,14 +519,17 @@ async function verifyDeleteAppliedAfterFailedResult(
 async function verifyUpdateAppliedAfterFailedResult(
   api: AutoCardUpdaterCrudApi,
   resolved: ResolvedPlan,
-  column: ColumnMeta,
+  onlyColumn?: ColumnMeta,
 ) {
   if (resolved.rowIndex === undefined) return false;
   const verifiedData = await exportVerifiedData(api);
   const verifiedContent = getSheetContent(verifiedData, resolved.table);
   const row = verifiedContent?.[resolved.rowIndex];
+  const columns = onlyColumn ? [onlyColumn] : resolved.columns;
   return Array.isArray(row)
-    && normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]);
+    && columns.every(column =>
+      normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]),
+    );
 }
 
 async function exportVerifiedData(api: AutoCardUpdaterCrudApi) {
@@ -600,7 +731,12 @@ function withError(
   };
 }
 
-function resolvePlan(planInput: unknown, currentData: unknown, templateData?: unknown): ResolvedPlan | null {
+function resolvePlan(
+  planInput: unknown,
+  currentData: unknown,
+  templateData?: unknown,
+  options: InternalMutationOptions = {},
+): ResolvedPlan | null {
   if (!isRecord(planInput)) return null;
   if (!isTableChangeAction(planInput.action)) {
     return {
@@ -638,10 +774,12 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
   }
 
   const values = extractPlanValues(plan, errors);
-  applyGeneratedInsertDefaults(table, plan, values);
+  applyGeneratedInsertDefaults(table, plan, values, options);
   let columns = resolveColumns(table, values, errors);
 
-  const duplicateInsert = tryPromoteDuplicateInsertToUpdate(table, plan, values, columns, errors);
+  const duplicateInsert = options.strictMemory
+    ? null
+    : tryPromoteDuplicateInsertToUpdate(table, plan, values, columns, errors);
   if (duplicateInsert) {
     const promotedErrors = [...duplicateInsert.errors];
     const promotedValues = { ...duplicateInsert.values };
@@ -661,10 +799,14 @@ function resolvePlan(planInput: unknown, currentData: unknown, templateData?: un
 
   let rowIndex = plan.action === 'insertRow' ? undefined : resolveRowIndex(table, plan.match, errors);
 
-  validateTableMutationPolicy(table, plan, values, errors);
-  validateChronicleAppendOnly(table, plan, values, rowIndex, errors);
+  validateUniqueValues(table, plan, values, rowIndex, errors);
+  validateCollectedArchiveProgress(table, plan, values, rowIndex, errors);
+  validateTableMutationPolicy(table, plan, values, errors, options);
+  validateChronicleAppendOnly(table, plan, values, rowIndex, errors, options);
 
-  const promoted = tryPromoteMissingFixedRowUpdateToInsert(table, plan, values, rowIndex, errors);
+  const promoted = options.strictMemory
+    ? null
+    : tryPromoteMissingFixedRowUpdateToInsert(table, plan, values, rowIndex, errors);
   if (promoted) {
     columns = resolveColumns(table, promoted.values, promoted.errors);
     validateColumnValues(table, columns, promoted.values, promoted.plan.action, promoted.errors);
@@ -750,8 +892,13 @@ function applyGeneratedInsertDefaults(
   table: TableMeta,
   plan: TableChangePlan,
   values: Record<string, Primitive>,
+  options: InternalMutationOptions = {},
 ) {
   if (plan.action !== 'insertRow') return;
+  const rowIdColumn = getRowIdPrimaryKeyColumn(table);
+  if (options.strictMemory && isMemoryMutationTable(table) && rowIdColumn && !hasColumnValue(table, values, rowIdColumn)) {
+    values[rowIdColumn.header] = nextPrimaryKeyValue(table.rows, rowIdColumn.index);
+  }
   if (!isChronicleTable(table)) return;
   const codeIndexColumn = findColumnByAlias(table, 'code_index');
   if (!codeIndexColumn || hasColumnValue(table, values, codeIndexColumn)) return;
@@ -1484,6 +1631,41 @@ function hasColumnValue(table: TableMeta, values: Record<string, Primitive>, col
   return Object.keys(values).some(key => aliases.includes(normalizeAlias(key)));
 }
 
+function isMemoryMutationTable(table: TableMeta) {
+  return isTableNamed(table, MEMORY_MUTATION_TABLES);
+}
+
+function isMemoryMutationTableRef(value: string) {
+  const normalized = normalizeAlias(value);
+  return MEMORY_MUTATION_TABLES.some(alias => normalizeAlias(alias) === normalized);
+}
+
+function makeInvalidMemoryDeleteResult(table?: string): TableChangeResult {
+  return {
+    ok: false,
+    action: 'deleteRow',
+    table,
+    errors: [{
+      code: 'TABLE_DELETE_FORBIDDEN',
+      message: '人工确认删除仅限事件纪要、收录档案和收录规律。',
+      table,
+    }],
+  };
+}
+
+function makeUnauthorizedMemoryDeleteResult(table?: string): TableChangeResult {
+  return {
+    ok: false,
+    action: 'deleteRow',
+    table,
+    errors: [{
+      code: 'UNAUTHORIZED',
+      message: '记忆删除未授权：缺少内部闭包令牌，已阻止。仅数据库前端在人工确认后可发起。',
+      table,
+    }],
+  };
+}
+
 function isChronicleTable(table: TableMeta) {
   return normalizeAlias(table.sqlName) === 'chronicle'
     || normalizeAlias(table.name) === normalizeAlias('事件纪要')
@@ -1555,13 +1737,74 @@ const FORBIDDEN_INSERT_TABLES = [
   '检定建议',
 ];
 
+function validateUniqueValues(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+  rowIndex: number | undefined,
+  errors: TableChangeError[],
+) {
+  if (plan.action !== 'insertRow' && plan.action !== 'updateCell') return;
+  for (const column of table.columns) {
+    if ((!column.primaryKey && !column.unique) || !hasColumnValue(table, values, column)) continue;
+    const expected = normalizeCellValue(values[column.header]);
+    if (!expected) continue;
+    const duplicate = table.rows.some((row, index) =>
+      index > 0
+      && index !== rowIndex
+      && normalizeCellValue(row[column.index]) === expected,
+    );
+    if (duplicate) {
+      errors.push({
+        code: 'UNIQUE_VIOLATION',
+        message: `列「${column.header}」的值「${expected}」已存在，不能重复。`,
+        table: table.name,
+        column: column.header,
+        value: values[column.header],
+      });
+    }
+  }
+}
+
+function validateCollectedArchiveProgress(
+  table: TableMeta,
+  plan: TableChangePlan,
+  values: Record<string, Primitive>,
+  rowIndex: number | undefined,
+  errors: TableChangeError[],
+) {
+  if (!isTableNamed(table, ['collected_archives', 'sheet_collected_archives', '收录档案'])) return;
+  if (plan.action !== 'insertRow' && plan.action !== 'updateCell') return;
+  const statusColumn = findColumnByAlias(table, 'archive_status') ?? findColumnByAlias(table, '收录状态');
+  const progressColumn = findColumnByAlias(table, 'archive_progress') ?? findColumnByAlias(table, '收录进度');
+  if (!statusColumn || !progressColumn) return;
+  const priorRow = rowIndex !== undefined ? table.rows[rowIndex] : undefined;
+  const status = hasColumnValue(table, values, statusColumn)
+    ? values[statusColumn.header]
+    : priorRow?.[statusColumn.index];
+  const progress = hasColumnValue(table, values, progressColumn)
+    ? values[progressColumn.header]
+    : priorRow?.[progressColumn.index];
+  if (normalizeCellValue(status) === '已收录' && Number(progress) !== 100) {
+    errors.push({
+      code: 'CHECK_RANGE_VIOLATION',
+      message: '收录状态为「已收录」时，收录进度必须为 100。',
+      table: table.name,
+      column: progressColumn.header,
+      value: typeof progress === 'string' || typeof progress === 'number' || typeof progress === 'boolean' ? progress : null,
+    });
+  }
+}
+
 function validateTableMutationPolicy(
   table: TableMeta,
   plan: TableChangePlan,
   values: Record<string, Primitive>,
   errors: TableChangeError[],
+  options: InternalMutationOptions = {},
 ) {
-  if (plan.action === 'deleteRow' && isTableNamed(table, FORBIDDEN_DELETE_TABLES)) {
+  const confirmedMemoryDelete = options.allowConfirmedMemoryDelete && isMemoryMutationTable(table);
+  if (plan.action === 'deleteRow' && isTableNamed(table, FORBIDDEN_DELETE_TABLES) && !confirmedMemoryDelete) {
     errors.push({
       code: 'TABLE_DELETE_FORBIDDEN',
       message: `表「${table.name}」禁止删除行；请用 updateCell 修正内容，或按模板规则追加新行。`,
@@ -1592,12 +1835,13 @@ function validateChronicleAppendOnly(
   values: Record<string, Primitive>,
   rowIndex: number | undefined,
   errors: TableChangeError[],
+  options: InternalMutationOptions = {},
 ) {
   if (!isChronicleTable(table)) return;
   // 事件纪要是追加式历史记录：开局 SP0001 等纪要行是独立的客观事实快照，
   // 后续轮次只应 insertRow 追加新编号，不应删除或重写已有行的编号，
   // 否则会出现“只剩 SP0002、开局 SP0001 纪要丢失”这类覆盖独立开局纪要的问题。
-  if (plan.action === 'deleteRow') {
+  if (plan.action === 'deleteRow' && !options.allowConfirmedMemoryDelete) {
     errors.push({
       code: 'CHRONICLE_APPEND_ONLY',
       message: '事件纪要是追加式历史记录，禁止删除已有纪要行；记录新事实请用 insertRow 追加新的纪要编号。',

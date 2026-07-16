@@ -24,6 +24,15 @@
                 titleHeaders: ['纪要编号', '概览', '关联事件'],
                 summaryHeaders: ['纪要', '概览'],
                 tagHeaders: ['时间跨度', '关联事件'],
+                memoryEditor: {
+                    tabLabel: '事件纪要',
+                    fieldHeaders: ['纪要编号', '时间跨度', '关联事件', '概览', '纪要'],
+                    readonlyOnEdit: ['纪要编号'],
+                    hiddenHeaders: ['row_id'],
+                    textareaHeaders: ['纪要'],
+                    maxLengthHeaders: { '概览': 40, '纪要': 600 },
+                    minLengthHeaders: { '纪要': 20 },
+                },
                 injected: true,
             },
             {
@@ -34,6 +43,10 @@
                 titleHeaders: ['线索编号', '内容', '关联事件'],
                 summaryHeaders: ['内容', '推断', '验证状态'],
                 tagHeaders: ['关联事件', '来源', '可信度', '可见性'],
+                archivePreview: {
+                    detailHeaders: ['线索编号', '关联事件', '来源', '内容', '可信度', '推断', '验证状态', '可见性'],
+                    visibility: { header: '可见性', allowed: ['玩家可见'], missing: 'deny' },
+                },
                 injected: true,
             },
             {
@@ -44,6 +57,9 @@
                 titleHeaders: ['姓名', '身份'],
                 summaryHeaders: ['已知情报', '关系', '灵异能力'],
                 tagHeaders: ['阵营', '所在地点', '在场状态', '生死状态'],
+                archivePreview: {
+                    detailHeaders: ['姓名', '身份', '阵营', '所在地点', '在场状态', '生死状态', '灵异能力', '关系', '已知情报'],
+                },
                 injected: true,
             },
             {
@@ -54,6 +70,9 @@
                 titleHeaders: ['地点名', '城市'],
                 summaryHeaders: ['关键描述', '可交互内容', '相关事件'],
                 tagHeaders: ['城市', '地点类型', '灵异状态', '封锁状态'],
+                archivePreview: {
+                    detailHeaders: ['地点名', '城市', '地点类型', '灵异状态', '封锁状态', '相关事件', '关键描述', '可交互内容'],
+                },
                 injected: true,
             },
             {
@@ -74,6 +93,9 @@
                 titleHeaders: ['档案编号', '厉鬼称呼'],
                 summaryHeaders: ['表现', '已知规律', '危险备注'],
                 tagHeaders: ['关联事件', '关押状态', '拼图关系'],
+                archivePreview: {
+                    detailHeaders: ['档案编号', '厉鬼称呼', '关联事件', '表现', '已知规律', '猜测规律', '压制方式', '关押状态', '拼图关系', '危险备注'],
+                },
                 injected: true,
             },
             {
@@ -94,6 +116,23 @@
                 titleHeaders: ['档案厉鬼名称', '收录状态'],
                 summaryHeaders: ['可见摘要', '厉鬼信息', '已知规律'],
                 tagHeaders: ['收录状态', '收录进度', '档案完整度', '可调用范围'],
+                memoryEditor: {
+                    tabLabel: '收录档案',
+                    fieldHeaders: ['档案厉鬼名称', '收录状态', '厉鬼信息', '已知规律', '猜测规律', '鬼域', '收录进度', '档案完整度', '可调用范围', '可见摘要'],
+                    readonlyOnEdit: ['档案厉鬼名称'],
+                    hiddenHeaders: ['row_id'],
+                    textareaHeaders: ['厉鬼信息', '可见摘要'],
+                    enumHeaders: {
+                        '收录状态': ['未收录', '收录中', '已收录', '污染档案', '错误档案'],
+                    },
+                    rangeIntHeaders: {
+                        '收录进度': { min: 0, max: 100 },
+                    },
+                    maxLengthHeaders: { '厉鬼信息': 180, '可见摘要': 180 },
+                    crossFieldRules: [
+                        { when: { '收录状态': '已收录' }, require: { '收录进度': 100 }, message: '收录状态为已收录时，收录进度必须为 100' },
+                    ],
+                },
                 injected: true,
             },
             {
@@ -104,6 +143,13 @@
                 titleHeaders: ['来源厉鬼', '规律类型'],
                 summaryHeaders: ['规律内容', '规律进阶', '可见摘要'],
                 tagHeaders: ['获取方式', '完整度', '风险备注'],
+                memoryEditor: {
+                    tabLabel: '收录规律',
+                    fieldHeaders: ['来源厉鬼', '获取方式', '规律类型', '规律内容', '规律进阶', '规律分解', '完整度', '风险备注', '可见摘要'],
+                    hiddenHeaders: ['row_id'],
+                    textareaHeaders: ['规律内容', '风险备注', '可见摘要'],
+                    maxLengthHeaders: { '规律内容': 180, '风险备注': 160, '可见摘要': 180 },
+                },
                 injected: true,
             },
             {

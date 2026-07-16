@@ -23,12 +23,14 @@ const fixedStatusPath = join(
   'index.ts',
 );
 const indexPath = join(frontendDir, 'index.ts');
+const adapterPath = join(frontendDir, 'table-change-adapter.ts');
 const configPath = join(frontendDir, 'frontend-config.js');
 const visualizerPath = join(frontendDir, 'v10_2_visualizer.js');
 const smokePath = join(repoRoot, 'mfrs-database-frontend-smoke.md');
 
 const fixedStatusSource = readFileSync(fixedStatusPath, 'utf8');
 const indexSource = readFileSync(indexPath, 'utf8');
+const adapterSource = readFileSync(adapterPath, 'utf8');
 const configSource = readFileSync(configPath, 'utf8');
 const visualizerSource = readFileSync(visualizerPath, 'utf8');
 const smokeSource = readFileSync(smokePath, 'utf8');
@@ -65,7 +67,43 @@ for (const key of ['legacyDashboardKeywords', 'dashboardSlots', 'recallTableRule
   assert.ok(Array.isArray(frontendConfig[key]), `${key} should be an array in frontend-config`);
 }
 
-assertContains(visualizerSource, 'const MFRS_FRONTEND_CONFIG = getFrontendConfig();', 'visualizer config split');
+for (const rule of frontendConfig.recallTableRules.filter(rule => ['sheet_clues', 'sheet_characters', 'sheet_locations', 'sheet_ghost_archives'].includes(rule.key))) {
+  assert.ok(Array.isArray(rule.archivePreview?.detailHeaders) && rule.archivePreview.detailHeaders.length > 0, `${rule.key} must define archive preview detail headers`);
+}
+const clueRule = frontendConfig.recallTableRules.find(rule => rule.key === 'sheet_clues');
+assert.deepEqual(
+  JSON.parse(JSON.stringify(clueRule?.archivePreview?.visibility)),
+  { header: '可见性', allowed: ['玩家可见'], missing: 'deny' },
+  'clue archive/recall visibility must fail closed to 玩家可见 only',
+);
+for (const key of ['sheet_chronicle', 'sheet_collected_archives', 'sheet_collected_rules']) {
+  const rule = frontendConfig.recallTableRules.find(item => item.key === key);
+  assert.ok(rule?.memoryEditor?.tabLabel, `${key} must define memory editor config`);
+  assert.ok(Array.isArray(rule.memoryEditor?.hiddenHeaders) && rule.memoryEditor.hiddenHeaders.includes('row_id'), `${key} memory editor must hide row_id`);
+}
+assert.ok(
+  frontendConfig.recallTableRules.find(rule => rule.key === 'sheet_chronicle')?.memoryEditor?.readonlyOnEdit?.includes('纪要编号'),
+  'chronicle code must remain readonly on edit',
+);
+
+assertContains(visualizerSource, 'isRecallRowVisible(headers, row, rule)', 'recall must filter visibility before text construction');
+assertContains(visualizerSource, 'const buildRecallRowIdentity', 'recall must use stable row identity');
+assertContains(visualizerSource, 'sanitizePinnedRecallItems(baseItems)', 'auto recall must sanitize legacy pinned items');
+assertContains(visualizerSource, 'sanitizePinnedRecallItems(items)', 'recall UI must sanitize pinned items');
+assertContains(adapterSource, 'const MEMORY_MUTATION_TABLES', 'adapter must scope strict mutation tables');
+assertContains(indexSource, 'createMemoryMutationExecutor', 'frontend keeps memory delete executor private');
+assertContains(indexSource, 'confirmedMemoryDeleteCapability', 'frontend captures the closure capability token');
+assertContains(indexSource, 'memoryDeleteCapability', 'frontend holds a named capability handle for confirmed delete');
+assertContains(indexSource, 'previewMemoryChange:', 'frontend exposes strict memory preview');
+assertContains(indexSource, 'applyMemoryChange:', 'frontend exposes strict memory apply');
+assertContains(indexSource, 'requestConfirmedMemoryDelete:', 'frontend exposes human-confirmed delete request');
+assertContains(indexSource, "getActiveMemoryWorkbenchState", 'frontend checks active memory workbench');
+assertContains(indexSource, 'getMemoryRowTitle(table, latestData, rowId)', 'delete execution re-resolves authoritative row');
+assertContains(indexSource, "action: 'deleteRow'", 'delete uses a fixed internal plan action');
+assertContains(visualizerSource, 'confirmDanger:', 'visualizer exposes confirmation-only helper');
+assertContains(visualizerSource, 'escapeHtml(message)', 'dialog escapes dynamic confirmation text');
+
+
 assertContains(visualizerSource, 'const MFRS_DASHBOARD_SLOTS = MFRS_FRONTEND_CONFIG.dashboardSlots || [];', 'dashboard config split');
 assertContains(visualizerSource, 'const MFRS_RECALL_TABLE_RULES = MFRS_FRONTEND_CONFIG.recallTableRules || [];', 'recall config split');
 assertContains(visualizerSource, 'const MFRS_CONSISTENCY_RULES = MFRS_FRONTEND_CONFIG.consistencyRules || [];', 'consistency config split');

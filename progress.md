@@ -1,5 +1,60 @@
 # 进度日志
 
+## 会话：沉浸 HUD 中栏改造 · Task #1 收尾 + Task #5 真页验收 — **完成（未 commit）**
+
+承接上一会话（Task #2 五缺口已接通）。本轮彻底完成 Task #1 数据库与安全底座，并完成 Task #5 真页验收。未 commit/push/publish/改 PNG/更新版本。
+
+**Task #1 收尾：收紧 `createMemoryMutationExecutor` export 可达性（`table-change-adapter.ts` + `数据库前端/index.ts`）**
+- `applyConfirmedMemoryDelete` 此前声明了 `confirmedMemoryDeleteCapability` Symbol 却只 `void`（未实际用作门禁）——裸调 `executor.applyConfirmedMemoryDelete(plan,data,tpl)` 即可删除记忆行，绕过前端的人工确认/工作台/快照三重保护。
+- 收紧：`applyConfirmedMemoryDelete` 新增 `capability` 参数，必须等于闭包内 Symbol；不匹配返回新错误码 `UNAUTHORIZED`（`TableChangeErrorCode` 联合新增）。executor 返回值附带 `confirmedMemoryDeleteCapability`（Symbol 键，不可序列化、`JSON.stringify` 丢弃）。
+- 前端 `index.ts` 捕获 `memoryDeleteCapability`，仅在 `requestConfirmedMemoryDelete` 人工确认后传入；该令牌是模块私有、永不进 plan/JSON/window。
+- 门禁：`verify-table-change-adapter.mjs` 新增裸调拒绝断言（`UNAUTHORIZED` + vendor 不触达）；`verify-mfrs-database-frontend-p3.mjs` 新增令牌捕获/传递断言。
+- **附（上轮已修）**：`数据库前端/index.ts` 的 `getHostWindow()` 函数头被 Task #1 的 `waitForMfrsConfirmDanger` 覆盖导致孤儿 `try` 体（TS1128 语法错误 + 261/864 行调用无定义）已恢复。
+
+**Task #5 真页验收（CDP 真机，http://127.0.0.1:8000/ SillyTavern，神秘复苏模拟器发布版 8.13.31 在线）：**
+- worktree `pnpm install`（8.4s，hardlink）；临时给 `webpack.config.ts` 加 `MFRS_SKIP_SYNC` 环境门禁跳过 `schema_dump`/`tavern_sync`，`MFRS_SKIP_SYNC=1 pnpm build:dev` 产出 dev bundle（**0 PNG/YAML 被改动**），验收后 `git checkout` 还原 dist + webpack.config.ts。
+- 本地静态服务器（127.0.0.1:8131）serve dist；向在线消息内面板 iframe 注入 `<script src>` 本地 bundle（替换在线 8.13.31 实例：先 `__mfrsMessagePanelCleanup__` 清旧，再挂我的版本）。验收后还原 `exportTableAsJson` + toggle 重挂回真实空库，Esc 回正文。
+- **archive 行为全部通过**（mock 4 表各 1 可见行注入 `exportTableAsJson`，toggle 强制 `refreshHudPanels(true)`）：
+  1. 四类档案按钮渲染（线索/厉鬼档案/人物/地点），各带三 `data-mfrs-hud-archive-*` 属性 ✓
+  2. 点击线索→中栏 `archive` 视图，archive-slot 渲染只读详情（CLUE-001 + 8 字段 + 「只读」）✓
+  3. 点击厉鬼档案/人物/地点→各自只读详情预览 ✓
+  4. 预览无 `data-mfrs-hud-open-table`/全库按钮（只读）✓
+  5. Esc→回 `story`、archive-slot 隐藏 ✓
+  6. **线索 fail-closed**：可见性=「内部」的线索被 `isHudArchiveRowVisible` 过滤（clueItems 仅 row_id 1）✓
+  7. **DB revision 回调**：`api._notifyTableUpdate({})` 触发已注册 `hudDatabaseUpdateCallback`→`hudDatabaseRevision+=1`→`refreshHudPanels(true)`→重读库重渲（clue 按钮 1→2）✓
+- Task #1 能力收紧由 `verify-table-change-adapter.mjs` VM 行为测试覆盖（裸调拒绝、确认删除通过、非记忆表拒绝）；在线挂载无 console error。
+
+**门禁（全绿）**：`verify:mfrs-frontend` / `verify:mfrs-table-adapter` / `verify:mfrs-archive-ui`（212→221，含 9 项 Phase G）/ `verify:mfrs-initvar-schema` / `verify:mfrs-regex-ids` / `verify:mfrs-mvu-hotfix` / `verify:mfrs-output-cleaning` 全 PASS；`git diff --check` 通过。tsc `--noEmit` 0 语法错误（本轮编辑行无新增类型错误）。
+
+**当前 worktree（10 未提交文件）**：progress.md + 3 门禁脚本（archive-ui/table-adapter/frontend-p3）+ 6 源码（消息内面板/index.ts、数据库前端/index.ts+table-change-adapter.ts+frontend-config.js+v10_2_visualizer.js、神秘复苏表格SQL_v1.json）。dist/webpack.config.ts/node_modules 已还原或 gitignored。
+
+**待办**：Task #3 记忆中栏 CRUD / Task #4 抽卡中栏嵌入（未开始，archive 已验收可进）；发布另立任务（本轮不发版）。
+
+## 会话：沉浸 HUD 中栏改造 · Task #2 四类档案中栏预览接通 — **Task #2 源码完成（未 commit）**
+
+隔离 worktree `worktree-feat-immersive-center-workspaces`（基于 `origin/main@992d922`）。本轮只动源码与门禁脚本，未 commit/push/publish/改 PNG/更新版本。
+
+**Task #2 五处缺口全部接通（`src/神秘复苏模拟器/脚本/消息内面板/index.ts`）：**
+- **缺口 1** `handleHudShellClick`：在 `data-mfrs-hud-open-table` 全库分支前新增 `.mfrs-hud-archive-item` 拦截，读 `data-mfrs-hud-archive-table-key/-table-name/-row-id` 写入 `hudArchiveSelection`，`setHudView('archive')`，≤800px `closeHudSideDrawers()`。
+- **缺口 2** `refreshHudBusinessPanels`：新增 archive slot 刷新，调用此前无调用点的 `buildHudArchivePreviewHtml()`。
+- **缺口 3** `setHudView`：新增 `view === 'archive'` 专门分支（关柜、移动端关抽屉、桌面保留左栏、仅渲染 archive slot、不调 memory/gacha/system refresh），置于 `isHudCenterBusinessView` 分支前。
+- **缺口 4** `hudDatabaseUpdateCallback/hudDatabaseRevision`：新增 `getHudDatabaseUpdateCallback`/`registerHudDatabaseUpdateCallback`/`unregisterHudDatabaseUpdateCallback`（idempotent flag `hudDatabaseCallbackRegistered`，API 未就绪静默跳过待重试）；`activateMessagePanelRuntime` 注册，`deactivateMessagePanelRuntime`+`cleanup` 注销。回调内 `hudDatabaseRevision += 1` + `refreshHudPanels(true)`；`getPanelRenderKey` 已含 `:db${hudDatabaseRevision}`，外部编辑/镜像写入后 HUD 全量刷新。
+- **缺口 5** `destroyHudImmersive`/`unmountHudImmersive`/`unregisterHudDatabaseUpdateCallback`：均重置 `hudArchiveSelection = null`（覆盖 destroy/切卡/注销 callback）。
+
+**附带修复（Task #1 残留语法回归）：** `src/神秘复苏模拟器/脚本/数据库前端/index.ts` 中 `getHostWindow()` 的函数头在 Task #1 被 `waitForMfrsConfirmDanger` 覆盖，导致 `try { return (window.parent ?? window)… }` 函数体孤儿化（`return` 脱离函数 → TS1128 语法错误，阻断 webpack transpile；且 `getHostWindow` 在 261/864 行仍被调用却无定义）。已按 HEAD 原样恢复 `function getHostWindow() {` 头，与新函数并存。此为编译阻断项，非本轮范围扩张。
+
+**门禁：**
+- `verify:mfrs-frontend` PASS、`verify:mfrs-table-adapter` PASS、`verify:mfrs-archive-ui` PASS（**212→221 checks**，新增 9 项 Phase G：archive-item 拦截序/	slot 刷新/setHudView archive 分支/四类规则按钮/无全库按钮只读/线索 fail-closed/Esc 返回正文/DB revision 接线/选中态重置）。
+- `git diff --check` 通过。
+- tsc 独立 `--noEmit`：孤儿修复后全工程可解析（0 个 TS1xxx 语法错误；余 132 项均为 TS2xxx/6xxx/7xxx 类型/解析噪声——global-script 跨文件重声明、vue/pinia auto-import、type-fest 命名空间、pnpm hoist `@babel/*`，均被 webpack `transpileOnly`+`onlyCompileBundledFiles`+unplugin-auto-import 规避，与本轮改动无关；`消息内面板/index.ts` 19 项全在 22-25/379/391/1573/3262/4880/5959/5986/6057 等既有行，无一落在本轮编辑行）。
+
+**待办：**
+- Task #1 残留：收紧 `createMemoryMutationExecutor` export 可达性（原 TODO，未动）。
+- Task #2 真页验收（Task #5）：需 production build + CDP 真机验证 archive slot 四类按钮→中栏预览→Esc 返回、DB revision 实时刷新。
+- Task #3 记忆中栏 CRUD / Task #4 抽卡中栏嵌入：未开始（用户要求 archive 验收前不混入 gacha 重构）。
+
+**未做：** commit/push/tag/publish-card/改 PNG/更新版本/CDN_REF。worktree 内创建了 `node_modules` junction 指向主仓 `node_modules`（gitignored，仅供 tsc 校验；非真实 install，无 .bin）。
+
 ## 会话：2026-07-16（8.13.31 发布）— **complete**
 
 - 将 MAINT-29 修复提交、推送并发布为 **8.13.31**。

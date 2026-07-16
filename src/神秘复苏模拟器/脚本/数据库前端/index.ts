@@ -1,6 +1,7 @@
 import templateData from '../../数据库/神秘复苏表格SQL_v1.json';
 import {
   applyTableChangePlan,
+  createMemoryMutationExecutor,
   listTableMetadata,
   normalizeExportedTableData,
   previewTableChangePlan,
@@ -22,6 +23,9 @@ type AutoCardUpdaterAPI = {
   updateCell?: AutoCardUpdaterCrudApi['updateCell'];
   insertRow?: AutoCardUpdaterCrudApi['insertRow'];
   deleteRow?: AutoCardUpdaterCrudApi['deleteRow'];
+  updateRow?: AutoCardUpdaterCrudApi['updateRow'];
+  registerTableUpdateCallback?: (callback: (data: unknown) => void) => void;
+  unregisterTableUpdateCallback?: (callback: (data: unknown) => void) => void;
 };
 
 type TemplateStatus = {
@@ -69,6 +73,9 @@ type HostWindow = Window & {
     getTableMetadata: () => Promise<TableMetaSummary[]>;
     previewTableChangePlan: (plan: TableChangePlan) => Promise<TableChangeResult>;
     applyTableChangePlan: (plan: TableChangePlan) => Promise<TableChangeResult>;
+    previewMemoryChange: (plan: TableChangePlan) => Promise<TableChangeResult>;
+    applyMemoryChange: (plan: TableChangePlan) => Promise<TableChangeResult>;
+    requestConfirmedMemoryDelete: (request: { table: string; row_id: string | number }) => Promise<TableChangeResult & { confirmed?: boolean }>;
     getPanelState: () => Promise<FrontendState>;
     refreshPanel: () => Promise<void>;
   };
@@ -76,7 +83,10 @@ type HostWindow = Window & {
     renderInterface?: () => void;
     cleanup?: () => void;
   };
-  MFRS?: unknown;
+  MysteryMessagePanel?: {
+    getHudActiveView?: () => unknown;
+  };
+  MFRS?: { confirmDanger?: (options: { title: string; message: string; confirmText?: string; cancelText?: string }) => Promise<boolean> } | unknown;
   __mfrsFixedStatusCleanup__?: () => void;
   __mfrsDatabaseFrontendCleanup__?: (options?: DatabaseCleanupOptions) => void;
   toastr?: {
@@ -153,6 +163,14 @@ let templateAutofixPromise: Promise<void> | null = null;
 let databaseScriptReloadPromise: Promise<boolean> | null = null;
 let databaseScriptReloadSeq = 0;
 let tableChangeQueue: Promise<unknown> = Promise.resolve();
+const memoryMutationExecutor = createMemoryMutationExecutor();
+// 闭包令牌：仅在人工确认删除时传入 executor，避免裸调即可删除记忆行。
+const memoryDeleteCapability = memoryMutationExecutor.confirmedMemoryDeleteCapability;
+const MEMORY_TABLE_ALIASES = new Set([
+  'chronicle', 'sheet_chronicle', '事件纪要',
+  'collected_archives', 'sheet_collected_archives', '收录档案',
+  'collected_rules', 'sheet_collected_rules', '收录规律',
+]);
 let acuFrontendRuntimePromise: Promise<void> | null = null;
 let nativeChatChangedSubscription:
   | {
@@ -168,6 +186,15 @@ function loadAcuFrontendRuntime() {
     import(/* webpackMode: "eager" */ './v10_2_visualizer.js'),
   ]).then(() => undefined);
   return acuFrontendRuntimePromise;
+}
+
+async function waitForMfrsConfirmDanger(hostWindow: HostWindow, attempts = 20, interval = 100) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const confirmDanger = (hostWindow.MFRS as { confirmDanger?: unknown } | undefined)?.confirmDanger;
+    if (typeof confirmDanger === 'function') return confirmDanger as (options: { title: string; message: string; confirmText?: string; cancelText?: string }) => Promise<boolean>;
+    await wait(interval);
+  }
+  return null;
 }
 
 function getHostWindow() {
@@ -432,6 +459,67 @@ function enqueueTableChange<T>(task: () => Promise<T>) {
   const run = tableChangeQueue.then(task, task);
   tableChangeQueue = run.catch(() => undefined);
   return run;
+}
+
+function normalizeMemoryTableAlias(value: unknown) {
+  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
+}
+
+function isMemoryTableName(value: unknown) {
+  return MEMORY_TABLE_ALIASES.has(normalizeMemoryTableAlias(value));
+}
+
+function makeMemoryDeleteResult(
+  code: TableChangeResult['errors'][number]['code'],
+  message: string,
+  table?: string,
+  confirmed?: boolean,
+): TableChangeResult & { confirmed?: boolean } {
+  return {
+    ok: false,
+    action: 'deleteRow',
+    table,
+    errors: [{ code, message, table }],
+    ...(confirmed === undefined ? {} : { confirmed }),
+  };
+}
+
+function getActiveMemoryWorkbenchState(hostWindow: HostWindow) {
+  const shell = hostWindow.document?.getElementById('mfrs-hud-shell');
+  const panel = hostWindow.MysteryMessagePanel as { getHudActiveView?: () => unknown } | undefined;
+  return Boolean(shell?.classList.contains('is-active') && panel?.getHudActiveView?.() === 'memory');
+}
+
+function getMemoryRowTitle(table: string, data: unknown, rowId: string | number) {
+  const record = normalizeExportedData(data) as Record<string, any> | null;
+  if (!record || typeof record !== 'object') return null;
+  const sheets = Object.values(record) as Array<any>;
+  const target = sheets.find(sheet => {
+    const aliases = [sheet?.uid, sheet?.name, sheet?.sourceData?.ddl?.match(/CREATE\s+TABLE\s+[`"]?([A-Za-z_][\w]*)/i)?.[1]]
+      .map(normalizeMemoryTableAlias);
+    return aliases.includes(normalizeMemoryTableAlias(table));
+  });
+  const content = target?.content;
+  if (!Array.isArray(content) || !Array.isArray(content[0])) return null;
+  const headers = content[0].map((value: unknown) => String(value ?? ''));
+  const rowIdIndex = headers.findIndex(header => normalizeMemoryTableAlias(header) === 'row_id');
+  if (rowIdIndex < 0) return null;
+  const rowIndex = content.findIndex((row: unknown, index: number) => index > 0 && Array.isArray(row) && String(row[rowIdIndex]) === String(rowId));
+  if (rowIndex < 1) return null;
+  const row = content[rowIndex] as unknown[];
+  const titleHeaders = target?.uid === 'sheet_chronicle' || target?.name === '事件纪要'
+    ? ['纪要编号', '概览']
+    : target?.uid === 'sheet_collected_archives' || target?.name === '收录档案'
+      ? ['档案厉鬼名称', '收录状态']
+      : ['来源厉鬼', '规律类型'];
+  const title = titleHeaders
+    .map(header => {
+      const index = headers.findIndex(value => value === header || value.includes(header));
+      return index >= 0 ? String(row[index] ?? '').trim() : '';
+    })
+    .filter(Boolean)
+    .join(' · ');
+  return { tableName: String(target?.name || table), rowIndex, title: title || `row_id=${rowId}`, rowSnapshot: JSON.stringify(row) };
 }
 
 async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStatus> {
@@ -849,6 +937,67 @@ async function installCompatibilityApi() {
           rerenderAcu(hostWindow);
         }
         return result;
+      });
+    },
+    async previewMemoryChange(plan) {
+      if (!isMemoryTableName(plan?.table) || (plan?.action !== 'insertRow' && plan?.action !== 'updateCell')) {
+        return makeMemoryDeleteResult('INVALID_PLAN', '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。', plan?.table);
+      }
+      const api = requireApi(hostWindow);
+      return memoryMutationExecutor.previewMemoryChange(plan, await exportCurrentDatabaseData(api), templateData);
+    },
+    async applyMemoryChange(plan) {
+      if (!isMemoryTableName(plan?.table) || (plan?.action !== 'insertRow' && plan?.action !== 'updateCell')) {
+        return makeMemoryDeleteResult('INVALID_PLAN', '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。', plan?.table);
+      }
+      return enqueueTableChange(async () => {
+        const api = requireApi(hostWindow);
+        const currentData = await exportCurrentDatabaseData(api);
+        const result = await memoryMutationExecutor.applyMemoryChange(api, plan, currentData, templateData);
+        if (result.ok) rerenderAcu(hostWindow);
+        return result;
+      });
+    },
+    async requestConfirmedMemoryDelete(request) {
+      const table = String(request?.table ?? '');
+      const rowId = request?.row_id;
+      if (!isMemoryTableName(table) || (typeof rowId !== 'string' && typeof rowId !== 'number')) {
+        return makeMemoryDeleteResult('INVALID_PLAN', '只能从记忆工作台删除事件纪要、收录档案或收录规律的指定记录。', table);
+      }
+      // 该检查是防误用的纵深保护；真正的写入授权仍是 adapter 内部不可序列化的 closure capability。
+      if (!getActiveMemoryWorkbenchState(hostWindow)) {
+        return makeMemoryDeleteResult('INVALID_PLAN', '删除仅能在当前沉浸“记忆”工作台中发起。', table);
+      }
+      const api = requireApi(hostWindow);
+      const beforeConfirm = await exportCurrentDatabaseData(api);
+      const target = getMemoryRowTitle(table, beforeConfirm, rowId);
+      if (!target) return makeMemoryDeleteResult('ROW_NOT_FOUND', '该记忆记录已不存在或已被外部修改。', table);
+      const confirmDanger = await waitForMfrsConfirmDanger(hostWindow);
+      if (!confirmDanger) {
+        return makeMemoryDeleteResult('API_UNAVAILABLE', '危险确认组件未就绪，已阻止删除。', table);
+      }
+      const confirmed = await confirmDanger({
+        title: '确认永久删除记忆记录',
+        message: `将永久删除「${target.tableName} · ${target.title}」。此操作无法自动恢复。`,
+        confirmText: '永久删除',
+        cancelText: '取消',
+      });
+      if (!confirmed) {
+        return { ok: true, action: 'deleteRow', table: target.tableName, errors: [], confirmed: false };
+      }
+      return enqueueTableChange(async () => {
+        const latestData = await exportCurrentDatabaseData(api);
+        const latestTarget = getMemoryRowTitle(table, latestData, rowId);
+        if (!latestTarget || latestTarget.rowSnapshot !== target.rowSnapshot) {
+          return makeMemoryDeleteResult('ROW_NOT_FOUND', '删除确认期间记录已变更；为避免误删，本次操作已取消。', target.tableName, true);
+        }
+        const result = await memoryMutationExecutor.applyConfirmedMemoryDelete(api, {
+          action: 'deleteRow',
+          table,
+          match: { row_id: rowId },
+        }, latestData, templateData, memoryDeleteCapability);
+        if (result.ok) rerenderAcu(hostWindow);
+        return { ...result, confirmed: true };
       });
     },
     async getPanelState() {

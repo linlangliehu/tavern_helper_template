@@ -1038,6 +1038,128 @@ addCheck('phase5', 'roll verification renders seed as text and updates meter acc
   assert.ok(rollEnhancer.includes("track?.setAttribute('aria-valuetext'"));
 });
 
+// Phase G: immersive center archive preview wiring (read-only drill-down from dossier investigation lists).
+addCheck('phase5', 'G1 archive-item click interception writes selection and opens archive view', () => {
+  const clickHandler = between(sources.message, 'function handleHudShellClick', 'function handleHudKeydown');
+  assert.ok(clickHandler.includes("target.closest('.mfrs-hud-archive-item')"), 'must intercept .mfrs-hud-archive-item clicks');
+  assert.ok(clickHandler.includes('data-mfrs-hud-archive-table-key'), 'must read archive table key');
+  assert.ok(clickHandler.includes('data-mfrs-hud-archive-table-name'), 'must read archive table name');
+  assert.ok(clickHandler.includes('data-mfrs-hud-archive-row-id'), 'must read archive row id');
+  assert.ok(clickHandler.includes('hudArchiveSelection = {'), 'must write selection object');
+  assert.ok(clickHandler.includes("setHudView('archive')"), 'must switch to archive view');
+  assert.ok(clickHandler.includes('max-width: 800px'), 'must close side drawers on narrow screens');
+  // interception must come before the open-table (full library) branch
+  assert.ok(
+    clickHandler.indexOf('.mfrs-hud-archive-item') < clickHandler.indexOf('data-mfrs-hud-open-table'),
+    'archive-item interception must precede the open-table branch',
+  );
+});
+addCheck('phase5', 'G2 refreshHudBusinessPanels refreshes the archive slot', () => {
+  const refresh = between(sources.message, 'function refreshHudBusinessPanels', 'function activateAcuNavTarget');
+  assert.ok(refresh.includes('data-mfrs-hud="archive-slot"'), 'must target the archive slot');
+  assert.ok(refresh.includes('buildHudArchivePreviewHtml()'), 'must render archive preview into the slot');
+  assert.ok(sources.message.includes('data-mfrs-hud="archive-slot" hidden'), 'shell HTML must declare a hidden archive slot');
+});
+addCheck('phase5', 'G3 setHudView has a dedicated archive branch', () => {
+  const setView = between(sources.message, 'function setHudView', 'function refreshHudBusinessPanels');
+  assert.ok(setView.includes("view === 'archive'"), 'archive view needs a dedicated branch');
+  assert.ok(setView.includes('closeHudCabinetLayer()'), 'archive must close cabinet layer');
+  assert.ok(setView.includes('buildHudArchivePreviewHtml()'), 'archive entry must render the slot');
+  // desktop keeps the left dossier column; only narrow screens close side drawers
+  assert.ok(setView.includes('max-width: 800px'), 'archive branch must gate side-drawer close on narrow screens');
+  // the dedicated archive branch must not trigger the memory/gacha/system refresh path
+  const archiveBranchStart = setView.indexOf("if (view === 'archive')");
+  assert.ok(archiveBranchStart !== -1, 'archive branch must exist as a dedicated if');
+  const businessStart = setView.indexOf('if (isHudCenterBusinessView', archiveBranchStart);
+  const archiveBranch =
+    businessStart !== -1 ? setView.slice(archiveBranchStart, businessStart) : setView.slice(archiveBranchStart);
+  assert.equal(
+    archiveBranch.includes('refreshHudBusinessPanels'),
+    false,
+    'archive branch must not refresh memory/gacha/system',
+  );
+});
+addCheck('phase5', 'G4 four investigation archive rules emit selectable items', () => {
+  const rules = between(sources.message, 'function getHudArchiveRules', 'function hudRowId');
+  for (const key of ['sheet_clues', 'sheet_ghost_archives', 'sheet_characters', 'sheet_locations']) {
+    assert.ok(rules.includes(`key: '${key}'`), `archive rule missing: ${key}`);
+  }
+  for (const name of ['线索', '厉鬼档案', '人物', '地点']) {
+    assert.ok(rules.includes(`names: ['${name}']`), `archive rule name missing: ${name}`);
+  }
+  const listBuilder = between(
+    sources.message,
+    'function buildHudArchiveSummaryListHtml',
+    'function buildHudArchivePreviewHtml',
+  );
+  assert.ok(listBuilder.includes('mfrs-hud-archive-item'), 'summary list must emit archive-item buttons');
+  assert.ok(listBuilder.includes('data-mfrs-hud-archive-table-key'), 'item must carry table key');
+  assert.ok(listBuilder.includes('data-mfrs-hud-archive-table-name'), 'item must carry table name');
+  assert.ok(listBuilder.includes('data-mfrs-hud-archive-row-id'), 'item must carry row id');
+});
+addCheck('phase5', 'G5 archive preview is read-only with no full-library button', () => {
+  const preview = between(
+    sources.message,
+    'function buildHudArchivePreviewHtml',
+    'function buildHudInvestigationSectionsHtml',
+  );
+  assert.equal(preview.includes('data-mfrs-hud-open-table'), false, 'archive preview must not embed open-table buttons');
+  assert.equal(preview.includes('open-full-library'), false, 'archive preview must not embed full-library buttons');
+  assert.equal(preview.includes('Mvu.replaceMvuData'), false, 'archive preview must remain read-only');
+  assert.ok(preview.includes('只读'), 'archive preview must label itself read-only');
+});
+addCheck('phase5', 'G6 clue visibility fails closed when the column is missing', () => {
+  const visible = between(sources.message, 'function isHudArchiveRowVisible', 'function findHudArchiveRule');
+  assert.ok(visible.includes("missing !== 'deny'"), 'missing visibility must deny when policy is deny');
+  const rules = between(sources.message, 'function getHudArchiveRules', 'function hudRowId');
+  assert.ok(rules.includes("missing: 'deny'"), 'clue rule must fail closed on missing visibility');
+  assert.ok(rules.includes("'玩家可见'"), 'clue rule must only allow 玩家可见 rows');
+  // findHudArchiveRow must reject invisible rows so a stale/hidden selection cannot render
+  const findRow = between(sources.message, 'function findHudArchiveRow', 'function hudRowField');
+  assert.ok(findRow.includes('isHudArchiveRowVisible'), 'archive row lookup must enforce visibility');
+});
+addCheck('phase5', 'G7 Esc returns from archive center panel to story body', () => {
+  const keydown = between(sources.message, 'function handleHudKeydown', 'function bindHudShellEvents');
+  assert.ok(keydown.includes('isHudCenterBusinessView(hudActiveView)'), 'Esc must detect center business views (incl. archive)');
+  assert.ok(keydown.includes("setHudView('story')"), 'Esc must return to story body from a center panel');
+});
+addCheck('phase5', 'G8 database table-update callback drives HUD revision and refresh', () => {
+  assert.ok(sources.message.includes('hudDatabaseRevision += 1'), 'callback must bump the database revision');
+  assert.ok(sources.message.includes('hudDatabaseCallbackRegistered'), 'callback registration must be idempotent via a flag');
+  assert.ok(sources.message.includes('registerHudDatabaseUpdateCallback'), 'register helper required');
+  assert.ok(sources.message.includes('unregisterHudDatabaseUpdateCallback'), 'unregister helper required');
+  assert.ok(sources.message.includes('registerTableUpdateCallback'), 'must register through AutoCardUpdaterAPI');
+  assert.ok(sources.message.includes('unregisterTableUpdateCallback'), 'must unregister through AutoCardUpdaterAPI');
+  const renderKey = between(sources.message, 'function getPanelRenderKey', 'function getBrandId');
+  assert.ok(renderKey.includes('hudDatabaseRevision'), 'render key must include the database revision');
+  const activate = between(sources.message, 'function activateMessagePanelRuntime', 'function clearChatChangedTimers');
+  assert.ok(activate.includes('registerHudDatabaseUpdateCallback'), 'activate must register the callback');
+  const deactivate = between(
+    sources.message,
+    'function deactivateMessagePanelRuntime',
+    'function activateMessagePanelRuntime',
+  );
+  assert.ok(deactivate.includes('unregisterHudDatabaseUpdateCallback'), 'deactivate must unregister the callback');
+  const cleanupBlock = between(
+    sources.message,
+    'const cleanup = () => {',
+    'hostWindow.__mfrsMessagePanelCleanup__ = cleanup',
+  );
+  assert.ok(cleanupBlock.includes('unregisterHudDatabaseUpdateCallback'), 'cleanup must unregister the callback');
+});
+addCheck('phase5', 'G9 archive selection resets on unmount/destroy/unregister', () => {
+  const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');
+  assert.ok(unmount.includes('hudArchiveSelection = null'), 'unmount must clear archive selection');
+  const destroy = between(sources.message, 'function destroyHudImmersive', '$(() => {');
+  assert.ok(destroy.includes('hudArchiveSelection = null'), 'destroy must clear archive selection');
+  const unregister = between(
+    sources.message,
+    'function unregisterHudDatabaseUpdateCallback',
+    'function restoreFixedHostFromHudCabinet',
+  );
+  assert.ok(unregister.includes('hudArchiveSelection = null'), 'unregister callback must clear archive selection');
+});
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.listStages) {

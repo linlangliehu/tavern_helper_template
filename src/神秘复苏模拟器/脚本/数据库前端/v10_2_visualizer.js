@@ -346,6 +346,42 @@
         return !!rule?.injected;
     };
 
+    const getRecallVisibilityPolicy = (rule) => {
+        const visibility = rule?.archivePreview?.visibility;
+        if (!visibility || !visibility.header) return null;
+        return visibility;
+    };
+
+    // 共享可见性策略：内部记录线索一律不进入召回/复制/固定提示词链路。
+    // missing='deny' 时缺失可见性字段 fail closed；其余情况按 allowed 白名单判断。
+    const isRecallRowVisible = (headers, row, rule) => {
+        const policy = getRecallVisibilityPolicy(rule);
+        if (!policy) return true;
+        const raw = getRecallFieldValue(headers, row, [policy.header], '');
+        const value = normalizePromptText(raw);
+        if (!value) {
+            return policy.missing !== 'deny';
+        }
+        const allowed = Array.isArray(policy.allowed)
+            ? policy.allowed.map(v => normalizePromptText(v)).filter(Boolean)
+            : [];
+        if (!allowed.length) return true;
+        return allowed.includes(value);
+    };
+
+    // 稳定召回 ID：优先 tableKey + row_id，缺失 row_id 才回退 rowIndex。
+    // matchKey 供旧固定项迁移到新稳定 ID 使用。
+    const buildRecallRowIdentity = (tableKey, tableName, headers, row, rowIndex) => {
+        const rowIdRaw = getRecallFieldValue(headers, row, ['row_id'], '');
+        const rowId = String(rowIdRaw || '').trim();
+        const rowLabel = rowId || String(rowIndex + 1);
+        const id = rowId
+            ? `${tableKey || tableName}:rid:${rowId}`
+            : `${tableKey || tableName}:idx:${rowIndex}`;
+        const matchKey = `${tableName}::${rowLabel}`;
+        return { id, rowLabel, matchKey };
+    };
+
     const buildRecallItemText = (item) => {
         const parts = [
             `【${item.kind}召回】${item.tableName}#${item.rowLabel} ${item.title}`,
@@ -383,14 +419,83 @@
         }
     };
 
+    // 旧版固定召回以 `${tableKey || tableName}:${rowIndex}` 作为 id，且未应用可见性策略，
+    // 可能包含内部记录线索、已被删除/失效的行。读出时与当前“可见召回集合”交叉验证：
+    //   1. 旧 id 可迁移到稳定 id 的，按 table + row label 映射。
+    //   2. 内部线索 / 已删除 / 失效项剔除，并回写净化后的 localStorage。
+    // 调用方可传当前 collectRecallItems 结果做校验；不传则不净化（仅迁移已知旧 id）。
+    const sanitizePinnedRecallItems = (visibleItems) => {
+        const pinned = getPinnedRecallItems();
+        if (!pinned.length) return pinned;
+        const visibleMap = new Map();
+        const visibleMatchKeys = new Set();
+        (visibleItems || []).forEach(item => {
+            if (!item?.id) return;
+            visibleMap.set(item.id, item);
+            if (item.matchKey) visibleMatchKeys.add(item.matchKey);
+        });
+        const migrated = [];
+        const seenIds = new Set();
+        pinned.forEach(old => {
+            // 直接命中稳定 id（新版本）
+            if (visibleMap.has(old.id)) {
+                const fresh = visibleMap.get(old.id);
+                migrated.push({
+                    id: fresh.id,
+                    tableName: fresh.tableName,
+                    rowLabel: fresh.rowLabel,
+                    kind: fresh.kind,
+                    icon: fresh.icon,
+                    title: fresh.title,
+                    summary: fresh.summary,
+                    tags: fresh.tags || [],
+                    injected: !!fresh.injected,
+                });
+                seenIds.add(fresh.id);
+                return;
+            }
+            // 旧版 id 形如 `${tableKey}:${rowIndex}` / `${tableName}:${rowIndex}`：按 table + rowLabel 映射。
+            // 旧固定项只存了 tableName/rowLabel/title，用 tableName + rowLabel 构造 matchKey 去命中当前可见集合。
+            const tableName = String(old.tableName || '');
+            const rowLabel = String(old.rowLabel || '');
+            const matchKey = rowLabel ? `${tableName}::${rowLabel}` : '';
+            if (matchKey && visibleMatchKeys.has(matchKey)) {
+                // 找到可见集合中第一条匹配项
+                const fresh = (visibleItems || []).find(item => item.matchKey === matchKey);
+                if (fresh && !seenIds.has(fresh.id)) {
+                    migrated.push({
+                        id: fresh.id,
+                        tableName: fresh.tableName,
+                        rowLabel: fresh.rowLabel,
+                        kind: fresh.kind,
+                        icon: fresh.icon,
+                        title: fresh.title,
+                        summary: fresh.summary,
+                        tags: fresh.tags || [],
+                        injected: !!fresh.injected,
+                    });
+                    seenIds.add(fresh.id);
+                    return;
+                }
+            }
+            // 既不在稳定 id 也不在 matchKey 集合中：已删除/失效/内部线索，剔除。
+        });
+        if (migrated.length !== pinned.length) {
+            savePinnedRecallItems(migrated);
+        }
+        return migrated;
+    };
+
     const pinRecallItem = (item) => {
         if (!item || !item.id) return getPinnedRecallItems();
         const current = getPinnedRecallItems().filter(old => old.id !== item.id);
         const clean = {
             id: item.id,
             tableName: item.tableName,
+            tableKey: item.tableKey || '',
             rowLabel: item.rowLabel,
             kind: item.kind,
+            icon: item.icon || 'fa-thumbtack',
             title: item.title,
             summary: item.summary,
             tags: item.tags || [],
@@ -495,9 +600,12 @@
             const injected = getRecallInjectionState(table, rule);
             table.rows.forEach((row, rowIndex) => {
                 if (!Array.isArray(row)) return;
+                // 共享可见性策略：在构造任何召回文本前过滤内部记录线索。
+                if (!isRecallRowVisible(headers, row, rule)) return;
                 const rowText = row.map(cell => normalizePromptText(cell)).filter(Boolean).join(' ');
                 if (q && !rowText.toLowerCase().includes(q) && !tableName.toLowerCase().includes(q)) return;
-                const rowLabel = getRecallFieldValue(headers, row, ['row_id'], '') || String(rowIndex + 1);
+                const identity = buildRecallRowIdentity(table.key, tableName, headers, row, rowIndex);
+                const rowLabel = identity.rowLabel;
                 const title = getRecallFieldValue(headers, row, rule.titleHeaders, '') || `${tableName} ${rowLabel}`;
                 const summaryParts = uniqRecallParts(rule.summaryHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
                 const tagParts = uniqRecallParts(rule.tagHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
@@ -511,7 +619,8 @@
                     if (tagParts.join(' ').toLowerCase().includes(q)) score += 3;
                 }
                 items.push({
-                    id: `${table.key || tableName}:${rowIndex}`,
+                    id: identity.id,
+                    matchKey: identity.matchKey,
                     tableName,
                     tableKey: table.key,
                     rowIndex,
@@ -633,12 +742,13 @@
         return Array.from(keywords).sort((a, b) => b.length - a.length).slice(0, 24);
     };
 
-    const mergePinnedRecallCandidates = (items) => {
+    const mergePinnedRecallCandidates = (items, pinnedOverride) => {
         const byId = new Map();
         (items || []).forEach(item => {
             if (item?.id) byId.set(item.id, item);
         });
-        getPinnedRecallItems().forEach(item => {
+        const pinned = Array.isArray(pinnedOverride) ? pinnedOverride : getPinnedRecallItems();
+        pinned.forEach(item => {
             if (!item?.id || byId.has(item.id)) return;
             byId.set(item.id, {
                 ...item,
@@ -703,8 +813,10 @@
         const config = getAutoRecallConfig();
         const enabled = config.plotEnabled || config.memoryEnabled;
         const baseItems = collectRecallItems(tables || {}, '');
-        const candidates = mergePinnedRecallCandidates(baseItems).filter(item => isAutoRecallKindEnabled(item, config));
-        const pinnedIds = new Set(getPinnedRecallItems().map(item => item.id));
+        // 读旧固定项时应用共享可见性策略并迁移到稳定 id：内部线索/已删除项不进入自动召回。
+        const pinnedItems = sanitizePinnedRecallItems(baseItems);
+        const candidates = mergePinnedRecallCandidates(baseItems, pinnedItems).filter(item => isAutoRecallKindEnabled(item, config));
+        const pinnedIds = new Set(pinnedItems.map(item => item.id));
         const contextText = buildAutoRecallContextText(config);
         const keywords = extractAutoRecallKeywords(contextText, candidates);
         if (!enabled) {
@@ -1539,11 +1651,11 @@
                 overlay.className = 'mfrs-confirm-overlay';
                 overlay.innerHTML = `
                     <div class="mfrs-confirm-dialog ${themeClass}">
-                        <div class="mfrs-confirm-title">${title}</div>
-                        <div class="mfrs-confirm-body">${message}</div>
+                        <div class="mfrs-confirm-title">${escapeHtml(title)}</div>
+                        <div class="mfrs-confirm-body">${escapeHtml(message)}</div>
                         <div class="mfrs-confirm-btns">
-                            <button class="mfrs-confirm-btn" data-act="cancel"><i class="fa-solid fa-times"></i> ${cancelText}</button>
-                            <button class="mfrs-confirm-btn ${danger}" data-act="ok"><i class="fa-solid fa-check"></i> ${confirmText}</button>
+                            <button class="mfrs-confirm-btn" data-act="cancel"><i class="fa-solid fa-times"></i> ${escapeHtml(cancelText)}</button>
+                            <button class="mfrs-confirm-btn ${danger}" data-act="ok"><i class="fa-solid fa-check"></i> ${escapeHtml(confirmText)}</button>
                         </div>
                     </div>`;
                 document.body.appendChild(overlay);
@@ -1567,8 +1679,8 @@
                 overlay.className = 'mfrs-confirm-overlay';
                 overlay.innerHTML = `
                     <div class="mfrs-confirm-dialog ${themeClass}">
-                        <div class="mfrs-confirm-title">${title}</div>
-                        <div class="mfrs-confirm-body">${message}</div>
+                        <div class="mfrs-confirm-title">${escapeHtml(title)}</div>
+                        <div class="mfrs-confirm-body">${escapeHtml(message)}</div>
                         <div class="mfrs-confirm-btns">
                             <button class="mfrs-confirm-btn mfrs-btn-primary" data-act="ok"><i class="fa-solid fa-check"></i> 确定</button>
                         </div>
@@ -4355,7 +4467,8 @@
         const query = String(recallSearchTerm || '').trim();
         const items = collectRecallItems(tables, query);
         const autoResult = buildAutoRecallResult(tables);
-        const pinned = getPinnedRecallItems();
+        // 渲染固定区时净化旧固定项：内部线索/已删除项不展示，并回写净化后的 storage。
+        const pinned = sanitizePinnedRecallItems(items);
         pinned.forEach(item => { if (item?.id) lastRecallItemMap[item.id] = item; });
         const healthHtml = healthChecks.map(item => `
             <div class="acu-recall-health-item ${escapeHtml(item.status)}">
@@ -8593,6 +8706,13 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             validateCatalog: validateGachaCatalog,
             getEconomySummary: buildGachaEconomySummary,
             // --- UI 入口（需 jQuery/DOM）---
+            // 纯确认能力：业务 API 自己生成权威文案；不暴露任何数据库删除 capability。
+            confirmDanger: ({ title = '确认操作', message = '', confirmText = '确定', cancelText = '取消' } = {}) => MFRSDialog.showConfirm(message, {
+                title,
+                confirmText,
+                cancelText,
+                danger: true,
+            }),
             showPanel: showGachaPanel,
             showFragmentShop: showFragmentShop,
             showCustomEditor: showCustomItemEditor,

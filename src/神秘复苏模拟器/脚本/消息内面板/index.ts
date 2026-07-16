@@ -4,6 +4,7 @@ type StatusData = Record<string, any>;
 type MessagePanelApi = {
   refreshAll: () => void;
   refreshMessage: (messageId: number | string) => void;
+  getHudActiveView: () => string;
 };
 type EventSubscription = { stop: () => void };
 type MessagePanelHostWindow = Window & {
@@ -450,7 +451,21 @@ function buildCheckSuggestionsFoldHtml(_data: StatusData): string {
   return `<details class="mfrs-msg-check-fold"><summary class="mfrs-msg-check-summary"><i class="fa-solid fa-dice" aria-hidden="true"></i><span>检定建议</span><span class="mfrs-msg-check-count">${rows.length}</span></summary><div class="mfrs-msg-check-body">${body}</div></details>`;
 }
 
-type HudTableBundle = { name: string; headers: string[]; rows: unknown[][] };
+type HudTableBundle = { key: string; name: string; headers: string[]; rows: unknown[][] };
+type HudArchiveSelection = { tableKey: string; tableName: string; rowId: string };
+
+type HudArchiveRule = {
+  key: string;
+  names: string[];
+  icon?: string;
+  titleHeaders: string[];
+  summaryHeaders?: string[];
+  tagHeaders?: string[];
+  archivePreview?: {
+    detailHeaders?: string[];
+    visibility?: { header?: string; allowed?: string[]; missing?: string };
+  };
+};
 
 function readHudDatabaseTables(): Record<string, HudTableBundle> {
   try {
@@ -470,6 +485,7 @@ function readHudDatabaseTables(): Record<string, HudTableBundle> {
       const sheet = (raw as Record<string, any>)[sheetId];
       if (!sheet?.name || !Array.isArray(sheet.content)) continue;
       tables[String(sheet.name)] = {
+        key: String(sheet.uid ?? sheetId),
         name: String(sheet.name),
         headers: (sheet.content[0] || []).map((h: unknown) => String(h ?? '')),
         rows: sheet.content.slice(1) || [],
@@ -491,6 +507,70 @@ function findHudTable(tables: Record<string, HudTableBundle>, ...names: string[]
     if (hit) return tables[hit];
   }
   return null;
+}
+
+function getHudArchiveRules(): HudArchiveRule[] {
+  const fallback: HudArchiveRule[] = [
+    {
+      key: 'sheet_clues', names: ['线索'], icon: 'fa-magnifying-glass',
+      titleHeaders: ['线索编号', '内容', '关联事件'], summaryHeaders: ['内容', '推断', '验证状态'], tagHeaders: ['可信度', '验证状态', '来源'],
+      archivePreview: { detailHeaders: ['线索编号', '关联事件', '来源', '内容', '可信度', '推断', '验证状态', '可见性'], visibility: { header: '可见性', allowed: ['玩家可见'], missing: 'deny' } },
+    },
+    {
+      key: 'sheet_ghost_archives', names: ['厉鬼档案'], icon: 'fa-book-skull',
+      titleHeaders: ['档案编号', '厉鬼称呼'], summaryHeaders: ['表现', '已知规律', '危险备注'], tagHeaders: ['关押状态', '关联事件', '拼图关系'],
+      archivePreview: { detailHeaders: ['档案编号', '厉鬼称呼', '关联事件', '表现', '已知规律', '猜测规律', '压制方式', '关押状态', '拼图关系', '危险备注'] },
+    },
+    {
+      key: 'sheet_characters', names: ['人物'], icon: 'fa-address-book',
+      titleHeaders: ['姓名', '身份'], summaryHeaders: ['已知情报', '关系', '灵异能力'], tagHeaders: ['在场状态', '阵营', '所在地点'],
+      archivePreview: { detailHeaders: ['姓名', '身份', '阵营', '所在地点', '在场状态', '生死状态', '灵异能力', '关系', '已知情报'] },
+    },
+    {
+      key: 'sheet_locations', names: ['地点'], icon: 'fa-map-location-dot',
+      titleHeaders: ['地点名', '城市'], summaryHeaders: ['关键描述', '可交互内容', '相关事件'], tagHeaders: ['灵异状态', '封锁状态', '地点类型'],
+      archivePreview: { detailHeaders: ['地点名', '城市', '地点类型', '灵异状态', '封锁状态', '相关事件', '关键描述', '可交互内容'] },
+    },
+  ];
+  try {
+    const config = (hostWindow as any).MFRS_DATABASE_FRONTEND_CONFIG;
+    const rules = config?.recallTableRules;
+    if (!Array.isArray(rules)) return fallback;
+    const result = fallback.map(fallbackRule => {
+      const remote = rules.find((item: HudArchiveRule) => item?.key === fallbackRule.key);
+      return remote?.archivePreview ? remote : fallbackRule;
+    });
+    return result;
+  } catch {
+    return fallback;
+  }
+}
+
+function hudRowId(table: HudTableBundle, row: unknown[]): string {
+  return hudRowField(table.headers, row, 'row_id');
+}
+
+function isHudArchiveRowVisible(rule: HudArchiveRule, table: HudTableBundle, row: unknown[]) {
+  const policy = rule.archivePreview?.visibility;
+  if (!policy?.header) return true;
+  const value = hudRowField(table.headers, row, policy.header);
+  if (!value) return policy.missing !== 'deny';
+  const allowed = policy.allowed ?? [];
+  return allowed.includes(value);
+}
+
+function findHudArchiveRule(table: HudTableBundle, rules = getHudArchiveRules()) {
+  return rules.find(rule => rule.key === table.key || rule.names.some(name => table.name.includes(name))) ?? null;
+}
+
+function findHudArchiveRow(selection: HudArchiveSelection, tables = readHudDatabaseTables()) {
+  const table = Object.values(tables).find(item => item.key === selection.tableKey || item.name === selection.tableName);
+  if (!table) return null;
+  const rule = findHudArchiveRule(table);
+  if (!rule) return null;
+  const row = table.rows.find(item => hudRowId(table, item) === selection.rowId);
+  if (!row || !isHudArchiveRowVisible(rule, table, row)) return null;
+  return { table, rule, row };
 }
 
 function hudRowField(headers: string[], row: unknown[], ...names: string[]): string {
@@ -704,7 +784,7 @@ function getPanelRenderKey(data: StatusData) {
     hash ^= source.charCodeAt(index);
     hash = Math.imul(hash, 16777619);
   }
-  return `${source.length}-${(hash >>> 0).toString(36)}`;
+  return `${source.length}-${(hash >>> 0).toString(36)}:db${hudDatabaseRevision}`;
 }
 
 function getBrandId(mesid: string) {
@@ -1467,10 +1547,14 @@ let hudFixedHostRestore: DomRestorePoint | null = null;
 let hudBodyOverflowPrev = '';
 let hudShellEventsBound = false;
 let hudKeydownBound = false;
-type HudView = 'story' | 'dossier' | 'relation' | 'memory' | 'gacha' | 'system' | 'settings' | 'cabinet';
-const HUD_CENTER_VIEWS: HudView[] = ['relation', 'memory', 'gacha', 'system'];
+type HudView = 'story' | 'dossier' | 'archive' | 'relation' | 'memory' | 'gacha' | 'system' | 'settings' | 'cabinet';
+const HUD_CENTER_VIEWS: HudView[] = ['archive', 'relation', 'memory', 'gacha', 'system'];
 const HUD_NAV_VIEWS: HudView[] = ['story', 'dossier', 'relation', 'memory', 'gacha', 'system', 'settings'];
 let hudActiveView: HudView = 'story';
+let hudArchiveSelection: HudArchiveSelection | null = null;
+let hudDatabaseRevision = 0;
+let hudDatabaseUpdateCallback: ((data: unknown) => void) | null = null;
+let hudDatabaseCallbackRegistered = false;
 /** 全库关闭后回到的视图（系统/档案摘要入口） */
 let hudCabinetReturnView: HudView = 'system';
 let hudPanelsRenderKey = '';
@@ -1774,6 +1858,45 @@ function ensureHudStyle() {
   font-size: 11px;
   color: color-mix(in srgb, var(--mfrs-bone-white) 48%, #777);
 }
+#${HUD_SHELL_ID} .mfrs-hud-archive-item {
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 2px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 45%, transparent);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+#${HUD_SHELL_ID} .mfrs-hud-archive-item:hover,
+#${HUD_SHELL_ID} .mfrs-hud-archive-item:focus-visible {
+  outline: none;
+  border-left-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 12%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-archive-heading {
+  margin: 0 0 12px;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--mfrs-bone-white);
+}
+#${HUD_SHELL_ID} .mfrs-hud-archive-details {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-archive-detail {
+  display: grid;
+  grid-template-columns: minmax(6em, 0.32fr) minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 18%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-archive-detail dt,
+#${HUD_SHELL_ID} .mfrs-hud-archive-detail dd { margin: 0; }
+#${HUD_SHELL_ID} .mfrs-hud-archive-detail dt { color: color-mix(in srgb, var(--mfrs-corpse-cyan) 75%, var(--mfrs-bone-white)); font-size: 12px; }
+#${HUD_SHELL_ID} .mfrs-hud-archive-detail dd { white-space: pre-wrap; word-break: break-word; color: var(--mfrs-bone-white); font-size: 13px; line-height: 1.55; }
 #${HUD_SHELL_ID} .mfrs-hud-system-actions {
   display: grid;
   gap: 8px;
@@ -2720,6 +2843,7 @@ function migrateHudShellDom(shell: HTMLElement) {
     ensureSlot('memory-slot', 'mfrs-hud-center-panel', 'relation-slot');
     ensureSlot('gacha-slot', 'mfrs-hud-center-panel', 'memory-slot');
     ensureSlot('system-slot', 'mfrs-hud-center-panel', 'gacha-slot');
+    ensureSlot('archive-slot', 'mfrs-hud-center-panel', 'relation-slot');
     shell.querySelector('[data-mfrs-hud="relation-slot"]')?.classList.add('mfrs-hud-center-panel');
   }
   const nav = shell.querySelector('.mfrs-hud-right-nav');
@@ -2790,6 +2914,7 @@ function ensureHudShell(): HTMLElement {
 </aside>
 <section class="mfrs-hud-center">
   <div class="mfrs-hud-chat-host" data-mfrs-hud="chat-host"></div>
+  <div class="mfrs-hud-center-panel" data-mfrs-hud="archive-slot" hidden></div>
   <div class="mfrs-hud-relation-panel mfrs-hud-center-panel" data-mfrs-hud="relation-slot" hidden></div>
   <div class="mfrs-hud-center-panel" data-mfrs-hud="memory-slot" hidden></div>
   <div class="mfrs-hud-center-panel" data-mfrs-hud="gacha-slot" hidden></div>
@@ -3845,56 +3970,40 @@ function buildHudResourceSectionsHtml(data: StatusData): string {
 </details>`;
 }
 
+function buildHudArchiveSummaryListHtml(table: HudTableBundle | null, rule: HudArchiveRule, limit = 3): string {
+  if (!table) return '<div class="mfrs-msg-empty">暂无记录</div>';
+  const rows = table.rows.filter(row => isHudArchiveRowVisible(rule, table, row)).slice(-limit).reverse();
+  if (!rows.length) return '<div class="mfrs-msg-empty">暂无可见记录</div>';
+  return rows.map(row => {
+    const rowId = hudRowId(table, row);
+    if (!rowId) return '';
+    const title = rule.titleHeaders.map(header => hudRowField(table.headers, row, header)).find(Boolean) || '未命名';
+    const tags = (rule.tagHeaders ?? []).map(header => hudRowField(table.headers, row, header)).filter(Boolean).slice(0, 3).join(' · ');
+    return `<button type="button" class="mfrs-hud-summary-item mfrs-hud-archive-item" data-mfrs-hud-archive-table-key="${_.escape(table.key)}" data-mfrs-hud-archive-table-name="${_.escape(table.name)}" data-mfrs-hud-archive-row-id="${_.escape(rowId)}" title="查看${_.escape(title)}"><span class="mfrs-hud-summary-title">${_.escape(clipHudLine(title, 28))}</span>${tags ? `<span class="mfrs-hud-summary-tags">${_.escape(clipHudLine(tags, 36))}</span>` : ''}</button>`;
+  }).join('');
+}
+
+function buildHudArchivePreviewHtml(): string {
+  if (!hudArchiveSelection) return '<p class="mfrs-hud-panel-title">档案预览</p><div class="mfrs-msg-empty">请从左侧调查档案选择一条记录。</div>';
+  const record = findHudArchiveRow(hudArchiveSelection);
+  if (!record) return '<p class="mfrs-hud-panel-title">档案预览</p><div class="mfrs-msg-empty">该记录已不存在、不可见，或已被外部更新。</div>';
+  const { table, rule, row } = record;
+  const title = rule.titleHeaders.map(header => hudRowField(table.headers, row, header)).filter(Boolean).join(' · ') || table.name;
+  const details = (rule.archivePreview?.detailHeaders ?? [])
+    .filter(header => header !== 'row_id')
+    .map(header => ({ header, value: hudRowField(table.headers, row, header) }))
+    .filter(item => item.value && item.header !== 'auto_merged')
+    .map(item => `<div class="mfrs-hud-archive-detail"><dt>${_.escape(item.header)}</dt><dd>${_.escape(item.value)}</dd></div>`)
+    .join('');
+  return `<p class="mfrs-hud-panel-title"><i class="fa-solid ${_.escape(rule.icon || 'fa-folder-open')}"></i> 档案预览</p><p class="mfrs-hud-panel-sub">${_.escape(table.name)} · 只读</p><h2 class="mfrs-hud-archive-heading">${_.escape(title)}</h2><dl class="mfrs-hud-archive-details">${details || '<div class="mfrs-msg-empty">暂无可显示字段</div>'}</dl>`;
+}
+
 function buildHudInvestigationSectionsHtml(): string {
   const tables = readHudDatabaseTables();
-  const sections: Array<{ key: string; title: string; icon: string; tableNames: string[]; titleHeaders: string[]; tagHeaders: string[] }> = [
-    {
-      key: 'clue',
-      title: '线索',
-      icon: 'fa-magnifying-glass',
-      tableNames: ['线索'],
-      titleHeaders: ['线索编号', '内容', '关联事件'],
-      tagHeaders: ['可信度', '验证状态', '来源'],
-    },
-    {
-      key: 'ghost-archive',
-      title: '厉鬼档案',
-      icon: 'fa-book-skull',
-      tableNames: ['厉鬼档案'],
-      titleHeaders: ['档案编号', '厉鬼称呼'],
-      tagHeaders: ['关押状态', '关联事件', '拼图关系'],
-    },
-    {
-      key: 'people',
-      title: '人物',
-      icon: 'fa-address-book',
-      tableNames: ['人物'],
-      titleHeaders: ['姓名', '身份'],
-      tagHeaders: ['在场状态', '阵营', '所在地点'],
-    },
-    {
-      key: 'place',
-      title: '地点',
-      icon: 'fa-map-location-dot',
-      tableNames: ['地点'],
-      titleHeaders: ['地点名', '城市'],
-      tagHeaders: ['灵异状态', '封锁状态', '地点类型'],
-    },
-  ];
-  const body = sections
-    .map(section => {
-      const table = findHudTable(tables, ...section.tableNames);
-      const list = buildHudTableSummaryListHtml(table, section.titleHeaders, section.tagHeaders, 3);
-      const openTable = section.tableNames[0];
-      return `<details class="mfrs-msg-fold" data-fold="invest-${section.key}">
-  <summary class="mfrs-msg-fold-summary"><i class="fa-solid ${section.icon}" aria-hidden="true"></i><span>${section.title}</span></summary>
-  <div class="mfrs-msg-fold-body">
-    ${list}
-    <button type="button" class="mfrs-hud-open-full" data-mfrs-hud-open-table="${_.escape(openTable)}">打开全库 · ${_.escape(openTable)}</button>
-  </div>
-</details>`;
-    })
-    .join('');
+  const body = getHudArchiveRules().map(rule => {
+    const table = Object.values(tables).find(item => item.key === rule.key || rule.names.some(name => item.name.includes(name))) ?? null;
+    return `<details class="mfrs-msg-fold" data-fold="invest-${_.escape(rule.key)}"><summary class="mfrs-msg-fold-summary"><i class="fa-solid ${_.escape(rule.icon || 'fa-folder-open')}" aria-hidden="true"></i><span>${_.escape(rule.names[0])}</span></summary><div class="mfrs-msg-fold-body">${buildHudArchiveSummaryListHtml(table, rule)}</div></details>`;
+  }).join('');
   return `<p class="mfrs-hud-dossier-group-title">调查档案</p>${body}`;
 }
 
@@ -4107,6 +4216,7 @@ function isHudCenterBusinessView(view: HudView) {
 
 function applyHudCenterView(shell: Element, view: HudView) {
   const chatHost = shell.querySelector('[data-mfrs-hud="chat-host"]') as HTMLElement | null;
+  const archive = shell.querySelector('[data-mfrs-hud="archive-slot"]') as HTMLElement | null;
   const relation = shell.querySelector('[data-mfrs-hud="relation-slot"]') as HTMLElement | null;
   const memory = shell.querySelector('[data-mfrs-hud="memory-slot"]') as HTMLElement | null;
   const gacha = shell.querySelector('[data-mfrs-hud="gacha-slot"]') as HTMLElement | null;
@@ -4114,6 +4224,7 @@ function applyHudCenterView(shell: Element, view: HudView) {
   const left = shell.querySelector('[data-mfrs-hud="left"]') as HTMLElement | null;
   const showBusiness = isHudCenterBusinessView(view);
   if (chatHost) chatHost.hidden = showBusiness;
+  if (archive) archive.hidden = view !== 'archive';
   if (relation) relation.hidden = view !== 'relation';
   if (memory) memory.hidden = view !== 'memory';
   if (gacha) gacha.hidden = view !== 'gacha';
@@ -4159,7 +4270,7 @@ function setHudView(view: HudView) {
   }
   hudActiveView = view;
   shell.classList.remove('is-settings-open');
-  setHudNavActive(view);
+  setHudNavActive(view === 'archive' ? 'dossier' : view);
   applyHudCenterView(shell, view);
   if (view === 'story') {
     closeHudCabinetLayer();
@@ -4185,6 +4296,16 @@ function setHudView(view: HudView) {
     shell.querySelector('.mfrs-hud-left')?.scrollTo?.({ top: 0, behavior: 'smooth' });
     return;
   }
+  if (view === 'archive') {
+    // 档案预览：关柜；移动端关左右抽屉，桌面保留左栏；仅渲染 archive slot，不刷新 memory/gacha/system
+    closeHudCabinetLayer();
+    if (hostWindow.matchMedia?.('(max-width: 800px)')?.matches) {
+      closeHudSideDrawers();
+    }
+    const archiveSlot = shell.querySelector('[data-mfrs-hud="archive-slot"]');
+    if (archiveSlot) archiveSlot.innerHTML = buildHudArchivePreviewHtml();
+    return;
+  }
   if (isHudCenterBusinessView(view)) {
     closeHudCabinetLayer();
     closeHudSideDrawers();
@@ -4195,6 +4316,8 @@ function setHudView(view: HudView) {
 }
 
 function refreshHudBusinessPanels(shell: Element, data: StatusData) {
+  const archiveSlot = shell.querySelector('[data-mfrs-hud="archive-slot"]');
+  if (archiveSlot) archiveSlot.innerHTML = buildHudArchivePreviewHtml();
   const memorySlot = shell.querySelector('[data-mfrs-hud="memory-slot"]');
   if (memorySlot) memorySlot.innerHTML = buildHudMemoryPanelHtml();
   const gachaSlot = shell.querySelector('[data-mfrs-hud="gacha-slot"]');
@@ -4298,6 +4421,44 @@ function refreshHudPanels(force = false) {
     shell.classList.add('is-settings-open');
     renderHudSettingsPanel(shell);
   }
+}
+
+/** 数据库表更新回调：自增 revision 触发 HUD 全量刷新（archive 摘要/记忆/系统随之刷新） */
+function getHudDatabaseUpdateCallback() {
+  if (!hudDatabaseUpdateCallback) {
+    hudDatabaseUpdateCallback = () => {
+      hudDatabaseRevision += 1;
+      refreshHudPanels(true);
+    };
+  }
+  return hudDatabaseUpdateCallback;
+}
+
+function registerHudDatabaseUpdateCallback() {
+  if (hudDatabaseCallbackRegistered) return;
+  const api = (hostWindow as any).AutoCardUpdaterAPI;
+  if (!api || typeof api.registerTableUpdateCallback !== 'function') return;
+  try {
+    api.registerTableUpdateCallback(getHudDatabaseUpdateCallback());
+    hudDatabaseCallbackRegistered = true;
+  } catch {
+    // 数据库前端可能尚未就绪，静默跳过，等下次 activate 重试
+  }
+}
+
+function unregisterHudDatabaseUpdateCallback() {
+  // 注销回调时同步清空只读选中态，避免残留指向已被销毁的表行
+  hudArchiveSelection = null;
+  if (!hudDatabaseCallbackRegistered) return;
+  const api = (hostWindow as any).AutoCardUpdaterAPI;
+  if (api && typeof api.unregisterTableUpdateCallback === 'function') {
+    try {
+      api.unregisterTableUpdateCallback(getHudDatabaseUpdateCallback());
+    } catch {
+      // ignore
+    }
+  }
+  hudDatabaseCallbackRegistered = false;
 }
 
 function restoreFixedHostFromHudCabinet() {
@@ -4442,6 +4603,19 @@ function handleHudShellClick(e: Event) {
   if (openGachaBtn) {
     e.preventDefault();
     openHudGachaUi();
+    return;
+  }
+  // 调查档案摘要项：写入只读选中态并切到中栏档案预览（在 open-table 全库分支前拦截）
+  const archiveItemBtn = target.closest('.mfrs-hud-archive-item') as HTMLElement | null;
+  if (archiveItemBtn) {
+    e.preventDefault();
+    hudArchiveSelection = {
+      tableKey: archiveItemBtn.getAttribute('data-mfrs-hud-archive-table-key') || '',
+      tableName: archiveItemBtn.getAttribute('data-mfrs-hud-archive-table-name') || '',
+      rowId: archiveItemBtn.getAttribute('data-mfrs-hud-archive-row-id') || '',
+    };
+    setHudView('archive');
+    if (hostWindow.matchMedia?.('(max-width: 800px)')?.matches) closeHudSideDrawers();
     return;
   }
   const openTableBtn = target.closest('[data-mfrs-hud-open-table]') as HTMLElement | null;
@@ -4653,6 +4827,8 @@ function unmountHudImmersive() {
   }
   hudMounted = false;
   hudPanelsRenderKey = '';
+  // 退出/切卡：清空只读档案选中态，避免下次挂载残留指向已失效表行
+  hudArchiveSelection = null;
   shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-settings-open', 'is-tavern-menu-open');
   doc.getElementById('mfrs-hud-st-return')?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
@@ -4697,6 +4873,7 @@ function destroyHudImmersive() {
   hudImmersivePreferred = true;
   hudActiveView = 'story';
   hudPanelsRenderKey = '';
+  hudArchiveSelection = null;
 }
 
 $(() => {
@@ -5748,6 +5925,7 @@ $(() => {
   const messagePanelApi: MessagePanelApi = {
     refreshAll: processAllMessages,
     refreshMessage: processOneMessage,
+    getHudActiveView: () => hudActiveView,
   };
   const refreshEvents = [
     tavern_events.MESSAGE_RECEIVED,
@@ -5798,6 +5976,8 @@ $(() => {
     observer.disconnect();
     unsubscribeRefreshEvents();
     clearRefreshTimers();
+    // 注销数据库表更新回调，避免销毁后回调写入已卸载的 HUD
+    unregisterHudDatabaseUpdateCallback();
     // E4：切非神秘复苏卡销毁壳，避免孤儿 #mfrs-hud-shell / toast / st-return
     destroyHudImmersive();
     cleanupOwnedMessageUi();
@@ -5816,6 +5996,8 @@ $(() => {
     mountStyle();
     mountApi();
     subscribeRefreshEvents();
+    // 注册数据库表更新回调：外部编辑/镜像写入后自增 revision 并刷新 HUD
+    registerHudDatabaseUpdateCallback();
     // E2：优先绑 #chat，禁止默认挂 body 扫全站
     observedChatContainer = doc.querySelector('#chat') || doc.body;
     observerEnabled = true;
@@ -5858,6 +6040,8 @@ $(() => {
     disposed = true;
     clearChatChangedTimers();
     deactivateMessagePanelRuntime();
+    // 再注销一次数据库表更新回调，防 deactivate 路径竞态残留
+    unregisterHudDatabaseUpdateCallback();
     // destroy 已在 deactivate 内调用；再清一次防竞态残留
     destroyHudImmersive();
     chatChangedSubscription?.stop();
