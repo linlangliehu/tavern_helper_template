@@ -649,7 +649,9 @@ function findHudArchiveRow(selection: HudArchiveSelection, tables = readHudDatab
 
 function hudRowField(headers: string[], row: unknown[], ...names: string[]): string {
   for (const name of names) {
-    const idx = headers.findIndex(h => h === name || h.includes(name));
+    // Prefer exact match; fall back to includes to avoid "纪要编号" matching "纪要"
+    let idx = headers.findIndex(h => h === name);
+    if (idx < 0) idx = headers.findIndex(h => h.includes(name));
     if (idx >= 0) {
       const text = String(row[idx] ?? '').trim();
       if (text) return text;

@@ -1,6 +1,35 @@
 # 进度日志
 
-## 会话：沉浸 HUD 中栏改造 · Task #3 记忆中栏 CRUD + Task #4 抽卡中栏嵌入 — **完成（未 commit）**
+## 会话：沉浸 HUD 中栏改造 · Task #3/#4 真页验收 + hudRowField 修复 — **完成**
+
+承接 Task #3/#4 源码提交（`a8244ae`）。本轮进行 CDP 真页验收，发现并修复 `hudRowField` 的 `includes` 匹配优先级 bug。
+
+**真页验收环境：** CORS 静态服务器（cors_server.py，端口 8131）serve dist；iframe 7 内 `import()` 本地 bundle 替换 CDN 8.13.31；mock `exportTableAsJson`（3 表各注入测试行）+ mock `MysteryDatabaseFrontend`（`previewMemoryChange`/`applyMemoryChange`/`requestConfirmedMemoryDelete`）。
+
+**Bug 发现与修复：`hudRowField` 的 `includes` 匹配优先级**
+- 原代码 `headers.findIndex(h => h === name || h.includes(name))` 对每个 header 同时检查精确匹配和 `includes`，导致 `纪要编号` 在 `纪要` 之前时被 `includes("纪要")` 优先匹配。
+- 编辑表单的 `纪要` 字段错误显示 `SP0002`（来自 `纪要编号` 列）而非实际纪要内容。
+- 修复：先 `findIndex(h => h === name)` 精确匹配，未命中再 `findIndex(h => h.includes(name))` 回退。
+
+**Task #3 记忆中栏 CRUD 真页验证（全通过）：**
+1. 三 section 渲染（事件纪要/收录档案/收录规律），4 行记录带编辑/删除/新增按钮 ✓
+2. 编辑表单预填充：`纪要` 字段正确显示"玩家首次进入鬼域，观察到时间停滞现象。"（修复后）✓
+3. `纪要编号` 编辑时 readonly（`readonlyOnEdit` 生效）✓
+4. 新增→填写→保存：`applyMemoryChange({ action: 'insertRow', table: '收录规律', data: {...} })` 调用正确 ✓
+5. 删除：`requestConfirmedMemoryDelete({ table: '收录档案', row_id: '1' })` 调用正确 ✓
+
+**Task #4 抽卡中栏嵌入真页验证（全通过）：**
+1. 卡池选择器（全物品/档案/规律/灵异物品 4 选项）✓
+2. 单抽按钮→MFRS.single()→结果内联渲染（1 件物品，余额 200→190）✓
+3. 十连按钮→MFRS.ten()→结果内联渲染（10 件物品，含 ★★★★ 禁忌知识）✓
+4. 结果项：图标/名称/稀有度星/颜色/类型全正确 ✓
+5. 保留"完整面板"按钮 ✓
+
+**门禁（全绿）**：7 道功能门禁全 PASS；`git diff --check` 通过；tsc 0 语法错误。验收后还原 `exportTableAsJson`、退出 HUD、停服务器、`git checkout dist webpack.config.ts`。
+
+**当前 worktree**：1 个未提交文件（`src/神秘复苏模拟器/脚本/消息内面板/index.ts` — `hudRowField` 修复）。
+
+## 会话：沉浸 HUD 中栏改造 · Task #3 记忆中栏 CRUD + Task #4 抽卡中栏嵌入 — **完成（已提交 `a8244ae`）**
 
 承接上轮（Task #1/#2/#5 已提交 `7155b09`）。本轮完成 Task #3 记忆中栏 CRUD 和 Task #4 抽卡中栏嵌入。未 commit/push/publish/改 PNG/更新版本。
 
