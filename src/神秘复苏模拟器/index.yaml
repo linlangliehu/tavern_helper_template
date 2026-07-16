@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 神秘复苏模拟器.png
-版本: '8.13.29'
+版本: '8.13.31'
 作者: 琳琅
 备注: ''
 
@@ -6614,7 +6614,7 @@
       启用: true
       类型: 脚本
       内容: |-
-        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@0.171.0/artifact/bundle.js?v=v81329_20260715_01';
+        import 'https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@0.171.0/artifact/bundle.js?v=v81331_20260716_01';
 
     - 名称: hotfix-generation-ended-listeners
       id: hotfix-generation-ended-001
@@ -6636,7 +6636,7 @@
           console.error(`[${label}] 加载失败，请检查 CDN 可用性`);
         };
 
-        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=v81329_20260715_01');
+        loadModule('Hotfix: GENERATION_ENDED 监听器', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/hotfix-generation-ended-listeners/index.js?v=v81331_20260716_01');
 
     - 名称: 变量结构
       id: f65ab164-4268-4366-8228-16af904c2251
@@ -6657,7 +6657,7 @@
           }
         };
 
-        loadLocalModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84/index.js?v=v81329_20260715_01');
+        loadLocalModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%8F%98%E9%87%8F%E7%BB%93%E6%9E%84/index.js?v=v81331_20260716_01');
 
     - 名称: 界面美化
       id: a1b2c3d4-0006-4000-8000-000000000006
@@ -6678,7 +6678,7 @@
           }
         };
 
-        loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=v81329_20260715_01');
+        loadLocalModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E7%95%8C%E9%9D%A2%E7%BE%8E%E5%8C%96/index.js?v=v81331_20260716_01');
 
     - 名称: 固定状态栏
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3001
@@ -6700,7 +6700,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和固定状态栏脚本入口可用`);
         };
 
-        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=v81329_20260715_01');
+        loadLocalModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E5%9B%BA%E5%AE%9A%E7%8A%B6%E6%80%81%E6%A0%8F/index.js?v=v81331_20260716_01');
 
     - 名称: spv3.9.5·数据库
       id: 93648737-21db-406c-8aab-3ef8f3af1238
@@ -6729,7 +6729,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库脚本入口可用`);
         };
 
-        loadLocalModule('spv3.9.5·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js?v=v81329_20260715_01');
+        loadLocalModule('spv3.9.5·数据库', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93/index.js?v=v81331_20260716_01');
 
     - 名称: 神秘复苏数据库前端
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3002
@@ -6758,7 +6758,7 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和数据库前端脚本入口可用`);
         };
 
-        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js?v=v81329_20260715_01');
+        loadLocalModule('神秘复苏数据库前端', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%89%8D%E7%AB%AF/index.js?v=v81331_20260716_01');
 
     - 名称: 消息内面板
       id: d0f6b2d4-4b25-4b8c-9b54-2f7b6c8a3003
@@ -6780,4 +6780,4 @@
           console.error(`[${label}] 本地资源加载失败，请确认本地 dist 服务和消息内面板脚本入口可用`);
         };
 
-        loadLocalModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@95981c90c901e35891d684a27cab6b67a56c0412/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%B6%88%E6%81%AF%E5%86%85%E9%9D%A2%E6%9D%BF/index.js?v=v81329_20260715_01');
+        loadLocalModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@5e52dcbc556e2fb6e7d788791f71746b5ee86ddc/dist/%E7%A5%9E%E7%A7%98%E5%A4%8D%E8%8B%8F%E6%A8%A1%E6%8B%9F%E5%99%A8/%E8%84%9A%E6%9C%AC/%E6%B6%88%E6%81%AF%E5%86%85%E9%9D%A2%E6%9D%BF/index.js?v=v81331_20260716_01');

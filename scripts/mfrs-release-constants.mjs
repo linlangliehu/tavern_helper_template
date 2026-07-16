@@ -3,10 +3,10 @@
  * publish-card / verify-mfrs-release-png 共用，避免人肉传参漂移。
  */
 export const REPO = 'linlangliehu/tavern_helper_template';
-// v8.13.29: 沉浸式按键审查修复（drawer/gacha-pity/aria-hidden/CoreMirror）
-export const CDN_REF = '95981c90c901e35891d684a27cab6b67a56c0412';
+// v8.13.31: MAINT-29 黄金储备正式路径 + drawer watcher 生命周期
+export const CDN_REF = '5e52dcbc556e2fb6e7d788791f71746b5ee86ddc';
 export const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
-export const CDN_CACHE_VERSION = 'v81329_20260715_01';
-export const RELEASE_VERSION = '8.13.29';
+export const CDN_CACHE_VERSION = 'v81331_20260716_01';
+export const RELEASE_VERSION = '8.13.31';
 export const MAGVAR_PIN = '0.171.0';
 export const MAGVAR_BUNDLE_URL = `https://testingcf.jsdelivr.net/gh/MagicalAstrogy/MagVarUpdate@${MAGVAR_PIN}/artifact/bundle.js`;
