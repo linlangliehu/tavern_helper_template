@@ -495,9 +495,26 @@ addCheck('phase5', 'IA v2.1 seven-key nav without cabinet primary', () => {
   assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'IA panels must remain read-only');
 });
 addCheck('phase5', 'β2 resource readout is display-only structured fields', () => {
-  assert.ok(sources.message.includes('function buildHudResourceSectionsHtml'), 'missing hud resource builder');
-  assert.ok(sources.message.includes('灵异资源.鬼拼图') || sources.message.includes('鬼拼图'), 'puzzle path');
-  assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'must not write MVU from hud resource UI');
+  const resourceBuilder = between(
+    sources.message,
+    'function buildHudResourceSectionsHtml',
+    'function buildHudInvestigationSectionsHtml',
+  );
+  assert.ok(resourceBuilder, 'missing hud resource builder');
+  const officialGold = resourceBuilder.indexOf("_.get(data, '灵异资源.黄金储备')");
+  const legacyGold = [
+    "_.get(data, '灵异资源.黄金')",
+    "_.get(data, '灵异资源.鬼钱')",
+    "_.get(data, '黄金')",
+  ].map(marker => resourceBuilder.indexOf(marker));
+  assert.ok(officialGold >= 0, 'resource builder must read schema path 灵异资源.黄金储备');
+  assert.ok(legacyGold.every(index => index >= 0), 'resource builder must preserve legacy gold aliases');
+  assert.ok(
+    legacyGold.every(index => officialGold < index),
+    'schema path 灵异资源.黄金储备 must win over legacy aliases',
+  );
+  assert.ok(resourceBuilder.includes('灵异资源.鬼拼图') || resourceBuilder.includes('鬼拼图'), 'puzzle path');
+  assert.equal(resourceBuilder.includes('Mvu.replaceMvuData'), false, 'must not write MVU from hud resource UI');
 });
 
 // Phase β3: cabinet overlay, esc/mask close, narrow drawers, a11y targets.
@@ -546,7 +563,7 @@ addCheck('phase5', 'A1 close prior ST drawers before opening menu target', () =>
   assert.ok(sources.message.includes('function hasOpenStDrawers'), 'missing hasOpenStDrawers');
   const runAction = between(sources.message, 'function runHudTavernAction', 'function reparentSendFormIntoHud');
   assert.ok(runAction.includes('closeOpenStDrawers()'), 'menu click must close open drawers first');
-  assert.ok(runAction.includes('yieldHudToStUi()'), 'menu click must still yield ST UI overlay');
+  assert.ok(runAction.includes('beginHudOverlayWatch()'), 'menu click must start yielded overlay watch');
 });
 addCheck('phase5', 'A2 menu fail feedback toast and disabled items', () => {
   assert.ok(sources.message.includes('function markHudMenuItemFailed'), 'missing fail marker helper');
@@ -577,13 +594,13 @@ addCheck('phase5', 'A4 close panel restores ST UI and clears open drawers', () =
   assert.ok(sources.message.includes('function restoreHudFromStUi'), 'missing restoreHudFromStUi');
   assert.ok(sources.message.includes('function closeSpDatabaseUi'), 'close panel must close SP·数据库 III');
   const restore = between(sources.message, 'function restoreHudFromStUi', 'function closeHudSettingsPanel');
-  assert.ok(restore.includes('closeSpDatabaseUi()'), 'restore must call closeSpDatabaseUi');
+  assert.ok(restore.includes('closeSpDatabaseUi('), 'restore must call closeSpDatabaseUi');
   assert.ok(restore.includes('closeOpenStDrawers()'), 'close panel must close drawers');
   assert.ok(
-    restore.includes('classList.remove(HUD_ST_UI_CLASS)') ||
-      restore.includes("classList.remove('mfrs-hud-st-ui-open')") ||
-      restore.includes('HUD_ST_UI_CLASS'),
-    'close panel must drop st-ui class',
+    restore.includes('releaseHudFromStUi(') ||
+      restore.includes('classList.remove(HUD_ST_UI_CLASS)') ||
+      restore.includes("classList.remove('mfrs-hud-st-ui-open')"),
+    'close panel must release st-ui class',
   );
   assert.ok(sources.message.includes('关闭面板'), 'missing close-panel control label');
   assert.ok(
@@ -730,6 +747,53 @@ addCheck('phase5', 'immersive overlay scan + extension menu unified yield', () =
   const unbind = between(sources.message, 'function unbindHudShellEvents', 'function rebindMessageObserverToChat');
   assert.ok(unbind.includes('stopHudOverlayWatch'), 'unbind must stop overlay watch');
   assert.equal(sources.message.includes('Mvu.replaceMvuData'), false, 'overlay yield must remain presentation-only');
+});
+addCheck('phase5', 'immersive overlay watch is epoch-scoped and non-destructive', () => {
+  const drawerSelectors = between(sources.message, 'const ST_OPEN_DRAWER_SELECTORS', 'type DomRestorePoint');
+  for (const marker of [
+    '.drawer-content.openDrawer',
+    '#left-nav-panel.openDrawer',
+    '#right-nav-panel.openDrawer',
+    '#WorldInfo.openDrawer',
+    '#rm_api_block.openDrawer',
+    '#AdvancedFormatting.openDrawer',
+    '#user-settings-block.openDrawer',
+    '#rm_extensions_block.openDrawer',
+    '#PersonaManagement.openDrawer',
+    '#Backgrounds.openDrawer',
+  ]) {
+    assert.ok(drawerSelectors.includes(marker), `canonical drawer selector missing ${marker}`);
+  }
+  assert.ok(drawerSelectors.includes('HUD_ST_OPEN_DRAWER_SELECTOR'), 'CSS drawer selector must derive from canonical list');
+  const yieldBlock = between(sources.message, 'function yieldHudToStUi', 'const SP_DB_UI_SELECTOR');
+  assert.equal(yieldBlock.includes('scheduleHudOverlayWatch'), false, 'yield must not recursively schedule watch');
+  const scheduleBlock = between(sources.message, 'function scheduleHudOverlayWatch', 'function beginHudOverlayWatch');
+  assert.ok(scheduleBlock.includes('scheduleHudOverlayTask'), 'burst callbacks must use tracked timer helper');
+  assert.ok(scheduleBlock.includes('epoch !== hudOverlayEpoch'), 'interval must reject stale epochs');
+  const scanBlock = between(sources.message, 'function scanAndYieldHudOverlays', 'function scheduleHudOverlayWatch');
+  assert.equal(scanBlock.includes('scheduleHudOverlayWatch'), false, 'scan must not restart watcher burst');
+  const maybeRestore = between(sources.message, 'function maybeRestoreHudAfterOverlayClose', 'function maybeHandleSpDatabaseCloseClick');
+  assert.ok(maybeRestore.includes('HUD_OVERLAY_OPENING_GRACE_MS') || maybeRestore.includes('hudOverlayOpeningUntil'), 'opening grace required');
+  assert.ok(maybeRestore.includes('hudOverlayRestoreTimer'), 'stable-close debounce required');
+  assert.ok(maybeRestore.includes('releaseHudFromStUi'), 'auto close must use non-destructive release');
+  for (const destructive of ['closeSpDatabaseUi(', 'closeOpenStDrawers(', 'forceCloseStDrawerClasses(', 'restoreHudFromStUi(']) {
+    assert.equal(maybeRestore.includes(destructive), false, `auto restore must not call ${destructive}`);
+  }
+  const releaseBlock = between(sources.message, 'function releaseHudFromStUi', 'function maybeRestoreHudAfterOverlayClose');
+  for (const destructive of ['closeSpDatabaseUi(', 'closeOpenStDrawers(', 'forceCloseStDrawerClasses(']) {
+    assert.equal(releaseBlock.includes(destructive), false, `release must not call ${destructive}`);
+  }
+  const runAction = between(sources.message, 'function runHudTavernAction', 'function reparentSendFormIntoHud');
+  assert.ok(runAction.includes("closest?.('.drawer-toggle')"), 'icon targets must resolve their drawer-toggle ancestor');
+  assert.ok(runAction.includes("querySelector?.('.drawer-toggle')"), 'drawer container targets must resolve a child drawer-toggle');
+  assert.ok(runAction.includes('epoch !== hudOverlayEpoch'), 'menu action callbacks must reject stale epochs');
+  assert.ok(runAction.includes('hudMenuOpenTimer = hostWindow.setTimeout(fire, openDelay)'), 'menu open timeout must be tracked');
+  const stopWatch = between(sources.message, 'function stopHudOverlayWatch', 'function isHudExtensionEntryClick');
+  assert.ok(stopWatch.includes('invalidateHudOverlaySession'), 'watch cleanup must invalidate epoch and clear timers');
+  const cancelMenu = between(sources.message, 'function cancelHudMenuOpenSchedule', 'function clearHudOverlaySessionTimers');
+  assert.ok(cancelMenu.includes('hudMenuOpenTimer'), 'watch cleanup must cancel pending menu-open timer');
+  assert.ok(sources.message.includes('const hudOverlayBurstTimers = new Set<number>()'), 'watch burst timers must be tracked');
+  assert.ok(sources.message.includes('HUD_OVERLAY_STABLE_CLOSE_MS'), 'stable-close timing constant required');
 });
 addCheck('phase5', 'F1 composer native form + ST overlay stacking contract', () => {
   assert.ok(sources.message.includes('function reparentSendFormIntoHud'), 'composer reparent required');

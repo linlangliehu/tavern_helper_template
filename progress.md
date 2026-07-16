@@ -1,5 +1,21 @@
 # 进度日志
 
+## 会话：2026-07-15（8.13.29 发布后维护：黄金储备 + drawer watcher）— **complete / unpublished**
+
+- 基线：隔离 worktree `worktree-fix-mfrs-drawer-gold` 从 `origin/main@ec14755`（tag `v8.13.30` bot bundle）实施；已发布内容仍为 **8.13.29**（release `410454b`，CDN dist `95981c9`，cache `v81329_20260715_01`）。
+- **MAINT-29-01**：消息内面板资源 builder 读取优先级改为 `灵异资源.黄金储备` → `灵异资源.黄金` → `灵异资源.鬼钱` → 顶层 `黄金`；保留对象格式化与 HTML escape，标准 schema 数据不再漏掉黄金区。
+- **MAINT-29-02**：drawer selector 建立单真源；overlay watcher 改为 epoch/token、burst timer Set、opening grace、stable-close debounce、RAF/timer 清理；自动确认关闭只调用非破坏性 `releaseHudFromStUi()`，不会再自动点击/强制关闭 ST UI。
+- drawer action 兼容 `.drawer-toggle` 自身、祖先和子元素，修复不同设置入口 DOM 形态不一致。
+- 门禁：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs` 通过；`pnpm verify:mfrs-archive-ui` **212 checks PASS**；`pnpm verify:mfrs-gates` 聚合 **7/7 PASS**；`git diff --check` 通过。
+- 构建：production `pnpm build` 完成；仅目标消息内面板 production dist 纳入业务改动，状态栏 module-id 噪声未保留。
+- 真机：通过独立远程调试 Chrome 的 `http://127.0.0.1:8000/` SillyTavern，向消息内面板 iframe 注入当前 worktree 本地 production bundle；未操作用户主浏览器。
+  - 8 个设置入口均成功打开对应 drawer，150ms 与约 2650ms 两次快照均保持 open/可见，HUD 让层 class 持续存在。
+  - 40ms 快速切换“世界书→API”后仅最后动作生效，旧 RAF/timer 未关闭新 drawer。
+  - 原生关闭 drawer 后，经稳定 debounce 自动撤销 HUD 让层；未发生再次点击或强制关闭。
+  - HUD“关闭面板”仍能主动关闭当前外部 UI并保持沉浸；黄金区显示“黄金 未准备”，无 `[object Object]`。
+  - 证据截图：`drawer-worldinfo-stable.png`（本地验证产物，不纳入发布）。
+- **未执行**：commit、push、publish-card、tag、发布 PNG 更新；本轮修复尚未上线。
+
 ## 会话：2026-07-15（沉浸式按键审查缺陷修复）— **complete**
 
 - 修复 4 个问题（ISSUE-002/003/004/005），源码 commit `779b9d7`，dist commit `74f74b7`，已 push `origin/main`。

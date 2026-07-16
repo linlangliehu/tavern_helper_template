@@ -1436,6 +1436,22 @@ const HUD_Z_CABINET = 10020;
 const HUD_Z_MENU = 10040;
 const HUD_Z_ST_YIELD = 50;
 const HUD_ST_UI_CLASS = 'mfrs-hud-st-ui-open';
+const ST_OPEN_DRAWER_SELECTORS = [
+  '.drawer-content.openDrawer',
+  '#left-nav-panel.openDrawer',
+  '#right-nav-panel.openDrawer',
+  '#WorldInfo.openDrawer',
+  '#rm_api_block.openDrawer',
+  '#AdvancedFormatting.openDrawer',
+  '#user-settings-block.openDrawer',
+  '#rm_extensions_block.openDrawer',
+  '#PersonaManagement.openDrawer',
+  '#Backgrounds.openDrawer',
+] as const;
+const ST_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.join(', ');
+const HUD_ST_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.map(
+  selector => `body.${HUD_ST_UI_CLASS} ${selector}`,
+).join(',\n');
 
 type DomRestorePoint = {
   parent: Node;
@@ -1460,6 +1476,7 @@ let hudCabinetReturnView: HudView = 'system';
 let hudPanelsRenderKey = '';
 let hudToastTimer: number | null = null;
 let hudMenuOpenTimer: number | null = null;
+let hudMenuOpenRaf: number | null = null;
 
 function isHudMounted() {
   return hudMounted && Boolean(doc.getElementById(HUD_SHELL_ID)?.classList.contains('is-active'));
@@ -2312,16 +2329,7 @@ body.${HUD_ST_UI_CLASS} #top-bar {
 body.${HUD_ST_UI_CLASS} #top-settings-holder {
   position: relative !important;
 }
-body.${HUD_ST_UI_CLASS} .drawer-content.openDrawer,
-body.${HUD_ST_UI_CLASS} #left-nav-panel.openDrawer,
-body.${HUD_ST_UI_CLASS} #right-nav-panel.openDrawer,
-body.${HUD_ST_UI_CLASS} #WorldInfo.openDrawer,
-body.${HUD_ST_UI_CLASS} #rm_api_block.openDrawer,
-body.${HUD_ST_UI_CLASS} #AdvancedFormatting.openDrawer,
-body.${HUD_ST_UI_CLASS} #user-settings-block.openDrawer,
-body.${HUD_ST_UI_CLASS} #rm_extensions_block.openDrawer,
-body.${HUD_ST_UI_CLASS} #PersonaManagement.openDrawer,
-body.${HUD_ST_UI_CLASS} #Backgrounds.openDrawer,
+${HUD_ST_OPEN_DRAWER_SELECTOR},
 body.${HUD_ST_UI_CLASS} #floatingPrompt,
 body.${HUD_ST_UI_CLASS} #cfgConfig,
 body.${HUD_ST_UI_CLASS} #logprobsViewer,
@@ -2347,9 +2355,7 @@ body.${HUD_ST_UI_CLASS} [data-mfrs-hud-overlay-lift="1"] {
   z-index: ${HUD_Z_SHELL + 80} !important;
   pointer-events: auto !important;
 }
-body.${HUD_ST_UI_CLASS} .drawer-content.openDrawer,
-body.${HUD_ST_UI_CLASS} #left-nav-panel.openDrawer,
-body.${HUD_ST_UI_CLASS} #right-nav-panel.openDrawer {
+${HUD_ST_OPEN_DRAWER_SELECTOR} {
   position: fixed !important;
 }
 #${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: none; }
@@ -2962,13 +2968,12 @@ function yieldHudToStUi() {
   if (!isHudMounted()) return;
   ensureHudStReturnButton();
   doc.body.classList.add(HUD_ST_UI_CLASS);
-  scheduleHudOverlayWatch();
 }
 
 const SP_DB_UI_SELECTOR = '.acu-v2-app__shell, .acu-v2-app, #acu-v2-root, [data-acu-v2-root]';
 const HUD_OVERLAY_LIFT_ATTR = 'data-mfrs-hud-overlay-lift';
-const ST_OPEN_DRAWER_SELECTOR =
-  '.drawer-content.openDrawer, #left-nav-panel.openDrawer, #right-nav-panel.openDrawer';
+const HUD_OVERLAY_OPENING_GRACE_MS = 1200;
+const HUD_OVERLAY_STABLE_CLOSE_MS = 250;
 /** 扩展菜单与常见入口：点了几乎总会弹出 z&lt;10000 的面板 */
 const HUD_EXTENSION_ENTRY_SELECTOR = [
   '#extensionsMenu',
@@ -2984,8 +2989,13 @@ const HUD_EXTENSION_ENTRY_SELECTOR = [
 ].join(', ');
 
 let hudOverlayObserver: MutationObserver | null = null;
-let hudOverlayWatchTimer: number | null = null;
+let hudOverlayMutationTimer: number | null = null;
+let hudOverlayRestoreTimer: number | null = null;
 let hudOverlayScanTimer: number | null = null;
+let hudOverlayEpoch = 0;
+let hudOverlayOpeningUntil = 0;
+let hudOverlaySeenActive = false;
+const hudOverlayBurstTimers = new Set<number>();
 let hudOverlayLastToastAt = 0;
 
 function isElementVisiblyLarge(el: HTMLElement, minW = 120, minH = 80) {
@@ -3030,6 +3040,7 @@ const HUD_ST_CORE_LAYOUT_IDS = new Set([
 
 function isHudStCoreLayoutElement(el: HTMLElement | null): boolean {
   if (!el) return false;
+  if (el.matches?.(ST_OPEN_DRAWER_SELECTOR)) return false;
   if (HUD_ST_CORE_LAYOUT_IDS.has(el.id)) return true;
   // 聊天/输入常驻祖先
   if (el.id === 'chat' || el.closest?.('#chat, #sheld, #form_sheld, #send_form, #top-bar, #top-settings-holder, #bg1')) {
@@ -3065,7 +3076,7 @@ function isHudCoverableExternalOverlay(el: HTMLElement): boolean {
   if (!isElementVisiblyLarge(el, 160, 100)) return false;
   // 白名单：已知外置面板（不靠面积误伤 #sheld/#bg1）
   if (el.matches?.(SP_DB_UI_SELECTOR) || el.closest?.(SP_DB_UI_SELECTOR)) return true;
-  if (el.classList?.contains('drawer-content') && el.classList.contains('openDrawer')) return true;
+  if (el.matches?.(ST_OPEN_DRAWER_SELECTOR)) return true;
   if (el.classList?.contains('popup') || el.classList?.contains('dialogue_popup')) return true;
   if (el.id === 'floatingPrompt' || el.id === 'cfgConfig' || el.id === 'logprobsViewer') return true;
   if (el.id === 'completion_prompt_manager_popup') return true;
@@ -3154,10 +3165,75 @@ function clearHudOverlayLifts() {
   doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}]`).forEach(el => el.removeAttribute(HUD_OVERLAY_LIFT_ATTR));
 }
 
+function clearHudOverlayBurstTimers() {
+  hudOverlayBurstTimers.forEach(timer => hostWindow.clearTimeout(timer));
+  hudOverlayBurstTimers.clear();
+}
+
+function clearHudOverlayRestoreTimer() {
+  if (hudOverlayRestoreTimer === null) return;
+  hostWindow.clearTimeout(hudOverlayRestoreTimer);
+  hudOverlayRestoreTimer = null;
+}
+
+function clearHudOverlayMutationTimer() {
+  if (hudOverlayMutationTimer === null) return;
+  hostWindow.clearTimeout(hudOverlayMutationTimer);
+  hudOverlayMutationTimer = null;
+}
+
+function cancelHudMenuOpenSchedule() {
+  if (hudMenuOpenTimer !== null) {
+    hostWindow.clearTimeout(hudMenuOpenTimer);
+    hudMenuOpenTimer = null;
+  }
+  if (hudMenuOpenRaf !== null && typeof hostWindow.cancelAnimationFrame === 'function') {
+    hostWindow.cancelAnimationFrame(hudMenuOpenRaf);
+    hudMenuOpenRaf = null;
+  }
+}
+
+function clearHudOverlaySessionTimers() {
+  clearHudOverlayBurstTimers();
+  clearHudOverlayRestoreTimer();
+  clearHudOverlayMutationTimer();
+  if (hudOverlayScanTimer !== null) {
+    hostWindow.clearInterval(hudOverlayScanTimer);
+    hudOverlayScanTimer = null;
+  }
+}
+
+function invalidateHudOverlaySession() {
+  hudOverlayEpoch += 1;
+  clearHudOverlaySessionTimers();
+  cancelHudMenuOpenSchedule();
+  hudOverlayOpeningUntil = 0;
+  hudOverlaySeenActive = false;
+  return hudOverlayEpoch;
+}
+
+function scheduleHudOverlayTask(
+  epoch: number,
+  callback: () => void,
+  delay: number,
+  requireHudMounted = true,
+) {
+  const timer = hostWindow.setTimeout(() => {
+    hudOverlayBurstTimers.delete(timer);
+    if (epoch !== hudOverlayEpoch || (requireHudMounted && !isHudMounted())) return;
+    callback();
+  }, delay);
+  hudOverlayBurstTimers.add(timer);
+  return timer;
+}
+
 function scanAndYieldHudOverlays(opts?: { toast?: string }) {
   if (!isHudMounted()) return 0;
   const count = liftHudCoverableOverlays();
-  if (count > 0 || hasOpenStDrawers() || isSpDatabaseUiOpen()) {
+  const active = count > 0 || hasOpenStDrawers() || isSpDatabaseUiOpen();
+  if (active) {
+    hudOverlaySeenActive = true;
+    clearHudOverlayRestoreTimer();
     yieldHudToStUi();
     if (opts?.toast) {
       const now = Date.now();
@@ -3170,35 +3246,40 @@ function scanAndYieldHudOverlays(opts?: { toast?: string }) {
   return count;
 }
 
-function scheduleHudOverlayWatch() {
-  if (!isHudMounted()) return;
-  if (hudOverlayWatchTimer !== null) {
-    hostWindow.clearTimeout(hudOverlayWatchTimer);
-    hudOverlayWatchTimer = null;
-  }
-  // 仅在「可能刚打开外置面板」时短扫描，避免常驻误伤 #sheld/#bg1 导致 st-ui 闪烁
+function scheduleHudOverlayWatch(epoch: number) {
+  if (!isHudMounted() || epoch !== hudOverlayEpoch) return;
+  // 仅在明确的外部 UI 打开动作后短扫描；所有 callback 均归属当前 epoch，可统一取消。
   const delays = [0, 80, 200, 450, 900];
   delays.forEach((ms, i) => {
-    hostWindow.setTimeout(() => {
-      if (!isHudMounted()) return;
-      scanAndYieldHudOverlays();
-      if (i === delays.length - 1) maybeRestoreHudAfterOverlayClose();
-    }, ms);
+    scheduleHudOverlayTask(
+      epoch,
+      () => {
+        scanAndYieldHudOverlays();
+        if (i === delays.length - 1) maybeRestoreHudAfterOverlayClose(epoch);
+      },
+      ms,
+    );
   });
   ensureHudOverlayObserver();
-  if (hudOverlayScanTimer === null) {
-    hudOverlayScanTimer = hostWindow.setInterval(() => {
-      if (!isHudMounted()) {
-        stopHudOverlayWatch();
-        return;
-      }
-      // 仅在已让层或确实有外置叠层时巡检；无则不碰 st-ui
-      if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasActiveHudExternalOverlay()) {
-        scanAndYieldHudOverlays();
-        maybeRestoreHudAfterOverlayClose();
-      }
-    }, 1200);
-  }
+  hudOverlayScanTimer = hostWindow.setInterval(() => {
+    if (epoch !== hudOverlayEpoch) return;
+    if (!isHudMounted()) {
+      stopHudOverlayWatch();
+      return;
+    }
+    if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasActiveHudExternalOverlay()) {
+      scanAndYieldHudOverlays();
+      maybeRestoreHudAfterOverlayClose(epoch);
+    }
+  }, 1200);
+}
+
+function beginHudOverlayWatch() {
+  const epoch = invalidateHudOverlaySession();
+  hudOverlayOpeningUntil = Date.now() + HUD_OVERLAY_OPENING_GRACE_MS;
+  yieldHudToStUi();
+  scheduleHudOverlayWatch(epoch);
+  return epoch;
 }
 
 function ensureHudOverlayObserver() {
@@ -3214,11 +3295,14 @@ function ensureHudOverlayObserver() {
       return true;
     });
     if (!interesting) return;
-    if (hudOverlayWatchTimer !== null) hostWindow.clearTimeout(hudOverlayWatchTimer);
-    hudOverlayWatchTimer = hostWindow.setTimeout(() => {
-      hudOverlayWatchTimer = null;
+    clearHudOverlayMutationTimer();
+    const epoch = hudOverlayEpoch;
+    hudOverlayMutationTimer = hostWindow.setTimeout(() => {
+      hudOverlayMutationTimer = null;
+      if (epoch !== hudOverlayEpoch || !isHudMounted()) return;
+      if (!doc.body.classList.contains(HUD_ST_UI_CLASS) && !hasActiveHudExternalOverlay()) return;
       scanAndYieldHudOverlays();
-      maybeRestoreHudAfterOverlayClose();
+      maybeRestoreHudAfterOverlayClose(epoch);
     }, 100);
   });
   // 不监听 style 全树，避免 #sheld 动画触发死循环
@@ -3231,17 +3315,10 @@ function ensureHudOverlayObserver() {
 }
 
 function stopHudOverlayWatch() {
+  invalidateHudOverlaySession();
   if (hudOverlayObserver) {
     hudOverlayObserver.disconnect();
     hudOverlayObserver = null;
-  }
-  if (hudOverlayWatchTimer !== null) {
-    hostWindow.clearTimeout(hudOverlayWatchTimer);
-    hudOverlayWatchTimer = null;
-  }
-  if (hudOverlayScanTimer !== null) {
-    hostWindow.clearInterval(hudOverlayScanTimer);
-    hudOverlayScanTimer = null;
   }
   clearHudOverlayLifts();
 }
@@ -3268,6 +3345,8 @@ function maybeYieldHudForExternalOverlay(target: EventTarget | null) {
   if (!isHudMounted() || !target || !(target as Node).nodeType) return;
   const el = (target as Node).nodeType === 1 ? (target as Element) : (target as Node).parentElement;
   if (!el) return;
+  // HUD 设置菜单动作由 runHudTavernAction 独占 watcher session，避免同一次点击重复调度。
+  if (el.closest?.('[data-mfrs-hud-menu-action]')) return;
   if (!isHudExtensionEntryClick(el)) {
     // 已有被盖面板时，任意点击也再抬一次
     if (hasHudCoverableOverlays() && !doc.body.classList.contains(HUD_ST_UI_CLASS)) {
@@ -3276,9 +3355,8 @@ function maybeYieldHudForExternalOverlay(target: EventTarget | null) {
     return;
   }
   const label = `${el.getAttribute?.('title') || ''} ${el.textContent || ''}`.replace(/\s+/g, ' ').trim().slice(0, 24);
-  yieldHudToStUi();
-  scheduleHudOverlayWatch();
-  hostWindow.setTimeout(() => {
+  const epoch = beginHudOverlayWatch();
+  scheduleHudOverlayTask(epoch, () => {
     const n = scanAndYieldHudOverlays();
     if (n > 0 || isSpDatabaseUiOpen() || hasOpenStDrawers()) {
       const tip = label.includes('SP') || label.includes('数据库') ? '已打开外部面板（已抬到沉浸之上）' : '已让层：外部面板可交互';
@@ -3295,19 +3373,61 @@ function hasActiveHudExternalOverlay() {
   return hasHudCoverableOverlays();
 }
 
-function maybeRestoreHudAfterOverlayClose() {
-  if (!isHudMounted()) return;
+function releaseHudFromStUi(epoch = hudOverlayEpoch, preserveScheduledCleanup = false) {
+  if (epoch !== hudOverlayEpoch) return;
+  if (!preserveScheduledCleanup) clearHudOverlaySessionTimers();
+  else {
+    clearHudOverlayRestoreTimer();
+    clearHudOverlayMutationTimer();
+    if (hudOverlayScanTimer !== null) {
+      hostWindow.clearInterval(hudOverlayScanTimer);
+      hudOverlayScanTimer = null;
+    }
+  }
+  hudOverlayOpeningUntil = 0;
+  hudOverlaySeenActive = false;
+  clearHudOverlayLifts();
+  doc.body.classList.remove(HUD_ST_UI_CLASS);
+  doc.getElementById('mfrs-hud-st-return')?.remove();
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (shell?.classList.contains('is-active')) {
+    shell.style.removeProperty('z-index');
+    shell.style.removeProperty('opacity');
+    shell.style.removeProperty('pointer-events');
+  }
+}
+
+function maybeRestoreHudAfterOverlayClose(epoch = hudOverlayEpoch) {
+  if (epoch !== hudOverlayEpoch || !isHudMounted()) return;
   if (!doc.body.classList.contains(HUD_ST_UI_CLASS)) return;
   // 先清掉误标在核心布局上的 lift，避免死循环
   doc.querySelectorAll(`[${HUD_OVERLAY_LIFT_ATTR}="1"]`).forEach(el => {
     if (isHudStCoreLayoutElement(el as HTMLElement)) el.removeAttribute(HUD_OVERLAY_LIFT_ATTR);
   });
   if (hasActiveHudExternalOverlay()) {
+    hudOverlaySeenActive = true;
+    clearHudOverlayRestoreTimer();
     liftHudCoverableOverlays();
     return;
   }
-  // 无抽屉、无外置大面板时收回叠层（保留沉浸）
-  restoreHudFromStUi();
+  // 打开阶段允许 drawer 旧关新开产生短暂无 active 的空窗。
+  if (Date.now() < hudOverlayOpeningUntil) return;
+  if (hudOverlayRestoreTimer !== null) return;
+  // 已确认打开后要求稳定关闭；从未打开成功时也在 grace 后用同一 debounce 收回让层。
+  const stableCloseDelay = hudOverlaySeenActive
+    ? HUD_OVERLAY_STABLE_CLOSE_MS
+    : HUD_OVERLAY_STABLE_CLOSE_MS + 100;
+  hudOverlayRestoreTimer = hostWindow.setTimeout(() => {
+    hudOverlayRestoreTimer = null;
+    if (epoch !== hudOverlayEpoch || !isHudMounted()) return;
+    if (hasActiveHudExternalOverlay()) {
+      hudOverlaySeenActive = true;
+      liftHudCoverableOverlays();
+      return;
+    }
+    // 自动路径只撤销 HUD 让层，不点击或强制改写外部 UI。
+    releaseHudFromStUi(epoch);
+  }, stableCloseDelay);
 }
 
 function maybeHandleSpDatabaseCloseClick(target: EventTarget | null) {
@@ -3320,8 +3440,17 @@ function maybeHandleSpDatabaseCloseClick(target: EventTarget | null) {
     (inSp && /关闭新 UI|关闭面板|关闭/.test(label) && Boolean(el.closest?.('button, [role="button"], .interactable'))) ||
     Boolean(el.closest?.('[title*="关闭新 UI"], [aria-label*="关闭新 UI"]'));
   if (!isClose) return;
-  hostWindow.setTimeout(() => maybeRestoreHudAfterOverlayClose(), 80);
-  hostWindow.setTimeout(() => maybeRestoreHudAfterOverlayClose(), 240);
+  const epoch = hudOverlayEpoch;
+  const scheduleCloseCheck = (delay: number) => {
+    const timer = hostWindow.setTimeout(() => {
+      hudOverlayBurstTimers.delete(timer);
+      if (epoch !== hudOverlayEpoch || !isHudMounted()) return;
+      maybeRestoreHudAfterOverlayClose(epoch);
+    }, delay);
+    hudOverlayBurstTimers.add(timer);
+  };
+  scheduleCloseCheck(80);
+  scheduleCloseCheck(240);
 }
 
 function hasOpenStDrawers() {
@@ -3408,7 +3537,7 @@ function markHudMenuItemFailed(btn: HTMLElement | null, label: string, detail: s
 }
 
 /** 关掉 SP·数据库 III（优先点原生「关闭新 UI」，失败则隐藏根节点） */
-function closeSpDatabaseUi() {
+function closeSpDatabaseUi(epoch = hudOverlayEpoch) {
   if (!isSpDatabaseUiOpen()) return false;
   const nativeClose = Array.from(
     doc.querySelectorAll(
@@ -3431,39 +3560,28 @@ function closeSpDatabaseUi() {
     }
   }
   // 原生 close 可能被确认框挡住；再兜底隐藏根壳，避免「关闭面板」无效
-  hostWindow.setTimeout(() => {
+  scheduleHudOverlayTask(epoch, () => {
     if (!isSpDatabaseUiOpen()) return;
     doc.querySelectorAll(SP_DB_UI_SELECTOR).forEach(node => {
       const el = node as HTMLElement;
       el.style.setProperty('display', 'none', 'important');
       el.setAttribute('hidden', '');
     });
-  }, 60);
+  }, 60, false);
   return true;
 }
 
-/** 关闭 ST 配置叠层 + SP 数据库 + 全部 open 抽屉（A4） */
+/** 关闭 ST 配置叠层 + SP 数据库 + 全部 open 抽屉（A4，仅主动用户路径） */
 function restoreHudFromStUi() {
-  if (hudMenuOpenTimer !== null) {
-    hostWindow.clearTimeout(hudMenuOpenTimer);
-    hudMenuOpenTimer = null;
-  }
-  closeSpDatabaseUi();
+  const epoch = invalidateHudOverlaySession();
+  // 主动关闭回调属于同一 epoch；release 仅撤销让层，不使这些兜底回调失效。
+  closeSpDatabaseUi(epoch);
   closeOpenStDrawers();
   forceCloseStDrawerClasses();
-  // ST 抽屉 click 可能异步回写 openDrawer，延迟再清两次
-  hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 50);
-  hostWindow.setTimeout(() => forceCloseStDrawerClasses(), 160);
-  clearHudOverlayLifts();
-  doc.body.classList.remove(HUD_ST_UI_CLASS);
-  const ret = doc.getElementById('mfrs-hud-st-return');
-  ret?.remove();
-  const shell = doc.getElementById(HUD_SHELL_ID);
-  if (shell?.classList.contains('is-active')) {
-    shell.style.removeProperty('z-index');
-    shell.style.removeProperty('opacity');
-    shell.style.removeProperty('pointer-events');
-  }
+  // ST 抽屉 click 可能异步回写 openDrawer，延迟再清两次；新动作会使本 epoch 失效。
+  scheduleHudOverlayTask(epoch, () => forceCloseStDrawerClasses(), 50, false);
+  scheduleHudOverlayTask(epoch, () => forceCloseStDrawerClasses(), 160, false);
+  releaseHudFromStUi(epoch, true);
 }
 
 function closeHudSettingsPanel() {
@@ -3532,10 +3650,7 @@ function toggleHudSettingsPanel() {
 }
 
 function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | null) {
-  if (hudMenuOpenTimer !== null) {
-    hostWindow.clearTimeout(hudMenuOpenTimer);
-    hudMenuOpenTimer = null;
-  }
+  cancelHudMenuOpenSchedule();
   if (action.kind === 'exit') {
     exitHudImmersive();
     return;
@@ -3579,23 +3694,27 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
     }
     // A1：先关已打开的 ST 抽屉，再叠层并打开目标，避免双抽屉叠在一起
     const closedCount = closeOpenStDrawers();
-    if (action.yieldUi) yieldHudToStUi();
+    const epoch = action.yieldUi ? beginHudOverlayWatch() : invalidateHudOverlaySession();
     const openDelay = closedCount > 0 || hasOpenStDrawers() ? 80 : 0;
     const fire = () => {
+      if (epoch !== hudOverlayEpoch || !isHudMounted()) return;
       hudMenuOpenTimer = null;
       const live = findHudActionTarget(action.selectors, action.matchText) || target;
       try {
-        // ST 的 doNavbarIconClick 绑在 .drawer-toggle 子元素上，
-        // 原生 .click() 发在 .drawer-icon 父容器不会向下传播。
-        // 优先找 .drawer-toggle 并走 jQuery trigger。
-        const toggle = live.querySelector?.('.drawer-toggle') as HTMLElement | null;
+        // ST 的 doNavbarIconClick 绑在 .drawer-toggle；入口选择器有时命中 icon，
+        // 有时命中 .drawer 容器，因此同时检查自身、祖先和后代。
+        const toggle = (
+          live.matches?.('.drawer-toggle')
+            ? live
+            : live.closest?.('.drawer-toggle') || live.querySelector?.('.drawer-toggle')
+        ) as HTMLElement | null;
         if (toggle && typeof (hostWindow as any).jQuery === 'function') {
           (hostWindow as any).jQuery(toggle).trigger('click');
         } else {
           live.click();
         }
         if (action.yieldUi) {
-          hostWindow.setTimeout(() => {
+          scheduleHudOverlayTask(epoch, () => {
             if (doc.body.classList.contains(HUD_ST_UI_CLASS) || hasOpenStDrawers()) {
               showHudToast(`已打开：${action.label}`, 1400);
             }
@@ -3606,13 +3725,8 @@ function runHudTavernAction(action: HudTavernAction, sourceBtn?: HTMLElement | n
         console.warn(`[消息内面板] 设置项点击失败: ${action.label}`, error);
       }
     };
-    if (typeof hostWindow.requestAnimationFrame === 'function') {
-      hostWindow.requestAnimationFrame(() => {
-        hudMenuOpenTimer = hostWindow.setTimeout(fire, openDelay);
-      });
-    } else {
-      hudMenuOpenTimer = hostWindow.setTimeout(fire, openDelay);
-    }
+    // 直接创建可取消的 open timer；epoch 已提供 last-action-wins，无需额外 RAF。
+    hudMenuOpenTimer = hostWindow.setTimeout(fire, openDelay);
   }
 }
 
@@ -3696,7 +3810,10 @@ function buildHudResourceSectionsHtml(data: StatusData): string {
     _.get(data, '灵异资源.灵异物品') ?? data.灵异物品 ?? _.get(data, '持有物品'),
   );
   const gold = formatResourceField(
-    _.get(data, '灵异资源.黄金') ?? _.get(data, '灵异资源.鬼钱') ?? _.get(data, '黄金'),
+    _.get(data, '灵异资源.黄金储备') ??
+      _.get(data, '灵异资源.黄金') ??
+      _.get(data, '灵异资源.鬼钱') ??
+      _.get(data, '黄金'),
   );
   const rows = [
     puzzle && `<div class="mfrs-msg-kv"><span>拼图</span><b>${_.escape(puzzle)}</b></div>`,
@@ -4275,8 +4392,9 @@ function handleHudShellClick(e: Event) {
   const target = e.target as HTMLElement | null;
   if (!target) return;
 
-  // 扩展菜单 / 顶栏入口：统一让层；关闭 SP 时收回；兜底扫描已开面板
-  maybeYieldHudForExternalOverlay(target);
+  // HUD 内设置动作由 runHudTavernAction 独占 watcher session；其他外部入口统一让层。
+  const menuActionBtn = target.closest('[data-mfrs-hud-menu-action]') as HTMLElement | null;
+  if (!menuActionBtn) maybeYieldHudForExternalOverlay(target);
   maybeHandleSpDatabaseCloseClick(target);
   if (hasHudCoverableOverlays() || isSpDatabaseUiOpen() || hasOpenStDrawers()) {
     scanAndYieldHudOverlays();
@@ -4290,7 +4408,6 @@ function handleHudShellClick(e: Event) {
     exitHudImmersive();
     return;
   }
-  const menuActionBtn = target.closest('[data-mfrs-hud-menu-action]') as HTMLElement | null;
   if (menuActionBtn) {
     e.preventDefault();
     e.stopPropagation();

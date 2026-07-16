@@ -154,13 +154,40 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 全量明细：`AUDIT_BUGFIX_BACKLOG.md`「三轮 A2」区 + `.tmp-research/a2-diff-workbench.md`（临时工作台）。
 
+## 8.13.29 发布后维护发现（MAINT-29，2026-07-15）
+
+### MAINT-29-01 · 黄金储备正式路径遗漏
+
+- **事实**：schema / initvar 的正式字段是 `灵异资源.黄金储备`；旧资源 builder 只回退读取 `灵异资源.黄金`、`灵异资源.鬼钱` 与顶层 `黄金`。
+- **影响**：标准数据只包含 `黄金储备` 时，黄金项会被判空，资源区可能消失；这与此前“嵌套对象显示 `[object Object]`”是不同层的问题。
+- **修复**：正式路径置于最高优先级，旧 alias 全保留，继续走 `formatResourceField()` 与 HTML escape。
+- **验证**：archive-ui phase5 加路径优先级断言；真实 SillyTavern 加载本地 production bundle 后显示“黄金 未准备”，无 `[object Object]`。
+
+### MAINT-29-02 · drawer watcher 自重入与破坏性恢复
+
+- **根因链**：`scan → yield → schedule` 可自重入并产生多轮 burst timer；单次瞬时 inactive 会立即走恢复；恢复路径会主动关闭 drawer/SP；旧 RAF/timer 又没有动作代际隔离。drawer 切换的短暂空窗因此可能在约 1 秒后被旧回调误判并关掉新面板。
+- **附加兼容问题**：HUD selector 有时命中 `.drawer-toggle` 本身、有时命中其图标子元素或 drawer 父容器；仅向单一方向找 toggle 不能覆盖 8 个入口。
+- **修复不变量**：
+  - canonical drawer selector 同时驱动 CSS 抬层与运行时检测；
+  - 新动作以单调 epoch 使旧回调失效，burst timeout 由 Set 持有并统一取消；
+  - opening grace 覆盖切换空窗，inactive 必须经 stable-close debounce 再确认；
+  - 自动路径只做非破坏性 release，只有“关闭面板”/Esc/unmount 等明确用户动作可主动关闭外部 UI；
+  - toggle 解析检查 self / closest / descendant 三个方向。
+- **验证**：archive-ui phase5 **212 checks PASS**，聚合门禁 **7/7 PASS**；ST 真机 8 个 drawer 均保持 >2.5s，快速切换 last-action-wins，原生关闭后 HUD 自动释放且不二次关闭，主动关闭路径仍正常。
+
+### 发布边界
+
+- 已发布内容：**8.13.29**（release `410454b`；CDN dist `95981c9` / cache `v81329_20260715_01`）。
+- 仓库头：`origin/main@ec14755` / tag `v8.13.30`，只是发布后的 bot bundle。
+- 本节两项修复目前仅存在于隔离 worktree 与本地 production dist，**未 commit、push、publish 或写入发布 PNG**。
+
 ## 当前状态快照（2026-07-15）
 
-- **审计与发布**：BF0–BF6、Phase 5 已完成；8.13.22 发布提交为 `e568cce`，tag `v8.13.22`，发布资源仍 pin `158dcc29107f` / `v81322_20260714_01`。
-- **仓库最新基线**：本地 `main` 已 fast-forward 到 `origin/main@b8213f7`（tag `v8.13.26`）。其中 `07051d7` 修复消息内面板档案资源区把嵌套对象显示为 `[object Object]`，`b8213f7` 为随后自动 bundle。
-- **backlog 结论**：已实施项全部勾选；DM9 明确归档为孤儿 App.vue 条目。门禁清单是每次相关改动的回归模板，不代表当前有待实施开发。
-- **当前任务状态**：暂无已排期的新功能或缺陷，等待用户指定下一范围。
-- **工作区保护**：5 项 untracked 用户文件保持未处理，不纳入规划或提交。
+- **审计与历史发布**：BF0–BF6、Phase 5 已完成；8.13.22 是该审计周期的历史发布结点。沉浸式按键审查修复随后已发布为 **8.13.29**（release `410454b`，CDN dist `95981c9`）。
+- **仓库最新基线**：当前 worktree 基于 `origin/main@ec14755`（tag `v8.13.30`）；它是 8.13.29 发布后的自动 bundle，不包含本地未提交 MAINT-29 修复。
+- **当前任务状态**：MAINT-29-01/02 已完成源码、production build、静态门禁和 SillyTavern 真机验证；等待用户决定后续提交/推送/发布。
+- **发布边界**：未运行 publish-card，未改发布 PNG，不能把黄金储备与 watcher 修复描述为已进入 8.13.29。
+- **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）
 

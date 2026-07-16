@@ -6,7 +6,7 @@
 - 二轮：正则 33 · SQL/14 表 · 开局/欢迎页 · 世界书规则与锚点路径  
 **基线发布版**：8.13.13（`28777ad` / `…-v81313-always-unlock-send`）  
 **范围**：`src/神秘复苏模拟器`  
-**状态**：历史总表；BF0–BF6 + Phase 5 已完成，8.13.22 已发布（`v8.13.22` → `e568cce`）；当前无已排期待修项
+**状态**：历史总表；BF0–BF6 + Phase 5 已完成。已发布内容现为 8.13.29（`v8.13.29` → `410454b`，CDN dist `95981c9`）；另有两项发布后维护在本地完成但未发布：`MAINT-29-01` 黄金储备正式路径、`MAINT-29-02` drawer watcher 生命周期。
 
 > 说明：本清单只收录已核实或高置信交叉对照缺陷，不保证穷尽全部运行时 bug。  
 > 修完一项请改为 `[x]` 并注明 PR/commit；发版后在对应 `RELEASE_*.md` 交叉引用。  
@@ -440,6 +440,27 @@
 | **BF4** | W1–W4 + WM3–WM8 + M1–M4 + RH1 + DH2 + SH5 + C5 + L6 | **已发 8.13.20**（`de42f2c`）；余 RM7–9/DM9/DL*/WM1–2 可挂 BF5 |
 | **BF5** | 回归门禁 + G2–G5 + DM8 + WM1/2/L8 | **已发 8.13.21**（`f2b7db2`） |
 | **BF6** | RM1/2/7/8/9 + RH3/4/5 + P0–P3 | **已发 8.13.22**（`e568cce`，tag `v8.13.22`；CDN_REF `158dcc29107f`，cache `v81322_20260714_01`） |
+| **Phase 5** | 审计 backlog 清理/归档 | **已完成**；后续沉浸式按键审查修复已随 **8.13.29** 发布（release `410454b`，CDN dist `95981c9`） |
+| **MAINT-29** | MAINT-29-01/02 | **本地实现、production build、门禁与 ST 真机完成；未 commit/push/publish** |
+
+---
+
+## 发布后维护项（8.13.29 基线；本地未发布）
+
+### MAINT-29-01 · 黄金储备 schema 正式路径遗漏 — **complete / unpublished**
+
+- [x] `buildHudResourceSectionsHtml()` 优先读取 `灵异资源.黄金储备`。
+- [x] 保留 `灵异资源.黄金`、`灵异资源.鬼钱`、顶层 `黄金` 三个旧存档 alias。
+- [x] archive-ui phase5 断言正式路径优先级；ST 真机显示黄金且无 `[object Object]`。
+
+### MAINT-29-02 · drawer overlay watcher 约 1 秒后误关 — **complete / unpublished**
+
+- [x] canonical selector 覆盖 left/right nav、WorldInfo、API、格式化、用户设置、扩展、Persona、Backgrounds，并同时驱动 CSS/运行时检测。
+- [x] watcher 使用 epoch、受管 burst timers、opening grace、stable-close debounce 与 RAF/timer cleanup，消除 `scan → yield → schedule` 自重入。
+- [x] 自动恢复改为非破坏性 release；显式“关闭面板”/Esc/unmount 保留主动关闭语义。
+- [x] `.drawer-toggle` 解析覆盖 self / ancestor / descendant。
+- [x] `verify:mfrs-archive-ui` 212 项、聚合门禁 7/7、production build 与 ST 真机均通过；8 个入口保持 >2.5s，快速切换与原生关闭通过。
+- [ ] commit / push / publish / tag — 未获授权，未执行。
 
 ---
 
@@ -450,6 +471,8 @@
 - [x] 8.13.22 发布时：`node scripts/verify-table-change-adapter.mjs`
 - [x] 8.13.22 发布时：`node scripts/verify-mfrs-release-png.mjs`（version=8.13.22、refs=7、cache=8、regex=33、scripts=8）
 - [x] BF2–BF6 分批实机：新开局、生成、A–D、发送解锁、DB 镜像、英文正文与正则关键路径已分别验证
+- [x] MAINT-29 本地：`pnpm verify:mfrs-archive-ui`（phase5 212 checks）并接入 `verify:mfrs-gates`，聚合 7/7 PASS
+- [x] MAINT-29 ST 真机：8 个 drawer >2.5s、快速切换、原生关闭非破坏性 release、黄金正式路径显示
 
 > 以上为历史发布验收记录，也是未来相关改动的回归模板；不是当前待办。
 
@@ -512,6 +535,7 @@
 | 2026-07-14 | **BF6/8.13.22 准备**：RM1/2/7/8/9、RH3/4/5、P0–P3 已完成；RH5 仅作用于闭合 `<sp_status>`；候选 CDN_REF `158dcc29107f`，publish/PNG/tag 仍 pending |
 | 2026-07-15 | **8.13.22 发布完成**：tag `v8.13.22` → `e568cce`；CDN_REF `158dcc29107f`、cache `v81322_20260714_01`；门禁全绿；关单 C1.3/DL3/M7/DM9(归档)/WB-06(W2部分)；改写 H2.2/SM1/SL3/DL5 指向 live owner |
 | 2026-07-15 | **Phase 5 backlog 清理**：关单/归档 H2(文档化)/C2.4(DB-only)/M5/M8/M9/M10/L3/L4/L5/L9/DM1–6/DL1–2/DL4–6/SM1–4/SL1–3；代码改动 M9(normalizer)/DM2(adapter 枚举)/DM3(种子行)/SM2(required)/SL2(注释)；规则改动 L3/M5(提示词)/DM1/DM5/DM6/DL1/DL2(联动规则+SQL 模板) |
-| 2026-07-15 | **维护收尾**：修正 H1/H3 旧“待修”标题、将 DM9 明确勾选为归档、把门禁清单改为已完成的历史验收/未来回归模板；当前无已排期 backlog |
+| 2026-07-15 | **维护收尾**：修正 H1/H3 旧“待修”标题、将 DM9 明确勾选为归档、把门禁清单改为已完成的历史验收/未来回归模板；当时无已排期 backlog |
+| 2026-07-15 | **8.13.29 发布后维护（未发布）**：新增 MAINT-29-01（黄金储备正式路径）与 MAINT-29-02（drawer watcher epoch/稳定关闭/非破坏性 release）；源码、production build、archive-ui 212 checks、聚合 7/7 与 ST 真机均通过；未 commit/push/publish |
 
 *关联：`TASKLIST_BETA.md`、`RELEASE_8.13.14.md`、`task_plan.md`。*
