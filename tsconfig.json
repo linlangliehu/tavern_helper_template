@@ -11,9 +11,13 @@
     ],
     "target": "ESNext",
     "module": "ESNext",
+    "rootDir": ".",
     "outDir": "dist",
+<<<<<<< HEAD
     "baseUrl": ".",
     "ignoreDeprecations": "5.0",
+=======
+>>>>>>> b6c722413d8cfdaf014bbb3f87518fd8c19754be
     "paths": {
       "@util/*": [
         "./util/*"
