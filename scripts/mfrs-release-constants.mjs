@@ -4,7 +4,7 @@
  */
 export const REPO = 'linlangliehu/tavern_helper_template';
 // v8.13.31: MAINT-29 黄金储备正式路径 + drawer watcher 生命周期
-export const CDN_REF = 'fe137b7810367c564bfb74f639b8dd06d0f1e6c6';
+export const CDN_REF = '8ee8c584fc60ce502d590c672883872589b31e44';
 export const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 export const CDN_CACHE_VERSION = 'v81331_20260716_01';
 export const RELEASE_VERSION = '8.13.31';
