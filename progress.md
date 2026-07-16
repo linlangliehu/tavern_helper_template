@@ -1,6 +1,47 @@
 # 进度日志
 
-## 会话：沉浸 HUD 中栏改造 · Task #1 收尾 + Task #5 真页验收 — **完成（未 commit）**
+## 会话：沉浸 HUD 中栏改造 · Task #3 记忆中栏 CRUD + Task #4 抽卡中栏嵌入 — **完成（未 commit）**
+
+承接上轮（Task #1/#2/#5 已提交 `7155b09`）。本轮完成 Task #3 记忆中栏 CRUD 和 Task #4 抽卡中栏嵌入。未 commit/push/publish/改 PNG/更新版本。
+
+**Task #3：记忆中栏 CRUD（`src/神秘复苏模拟器/脚本/消息内面板/index.ts`）：**
+- 新增状态变量 `hudMemoryEditState`（`{ tableKey, mode: 'new'|'edit', rowId }`），与 `hudArchiveSelection` 并列管理。
+- `buildHudMemoryPanelHtml` 从只读摘要列表重写为交互式 CRUD：
+  - 三张记忆表（事件纪要/收录档案/收录规律）各一个 section，含行列表 + 新增按钮。
+  - 每行带编辑（`data-mfrs-hud-memory-action="edit"`）和删除（`"delete"`）按钮。
+  - 新增/编辑时渲染内联表单 `buildHudMemoryFormHtml`，从 `frontend-config.js` 的 `memoryEditor` 配置读取字段列表：
+    - `fieldHeaders` → 表单字段顺序
+    - `textareaHeaders` → `<textarea>`
+    - `enumHeaders` → `<select>`
+    - `rangeIntHeaders` → `<input type="number">` + min/max
+    - `readonlyOnEdit` → 编辑时只读
+    - `hiddenHeaders` → 隐藏（如 row_id）
+    - `maxLengthHeaders`/`minLengthHeaders` → 字符长度验证
+    - `crossFieldRules` → 跨字段验证（如收录状态=已收录时进度必须100）
+- `handleHudShellClick` 新增 5 类记忆操作拦截：new/edit/delete/save/cancel，各设置 `hudMemoryEditState` 并刷新 memory-slot。
+- `executeHudMemorySave`：收集表单数据 → `validateHudMemoryFormData` 验证 → 调 `MysteryDatabaseFrontend.applyMemoryChange`（insertRow/updateCell）→ 成功后清空编辑态。
+- `executeHudMemoryDelete`：调 `MysteryDatabaseFrontend.requestConfirmedMemoryDelete`（内含人工确认 + capability 令牌）。
+- `setHudView` 切离 memory 时清空 `hudMemoryEditState`；unmount/destroy/unregister 同步重置。
+- 新增 CSS：memory-form/memory-field/memory-btn/memory-add-btn/memory-row/memory-actions 等。
+
+**Task #4：抽卡中栏嵌入（`src/神秘复苏模拟器/脚本/消息内面板/index.ts`）：**
+- 新增状态变量 `hudGachaLastResult`（上次抽卡结果）和 `hudGachaPoolType`（当前池类型，默认 'all'）。
+- `buildHudGachaPanelHtml` 从纯摘要+外部按钮重写为嵌入式：
+  - 保留调查点/保底/残屑/历史四项 KV 摘要。
+  - 新增卡池选择器（全物品/档案/规律/灵异物品池，`data-mfrs-hud-gacha-pool`）。
+  - 新增单抽（`data-mfrs-hud-gacha-action="single"`）和十连（`"ten"`）内联按钮，调 `MFRS.single(poolType)` / `MFRS.ten(poolType)`。
+  - 保留"完整面板"按钮打开完整抽卡 UI（`MFRS.showPanel()`）。
+  - `buildHudGachaResultHtml`：内联渲染抽卡结果——每项显示图标/名称/稀有度星/颜色/类型。
+- `handleHudShellClick` 新增抽卡操作拦截：single/ten 调 `executeHudGachaPull`；池选择写 `hudGachaPoolType`。
+- `executeHudGachaPull`：调 `MFRS[kind](hudGachaPoolType)` → 存 `hudGachaLastResult` → 刷新 gacha-slot。
+- `setHudView` 切离 gacha 时清空 `hudGachaLastResult`；unmount/destroy/unregister 同步重置。
+- 新增 CSS：gacha-controls/gacha-pool-label/gacha-result/gacha-items/gacha-item 等。
+
+**门禁（全绿）**：`verify:mfrs-frontend` / `verify:mfrs-table-adapter` / `verify:mfrs-archive-ui`（221→232，新增 11 项 Phase H：H1-H11 记忆 CRUD 交互/表单字段/CRUD 调度/save 调用/delete 调用/状态重置/抽卡嵌入/抽卡操作/结果渲染/状态重置/CSS）/ `verify:mfrs-initvar-schema` / `verify:mfrs-regex-ids` / `verify:mfrs-mvu-hotfix` / `verify:mfrs-output-cleaning` 全 PASS；`git diff --check` 通过。tsc `--noEmit` 0 语法错误。
+
+**当前 worktree**：2 个未提交文件（`src/神秘复苏模拟器/脚本/消息内面板/index.ts` + `scripts/verify-mfrs-archive-ui-regressions.mjs`）。
+
+## 会话：沉浸 HUD 中栏改造 · Task #1 收尾 + Task #5 真页验收 — **完成（已提交 `7155b09`）**
 
 承接上一会话（Task #2 五缺口已接通）。本轮彻底完成 Task #1 数据库与安全底座，并完成 Task #5 真页验收。未 commit/push/publish/改 PNG/更新版本。
 

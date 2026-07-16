@@ -1160,6 +1160,120 @@ addCheck('phase5', 'G9 archive selection resets on unmount/destroy/unregister', 
   assert.ok(unregister.includes('hudArchiveSelection = null'), 'unregister callback must clear archive selection');
 });
 
+// Phase H: memory center panel CRUD + gacha center panel embedding (Task #3 + Task #4).
+addCheck('phase5', 'H1 memory panel renders interactive rows with edit/delete buttons', () => {
+  const memPanel = between(sources.message, 'function buildHudMemoryPanelHtml', 'function buildHudGachaPanelHtml');
+  assert.ok(memPanel.includes('data-mfrs-hud-memory-action'), 'memory panel must emit data-mfrs-hud-memory-action buttons');
+  assert.ok(memPanel.includes('data-mfrs-hud-memory-action="edit"'), 'memory rows must have edit buttons');
+  assert.ok(memPanel.includes('data-mfrs-hud-memory-action="delete"'), 'memory rows must have delete buttons');
+  assert.ok(memPanel.includes('data-mfrs-hud-memory-action="new"'), 'memory sections must have add-new buttons');
+});
+addCheck('phase5', 'H2 memory form renders fields from memoryEditor config', () => {
+  const formFunc = between(sources.message, 'function buildHudMemoryFormHtml', 'function buildHudGachaPanelHtml');
+  assert.ok(formFunc.includes('data-mfrs-hud-memory-field'), 'form must emit data-mfrs-hud-memory-field inputs');
+  assert.ok(formFunc.includes('textareaHeaders'), 'form must render textareas for textareaHeaders');
+  assert.ok(formFunc.includes('enumHeaders'), 'form must render selects for enumHeaders');
+  assert.ok(formFunc.includes('rangeIntHeaders'), 'form must render number inputs for rangeIntHeaders');
+  assert.ok(formFunc.includes('readonlyOnEdit'), 'form must respect readonlyOnEdit');
+  assert.ok(formFunc.includes('data-mfrs-hud-memory-action="save"'), 'form must have a save button');
+  assert.ok(formFunc.includes('data-mfrs-hud-memory-action="cancel"'), 'form must have a cancel button');
+});
+addCheck('phase5', 'H3 handleHudShellClick dispatches memory CRUD actions', () => {
+  const click = between(sources.message, 'function handleHudShellClick', 'function handleHudKeydown');
+  assert.ok(click.includes('data-mfrs-hud-memory-action'), 'click handler must intercept memory action buttons');
+  assert.ok(click.includes("memAct === 'new'"), 'must handle new action');
+  assert.ok(click.includes("memAct === 'edit'"), 'must handle edit action');
+  assert.ok(click.includes("memAct === 'delete'"), 'must handle delete action');
+  assert.ok(click.includes("memAct === 'save'"), 'must handle save action');
+  assert.ok(click.includes("memAct === 'cancel'"), 'must handle cancel action');
+  assert.ok(click.includes('hudMemoryEditState'), 'must write/read hudMemoryEditState');
+});
+addCheck('phase5', 'H4 memory save calls MysteryDatabaseFrontend.applyMemoryChange', () => {
+  const save = between(sources.message, 'async function executeHudMemorySave', 'async function executeHudMemoryDelete');
+  assert.ok(save.includes('MysteryDatabaseFrontend'), 'must access MysteryDatabaseFrontend');
+  assert.ok(save.includes('applyMemoryChange'), 'must call applyMemoryChange');
+  assert.ok(save.includes("action: 'insertRow'"), 'new mode must use insertRow');
+  assert.ok(save.includes("action: 'updateCell'"), 'edit mode must use updateCell');
+  assert.ok(save.includes('validateHudMemoryFormData'), 'must validate before saving');
+  assert.ok(save.includes('hudMemoryEditState = null'), 'must clear edit state on success');
+});
+addCheck('phase5', 'H5 memory delete calls MysteryDatabaseFrontend.requestConfirmedMemoryDelete', () => {
+  const del = between(sources.message, 'async function executeHudMemoryDelete', 'function refreshHudPanels');
+  assert.ok(del.includes('MysteryDatabaseFrontend'), 'must access MysteryDatabaseFrontend');
+  assert.ok(del.includes('requestConfirmedMemoryDelete'), 'must call requestConfirmedMemoryDelete');
+  assert.ok(del.includes('table:'), 'must pass table name');
+  assert.ok(del.includes('row_id:'), 'must pass row_id');
+});
+addCheck('phase5', 'H6 memory edit state resets on view switch / unmount / destroy / unregister', () => {
+  const setView = between(sources.message, 'function setHudView', 'function refreshHudBusinessPanels');
+  assert.ok(setView.includes("view !== 'memory'"), 'setHudView must clear memory edit state when leaving memory view');
+  assert.ok(setView.includes('hudMemoryEditState = null'), 'setHudView must null the memory edit state');
+  const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');
+  assert.ok(unmount.includes('hudMemoryEditState = null'), 'unmount must clear memory edit state');
+  const destroy = between(sources.message, 'function destroyHudImmersive', '$(() => {');
+  assert.ok(destroy.includes('hudMemoryEditState = null'), 'destroy must clear memory edit state');
+  const unregister = between(
+    sources.message,
+    'function unregisterHudDatabaseUpdateCallback',
+    'function restoreFixedHostFromHudCabinet',
+  );
+  assert.ok(unregister.includes('hudMemoryEditState = null'), 'unregister must clear memory edit state');
+});
+addCheck('phase5', 'H7 gacha panel embeds inline single/ten pull buttons and pool selector', () => {
+  const gacha = between(sources.message, 'function buildHudGachaPanelHtml', 'function buildHudSystemPanelHtml');
+  assert.ok(gacha.includes('data-mfrs-hud-gacha-action="single"'), 'gacha panel must have single pull button');
+  assert.ok(gacha.includes('data-mfrs-hud-gacha-action="ten"'), 'gacha panel must have ten pull button');
+  assert.ok(gacha.includes('data-mfrs-hud-gacha-pool'), 'gacha panel must have pool type selector');
+  assert.ok(gacha.includes('hudGachaPoolType'), 'gacha panel must track selected pool type');
+  // still keeps the full-panel button
+  assert.ok(gacha.includes('data-mfrs-hud="open-gacha"'), 'gacha panel must still offer the full panel button');
+});
+addCheck('phase5', 'H8 handleHudShellClick dispatches gacha pull and pool selection', () => {
+  const click = between(sources.message, 'function handleHudShellClick', 'function handleHudKeydown');
+  assert.ok(click.includes('data-mfrs-hud-gacha-action'), 'click handler must intercept gacha action buttons');
+  assert.ok(click.includes("act === 'single'"), 'must handle single pull');
+  assert.ok(click.includes("act === 'ten'"), 'must handle ten pull');
+  assert.ok(click.includes('executeHudGachaPull'), 'must call executeHudGachaPull');
+  assert.ok(click.includes('data-mfrs-hud-gacha-pool'), 'must handle pool type selection');
+  assert.ok(click.includes('hudGachaPoolType'), 'must write the selected pool type');
+});
+addCheck('phase5', 'H9 gacha pull calls MFRS.single/ten and renders inline results', () => {
+  const pull = between(sources.message, 'async function executeHudGachaPull', 'function collectHudMemoryFormData');
+  assert.ok(pull.includes('mfrs[kind]'), 'must call MFRS.single or MFRS.ten');
+  assert.ok(pull.includes('hudGachaPoolType'), 'must pass the selected pool type');
+  assert.ok(pull.includes('hudGachaLastResult'), 'must store the result');
+  assert.ok(pull.includes('refreshHudGachaSlot'), 'must refresh the gacha slot after pull');
+  const resultHtml = between(sources.message, 'function buildHudGachaResultHtml', 'function buildHudSystemPanelHtml');
+  assert.ok(resultHtml.includes('mfrs-hud-gacha-item'), 'result must render item elements');
+  assert.ok(resultHtml.includes('rarity'), 'result must display rarity info');
+  assert.ok(resultHtml.includes('stars'), 'result must show rarity stars');
+  assert.ok(resultHtml.includes('color'), 'result must use rarity color');
+});
+addCheck('phase5', 'H10 gacha result state resets on view switch / unmount / destroy / unregister', () => {
+  const setView = between(sources.message, 'function setHudView', 'function refreshHudBusinessPanels');
+  assert.ok(setView.includes("view !== 'gacha'"), 'setHudView must clear gacha result when leaving gacha view');
+  assert.ok(setView.includes('hudGachaLastResult = null'), 'setHudView must null the gacha result');
+  const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');
+  assert.ok(unmount.includes('hudGachaLastResult = null'), 'unmount must clear gacha result');
+  const destroy = between(sources.message, 'function destroyHudImmersive', '$(() => {');
+  assert.ok(destroy.includes('hudGachaLastResult = null'), 'destroy must clear gacha result');
+  const unregister = between(
+    sources.message,
+    'function unregisterHudDatabaseUpdateCallback',
+    'function restoreFixedHostFromHudCabinet',
+  );
+  assert.ok(unregister.includes('hudGachaLastResult = null'), 'unregister must clear gacha result');
+});
+addCheck('phase5', 'H11 CSS exists for memory CRUD form and gacha result items', () => {
+  assert.ok(sources.message.includes('mfrs-hud-memory-form'), 'CSS for memory form must exist');
+  assert.ok(sources.message.includes('mfrs-hud-memory-field'), 'CSS for memory field must exist');
+  assert.ok(sources.message.includes('mfrs-hud-memory-btn'), 'CSS for memory buttons must exist');
+  assert.ok(sources.message.includes('mfrs-hud-memory-add-btn'), 'CSS for add button must exist');
+  assert.ok(sources.message.includes('mfrs-hud-gacha-controls'), 'CSS for gacha controls must exist');
+  assert.ok(sources.message.includes('mfrs-hud-gacha-result'), 'CSS for gacha result must exist');
+  assert.ok(sources.message.includes('mfrs-hud-gacha-item'), 'CSS for gacha items must exist');
+});
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.listStages) {

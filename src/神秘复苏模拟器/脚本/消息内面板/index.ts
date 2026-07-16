@@ -563,6 +563,80 @@ function findHudArchiveRule(table: HudTableBundle, rules = getHudArchiveRules())
   return rules.find(rule => rule.key === table.key || rule.names.some(name => table.name.includes(name))) ?? null;
 }
 
+type HudMemoryEditorRule = {
+  key: string;
+  names: string[];
+  icon?: string;
+  titleHeaders: string[];
+  tagHeaders?: string[];
+  memoryEditor: {
+    tabLabel: string;
+    fieldHeaders: string[];
+    readonlyOnEdit?: string[];
+    hiddenHeaders?: string[];
+    textareaHeaders?: string[];
+    maxLengthHeaders?: Record<string, number>;
+    minLengthHeaders?: Record<string, number>;
+    enumHeaders?: Record<string, string[]>;
+    rangeIntHeaders?: Record<string, { min: number; max: number }>;
+    crossFieldRules?: Array<{ when: Record<string, string>; require: Record<string, number>; message: string }>;
+  };
+};
+
+const HUD_MEMORY_EDITOR_FALLBACK: HudMemoryEditorRule[] = [
+  {
+    key: 'sheet_chronicle', names: ['事件纪要', '纪要'], icon: 'fa-clock-rotate-left',
+    titleHeaders: ['纪要编号', '概览', '关联事件'], tagHeaders: ['时间跨度', '关联事件'],
+    memoryEditor: {
+      tabLabel: '事件纪要', fieldHeaders: ['纪要编号', '时间跨度', '关联事件', '概览', '纪要'],
+      readonlyOnEdit: ['纪要编号'], hiddenHeaders: ['row_id'], textareaHeaders: ['纪要'],
+      maxLengthHeaders: { '概览': 40, '纪要': 600 }, minLengthHeaders: { '纪要': 20 },
+    },
+  },
+  {
+    key: 'sheet_collected_archives', names: ['收录档案'], icon: 'fa-folder-open',
+    titleHeaders: ['档案厉鬼名称', '收录状态'], tagHeaders: ['收录状态', '收录进度', '档案完整度', '可调用范围'],
+    memoryEditor: {
+      tabLabel: '收录档案',
+      fieldHeaders: ['档案厉鬼名称', '收录状态', '厉鬼信息', '已知规律', '猜测规律', '鬼域', '收录进度', '档案完整度', '可调用范围', '可见摘要'],
+      readonlyOnEdit: ['档案厉鬼名称'], hiddenHeaders: ['row_id'], textareaHeaders: ['厉鬼信息', '可见摘要'],
+      enumHeaders: { '收录状态': ['未收录', '收录中', '已收录', '污染档案', '错误档案'] },
+      rangeIntHeaders: { '收录进度': { min: 0, max: 100 } },
+      maxLengthHeaders: { '厉鬼信息': 180, '可见摘要': 180 },
+      crossFieldRules: [{ when: { '收录状态': '已收录' }, require: { '收录进度': 100 }, message: '收录状态为已收录时，收录进度必须为 100' }],
+    },
+  },
+  {
+    key: 'sheet_collected_rules', names: ['收录规律'], icon: 'fa-book-open',
+    titleHeaders: ['来源厉鬼', '规律类型'], tagHeaders: ['获取方式', '完整度', '风险备注'],
+    memoryEditor: {
+      tabLabel: '收录规律',
+      fieldHeaders: ['来源厉鬼', '获取方式', '规律类型', '规律内容', '规律进阶', '规律分解', '完整度', '风险备注', '可见摘要'],
+      hiddenHeaders: ['row_id'], textareaHeaders: ['规律内容', '风险备注', '可见摘要'],
+      maxLengthHeaders: { '规律内容': 180, '风险备注': 160, '可见摘要': 180 },
+    },
+  },
+];
+
+function getHudMemoryEditorRules(): HudMemoryEditorRule[] {
+  try {
+    const config = (hostWindow as any).MFRS_DATABASE_FRONTEND_CONFIG;
+    const rules = config?.recallTableRules;
+    if (!Array.isArray(rules)) return HUD_MEMORY_EDITOR_FALLBACK;
+    const result = HUD_MEMORY_EDITOR_FALLBACK.map(fallback => {
+      const remote = rules.find((item: HudMemoryEditorRule) => item?.key === fallback.key);
+      return remote?.memoryEditor ? remote : fallback;
+    });
+    return result;
+  } catch {
+    return HUD_MEMORY_EDITOR_FALLBACK;
+  }
+}
+
+function findHudMemoryEditorRule(table: HudTableBundle, rules = getHudMemoryEditorRules()) {
+  return rules.find(rule => rule.key === table.key || rule.names.some(name => table.name.includes(name))) ?? null;
+}
+
 function findHudArchiveRow(selection: HudArchiveSelection, tables = readHudDatabaseTables()) {
   const table = Object.values(tables).find(item => item.key === selection.tableKey || item.name === selection.tableName);
   if (!table) return null;
@@ -1561,6 +1635,12 @@ let hudPanelsRenderKey = '';
 let hudToastTimer: number | null = null;
 let hudMenuOpenTimer: number | null = null;
 let hudMenuOpenRaf: number | null = null;
+/** 记忆中栏 CRUD 编辑态 */
+type HudMemoryEditState = { tableKey: string; mode: 'new' | 'edit'; rowId: string };
+let hudMemoryEditState: HudMemoryEditState | null = null;
+/** 抽卡中栏上次结果与池类型 */
+let hudGachaLastResult: unknown = null;
+let hudGachaPoolType: string = 'all';
 
 function isHudMounted() {
   return hudMounted && Boolean(doc.getElementById(HUD_SHELL_ID)?.classList.contains('is-active'));
@@ -1925,6 +2005,187 @@ function ensureHudStyle() {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+/* 记忆中栏 CRUD */
+#${HUD_SHELL_ID} .mfrs-hud-memory-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 4px;
+  padding: 7px 0 7px 8px;
+  border-left: 2px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 45%, transparent);
+  margin-bottom: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-row > .mfrs-hud-memory-title {
+  font-size: 12px;
+  color: var(--mfrs-bone-white);
+  grid-column: 1;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-row > .mfrs-hud-memory-meta {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 48%, #777);
+  grid-column: 1;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-actions {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: flex;
+  gap: 4px;
+  align-self: center;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-btn {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: transparent;
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+  border-radius: 4px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-btn:hover {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 18%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-btn-danger {
+  color: #e06666;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-btn-danger:hover {
+  border-color: #e06666;
+  background: color-mix(in srgb, #e06666 18%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-btn-primary {
+  color: var(--mfrs-corpse-cyan);
+  font-weight: bold;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-add-btn {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: transparent;
+  color: var(--mfrs-corpse-cyan);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  border-radius: 4px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-add-btn:hover {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 12%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-field {
+  display: grid;
+  gap: 2px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-field > span {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 75%, var(--mfrs-bone-white));
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-field input,
+#${HUD_SHELL_ID} .mfrs-hud-memory-field select,
+#${HUD_SHELL_ID} .mfrs-hud-memory-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: rgba(8, 10, 10, 0.6);
+  color: var(--mfrs-bone-white);
+  font: inherit;
+  font-size: 12px;
+  border-radius: 4px;
+  resize: vertical;
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-field input:focus,
+#${HUD_SHELL_ID} .mfrs-hud-memory-field select:focus,
+#${HUD_SHELL_ID} .mfrs-hud-memory-field textarea:focus {
+  outline: none;
+  border-color: var(--mfrs-corpse-cyan);
+}
+#${HUD_SHELL_ID} .mfrs-hud-memory-form-actions {
+  display: flex;
+  gap: 8px;
+}
+/* 抽卡中栏嵌入 */
+#${HUD_SHELL_ID} .mfrs-hud-gacha-controls {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-pool-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 75%, var(--mfrs-bone-white));
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-pool-label select {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: rgba(8, 10, 10, 0.6);
+  color: var(--mfrs-bone-white);
+  font: inherit;
+  font-size: 12px;
+  border-radius: 4px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-result {
+  margin-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
+  padding-top: 10px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 80%, var(--mfrs-bone-white));
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-result-currency {
+  color: var(--mfrs-bone-white);
+  font-weight: bold;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-result-error {
+  color: #e06666;
+  font-size: 13px;
+  margin: 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-items {
+  display: grid;
+  gap: 6px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--mfrs-bone-white);
+  background: rgba(8, 10, 10, 0.5);
+  border-radius: 0 4px 4px 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-item-icon {
+  font-size: 18px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-item-name {
+  font-size: 13px;
+  font-weight: bold;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-item-type {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--mfrs-bone-white) 48%, #777);
 }
 #${HUD_SHELL_ID} .mfrs-msg-check-fold {
   margin-top: 8px;
@@ -4034,22 +4295,93 @@ function buildHudDossierHtml(data: StatusData): string {
 
 function buildHudMemoryPanelHtml(): string {
   const tables = readHudDatabaseTables();
-  const chronicle = findHudTable(tables, '事件纪要', '纪要');
-  const archives = findHudTable(tables, '收录档案');
-  const rules = findHudTable(tables, '收录规律');
-  const section = (title: string, icon: string, table: HudTableBundle | null, titleHeaders: string[], tagHeaders: string[], openName: string) => `
-<section class="mfrs-hud-panel-section">
-  <div class="mfrs-hud-panel-section-title"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>${title}</span></div>
-  ${buildHudTableSummaryListHtml(table, titleHeaders, tagHeaders, 6)}
-  <button type="button" class="mfrs-hud-open-full" data-mfrs-hud-open-table="${_.escape(openName)}">在全库中编辑</button>
-</section>`;
+  const editorRules = getHudMemoryEditorRules();
+  const sections = editorRules.map(rule => {
+    const table = Object.values(tables).find(item => item.key === rule.key) ??
+      (rule.names.length ? findHudTable(tables, ...rule.names) : null);
+    return buildHudMemorySectionHtml(rule, table);
+  });
   return `
 <p class="mfrs-hud-panel-title">记忆与收录</p>
-<p class="mfrs-hud-panel-sub">事件纪要 · 收录档案 · 收录规律（只读摘要，编辑走全库）</p>
-${section('事件纪要', 'fa-clock-rotate-left', chronicle, ['纪要编号', '概览', '关联事件'], ['时间跨度', '关联事件'], '事件纪要')}
-${section('收录档案', 'fa-folder-open', archives, ['档案厉鬼名称', '收录状态'], ['收录进度', '档案完整度', '可调用范围'], '收录档案')}
-${section('收录规律', 'fa-book-open', rules, ['来源厉鬼', '规律类型'], ['获取方式', '完整度', '风险备注'], '收录规律')}
+<p class="mfrs-hud-panel-sub">事件纪要 · 收录档案 · 收录规律（可直接新增、编辑、删除）</p>
+${sections.join('')}
 `;
+}
+
+function buildHudMemorySectionHtml(rule: HudMemoryEditorRule, table: HudTableBundle | null): string {
+  const editing = hudMemoryEditState?.tableKey === rule.key;
+  if (editing) {
+    const row = hudMemoryEditState!.mode === 'edit' && table
+      ? table.rows.find(r => hudRowId(table, r) === hudMemoryEditState!.rowId)
+      : null;
+    if (hudMemoryEditState!.mode === 'edit' && !row) {
+      // 目标行不存在了
+      hudMemoryEditState = null;
+    } else {
+      return buildHudMemoryFormHtml(rule, table, hudMemoryEditState!.mode, row);
+    }
+  }
+  const rows = table ? table.rows.slice(-8).reverse() : [];
+  const rowHtml = rows.length
+    ? rows.map(row => {
+        const rowId = hudRowId(table!, row);
+        const title = rule.titleHeaders.map(h => hudRowField(table!.headers, row, h)).filter(Boolean).join(' · ') || '未命名';
+        const tags = (rule.tagHeaders ?? []).map(h => hudRowField(table!.headers, row, h)).filter(Boolean).slice(0, 3).join(' · ');
+        return `<div class="mfrs-hud-memory-item mfrs-hud-memory-row" data-mfrs-hud-memory-table-key="${_.escape(rule.key)}" data-mfrs-hud-memory-row-id="${_.escape(rowId)}">
+  <span class="mfrs-hud-memory-title">${_.escape(clipHudLine(title, 28))}</span>
+  ${tags ? `<span class="mfrs-hud-memory-meta">${_.escape(clipHudLine(tags, 36))}</span>` : ''}
+  <span class="mfrs-hud-memory-actions">
+    <button type="button" class="mfrs-hud-memory-btn" data-mfrs-hud-memory-action="edit" data-mfrs-hud-memory-table-key="${_.escape(rule.key)}" data-mfrs-hud-memory-row-id="${_.escape(rowId)}" title="编辑"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+    <button type="button" class="mfrs-hud-memory-btn mfrs-hud-memory-btn-danger" data-mfrs-hud-memory-action="delete" data-mfrs-hud-memory-table-key="${_.escape(rule.key)}" data-mfrs-hud-memory-row-id="${_.escape(rowId)}" title="删除"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+  </span>
+</div>`;
+      }).join('')
+    : '<div class="mfrs-msg-empty">暂无记录</div>';
+  return `
+<section class="mfrs-hud-panel-section">
+  <div class="mfrs-hud-panel-section-title"><i class="fa-solid ${_.escape(rule.icon || 'fa-folder-open')}" aria-hidden="true"></i><span>${_.escape(rule.memoryEditor.tabLabel)}</span><button type="button" class="mfrs-hud-memory-add-btn" data-mfrs-hud-memory-action="new" data-mfrs-hud-memory-table-key="${_.escape(rule.key)}"><i class="fa-solid fa-plus" aria-hidden="true"></i> 新增</button></div>
+  ${rowHtml}
+</section>`;
+}
+
+function buildHudMemoryFormHtml(rule: HudMemoryEditorRule, table: HudTableBundle | null, mode: 'new' | 'edit', row?: unknown[] | null): string {
+  const ed = rule.memoryEditor;
+  const fields = ed.fieldHeaders.filter(h => !(ed.hiddenHeaders ?? []).includes(h));
+  const readOnly = mode === 'edit' ? (ed.readonlyOnEdit ?? []) : [];
+  const fieldHtml = fields.map(header => {
+    const current = mode === 'edit' && row && table ? hudRowField(table.headers, row, header) : '';
+    const isRead = readOnly.includes(header) ? 'readonly' : '';
+    const maxLength = ed.maxLengthHeaders?.[header];
+    const minLength = ed.minLengthHeaders?.[header];
+    const enumOpts = ed.enumHeaders?.[header];
+    const isTextarea = (ed.textareaHeaders ?? []).includes(header);
+    const rangeInt = ed.rangeIntHeaders?.[header];
+    const maxAttr = maxLength != null ? `maxlength="${maxLength}"` : '';
+    const minAttr = minLength != null ? `data-min-length="${minLength}"` : '';
+    const label = _.escape(header);
+    if (enumOpts) {
+      const opts = enumOpts.map(v => `<option value="${_.escape(v)}" ${v === current ? 'selected' : ''}>${_.escape(v)}</option>`).join('');
+      return `<label class="mfrs-hud-memory-field"><span>${label}</span><select data-mfrs-hud-memory-field="${_.escape(header)}" ${isRead}>${opts}</select></label>`;
+    }
+    if (isTextarea) {
+      return `<label class="mfrs-hud-memory-field"><span>${label}</span><textarea data-mfrs-hud-memory-field="${_.escape(header)}" rows="3" ${maxAttr} ${minAttr} ${isRead}>${_.escape(current)}</textarea></label>`;
+    }
+    if (rangeInt) {
+      return `<label class="mfrs-hud-memory-field"><span>${label}</span><input type="number" data-mfrs-hud-memory-field="${_.escape(header)}" min="${rangeInt.min}" max="${rangeInt.max}" value="${_.escape(current)}" ${isRead}/></label>`;
+    }
+    return `<label class="mfrs-hud-memory-field"><span>${label}</span><input type="text" data-mfrs-hud-memory-field="${_.escape(header)}" ${maxAttr} ${minAttr} value="${_.escape(current)}" ${isRead}/></label>`;
+  }).join('');
+  return `
+<section class="mfrs-hud-panel-section mfrs-hud-memory-form-section">
+  <div class="mfrs-hud-panel-section-title"><i class="fa-solid ${_.escape(rule.icon || 'fa-folder-open')}" aria-hidden="true"></i><span>${mode === 'new' ? '新增' : '编辑'} · ${_.escape(ed.tabLabel)}</span></div>
+  <div class="mfrs-hud-memory-form">
+    ${fieldHtml}
+  </div>
+  <div class="mfrs-hud-memory-form-actions">
+    <button type="button" class="mfrs-hud-memory-btn mfrs-hud-memory-btn-primary" data-mfrs-hud-memory-action="save" data-mfrs-hud-memory-table-key="${_.escape(rule.key)}" data-mfrs-hud-memory-mode="${mode}" ${row ? `data-mfrs-hud-memory-row-id="${_.escape(hudRowId(table!, row!))}"` : ''}><i class="fa-solid fa-check" aria-hidden="true"></i> 保存</button>
+    <button type="button" class="mfrs-hud-memory-btn" data-mfrs-hud-memory-action="cancel"><i class="fa-solid fa-times" aria-hidden="true"></i> 取消</button>
+  </div>
+</section>`;
 }
 
 function buildHudGachaPanelHtml(): string {
@@ -4063,7 +4395,6 @@ function buildHudGachaPanelHtml(): string {
     if (typeof mfrs?.getPity === 'function') {
       const p = mfrs.getPity();
       if (typeof p === 'object' && p) {
-        // getPity() 返回 { total, rare, epic }，与完整抽卡面板对齐
         const epic = Number(p.epic) || 0;
         const total = Number(p.total) || 0;
         pity = `★4 还需${Math.max(0, 50 - epic)}抽 · ★6 还需${Math.max(0, 100 - total)}抽`;
@@ -4079,20 +4410,65 @@ function buildHudGachaPanelHtml(): string {
   } catch {
     // ignore gacha api errors
   }
-  const ready = typeof mfrs?.showPanel === 'function';
+  const canPull = typeof mfrs?.single === 'function' && typeof mfrs?.ten === 'function';
+  const poolTypes = [
+    { value: 'all', label: '全物品池' },
+    { value: 'archive', label: '档案池' },
+    { value: 'pattern', label: '规律池' },
+    { value: 'supernatural', label: '灵异物品池' },
+  ];
+  const poolHtml = poolTypes.map(p =>
+    `<option value="${p.value}" ${p.value === hudGachaPoolType ? 'selected' : ''}>${_.escape(p.label)}</option>`,
+  ).join('');
+  const resultHtml = hudGachaLastResult ? buildHudGachaResultHtml(hudGachaLastResult) : '';
   return `
 <p class="mfrs-hud-panel-title">抽卡</p>
-<p class="mfrs-hud-panel-sub">中栏摘要；完整抽卡 UI 在下方打开（正文已隐藏）</p>
+<p class="mfrs-hud-panel-sub">中栏抽卡 · ${canPull ? '可操作' : 'API 未就绪'}</p>
 <div class="mfrs-hud-gacha-embed">
   <div class="mfrs-msg-kv"><span>调查点</span><b>${_.escape(currency)}</b></div>
   <div class="mfrs-msg-kv"><span>保底</span><b>${_.escape(clipHudLine(String(pity), 40))}</b></div>
   <div class="mfrs-msg-kv"><span>残屑</span><b>${_.escape(fragments)}</b></div>
   <div class="mfrs-msg-kv"><span>历史</span><b>${_.escape(historyCount)}</b></div>
 </div>
-<div class="mfrs-hud-gacha-actions">
-  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-gacha" ${ready ? '' : 'disabled'}>${ready ? '打开抽卡面板' : '抽卡 API 未就绪'}</button>
+<div class="mfrs-hud-gacha-controls">
+  <label class="mfrs-hud-gacha-pool-label"><span>卡池</span><select data-mfrs-hud-gacha-pool>${poolHtml}</select></label>
+  <div class="mfrs-hud-gacha-actions">
+    <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-gacha-action="single" ${canPull ? '' : 'disabled'}><i class="fa-solid fa-1" aria-hidden="true"></i> 单抽(10)</button>
+    <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-gacha-action="ten" ${canPull ? '' : 'disabled'}><i class="fa-solid fa-dice" aria-hidden="true"></i> 十连(90)</button>
+    <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-gacha" ${typeof mfrs?.showPanel === 'function' ? '' : 'disabled'}><i class="fa-solid fa-expand" aria-hidden="true"></i> 完整面板</button>
+  </div>
 </div>
+${resultHtml}
 `;
+}
+
+function buildHudGachaResultHtml(result: unknown): string {
+  const r = result as { success?: boolean; error?: string; items?: any[]; currency?: number; fragments?: unknown };
+  if (!r?.success) {
+    return `<div class="mfrs-hud-gacha-result"><p class="mfrs-hud-gacha-result-error">${_.escape(r?.error || '抽卡失败')}</p></div>`;
+  }
+  const items = Array.isArray(r.items) ? r.items : [];
+  const itemHtml = items.map(item => {
+    const rarity = item?.rarity;
+    const stars = rarity?.stars || '';
+    const color = rarity?.color || 'var(--mfrs-bone-white)';
+    const name = item?.name || '未知';
+    const icon = item?.icon || '🎁';
+    const type = item?.type || '';
+    const typeLabel = type === 'supernatural' ? '灵异物品' : type === 'clue' ? '线索' : type === 'knowledge' ? '知识' : '';
+    return `<div class="mfrs-hud-gacha-item" style="border-left-color:${color}">
+  <span class="mfrs-hud-gacha-item-icon">${_.escape(icon)}</span>
+  <span class="mfrs-hud-gacha-item-info">
+    <span class="mfrs-hud-gacha-item-name" style="color:${color}">${_.escape(stars)} ${_.escape(name)}</span>
+    ${typeLabel ? `<span class="mfrs-hud-gacha-item-type">${_.escape(typeLabel)}</span>` : ''}
+  </span>
+</div>`;
+  }).join('');
+  const currencyAfter = r.currency != null ? String(r.currency) : '—';
+  return `<div class="mfrs-hud-gacha-result">
+  <div class="mfrs-hud-gacha-result-header"><span>抽卡结果</span><span class="mfrs-hud-gacha-result-currency">余额: ${_.escape(currencyAfter)}</span></div>
+  <div class="mfrs-hud-gacha-items">${itemHtml || '<div class="mfrs-msg-empty">无</div>'}</div>
+</div>`;
 }
 
 function buildHudSystemPanelHtml(data: StatusData): string {
@@ -4270,6 +4646,9 @@ function setHudView(view: HudView) {
   }
   hudActiveView = view;
   shell.classList.remove('is-settings-open');
+  // 切离记忆/抽卡视图时清空编辑态/结果态，避免下次进入残留旧表单
+  if (view !== 'memory') hudMemoryEditState = null;
+  if (view !== 'gacha') hudGachaLastResult = null;
   setHudNavActive(view === 'archive' ? 'dossier' : view);
   applyHudCenterView(shell, view);
   if (view === 'story') {
@@ -4373,6 +4752,141 @@ function openHudGachaUi() {
   showHudToast('抽卡面板未就绪：请确认数据库前端已加载');
 }
 
+function refreshHudMemorySlot() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  const slot = shell.querySelector('[data-mfrs-hud="memory-slot"]');
+  if (slot) slot.innerHTML = buildHudMemoryPanelHtml();
+}
+
+function refreshHudGachaSlot() {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  const slot = shell.querySelector('[data-mfrs-hud="gacha-slot"]');
+  if (slot) slot.innerHTML = buildHudGachaPanelHtml();
+}
+
+async function executeHudGachaPull(kind: 'single' | 'ten') {
+  const mfrs = (hostWindow as any).MFRS;
+  if (!mfrs || typeof mfrs[kind] !== 'function') {
+    showHudToast('抽卡 API 未就绪');
+    return;
+  }
+  try {
+    const result = mfrs[kind](hudGachaPoolType);
+    hudGachaLastResult = result;
+    refreshHudGachaSlot();
+    if (!result?.success) {
+      showHudToast(result?.error || '抽卡失败');
+    }
+  } catch (err) {
+    hudGachaLastResult = { success: false, error: String(err?.message || err || '抽卡异常') };
+    refreshHudGachaSlot();
+    showHudToast('抽卡异常');
+  }
+}
+
+function collectHudMemoryFormData(shell: Element, rule: HudMemoryEditorRule): Record<string, string> {
+  const data: Record<string, string> = {};
+  const fields = rule.memoryEditor.fieldHeaders.filter(h => !(rule.memoryEditor.hiddenHeaders ?? []).includes(h));
+  for (const header of fields) {
+    const el = shell.querySelector(`[data-mfrs-hud-memory-field="${CSS.escape(header)}"]`) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+    if (el) data[header] = String(el.value ?? '');
+  }
+  return data;
+}
+
+function validateHudMemoryFormData(data: Record<string, string>, rule: HudMemoryEditorRule): string[] {
+  const ed = rule.memoryEditor;
+  const errors: string[] = [];
+  for (const [header, value] of Object.entries(data)) {
+    const maxLen = ed.maxLengthHeaders?.[header];
+    if (maxLen != null && value.length > maxLen) errors.push(`${header} 超过最大长度 ${maxLen}`);
+    const minLen = ed.minLengthHeaders?.[header];
+    if (minLen != null && value && value.length < minLen) errors.push(`${header} 不足最小长度 ${minLen}`);
+    const range = ed.rangeIntHeaders?.[header];
+    if (range && value) {
+      const num = Number(value);
+      if (Number.isNaN(num)) errors.push(`${header} 必须是数字`);
+      else if (num < range.min || num > range.max) errors.push(`${header} 必须在 ${range.min}-${range.max} 之间`);
+    }
+  }
+  if (ed.crossFieldRules) {
+    for (const cf of ed.crossFieldRules) {
+      const matches = Object.entries(cf.when).every(([k, v]) => data[k] === v);
+      if (matches) {
+        for (const [k, v] of Object.entries(cf.require)) {
+          if (Number(data[k]) !== v) errors.push(cf.message);
+        }
+      }
+    }
+  }
+  return errors;
+}
+
+async function executeHudMemorySave(tableKey: string, mode: 'new' | 'edit', rowId: string) {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell) return;
+  const editorRules = getHudMemoryEditorRules();
+  const rule = editorRules.find(r => r.key === tableKey);
+  if (!rule) return;
+  const data = collectHudMemoryFormData(shell, rule);
+  const errors = validateHudMemoryFormData(data, rule);
+  if (errors.length) {
+    showHudToast(errors[0]);
+    return;
+  }
+  const frontend = (hostWindow as any).MysteryDatabaseFrontend;
+  if (!frontend || typeof frontend.applyMemoryChange !== 'function') {
+    showHudToast('数据库前端未就绪');
+    return;
+  }
+  const tableName = rule.names[0] || tableKey;
+  const plan = mode === 'new'
+    ? { action: 'insertRow', table: tableName, data }
+    : { action: 'updateCell', table: tableName, set: data, match: { row_id: rowId } };
+  try {
+    const result = await frontend.applyMemoryChange(plan);
+    if (result?.ok) {
+      hudMemoryEditState = null;
+      showHudToast('记忆记录已保存');
+      // DB 回调会触发 refreshHudPanels(true)，但也手动刷新确保即时
+      refreshHudMemorySlot();
+    } else {
+      const msg = Array.isArray(result?.errors) && result.errors[0]?.message ? result.errors[0].message : '保存失败';
+      showHudToast(msg);
+    }
+  } catch (err) {
+    showHudToast(`保存异常: ${String(err?.message || err || '')}`);
+  }
+}
+
+async function executeHudMemoryDelete(tableKey: string, rowId: string) {
+  const frontend = (hostWindow as any).MysteryDatabaseFrontend;
+  if (!frontend || typeof frontend.requestConfirmedMemoryDelete !== 'function') {
+    showHudToast('数据库前端未就绪');
+    return;
+  }
+  const editorRules = getHudMemoryEditorRules();
+  const rule = editorRules.find(r => r.key === tableKey);
+  if (!rule) return;
+  const tableName = rule.names[0] || tableKey;
+  try {
+    const result = await frontend.requestConfirmedMemoryDelete({ table: tableName, row_id: rowId });
+    if (result?.ok && result?.confirmed !== false) {
+      showHudToast('记忆记录已删除');
+      refreshHudMemorySlot();
+    } else if (result?.confirmed === false) {
+      // 用户取消，不提示
+    } else {
+      const msg = Array.isArray(result?.errors) && result.errors[0]?.message ? result.errors[0].message : '删除失败';
+      showHudToast(msg);
+    }
+  } catch (err) {
+    showHudToast(`删除异常: ${String(err?.message || err || '')}`);
+  }
+}
+
 function refreshHudPanels(force = false) {
   if (!isHudMounted()) return;
   const shell = doc.getElementById(HUD_SHELL_ID);
@@ -4449,6 +4963,8 @@ function registerHudDatabaseUpdateCallback() {
 function unregisterHudDatabaseUpdateCallback() {
   // 注销回调时同步清空只读选中态，避免残留指向已被销毁的表行
   hudArchiveSelection = null;
+  hudMemoryEditState = null;
+  hudGachaLastResult = null;
   if (!hudDatabaseCallbackRegistered) return;
   const api = (hostWindow as any).AutoCardUpdaterAPI;
   if (api && typeof api.unregisterTableUpdateCallback === 'function') {
@@ -4603,6 +5119,44 @@ function handleHudShellClick(e: Event) {
   if (openGachaBtn) {
     e.preventDefault();
     openHudGachaUi();
+    return;
+  }
+  // 抽卡中栏操作：单抽/十连
+  const gachaActionBtn = target.closest('[data-mfrs-hud-gacha-action]') as HTMLElement | null;
+  if (gachaActionBtn) {
+    e.preventDefault();
+    const act = gachaActionBtn.getAttribute('data-mfrs-hud-gacha-action');
+    if (act === 'single' || act === 'ten') executeHudGachaPull(act);
+    return;
+  }
+  // 抽卡池类型选择
+  const gachaPoolSel = target.closest('[data-mfrs-hud-gacha-pool]') as HTMLSelectElement | null;
+  if (gachaPoolSel) {
+    hudGachaPoolType = gachaPoolSel.value || 'all';
+    return;
+  }
+  // 记忆中栏 CRUD 操作
+  const memoryActionBtn = target.closest('[data-mfrs-hud-memory-action]') as HTMLElement | null;
+  if (memoryActionBtn) {
+    e.preventDefault();
+    const memAct = memoryActionBtn.getAttribute('data-mfrs-hud-memory-action');
+    const memTableKey = memoryActionBtn.getAttribute('data-mfrs-hud-memory-table-key') || '';
+    const memRowId = memoryActionBtn.getAttribute('data-mfrs-hud-memory-row-id') || '';
+    if (memAct === 'new') {
+      hudMemoryEditState = { tableKey: memTableKey, mode: 'new', rowId: '' };
+      refreshHudMemorySlot();
+    } else if (memAct === 'edit') {
+      hudMemoryEditState = { tableKey: memTableKey, mode: 'edit', rowId: memRowId };
+      refreshHudMemorySlot();
+    } else if (memAct === 'delete') {
+      executeHudMemoryDelete(memTableKey, memRowId);
+    } else if (memAct === 'save') {
+      const mode = (memoryActionBtn.getAttribute('data-mfrs-hud-memory-mode') || 'new') as 'new' | 'edit';
+      executeHudMemorySave(memTableKey, mode, memRowId);
+    } else if (memAct === 'cancel') {
+      hudMemoryEditState = null;
+      refreshHudMemorySlot();
+    }
     return;
   }
   // 调查档案摘要项：写入只读选中态并切到中栏档案预览（在 open-table 全库分支前拦截）
@@ -4829,6 +5383,8 @@ function unmountHudImmersive() {
   hudPanelsRenderKey = '';
   // 退出/切卡：清空只读档案选中态，避免下次挂载残留指向已失效表行
   hudArchiveSelection = null;
+  hudMemoryEditState = null;
+  hudGachaLastResult = null;
   shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-settings-open', 'is-tavern-menu-open');
   doc.getElementById('mfrs-hud-st-return')?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
@@ -4874,6 +5430,8 @@ function destroyHudImmersive() {
   hudActiveView = 'story';
   hudPanelsRenderKey = '';
   hudArchiveSelection = null;
+  hudMemoryEditState = null;
+  hudGachaLastResult = null;
 }
 
 $(() => {
