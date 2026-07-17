@@ -1,6 +1,6 @@
 # HUD 交互三项调整任务清单
 
-**状态**：T0–T3 已完成，T4 待开始；当前进度 20/44，待执行 24
+**状态**：T0–T4 已完成，T5 待开始；当前进度 25/44，待执行 19
 
 **对应计划**：`PLAN_HUD_UX_NEXT.md`
 
@@ -79,7 +79,7 @@
   - 依赖：T2.2–T2.4
   - 完成条件：源码中不存在 `hudGachaLastResult`、`hudGachaPoolType`、`data-mfrs-hud="open-gacha"` 和简版操作 selector。
   - 完成证据：稳定 `[data-mfrs-hud-gacha-host]` 承接 `hudGachaPanelHandle`；可信 realm/root 品牌校验通过；设置、全库、切视图、unmount/deactivate/hot reload/pagehide 均统一销毁；普通 refresh 保留已挂载 root；旧简版 marker 搜索为 0。frontend 门禁仍 PASS（21 项动态抽卡生命周期检查），目标 TS/门禁 JS 语法检查与 `git diff --check` 通过，独立反模式和代码质量复核均无 High/Medium。
-  - T4 边界：archive-ui H7–H11 仍是 8.13.36 的旧简版契约，当前按计划在旧 H7 首败；留待 T4.1–T4.4 替换断言后恢复全绿，不以删除旧断言来降级门禁。
+  - 历史 T4 边界（T2 完成时）：archive-ui H7–H11 仍是 8.13.36 的旧简版契约，并按计划在旧 H7 首败；该旧首败和旧契约已由 T4 替换关闭，当前 archive-ui 237 checks PASS，未以删除旧断言降级门禁。
 
 ## T3：左栏精简与模式切换
 
@@ -96,21 +96,22 @@
 - [x] **T3.5 焦点与响应式**：补默认按钮刷新焦点恢复和桌面/移动稳定尺寸。
   - 依赖：T3.2–T3.4
   - 完成条件：按钮文字不溢出，不遮挡原 7 键；键盘可达。
-  - 完成证据：`buildHudDossierHtml()` 只移除指定玩家状态全库按钮；默认最新 AI 三栏在原 7 键导航外增加独立“沉浸模式”工具按钮，继续复用 `toggleHudImmersive()`、`hudImmersivePreferred` 与 `Ctrl+Shift+G`；沉浸顶栏迁移为收起图标 + “默认模式”并保持 `exitHudImmersive()`。默认/沉浸按钮双向交接焦点，mode 快照支持面板刷新恢复；历史楼 mode tools 隐藏，桌面/≤900px 右轨为 60px，≤640px 独立整行，点击目标不小于 44px。`git diff --check` 与双路只读代码复核通过，无 High/Medium；archive-ui 旧 H7–H11 留 T4 更新。
+  - 完成证据：`buildHudDossierHtml()` 只移除指定玩家状态全库按钮；默认最新 AI 三栏在原 7 键导航外增加独立“沉浸模式”工具按钮，继续复用 `toggleHudImmersive()`、`hudImmersivePreferred` 与 `Ctrl+Shift+G`；沉浸顶栏迁移为收起图标 + “默认模式”并保持 `exitHudImmersive()`。默认/沉浸按钮双向交接焦点，mode 快照支持面板刷新恢复；历史楼 mode tools 隐藏，桌面/≤900px 右轨为 60px，≤640px 独立整行，点击目标不小于 44px。`git diff --check` 与双路只读代码复核通过，无 High/Medium；T3 完成时留给 T4 的 archive-ui 旧 H7–H11 已替换关闭，当前 archive-ui 237 checks PASS。
 
 ## T4：自动化契约更新
 
-- [ ] **T4.1 替换 archive-ui H7-H11**：删除旧“简版 + 完整面板按钮”契约，增加 host/mount/destroy/无旧 marker 断言。
+- [x] **T4.1 替换 archive-ui H7-H11**：删除旧“简版 + 完整面板按钮”契约，增加 host/mount/destroy/无旧 marker 断言。
   - 文件：`scripts/verify-mfrs-archive-ui-regressions.mjs`
-- [ ] **T4.2 增加左栏精简门禁**：只在 `buildHudDossierHtml()` 范围内禁止玩家状态全库按钮。
+- [x] **T4.2 增加左栏精简门禁**：只在 `buildHudDossierHtml()` 范围内禁止玩家状态全库按钮。
   - 完成条件：通用 `data-mfrs-hud-open-table` 与系统全库入口仍被允许。
-- [ ] **T4.3 增加模式切换门禁**：断言默认可见入口、沉浸反向入口、快捷键和单一 preference。
-- [ ] **T4.4 专项门禁**：运行 frontend 与 archive-ui。
+- [x] **T4.3 增加模式切换门禁**：断言默认可见入口、沉浸反向入口、快捷键和单一 preference。
+- [x] **T4.4 专项门禁**：运行 frontend 与 archive-ui。
   - 依赖：T1–T4.3
   - 完成条件：两项 PASS；确认测试没有通过删断言降级。
-- [ ] **T4.5 聚合门禁**：运行 `pnpm verify:mfrs-gates`。
+- [x] **T4.5 聚合门禁**：运行 `pnpm verify:mfrs-gates`。
   - 依赖：T4.4
   - 完成条件：全部 PASS；33 条正则和 8 项脚本约束不变。
+  - 完成证据：旧 H7–H11 已替换为完整面板 host、mount/destroy、重试、刷新保留与多入口清理契约，并新增 I1–I5 覆盖左栏精简和双向模式切换。门禁通过 TypeScript AST 精确定位函数、分支、调用和赋值，从 AST 提取 CSS template 后按最终声明验证，同时屏蔽 HTML comments 并限定静态字符串拼接，避免注释/死文本假阳性。`node --check`、frontend（21 项动态生命周期检查）、archive-ui（237 checks）、`pnpm verify:mfrs-gates` 与 `git diff --check` 全部通过；独立反模式与代码质量复核均 APPROVE，仅保留既有 CDN_REF warning。
 
 ## T5：源码提交检查点
 
@@ -145,6 +146,6 @@
 ## 完成统计
 
 - 总任务：**44**
-- 已完成：**20**
+- 已完成：**25**
 - 进行中：**0**
-- 待执行：**24**
+- 待执行：**19**

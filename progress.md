@@ -1,5 +1,15 @@
 # 进度日志
 
+## 会话：2026-07-17（HUD-UX-NEXT · T4 自动化契约更新）— **complete**
+
+- **T4.1 complete**：archive-ui 旧 H7–H11 “简版抽卡 + 完整面板按钮”断言已替换为稳定 host、`MFRS.mountPanel()`、`hudGachaPanelHandle`、幂等 destroy、失败重试、普通刷新保留、切视图/设置/全库/unmount/deactivate/cleanup 回收，以及旧简版 marker 缺席契约。
+- **T4.2 complete**：新增 scoped 左栏精简门禁，只在 `buildHudDossierHtml()` 范围禁止“打开全库 · 玩家状态”；`buildHudInvestigationSectionsHtml()`、通用 `data-mfrs-hud-open-table`、系统全库入口和玩家状态数据仍被正向保护。
+- **T4.3 complete**：新增 I1–I5，覆盖原 7 个 `data-nav` 键保持不变、独立默认“沉浸模式”入口、沉浸顶栏“默认模式”反向入口、唯一 `hudImmersivePreferred`、无新 mode localStorage、`Ctrl+Shift+G`、双向焦点、历史楼隐藏和 60px/≤640px 响应式契约。
+- **测试设计**：门禁通过 TypeScript AST 精确定位函数、分支、调用和赋值；从 AST 提取 CSS template 后按最终声明验证；HTML comments 先屏蔽；仅解析受限静态字符串拼接，避免注释、死代码或同名文本造成假阳性。旧覆盖未被删除降级，而是由新 H7–H11 和 I1–I5 接替。
+- **T4.4–T4.5 complete / 验证**：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs` PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（237 checks）；`pnpm verify:mfrs-gates` 全部 PASS；`git diff --check` PASS。独立反模式与代码质量最终复核均 APPROVE，仅出现既有 CDN_REF warning。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改业务源码/dist/package/lockfile；T4 只改 archive-ui 门禁与规划记录。
+- **清单进度**：T0–T4 共 25/44 complete，待执行 19；下一项为 **T5.1** 源码代码审查，但 T5 尚未开始。
+
 ## 会话：2026-07-17（HUD-UX-NEXT · T3 实施）— **complete**
 
 - **T3.1 complete**：`buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”按钮及其拼接；玩家状态数据、镜像、通用 `data-mfrs-hud-open-table` 处理器、调查档案与系统全库入口均保留。

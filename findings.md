@@ -1,5 +1,13 @@
 # 发现与决策 · 神秘复苏审计
 
+## HUD-UX-NEXT · Phase 4 发现与决策（2026-07-17）
+
+- 旧 archive-ui H7–H11 不能简单删除；必须由新 H7–H11 接替完整抽卡 host、mount/destroy、重试、刷新保留、清理和旧 marker 缺席契约，再用 I1–I5 补齐左栏精简与模式切换覆盖，才能证明门禁没有通过减断言降级。
+- 对 `index.ts` 这类大型 TypeScript 源码做字符串包含检查容易被注释、同名文本或无关函数误导。决定用 TypeScript AST 精确取得目标函数、条件分支、调用与赋值，只在结构化范围内验证所有权和生命周期契约。
+- CSS 响应式规则嵌在 TypeScript template 中；测试先从 AST 提取目标 CSS template，再按最终声明验证桌面/≤900px 右轨 60px 与 ≤640px 单列布局，避免全文件正则命中被覆盖的旧声明。
+- HTML builder 的静态验证先屏蔽 comments，并只接受受限静态字符串拼接；这样可确认模式按钮、ARIA/title、图标和 scoped 玩家按钮删除来自实际返回 HTML，而不是注释或死文本。
+- T4 最终基线为 frontend 21 项动态生命周期检查、archive-ui 237 checks、聚合门禁、目标 `node --check` 和 `git diff --check` 全绿；独立反模式与代码质量复核均 APPROVE，仅保留既有 CDN_REF warning。
+
 ## HUD-UX-NEXT · Phase 3 发现与决策（2026-07-17）
 
 - 左栏需求只对应 `buildHudDossierHtml()` 的 `openPlayer` 按钮拼接；删除它不需要也不允许触碰玩家状态表、镜像、调查档案或通用全库处理器。
@@ -230,7 +238,7 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 - **审计与历史发布**：BF0–BF6、Phase 5、8.13.29、8.13.31 与沉浸 HUD 中栏改造均已完成。
 - **当前发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
-- **当前任务状态**：HUD-UX-NEXT 的 T0–T3 已完成（20/44），T4 自动化契约更新 pending；archive-ui 旧 H7–H11、左栏精简和模式切换断言均留 T4 更新。
+- **当前任务状态**：HUD-UX-NEXT 的 T0–T4 已完成（25/44），T5 源码提交检查点 pending；archive-ui 新 H7–H11/I1–I5、frontend 21 项动态检查与聚合门禁均已通过，T5 尚未开始。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）

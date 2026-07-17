@@ -3,7 +3,7 @@
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → bot bundle `296c14cd`）。
 
-下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0–T3 已完成，下一项为 T4 自动化契约更新。
+下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0–T4 已完成，下一项为 T5 源码提交检查点。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -23,17 +23,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
-**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0–T3 complete；T4 pending）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0–T4 complete；T5 pending）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整的 T0–T3 已完成，完整抽卡中栏、左栏精简和默认/沉浸双向切换均已落到源码 |
-| 我要去哪里？ | 在 `worktree-feat-hud-gacha-mode-toggle` 从 T4 更新 archive-ui/frontend 自动化契约，再按 Phase 5–6 完成真页验收与发布 |
+| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整的 T0–T4 已完成，源码功能与 archive-ui/frontend 自动化契约均已同步 |
+| 我要去哪里？ | 在 `worktree-feat-hud-gacha-mode-toggle` 从 T5 完成源码审查、静态检查和精确提交，再按 Phase 5–6 完成真页验收与发布 |
 | 目标是什么？ | 抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向切换 |
-| 我学到了什么？ | 模式切换必须保持单一 preference 与既有 mount/unmount 生命周期；默认入口应独立于 7 个业务视图，并同时处理刷新焦点、历史楼隐藏和窄右轨文字尺寸 |
-| 我做了什么？ | 完成 T0–T3：单源 renderer/embedded API、右侧抽卡直达稳定 host、完整句柄清理、左栏指定入口删除，以及默认/沉浸双向按钮与焦点交接 |
+| 我学到了什么？ | 复杂源码门禁应以 TypeScript AST 精确定位函数、分支、调用与赋值；CSS 应从 AST 提取 template 后按最终声明验证，并屏蔽 HTML comments、限制静态字符串拼接以避免死文本假阳性 |
+| 我做了什么？ | 完成 T0–T4：单源 renderer/embedded API、右侧抽卡直达稳定 host、完整句柄清理、左栏指定入口删除、默认/沉浸双向按钮，以及 H7–H11/I1–I5 自动化契约更新 |
 
 ## 硬约束（勿破）
 
@@ -51,8 +51,8 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 发布内容版本 | **8.13.36**（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → `296c14cd`） |
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
 | 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
-| 工作树状态 | 实施 worktree 已完成 T0–T3；T3 仅修改消息内面板源码与四份规划记录，不含 dist/package/lockfile；主工作树的 10 个 watch dev dist 未触碰 |
-| 下一阶段 | **HUD-UX-NEXT T0–T3 complete；T4 pending** |
+| 工作树状态 | 实施 worktree 已完成 T0–T4；T4 仅修改 archive-ui 门禁与四份规划记录，不含业务源码、dist/package/lockfile；主工作树的 10 个 watch dev dist 未触碰 |
+| 下一阶段 | **HUD-UX-NEXT T0–T4 complete；T5 pending** |
 
 ## 各阶段
 
@@ -227,19 +227,19 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
 - **状态：** complete（本轮只规划，业务源码未改）
 
-### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0–T3 complete；T4 pending）**
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0–T4 complete；T5 pending）**
 
 - [x] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
 - [x] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
 - [x] Phase 3：移除左栏玩家状态全库按钮，增加默认/沉浸双向可见切换。
-- [ ] Phase 4：同步 archive-ui 与 database frontend 门禁。
+- [x] Phase 4：同步 archive-ui 与 database frontend 门禁。
 - [ ] Phase 5：Chrome DevTools 桌面/390px 真页及生命周期验收。
 - [ ] Phase 6：production build、精确提交、publish-card、CDN/tag 验收。
 - **T1 审查：** 3 个 Medium 已全部关闭：宿主使用可信 document identity + 可信 realm `Element` + 原生 `Node.prototype.nodeType` getter 做品牌校验；异步 continuation 全部检查 current owner；商店/详情/编辑器使用所属文档、幂等 handle 与父实例统一回收。两份 JS `node --check`、frontend（21 项动态生命周期检查）、archive-ui（232 checks）及 `git diff --check` 均通过；独立反模式与代码质量复核均 APPROVE、无 High/Medium。
 - **T2 审查：** gacha slot 改为稳定 host，`hudGachaPanelHandle` 持有唯一实例；可信 realm/root 品牌校验、失败 API identity latch、普通 refresh 保留、设置/全库/切视图/unmount/deactivate/hot reload/pagehide 清理均已覆盖，旧简版 marker 为 0。frontend 21 项动态检查、目标语法检查和 `git diff --check` 通过；双路复核无 High/Medium。
 - **T3 审查：** `buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”；默认最新 AI 三栏的 7 键导航保持独立，其下新增展开图标 + “沉浸模式”，复用唯一 `hudImmersivePreferred`、`toggleHudImmersive()` 与快捷键。沉浸顶栏旧 shell 可幂等迁移为收起图标 + “默认模式”；进入/退出双向聚焦、mode 刷新恢复、非 latest 历史楼隐藏、60px 桌面/≤900px 右轨和 ≤640px 整行布局均完成。`git diff --check` 与双路代码质量复核通过，无 High/Medium。
-- **T4 测试边界：** archive-ui H7–H11 仍断言旧“简版 + 完整面板按钮”契约，因此当前按计划在旧 H7 首败；T4 更新断言后才要求 archive-ui 恢复全绿。
-- **状态：** in_progress（T0–T3 complete；T4 pending；20/44 complete，24 pending）
+- **T4 审查：** archive-ui 旧 H7–H11 已替换为完整面板 host/mount/destroy、重试、刷新保留、清理和旧 marker 缺席契约；新增 I1–I5 覆盖 `buildHudDossierHtml()` 范围内的左栏精简，以及默认/沉浸双向按钮、单一 preference、快捷键、焦点和响应式布局。门禁使用 TypeScript AST 精确定位函数/分支/调用/赋值，从 AST 提取 CSS template 并按最终声明验证，同时屏蔽 HTML comments、限定静态字符串拼接。frontend 21 项动态检查、archive-ui 237 checks、聚合门禁、`node --check` 与 `git diff --check` 全部通过；独立反模式与质量复核均 APPROVE，仅既有 CDN_REF warning。
+- **状态：** in_progress（T0–T4 complete；T5 pending；25/44 complete，19 pending）
 
 ## 合并关单
 
@@ -265,7 +265,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 ## 当前任务状态
 
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. **HUD-UX-NEXT 已完成 T0–T3，T4 pending**：完整抽卡面板现由单一 renderer 同时服务 overlay 与 embedded；右侧抽卡键直接挂载中栏完整系统；左栏指定玩家状态全库入口已删除，默认最新 AI 三栏与沉浸顶栏已形成双向可见模式切换和焦点交接。Phase 4–6 见 `PLAN_HUD_UX_NEXT.md`；archive-ui 旧 H7–H11 留 T4 更新。
+2. **HUD-UX-NEXT 已完成 T0–T4，T5 pending**：完整抽卡面板现由单一 renderer 同时服务 overlay 与 embedded；右侧抽卡键直接挂载中栏完整系统；左栏指定玩家状态全库入口已删除，默认最新 AI 三栏与沉浸顶栏已形成双向可见模式切换和焦点交接；archive-ui H7–H11/I1–I5 已同步为新契约，frontend 21 项动态检查、archive-ui 237 checks 与聚合门禁全绿。Phase 5–6 见 `PLAN_HUD_UX_NEXT.md`。
 3. 后续实施使用 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` / `worktree-feat-hud-gacha-mode-toggle`，基线为 `origin/main@75f4a9a`；不使用旧 `feat-immersive-center-workspaces`。
 4. 用户原有 watch 仍在运行（webpack watch PID `21824`），非本任务启动且不阻塞 T3 源码阶段；主工作树的 10 个 dist 修改是其产物，T7 前由用户停止 watch。
 
@@ -313,7 +313,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
 当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）。
-HUD-UX-NEXT 的 T0–T3 已完成，下一项为 T4 自动化契约更新；archive-ui 旧 H7–H11 仍留待本阶段替换。再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
+HUD-UX-NEXT 的 T0–T4 已完成，下一项为 T5 源码提交检查点；T5 尚未开始。再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
 Worktree：D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle
 分支：worktree-feat-hud-gacha-mode-toggle（基线 origin/main@75f4a9a）
 ```
