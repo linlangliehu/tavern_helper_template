@@ -1,10 +1,10 @@
 # HUD 交互三项调整任务清单
 
-**状态**：T0 执行中，业务实现未开始
+**状态**：T0 已完成，T1 待开始，业务实现未开始
 
 **对应计划**：`PLAN_HUD_UX_NEXT.md`
 
-**发布基线**：8.13.36；规划基线 `origin/main@6ee6314`
+**发布基线**：8.13.36；实施基线 `origin/main@75f4a9a`
 
 ## 执行规则
 
@@ -20,17 +20,20 @@
 - [x] **T0.1 规划文件自检**：严格 UTF-8、`git diff --check`、计划/清单状态一致。
   - 文件：`PLAN_HUD_UX_NEXT.md`、本文件、`task_plan.md`、`findings.md`、`progress.md`
   - 完成条件：没有行尾错误；没有业务源码或 dev dist 混入规划 diff。
-- [ ] **T0.2 规划提交**：只暂存五个规划文件，提交信息带 `[skip ci]`，推送 `main`。
+- [x] **T0.2 规划提交**：只暂存五个规划文件，提交信息带 `[skip ci]`，推送 `main`。
   - 依赖：T0.1
   - 完成条件：`HEAD == origin/main`；`v8.13.36` 不变；未生成新 tag。
-- [ ] **T0.3 新建 worktree**：从最新 `origin/main` 创建 `feat-hud-gacha-mode-toggle` worktree/分支。
+  - 完成证据：规划提交 `75f4a9a` 已进入 `main`，本地 `main` 与 `origin/main` 一致；`v8.13.36` 仍指向 `296c14cd`，无 `v8.13.37`。
+- [x] **T0.3 新建 worktree**：从最新 `origin/main` 创建 `feat-hud-gacha-mode-toggle` worktree/分支。
   - 依赖：T0.2
   - 建议路径：`D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`
   - 完成条件：新 worktree clean；旧 `feat-immersive-center-workspaces` 未被复用或改动。
-- [ ] **T0.4 基线门禁**：在新 worktree 运行 frontend 与 archive-ui 专项门禁。
+  - 完成证据：worktree 路径为上述建议路径，分支 `worktree-feat-hud-gacha-mode-toggle`，创建时 `HEAD=75f4a9a` 且 clean；旧 worktree 保持 `c8961df`、clean，未改动。
+- [x] **T0.4 基线门禁**：在新 worktree 运行 frontend 与 archive-ui 专项门禁。
   - 依赖：T0.3
   - 命令：`pnpm verify:mfrs-frontend`、`pnpm verify:mfrs-archive-ui`
   - 完成条件：改代码前两项均 PASS；失败先记录，不能把既有失败归因于本轮。
+  - 完成证据：`verify:mfrs-frontend` PASS；`verify:mfrs-archive-ui` PASS（232 checks）。
 
 ## T1：完整抽卡面板单源挂载 API
 
@@ -138,6 +141,6 @@
 ## 完成统计
 
 - 总任务：**44**
-- 已完成：**1**
+- 已完成：**4**
 - 进行中：**0**
-- 待执行：**43**
+- 待执行：**40**

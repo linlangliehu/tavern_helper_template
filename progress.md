@@ -1,12 +1,15 @@
 # 进度日志
 
-## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **in_progress**
+## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **complete**
 
 - **T0.1 complete**：五个规划文件均为无 BOM 严格 UTF-8；tracked `git diff --check` 无报错，两份新规划文件无行尾空白。
-- 规划差异范围精确为 `PLAN_HUD_UX_NEXT.md`、`TASKLIST_HUD_UX_NEXT.md`、`task_plan.md`、`findings.md`、`progress.md`；未混入业务源码或门禁。
-- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/` 差异为 0，未触碰这些产物。
-- 清单复核为 44 个唯一任务 ID，T0–T7 分组数量为 4/6/5/5/5/3/7/9；当前统计 1/44，进行中 0，待执行 43。
-- 下一项：T0.2 精确暂存五个规划文件，以带 `[skip ci]` 的提交入库并推送 `main`。
+- **T0.2 complete**：五个规划文件由提交 `75f4a9a`（`docs(mfrs): plan HUD UX follow-up [skip ci]`）精确入库；本地 `main == origin/main == 75f4a9a`，`v8.13.36` 仍指向 `296c14cd`，无 `v8.13.37`。
+- **T0.3 complete**：独立 worktree 为 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`，分支 `worktree-feat-hud-gacha-mode-toggle`，创建时 `HEAD=75f4a9a` 且 clean；旧 `feat-immersive-center-workspaces@c8961df` 保持 clean，未复用或改动。
+- **T0.4 complete**：实施 worktree 基线 `pnpm verify:mfrs-frontend` PASS；`pnpm verify:mfrs-archive-ui` PASS（232 checks）。
+- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/` 差异为 0，T0 未触碰这些产物。
+- 用户原有 webpack watch PID `21824` 仍存在，并非 T0 启动且不阻塞后续源码阶段；T7 production build 前须由用户停止。
+- 清单复核为 44 个唯一任务 ID，T0–T7 分组数量为 4/6/5/5/5/3/7/9；当前统计 4/44，进行中 0，待执行 40。
+- 下一项：**T1.1**，从 `showGachaPanel()` 提取 overlay/embedded 共用的完整面板 renderer。
 
 ## 会话：2026-07-17（HUD-UX-NEXT 任务清单）— **complete**
 

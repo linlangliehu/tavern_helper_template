@@ -3,7 +3,7 @@
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → bot bundle `296c14cd`）。
 
-下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0 已开始，业务源码实现尚未开始。
+下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0 已完成，T1 待开始，业务源码实现尚未开始。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -23,17 +23,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
-**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0 complete；T1 pending）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整已完成规划并开始 T0，尚未改业务代码 |
-| 我要去哪里？ | 从最新 `origin/main` 新建 worktree，按 Phase 1–6 实施、真页验收并发布 |
+| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整的 T0 已完成，独立实施 worktree 与基线门禁就绪，尚未改业务代码 |
+| 我要去哪里？ | 在 `worktree-feat-hud-gacha-mode-toggle` 从 T1 开始，按 Phase 1–6 实施、真页验收并发布 |
 | 目标是什么？ | 抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向切换 |
 | 我学到了什么？ | autotag 在 main 推送后自动 bundle 并打标签，标签指向 bundle 提交（非 release 提交）是正常形态 |
-| 我做了什么？ | 完成三项需求的真实调用链、允许 API、风险、门禁与真页验收规划；业务源码未改 |
+| 我做了什么？ | 完成规划提交、新 worktree 创建与 frontend/archive-ui 基线门禁；T0 complete，T1 pending，业务源码未改 |
 
 ## 硬约束（勿破）
 
@@ -50,9 +50,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 |----|-----|
 | 发布内容版本 | **8.13.36**（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → `296c14cd`） |
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
-| 规划基线 | `origin/main@6ee6314`；实施须新建独立 worktree |
-| 工作树状态 | 主工作树有 watch 生成的 10 个 dev dist 修改；业务源码未改 |
-| 下一阶段 | **HUD-UX-NEXT T0 in_progress；业务实现尚未开始** |
+| 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
+| 工作树状态 | 实施 worktree 以 `75f4a9a` 为基线，T0 已完成且业务源码未改；主工作树有 watch 生成的 10 个 dev dist 修改 |
+| 下一阶段 | **HUD-UX-NEXT T0 complete；T1 pending；业务实现尚未开始** |
 
 ## 各阶段
 
@@ -227,7 +227,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
 - **状态：** complete（本轮只规划，业务源码未改）
 
-### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0）**
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0 complete；T1 pending）**
 
 - [ ] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
 - [ ] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
@@ -235,7 +235,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [ ] Phase 4：同步 archive-ui 与 database frontend 门禁。
 - [ ] Phase 5：Chrome DevTools 桌面/390px 真页及生命周期验收。
 - [ ] Phase 6：production build、精确提交、publish-card、CDN/tag 验收。
-- **状态：** in_progress（T0 规划入库与实施工作树；业务源码尚未修改）
+- **状态：** in_progress（T0 complete；T1 pending；业务源码尚未修改）
 
 ## 合并关单
 
@@ -261,9 +261,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 ## 当前任务状态
 
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. **HUD-UX-NEXT 正在执行 T0**：规划自检已完成，尚未进入 Phase 1 业务实现；Phase 1–6 见 `PLAN_HUD_UX_NEXT.md`。
-3. 实施必须从最新 `origin/main` 新建 worktree，不继续使用旧 `feat-immersive-center-workspaces`。
-4. 主工作树当前 10 个 dist 修改是 watch 产物；业务源码和门禁未因本次规划改变。
+2. **HUD-UX-NEXT 已完成 T0，T1 pending**：规划已由 `75f4a9a` 入库，独立 worktree 与基线门禁就绪，尚未进入 Phase 1 业务实现；Phase 1–6 见 `PLAN_HUD_UX_NEXT.md`。
+3. 后续实施使用 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` / `worktree-feat-hud-gacha-mode-toggle`，基线为 `origin/main@75f4a9a`；不使用旧 `feat-immersive-center-workspaces`。
+4. 用户原有 watch 仍在运行（webpack watch PID `21824`），非 T0 启动且不阻塞 T1；主工作树的 10 个 dist 修改是其产物，T7 前由用户停止 watch。
 
 ## 遇到的错误
 
@@ -305,7 +305,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
 当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）。
-下一阶段 HUD-UX-NEXT 已规划、未实施；再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md，并从最新 origin/main 新建独立 worktree。
+HUD-UX-NEXT 的 T0 已完成、T1 待开始，业务源码未改；再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
+Worktree：D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle
+分支：worktree-feat-hud-gacha-mode-toggle（基线 origin/main@75f4a9a）
 ```
 
 ## 备注
