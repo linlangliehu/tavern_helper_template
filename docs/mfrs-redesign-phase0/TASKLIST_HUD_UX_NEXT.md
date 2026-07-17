@@ -1,6 +1,6 @@
 # HUD 交互三项调整任务清单
 
-**状态**：T0 已完成，T1 待开始，业务实现未开始
+**状态**：T0–T1 已完成，T2 待开始；当前进度 10/44，待执行 34
 
 **对应计划**：`PLAN_HUD_UX_NEXT.md`
 
@@ -39,24 +39,25 @@
 
 主文件：`src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`
 
-- [ ] **T1.1 提取单一 renderer**：从 `showGachaPanel()` 提取完整面板 DOM 与事件绑定，overlay/embedded 共用。
+- [x] **T1.1 提取单一 renderer**：从 `showGachaPanel()` 提取完整面板 DOM 与事件绑定，overlay/embedded 共用。
   - 依赖：T0.4
   - 完成条件：余额、scope、残屑、经济、保底、卡池、单抽/十连、结果、历史、自定义、导入/导出/重置逻辑仍只有一份。
-- [ ] **T1.2 保留 overlay 兼容入口**：`MFRS.showPanel()` 无参行为保持不变。
+- [x] **T1.2 保留 overlay 兼容入口**：`MFRS.showPanel()` 无参行为保持不变。
   - 依赖：T1.1
   - 完成条件：ACU 原抽卡按钮仍在 body 打开可关闭 overlay。
-- [ ] **T1.3 新增 embedded 契约**：公开 `MFRS.mountPanel(container, { onClose })`。
+- [x] **T1.3 新增 embedded 契约**：公开 `MFRS.mountPanel(container, { onClose })`。
   - 依赖：T1.1
   - 完成条件：非法 container 明确报错；合法调用返回 `{ root, destroy }`；`destroy()` 幂等。
-- [ ] **T1.4 内嵌布局适配**：为 embedded 根节点增加独立呈现类，移除主面板 fixed/overlay/`90vh` 约束。
+- [x] **T1.4 内嵌布局适配**：为 embedded 根节点增加独立呈现类，移除主面板 fixed/overlay/`90vh` 约束。
   - 依赖：T1.3
   - 完成条件：宿主内文档流布局，无横向滚动；滚动由 HUD 中栏承接。
-- [ ] **T1.5 二级弹层兼容**：验证物品详情、残屑商店、自定义编辑器仍使用原 overlay 且可关闭。
+- [x] **T1.5 二级弹层兼容**：验证物品详情、残屑商店、自定义编辑器仍使用原 overlay 且可关闭。
   - 依赖：T1.3、T1.4
   - 完成条件：二级弹层不被沉浸壳遮挡，不移走 embedded 主面板。
-- [ ] **T1.6 API 单元门禁**：扩展 `verify-mfrs-database-frontend-p3.mjs`。
+- [x] **T1.6 API 单元门禁**：扩展 `verify-mfrs-database-frontend-p3.mjs`。
   - 依赖：T1.2–T1.5
   - 完成条件：同时断言 `showPanel` 兼容、`mountPanel`/destroy、chat-scope 不变、自定义卡池仍为 global scope。
+  - 完成证据：frontend 门禁 PASS（21 项动态抽卡生命周期检查）；archive-ui phase5 PASS（232 checks）；独立反模式与代码质量复核均无 High/Medium。
 
 ## T2：右侧抽卡键直达中栏完整系统
 

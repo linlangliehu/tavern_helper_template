@@ -3,7 +3,7 @@
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → bot bundle `296c14cd`）。
 
-下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0 已完成，T1 待开始，业务源码实现尚未开始。
+下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0–T1 已完成，下一项为 T2 右侧抽卡键接入完整面板。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -23,17 +23,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
-**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0 complete；T1 pending）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0–T1 complete；T2 pending）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整的 T0 已完成，独立实施 worktree 与基线门禁就绪，尚未改业务代码 |
-| 我要去哪里？ | 在 `worktree-feat-hud-gacha-mode-toggle` 从 T1 开始，按 Phase 1–6 实施、真页验收并发布 |
+| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整的 T0–T1 已完成，完整抽卡面板单源 mount API 已通过最终审查与门禁 |
+| 我要去哪里？ | 在 `worktree-feat-hud-gacha-mode-toggle` 从 T2 接入右侧抽卡键，再按 Phase 3–6 实施、真页验收并发布 |
 | 目标是什么？ | 抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向切换 |
 | 我学到了什么？ | autotag 在 main 推送后自动 bundle 并打标签，标签指向 bundle 提交（非 release 提交）是正常形态 |
-| 我做了什么？ | 完成规划提交、新 worktree 创建与 frontend/archive-ui 基线门禁；T0 complete，T1 pending，业务源码未改 |
+| 我做了什么？ | 完成 T0 与 T1：单源 renderer、overlay 兼容入口、embedded ownership API、二级弹层清理和 21 项动态门禁 |
 
 ## 硬约束（勿破）
 
@@ -51,8 +51,8 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 发布内容版本 | **8.13.36**（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → `296c14cd`） |
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
 | 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
-| 工作树状态 | 实施 worktree 以 `75f4a9a` 为基线，T0 已完成且业务源码未改；主工作树有 watch 生成的 10 个 dev dist 修改 |
-| 下一阶段 | **HUD-UX-NEXT T0 complete；T1 pending；业务实现尚未开始** |
+| 工作树状态 | 实施 worktree 已完成 T0–T1，T1 修改范围仅数据库前端源码、专项门禁与规划记录；主工作树有 watch 生成的 10 个 dev dist 修改 |
+| 下一阶段 | **HUD-UX-NEXT T0–T1 complete；T2 pending** |
 
 ## 各阶段
 
@@ -227,15 +227,16 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
 - **状态：** complete（本轮只规划，业务源码未改）
 
-### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0 complete；T1 pending）**
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0–T1 complete；T2 pending）**
 
-- [ ] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
+- [x] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
 - [ ] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
 - [ ] Phase 3：移除左栏玩家状态全库按钮，增加默认/沉浸双向可见切换。
 - [ ] Phase 4：同步 archive-ui 与 database frontend 门禁。
 - [ ] Phase 5：Chrome DevTools 桌面/390px 真页及生命周期验收。
 - [ ] Phase 6：production build、精确提交、publish-card、CDN/tag 验收。
-- **状态：** in_progress（T0 complete；T1 pending；业务源码尚未修改）
+- **T1 审查：** 3 个 Medium 已全部关闭：宿主使用可信 document identity + 可信 realm `Element` + 原生 `Node.prototype.nodeType` getter 做品牌校验；异步 continuation 全部检查 current owner；商店/详情/编辑器使用所属文档、幂等 handle 与父实例统一回收。两份 JS `node --check`、frontend（21 项动态生命周期检查）、archive-ui（232 checks）及 `git diff --check` 均通过；独立反模式与代码质量复核均 APPROVE、无 High/Medium。
+- **状态：** in_progress（T0–T1 complete；T2 pending；10/44 complete，34 pending）
 
 ## 合并关单
 
@@ -261,9 +262,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 ## 当前任务状态
 
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. **HUD-UX-NEXT 已完成 T0，T1 pending**：规划已由 `75f4a9a` 入库，独立 worktree 与基线门禁就绪，尚未进入 Phase 1 业务实现；Phase 1–6 见 `PLAN_HUD_UX_NEXT.md`。
+2. **HUD-UX-NEXT 已完成 T0–T1，T2 pending**：完整抽卡面板现由单一 renderer 同时服务 `MFRS.showPanel()` overlay 与 `MFRS.mountPanel(container, { onClose })` embedded；ownership、异步 continuation 与二级 overlay 清理已通过最终门禁和双路审查。Phase 2–6 见 `PLAN_HUD_UX_NEXT.md`。
 3. 后续实施使用 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` / `worktree-feat-hud-gacha-mode-toggle`，基线为 `origin/main@75f4a9a`；不使用旧 `feat-immersive-center-workspaces`。
-4. 用户原有 watch 仍在运行（webpack watch PID `21824`），非 T0 启动且不阻塞 T1；主工作树的 10 个 dist 修改是其产物，T7 前由用户停止 watch。
+4. 用户原有 watch 仍在运行（webpack watch PID `21824`），非本任务启动且不阻塞 T2 源码阶段；主工作树的 10 个 dist 修改是其产物，T7 前由用户停止 watch。
 
 ## 遇到的错误
 
@@ -274,6 +275,8 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 发版恢复时组合查询 package/tag 历史超时 | 1 次并行组合命令，14 秒超时 | 拆成小范围 `package.json` 当前值与目标提交查询，不重复全历史扫描 |
 | 规划同步首次 SHA-256 比较使用 PowerShell 泛型静态方法语法失败 | 1 次，未修改文件 | 改为分别计算 `Get-FileHash` 后比较字符串；三文件根目录/worktree 哈希一致 |
 | planning-with-files `check-complete.ps1` 无法识别本项目中文阶段格式 | 1 次，返回 `0/0 phases` | 不采信该结果；改用 HUD 阶段未勾选项/`in_progress` 定向扫描与 `git diff --check` 验收 |
+| 主会话组合执行多条 `rg`，其中无匹配查询按约定返回 exit 1，导致整组只读命令被误判失败 | 1 次；仅查询，未修改文件 | 拆分需要允许“无匹配”的查询并单独解释 exit 1，不把它当作源码失败 |
+| 审查代理在 PowerShell 命令文本中使用反引号，触发 PowerShell 解析失败 | 1 次；命令未成功执行，未修改文件 | 改用无反引号的字面量/独立命令读取源码，后续校验正常完成 |
 | 单文件暂存白名单检查把 PowerShell 标量字符串按字符索引，误报文件不匹配 | 1 次，未 commit/push | 用 `@(git diff --cached --name-only)` 强制数组后检查完整文件名 |
 | 迁移预检脚本中的 PowerShell 制表符转义与工具层 JavaScript 模板字符串冲突 | 1 次，脚本未执行且未修改文件 | 移除反引号转义，改用普通分隔文本后重跑只读预检 |
 | Windows PowerShell 旧版 .NET 不支持 `Convert.ToHexString` | 1 次，预检在汇总哈希显示阶段停止，未修改文件 | 改用兼容的 `BitConverter.ToString(...).Replace('-', '')` |
@@ -305,7 +308,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
 当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）。
-HUD-UX-NEXT 的 T0 已完成、T1 待开始，业务源码未改；再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
+HUD-UX-NEXT 的 T0–T1 已完成，下一项为 T2 右侧抽卡键直达完整面板；再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
 Worktree：D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle
 分支：worktree-feat-hud-gacha-mode-toggle（基线 origin/main@75f4a9a）
 ```

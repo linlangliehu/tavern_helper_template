@@ -1,5 +1,16 @@
 # 进度日志
 
+## 会话：2026-07-17（HUD-UX-NEXT · T1 实施）— **complete**
+
+- **T1.1–T1.2 complete**：完整抽卡面板的 DOM、余额/scope/残屑/经济/保底/卡池/抽卡/结果/历史/自定义/导入导出重置逻辑收敛到单一 `createGachaPanelInstance()`；`MFRS.showPanel()` 继续在宿主 body 打开原 overlay。
+- **T1.3–T1.4 complete**：新增 `MFRS.mountPanel(container, { onClose }) -> { root, destroy }`；同一宿主新挂载会销毁旧实例，`destroy()` 幂等，embedded 使用独立文档流与响应式布局，不继承 fixed、overlay、`90vh` 或横向滚动。
+- **T1.5 complete**：残屑商店、物品详情与自定义编辑器保留为二级 overlay，使用主面板所属 document，返回幂等 handle，并由父实例 registry 在销毁时统一回收。
+- **生命周期安全**：FileReader、重置确认、单抽/十连写库 await 等异步 continuation 均检查 current owner；销毁会清 timer、动画、事件与二级 handle，旧实例不能继续写数据或 UI。
+- **审查整改**：3 个 Medium 全部关闭。最终宿主校验只信任 `getHostDocument()`，要求 document identity 相同，构造器来自可信 realm，并调用原生 `Node.prototype.nodeType` getter 拒绝候选自带 `Element=Object` 或伪造 `Element.prototype` 的对象；真实 Chrome 已只读确认 iframe 闭包可接受父页面真实元素并拒绝其他文档/伪造对象。
+- **T1.6 complete / 验证**：两份 JS `node --check` PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（232 checks）；`git diff --check` PASS。独立验证、反模式复核与代码质量复核均 APPROVE，无 High/Medium。
+- **范围保护**：未 install、未启动或停止 watch、未 build、未改 dist/package/lockfile；T1 关单时只有数据库前端源码、专项门禁和规划记录进入 diff。
+- **清单进度**：T0–T1 共 10/44 complete，待执行 34；下一项为 **T2.1**，让右侧抽卡键直接挂载完整面板宿主。
+
 ## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **complete**
 
 - **T0.1 complete**：五个规划文件均为无 BOM 严格 UTF-8；tracked `git diff --check` 无报错，两份新规划文件无行尾空白。
