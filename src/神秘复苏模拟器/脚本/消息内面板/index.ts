@@ -7,9 +7,17 @@ type MessagePanelApi = {
   getHudActiveView: () => string;
 };
 type EventSubscription = { stop: () => void };
+type HudGachaPanelHandle = {
+  root: Element;
+  destroy: () => unknown;
+};
+type MfrsGachaApi = {
+  mountPanel?: (container: HTMLElement, options: { onClose: () => void }) => HudGachaPanelHandle;
+};
 type MessagePanelHostWindow = Window & {
   MysteryMessagePanel?: MessagePanelApi;
   __mfrsMessagePanelCleanup__?: () => void;
+  MFRS?: MfrsGachaApi;
   SillyTavern?: {
     getContext?: () => {
       characterId?: string | number;
@@ -1640,9 +1648,10 @@ let hudMenuOpenRaf: number | null = null;
 /** 记忆中栏 CRUD 编辑态 */
 type HudMemoryEditState = { tableKey: string; mode: 'new' | 'edit'; rowId: string };
 let hudMemoryEditState: HudMemoryEditState | null = null;
-/** 抽卡中栏上次结果与池类型 */
-let hudGachaLastResult: unknown = null;
-let hudGachaPoolType: string = 'all';
+/** 完整抽卡面板由数据库前端 mountPanel 返回的 ownership 句柄 */
+let hudGachaPanelHandle: HudGachaPanelHandle | null = null;
+let hudGachaPanelMountFailed = false;
+let hudGachaPanelFailedApi: MfrsGachaApi['mountPanel'] = undefined;
 
 function isHudMounted() {
   return hudMounted && Boolean(doc.getElementById(HUD_SHELL_ID)?.classList.contains('is-active'));
@@ -1999,15 +2008,6 @@ function ensureHudStyle() {
   border-color: var(--mfrs-corpse-cyan);
   background: color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, transparent);
 }
-#${HUD_SHELL_ID} .mfrs-hud-gacha-embed {
-  min-height: 120px;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
 /* 记忆中栏 CRUD */
 #${HUD_SHELL_ID} .mfrs-hud-memory-row {
   display: grid;
@@ -2115,79 +2115,56 @@ function ensureHudStyle() {
   display: flex;
   gap: 8px;
 }
-/* 抽卡中栏嵌入 */
-#${HUD_SHELL_ID} .mfrs-hud-gacha-controls {
-  margin-top: 12px;
+/* 完整抽卡面板稳定宿主与不可用状态 */
+#${HUD_SHELL_ID} .mfrs-hud-gacha-host {
+  width: 100%;
+  min-width: 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-unavailable {
+  min-height: 180px;
   display: grid;
-  gap: 10px;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-pool-label {
-  display: flex;
-  align-items: center;
+  place-content: center;
+  justify-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 75%, var(--mfrs-bone-white));
+  padding: 24px;
+  border: 1px dashed color-mix(in srgb, var(--mfrs-corpse-cyan) 42%, transparent);
+  color: color-mix(in srgb, var(--mfrs-bone-white) 72%, #888);
+  text-align: center;
 }
-#${HUD_SHELL_ID} .mfrs-hud-gacha-pool-label select {
-  flex: 1;
-  padding: 5px 8px;
-  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
-  background: rgba(8, 10, 10, 0.6);
-  color: var(--mfrs-bone-white);
-  font: inherit;
-  font-size: 12px;
-  border-radius: 4px;
+#${HUD_SHELL_ID} .mfrs-hud-gacha-unavailable > i {
+  color: var(--mfrs-corpse-cyan);
+  font-size: 24px;
 }
-#${HUD_SHELL_ID} .mfrs-hud-gacha-result {
-  margin-top: 12px;
-  border-top: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 28%, transparent);
-  padding-top: 10px;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 12px;
-  color: color-mix(in srgb, var(--mfrs-corpse-cyan) 80%, var(--mfrs-bone-white));
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-result-currency {
-  color: var(--mfrs-bone-white);
-  font-weight: bold;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-result-error {
-  color: #e06666;
-  font-size: 13px;
+#${HUD_SHELL_ID} .mfrs-hud-gacha-unavailable-title,
+#${HUD_SHELL_ID} .mfrs-hud-gacha-unavailable-detail {
   margin: 0;
 }
-#${HUD_SHELL_ID} .mfrs-hud-gacha-items {
-  display: grid;
-  gap: 6px;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-left: 3px solid var(--mfrs-bone-white);
-  background: rgba(8, 10, 10, 0.5);
-  border-radius: 0 4px 4px 0;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-item-icon {
-  font-size: 18px;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-#${HUD_SHELL_ID} .mfrs-hud-gacha-item-name {
-  font-size: 13px;
+#${HUD_SHELL_ID} .mfrs-hud-gacha-unavailable-title {
+  color: var(--mfrs-bone-white);
+  font-size: 15px;
   font-weight: bold;
 }
-#${HUD_SHELL_ID} .mfrs-hud-gacha-item-type {
-  font-size: 11px;
-  color: color-mix(in srgb, var(--mfrs-bone-white) 48%, #777);
+#${HUD_SHELL_ID} .mfrs-hud-gacha-unavailable-detail {
+  max-width: 44em;
+  font-size: 12px;
+  line-height: 1.6;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-retry {
+  min-height: 40px;
+  margin-top: 4px;
+  padding: 7px 14px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 55%, transparent);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 14%, transparent);
+  color: var(--mfrs-bone-white);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-gacha-retry:hover,
+#${HUD_SHELL_ID} .mfrs-hud-gacha-retry:focus-visible {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 24%, transparent);
+  outline: none;
 }
 #${HUD_SHELL_ID} .mfrs-msg-check-fold {
   margin-top: 8px;
@@ -4015,6 +3992,7 @@ function openHudSettingsPanel() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
   closeHudCabinetLayer();
+  if (hudActiveView === 'gacha') destroyHudGachaPanel();
   closeHudSideDrawers();
   renderHudSettingsPanel(shell);
   shell.classList.add('is-settings-open');
@@ -4387,89 +4365,18 @@ function buildHudMemoryFormHtml(rule: HudMemoryEditorRule, table: HudTableBundle
 }
 
 function buildHudGachaPanelHtml(): string {
-  const mfrs = (hostWindow as any).MFRS;
-  let currency = '—';
-  let pity = '—';
-  let fragments = '—';
-  let historyCount = '—';
-  try {
-    if (typeof mfrs?.getCurrency === 'function') currency = String(mfrs.getCurrency());
-    if (typeof mfrs?.getPity === 'function') {
-      const p = mfrs.getPity();
-      if (typeof p === 'object' && p) {
-        const epic = Number(p.epic) || 0;
-        const total = Number(p.total) || 0;
-        pity = `★4 还需${Math.max(0, 50 - epic)}抽 · ★6 还需${Math.max(0, 100 - total)}抽`;
-      } else {
-        pity = String(p ?? '—');
-      }
-    }
-    if (typeof mfrs?.getFragments === 'function') fragments = String(mfrs.getFragments());
-    if (typeof mfrs?.getHistory === 'function') {
-      const h = mfrs.getHistory();
-      historyCount = Array.isArray(h) ? String(h.length) : '—';
-    }
-  } catch {
-    // ignore gacha api errors
-  }
-  const canPull = typeof mfrs?.single === 'function' && typeof mfrs?.ten === 'function';
-  const poolTypes = [
-    { value: 'all', label: '全物品池' },
-    { value: 'archive', label: '档案池' },
-    { value: 'pattern', label: '规律池' },
-    { value: 'supernatural', label: '灵异物品池' },
-  ];
-  const poolHtml = poolTypes.map(p =>
-    `<option value="${p.value}" ${p.value === hudGachaPoolType ? 'selected' : ''}>${_.escape(p.label)}</option>`,
-  ).join('');
-  const resultHtml = hudGachaLastResult ? buildHudGachaResultHtml(hudGachaLastResult) : '';
-  return `
-<p class="mfrs-hud-panel-title">抽卡</p>
-<p class="mfrs-hud-panel-sub">中栏抽卡 · ${canPull ? '可操作' : 'API 未就绪'}</p>
-<div class="mfrs-hud-gacha-embed">
-  <div class="mfrs-msg-kv"><span>调查点</span><b>${_.escape(currency)}</b></div>
-  <div class="mfrs-msg-kv"><span>保底</span><b>${_.escape(clipHudLine(String(pity), 40))}</b></div>
-  <div class="mfrs-msg-kv"><span>残屑</span><b>${_.escape(fragments)}</b></div>
-  <div class="mfrs-msg-kv"><span>历史</span><b>${_.escape(historyCount)}</b></div>
-</div>
-<div class="mfrs-hud-gacha-controls">
-  <label class="mfrs-hud-gacha-pool-label"><span>卡池</span><select data-mfrs-hud-gacha-pool>${poolHtml}</select></label>
-  <div class="mfrs-hud-gacha-actions">
-    <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-gacha-action="single" ${canPull ? '' : 'disabled'}><i class="fa-solid fa-1" aria-hidden="true"></i> 单抽(10)</button>
-    <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-gacha-action="ten" ${canPull ? '' : 'disabled'}><i class="fa-solid fa-dice" aria-hidden="true"></i> 十连(90)</button>
-    <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-gacha" ${typeof mfrs?.showPanel === 'function' ? '' : 'disabled'}><i class="fa-solid fa-expand" aria-hidden="true"></i> 完整面板</button>
-  </div>
-</div>
-${resultHtml}
-`;
+  return `<div class="mfrs-hud-gacha-host" data-mfrs-hud-gacha-host>${buildHudGachaUnavailableHtml(
+    '完整抽卡系统 API 尚未就绪',
+    '请确认数据库前端已加载，然后重试挂载。',
+  )}</div>`;
 }
 
-function buildHudGachaResultHtml(result: unknown): string {
-  const r = result as { success?: boolean; error?: string; items?: any[]; currency?: number; fragments?: unknown };
-  if (!r?.success) {
-    return `<div class="mfrs-hud-gacha-result"><p class="mfrs-hud-gacha-result-error">${_.escape(r?.error || '抽卡失败')}</p></div>`;
-  }
-  const items = Array.isArray(r.items) ? r.items : [];
-  const itemHtml = items.map(item => {
-    const rarity = item?.rarity;
-    const stars = rarity?.stars || '';
-    const color = rarity?.color || 'var(--mfrs-bone-white)';
-    const name = item?.name || '未知';
-    const icon = item?.icon || '🎁';
-    const type = item?.type || '';
-    const typeLabel = type === 'supernatural' ? '灵异物品' : type === 'clue' ? '线索' : type === 'knowledge' ? '知识' : '';
-    return `<div class="mfrs-hud-gacha-item" style="border-left-color:${color}">
-  <span class="mfrs-hud-gacha-item-icon">${_.escape(icon)}</span>
-  <span class="mfrs-hud-gacha-item-info">
-    <span class="mfrs-hud-gacha-item-name" style="color:${color}">${_.escape(stars)} ${_.escape(name)}</span>
-    ${typeLabel ? `<span class="mfrs-hud-gacha-item-type">${_.escape(typeLabel)}</span>` : ''}
-  </span>
-</div>`;
-  }).join('');
-  const currencyAfter = r.currency != null ? String(r.currency) : '—';
-  return `<div class="mfrs-hud-gacha-result">
-  <div class="mfrs-hud-gacha-result-header"><span>抽卡结果</span><span class="mfrs-hud-gacha-result-currency">余额: ${_.escape(currencyAfter)}</span></div>
-  <div class="mfrs-hud-gacha-items">${itemHtml || '<div class="mfrs-msg-empty">无</div>'}</div>
+function buildHudGachaUnavailableHtml(title: string, detail: string): string {
+  return `<div class="mfrs-hud-gacha-unavailable" data-mfrs-hud-gacha-state role="status">
+  <i class="fa-solid fa-gift" aria-hidden="true"></i>
+  <p class="mfrs-hud-gacha-unavailable-title">${_.escape(title)}</p>
+  <p class="mfrs-hud-gacha-unavailable-detail">${_.escape(detail)}</p>
+  <button type="button" class="mfrs-hud-gacha-retry" data-mfrs-hud-gacha-retry><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> 重试挂载</button>
 </div>`;
 }
 
@@ -4592,6 +4499,89 @@ function isHudCenterBusinessView(view: HudView) {
   return HUD_CENTER_VIEWS.includes(view);
 }
 
+function clearHudGachaPanelMountFailure() {
+  hudGachaPanelMountFailed = false;
+  hudGachaPanelFailedApi = undefined;
+}
+
+function recordHudGachaPanelMountFailure(api: MfrsGachaApi['mountPanel']) {
+  hudGachaPanelMountFailed = true;
+  hudGachaPanelFailedApi = api;
+}
+
+function isHudGachaPanelRoot(value: unknown, host: HTMLElement): value is Element {
+  try {
+    if (!value || typeof value !== 'object' || (value as Node).ownerDocument !== host.ownerDocument) return false;
+    const HostElementCtor = host.ownerDocument.defaultView?.Element;
+    const NodeCtor = host.ownerDocument.defaultView?.Node;
+    if (typeof HostElementCtor !== 'function' || typeof NodeCtor !== 'function') return false;
+    const nodeTypeGetter = Object.getOwnPropertyDescriptor(NodeCtor.prototype, 'nodeType')?.get;
+    return (
+      typeof nodeTypeGetter === 'function' &&
+      value instanceof HostElementCtor &&
+      nodeTypeGetter.call(value) === 1 &&
+      value.parentElement === host
+    );
+  } catch {
+    return false;
+  }
+}
+
+function destroyHudGachaPanel() {
+  const handle = hudGachaPanelHandle;
+  hudGachaPanelHandle = null;
+  clearHudGachaPanelMountFailure();
+  if (!handle) return;
+  try {
+    handle.destroy();
+  } catch (error) {
+    console.warn('[消息内面板] 销毁完整抽卡面板失败', error);
+  }
+}
+
+function renderHudGachaUnavailable(host: HTMLElement, title: string, detail: string) {
+  host.innerHTML = buildHudGachaUnavailableHtml(title, detail);
+}
+
+function ensureHudGachaPanelMounted(shell: Element, force = false) {
+  if (hudActiveView !== 'gacha' || !isHudMounted()) return;
+  const slot = shell.querySelector('[data-mfrs-hud="gacha-slot"]') as HTMLElement | null;
+  if (!slot || slot.hidden) return;
+  const host = slot.querySelector('[data-mfrs-hud-gacha-host]') as HTMLElement | null;
+  if (!host) {
+    destroyHudGachaPanel();
+    return;
+  }
+
+  const currentRoot = hudGachaPanelHandle?.root;
+  const mountPanel = hostWindow.MFRS?.mountPanel;
+  if (currentRoot && isHudGachaPanelRoot(currentRoot, host)) return;
+  if (!force && hudGachaPanelMountFailed && hudGachaPanelFailedApi === mountPanel) return;
+  destroyHudGachaPanel();
+
+  if (typeof mountPanel !== 'function') {
+    recordHudGachaPanelMountFailure(mountPanel);
+    renderHudGachaUnavailable(host, '完整抽卡系统 API 尚未就绪', '请确认数据库前端已加载，然后点击“重试挂载”。');
+    return;
+  }
+
+  host.replaceChildren();
+  try {
+    const handle = mountPanel(host, { onClose: () => setHudView('story') });
+    if (!handle || !isHudGachaPanelRoot(handle.root, host) || typeof handle.destroy !== 'function') {
+      handle?.destroy?.();
+      throw new TypeError('MFRS.mountPanel() 未返回有效的 { root, destroy } 句柄');
+    }
+    clearHudGachaPanelMountFailure();
+    hudGachaPanelHandle = handle;
+  } catch (error) {
+    recordHudGachaPanelMountFailure(mountPanel);
+    const detail = String((error as Error)?.message || error || '未知错误');
+    renderHudGachaUnavailable(host, '完整抽卡系统挂载失败', `${detail}；请稍后重试。`);
+    console.warn('[消息内面板] 完整抽卡系统挂载失败', error);
+  }
+}
+
 function applyHudCenterView(shell: Element, view: HudView) {
   const chatHost = shell.querySelector('[data-mfrs-hud="chat-host"]') as HTMLElement | null;
   const archive = shell.querySelector('[data-mfrs-hud="archive-slot"]') as HTMLElement | null;
@@ -4638,6 +4628,7 @@ function isHudCabinetOpen() {
 function setHudView(view: HudView) {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
+  if (view !== 'gacha') destroyHudGachaPanel();
   if (view === 'settings') {
     openHudSettingsPanel();
     return;
@@ -4648,9 +4639,8 @@ function setHudView(view: HudView) {
   }
   hudActiveView = view;
   shell.classList.remove('is-settings-open');
-  // 切离记忆/抽卡视图时清空编辑态/结果态，避免下次进入残留旧表单
+  // 切离记忆视图时清空编辑态，避免下次进入残留旧表单
   if (view !== 'memory') hudMemoryEditState = null;
-  if (view !== 'gacha') hudGachaLastResult = null;
   setHudNavActive(view === 'archive' ? 'dossier' : view);
   applyHudCenterView(shell, view);
   if (view === 'story') {
@@ -4693,6 +4683,7 @@ function setHudView(view: HudView) {
     if (view === 'memory' || view === 'gacha' || view === 'system') {
       refreshHudBusinessPanels(shell, readLatestHudStatusData());
     }
+    if (view === 'gacha') ensureHudGachaPanelMounted(shell);
   }
 }
 
@@ -4701,8 +4692,11 @@ function refreshHudBusinessPanels(shell: Element, data: StatusData) {
   if (archiveSlot) archiveSlot.innerHTML = buildHudArchivePreviewHtml();
   const memorySlot = shell.querySelector('[data-mfrs-hud="memory-slot"]');
   if (memorySlot) memorySlot.innerHTML = buildHudMemoryPanelHtml();
-  const gachaSlot = shell.querySelector('[data-mfrs-hud="gacha-slot"]');
-  if (gachaSlot) gachaSlot.innerHTML = buildHudGachaPanelHtml();
+  const gachaSlot = shell.querySelector('[data-mfrs-hud="gacha-slot"]') as HTMLElement | null;
+  if (gachaSlot && !gachaSlot.querySelector('[data-mfrs-hud-gacha-host]')) {
+    destroyHudGachaPanel();
+    gachaSlot.innerHTML = buildHudGachaPanelHtml();
+  }
   const systemSlot = shell.querySelector('[data-mfrs-hud="system-slot"]');
   if (systemSlot) systemSlot.innerHTML = buildHudSystemPanelHtml(data);
 }
@@ -4729,6 +4723,7 @@ function openHudFullLibrary(tableOrTab?: string, returnView?: HudView) {
   hudCabinetReturnView =
     returnView && returnView !== 'cabinet' && returnView !== 'settings' ? returnView : hudActiveView === 'cabinet' ? 'system' : hudActiveView;
   if (hudCabinetReturnView === 'settings') hudCabinetReturnView = 'system';
+  if (hudActiveView === 'gacha') destroyHudGachaPanel();
   closeHudSideDrawers();
   const shell = doc.getElementById(HUD_SHELL_ID);
   shell?.classList.remove('is-settings-open');
@@ -4741,51 +4736,11 @@ function openHudFullLibrary(tableOrTab?: string, returnView?: HudView) {
   }
 }
 
-function openHudGachaUi() {
-  try {
-    const show = (hostWindow as any).MFRS?.showPanel;
-    if (typeof show === 'function') {
-      show();
-      return;
-    }
-  } catch {
-    // fall through
-  }
-  showHudToast('抽卡面板未就绪：请确认数据库前端已加载');
-}
-
 function refreshHudMemorySlot() {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
   const slot = shell.querySelector('[data-mfrs-hud="memory-slot"]');
   if (slot) slot.innerHTML = buildHudMemoryPanelHtml();
-}
-
-function refreshHudGachaSlot() {
-  const shell = doc.getElementById(HUD_SHELL_ID);
-  if (!shell) return;
-  const slot = shell.querySelector('[data-mfrs-hud="gacha-slot"]');
-  if (slot) slot.innerHTML = buildHudGachaPanelHtml();
-}
-
-async function executeHudGachaPull(kind: 'single' | 'ten') {
-  const mfrs = (hostWindow as any).MFRS;
-  if (!mfrs || typeof mfrs[kind] !== 'function') {
-    showHudToast('抽卡 API 未就绪');
-    return;
-  }
-  try {
-    const result = mfrs[kind](hudGachaPoolType);
-    hudGachaLastResult = result;
-    refreshHudGachaSlot();
-    if (!result?.success) {
-      showHudToast(result?.error || '抽卡失败');
-    }
-  } catch (err) {
-    hudGachaLastResult = { success: false, error: String(err?.message || err || '抽卡异常') };
-    refreshHudGachaSlot();
-    showHudToast('抽卡异常');
-  }
 }
 
 function collectHudMemoryFormData(shell: Element, rule: HudMemoryEditorRule): Record<string, string> {
@@ -4899,6 +4854,7 @@ function refreshHudPanels(force = false) {
     hudActiveView === 'cabinet' || hudActiveView === 'settings' ? 'story' : hudActiveView;
   if (!force && renderKey === hudPanelsRenderKey) {
     applyHudCenterView(shell, centerView);
+    if (centerView === 'gacha') ensureHudGachaPanelMounted(shell);
     return;
   }
   hudPanelsRenderKey = renderKey;
@@ -4928,6 +4884,7 @@ function refreshHudPanels(force = false) {
   refreshHudBusinessPanels(shell, data);
 
   applyHudCenterView(shell, centerView);
+  if (centerView === 'gacha') ensureHudGachaPanelMounted(shell);
   if (hudActiveView === 'cabinet') {
     setHudNavActive(hudCabinetReturnView === 'story' ? 'system' : hudCabinetReturnView);
   } else {
@@ -4966,7 +4923,6 @@ function unregisterHudDatabaseUpdateCallback() {
   // 注销回调时同步清空只读选中态，避免残留指向已被销毁的表行
   hudArchiveSelection = null;
   hudMemoryEditState = null;
-  hudGachaLastResult = null;
   if (!hudDatabaseCallbackRegistered) return;
   const api = (hostWindow as any).AutoCardUpdaterAPI;
   if (api && typeof api.unregisterTableUpdateCallback === 'function') {
@@ -5034,6 +4990,7 @@ function closeHudCabinetLayer() {
       if (back === 'memory' || back === 'gacha' || back === 'system') {
         refreshHudBusinessPanels(shell, readLatestHudStatusData());
       }
+      if (back === 'gacha') ensureHudGachaPanelMounted(shell);
     }
   }
 }
@@ -5117,24 +5074,10 @@ function handleHudShellClick(e: Event) {
     openHudFullLibrary(undefined, 'system');
     return;
   }
-  const openGachaBtn = target.closest('[data-mfrs-hud="open-gacha"]') as HTMLElement | null;
-  if (openGachaBtn) {
+  const gachaRetryBtn = target.closest('[data-mfrs-hud-gacha-retry]') as HTMLElement | null;
+  if (gachaRetryBtn) {
     e.preventDefault();
-    openHudGachaUi();
-    return;
-  }
-  // 抽卡中栏操作：单抽/十连
-  const gachaActionBtn = target.closest('[data-mfrs-hud-gacha-action]') as HTMLElement | null;
-  if (gachaActionBtn) {
-    e.preventDefault();
-    const act = gachaActionBtn.getAttribute('data-mfrs-hud-gacha-action');
-    if (act === 'single' || act === 'ten') executeHudGachaPull(act);
-    return;
-  }
-  // 抽卡池类型选择
-  const gachaPoolSel = target.closest('[data-mfrs-hud-gacha-pool]') as HTMLSelectElement | null;
-  if (gachaPoolSel) {
-    hudGachaPoolType = gachaPoolSel.value || 'all';
+    ensureHudGachaPanelMounted(shell, true);
     return;
   }
   // 记忆中栏 CRUD 操作
@@ -5358,7 +5301,9 @@ function unmountHudImmersive() {
   // 退出路径：先停观察者，避免 reparent 触发 mutation → 全量刷新风暴
   messageObserver?.disconnect();
   historyCatchUpToken += 1;
+  hudMounted = false;
   closeHudCabinetLayer();
+  destroyHudGachaPanel();
   closeHudSettingsPanel();
   restoreHudFromStUi();
   clearHudToast();
@@ -5381,12 +5326,10 @@ function unmountHudImmersive() {
   if (hudBodyOverflowPrev !== undefined) {
     doc.body.style.overflow = hudBodyOverflowPrev;
   }
-  hudMounted = false;
   hudPanelsRenderKey = '';
   // 退出/切卡：清空只读档案选中态，避免下次挂载残留指向已失效表行
   hudArchiveSelection = null;
   hudMemoryEditState = null;
-  hudGachaLastResult = null;
   shell?.classList.remove('is-left-open', 'is-right-open', 'is-cabinet-open', 'is-settings-open', 'is-tavern-menu-open');
   doc.getElementById('mfrs-hud-st-return')?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
@@ -5421,6 +5364,7 @@ function syncHudImmersiveWithCard() {
 }
 
 function destroyHudImmersive() {
+  destroyHudGachaPanel();
   unmountHudImmersive();
   unbindHudShellEvents();
   clearHudToast();
@@ -5433,7 +5377,6 @@ function destroyHudImmersive() {
   hudPanelsRenderKey = '';
   hudArchiveSelection = null;
   hudMemoryEditState = null;
-  hudGachaLastResult = null;
 }
 
 $(() => {
@@ -6536,6 +6479,7 @@ $(() => {
     observer.disconnect();
     unsubscribeRefreshEvents();
     clearRefreshTimers();
+    destroyHudGachaPanel();
     // 注销数据库表更新回调，避免销毁后回调写入已卸载的 HUD
     unregisterHudDatabaseUpdateCallback();
     // E4：切非神秘复苏卡销毁壳，避免孤儿 #mfrs-hud-shell / toast / st-return
@@ -6599,6 +6543,7 @@ $(() => {
     if (disposed) return;
     disposed = true;
     clearChatChangedTimers();
+    destroyHudGachaPanel();
     deactivateMessagePanelRuntime();
     // 再注销一次数据库表更新回调，防 deactivate 路径竞态残留
     unregisterHudDatabaseUpdateCallback();

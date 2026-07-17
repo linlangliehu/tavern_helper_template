@@ -1,5 +1,14 @@
 # 发现与决策 · 神秘复苏审计
 
+## HUD-UX-NEXT · Phase 2 发现与决策（2026-07-17）
+
+- gacha 中栏必须保留稳定 host，不能在每次 `refreshHudBusinessPanels()` 时重写 slot；否则 `MFRS.mountPanel()` 内部的抽卡结果、折叠状态、滚动与事件所有权会被无关数据刷新销毁。决定只在 host 缺失时重建，其他刷新复用当前 root。
+- settings 不只经 `setHudView('settings')` 进入，`openHudSettingsPanel()` 还有直接调用路径；仅在 `setHudView()` 清理会漏掉该绕行路径。因此 settings、全库/cabinet 与所有 teardown 入口都各自显式收口 `destroyHudGachaPanel()`。
+- `mountPanel()` 的返回值属于外部 API 边界，不能只信任候选自报的 `ownerDocument`/构造器或结构字段。root 校验使用宿主 document 的可信 realm `Element`、原生 `Node.prototype.nodeType` getter、document identity 和 `parentElement === host`，拒绝伪造对象与错误宿主 root。
+- 挂载失败后，普通 HUD refresh 不能持续重复调用同一个失败 API。决定记录失败时的 mount 函数 identity：同一 identity 自动熔断，显式重试可 force；数据库前端热更新为新函数 identity 后允许自动恢复。
+- unmount teardown 必须先设置 `hudMounted=false`，再调用面板 `destroy()`；即使外部 destroy/关闭回调同步触发 `setHudView('story')`，也不能在卸载途中再次挂载或把已销毁 HUD 当作 active。
+- T2 只更新消息内面板实现与 frontend 生命周期验证；archive-ui H7–H11 当前仍是旧“简版 + 完整面板按钮”契约，按计划在旧 H7 首败。该测试边界留给 T4 统一替换，避免在 T2 顺手删除断言造成覆盖降级。
+
 ## HUD-UX-NEXT · Phase 0 发现与决策（2026-07-17）
 
 - 右侧 `gacha` 导航已有独立中栏 slot；当前 `buildHudGachaPanelHtml()` 生成卡池选择、单抽、十连、结果区和“完整面板”按钮，属于 8.13.36 的“部分嵌入”实现。
@@ -210,7 +219,7 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 - **审计与历史发布**：BF0–BF6、Phase 5、8.13.29、8.13.31 与沉浸 HUD 中栏改造均已完成。
 - **当前发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
-- **当前任务状态**：实现、真页验收、production dist、publish-card、推送与 tag 验收均完成；暂无已排期新任务。
+- **当前任务状态**：HUD-UX-NEXT 的 T0–T2 已完成（15/44），T3 左栏精简与默认/沉浸双向切换 pending；archive-ui 旧 H7–H11 留 T4 更新。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）

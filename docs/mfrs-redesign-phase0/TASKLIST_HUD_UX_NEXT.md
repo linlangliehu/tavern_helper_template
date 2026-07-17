@@ -1,6 +1,6 @@
 # HUD 交互三项调整任务清单
 
-**状态**：T0–T1 已完成，T2 待开始；当前进度 10/44，待执行 34
+**状态**：T0–T2 已完成，T3 待开始；当前进度 15/44，待执行 29
 
 **对应计划**：`PLAN_HUD_UX_NEXT.md`
 
@@ -63,21 +63,23 @@
 
 主文件：`src/神秘复苏模拟器/脚本/消息内面板/index.ts`
 
-- [ ] **T2.1 替换 gacha slot 内容**：`buildHudGachaPanelHtml()` 只生成完整面板宿主和 API 未就绪状态。
+- [x] **T2.1 替换 gacha slot 内容**：`buildHudGachaPanelHtml()` 只生成完整面板宿主和 API 未就绪状态。
   - 依赖：T1.6
   - 完成条件：不再输出“中栏抽卡”、简版卡池/单抽/十连和“完整面板”按钮。
-- [ ] **T2.2 接入所有权句柄**：新增 `hudGachaPanelHandle`，进入 gacha 后调用 `MFRS.mountPanel()`。
+- [x] **T2.2 接入所有权句柄**：新增 `hudGachaPanelHandle`，进入 gacha 后调用 `MFRS.mountPanel()`。
   - 依赖：T2.1
   - 完成条件：面板关闭回正文；挂载失败显示明确重试入口，不回退旧简版。
-- [ ] **T2.3 完整生命周期清理**：离开 gacha、退出沉浸、切卡、hot reload、pagehide 时统一 `destroy()`。
+- [x] **T2.3 完整生命周期清理**：离开 gacha、退出沉浸、切卡、hot reload、pagehide 时统一 `destroy()`。
   - 依赖：T2.2
   - 完成条件：重复进入不产生重复 DOM、固定 id、事件监听或二次扣费。
-- [ ] **T2.4 修正刷新链**：`refreshHudBusinessPanels()` 不在普通数据更新时反复重挂完整抽卡面板。
+- [x] **T2.4 修正刷新链**：`refreshHudBusinessPanels()` 不在普通数据更新时反复重挂完整抽卡面板。
   - 依赖：T2.2、T2.3
   - 完成条件：抽卡结果/展开状态不会被无关 HUD refresh 立即清空。
-- [ ] **T2.5 删除简版残留**：删除旧结果状态、池状态、builder、pull handler、点击分支和专用 CSS。
+- [x] **T2.5 删除简版残留**：删除旧结果状态、池状态、builder、pull handler、点击分支和专用 CSS。
   - 依赖：T2.2–T2.4
   - 完成条件：源码中不存在 `hudGachaLastResult`、`hudGachaPoolType`、`data-mfrs-hud="open-gacha"` 和简版操作 selector。
+  - 完成证据：稳定 `[data-mfrs-hud-gacha-host]` 承接 `hudGachaPanelHandle`；可信 realm/root 品牌校验通过；设置、全库、切视图、unmount/deactivate/hot reload/pagehide 均统一销毁；普通 refresh 保留已挂载 root；旧简版 marker 搜索为 0。frontend 门禁仍 PASS（21 项动态抽卡生命周期检查），目标 TS/门禁 JS 语法检查与 `git diff --check` 通过，独立反模式和代码质量复核均无 High/Medium。
+  - T4 边界：archive-ui H7–H11 仍是 8.13.36 的旧简版契约，当前按计划在旧 H7 首败；留待 T4.1–T4.4 替换断言后恢复全绿，不以删除旧断言来降级门禁。
 
 ## T3：左栏精简与模式切换
 
@@ -142,6 +144,6 @@
 ## 完成统计
 
 - 总任务：**44**
-- 已完成：**4**
+- 已完成：**15**
 - 进行中：**0**
-- 待执行：**40**
+- 待执行：**29**

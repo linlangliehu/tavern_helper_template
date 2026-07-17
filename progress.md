@@ -1,5 +1,18 @@
 # 进度日志
 
+## 会话：2026-07-17（HUD-UX-NEXT · T2 实施）— **complete**
+
+- **T2.1 complete**：`buildHudGachaPanelHtml()` 只保留稳定的 `[data-mfrs-hud-gacha-host]` 与 API 未就绪/挂载失败状态；旧“中栏抽卡”、简版摘要、池选择、单抽/十连及“完整面板”按钮不再生成。
+- **T2.2 complete**：新增唯一 `hudGachaPanelHandle`，进入 gacha 后调用 `MFRS.mountPanel()`；返回 root 必须通过宿主 document 的可信 realm `Element`、原生 `Node.prototype.nodeType` getter、document identity 与直接父节点校验。失败状态以 mount API identity latch 防止普通 refresh 重试风暴，显式“重试挂载”可 force 重试，API identity 变化后可自动再试。
+- **T2.3 complete**：离开 gacha、直接打开 settings、进入全库/cabinet、unmount、destroy、deactivate、hot reload cleanup 与 pagehide cleanup 均统一调用幂等销毁；unmount 先置 `hudMounted=false` 再销毁，阻止 teardown 期间的关闭回调重新挂载或写回已卸载 HUD。
+- **T2.4 complete**：`refreshHudBusinessPanels()` 仅在稳定 host 缺失时重建 gacha slot；普通数据刷新和 render-key 命中只复用当前 root，因此抽卡结果、展开状态与内部滚动不会被无关 HUD refresh 清空。
+- **T2.5 complete**：删除 `hudGachaLastResult`、`hudGachaPoolType`、简版 result builder/pull handler、池/操作 click 分支、`data-mfrs-hud="open-gacha"` 与专用 CSS；旧简版 marker 定向搜索为 0。
+- **验证**：`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；目标源码/门禁语法检查与 `git diff --check` PASS；独立反模式复核和代码质量复核均无 High/Medium。
+- **T4 预期边界**：`pnpm verify:mfrs-archive-ui` 当前按计划在旧 H7 首败，因为 H7–H11 仍锁定 8.13.36 的“简版 + 完整面板按钮”契约；这不是 T2 实现错误，留待 T4 替换契约后恢复全绿。
+- **本轮非写入错误**：① 一次 `rg` 组合正则因 PowerShell 引号组合产生 `unclosed group`，改为拆分字面量查询；② `prettier` command not found，未安装依赖，改用现有语法/门禁与 diff 校验；③ 首次 Node stdin 中的中文路径被代码页转成 `????` 导致 `ENOENT`，改用 PowerShell `Resolve-Path` 经环境变量传入；④ 实现代理的一次只读验证编排括号语法错误，命令未执行且未写文件，后续拆分验证。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T2 只改消息内面板源码与规划记录。
+- **清单进度**：T0–T2 共 15/44 complete，待执行 29；下一项为 **T3.1**，移除左栏“打开全库 · 玩家状态”入口。
+
 ## 会话：2026-07-17（HUD-UX-NEXT · T1 实施）— **complete**
 
 - **T1.1–T1.2 complete**：完整抽卡面板的 DOM、余额/scope/残屑/经济/保底/卡池/抽卡/结果/历史/自定义/导入导出重置逻辑收敛到单一 `createGachaPanelInstance()`；`MFRS.showPanel()` 继续在宿主 body 打开原 overlay。
