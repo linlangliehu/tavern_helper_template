@@ -1,6 +1,28 @@
 # 进度日志
 
-## 会话：沉浸 HUD 中栏改造 · 发布准备 — **in_progress**
+## 会话：2026-07-17（规划文件同步收尾）— **complete**
+
+- 以实际源码、提交链和发布产物复核 8.13.36：Task #1–#5 均已实现；release `0726289`、CDN_REF `9c5a467a3481…`、bot bundle / tag `296c14cd` 状态一致。
+- 复跑 `pnpm verify:mfrs-gates`：7/7 PASS；archive-ui phase5 232 checks；数据库前端 P3、release PNG 与只读 dist freshness 均通过。
+- `task_plan.md`：HUD-CENTER-RELEASE 阶段、发布提交与 tag 验收项全部关单为 complete。
+- `findings.md`：发布前基线与 8.13.31 当前快照更新为 8.13.36 最终发布结论。
+- 主工作树 10 个 dist 修改均为带 eval/sourceURL/sourceMap 的 dev/watch 产物；`src/`、`scripts/` 无未提交源码，本轮未触碰这些用户状态。
+- 根目录与发布 worktree 三份规划文件 SHA-256 完全一致，严格 UTF-8 解码和 `git diff --check` 通过；内置 `check-complete.ps1` 因中文阶段格式返回无效的 `0/0 phases`，已改用定向状态扫描验收。
+- 当前进入待命：暂无已排期新任务；全新任务从最新 `origin/main@296c14cd` 新建 worktree。
+
+## 会话：沉浸 HUD 中栏改造 · 发布准备 — **complete（8.13.36 已发布）**
+
+### 收尾（2026-07-16 · 提交 / 推送 / main / tag / 最终验收）
+
+- 发布提交 `0726289 chore(mfrs): release 8.13.36`：精确白名单暂存 11 项 + 新增 `RELEASE_8.13.36.md`（12 files），未用 `git add -A`/`.`。
+- 推送功能分支 `worktree-feat-immersive-center-workspaces`：`9c5a467..0726289`。
+- main fast-forward：`git push origin HEAD:main` → `9a9da19..0726289`，完整发布链一次推送。
+- **GitHub Actions 自动 bundle 已运行**：workflow 在 main 推送后生成 `[bot] bundle` 提交 `296c14cd`（父提交为 `0726289`），advance `origin/main` 并打 `v8.13.36` 标签——与 `v8.13.34`→`e35d6c7 [bot] bundle` 同一发布形态。bundle 仅改 `dist/神秘复苏模拟器/界面/状态栏/index.html`（module-id 重排 1 行），无实质内容变化。
+- `gh` 未安装（不在 PATH），改用 `git ls-remote` 验收：`refs/tags/v8.13.36` = `296c14cd`（远端可达）；`origin/main` = `296c14cd`。
+- 最终核对（发布版 PNG `神秘复苏模拟器发布版.png`，SHA256 `5356AE53…CBD6DCBA`，7798294 字节）：chara/ccv3 均 version=8.13.36、projectRefCount=7、cacheCount=8、regexScripts=33、scripts=8（名称/顺序不变）；CDN_REF `9c5a467a3481` 7 个 URL 全部 HTTP 200 且字节 SHA256 与本地 dist 一致；工作树 clean。
+- 说明：release-png 的 `CDN_REF != HEAD` 是预期告警——CDN_REF 固定指向 production dist 提交 `9c5a467`，HEAD 领先的 `0726289`/`296c14cd` 仅含发布元数据与 bot bundle，无 dist 实质遗漏。
+
+## 会话：沉浸 HUD 中栏改造 · 发布准备（历史断点）
 
 - 用户要求按项目既有流程提交、推送、更新角色卡版本与 CDN，并验收最终角色卡。
 - 功能分支 `worktree-feat-immersive-center-workspaces` 已推送；本地/远端 HEAD 均为 `116612e`，相对 `origin/main@9a9da19` 领先 3 个提交。
