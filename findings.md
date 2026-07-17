@@ -1,5 +1,12 @@
 # 发现与决策 · 神秘复苏审计
 
+## HUD-UX-NEXT · Phase 5 发现与决策（2026-07-17）
+
+- T5 源码检查点确认 overlay/embedded 共用 renderer、数据库前端与 HUD 句柄所有权边界、可信 root 校验和清理入口没有分叉；模式状态继续只由 `hudImmersivePreferred` 管理，不需要额外源码提交修正。
+- `75f4a9a..5dacd2e` 的既有 T0–T4 提交链已经把规划、两处源码和两项门禁按阶段精确提交并推送，白名单不含 dist、PNG、版本常量、package 或 lockfile。T5.3 应审核这条链，而不是为了形成“检查点提交”重复提交相同源码。
+- 静态检查边界：v10 全文件运行 `better-tailwindcss` 时会误扫 JavaScript template 内的非 Tailwind HTML/CSS；该类诊断不适合作为本轮回归结论。排除 Tailwind 插件模板误报后，其他 lint 规则与 `origin/main` 基线一致；archive-ui ESLint errors 为 0，一行正则字符类 lint 清理不改变门禁语义。
+- T5 最终证据为 `git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend 21 项、archive-ui 237 checks 和聚合门禁全部 PASS；独立 verification、反模式与代码质量复核均 APPROVE。T6 真页验收仍为 pending，下一项是 T6.1。
+
 ## HUD-UX-NEXT · Phase 4 发现与决策（2026-07-17）
 
 - 旧 archive-ui H7–H11 不能简单删除；必须由新 H7–H11 接替完整抽卡 host、mount/destroy、重试、刷新保留、清理和旧 marker 缺席契约，再用 I1–I5 补齐左栏精简与模式切换覆盖，才能证明门禁没有通过减断言降级。
@@ -238,7 +245,7 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 - **审计与历史发布**：BF0–BF6、Phase 5、8.13.29、8.13.31 与沉浸 HUD 中栏改造均已完成。
 - **当前发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
-- **当前任务状态**：HUD-UX-NEXT 的 T0–T4 已完成（25/44），T5 源码提交检查点 pending；archive-ui 新 H7–H11/I1–I5、frontend 21 项动态检查与聚合门禁均已通过，T5 尚未开始。
+- **当前任务状态**：HUD-UX-NEXT 的 T0–T5 已完成（28/44），T6 Chrome DevTools 真页验收 pending；archive-ui 新 H7–H11/I1–I5、frontend 21 项动态检查、archive-ui 237 checks、聚合门禁和源码提交链检查均已通过，下一项为 T6.1。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）

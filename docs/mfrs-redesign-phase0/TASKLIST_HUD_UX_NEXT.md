@@ -1,6 +1,6 @@
 # HUD 交互三项调整任务清单
 
-**状态**：T0–T4 已完成，T5 待开始；当前进度 25/44，待执行 19
+**状态**：T0–T5 已完成，T6 待开始；当前进度 28/44，待执行 16
 
 **对应计划**：`PLAN_HUD_UX_NEXT.md`
 
@@ -115,10 +115,11 @@
 
 ## T5：源码提交检查点
 
-- [ ] **T5.1 代码审查**：检查 overlay/embedded 单源、句柄所有权和模式状态唯一性。
-- [ ] **T5.2 静态检查**：运行 `git diff --check`、目标 JS/TS 语法检查和相关 lint/type 检查。
-- [ ] **T5.3 精确暂存源码提交**：只提交两处源码、两项门禁和规划记录。
+- [x] **T5.1 代码审查**：检查 overlay/embedded 单源、句柄所有权和模式状态唯一性。
+- [x] **T5.2 静态检查**：运行 `git diff --check`、目标 JS/TS 语法检查和相关 lint/type 检查。
+- [x] **T5.3 精确暂存源码提交**：只提交两处源码、两项门禁和规划记录。
   - 完成条件：不含 dist、PNG、版本常量或无关文件；功能提交已推送功能分支。
+  - 完成证据：源码审查确认 overlay/embedded 继续共用单一 renderer，抽卡句柄所有权和 `hudImmersivePreferred` 模式状态真源唯一；独立 verification、反模式与代码质量复核均 APPROVE。`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend（21 项）、archive-ui（237 checks）和聚合门禁全部 PASS，archive-ui ESLint errors 为 0。v10 全文件 lint 的 `better-tailwindcss` 会误扫 JavaScript template 内的非 Tailwind HTML/CSS，属于已知非阻断限制；排除该插件误报后，其余规则与 `origin/main` 基线一致。`75f4a9a..5dacd2e` 提交链白名单精确，不含 dist、PNG、版本、package 或 lockfile；功能提交均已推送，无需重复提交源码，一行 archive-ui lint 清理随 T5 规划同步提交。
 
 ## T6：Chrome DevTools 真页验收
 
@@ -146,6 +147,6 @@
 ## 完成统计
 
 - 总任务：**44**
-- 已完成：**25**
+- 已完成：**28**
 - 进行中：**0**
-- 待执行：**19**
+- 待执行：**16**

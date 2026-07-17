@@ -385,7 +385,7 @@ function lastCssDeclaration(ruleText, property) {
 }
 
 function finalCssDeclaration(source, selectorPattern, property, viewportWidth = Number.POSITIVE_INFINITY) {
-  const mediaBlocks = findCssBlocks(source, /@media\b[^\{]*\{/g, 'CSS media').map(block => ({
+  const mediaBlocks = findCssBlocks(source, /@media\b[^{]*\{/g, 'CSS media').map(block => ({
     ...block,
     maxWidth: Number(block.text.match(/max-width\s*:\s*(\d+)px/)?.[1] ?? Number.NaN),
   }));

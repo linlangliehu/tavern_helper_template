@@ -1,5 +1,14 @@
 # 进度日志
 
+## 会话：2026-07-17（HUD-UX-NEXT · T5 源码提交检查点）— **complete**
+
+- **T5.1 complete / 源码审查**：overlay 与 embedded 继续共用单一完整抽卡 renderer；HUD 与数据库前端的句柄所有权、root 校验和回收边界清晰；模式状态仍只有 `hudImmersivePreferred` 一个真源。独立 verification、反模式与代码质量复核均 APPROVE。
+- **T5.2 complete / 静态检查**：`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend（21 项）、archive-ui（237 checks）和 `pnpm verify:mfrs-gates` 全部 PASS；archive-ui ESLint errors 为 0。
+- **lint 边界**：v10 全文件 `better-tailwindcss` 会把 JavaScript template 中的非 Tailwind HTML/CSS 当成 Tailwind 类规则检查，产生与本轮功能无关的误报；排除该插件误报后，其他 ESLint 规则与 `origin/main` 基线一致，作为已知非阻断限制记录。一行 archive-ui 正则字符类 lint 清理随 T5 规划同步提交，不改变门禁语义。
+- **T5.3 complete / 提交链检查**：`75f4a9a..5dacd2e` 逐提交白名单精确，功能提交均已推送 feature 分支；没有 dist、PNG、版本常量、package、lockfile 或无关文件。T1–T4 已按阶段提交，因此无需为 T5 重复提交相同源码。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/PNG/版本/package/lockfile；T6 尚未开始。
+- **清单进度**：T0–T5 共 28/44 complete，待执行 16；下一项为 **T6.1** Chrome DevTools 桌面完整面板真页验收。
+
 ## 会话：2026-07-17（HUD-UX-NEXT · T4 自动化契约更新）— **complete**
 
 - **T4.1 complete**：archive-ui 旧 H7–H11 “简版抽卡 + 完整面板按钮”断言已替换为稳定 host、`MFRS.mountPanel()`、`hudGachaPanelHandle`、幂等 destroy、失败重试、普通刷新保留、切视图/设置/全库/unmount/deactivate/cleanup 回收，以及旧简版 marker 缺席契约。
