@@ -1,15 +1,14 @@
 # 发现与决策 · 神秘复苏审计
 
-## 沉浸 HUD 中栏发版基线（2026-07-16）
+## 沉浸 HUD 中栏发布结论（2026-07-16）
 
 - 功能分支含 3 个已推送提交：`7155b09`（Task #1/#2/#5）、`a8244ae`（Task #3/#4）、`116612e`（真页发现的精确字段匹配修复）。
-- `origin/main` 与功能分支共同基线为 `9a9da19`，当前无需 rebase；发布前必须先让 production dist commit 在远端可达，再将其完整 SHA 写入 `CDN_REF`。
-- release constants 和角色卡内版本仍为 8.13.31 / `8ee8c58` / `v81331_20260716_01`。
-- Git 标签已存在 `v8.13.32`、`v8.13.33`、`v8.13.34`、`v8.13.35`；新内容版本必须避开这些已占用标签，并核对 bot bundle 的标签行为。
-- `.github/workflows/bundle.yaml` 仅在 `main` 的非 `dist/**` 推送触发，并由 `phish108/autotag-action` 根据最新标签自动递增；仓库 `package.json` 没有 version 字段。因此本轮使用 **8.13.36**，最后一次性推送完整发布链到 `main`，再核对/纠正自动 tag 指向。
+- production dist 提交为 `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`；已在远端可达并作为最终 `CDN_REF`，G1 production 重构建与只读 freshness 均一致。
+- release constants 与角色卡已统一为 **8.13.36** / `9c5a467a3481…` / `v81336_20260716_01`。
+- release 提交 `0726289` 已推送功能分支并 fast-forward 到 `main`；GitHub Actions 随后生成 bot bundle `296c14cd`，`origin/main` 与 tag `v8.13.36` 均指向该 bundle，这是仓库 autotag 的正常发布形态。
 - 最终发布物只能由 `pnpm publish-card 神秘复苏模拟器发布版` 生成，不手改发布版 YAML 或 PNG。
-- production dist 候选为 `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`；已在 `origin/worktree-feat-immersive-center-workspaces` 可达并通过 G1 production 重构建一致性验证。
 - 2026-07-16 最终 CDN 实测：发布卡中的 7 个 `testingcf.jsdelivr.net` URL 全部 HTTP 200，下载字节 SHA256 与本地 `dist/` 对应文件逐项完全一致。
+- 2026-07-17 源码复核：`verify:mfrs-gates` 7/7、archive-ui phase5 232 checks、数据库前端 P3、release PNG 与 dist freshness 全部通过；release 后无未提交业务源码。
 
 ## 需求
 - 审查角色卡：脚本、MVU、EJS、系统提示词
@@ -191,11 +190,11 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 - **8.13.31 已发布**（release `4c94a4e`；CDN_REF `8ee8c58` / cache `v81331_20260716_01`；tag `v8.13.31`）。
 - publish-card 门禁通过：G1 dist 新鲜度 ✓；release-png version=8.13.31 refs=7 cache=8 regex=33 scripts=8 ✓。
 
-## 当前状态快照（2026-07-16）
+## 当前状态快照（2026-07-17）
 
-- **审计与历史发布**：BF0–BF6、Phase 5 已完成；8.13.22 是该审计周期的历史发布结点。沉浸式按键审查修复发布为 8.13.29；MAINT-29 黄金储备与 drawer watcher 修复发布为 **8.13.31**。
-- **当前发布版本**：**8.13.31**（release `4c94a4e`，CDN_REF `8ee8c58`，cache `v81331_20260716_01`，tag `v8.13.31`）。
-- **当前任务状态**：审计与维护周期已完成；暂无已排期新任务。
+- **审计与历史发布**：BF0–BF6、Phase 5、8.13.29、8.13.31 与沉浸 HUD 中栏改造均已完成。
+- **当前发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
+- **当前任务状态**：实现、真页验收、production dist、publish-card、推送与 tag 验收均完成；暂无已排期新任务。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）
