@@ -3,6 +3,8 @@
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → bot bundle `296c14cd`）。
 
+下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0 已开始，业务源码实现尚未开始。
+
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
 **阶段 A2：全量再审计差分（7 轨盲审）— complete（2026-07-13）**  
@@ -20,16 +22,18 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **8.13.31 已发布 — MAINT-29 黄金储备 + drawer watcher（release `4c94a4e`；CDN_REF `8ee8c58`；tag `v8.13.31`）**
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
+**阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；主工作树本地归档与 dev/watch 产物已清理 |
-| 我要去哪里？ | 待命；暂无已排期新任务 |
-| 目标是什么？ | 8.13.36 已交付沉浸 HUD 中栏工作区（档案预览、记忆 CRUD、抽卡嵌入、删除安全） |
+| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整已完成规划并开始 T0，尚未改业务代码 |
+| 我要去哪里？ | 从最新 `origin/main` 新建 worktree，按 Phase 1–6 实施、真页验收并发布 |
+| 目标是什么？ | 抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向切换 |
 | 我学到了什么？ | autotag 在 main 推送后自动 bundle 并打标签，标签指向 bundle 提交（非 release 提交）是正常形态 |
-| 我做了什么？ | 8.13.36 发布验收；46 个本地文件迁出；10 个 dev/watch dist 恢复；历史 8.13.22 计划归档 |
+| 我做了什么？ | 完成三项需求的真实调用链、允许 API、风险、门禁与真页验收规划；业务源码未改 |
 
 ## 硬约束（勿破）
 
@@ -46,8 +50,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 |----|-----|
 | 发布内容版本 | **8.13.36**（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → `296c14cd`） |
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
-| 分支 | 隔离 worktree `worktree-feat-immersive-center-workspaces` |
-| 状态 | **8.13.36 已发布、推送并打 tag** |
+| 规划基线 | `origin/main@6ee6314`；实施须新建独立 worktree |
+| 工作树状态 | 主工作树有 watch 生成的 10 个 dev dist 修改；业务源码未改 |
+| 下一阶段 | **HUD-UX-NEXT T0 in_progress；业务实现尚未开始** |
 
 ## 各阶段
 
@@ -211,6 +216,27 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 验证主工作树 clean、`v8.13.36` 不变、无 `v8.13.37`，功能 worktree 保持 clean。
 - **状态：** complete
 
+### 阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — **complete（2026-07-17）**
+
+- [x] Phase 0：核对抽卡完整面板、左栏玩家状态入口和默认/沉浸模式的真实调用链与允许 API。
+- [x] 设计右侧“抽卡”直接在中栏呈现完整系统面板的复用边界，替换现有部分面板契约。
+- [x] 明确只移除左栏“打开全库 · 玩家状态”入口，不删除玩家状态数据或全库能力。
+- [x] 设计默认模式 ↔ 沉浸式模式的可见切换按钮、状态语义、持久化与退出路径。
+- [x] 列出静态门禁、production build 与 Chrome DevTools 真页验收清单。
+- [x] 详细计划：`docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`。
+- [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
+- **状态：** complete（本轮只规划，业务源码未改）
+
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0）**
+
+- [ ] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
+- [ ] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
+- [ ] Phase 3：移除左栏玩家状态全库按钮，增加默认/沉浸双向可见切换。
+- [ ] Phase 4：同步 archive-ui 与 database frontend 门禁。
+- [ ] Phase 5：Chrome DevTools 桌面/390px 真页及生命周期验收。
+- [ ] Phase 6：production build、精确提交、publish-card、CDN/tag 验收。
+- **状态：** in_progress（T0 规划入库与实施工作树；业务源码尚未修改）
+
 ## 合并关单
 
 | 主项 | 并关 |
@@ -232,12 +258,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 发布只走 publish-card | 禁手改 PNG |
 | 文案质量/全文润色不在本轮 | 只修功能路径 bug |
 
-## 当前待命状态
+## 当前任务状态
 
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. 审计周期（BF0–BF6、Phase 5）与后续维护（8.13.23–8.13.31）和中栏改造（8.13.36）已全部完成。
-3. 世界书全文文案、性能安全、多 ST 全量回归等从未纳入本轮，若需要必须作为新任务单独立项。
-4. 主工作树已清理完成；本地资产位于 `D:\project-local-assets\tavern_helper_template`，历史 8.13.22 执行计划已纳入仓库。
+2. **HUD-UX-NEXT 正在执行 T0**：规划自检已完成，尚未进入 Phase 1 业务实现；Phase 1–6 见 `PLAN_HUD_UX_NEXT.md`。
+3. 实施必须从最新 `origin/main` 新建 worktree，不继续使用旧 `feat-immersive-center-workspaces`。
+4. 主工作树当前 10 个 dist 修改是 watch 产物；业务源码和门禁未因本次规划改变。
 
 ## 遇到的错误
 
@@ -253,6 +279,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | Windows PowerShell 旧版 .NET 不支持 `Convert.ToHexString` | 1 次，预检在汇总哈希显示阶段停止，未修改文件 | 改用兼容的 `BitConverter.ToString(...).Replace('-', '')` |
 | 迁移命令的源路径复核表达式缺少右括号 | 1 次，PowerShell 解析阶段停止，未执行迁移 | 修正括号并从完整源/目标预检重新执行 |
 | 历史执行计划有 3 处 Markdown 行尾双空格，`git diff --cached --check` 报错 | 1 次，未提交 | 移除不承载内容的行尾空格，重新暂存并复检 |
+| HUD-UX 文档发现的 3 个并行子任务被 CC Switch 本地代理返回 HTTP 503/429 | 连续 3 次，未修改文件 | 停止重复失败；主会话完成全部定向源码、文档与门禁读取并交叉核对 |
+| 规划收尾的全文件行尾扫描命中 `task_plan.md` 既有 Markdown 双空格硬换行 | 1 次；`git diff --check` 已通过 | 不改历史格式；改为检查本轮 diff 与新计划文件自身 |
+| HUD-UX 任务清单初稿统计写为 42 项，编号实数为 44 项 | 1 次，未进入实施 | 用编号正则复核后统一修正总数与待执行数为 44 |
 | 发送可见但点不动 | 实机 CDP | 8.13.13 `forceRecoverSendUi`（仍属 H5 可优化） |
 | 行动建议落不了库 | MagVar replace 缺路径 | 8.13.11 seed；根因仍是 C1 initvar 嵌套 |
 | BF-1 子代理重复/中断 `pnpm install` | 同一主工作区连续重试，导致 `node_modules` 半安装且 tracked dist 出现删除 | 作废旧代理；仅恢复主 dist 到 HEAD；在 `D:\project\tavern_helper_template-bf1` / `codex/bf1-recovery` 隔离续做，保留主目录 watch 与 `node_modules` |
@@ -267,13 +296,16 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | `docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md` | **缺陷 ID 全表** |
 | `docs/mfrs-redesign-phase0/README.md` | 发版索引 + 挂链 |
 | `scripts/publish-card.mjs` | CDN_REF / 版本 |
+| `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md` | HUD 三项交互调整的分阶段实施计划 |
+| `docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md` | HUD 三项交互调整的编号任务清单与完成统计 |
 
 ## 新会话启动指令（复制）
 
 ```
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
-当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）；暂无已排期新任务。
+当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）。
+下一阶段 HUD-UX-NEXT 已规划、未实施；再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md，并从最新 origin/main 新建独立 worktree。
 ```
 
 ## 备注

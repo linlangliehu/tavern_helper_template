@@ -1,5 +1,21 @@
 # 发现与决策 · 神秘复苏审计
 
+## HUD-UX-NEXT · Phase 0 发现与决策（2026-07-17）
+
+- 右侧 `gacha` 导航已有独立中栏 slot；当前 `buildHudGachaPanelHtml()` 生成卡池选择、单抽、十连、结果区和“完整面板”按钮，属于 8.13.36 的“部分嵌入”实现。
+- “完整面板”按钮通过 `openHudGachaUi()` 转交数据库前端的抽卡面板能力；新需求应复用完整系统的既有实现，不能在消息内面板再复制一套业务逻辑。
+- 左侧“打开全库 · 玩家状态”由消息内面板独立生成；计划目标仅移除该入口，保留玩家状态表、数据库镜像、全库编辑和其他表入口。
+- `verify-mfrs-archive-ui-regressions.mjs` 的 phase5 H7–H10 当前把“中栏部分抽卡 + 保留完整面板按钮”写成硬契约，实现时必须同步替换为新的完整面板中栏契约。
+- 当前主工作树的 10 个 dist 修改来自已恢复的 watch，规划与后续实现都不得把这些 dev 产物误当业务源码提交。
+- `showGachaPanel()` 当前把 `.acu-edit-overlay` 直接追加到 body，且 `MFRS.showPanel` 无参数、无返回句柄；简单调用不能满足“中栏直接完整面板”。决定先在数据库前端增加 `MFRS.mountPanel(container, { onClose }) -> { root, destroy }`，overlay 与 embedded 共用同一 renderer。
+- 完整面板包含余额、chat scope、导入/导出/重置、自定义卡池、残屑商店、经济、保底、卡池、单抽/十连、结果、历史与详情；中栏方案必须保留这些能力，而不是放大旧简版。
+- 默认三栏已有 7 个业务导航键；模式切换应作为导航下方独立工具按钮，避免伪装成第 8 个业务视图。沉浸顶栏现有退出按钮作为反向“默认模式”入口。
+- 模式切换复用现有 `hudImmersivePreferred`、`toggleHudImmersive()`、mount/unmount 与 `Ctrl+Shift+G`；本轮不改变首次自动沉浸，不增加 localStorage。
+- 玩家状态按钮只存在于 `buildHudDossierHtml()` 的 `openPlayer` 拼接；删除该按钮不需要、也不允许删除玩家状态表和通用全库处理器。
+- 详细实施与验收计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`。
+- 实施任务已拆成 `TASKLIST_HUD_UX_NEXT.md` 的 T0–T7 共 44 项；T0 先用 `[skip ci]` 提交规划文件，再从更新后的 `origin/main` 新建 worktree，避免当前 watch dist 污染实现分支。
+
+
 ## 沉浸 HUD 中栏发布结论（2026-07-16）
 
 - 功能分支含 3 个已推送提交：`7155b09`（Task #1/#2/#5）、`a8244ae`（Task #3/#4）、`116612e`（真页发现的精确字段匹配修复）。

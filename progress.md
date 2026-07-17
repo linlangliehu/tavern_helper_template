@@ -1,5 +1,35 @@
 # 进度日志
 
+## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **in_progress**
+
+- **T0.1 complete**：五个规划文件均为无 BOM 严格 UTF-8；tracked `git diff --check` 无报错，两份新规划文件无行尾空白。
+- 规划差异范围精确为 `PLAN_HUD_UX_NEXT.md`、`TASKLIST_HUD_UX_NEXT.md`、`task_plan.md`、`findings.md`、`progress.md`；未混入业务源码或门禁。
+- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/` 差异为 0，未触碰这些产物。
+- 清单复核为 44 个唯一任务 ID，T0–T7 分组数量为 4/6/5/5/5/3/7/9；当前统计 1/44，进行中 0，待执行 43。
+- 下一项：T0.2 精确暂存五个规划文件，以带 `[skip ci]` 的提交入库并推送 `main`。
+
+## 会话：2026-07-17（HUD-UX-NEXT 任务清单）— **complete**
+
+- 基于已完成的 `PLAN_HUD_UX_NEXT.md` 制作 `TASKLIST_HUD_UX_NEXT.md`，未重复未变化的 Phase 0 源码发现。
+- 清单拆为 T0–T7 共 44 项：规划入库/worktree、抽卡单源 mount API、HUD 接入、左栏与模式切换、自动门禁、源码提交、Chrome DevTools 真页、production/发布。
+- 每项包含依赖或完成条件；明确规划提交 `[skip ci]`、新 worktree、禁止 install/抢 watch/混入 dev dist/手改 PNG。
+- 当前统计 0/44；实施仍为 pending，本轮未改业务源码或门禁。
+- 初稿总数曾写为 42；编号正则复核得到 44，已统一修正统计，未影响任务内容。
+
+## 会话：2026-07-17（HUD 交互三项调整规划）— **complete**
+
+- 用户提出三项需求：抽卡键直接把中栏替换为完整抽卡系统；移除左栏“打开全库 · 玩家状态”；增加默认/沉浸模式切换按钮。
+- 本轮只做计划与源码发现，不改业务实现；按 `make-plan` + `planning-with-files-zh` 工作流执行。
+- 初步定位消息内面板的 gacha slot / `buildHudGachaPanelHtml()` / `openHudGachaUi()`、玩家状态入口，以及 archive-ui phase5 H7–H10 旧契约。
+- 三个并行 Documentation Discovery 子任务首次均遇到 CC Switch HTTP 503；未修改文件，已记录并准备重试。
+- 三组子任务连续三次均因 CC Switch 503/429 无法产出；按三次失败协议停止重试，由主会话完成数据库前端、消息内面板、项目规则、archive-ui 与 frontend P3 门禁的定向读取。
+- 确认 `MFRS.showPanel()` 只能生成 body overlay，故规划新增单源 `MFRS.mountPanel()` 及可清理句柄；禁止复制完整抽卡业务或搬运无所有权 overlay。
+- 已明确左栏只删指定入口；模式按钮复用现有生命周期，默认三栏新增可见入口，沉浸顶栏提供反向入口，保留快捷键与首次自动沉浸。
+- 新增 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`，覆盖 Phase 0–6、允许 API、反模式、自动门禁、Chrome DevTools 真页验收、production 与发布流程。
+- 规划阶段完成，实施阶段保持 pending；本轮未改任何业务源码，也未触碰 watch 生成的 10 个 dev dist。
+- 收尾时全文件行尾扫描命中根计划既有 Markdown 硬换行；本轮 diff 检查本身通过，最终改用“tracked diff + 新计划文件”定向空白检查。
+
+
 ## 会话：2026-07-17（主工作树本地归档清理）— **complete**
 
 - 用户确认 `pnpm watch` 已停止；本地资产统一迁移至 `D:\project-local-assets\tavern_helper_template`。
