@@ -19,16 +19,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **8.13.29 已发布 — 沉浸式按键审查修复已进入角色卡（release `410454b`；CDN dist `95981c9`）**
 **8.13.31 已发布 — MAINT-29 黄金储备 + drawer watcher（release `4c94a4e`；CDN_REF `8ee8c58`；tag `v8.13.31`）**
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
+**阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布（release `0726289`，bot bundle `296c14cd`，tag `v8.13.36`） |
+| 我在哪里？ | 8.13.36 已发布；主工作树本地归档与 dev/watch 产物已清理 |
 | 我要去哪里？ | 待命；暂无已排期新任务 |
 | 目标是什么？ | 8.13.36 已交付沉浸 HUD 中栏工作区（档案预览、记忆 CRUD、抽卡嵌入、删除安全） |
 | 我学到了什么？ | autotag 在 main 推送后自动 bundle 并打标签，标签指向 bundle 提交（非 release 提交）是正常形态 |
-| 我做了什么？ | Task #1–#5 源码+真页验收；production dist；publish-card；CDN 字节验证；精确提交+推送+main FF+tag 验收 |
+| 我做了什么？ | 8.13.36 发布验收；46 个本地文件迁出；10 个 dev/watch dist 恢复；历史 8.13.22 计划归档 |
 
 ## 硬约束（勿破）
 
@@ -199,6 +200,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 创建并核对 release tag：`v8.13.36` → `296c14cd`；发布 PNG、7 个 CDN URL 与最终导入路径均已验收。
 - **状态：** complete（8.13.36 已发布；CDN_REF `9c5a467a3481…`）
 
+### 阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — **complete（2026-07-17）**
+
+- [x] 确认 watch 已停止、`HEAD == origin/main`，且源码目录无未提交修改。
+- [x] 对 46 个未跟踪本地文件做源/目标路径、数量与 SHA-256 预检。
+- [x] 迁移至 `D:\project-local-assets\tavern_helper_template` 并逐文件校验哈希。
+- [x] 为这些本地资产写入 `.git/info/exclude`，防止以后误放回仓库时污染状态。
+- [x] 精确恢复 10 个 dev/watch dist 文件，不改业务源码。
+- [x] 提交并推送 `planning_archive_2026-07/EXECUTION_PLAN_2026-07-14-81322-era.md` 与规划记录，提交信息带 `[skip ci]`。
+- [x] 验证主工作树 clean、`v8.13.36` 不变、无 `v8.13.37`，功能 worktree 保持 clean。
+- **状态：** complete
+
 ## 合并关单
 
 | 主项 | 并关 |
@@ -225,7 +237,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
 2. 审计周期（BF0–BF6、Phase 5）与后续维护（8.13.23–8.13.31）和中栏改造（8.13.36）已全部完成。
 3. 世界书全文文案、性能安全、多 ST 全量回归等从未纳入本轮，若需要必须作为新任务单独立项。
-4. 主工作树既有 dirty/untracked 用户文件不纳入任务，也不自动修改、提交或删除。
+4. 主工作树已清理完成；本地资产位于 `D:\project-local-assets\tavern_helper_template`，历史 8.13.22 执行计划已纳入仓库。
 
 ## 遇到的错误
 
@@ -237,6 +249,10 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 规划同步首次 SHA-256 比较使用 PowerShell 泛型静态方法语法失败 | 1 次，未修改文件 | 改为分别计算 `Get-FileHash` 后比较字符串；三文件根目录/worktree 哈希一致 |
 | planning-with-files `check-complete.ps1` 无法识别本项目中文阶段格式 | 1 次，返回 `0/0 phases` | 不采信该结果；改用 HUD 阶段未勾选项/`in_progress` 定向扫描与 `git diff --check` 验收 |
 | 单文件暂存白名单检查把 PowerShell 标量字符串按字符索引，误报文件不匹配 | 1 次，未 commit/push | 用 `@(git diff --cached --name-only)` 强制数组后检查完整文件名 |
+| 迁移预检脚本中的 PowerShell 制表符转义与工具层 JavaScript 模板字符串冲突 | 1 次，脚本未执行且未修改文件 | 移除反引号转义，改用普通分隔文本后重跑只读预检 |
+| Windows PowerShell 旧版 .NET 不支持 `Convert.ToHexString` | 1 次，预检在汇总哈希显示阶段停止，未修改文件 | 改用兼容的 `BitConverter.ToString(...).Replace('-', '')` |
+| 迁移命令的源路径复核表达式缺少右括号 | 1 次，PowerShell 解析阶段停止，未执行迁移 | 修正括号并从完整源/目标预检重新执行 |
+| 历史执行计划有 3 处 Markdown 行尾双空格，`git diff --cached --check` 报错 | 1 次，未提交 | 移除不承载内容的行尾空格，重新暂存并复检 |
 | 发送可见但点不动 | 实机 CDP | 8.13.13 `forceRecoverSendUi`（仍属 H5 可优化） |
 | 行动建议落不了库 | MagVar replace 缺路径 | 8.13.11 seed；根因仍是 C1 initvar 嵌套 |
 | BF-1 子代理重复/中断 `pnpm install` | 同一主工作区连续重试，导致 `node_modules` 半安装且 tracked dist 出现删除 | 作废旧代理；仅恢复主 dist 到 HEAD；在 `D:\project\tavern_helper_template-bf1` / `codex/bf1-recovery` 隔离续做，保留主目录 watch 与 `node_modules` |

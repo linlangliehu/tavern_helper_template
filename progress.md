@@ -1,5 +1,21 @@
 # 进度日志
 
+## 会话：2026-07-17（主工作树本地归档清理）— **complete**
+
+- 用户确认 `pnpm watch` 已停止；本地资产统一迁移至 `D:\project-local-assets\tavern_helper_template`。
+- 已确认当前 `main@eab282f` 与 `origin/main` 一致；工作树仅有 10 个 dev/watch dist 修改及约定的未跟踪文件，`src/`、`scripts/` 无未提交修改。
+- 本轮授权范围：迁出 46 个本地文件，精确恢复 10 个 dist，设置本地 exclude，并提交历史 `EXECUTION_PLAN_2026-07-14-81322-era.md`。
+- 迁移预检确认 46 个文件、28,521,143 字节均为未跟踪文件，目标无冲突；清单汇总 SHA-256 为 `5F9105730D8B81421521224C09130562CEEF0DAACD8725C9CEE20B37499F04F2`。
+- 迁移预检首次在工具解析层因 PowerShell 制表符转义冲突失败；命令未执行、文件未变，已改为无反引号的输出格式后重试。
+- 第二次预检已通过路径、未跟踪状态、数量及目标冲突检查，但旧版 PowerShell 不支持 `Convert.ToHexString`；未改文件，汇总哈希输出改用 `BitConverter`。
+- 首次迁移命令在 PowerShell 解析阶段因缺失右括号停止，`Move-Item` 未执行；源和目标未变，修正后从完整预检重跑。
+- 46 个文件已迁至 `D:\project-local-assets\tavern_helper_template`；迁移后源路径为 0、目标缺失为 0、逐文件长度/SHA-256 不一致为 0。
+- `.git/info/exclude` 已加入六组本地路径规则；该配置仅本机生效，不进入仓库提交。
+- watch 复核为 0 后，精确恢复 10 个 dev/watch dist；`src/`、`scripts/` 与全部 dist 均无未提交差异。
+- 历史计划 `planning_archive_2026-07/EXECUTION_PLAN_2026-07-14-81322-era.md` 已核对为严格 UTF-8，SHA-256 `D74CA87A766E25876BE3B900D9802B20B3D9CD4033EFFAE56AFB16718A1C95DD`，随本次规划记录提交。
+- 功能 worktree 保持 clean；`v8.13.36` 仍指向 `296c14cd`，不存在 `v8.13.37`。
+- 首次暂存白名单正确，但历史计划开头 3 处 Markdown 行尾双空格触发 `git diff --cached --check`；已移除空白并重新校验。
+
 ## 会话：2026-07-17（规划文件同步收尾）— **complete**
 
 - 以实际源码、提交链和发布产物复核 8.13.36：Task #1–#5 均已实现；release `0726289`、CDN_REF `9c5a467a3481…`、bot bundle / tag `296c14cd` 状态一致。
