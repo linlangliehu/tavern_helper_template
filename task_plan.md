@@ -236,6 +236,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 发版恢复时组合查询 package/tag 历史超时 | 1 次并行组合命令，14 秒超时 | 拆成小范围 `package.json` 当前值与目标提交查询，不重复全历史扫描 |
 | 规划同步首次 SHA-256 比较使用 PowerShell 泛型静态方法语法失败 | 1 次，未修改文件 | 改为分别计算 `Get-FileHash` 后比较字符串；三文件根目录/worktree 哈希一致 |
 | planning-with-files `check-complete.ps1` 无法识别本项目中文阶段格式 | 1 次，返回 `0/0 phases` | 不采信该结果；改用 HUD 阶段未勾选项/`in_progress` 定向扫描与 `git diff --check` 验收 |
+| 单文件暂存白名单检查把 PowerShell 标量字符串按字符索引，误报文件不匹配 | 1 次，未 commit/push | 用 `@(git diff --cached --name-only)` 强制数组后检查完整文件名 |
 | 发送可见但点不动 | 实机 CDP | 8.13.13 `forceRecoverSendUi`（仍属 H5 可优化） |
 | 行动建议落不了库 | MagVar replace 缺路径 | 8.13.11 seed；根因仍是 C1 initvar 嵌套 |
 | BF-1 子代理重复/中断 `pnpm install` | 同一主工作区连续重试，导致 `node_modules` 半安装且 tracked dist 出现删除 | 作废旧代理；仅恢复主 dist 到 HEAD；在 `D:\project\tavern_helper_template-bf1` / `codex/bf1-recovery` 隔离续做，保留主目录 watch 与 `node_modules` |

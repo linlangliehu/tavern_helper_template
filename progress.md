@@ -8,7 +8,7 @@
 - `findings.md`：发布前基线与 8.13.31 当前快照更新为 8.13.36 最终发布结论。
 - 主工作树 10 个 dist 修改均为带 eval/sourceURL/sourceMap 的 dev/watch 产物；`src/`、`scripts/` 无未提交源码，本轮未触碰这些用户状态。
 - 根目录与发布 worktree 三份规划文件 SHA-256 完全一致，严格 UTF-8 解码和 `git diff --check` 通过；内置 `check-complete.ps1` 因中文阶段格式返回无效的 `0/0 phases`，已改用定向状态扫描验收。
-- 当前进入待命：暂无已排期新任务；全新任务从最新 `origin/main@296c14cd` 新建 worktree。
+- 当前进入待命：暂无已排期新任务；全新任务从最新 `origin/main` 新建 worktree。`296c14cd` 仍是 8.13.36 的运行时 bot bundle / tag 基线，后续规划提交不改变发布内容。
 
 ## 会话：沉浸 HUD 中栏改造 · 发布准备 — **complete（8.13.36 已发布）**
 
