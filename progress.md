@@ -1,5 +1,16 @@
 # 进度日志
 
+## 会话：2026-07-17（HUD-UX-NEXT · T3 实施）— **complete**
+
+- **T3.1 complete**：`buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”按钮及其拼接；玩家状态数据、镜像、通用 `data-mfrs-hud-open-table` 处理器、调查档案与系统全库入口均保留。
+- **T3.2–T3.3 complete**：默认最新 AI 三栏保持原 7 个业务导航键，在 `nav` 外新增独立 mode tools 与展开图标 + “沉浸模式”按钮；点击复用 `toggleHudImmersive()` 和唯一 `hudImmersivePreferred`，未增加 localStorage 或第二状态真源，`Ctrl+Shift+G` 保留。
+- **T3.4 complete**：沉浸顶栏“退出沉浸”迁移为收起图标 + “默认模式”，继续调用 `exitHudImmersive()`；`migrateHudShellDom()` 可幂等升级热更新前旧 shell 的 class、ARIA、title 与按钮内容。
+- **T3.5 complete**：默认入口按稳定 `panelId` / `data-mfrs-mode` 捕获并恢复刷新焦点；进入沉浸后聚焦顶栏默认模式按钮，显式退出后回焦默认入口，找不到时回退原生输入框。非 latest 历史楼隐藏 mode tools；桌面与 ≤900px 右轨扩为 60px，≤640px 模式按钮独立整行，默认/沉浸按钮点击目标均不小于 44px。
+- **验证**：定向源码复核确认模式按钮不计入 7 键业务导航、latest 守卫与旧 shell 迁移保持幂等，`exitHudImmersive()` 新聚焦只覆盖显式用户退出路径；TypeScript `transpileModule` PASS，T3 静态契约 20/20 PASS，frontend 21 项动态生命周期检查 PASS，`git diff --check` PASS，双路只读反模式/代码质量复核均 APPROVE、无 High/Medium。archive-ui 按计划在旧 H7 首败，H7–H11 留 T4 替换。
+- **本轮非写入错误**：① 主线程两次组合带引号 selector 的 `rg` / 固定字符串查询，被 PowerShell 分别解析为 `unclosed group` 或额外路径参数，改用严格 UTF-8 读取后的 `Select-String` / 独立字面量检查；② 实现代理首次 Node 内联中文路径被代码页转成 `?`，改由 `git diff` 提供路径并使用 Unicode/宿主侧路径传递；③ 最终校验首次在全部 diff 搜索新增 `localStorage`，误命中文档中的“未增加 localStorage”说明，收窄到消息内面板源码 diff 后新增命中为 0。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T3 业务改动仅在消息内面板源码，规划同步仅涉及本任务四份 Markdown。
+- **清单进度**：T0–T3 共 20/44 complete，待执行 24；下一项为 **T4.1**，替换 archive-ui H7–H11 旧抽卡契约。
+
 ## 会话：2026-07-17（HUD-UX-NEXT · T2 实施）— **complete**
 
 - **T2.1 complete**：`buildHudGachaPanelHtml()` 只保留稳定的 `[data-mfrs-hud-gacha-host]` 与 API 未就绪/挂载失败状态；旧“中栏抽卡”、简版摘要、池选择、单抽/十连及“完整面板”按钮不再生成。

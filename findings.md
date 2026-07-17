@@ -1,5 +1,16 @@
 # 发现与决策 · 神秘复苏审计
 
+## HUD-UX-NEXT · Phase 3 发现与决策（2026-07-17）
+
+- 左栏需求只对应 `buildHudDossierHtml()` 的 `openPlayer` 按钮拼接；删除它不需要也不允许触碰玩家状态表、镜像、调查档案或通用全库处理器。
+- 默认三栏原有 7 个键代表业务视图；模式切换不是第 8 个视图，因此 mode tools 必须放在 `nav` 外，以独立 group、展开图标、可见文字和明确 `aria-label` 呈现。
+- 模式状态继续以 `hudImmersivePreferred` 为唯一真源；默认按钮复用 `toggleHudImmersive()`，沉浸反向按钮复用 `exitHudImmersive()`，保留首次自动沉浸策略和 `Ctrl+Shift+G`，不写 localStorage。
+- 面板数据刷新可能替换按钮子树，不能只依赖瞬时 DOM 引用；决定在 `PanelFocusSnapshot` 中以稳定 `data-mfrs-mode` 保存模式控制焦点，并在新 panel 内恢复。进入沉浸聚焦反向按钮，显式退出优先回焦最新 AI 的默认入口，缺失时回退输入框。
+- hot reload 可能复用旧 HUD shell；`migrateHudShellDom()` 必须幂等补齐按钮 class、ARIA/title、收起图标与“默认模式”文案，避免只有新建 shell 才获得新语义。
+- 最新楼降级为历史楼时，短暂残留的 tri shell 不能继续暴露“沉浸模式”；在非 `.last_mes` AI 楼层隐藏 mode tools，并保留 click 层 latest 双重守卫。
+- 52px 右轨扣除内边距后对四字模式标签过紧；桌面及 ≤900px 改为 60px，≤640px 保持全宽独立整行，所有模式控制维持至少 44px 点击目标。
+- T3 不更新自动化脚本；archive-ui H7–H11 仍锁定旧“简版 + 完整面板按钮”契约，连同左栏精简和模式切换断言统一留给 T4，避免跨阶段顺手删断言造成门禁降级。
+
 ## HUD-UX-NEXT · Phase 2 发现与决策（2026-07-17）
 
 - gacha 中栏必须保留稳定 host，不能在每次 `refreshHudBusinessPanels()` 时重写 slot；否则 `MFRS.mountPanel()` 内部的抽卡结果、折叠状态、滚动与事件所有权会被无关数据刷新销毁。决定只在 host 缺失时重建，其他刷新复用当前 root。
@@ -219,7 +230,7 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 - **审计与历史发布**：BF0–BF6、Phase 5、8.13.29、8.13.31 与沉浸 HUD 中栏改造均已完成。
 - **当前发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
-- **当前任务状态**：HUD-UX-NEXT 的 T0–T2 已完成（15/44），T3 左栏精简与默认/沉浸双向切换 pending；archive-ui 旧 H7–H11 留 T4 更新。
+- **当前任务状态**：HUD-UX-NEXT 的 T0–T3 已完成（20/44），T4 自动化契约更新 pending；archive-ui 旧 H7–H11、左栏精简和模式切换断言均留 T4 更新。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）

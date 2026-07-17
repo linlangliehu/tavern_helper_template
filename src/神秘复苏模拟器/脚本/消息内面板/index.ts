@@ -810,6 +810,9 @@ function buildNavHtml(panelId: string): string {
     )
     .join('')}
 </nav>
+<div class="mfrs-msg-mode-tools" role="group" aria-label="显示模式">
+  <button type="button" class="mfrs-msg-mode-btn" data-mfrs-mode="immersive" id="${panelId}-mode-immersive" aria-label="切换到沉浸模式" title="沉浸模式 (Ctrl+Shift+G)"><i class="fa-solid fa-expand" aria-hidden="true"></i><span>沉浸模式</span></button>
+</div>
 `;
 }
 
@@ -1080,6 +1083,7 @@ function setTriView(panel: Element, view: 'story' | 'relation' | 'dossier') {
 
 type PanelFocusSnapshot =
   | { kind: 'tab'; value: string }
+  | { kind: 'mode'; value: string }
   | { kind: 'action'; value: string; index: number }
   | { kind: 'id'; value: string }
   | null;
@@ -1093,6 +1097,9 @@ function capturePanelFocus(panel: Element): PanelFocusSnapshot {
   const nav = activeElement.closest('.mfrs-msg-nav-btn');
   const navId = nav?.getAttribute('data-nav');
   if (navId) return { kind: 'id', value: activeElement.id || `${panel.id}-nav-${navId}` };
+  const mode = activeElement.closest('[data-mfrs-mode]');
+  const modeName = mode?.getAttribute('data-mfrs-mode');
+  if (modeName) return { kind: 'mode', value: modeName };
   const action = activeElement.closest('.mfrs-msg-action-btn');
   const actionText = action?.getAttribute('data-action');
   if (action && actionText) {
@@ -1111,6 +1118,11 @@ function restorePanelFocus(panel: Element, snapshot: PanelFocusSnapshot) {
     target =
       Array.from(panel.querySelectorAll<HTMLElement>('.mfrs-msg-tab')).find(
         candidate => candidate.getAttribute('data-tab') === snapshot.value,
+      ) ?? null;
+  } else if (snapshot.kind === 'mode') {
+    target =
+      Array.from(panel.querySelectorAll<HTMLElement>('[data-mfrs-mode]')).find(
+        candidate => candidate.getAttribute('data-mfrs-mode') === snapshot.value,
       ) ?? null;
   } else if (snapshot.kind === 'action') {
     const matchingActions = Array.from(panel.querySelectorAll<HTMLElement>('.mfrs-msg-action-btn')).filter(
@@ -1502,6 +1514,16 @@ function openArchiveCabinet() {
 
 function handleNavClick(e: Event) {
   const target = e.target as HTMLElement;
+  const modeBtn = target.closest?.('[data-mfrs-mode="immersive"]') as HTMLElement | null;
+  if (modeBtn) {
+    const panel = modeBtn.closest('.mfrs-msg-panel.mfrs-msg-tri');
+    const mes = panel?.closest('.mes');
+    if (!panel || !mes || !isLatestAiMessage(mes) || getLatestAiMessageElement() !== mes) return;
+    e.preventDefault();
+    toggleHudImmersive();
+    if (isHudMounted()) focusImmersiveModeControl();
+    return;
+  }
   const btn = target.closest?.('.mfrs-msg-nav-btn') as HTMLElement | null;
   if (!btn || btn.hasAttribute('disabled')) return;
   const panel = btn.closest('.mfrs-msg-panel');
@@ -1770,6 +1792,10 @@ function ensureHudStyle() {
 }
 #${HUD_SHELL_ID} .mfrs-hud-exit {
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   min-width: 44px;
   min-height: 44px;
   padding: 0 12px;
@@ -1781,10 +1807,18 @@ function ensureHudStyle() {
   font: inherit;
   font-size: 12px;
   letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
+#${HUD_SHELL_ID} .mfrs-hud-exit i { flex: 0 0 auto; font-size: 12px; }
+#${HUD_SHELL_ID} .mfrs-hud-exit span { min-width: 0; }
 #${HUD_SHELL_ID} .mfrs-hud-exit:hover {
   border-color: var(--mfrs-corpse-cyan);
   background: rgba(61, 107, 102, 0.22);
+}
+#${HUD_SHELL_ID} .mfrs-hud-exit:focus-visible {
+  outline: 2px solid var(--mfrs-corpse-cyan);
+  outline-offset: 2px;
 }
 #${HUD_SHELL_ID} .mfrs-hud-left,
 #${HUD_SHELL_ID} .mfrs-hud-right {
@@ -3115,6 +3149,23 @@ function migrateHudShellDom(shell: HTMLElement) {
   if (chrome && chrome.textContent?.includes('档案柜')) {
     chrome.textContent = '全库编辑 · 系统入口';
   }
+  const exitModeBtn = shell.querySelector('[data-mfrs-hud="exit"]') as HTMLButtonElement | null;
+  if (exitModeBtn) {
+    exitModeBtn.classList.add('mfrs-hud-exit');
+    exitModeBtn.setAttribute('aria-label', '切换到默认模式');
+    exitModeBtn.setAttribute('title', '默认模式 (Ctrl+Shift+G)');
+    const hasExpectedContent =
+      Boolean(exitModeBtn.querySelector('.fa-compress')) &&
+      exitModeBtn.querySelector('span')?.textContent?.trim() === '默认模式';
+    if (!hasExpectedContent) {
+      const icon = doc.createElement('i');
+      icon.className = 'fa-solid fa-compress';
+      icon.setAttribute('aria-hidden', 'true');
+      const label = doc.createElement('span');
+      label.textContent = '默认模式';
+      exitModeBtn.replaceChildren(icon, label);
+    }
+  }
 }
 
 function ensureHudShell(): HTMLElement {
@@ -3145,7 +3196,7 @@ function ensureHudShell(): HTMLElement {
   <div class="mfrs-hud-top-actions">
     <button type="button" class="mfrs-hud-tool-btn mfrs-hud-mobile-only" data-mfrs-hud="toggle-left" aria-label="打开现场档案" title="档案">档案</button>
     <button type="button" class="mfrs-hud-tool-btn mfrs-hud-mobile-only" data-mfrs-hud="toggle-right" aria-label="打开导航" title="导航">导航</button>
-    <button type="button" class="mfrs-hud-exit" data-mfrs-hud="exit" title="退出沉浸 (Ctrl+Shift+G)">退出沉浸</button>
+    <button type="button" class="mfrs-hud-exit" data-mfrs-hud="exit" aria-label="切换到默认模式" title="默认模式 (Ctrl+Shift+G)"><i class="fa-solid fa-compress" aria-hidden="true"></i><span>默认模式</span></button>
   </div>
 </header>
 <aside class="mfrs-hud-left" data-mfrs-hud="left" aria-label="现场档案">
@@ -4132,6 +4183,29 @@ function getLatestAiMessageElement(): Element | null {
   return null;
 }
 
+function getDefaultModeControl(): HTMLElement | null {
+  const latest = getLatestAiMessageElement();
+  if (!latest || !isLatestAiMessage(latest)) return null;
+  const panel = latest.querySelector('.mfrs-msg-panel.mfrs-msg-tri');
+  return (panel?.querySelector('[data-mfrs-mode="immersive"]') as HTMLElement | null) ?? null;
+}
+
+function focusDefaultModeControl(): boolean {
+  const control = getDefaultModeControl();
+  if (!control) return false;
+  control.focus({ preventScroll: true });
+  return doc.activeElement === control;
+}
+
+function focusImmersiveModeControl(): boolean {
+  const shell = doc.getElementById(HUD_SHELL_ID);
+  if (!shell?.classList.contains('is-active')) return false;
+  const control = shell.querySelector('[data-mfrs-hud="exit"]') as HTMLElement | null;
+  if (!control) return false;
+  control.focus({ preventScroll: true });
+  return doc.activeElement === control;
+}
+
 function readLatestHudStatusData(): StatusData {
   const mes = getLatestAiMessageElement();
   if (!mes) return {};
@@ -4269,8 +4343,7 @@ function buildHudDossierHtml(data: StatusData): string {
     '<details class="mfrs-msg-fold" data-fold="resource">',
   );
   const sceneTitle = `<p class="mfrs-hud-dossier-group-title">现场摘要</p>`;
-  const openPlayer = `<button type="button" class="mfrs-hud-open-full" data-mfrs-hud-open-table="玩家状态">打开全库 · 玩家状态</button>`;
-  return `${sceneTitle}${base}${resource}${openPlayer}${buildHudInvestigationSectionsHtml()}`;
+  return `${sceneTitle}${base}${resource}${buildHudInvestigationSectionsHtml()}`;
 }
 
 function buildHudMemoryPanelHtml(): string {
@@ -5342,6 +5415,7 @@ function unmountHudImmersive() {
 function exitHudImmersive() {
   hudImmersivePreferred = false;
   unmountHudImmersive();
+  if (!focusDefaultModeControl()) getSendTextarea()?.focus({ preventScroll: true });
 }
 
 function toggleHudImmersive() {
@@ -6193,7 +6267,7 @@ $(() => {
 /* ===== Phase2 三栏壳（仅 last_mes） ===== */
 .mfrs-msg-panel.mfrs-msg-tri {
   display: grid;
-  grid-template-columns: minmax(196px, 0.3fr) minmax(0, 1fr) 52px;
+  grid-template-columns: minmax(196px, 0.3fr) minmax(0, 1fr) 60px;
   grid-template-rows: auto;
   gap: 0;
   align-items: stretch;
@@ -6304,6 +6378,10 @@ $(() => {
 }
 
 .mfrs-msg-tri-right {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   border-left: 1px solid rgba(61, 107, 102, 0.34);
   background: rgba(6, 8, 8, 0.94);
   padding: 8px 4px;
@@ -6360,6 +6438,50 @@ $(() => {
   outline-offset: -2px;
 }
 
+.mfrs-msg-mode-tools {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(61, 107, 102, 0.3);
+}
+
+.mfrs-msg-mode-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 6px 2px;
+  border: 1px solid rgba(61, 107, 102, 0.45);
+  border-radius: 0;
+  background: rgba(61, 107, 102, 0.08);
+  color: var(--mfrs-panel-bone);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.mfrs-msg-mode-btn i { flex: 0 0 auto; color: var(--mfrs-panel-corpse); font-size: 12px; }
+.mfrs-msg-mode-btn:hover {
+  border-color: var(--mfrs-panel-corpse);
+  background: rgba(61, 107, 102, 0.18);
+}
+.mfrs-msg-mode-btn:focus-visible {
+  outline: 2px solid var(--mfrs-panel-corpse);
+  outline-offset: -2px;
+}
+
 .mfrs-msg-tabs-a11y,
 .mfrs-msg-sr-only {
   position: absolute !important;
@@ -6381,10 +6503,13 @@ $(() => {
 .mes[is_user="false"]:not(.last_mes) .mfrs-msg-panel.mfrs-msg-tri {
   display: block;
 }
+.mes[is_user="false"]:not(.last_mes) .mfrs-msg-mode-tools {
+  display: none;
+}
 
 @media (max-width: 900px) {
   .mfrs-msg-panel.mfrs-msg-tri {
-    grid-template-columns: minmax(0, 1fr) 52px;
+    grid-template-columns: minmax(0, 1fr) 60px;
     grid-template-areas:
       "center right"
       "left right";
@@ -6416,6 +6541,15 @@ $(() => {
   .mfrs-msg-nav-btn {
     flex: 1 1 18%;
     min-width: 44px;
+  }
+  .mfrs-msg-mode-tools {
+    padding-top: 6px;
+  }
+  .mfrs-msg-mode-btn {
+    flex-direction: row;
+    gap: 7px;
+    padding: 8px 12px;
+    font-size: 11px;
   }
 }
 
