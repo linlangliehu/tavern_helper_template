@@ -1,4 +1,8 @@
 {
+  // 默认调试配置 = 第一项「MFRS: 实时开发当前工作树」。
+  // 在「运行和调试」下拉框选中该项后，按 F5（部分键盘为 Fn+F5）即可启动：
+  // 预检 → 551x 静态服务 → watch → 调试 Chrome(9222)。
+  // 仍需另开终端 pnpm mfrs:dev-card，并在酒馆加载 DEV 卡。
   "version": "0.2.0",
   "configurations": [
     {
@@ -15,7 +19,7 @@
       "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
     },
     {
-      "name": "编译代码并调试酒馆网页 (Chrome)",
+      "name": "遗留: 仅 watch + 调试 Chrome (不启 551x)",
       "type": "chrome",
       "request": "attach",
       "preLaunchTask": "开始任务",

@@ -132,8 +132,12 @@
 ### 推荐：当前 worktree 实时开发
 
 1. 用 VS Code **打开目标 worktree 根目录**（不要只开主仓库却改嵌套 worktree）。
-2. 调试配置选 **`MFRS: 实时开发当前工作树`**（或任务 `MFRS: 开始实时开发`）。
-3. 复合任务顺序：
+2. **快捷键启动（与旧 Fn+F5 同手感）**：
+   - 打开「运行和调试」，下拉框选中 **`MFRS: 实时开发当前工作树`**（已是列表第一项/默认）。
+   - 按 **F5**（部分笔记本键盘为 **Fn+F5**）→ 自动跑预检 + 551x + watch + 调试 Chrome。
+   - 也可运行任务 **`MFRS: 开始实时开发`**（不经过调试附加）。
+   - 若 F5 仍启动旧流程：检查下拉框是否误选了「遗留: 仅 watch + 调试 Chrome」。
+3. 复合任务顺序（F5 / 开始实时开发 内部）：
    1. `MFRS: 开发环境预检` → `scripts/mfrs-dev-preflight.mjs`
    2. `MFRS: 启动当前工作树静态服务` → `scripts/mfrs-dev-server.mjs`（写会话锁、提供 551x）
    3. `MFRS: 开始目标工作树 watch` → `pnpm watch`（`MFRS_SKIP_TAVERN_SYNC=1`）
@@ -153,9 +157,9 @@
 
 ### 遗留入口（兼容保留）
 
-- `编译代码并调试酒馆网页 (Chrome)` / `开始任务`：仅 `pnpm watch` + 调试 Chrome。
+- 调试配置 **`遗留: 仅 watch + 调试 Chrome (不启 551x)`** / 任务 `开始任务`：仅 `pnpm watch` + 调试 Chrome。
 - **不会**启动 551x 静态服务，**不会**派生本地开发卡，**不会**切换 CDN。
-- 仅适合“已手动保证 loader 与 dist 身份一致”的附加调试；**不作为 feature worktree 默认入口**。
+- 仅适合“已手动保证 loader 与 dist 身份一致”的附加调试；**不要用 F5 默认跑这一项**。
 
 ### 相关脚本与路径
 
