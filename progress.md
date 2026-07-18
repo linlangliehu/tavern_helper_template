@@ -1,5 +1,11 @@
 # 进度日志
 
+## 会话：2026-07-18（重写 HUD-UX-NEXT 任务清单 · MFRS 对齐）— **docs complete**
+
+- 按新开发流程重写 `docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（worktree + main 同步）。
+- **业务 T0–T5 不重做**；T6 增加 T6.0.1–T6.0.4 环境/身份门禁；明确 feature worktree + F5=MFRS + DEV 卡。
+- T7 仍 blocked until T6 全过 + 用户授权发版。
+- 当前进度：28/48 complete；待执行 20。
 ## 会话：2026-07-18（统一项目运行流程文档口径）— **docs complete**
 
 - **问题**：主仓库 `PROJECT_FLOW.md`/`README` 仍写 Fn+F5+5500；feature worktree 已落地 MFRS 四链路，文档双轨导致入口混淆。

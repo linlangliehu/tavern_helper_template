@@ -23,7 +23,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
-**阶段 HUD-UX-NEXT：三项交互调整实施 — paused（T0–T5 complete；T6 blocked/pending）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — active（T0–T5 complete；T6 可执行 / MFRS；T7 blocked until 授权）**
 **阶段 PROJECT-FLOW-FIX：修复项目流程 — P0–P9.4 complete（P9.5 会话保持可选）**
 
 ## 五问重启（新对话先读）
@@ -53,7 +53,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
 | 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
 | 工作树状态 | 实施 worktree 已完成 T0–T5；`75f4a9a..5dacd2e` 功能提交链白名单精确，一行 archive-ui lint 清理随 T5 规划同步，不含 dist/PNG/版本/package/lockfile；主工作树的 10 个 watch dev dist 未触碰 |
-| 下一阶段 | **PROJECT-FLOW-FIX P0–P9.4 complete；HUD-UX-NEXT T6 已恢复可验；P9.5 结束会话按需；T7 未开始** |
+| 下一阶段 | **HUD-UX-NEXT T6.0→T6.7（feature worktree + MFRS + DEV 卡）；T7 待授权** |
 
 ## 各阶段
 
@@ -228,7 +228,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
 - **状态：** complete（本轮只规划，业务源码未改）
 
-### 阶段 HUD-UX-NEXT：三项交互调整实施 — **paused（T0–T5 complete；T6 blocked/pending）**
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **active（T0–T5 complete；T6 可执行 / MFRS；T7 blocked until 授权）**
 
 - [x] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
 - [x] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
@@ -297,7 +297,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 ## 当前任务状态
 
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. **HUD-UX-NEXT 已完成 T0–T5，当前暂停**：T6 因调试页与 5500 均加载旧 bundle 而 blocked；T6.1–T6.7、production 和发布均未执行，保持 28/44 complete。
+2. **HUD-UX-NEXT 已完成 T0–T5，当前暂停**：T6 已按 MFRS 流程重写清单（含 T6.0 环境门禁）；在 feature worktree + DEV 卡上可执行；T7 待 T6 通过且用户授权。进度见 TASKLIST_HUD_UX_NEXT.md（28/48）。
 3. **新增 PROJECT-FLOW-FIX**：下一任务为修复项目流程；先做流程缺陷梳理、边界确认和任务规划，暂不执行配置修改、构建、注入或页面交互。
 4. 后续如恢复 HUD 实施，仍使用 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` / `worktree-feat-hud-gacha-mode-toggle`，基线为 `origin/main@75f4a9a`；不使用旧 `feat-immersive-center-workspaces`。
 5. 用户原有 watch 由用户维护，不得启动、停止或接管；主工作树的 dev dist 不纳入任务提交。
