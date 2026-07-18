@@ -1,5 +1,11 @@
 # 进度日志
 
+## 会话：2026-07-18（统一项目运行流程文档口径）— **docs complete**
+
+- **问题**：主仓库 `PROJECT_FLOW.md`/`README` 仍写 Fn+F5+5500；feature worktree 已落地 MFRS 四链路，文档双轨导致入口混淆。
+- **本轮（worktree）**：在 `PROJECT_FLOW.md` 顶部增加「统一运行口径」；MCP/CDP 写明 Copilot 默认走 `cdp-evaluate`；`README.md` 开发流程与快速开始对齐 MFRS；`docs/mfrs-redesign-phase0/local-test/README.md` 从 5500/β 卡改为 551x + `mfrs:dev-card`。
+- **未做**：未把 MFRS 脚本合入 `main`（主仓仍缺 `scripts/mfrs-dev-*.mjs`）；未 production/发布；未改正式 YAML。
+- **后续**：将 worktree 流程脚本+文档合入主线后，主仓打开时也会与本文档一致。
 ## 会话：2026-07-18（PROJECT-FLOW-FIX · P9 真页恢复验收）— **complete（含 P9.5）**
 
 - **环境**：feature worktree `feat-hud-gacha-mode-toggle` @ `650d209`；`pnpm install` 后预检 exit 0。

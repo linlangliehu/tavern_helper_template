@@ -1,3 +1,9 @@
+## 运行流程统一口径（2026-07-18）
+
+- 文档真源：`PROJECT_FLOW.md` 顶部「统一运行口径」+ 四条链路；README 快速开始与「开发流程」必须与之同构。
+- 默认入口：`MFRS: 实时开发当前工作树` + `pnpm mfrs:dev-card` + DEV 卡 + `5510–5514`；`Fn+F5`/`5500` 为遗留。
+- 真页工具：Codex/Cursor 可用 chrome-devtools MCP；Copilot 默认 `scripts/cdp-evaluate.mjs`。
+- 主仓若尚未合并 MFRS 脚本，打开主仓时文档会超前于可执行入口——合入前应在 feature worktree 操作。
 ## PROJECT-FLOW-FIX · P9 真页恢复结论（2026-07-18）
 
 - 本地实时链路可证明：worktree dist → `127.0.0.1:5510` → DEV 卡 loader → `__mfrsRuntimeBuilds__` 七入口一致（`650d209` / development）。

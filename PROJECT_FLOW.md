@@ -4,6 +4,20 @@
 
 本文件应随 planning 整理提交并长期保留在仓库根目录。它只回答“项目怎么运行、怎么验证、怎么发布、哪些边界不能踩”，不回答“当前做到哪一步”；当前进度永远以 `task_plan.md` 顶部为准。
 
+## 统一运行口径（唯一真源）
+
+本仓库**只认**下列口径；旧教程里的 `Fn+F5` / Live Server `5500` / “开发卡=本地实时卡” 一律降级为遗留兼容，不再作为默认流程。
+
+| 场景 | 唯一推荐入口 | 禁止当作默认 |
+|------|--------------|--------------|
+| feature / worktree 日常改代码并真页验收 | `MFRS: 实时开发当前工作树` + `pnpm mfrs:dev-card` + DEV 卡 + `5510–5514` | 只按 `Fn+F5`/`开始任务` 却期望加载本 worktree dist |
+| 主仓库只编译/附加调试 | 遗留 `编译代码并调试酒馆网页`（watch + 9222） | 用正式 CDN 卡验收未发布 feature |
+| 正式发版 | 停 watch → 门禁 → source 进 main → bot bundle → `publish-card` | 发布 watch dist、永久改正式 YAML 为 localhost、`CDN_REF=@main` |
+
+**四条链路必须分开证明**（详见下文）：开发编译链 · 角色卡同步链 · 真页资源加载链 · 正式发布链。  
+**身份不变量**：`源码 worktree == watch cwd == dist 所属 == 静态 root == Network loader 来源`。  
+**正式 `src/神秘复苏模拟器/index.yaml` 固定 pin CDN**；本地实时只用 `.local/` 派生 DEV 卡，bundle/push 后不得污染正式 YAML / `tavern_sync.yaml`。
+
 ## Planning 文件分工
 
 - `task_plan.md`：当前状态、当前任务清单、版本变更索引、提交边界和不提交边界。新对话优先读取顶部，不要通读旧流水来判断当前停点。
@@ -19,7 +33,7 @@
 3. 读取 `progress.md` 顶部最近 2-3 条，确认上次实际执行到哪里。
 4. 需要背景时读取 `findings.md` 顶部相关经验；旧长流水按版本号回查，不凭记忆补细节。
 5. 如果任务涉及旧版体验退化、发布后可玩性、正文面板、MVU、状态栏或数据库展示，读取 `4.0功能基线回归清单.md`。
-6. 如果要操控酒馆真页，确认当前 Codex 会话工具列表已经暴露 Chrome DevTools MCP 的 page/browser 操作工具；若未暴露，优先重启/恢复 Codex 会话加载 MCP。仅需读取运行态数据时，可用 `scripts/cdp-evaluate.mjs`（裸 CDP via Node 内置 WebSocket 连 9222 page target 发 `Runtime.evaluate`）做最小替代；不要默认引入其它浏览器自动化工具。
+6. 如果要操控酒馆真页：Codex/Cursor 会话优先确认已加载 Chrome DevTools MCP；**VS Code GitHub Copilot Chat 通常不暴露该 MCP**，默认用 `scripts/cdp-evaluate.mjs`（裸 CDP 连 `9222`）做 evaluate。不要默认引入其它浏览器自动化工具。
 7. 运行 `git status --short --branch`，先区分当前任务文件和既有无关 dirty。
 8. 如果 `session-catchup.py` 报旧 v6.21 中段残片，按 `task_plan.md` 当前状态处理：默认已被 v6.25/v6.27/v6.28 P5 线覆盖，除非用户要求回查历史。
 9. 新对话只需默认读取 `progress.md` 和 `findings.md` 顶部最近条目；旧长流水按版本号回查，避免重复扫描历史。
@@ -170,13 +184,13 @@
 - 临时注入 `tavern_sync.yaml` 的 `神秘复苏模拟器-DEV` 配置，bundle/push 后 **必须还原**正式 sync 与正式 YAML。
 - 产物：`.local/mfrs-dev/神秘复苏模拟器-DEV-<branch短名>.png`；**不可发布**。
 
-## Chrome DevTools MCP
+## 真页调试工具（MCP / CDP）
 
-- 项目 `.mcp.json` 应配置 `chrome-devtools` 指向 `http://127.0.0.1:9222`。
-- 本机 Codex 全局 MCP 可用 `codex mcp list` / `codex mcp get chrome-devtools` / `codex doctor` 检查；`doctor` 为 ok 只代表配置正确，不代表当前已运行会话已经加载工具。
-- 当前已知正确全局口径：`chrome-devtools-mcp@latest --browserUrl http://127.0.0.1:9222`，`cwd` 指向当前打开的 worktree 根目录。
-- Codex 运行中的旧会话不会动态暴露新 MCP tool schema；如果工具列表没有 Chrome DevTools MCP 的 browser/page 操作入口，需要重启或恢复会话。
-- 真页阶段验证默认使用 Chrome DevTools MCP 查看页面、Console、Network、DOM 和交互。MCP 不可用且只需 evaluate 时，用 `scripts/cdp-evaluate.mjs`；需要导航、点击、截图但 MCP 不可用时，先向用户说明替代方案，不自行切换到额外浏览器工具。
+- 项目 `.mcp.json` 配置 `chrome-devtools` → `http://127.0.0.1:9222`（给 Codex/Cursor 等会加载 MCP 的宿主）。
+- **GitHub Copilot Chat 默认不加载该 MCP**；在 Copilot 会话中以 `scripts/cdp-evaluate.mjs` 为标准 evaluate 路径。
+- Codex：`codex mcp list` / `codex doctor` 只证明配置，不证明当前会话已挂载工具；旧会话需重启后才暴露 tool schema。
+- 调试 Chrome 必须是 `--remote-debugging-port=9222` 且 profile 为 `%TEMP%\chrome-debug`；不要连用户主 Chrome。
+- 需要完整 Network/点击/截图且当前宿主无 MCP 时，先向用户说明替代方案，不擅自换工具栈。
 
 ## 协作顺序
 

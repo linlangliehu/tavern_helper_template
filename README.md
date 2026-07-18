@@ -35,6 +35,9 @@ cd tavern_helper_template
 pnpm install
 ```
 
+> **统一口径**：日常真页开发以 `PROJECT_FLOW.md` 的四条链路 + `MFRS: 实时开发当前工作树` 为准。  
+> 旧 `Fn+F5` / Live Server `5500` 仅为遗留兼容，不能单独证明 feature bundle。
+
 ##### 实时开发当前 worktree（推荐）
 
 1. 用 VS Code **打开目标 worktree 根目录**（feature 分支请打开对应 worktree，不要只开主仓库）。
@@ -191,17 +194,23 @@ tavern_helper_template/
 vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 ```
 
-#### 2. 实时验证
-- 在 VSCode 按 F5 启动调试
-- Chrome 打开 `http://127.0.0.1:8000/`
-- pnpm watch 自动编译
+#### 2. 实时验证（与 PROJECT_FLOW 统一）
+
+推荐（feature / 任意 worktree）：
+
+1. 调试配置 **`MFRS: 实时开发当前工作树`**（预检 → `551x` 静态服务 → watch → 调试 Chrome `9222`）
+2. `pnpm mfrs:dev-card -- --port <实际端口>`，酒馆加载 **DEV 卡**
+3. Network 确认 loader 为 `http://127.0.0.1:551x/dist/...`，可选 `pnpm verify:mfrs-runtime-identity`
+4. 结束：`MFRS: 结束实时开发`
+
+遗留 `Fn+F5` / `开始任务` 只启动 watch + 调试 Chrome，**不会**起 `551x`，也**不会**把正式 CDN 卡切到本地 dist。
 
 #### 3. 构建发布
 ```bash
-# 构建 production 版本
+# 停止 watch 后，本地可按需 production 验证（默认不提交 dist）
 pnpm build
 
-# 同步到发布版
+# 正式发布：source 进 main → 等 bot bundle/tag → 再同步发布版
 pnpm run publish-card -- 神秘复苏模拟器发布版
 ```
 
