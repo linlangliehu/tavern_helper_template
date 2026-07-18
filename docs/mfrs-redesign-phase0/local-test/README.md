@@ -8,44 +8,53 @@
 |----|------|
 | `pnpm build` + dist 含全屏壳 + A–E | 已完成 |
 | 门禁 archive-ui phase5（含 F1） | 已通过 |
-| 本机 `http://127.0.0.1:5500` 提供 dist | 需保持在听 |
-| 测试卡 PNG | `神秘复苏模拟器-β本地验收.png`（本目录） |
+| 本机静态 dist | **推荐** `pnpm mfrs:dev-server` → `http://127.0.0.1:5510`（占用则 5511+）；旧 Live Server `5500` 仅遗留 |
+| 测试卡 PNG | 优先 `pnpm mfrs:dev-card` 生成 `.local/mfrs-dev/*-DEV-*.png`；本目录 β PNG 为历史产物 |
 | 仓库 `index.yaml` | **未**留下 localhost（打包后已还原） |
-| 正式发版 | **8.13.0** 待 commit/push 后 `publish-card` |
+| 正式发版 | 走 `publish-card` + CDN，不用本地卡 |
 
-**重新生成测试卡（改代码后）：**
+**重新生成本地验收卡（改代码后）：**
 
 ```powershell
-pnpm build
-node scripts/prepare-mfrs-beta-local-test.mjs
-```
+# 推荐：当前 worktree watch/dev 产物 + 派生 DEV 卡
+pnpm mfrs:preflight
+pnpm mfrs:dev-server
+# 另开终端：
+pnpm watch   # 或 MFRS 任务；端口冲突时设 MFRS_SKIP_HMR_SERVER=1
+pnpm mfrs:dev-card -- --port 5510
 
-（需 5500 仍指向仓库根目录。）
+# 历史 β 脚本（仍可能写 5500，仅兼容）：
+# pnpm build
+# node scripts/prepare-mfrs-beta-local-test.mjs
+```
 
 ---
 
 ## 你要做的（约 10–20 分钟）
 
-### 1. 确认 5500 还活着
+### 1. 确认静态服务还活着
 
-浏览器打开：
+浏览器打开（端口以预检/服务日志为准，默认 5510）：
 
 ```text
-http://127.0.0.1:5500/dist/神秘复苏模拟器/脚本/消息内面板/index.js
+http://127.0.0.1:5510/__mfrs_dev_identity
+http://127.0.0.1:5510/dist/神秘复苏模拟器/脚本/消息内面板/index.js
 ```
 
-应看到 JS 文本，且内容里能搜到 `mfrs-hud-shell`。若 404：在仓库根再起 Live Server / serve 到 5500。
+身份 JSON 的 `workspace/branch/commit` 须等于当前 worktree；JS 文本里应能搜到 `mfrs-hud-shell`。若 404：在**当前 worktree** 启动 `pnpm mfrs:dev-server`，不要假设主仓库 Live Server `5500`。
 
 ### 2. 导入测试卡
 
-导入本目录：
+优先导入：
 
 ```text
-docs/mfrs-redesign-phase0/local-test/神秘复苏模拟器-β本地验收.png
+.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png
 ```
 
-- 可新建角色名，避免覆盖你正在用的 8.11 发布版。  
-- **不要**用旧的「神秘复苏模拟器发布版」8.11 做 β 验收（仍吃 CDN，没有全屏壳）。
+（由 `pnpm mfrs:dev-card` 生成。）历史 β 卡 `docs/mfrs-redesign-phase0/local-test/神秘复苏模拟器-β本地验收.png` 仅作兼容。
+
+- 可新建角色名，避免覆盖正在用的发布版。  
+- **不要**用正式「神秘复苏模拟器发布版」做本地 feature 验收（仍吃 CDN）。
 
 ### 3. 新开聊天 → 真实对话几轮
 

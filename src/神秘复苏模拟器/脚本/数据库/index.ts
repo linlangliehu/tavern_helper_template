@@ -1,3 +1,7 @@
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('数据库');
+
 const databaseScriptName = 'spv3.9.5·数据库';
 // 自托管 fork（vendor/shujuku-sp-fork/index.js，已把库默认提示词的 AM 编码改为 SP）。
 // 从运行时实际加载 URL 解析发布 ref，确保 loader 和 vendor 始终来自同一个 bundle。

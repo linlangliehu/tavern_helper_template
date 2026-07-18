@@ -4,6 +4,20 @@
 
 本文件应随 planning 整理提交并长期保留在仓库根目录。它只回答“项目怎么运行、怎么验证、怎么发布、哪些边界不能踩”，不回答“当前做到哪一步”；当前进度永远以 `task_plan.md` 顶部为准。
 
+## 统一运行口径（唯一真源）
+
+本仓库**只认**下列口径；旧教程里的 `Fn+F5` / Live Server `5500` / “开发卡=本地实时卡” 一律降级为遗留兼容，不再作为默认流程。
+
+| 场景 | 唯一推荐入口 | 禁止当作默认 |
+|------|--------------|--------------|
+| feature / worktree 日常改代码并真页验收 | `MFRS: 实时开发当前工作树` + `pnpm mfrs:dev-card` + DEV 卡 + `5510–5514` | 只按 `Fn+F5`/`开始任务` 却期望加载本 worktree dist |
+| 主仓库只编译/附加调试 | 遗留 `编译代码并调试酒馆网页`（watch + 9222） | 用正式 CDN 卡验收未发布 feature |
+| 正式发版 | 停 watch → 门禁 → source 进 main → bot bundle → `publish-card` | 发布 watch dist、永久改正式 YAML 为 localhost、`CDN_REF=@main` |
+
+**四条链路必须分开证明**（详见下文）：开发编译链 · 角色卡同步链 · 真页资源加载链 · 正式发布链。  
+**身份不变量**：`源码 worktree == watch cwd == dist 所属 == 静态 root == Network loader 来源`。  
+**正式 `src/神秘复苏模拟器/index.yaml` 固定 pin CDN**；本地实时只用 `.local/` 派生 DEV 卡，bundle/push 后不得污染正式 YAML / `tavern_sync.yaml`。
+
 ## Planning 文件分工
 
 - `task_plan.md`：当前状态、当前任务清单、版本变更索引、提交边界和不提交边界。新对话优先读取顶部，不要通读旧流水来判断当前停点。
@@ -19,7 +33,7 @@
 3. 读取 `progress.md` 顶部最近 2-3 条，确认上次实际执行到哪里。
 4. 需要背景时读取 `findings.md` 顶部相关经验；旧长流水按版本号回查，不凭记忆补细节。
 5. 如果任务涉及旧版体验退化、发布后可玩性、正文面板、MVU、状态栏或数据库展示，读取 `4.0功能基线回归清单.md`。
-6. 如果要操控酒馆真页，确认当前 Codex 会话工具列表已经暴露 Chrome DevTools MCP 的 page/browser 操作工具；若未暴露，优先重启/恢复 Codex 会话加载 MCP。仅需读取运行态数据时，可用 `scripts/cdp-evaluate.mjs`（裸 CDP via Node 内置 WebSocket 连 9222 page target 发 `Runtime.evaluate`）做最小替代；不要默认引入其它浏览器自动化工具。
+6. 如果要操控酒馆真页：Codex/Cursor 会话优先确认已加载 Chrome DevTools MCP；**VS Code GitHub Copilot Chat 通常不暴露该 MCP**，默认用 `scripts/cdp-evaluate.mjs`（裸 CDP 连 `9222`）做 evaluate。不要默认引入其它浏览器自动化工具。
 7. 运行 `git status --short --branch`，先区分当前任务文件和既有无关 dirty。
 8. 如果 `session-catchup.py` 报旧 v6.21 中段残片，按 `task_plan.md` 当前状态处理：默认已被 v6.25/v6.27/v6.28 P5 线覆盖，除非用户要求回查历史。
 9. 新对话只需默认读取 `progress.md` 和 `findings.md` 顶部最近条目；旧长流水按版本号回查，避免重复扫描历史。
@@ -52,39 +66,149 @@
 - 角色卡同步配置：`tavern_sync.yaml`
 - 当前有效发布版、当前候选线、远端 HEAD/tag、资源 bundle、vendor ref 与 marker/cache 均以 `task_plan.md` 的 `当前状态` 和 `版本变更索引` 为准；本文件只保留常驻流程，不固定一次性发布口径。
 
-## 真实开发入口
+## 四条独立链路（核心契约）
 
-- 在 VSCode 终端/调试环境按 `Fn+F5`。
-- 启动调试配置：`编译代码并调试酒馆网页 (Chrome)`。
-- `.vscode/launch.json` 的 `preLaunchTask: 开始任务` 会先运行 `pnpm watch`，再运行 `.vscode/start-chrome-debug.cmd`。
-- Chrome 使用 `--remote-debugging-port=9222` 打开 `http://127.0.0.1:8000/`。
-- 默认浏览器调试入口是 Chrome DevTools MCP。其它浏览器自动化工具不属于项目默认流程，除非用户明确要求或 MCP/CDP 路径确实不可用。
+项目不是“一条连续流水线”，而是四条可独立失败、必须分别证明的链路。把其中任意两条混为一谈，就会出现“端口 200 但仍是旧 bundle”的假绿。
 
-## Chrome DevTools MCP
+| 链路 | 职责 | 关键端口/产物 | 不是什么 |
+|------|------|---------------|----------|
+| **开发编译链** | 把当前 worktree 源码编译为 `dist/**` | `pnpm watch` / `pnpm build`；HMR 通知 `6621` | 不是静态资源服务器；不是角色卡导入器 |
+| **角色卡同步链** | 把 YAML/世界书/脚本库配置同步到酒馆或导出 PNG | `tavern_sync` `6620`；`tavern_sync.yaml` | 不是 bundle 加载器；不会改写 loader URL 指向 |
+| **真页资源加载链** | 酒馆页面实际 `import()` 的 JS/CSS 来源 | 本地静态 `5510–5514` 或 CDN jsdelivr | 不是 watch 本身；HTTP 200 ≠ feature bundle |
+| **正式发布链** | production dist → bot tag → `publish-card` → 发布版 PNG/CDN | GitHub `bundle.yaml`、`publish-card.mjs` | 不是日常实时开发入口 |
 
-- 项目 `.mcp.json` 应配置 `chrome-devtools` 指向 `http://127.0.0.1:9222`。
-- 本机 Codex 全局 MCP 可用 `codex mcp list` / `codex mcp get chrome-devtools` / `codex doctor` 检查；`doctor` 为 ok 只代表配置正确，不代表当前已运行会话已经加载工具。
-- 当前已知正确全局口径：`chrome-devtools-mcp@latest --browserUrl http://127.0.0.1:9222`，`cwd` 指向 `D:\project\tavern_helper_template`。
-- Codex 运行中的旧会话不会动态暴露新 MCP tool schema；如果工具列表没有 Chrome DevTools MCP 的 browser/page 操作入口，需要重启或恢复会话。
-- 真页阶段验证默认使用 Chrome DevTools MCP 查看页面、Console、Network、DOM 和交互。MCP 不可用且只需 evaluate 时，用 `scripts/cdp-evaluate.mjs`；需要导航、点击、截图但 MCP 不可用时，先向用户说明替代方案，不自行切换到额外浏览器工具。
+### 端口职责表
+
+| 端口 | 进程 | 职责 | 备注 |
+|------|------|------|------|
+| `8000` | SillyTavern | 酒馆真页 | 业务页面，不提供 worktree dist |
+| `9222` | 调试 Chrome CDP | 只读/交互验收 | 独立 profile `%TEMP%\chrome-debug`；不碰主 Chrome |
+| `5510–5514` | `scripts/mfrs-dev-server.mjs` | 当前 worktree 静态 `dist` | 默认 5510，占用则递增；只绑 `127.0.0.1` |
+| `6620` | `tavern_sync` | 角色卡/世界书 push/pull/watch | 配置同步器，不是静态服务器 |
+| `6621` | webpack HMR Socket.IO | 通知酒馆助手“可重载” | 只发事件，不替换 loader URL |
+| `5500` | 用户手动 Live Server（遗留） | 历史教程端口 | **Fn+F5 不会启动**；新流程改用 5510+ |
+
+### worktree 身份不变量
+
+要声称“正在验收某个 worktree”，必须同时证明：
+
+```text
+源码 worktree == watch cwd == dist 所属 == 静态服务器 root == Network loader 来源
+```
+
+任一项不一致时：**停止、报告、不自动接管**。不要 kill 用户已有 watch，不要假设 5500/主 workspace 就是 feature worktree。
+
+### 关键澄清
+
+- **Fn+F5 旧配置**（`编译代码并调试酒馆网页` / `开始任务`）只启动 `pnpm watch` + 调试 Chrome；**不会**启动 Live Server，**不会**把 CDN loader 切到本地。
+- **`tavern_sync` 是配置同步器**，负责把角色卡 YAML/脚本库内容推到酒馆或导出 PNG；它**不是** bundle 加载器，也不会把 CDN URL 改成 localhost。
+- **正式 `src/神秘复苏模拟器/index.yaml` 固定 pin CDN SHA**；日常实时开发必须使用派生本地开发卡（见下），不得永久改写正式 YAML。
+- **T6 旧 bundle 根因**：真页 loader 仍指向 CDN；watch/HMR 只触发“再 import 同一 URL”；若 watch cwd 还是主 workspace，feature worktree 源码根本不会进入 dist。
+
+## 流程矩阵
+
+| 维度 | 日常实时开发 | 发布候选验收 | 正式发布 | 线上只读复核 |
+|------|--------------|--------------|----------|--------------|
+| 源码位置 | 当前 feature worktree | 候选 commit / 主线候选 | `main` 已合并源码 | 已发布 tag/CDN |
+| 构建方式 | `pnpm watch`（dev） | `pnpm build` 或 bot bundle | GitHub `bundle.yaml` production | 不构建 |
+| 资源来源 | `http://127.0.0.1:551x/dist/...` | 本地 dist 或候选 CDN SHA | jsdelivr `@<SHA>` | 线上 CDN |
+| 卡类型 | `神秘复苏模拟器 · DEV · <branch>`（`.local/` 派生） | β/候选卡或正式开发卡 | 发布版 PNG | 玩家已导入发布卡 |
+| 是否允许发布 | **否** | 否（只验收） | **是**（走 publish-card） | 否 |
+| 进入条件 | 预检通过；会话锁可获取；node_modules 存在 | 源码门禁绿；明确候选 SHA | 真页验收通过；门禁绿 | 仅观察 |
+| 退出条件 | `MFRS: 结束实时开发`；清会话锁 | 记录结论；不留正式 YAML 污染 | tag + CDN smoke + 发布版提交 | 关闭只读会话 |
+
+## worktree 身份检查清单（T6 / 真页前必过）
+
+1. **源码 worktree**：`git rev-parse --show-toplevel` 等于当前 VS Code `workspaceFolder`。
+2. **watch cwd**：`MFRS: 开始目标工作树 watch` / `pnpm watch` 的 cwd 是该 worktree，不是主仓库。
+3. **dist 所属**：`dist/神秘复苏模拟器/脚本/消息内面板/index.js` 由该 worktree 的 watch 生成。
+4. **静态服务器 root**：`http://127.0.0.1:<port>/__mfrs_dev_identity` 的 `workspace/branch/commit` 与当前 worktree 一致。
+5. **Network loader 来源**：角色卡脚本 `import` URL 为 `http://127.0.0.1:<port>/dist/...`，不是 jsdelivr 旧 SHA；运行时 `window.__mfrsRuntimeBuilds__` 各入口 `mode=development` 且 `commit` 等于当前 HEAD。
+
+不一致处置：停止后续交互；运行 `node scripts/mfrs-dev-preflight.mjs` 与 `node scripts/verify-mfrs-runtime-identity.mjs`；**不自动 kill** 占用进程。
+
+## 真实开发入口（PROJECT-FLOW-FIX 后）
+
+### 推荐：当前 worktree 实时开发
+
+1. 用 VS Code **打开目标 worktree 根目录**（不要只开主仓库却改嵌套 worktree）。
+2. 调试配置选 **`MFRS: 实时开发当前工作树`**（或任务 `MFRS: 开始实时开发`）。
+3. 复合任务顺序：
+   1. `MFRS: 开发环境预检` → `scripts/mfrs-dev-preflight.mjs`
+   2. `MFRS: 启动当前工作树静态服务` → `scripts/mfrs-dev-server.mjs`（写会话锁、提供 551x）
+   3. `MFRS: 开始目标工作树 watch` → `pnpm watch`（`MFRS_SKIP_TAVERN_SYNC=1`）
+   4. `MFRS: 启动调试 Chrome` → `.vscode/start-chrome-debug.cmd`（9222）
+4. 另开终端生成本地开发卡：
+   ```bash
+   pnpm mfrs:dev-card -- --port 5510
+   # 或推送到酒馆（需 6620 已连接）：
+   pnpm mfrs:dev-card -- --port 5510 --push
+   ```
+5. 在酒馆加载 **`神秘复苏模拟器 · DEV · <branch>`**，不要用正式 CDN 卡做 feature 验收。
+6. 真页身份门禁：
+   ```bash
+   pnpm verify:mfrs-runtime-identity
+   ```
+7. 结束：`MFRS: 结束实时开发`（释放会话锁并 terminate 本会话任务；**不关闭主 Chrome**，调试 Chrome 由用户决定）。
+
+### 遗留入口（兼容保留）
+
+- `编译代码并调试酒馆网页 (Chrome)` / `开始任务`：仅 `pnpm watch` + 调试 Chrome。
+- **不会**启动 551x 静态服务，**不会**派生本地开发卡，**不会**切换 CDN。
+- 仅适合“已手动保证 loader 与 dist 身份一致”的附加调试；**不作为 feature worktree 默认入口**。
+
+### 相关脚本与路径
+
+| 项 | 路径/命令 |
+|----|-----------|
+| 预检 | `pnpm mfrs:preflight` / `scripts/mfrs-dev-preflight.mjs` |
+| 静态服务 | `pnpm mfrs:dev-server` / `scripts/mfrs-dev-server.mjs` |
+| 会话锁 | `.local/mfrs-dev-session.json`；`pnpm mfrs:session -- status\|acquire\|release` |
+| 派生开发卡 | `pnpm mfrs:dev-card` → `.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png` |
+| 运行时身份 | `pnpm verify:mfrs-runtime-identity`；`window.__mfrsRuntimeBuilds__` |
+| 身份探针 | `http://127.0.0.1:<port>/__mfrs_dev_identity` |
+| webpack 可选 env | `MFRS_SKIP_SCHEMA_DUMP` / `MFRS_SKIP_TAVERN_SYNC` / `MFRS_SKIP_HMR_SERVER`（默认不设则行为与改造前一致） |
+
+### 会话锁语义
+
+- 锁文件：`.local/mfrs-dev-session.json`（gitignore）。
+- **由长生命周期静态服务写入**（PID=静态服务进程）；退出/结束任务时清理。
+- 预检发现其他 worktree 持有活锁 → 退出码 `4`，只报告不 kill。
+- 预检发现本 worktree 僵死锁 → 清理后继续。
+
+### 本地开发卡派生规则
+
+- 读取正式 `src/神秘复苏模拟器/index.yaml`，**只在 `.local/mfrs-dev/_card_src` 写派生副本**。
+- 7 个项目脚本 CDN base → `http://127.0.0.1:<port>/`；**MagVarUpdate 保持 CDN**。
+- 结构门禁：项目脚本 7 本地、脚本库 8、正则 33、mvu pin 不变。
+- 临时注入 `tavern_sync.yaml` 的 `神秘复苏模拟器-DEV` 配置，bundle/push 后 **必须还原**正式 sync 与正式 YAML。
+- 产物：`.local/mfrs-dev/神秘复苏模拟器-DEV-<branch短名>.png`；**不可发布**。
+
+## 真页调试工具（MCP / CDP）
+
+- 项目 `.mcp.json` 配置 `chrome-devtools` → `http://127.0.0.1:9222`（给 Codex/Cursor 等会加载 MCP 的宿主）。
+- **GitHub Copilot Chat 默认不加载该 MCP**；在 Copilot 会话中以 `scripts/cdp-evaluate.mjs` 为标准 evaluate 路径。
+- Codex：`codex mcp list` / `codex doctor` 只证明配置，不证明当前会话已挂载工具；旧会话需重启后才暴露 tool schema。
+- 调试 Chrome 必须是 `--remote-debugging-port=9222` 且 profile 为 `%TEMP%\chrome-debug`；不要连用户主 Chrome。
+- 需要完整 Network/点击/截图且当前宿主无 MCP 时，先向用户说明替代方案，不擅自换工具栈。
 
 ## 协作顺序
 
 1. 先只改开发版 `src/神秘复苏模拟器/`。
-2. 用真实酒馆页面 `http://127.0.0.1:8000/` 验收。
+2. 用 **本地开发卡 + 当前 worktree 静态服务** 在 `http://127.0.0.1:8000/` 验收；先过身份清单再做功能点击。
 3. SQL/数据库问题以 `SP·数据库 III -> 高级工具 -> 运行日志` 为权威入口。
 4. 确认开发版完成并通过真页验收后，再同步发布版 `src/神秘复苏模拟器发布版/`。
 5. 不要手工散改发布版来绕过开发版。
 
-## 实时开发链路
+## 实时开发链路（逐步）
 
-1. 修改 `src/<项目>/` 里的 `index.ts`、`App.vue`、`index.html`、`store.ts`、世界书或脚本文件。
-2. 在 VSCode 中按 `Fn+F5` 启动调试配置。
-3. `pnpm watch` 持续监听并编译源码。
-4. Chrome 调试窗口打开酒馆页面 `http://127.0.0.1:8000/`。
-5. 优先使用 Chrome DevTools MCP 检查页面、Console、Network、DOM 和交互。
-6. 若酒馆卡当前仍指向旧 CDN，而本轮改动需要验证最新本地 bundle，使用 VSCode Live Server / 既有本地静态服务（通常是 `http://localhost:5500/`）加载 `dist/**` 产物，配合酒馆助手实时监听或显式本地 import 验证。
-7. 本地 `localhost:5500` / Live Server / 本地 import 只用于开发真页验证，不等同于发布卡实际 CDN 资源链路。
+1. 修改当前 worktree 的 `src/<项目>/` 源码。
+2. 启动 `MFRS: 开始实时开发`（预检 → 551x 静态服务+会话锁 → watch → 调试 Chrome）。
+3. `pnpm watch` 把源码编译到**本 worktree** `dist/**`，6621 通知可重载。
+4. `pnpm mfrs:dev-card` 生成/推送本地开发卡；酒馆 loader 指向 `127.0.0.1:551x`。
+5. 用 Chrome DevTools MCP / `cdp-evaluate` 检查 Console、Network、`__mfrsRuntimeBuilds__`。
+6. 功能验收通过后 `MFRS: 结束实时开发`。
+7. **本地 551x / 派生卡只用于开发真页验证，不等同于发布卡 CDN 链路。**
 
 ## 正式构建与发布链路
 

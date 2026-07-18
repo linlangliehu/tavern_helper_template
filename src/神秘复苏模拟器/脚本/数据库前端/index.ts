@@ -12,6 +12,9 @@ import {
   type TableMetaSummary,
 } from './table-change-adapter';
 import { installMvuCoreMirror } from './mvu-core-mirror';
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('数据库前端');
 
 type AutoCardUpdaterAPI = {
   __mfrsDatabaseScriptMarker__?: string;
@@ -111,6 +114,20 @@ const databaseScriptMarker = 'mfrs-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v85
 const databaseInstanceFlag = '__ACU_STAR_DB_III_LOADED__';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
+
+function isMysteryCardIdentity(name?: string | null, avatar?: string | null): boolean {
+  if (name) {
+    if (mysteryCardNames.has(name)) return true;
+    // 本地 DEV 卡：prepare-mfrs-dev-card 命名为「神秘复苏模拟器 · DEV · <branch>」
+    if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b/u.test(name)) return true;
+  }
+  if (avatar) {
+    if (mysteryCardAvatars.has(avatar)) return true;
+    if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b.*\.png$/iu.test(avatar)) return true;
+  }
+  return false;
+}
+
 const ACU_UI_COLLAPSE_KEY = 'acu_ui_collapse_state';
 const ACU_UI_CONFIG_KEY = 'acu_ui_config_v18';
 const legacyId = (...parts: string[]) => parts.join('-');
@@ -324,11 +341,7 @@ function getCurrentCharacter(hostWindow: HostWindow) {
 
 function isMysteryRevivalCardActive(hostWindow: HostWindow) {
   const character = getCurrentCharacter(hostWindow);
-  return Boolean(
-    character
-      && ((character.name && mysteryCardNames.has(character.name))
-        || (character.avatar && mysteryCardAvatars.has(character.avatar))),
-  );
+  return Boolean(character && isMysteryCardIdentity(character.name, character.avatar));
 }
 
 function tagDatabaseApi(hostWindow: HostWindow) {

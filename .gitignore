@@ -43,6 +43,9 @@ et --hard
 # 审计临时研究文件（会话产生，审计完成后可删）
 .tmp-research/
 
+# 本地实时开发会话锁 / 派生开发卡 / 临时导出（PROJECT-FLOW-FIX）
+.local/
+
 # 用户本地截图
 屏幕截图*.png
 2026-*.png

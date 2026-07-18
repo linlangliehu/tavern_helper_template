@@ -31,14 +31,43 @@
 git clone https://github.com/linlangliehu/tavern_helper_template.git
 cd tavern_helper_template
 
-# 安装依赖
+# 安装依赖（每个 worktree 都需要自己的 node_modules）
 pnpm install
-
-# 启动开发环境（VSCode 按 F5）
-# 会自动运行 pnpm watch 并启动 Chrome 调试
 ```
 
-开发环境会在 `http://127.0.0.1:8000/` 打开 SillyTavern，实时编译 `src/` 到 `dist/`。
+> **统一口径**：日常真页开发以 `PROJECT_FLOW.md` 的四条链路 + `MFRS: 实时开发当前工作树` 为准。  
+> 旧 `Fn+F5` / Live Server `5500` 仅为遗留兼容，不能单独证明 feature bundle。
+
+##### 实时开发当前 worktree（推荐）
+
+1. 用 VS Code **打开目标 worktree 根目录**（feature 分支请打开对应 worktree，不要只开主仓库）。
+2. 调试配置选择 **`MFRS: 实时开发当前工作树`**（或运行任务 `MFRS: 开始实时开发`）。
+3. 流程会依次：预检 → 启动本 worktree 静态服务（默认 `5510`，占用则 `5511+`）→ `pnpm watch` → 调试 Chrome（CDP `9222`）。
+4. 生成本地开发卡（不修改正式 `index.yaml`）：
+   ```bash
+   pnpm mfrs:dev-card -- --port 5510
+   # 若 tavern_sync 已连接，可直接推送独立 DEV 卡：
+   pnpm mfrs:dev-card -- --port 5510 --push
+   ```
+5. 在 SillyTavern 加载 **`神秘复苏模拟器 · DEV · <branch>`**，确认 Network 中脚本来自 `http://127.0.0.1:551x/dist/...`。
+6. 可选身份门禁：`pnpm verify:mfrs-runtime-identity`（读取 `window.__mfrsRuntimeBuilds__`）。
+
+##### 结束实时开发
+
+- 运行任务 **`MFRS: 结束实时开发`**：释放 `.local/mfrs-dev-session.json`，终止本会话启动的 watch/静态服务。
+- **不关闭主 Chrome**；调试 Chrome 由用户自行决定是否关闭。
+- 正式 `src/神秘复苏模拟器/index.yaml` 与 `tavern_sync.yaml` 正式配置应保持未污染。
+
+##### 多 worktree 并行注意
+
+- 同一时间只应有一个 worktree 持有 MFRS 实时开发会话锁。
+- 静态端口在 `5510–5514` 自动避让；`6620`/`6621` 冲突时预检会失败并报告，**不会自动 kill** 占用进程。
+- 身份不变量：`源码 worktree == watch cwd == dist 所属 == 静态服务器 root == Network loader 来源`。
+- 详细契约见根目录 `PROJECT_FLOW.md`。
+
+##### 遗留入口
+
+旧配置 `编译代码并调试酒馆网页 (Chrome)` 仍可用，但**只**启动 watch + 调试 Chrome，**不会**启动 551x 静态服务，也**不会**把 CDN loader 切到本地。feature 验收请用上面的 MFRS 流程。
 
 #### 创建自己的仓库
 
@@ -165,17 +194,23 @@ tavern_helper_template/
 vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 ```
 
-#### 2. 实时验证
-- 在 VSCode 按 F5 启动调试
-- Chrome 打开 `http://127.0.0.1:8000/`
-- pnpm watch 自动编译
+#### 2. 实时验证（与 PROJECT_FLOW 统一）
+
+推荐（feature / 任意 worktree）：
+
+1. 调试配置 **`MFRS: 实时开发当前工作树`**（预检 → `551x` 静态服务 → watch → 调试 Chrome `9222`）
+2. `pnpm mfrs:dev-card -- --port <实际端口>`，酒馆加载 **DEV 卡**
+3. Network 确认 loader 为 `http://127.0.0.1:551x/dist/...`，可选 `pnpm verify:mfrs-runtime-identity`
+4. 结束：`MFRS: 结束实时开发`
+
+遗留 `Fn+F5` / `开始任务` 只启动 watch + 调试 Chrome，**不会**起 `551x`，也**不会**把正式 CDN 卡切到本地 dist。
 
 #### 3. 构建发布
 ```bash
-# 构建 production 版本
+# 停止 watch 后，本地可按需 production 验证（默认不提交 dist）
 pnpm build
 
-# 同步到发布版
+# 正式发布：source 进 main → 等 bot bundle/tag → 再同步发布版
 pnpm run publish-card -- 神秘复苏模拟器发布版
 ```
 

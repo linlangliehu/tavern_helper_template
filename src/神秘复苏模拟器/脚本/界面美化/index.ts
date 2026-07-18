@@ -1,3 +1,7 @@
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('界面美化');
+
 function getHostDocument() {
   try {
     return window.parent?.document ?? document;

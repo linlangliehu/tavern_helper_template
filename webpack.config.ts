@@ -3,7 +3,7 @@ import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import _ from 'lodash';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import { ChildProcess, exec, spawn } from 'node:child_process';
+import { ChildProcess, exec, execSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import { createRequire } from 'node:module';
@@ -80,8 +80,33 @@ const config: Config = {
   entries: glob_script_files().map(parse_entry),
 };
 
+function readGit(args: string[]): string {
+  try {
+    return execSync(`git ${args.join(' ')}`, {
+      cwd: import.meta.dirname,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return 'unknown';
+  }
+}
+
+function buildMfrsMeta(mode: string) {
+  return {
+    mode,
+    commit: readGit(['rev-parse', '--short', 'HEAD']),
+    branch: readGit(['rev-parse', '--abbrev-ref', 'HEAD']),
+    builtAt: new Date().toISOString(),
+    workspace: readGit(['rev-parse', '--show-toplevel']).replace(/\\/g, '/'),
+  };
+}
+
 let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
+  if (process.env.MFRS_SKIP_HMR_SERVER === '1') {
+    return;
+  }
   if (compiler.options.watch) {
     const port = config.port ?? 6621;
 
@@ -117,6 +142,9 @@ const dump = () => {
 };
 const dump_debounced = _.debounce(dump, 500, { leading: true, trailing: false });
 function schema_dump(compiler: webpack.Compiler) {
+  if (process.env.MFRS_SKIP_SCHEMA_DUMP === '1') {
+    return;
+  }
   if (!compiler.options.watch) {
     dump_debounced();
     return;
@@ -139,6 +167,9 @@ const bundle = () => {
 };
 const bundle_debounced = _.debounce(bundle, 500, { leading: true, trailing: false });
 function tavern_sync(compiler: webpack.Compiler) {
+  if (process.env.MFRS_SKIP_TAVERN_SYNC === '1') {
+    return;
+  }
   if (!compiler.options.watch) {
     bundle_debounced();
     return;
@@ -470,6 +501,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
           __VUE_OPTIONS_API__: false,
           __VUE_PROD_DEVTOOLS__: process.env.CI !== 'true',
           __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+          // 只读运行时身份；development 注入 __MFRS_DEV_BUILD__，production 仅保留 __MFRS_BUILD_META__
+          __MFRS_BUILD_META__: JSON.stringify(buildMfrsMeta(argv.mode === 'production' ? 'production' : 'development')),
+          __MFRS_DEV_BUILD__:
+            argv.mode === 'development' ? JSON.stringify(buildMfrsMeta('development')) : 'undefined',
         }),
       )
       .concat(
