@@ -24,14 +24,14 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT：三项交互调整实施 — paused（T0–T5 complete；T6 blocked/pending）**
-**阶段 PROJECT-FLOW-FIX：修复项目流程 — P0–P8 complete（P9 真页恢复验收 pending）**
+**阶段 PROJECT-FLOW-FIX：修复项目流程 — P0–P9.4 complete（P9.5 会话保持可选）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；HUD T0–T5 完成且 T6 仍 blocked；PROJECT-FLOW-FIX 的 P0–P8 已在 feature worktree 落地（脚本/VS Code/webpack 可选 guard/文档） |
-| 我要去哪里？ | 下一步是 P9：在 feature worktree 用新 MFRS 流程做真页身份验证并恢复 T6；在此之前不 production、不发布 |
+| 我在哪里？ | 8.13.36 已发布；PROJECT-FLOW-FIX P0–P9.4 完成；feature worktree 真页已加载 DEV 本地 bundle（`650d209`/development）；T6 可继续人工细验 |
+| 我要去哪里？ | 继续 T6 人工细验/补齐 390；通过后进入 T7 发布评估；不 production 直到用户明确授权 |
 | 目标是什么？ | 让「源码 worktree == watch cwd == dist == 静态 root == Network loader」可证明，从而恢复 feature 真页验收 |
 | 我学到了什么？ | Fn+F5 旧链路不会启动静态服务也不会切 CDN；`tavern_sync` 不是 bundle 加载器；HTTP 200 ≠ feature bundle；会话锁必须由长生命周期进程持有 |
 | 我做了什么？ | 实现 mfrs-dev 预检/静态服务/会话锁/派生开发卡/运行时身份标记与校验，重写 `PROJECT_FLOW.md` 四条链路与流程矩阵，更新 README/tasks/launch |
@@ -53,7 +53,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
 | 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
 | 工作树状态 | 实施 worktree 已完成 T0–T5；`75f4a9a..5dacd2e` 功能提交链白名单精确，一行 archive-ui lint 清理随 T5 规划同步，不含 dist/PNG/版本/package/lockfile；主工作树的 10 个 watch dev dist 未触碰 |
-| 下一阶段 | **PROJECT-FLOW-FIX P0–P8 complete；P9 真页恢复验收 pending；HUD-UX-NEXT T6 仍 blocked 直至 P9** |
+| 下一阶段 | **PROJECT-FLOW-FIX P0–P9.4 complete；HUD-UX-NEXT T6 已恢复可验；P9.5 结束会话按需；T7 未开始** |
 
 ## 各阶段
 

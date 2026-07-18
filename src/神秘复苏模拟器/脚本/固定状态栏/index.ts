@@ -11,6 +11,19 @@ const statusDetailId = 'mfrs-fixed-status-detail';
 const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟器发布版']);
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
 
+function isMysteryCardIdentity(name?: string | null, avatar?: string | null): boolean {
+  if (name) {
+    if (mysteryCardNames.has(name)) return true;
+    // 本地 DEV 卡：prepare-mfrs-dev-card 命名为「神秘复苏模拟器 · DEV · <branch>」
+    if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b/u.test(name)) return true;
+  }
+  if (avatar) {
+    if (mysteryCardAvatars.has(avatar)) return true;
+    if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b.*\.png$/iu.test(avatar)) return true;
+  }
+  return false;
+}
+
 type HostWindow = Window & {
   __mfrsFixedStatusCleanup__?: () => void;
   SillyTavern?: {
@@ -72,11 +85,7 @@ function getCurrentCharacter() {
 
 function isMysteryRevivalCardActive() {
   const character = getCurrentCharacter();
-  return Boolean(
-    character
-      && ((character.name && mysteryCardNames.has(character.name))
-        || (character.avatar && mysteryCardAvatars.has(character.avatar))),
-  );
+  return Boolean(character && isMysteryCardIdentity(character.name, character.avatar));
 }
 
 function getSendForm() {

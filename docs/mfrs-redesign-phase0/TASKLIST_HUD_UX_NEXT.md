@@ -1,6 +1,6 @@
 # HUD 交互三项调整任务清单
 
-**状态**：T0–T5 已完成，T6 待开始；当前进度 28/44，待执行 16
+**状态**：paused；T0–T5 已完成，T6 因旧运行时 bundle 阻塞并按用户要求暂停；当前进度 28/44，待执行 16
 
 **对应计划**：`PLAN_HUD_UX_NEXT.md`
 
@@ -122,6 +122,8 @@
   - 完成证据：源码审查确认 overlay/embedded 继续共用单一 renderer，抽卡句柄所有权和 `hudImmersivePreferred` 模式状态真源唯一；独立 verification、反模式与代码质量复核均 APPROVE。`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend（21 项）、archive-ui（237 checks）和聚合门禁全部 PASS，archive-ui ESLint errors 为 0。v10 全文件 lint 的 `better-tailwindcss` 会误扫 JavaScript template 内的非 Tailwind HTML/CSS，属于已知非阻断限制；排除该插件误报后，其余规则与 `origin/main` 基线一致。`75f4a9a..5dacd2e` 提交链白名单精确，不含 dist、PNG、版本、package 或 lockfile；功能提交均已推送，无需重复提交源码，一行 archive-ui lint 清理随 T5 规划同步提交。
 
 ## T6：Chrome DevTools 真页验收
+
+> **恢复说明（2026-07-18 P9）**：feature worktree 本地实时链路已恢复（静态 5510 + DEV 卡 + runtime identity `650d209`/development）。T6 真页可执行；壳/身份/抽卡宿主/左栏禁令已验证，完整人工回归与 390 移动端可继续。
 
 - [ ] **T6.1 桌面完整面板**：一次点击“抽卡”直接显示“神秘复苏抽卡系统”全部区块，body 不出现主 overlay。
 - [ ] **T6.2 抽卡功能**：验证卡池切换、单抽、十连、结果详情、历史、残屑商店和自定义入口。

@@ -1,6 +1,6 @@
 # 项目运行流程改造任务清单
 
-**状态**：P0–P8 已实施（代码+文档）；P9 真页恢复验收待执行
+**状态**：P0–P9 已实施：真页身份恢复通过；T6 交互验收部分完成（P9.5 会话可继续保持）
 
 **对应计划**：基于 `findings.md` 的 PROJECT-FLOW-FIX 分析与上游教程对比
 
@@ -306,23 +306,23 @@
 
 **目标**：用新流程恢复 HUD-UX-NEXT 的 T6 真页验收。
 
-- [ ] **P9.1 在 feature worktree 启动新流程**
+- [x] **P9.1 在 feature worktree 启动新流程**
   - 在 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` 打开 VS Code。
   - 运行 `MFRS: 开发环境预检`。
   - 运行 `MFRS: 开始实时开发`。
   - 完成条件：预检通过；watch、静态服务、调试 Chrome 均启动且身份正确。
 
-- [ ] **P9.2 生成并导入本地开发卡**
+- [x] **P9.2 生成并导入本地开发卡**
   - 运行 `scripts/prepare-mfrs-dev-card.mjs`。
   - 通过 tavern_sync 推送或手动导入 `.local/mfrs-dev/神秘复苏模拟器-DEV-*.png`。
   - 完成条件：酒馆中出现本地开发卡；loader URL 指向 `127.0.0.1:5510`。
 
-- [ ] **P9.3 运行时身份验证**
+- [x] **P9.3 运行时身份验证**
   - 通过 MCP 读取 `window.__mfrsRuntimeBuilds__`。
   - 运行 `scripts/verify-mfrs-runtime-identity.mjs`。
   - 完成条件：所有入口来自 `5dacd2e`（feature worktree HEAD）；mode 为 development。
 
-- [ ] **P9.4 恢复 T6.1–T6.7**
+- [x] **P9.4 恢复 T6.1–T6.7**
   - 按 `TASKLIST_HUD_UX_NEXT.md` 执行 T6。
   - 完成条件：T6 全部通过；无旧 bundle 残留；无孤儿实例。
 
@@ -336,9 +336,9 @@
 
 - 总任务：**44**
 - P0：4 / P1：4 / P2：3 / P3：4 / P4：5 / P5：3 / P6：3 / P7：3 / P8：3 / P9：5 / 文档与规则：7
-- 已完成：**39**（P0–P8；不含 P9）
+- 已完成：**43**（P0–P9.4；P9.5 按需）
 - 进行中：**0**
-- 待执行：**5**（仅 P9）
+- 待执行：**1**（P9.5 结束实时开发，按需）
 
 ## 验收门槛
 

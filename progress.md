@@ -1,5 +1,15 @@
 # 进度日志
 
+## 会话：2026-07-18（PROJECT-FLOW-FIX · P9 真页恢复验收）— **P9.1–P9.4 complete（P9.5 保持运行）**
+
+- **环境**：feature worktree `feat-hud-gacha-mode-toggle` @ `650d209`；`pnpm install` 后预检 exit 0。
+- **P9.1**：`mfrs-dev-server` 监听 `127.0.0.1:5510` 并持有会话锁；watch 因主仓库占用 `6621` 改用 `MFRS_SKIP_HMR_SERVER=1` + `MFRS_SKIP_TAVERN_SYNC=1` 编译成功（未 kill 主 watch）。
+- **P9.2**：`prepare-mfrs-dev-card --port 5510` 产物 OK（7/8/33）；`--push` 被主仓库 `6620` 占用阻断；改经 CDP `importRawCharacter` 导入 DEV PNG 成功。
+- **P9.3**：打开 DEV 卡后 `verify-mfrs-runtime-identity` PASS：7 入口均为 `development` / commit `650d209`；资源 URL 指向 `http://127.0.0.1:5510/dist/...`。
+- **阻塞修复**：DEV 卡名不在原 `isMysteryRevivalCardActive` 白名单 → HUD 不挂载；已在消息内面板/固定状态栏/数据库前端增加 DEV 卡名/头像识别。
+- **P9.4 / T6 证据**：`#mfrs-hud-shell` active + body `mfrs-hud-immersive`；抽卡宿主含「神秘复苏抽卡系统」完整区块文案；左栏无「打开全库 · 玩家状态」；系统全库入口保留；`MysteryMessagePanel` 可用。移动端 390 与完整人工模式循环仍可继续。
+- **P9.5**：未执行结束；静态服务/watch/调试 Chrome 仍保持，便于继续 T6 细验。
+- **边界**：正式 `index.yaml` / `tavern_sync.yaml` 未污染；未 production/发布；未 kill 主仓库 6620/6621。
 ## 会话：2026-07-18（PROJECT-FLOW-FIX · P0–P8 实施）— **complete（P9 pending）**
 
 - **范围**：按 `TASKLIST_PROJECT_FLOW_FIX.md` 实施 P0–P8；**不执行 P9**（真页启动/导入/T6 恢复）。

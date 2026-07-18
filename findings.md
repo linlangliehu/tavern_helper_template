@@ -1,3 +1,9 @@
+## PROJECT-FLOW-FIX · P9 真页恢复结论（2026-07-18）
+
+- 本地实时链路可证明：worktree dist → `127.0.0.1:5510` → DEV 卡 loader → `__mfrsRuntimeBuilds__` 七入口一致（`650d209` / development）。
+- 主仓库若已占用 `6620/6621`，feature watch 应使用 `MFRS_SKIP_TAVERN_SYNC=1` 与 `MFRS_SKIP_HMR_SERVER=1`，不要自动 kill。
+- `prepare-mfrs-dev-card --push` 依赖 6620；被占用时可用静态服务暴露 `.local` PNG + `TavernHelper.importRawCharacter` 导入。
+- DEV 卡显示名 `神秘复苏模拟器 · DEV · <branch>` 必须被 HUD/状态栏/数据库前端的卡身份门禁识别，否则 bundle 已加载也不会挂载沉浸壳。
 # 发现与决策 · 神秘复苏审计
 
 ## PROJECT-FLOW-FIX · 上游模板与教程参考基线（2026-07-18）

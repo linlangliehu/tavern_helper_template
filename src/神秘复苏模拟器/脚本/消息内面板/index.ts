@@ -36,6 +36,19 @@ const mysteryCardNames = new Set(['神秘复苏模拟器', '神秘复苏模拟�
 const mysteryCardAvatars = new Set(['神秘复苏模拟器.png', '神秘复苏模拟器发布版.png']);
 const ownedMessageUiSelector = '.mfrs-msg-panel, .mfrs-msg-narrative-wrapper, .mfrs-msg-brand';
 
+function isMysteryCardIdentity(name?: string | null, avatar?: string | null): boolean {
+  if (name) {
+    if (mysteryCardNames.has(name)) return true;
+    // 本地 DEV 卡：prepare-mfrs-dev-card 命名为「神秘复苏模拟器 · DEV · <branch>」
+    if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b/u.test(name)) return true;
+  }
+  if (avatar) {
+    if (mysteryCardAvatars.has(avatar)) return true;
+    if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b.*\.png$/iu.test(avatar)) return true;
+  }
+  return false;
+}
+
 function getSillyTavernContext() {
   for (const st of [hostWindow.SillyTavern, (window as MessagePanelHostWindow).SillyTavern]) {
     try {
@@ -54,11 +67,7 @@ function isMysteryRevivalCardActive() {
   if (characterId === undefined || characterId === null) return false;
   const characters = context?.characters;
   const character = Array.isArray(characters) ? characters[Number(characterId)] : characters?.[String(characterId)];
-  return Boolean(
-    character &&
-    ((character.name && mysteryCardNames.has(character.name)) ||
-      (character.avatar && mysteryCardAvatars.has(character.avatar))),
-  );
+  return Boolean(character && isMysteryCardIdentity(character.name, character.avatar));
 }
 
 function isElementNode(value: unknown): value is Element {
