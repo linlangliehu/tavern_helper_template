@@ -1,4 +1,7 @@
 // 消息内状态面板脚本 - 在每条 AI 消息内嵌入完整状态面板（两个 tab）+ 叙事文本包装
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('消息内面板');
 
 type StatusData = Record<string, any>;
 type MessagePanelApi = {

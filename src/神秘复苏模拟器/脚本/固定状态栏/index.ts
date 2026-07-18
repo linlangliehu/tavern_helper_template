@@ -1,3 +1,7 @@
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('固定状态栏');
+
 const statusContainerId = 'mfrs-fixed-status-host';
 const dashboardSlotId = 'mfrs-fixed-dashboard-slot';
 const frontendSlotId = 'mfrs-fixed-frontend-slot';

@@ -1,5 +1,52 @@
 # 进度日志
 
+## 会话：2026-07-18（PROJECT-FLOW-FIX · P0–P8 实施）— **complete（P9 pending）**
+
+- **范围**：按 `TASKLIST_PROJECT_FLOW_FIX.md` 实施 P0–P8；**不执行 P9**（真页启动/导入/T6 恢复）。
+- **P0/P8 文档**：重写 `PROJECT_FLOW.md` 四条链路、端口表、流程矩阵、身份清单与 MFRS 入口；更新 `README.md` 实时开发/结束/多 worktree；同步 `task_plan.md` / `findings.md` / 本文件 / 任务清单勾选。
+- **P1–P2**：`scripts/mfrs-dev-server.mjs`（127.0.0.1、CORS、no-store、`/__mfrs_dev_identity`、5510–5514、自检）；`mfrs-dev-preflight.mjs`（退出码 0/1/2/3/4，不 kill）。
+- **P3**：`.vscode/tasks.json` / `launch.json` 增加 MFRS 预检、静态服务、watch、调试 Chrome、开始/结束实时开发；独立 panel；结束任务 release 锁 + terminateAll，不关主 Chrome。
+- **P4**：`prepare-mfrs-dev-card.mjs` 派生到 `.local/`，临时注入 sync 配置后还原；离线验证 7/8/33 + MagVar CDN；正式 YAML 未污染。
+- **P5**：webpack `DefinePlugin` + 7 入口 `registerMfrsRuntimeBuild` + `verify-mfrs-runtime-identity.mjs`。
+- **P6**：`.local/mfrs-dev-session.json`；锁由静态服务持有；预检识别外 worktree 锁。
+- **P7**：`MFRS_SKIP_SCHEMA_DUMP` / `MFRS_SKIP_TAVERN_SYNC` / `MFRS_SKIP_HMR_SERVER`；MFRS watch 设 `MFRS_SKIP_TAVERN_SYNC=1`。
+- **边界**：未改正式 `index.yaml`、发布版、publish-card、release constants、bundle workflow；未 production/发布；未接管用户 watch；未连主 Chrome。
+- **已知阻塞**：本 worktree 无 `node_modules` → 预检 exit 3；完整 watch/dev-card bundle/真页身份验证留 **P9**。
+- **清单**：P0–P8 = 39 complete；P9 = 5 pending。
+
+## 会话：2026-07-18（PROJECT-FLOW-FIX · 本地源码运行流程对比）— **analysis complete**
+
+- 只读分析了本地 `.vscode` 启动配置、`webpack.config.ts`、`tavern_sync`、开发版卡 loader、实时修改模板、β 本地验收脚本和 GitHub bundle workflow。
+- 确认项目由开发编译、角色卡同步、真页资源加载和正式发布四条相互独立的链组成；6620/6621 都不是静态资源服务器，Fn+F5 也不会启动 5500。
+- 确认真页旧 bundle 的首要原因是开发版卡仍固定 import CDN SHA；同时 Fn+F5 watch 绑定主 workspace，而 feature 源码位于嵌套 worktree，5500 根目录也未绑定。
+- 已将详细对比和根因写入 `findings.md`。本轮未执行构建、watch、浏览器、同步或页面操作。
+
+## 会话：2026-07-18（PROJECT-FLOW-FIX · 读取上游参考资料）— **research complete**
+
+- 已读取 `StageDog/tavern_helper_template` 的 README、webpack 流程和相关生命周期示例，以及教程“实时编写前端界面或脚本 / 实际编写”。
+- 确认上游标准实时链路为：目标项目 `pnpm watch` 自动编译 → 酒馆助手实时监听接收 Socket.IO 更新事件 → Live Server 提供目标 `dist` URL → 酒馆实时修改正则/脚本重新请求该 URL → Chrome DevTools MCP 查看和操控页面。
+- 关键结论：watch 通知不会替换资源 URL；Live Server 可访问也不代表服务的是 feature worktree；Fn+F5 若从主 workspace 启动，只会编译主 workspace。当前 T6“端口正常但仍是旧 bundle”与这三个身份映射未对齐相符。
+- 已将上游证据、对 T6 的解释和流程修复原则写入 `findings.md`。本轮只读取外部资料并更新 planning，没有执行构建、watch、浏览器或页面操作。
+
+## 会话：2026-07-18（暂停 HUD-UX-NEXT，新增项目流程修复任务）— **paused / planning**
+
+- 用户要求暂停 HUD-UX-NEXT 当前阶段；T6.1–T6.7 继续保持 blocked/pending，T0–T5 仍为 28/44 complete。
+- 本轮不恢复临时双入口构建、8131 服务、浏览器注入或页面交互，也不执行 production、发布、install 或 watch 操作。
+- 新增任务 **PROJECT-FLOW-FIX：修复项目流程**。下一步只梳理开发入口、worktree、watch、临时开发构建、真页验收、production 与发布链路中的流程问题，并制定边界和验收标准。
+- 在用户确认具体流程修复范围前，不修改 `webpack.config.ts`、`.vscode` 配置、同步/发布脚本或其他流程文件。
+
+## 会话：2026-07-18（HUD-UX-NEXT · T6 真页验收环境阻塞）— **blocked / 未执行**
+
+- **连接边界**：仅连接用户单独以调试模式启动的 Chrome（CDP `127.0.0.1:9222`，SillyTavern `127.0.0.1:8000`）；未连接、读取或操作用户主浏览器。
+- **运行时证据**：当前调试页仍加载旧 bundle：`MFRS.mountPanel` 为 `undefined`、`[data-mfrs-hud-gacha-host]` 数量为 0、`[data-mfrs-mode]` 数量为 0，且左栏旧“打开全库 · 玩家状态”入口仍存在。feature 源码具有新契约，但 feature `dist` 的两个相关 bundle 都不包含该实现；`5500` 与 `8131` 均未监听，不能作为 feature 静态运行时。
+- **Fn+F5 复测（2026-07-18）**：用户确认本地 Fn+F5 已启动后，仍只通过同一调试 Chrome `127.0.0.1:9222` 复测目标页 `http://127.0.0.1:8000/`；探针结果未变化：`MFRS.mountPanel === undefined`、host 为 0、immersive mode button 为 0、旧左栏入口仍为真，body 仍带旧 `mfrs-hud-immersive`。截图：`C:\Users\linlang\.agent-browser\tmp\screenshots\t6-fnf5-stale-runtime-20260718.png`。因此 Fn+F5 当前未把 feature 的两个新 bundle 提供给该页面，T6 仍不可执行。
+- **执行边界**：T6.1–T6.7 均为 BLOCKED，未执行抽卡、重置、导入、文件写入或其他持久化页面动作；任务进度保持 T0–T5 的 28/44 complete，T6 全部 pending。
+- **恢复条件**：用户可启动既有的 VS Code `Fn+F5` feature 调试流程；或明确授权一个隔离、可逆的双入口临时构建和临时 CORS 静态服务。该替代流程必须禁用 schema dump、tavern sync 和自动导入副作用；之后向消息内面板 iframe 依次注入数据库前端与消息内面板 bundle 并清理旧实例。不得使用 `webpack --output-path` 定向构建到仓库外，该方式会因多 entry 的 `index.js` 冲突且普通 build 仍触发项目插件副作用而不可用。
+- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含 `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` / `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
+- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看 `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode selector=0、旧“打开全库 · 玩家状态”=1、body 为 `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
+- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含 `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` / `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
+- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看 `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode selector=0、旧“打开全库 · 玩家状态”=1、body 为 `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
+
 ## 会话：2026-07-17（HUD-UX-NEXT · T5 源码提交检查点）— **complete**
 
 - **T5.1 complete / 源码审查**：overlay 与 embedded 继续共用单一完整抽卡 renderer；HUD 与数据库前端的句柄所有权、root 校验和回收边界清晰；模式状态仍只有 `hudImmersivePreferred` 一个真源。独立 verification、反模式与代码质量复核均 APPROVE。

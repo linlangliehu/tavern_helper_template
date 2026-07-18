@@ -1,4 +1,7 @@
 import * as protocolNormalizer from './protocol-normalizer.js';
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('hotfix-generation-ended-listeners');
 
 /**
  * Hotfix: 注册 MVU 和自动更新的 GENERATION_ENDED 监听器

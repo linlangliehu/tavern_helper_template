@@ -31,14 +31,40 @@
 git clone https://github.com/linlangliehu/tavern_helper_template.git
 cd tavern_helper_template
 
-# 安装依赖
+# 安装依赖（每个 worktree 都需要自己的 node_modules）
 pnpm install
-
-# 启动开发环境（VSCode 按 F5）
-# 会自动运行 pnpm watch 并启动 Chrome 调试
 ```
 
-开发环境会在 `http://127.0.0.1:8000/` 打开 SillyTavern，实时编译 `src/` 到 `dist/`。
+##### 实时开发当前 worktree（推荐）
+
+1. 用 VS Code **打开目标 worktree 根目录**（feature 分支请打开对应 worktree，不要只开主仓库）。
+2. 调试配置选择 **`MFRS: 实时开发当前工作树`**（或运行任务 `MFRS: 开始实时开发`）。
+3. 流程会依次：预检 → 启动本 worktree 静态服务（默认 `5510`，占用则 `5511+`）→ `pnpm watch` → 调试 Chrome（CDP `9222`）。
+4. 生成本地开发卡（不修改正式 `index.yaml`）：
+   ```bash
+   pnpm mfrs:dev-card -- --port 5510
+   # 若 tavern_sync 已连接，可直接推送独立 DEV 卡：
+   pnpm mfrs:dev-card -- --port 5510 --push
+   ```
+5. 在 SillyTavern 加载 **`神秘复苏模拟器 · DEV · <branch>`**，确认 Network 中脚本来自 `http://127.0.0.1:551x/dist/...`。
+6. 可选身份门禁：`pnpm verify:mfrs-runtime-identity`（读取 `window.__mfrsRuntimeBuilds__`）。
+
+##### 结束实时开发
+
+- 运行任务 **`MFRS: 结束实时开发`**：释放 `.local/mfrs-dev-session.json`，终止本会话启动的 watch/静态服务。
+- **不关闭主 Chrome**；调试 Chrome 由用户自行决定是否关闭。
+- 正式 `src/神秘复苏模拟器/index.yaml` 与 `tavern_sync.yaml` 正式配置应保持未污染。
+
+##### 多 worktree 并行注意
+
+- 同一时间只应有一个 worktree 持有 MFRS 实时开发会话锁。
+- 静态端口在 `5510–5514` 自动避让；`6620`/`6621` 冲突时预检会失败并报告，**不会自动 kill** 占用进程。
+- 身份不变量：`源码 worktree == watch cwd == dist 所属 == 静态服务器 root == Network loader 来源`。
+- 详细契约见根目录 `PROJECT_FLOW.md`。
+
+##### 遗留入口
+
+旧配置 `编译代码并调试酒馆网页 (Chrome)` 仍可用，但**只**启动 watch + 调试 Chrome，**不会**启动 551x 静态服务，也**不会**把 CDN loader 切到本地。feature 验收请用上面的 MFRS 流程。
 
 #### 创建自己的仓库
 

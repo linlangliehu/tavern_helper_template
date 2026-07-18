@@ -12,6 +12,9 @@ import {
   type TableMetaSummary,
 } from './table-change-adapter';
 import { installMvuCoreMirror } from './mvu-core-mirror';
+import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+
+registerMfrsRuntimeBuild('数据库前端');
 
 type AutoCardUpdaterAPI = {
   __mfrsDatabaseScriptMarker__?: string;
