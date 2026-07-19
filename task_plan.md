@@ -3,7 +3,7 @@
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → bot bundle `296c14cd`）。
 
-下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0 已开始，业务源码实现尚未开始。
+下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0–T5 已完成，下一项为 T6 Chrome DevTools 真页验收。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -23,17 +23,18 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
-**阶段 HUD-UX-NEXT：三项交互调整实施 — in_progress（T0）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — active（T0–T5 complete；T6 可执行 / MFRS；T7 blocked until 授权）**
+**阶段 PROJECT-FLOW-FIX：修复项目流程 — P0–P9.4 complete（P9.5 会话保持可选）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；HUD 三项交互调整已完成规划并开始 T0，尚未改业务代码 |
-| 我要去哪里？ | 从最新 `origin/main` 新建 worktree，按 Phase 1–6 实施、真页验收并发布 |
-| 目标是什么？ | 抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向切换 |
-| 我学到了什么？ | autotag 在 main 推送后自动 bundle 并打标签，标签指向 bundle 提交（非 release 提交）是正常形态 |
-| 我做了什么？ | 完成三项需求的真实调用链、允许 API、风险、门禁与真页验收规划；业务源码未改 |
+| 我在哪里？ | 8.13.36 已发布；PROJECT-FLOW-FIX P0–P9.4 完成；feature worktree 真页已加载 DEV 本地 bundle（`650d209`/development）；T6 可继续人工细验 |
+| 我要去哪里？ | 继续 T6 人工细验/补齐 390；通过后进入 T7 发布评估；不 production 直到用户明确授权 |
+| 目标是什么？ | 让「源码 worktree == watch cwd == dist == 静态 root == Network loader」可证明，从而恢复 feature 真页验收 |
+| 我学到了什么？ | Fn+F5 旧链路不会启动静态服务也不会切 CDN；`tavern_sync` 不是 bundle 加载器；HTTP 200 ≠ feature bundle；会话锁必须由长生命周期进程持有 |
+| 我做了什么？ | 实现 mfrs-dev 预检/静态服务/会话锁/派生开发卡/运行时身份标记与校验，重写 `PROJECT_FLOW.md` 四条链路与流程矩阵，更新 README/tasks/launch |
 
 ## 硬约束（勿破）
 
@@ -50,9 +51,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 |----|-----|
 | 发布内容版本 | **8.13.36**（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → `296c14cd`） |
 | 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
-| 规划基线 | `origin/main@6ee6314`；实施须新建独立 worktree |
-| 工作树状态 | 主工作树有 watch 生成的 10 个 dev dist 修改；业务源码未改 |
-| 下一阶段 | **HUD-UX-NEXT T0 in_progress；业务实现尚未开始** |
+| 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
+| 工作树状态 | 实施 worktree 已完成 T0–T5；`75f4a9a..5dacd2e` 功能提交链白名单精确，一行 archive-ui lint 清理随 T5 规划同步，不含 dist/PNG/版本/package/lockfile；主工作树的 10 个 watch dev dist 未触碰 |
+| 下一阶段 | **HUD-UX-NEXT T6.0→T6.7（feature worktree + MFRS + DEV 卡）；T7 待授权** |
 
 ## 各阶段
 
@@ -227,15 +228,50 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
 - **状态：** complete（本轮只规划，业务源码未改）
 
-### 阶段 HUD-UX-NEXT：三项交互调整实施 — **in_progress（T0）**
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **active（T0–T5 complete；T6 可执行 / MFRS；T7 blocked until 授权）**
 
-- [ ] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
-- [ ] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
-- [ ] Phase 3：移除左栏玩家状态全库按钮，增加默认/沉浸双向可见切换。
-- [ ] Phase 4：同步 archive-ui 与 database frontend 门禁。
+- [x] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
+- [x] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
+- [x] Phase 3：移除左栏玩家状态全库按钮，增加默认/沉浸双向可见切换。
+- [x] Phase 4：同步 archive-ui 与 database frontend 门禁。
+- [x] 源码提交检查点：审查单源/所有权/状态唯一性，运行静态与聚合门禁，并核对既有提交链白名单。
 - [ ] Phase 5：Chrome DevTools 桌面/390px 真页及生命周期验收。
 - [ ] Phase 6：production build、精确提交、publish-card、CDN/tag 验收。
-- **状态：** in_progress（T0 规划入库与实施工作树；业务源码尚未修改）
+- **T1 审查：** 3 个 Medium 已全部关闭：宿主使用可信 document identity + 可信 realm `Element` + 原生 `Node.prototype.nodeType` getter 做品牌校验；异步 continuation 全部检查 current owner；商店/详情/编辑器使用所属文档、幂等 handle 与父实例统一回收。两份 JS `node --check`、frontend（21 项动态生命周期检查）、archive-ui（232 checks）及 `git diff --check` 均通过；独立反模式与代码质量复核均 APPROVE、无 High/Medium。
+- **T2 审查：** gacha slot 改为稳定 host，`hudGachaPanelHandle` 持有唯一实例；可信 realm/root 品牌校验、失败 API identity latch、普通 refresh 保留、设置/全库/切视图/unmount/deactivate/hot reload/pagehide 清理均已覆盖，旧简版 marker 为 0。frontend 21 项动态检查、目标语法检查和 `git diff --check` 通过；双路复核无 High/Medium。
+- **T3 审查：** `buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”；默认最新 AI 三栏的 7 键导航保持独立，其下新增展开图标 + “沉浸模式”，复用唯一 `hudImmersivePreferred`、`toggleHudImmersive()` 与快捷键。沉浸顶栏旧 shell 可幂等迁移为收起图标 + “默认模式”；进入/退出双向聚焦、mode 刷新恢复、非 latest 历史楼隐藏、60px 桌面/≤900px 右轨和 ≤640px 整行布局均完成。`git diff --check` 与双路代码质量复核通过，无 High/Medium。
+- **T4 审查：** archive-ui 旧 H7–H11 已替换为完整面板 host/mount/destroy、重试、刷新保留、清理和旧 marker 缺席契约；新增 I1–I5 覆盖 `buildHudDossierHtml()` 范围内的左栏精简，以及默认/沉浸双向按钮、单一 preference、快捷键、焦点和响应式布局。门禁使用 TypeScript AST 精确定位函数/分支/调用/赋值，从 AST 提取 CSS template 并按最终声明验证，同时屏蔽 HTML comments、限定静态字符串拼接。frontend 21 项动态检查、archive-ui 237 checks、聚合门禁、`node --check` 与 `git diff --check` 全部通过；独立反模式与质量复核均 APPROVE，仅既有 CDN_REF warning。
+- **T5 审查：** overlay/embedded 单源、抽卡句柄所有权和唯一 `hudImmersivePreferred` 状态真源均通过审查；`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend 21 项、archive-ui 237 checks、聚合门禁全部 PASS，archive-ui ESLint errors 为 0。v10 全文件 `better-tailwindcss` 会误扫 JavaScript template 内的非 Tailwind HTML/CSS；排除该已知插件误报后，非 Tailwind 规则与 `origin/main` 基线一致。`75f4a9a..5dacd2e` 提交链白名单精确，不含 dist/PNG/版本/package/lockfile，功能提交已推送且无需重复提交；独立 verification、反模式与质量复核均 APPROVE。
+- **状态：** paused（T0–T5 complete；T6 blocked/pending；28/44 complete，16 pending；按用户要求暂停）
+
+### 阶段 PROJECT-FLOW-FIX：修复项目流程 — **planning complete（待用户确认实施）**
+
+- [x] 梳理当前开发入口、worktree、watch、临时开发构建、真页注入、production 与发布链路中的流程缺陷。
+- [x] 明确要修复的流程范围、不可触碰边界、单一推荐路径和失败恢复策略。
+- [x] 制定可执行任务清单与验收标准；详细清单见 `docs/mfrs-redesign-phase0/TASKLIST_PROJECT_FLOW_FIX.md`。
+- [ ] 用户确认后按 P0 → P9 实施。
+- **状态：** planning complete（已产出 44 项任务清单；待用户确认实施范围和优先级）
+
+### PROJECT-FLOW-FIX 任务清单摘要（详见 TASKLIST_PROJECT_FLOW_FIX.md）
+
+| 阶段 | 目标 | 任务数 |
+|---|---|---|
+| P0 | 流程文档基线与四条链路矩阵 | 4 |
+| P1 | 本地静态服务器与身份探针 | 4 |
+| P2 | 工作树预检脚本 | 3 |
+| P3 | VS Code 任务拆分与 Fn+F5 重新定义 | 4 |
+| P4 | 本地开发卡派生器 | 5 |
+| P5 | Bundle 身份标记 | 3 |
+| P6 | watch 所有权锁 | 3 |
+| P7 | webpack 副作用门禁 | 3 |
+| P8 | 流程文档最终化与 README 更新 | 3 |
+| P9 | T6 恢复验收 | 5 |
+| 文档与规则 | 执行规则、边界、验收门槛 | 7 |
+| **合计** | | **44** |
+
+**不可触碰边界**：正式 `index.yaml`、发布版 YAML/PNG、`publish-card.mjs`、`mfrs-release-constants.mjs`、`bundle.yaml`、`webpack.config.ts` 默认行为、`tavern_sync.yaml` 正式配置、业务源码、现有门禁。
+
+**核心不变量**：源码 worktree == watch cwd == dist 所属 == 静态服务器 root == Network loader 来源。
 
 ## 合并关单
 
@@ -261,9 +297,10 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 ## 当前任务状态
 
 1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. **HUD-UX-NEXT 正在执行 T0**：规划自检已完成，尚未进入 Phase 1 业务实现；Phase 1–6 见 `PLAN_HUD_UX_NEXT.md`。
-3. 实施必须从最新 `origin/main` 新建 worktree，不继续使用旧 `feat-immersive-center-workspaces`。
-4. 主工作树当前 10 个 dist 修改是 watch 产物；业务源码和门禁未因本次规划改变。
+2. **HUD-UX-NEXT 已完成 T0–T5，当前暂停**：T6 已按 MFRS 流程重写清单（含 T6.0 环境门禁）；在 feature worktree + DEV 卡上可执行；T7 待 T6 通过且用户授权。进度见 TASKLIST_HUD_UX_NEXT.md（28/48）。
+3. **新增 PROJECT-FLOW-FIX**：下一任务为修复项目流程；先做流程缺陷梳理、边界确认和任务规划，暂不执行配置修改、构建、注入或页面交互。
+4. 后续如恢复 HUD 实施，仍使用 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` / `worktree-feat-hud-gacha-mode-toggle`，基线为 `origin/main@75f4a9a`；不使用旧 `feat-immersive-center-workspaces`。
+5. 用户原有 watch 由用户维护，不得启动、停止或接管；主工作树的 dev dist 不纳入任务提交。
 
 ## 遇到的错误
 
@@ -274,6 +311,8 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | 发版恢复时组合查询 package/tag 历史超时 | 1 次并行组合命令，14 秒超时 | 拆成小范围 `package.json` 当前值与目标提交查询，不重复全历史扫描 |
 | 规划同步首次 SHA-256 比较使用 PowerShell 泛型静态方法语法失败 | 1 次，未修改文件 | 改为分别计算 `Get-FileHash` 后比较字符串；三文件根目录/worktree 哈希一致 |
 | planning-with-files `check-complete.ps1` 无法识别本项目中文阶段格式 | 1 次，返回 `0/0 phases` | 不采信该结果；改用 HUD 阶段未勾选项/`in_progress` 定向扫描与 `git diff --check` 验收 |
+| 主会话组合执行多条 `rg`，其中无匹配查询按约定返回 exit 1，导致整组只读命令被误判失败 | 1 次；仅查询，未修改文件 | 拆分需要允许“无匹配”的查询并单独解释 exit 1，不把它当作源码失败 |
+| 审查代理在 PowerShell 命令文本中使用反引号，触发 PowerShell 解析失败 | 1 次；命令未成功执行，未修改文件 | 改用无反引号的字面量/独立命令读取源码，后续校验正常完成 |
 | 单文件暂存白名单检查把 PowerShell 标量字符串按字符索引，误报文件不匹配 | 1 次，未 commit/push | 用 `@(git diff --cached --name-only)` 强制数组后检查完整文件名 |
 | 迁移预检脚本中的 PowerShell 制表符转义与工具层 JavaScript 模板字符串冲突 | 1 次，脚本未执行且未修改文件 | 移除反引号转义，改用普通分隔文本后重跑只读预检 |
 | Windows PowerShell 旧版 .NET 不支持 `Convert.ToHexString` | 1 次，预检在汇总哈希显示阶段停止，未修改文件 | 改用兼容的 `BitConverter.ToString(...).Replace('-', '')` |
@@ -282,6 +321,8 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 | HUD-UX 文档发现的 3 个并行子任务被 CC Switch 本地代理返回 HTTP 503/429 | 连续 3 次，未修改文件 | 停止重复失败；主会话完成全部定向源码、文档与门禁读取并交叉核对 |
 | 规划收尾的全文件行尾扫描命中 `task_plan.md` 既有 Markdown 双空格硬换行 | 1 次；`git diff --check` 已通过 | 不改历史格式；改为检查本轮 diff 与新计划文件自身 |
 | HUD-UX 任务清单初稿统计写为 42 项，编号实数为 44 项 | 1 次，未进入实施 | 用编号正则复核后统一修正总数与待执行数为 44 |
+| T3 主线程两次把带引号 selector 的 `rg` / 固定字符串组合交给 PowerShell，分别被解析为 `unclosed group` 或额外路径参数 | 2 次；均为只读查询，未修改文件 | 停止复用该组合，改用严格 UTF-8 读取后的 `Select-String` / 独立字面量检查 |
+| T3 实现代理首次在 Node 内联命令中直接写中文路径，路径被代码页转换为 `?` | 1 次；命令未找到文件且未写入 | 改由 `git diff` 提供已解析路径，并使用 Unicode/宿主侧路径传递完成只读核对 |
 | 发送可见但点不动 | 实机 CDP | 8.13.13 `forceRecoverSendUi`（仍属 H5 可优化） |
 | 行动建议落不了库 | MagVar replace 缺路径 | 8.13.11 seed；根因仍是 C1 initvar 嵌套 |
 | BF-1 子代理重复/中断 `pnpm install` | 同一主工作区连续重试，导致 `node_modules` 半安装且 tracked dist 出现删除 | 作废旧代理；仅恢复主 dist 到 HEAD；在 `D:\project\tavern_helper_template-bf1` / `codex/bf1-recovery` 隔离续做，保留主目录 watch 与 `node_modules` |
@@ -305,7 +346,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
 当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）。
-下一阶段 HUD-UX-NEXT 已规划、未实施；再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md，并从最新 origin/main 新建独立 worktree。
+HUD-UX-NEXT 的 T0–T5 已完成，下一项为 T6.1 Chrome DevTools 桌面完整面板真页验收；T6 尚未开始。再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
+Worktree：D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle
+分支：worktree-feat-hud-gacha-mode-toggle（基线 origin/main@75f4a9a）
 ```
 
 ## 备注

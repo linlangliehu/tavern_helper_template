@@ -1,6 +1,3 @@
-﻿// 键盘 F5（笔记本常为 Fn+F5）= VS Code「开始调试」= 第一项 MFRS 实时开发。
-// 注意：这是快捷键，不是在终端里输入文字 Fn+F5。
-// 启动：预检 → 551x → watch → 调试 Chrome(9222)。仍需 pnpm mfrs:dev-card + 酒馆加载 DEV 卡。
 {
   "version": "0.2.0",
   "configurations": [
@@ -18,7 +15,20 @@
       "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
     },
     {
-      "name": "仅附加到已打开的调试 Chrome",
+      "name": "编译代码并调试酒馆网页 (Chrome)",
+      "type": "chrome",
+      "request": "attach",
+      "preLaunchTask": "开始任务",
+      "port": 9222,
+      "timeout": 30000,
+      "sourceMapPathOverrides": {
+        "src://tavern_helper_template/*": "${workspaceFolder}/*",
+        "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
+      },
+      "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+    },
+    {
+      "name": "仅附加到 Chrome",
       "type": "chrome",
       "request": "attach",
       "port": 9222,

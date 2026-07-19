@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
@@ -19,6 +20,8 @@ const sourcePaths = {
 };
 
 const sources = Object.fromEntries(Object.entries(sourcePaths).map(([key, path]) => [key, readFileSync(path, 'utf8')]));
+const messageAst = ts.createSourceFile(sourcePaths.message, sources.message, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+const visualizerAst = ts.createSourceFile(sourcePaths.visualizer, sources.visualizer, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 
 const stages = [
   ['baseline', 'v8.7.4 currently provable source contracts'],
@@ -49,6 +52,350 @@ function between(source, start, end) {
   const endIndex = source.indexOf(end, startIndex + start.length);
   assert.notEqual(endIndex, -1, `missing block end: ${end}`);
   return source.slice(startIndex, endIndex);
+}
+
+function astNodes(root, predicate) {
+  const found = [];
+  const visit = node => {
+    if (predicate(node)) found.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(root);
+  return found;
+}
+
+function oneAstNode(root, predicate, label) {
+  const found = astNodes(root, predicate);
+  assert.equal(found.length, 1, `expected one AST node: ${label}`);
+  return found[0];
+}
+
+function messageFunction(name) {
+  return oneAstNode(messageAst, node => ts.isFunctionDeclaration(node) && node.name?.text === name, `function ${name}`);
+}
+
+function messageTypeAlias(name) {
+  return oneAstNode(messageAst, node => ts.isTypeAliasDeclaration(node) && node.name.text === name, `type ${name}`);
+}
+
+function variableDeclarations(name, root = messageAst) {
+  return astNodes(root, node => ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === name);
+}
+
+function variableInitializer(name, root = messageAst) {
+  const declarations = variableDeclarations(name, root);
+  assert.equal(declarations.length, 1, `expected one variable declaration: ${name}`);
+  const [declaration] = declarations;
+  assert.ok(declaration.initializer, `variable must have initializer: ${name}`);
+  return declaration.initializer;
+}
+
+function unwrapExpression(expression) {
+  let current = expression;
+  while (ts.isParenthesizedExpression(current) || ts.isAsExpression(current) ||
+    ts.isTypeAssertionExpression(current) || ts.isNonNullExpression(current)) {
+    current = current.expression;
+  }
+  return current;
+}
+
+function literalValue(node) {
+  const value = node && unwrapExpression(node);
+  if (value && (ts.isStringLiteral(value) || ts.isNoSubstitutionTemplateLiteral(value))) return value.text;
+  if (value && ts.isNumericLiteral(value)) return Number(value.text);
+  if (value?.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (value?.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (value?.kind === ts.SyntaxKind.NullKeyword) return null;
+  return null;
+}
+
+function memberName(expression) {
+  const value = unwrapExpression(expression);
+  if (ts.isIdentifier(value)) return value.text;
+  if (ts.isPropertyAccessExpression(value)) return value.name.text;
+  if (ts.isElementAccessExpression(value)) return literalValue(value.argumentExpression);
+  return null;
+}
+
+function memberReceiver(expression) {
+  const value = unwrapExpression(expression);
+  return ts.isPropertyAccessExpression(value) || ts.isElementAccessExpression(value) ? unwrapExpression(value.expression) : null;
+}
+
+function expressionPath(expression) {
+  const value = unwrapExpression(expression);
+  if (ts.isIdentifier(value)) return value.text;
+  if (value.kind === ts.SyntaxKind.ThisKeyword) return 'this';
+  if (ts.isPropertyAccessExpression(value) || ts.isElementAccessExpression(value)) {
+    const receiver = expressionPath(value.expression);
+    const name = memberName(value);
+    return receiver && name ? `${receiver}.${name}` : null;
+  }
+  return null;
+}
+
+function callsNamed(root, name) {
+  return astNodes(root, node => ts.isCallExpression(node) && memberName(node.expression) === name);
+}
+
+function callArgumentsEqual(call, expected) {
+  if (call.arguments.length !== expected.length) return false;
+  return expected.every((value, index) => {
+    if (value === undefined) return Boolean(call.arguments[index]);
+    if (typeof value === 'string' && value.startsWith('$path:')) {
+      return expressionPath(call.arguments[index]) === value.slice('$path:'.length);
+    }
+    return literalValue(call.arguments[index]) === value;
+  });
+}
+
+function callExpressionMatches(expression, name, expected = [], receiverPath = null) {
+  const value = unwrapExpression(expression);
+  return ts.isCallExpression(value) && memberName(value.expression) === name && callArgumentsEqual(value, expected) &&
+    (receiverPath === null || expressionPath(memberReceiver(value.expression)) === receiverPath);
+}
+
+function logicalTerms(expression, operatorKind) {
+  const value = unwrapExpression(expression);
+  if (!ts.isBinaryExpression(value) || value.operatorToken.kind !== operatorKind) return [value];
+  return [...logicalTerms(value.left, operatorKind), ...logicalTerms(value.right, operatorKind)];
+}
+
+function binaryMatches(expression, operatorKind, leftPath, rightValue) {
+  const value = unwrapExpression(expression);
+  if (!ts.isBinaryExpression(value) || value.operatorToken.kind !== operatorKind || expressionPath(value.left) !== leftPath) return false;
+  return typeof rightValue === 'string' && rightValue.startsWith('$path:')
+    ? expressionPath(value.right) === rightValue.slice('$path:'.length)
+    : literalValue(value.right) === rightValue;
+}
+
+function negates(expression, predicate) {
+  const value = unwrapExpression(expression);
+  return ts.isPrefixUnaryExpression(value) && value.operator === ts.SyntaxKind.ExclamationToken && predicate(unwrapExpression(value.operand));
+}
+
+function callsMatching(root, name, expected = []) {
+  return callsNamed(root, name).filter(call => callArgumentsEqual(call, expected));
+}
+
+function oneCall(root, name, expected, label) {
+  const calls = callsMatching(root, name, expected);
+  assert.equal(calls.length, 1, `expected one call: ${label}`);
+  return calls[0];
+}
+
+function directStatements(statement) {
+  return ts.isBlock(statement) ? [...statement.statements] : [statement];
+}
+
+function oneDirectCall(statement, name, expected, label) {
+  const calls = directStatements(statement)
+    .filter(ts.isExpressionStatement)
+    .map(node => unwrapExpression(node.expression))
+    .filter(node => callExpressionMatches(node, name, expected));
+  assert.equal(calls.length, 1, `expected one direct call: ${label}`);
+  return calls[0];
+}
+
+function assignmentsToMember(root, receiverPath, property) {
+  return astNodes(root, node => ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+    memberName(node.left) === property && expressionPath(memberReceiver(node.left)) === receiverPath);
+}
+
+function assignmentsToIdentifier(root, name) {
+  return astNodes(root, node => ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+    ts.isIdentifier(unwrapExpression(node.left)) && unwrapExpression(node.left).text === name);
+}
+
+function nodeContains(outer, inner) {
+  return inner.getStart(messageAst) >= outer.getStart(messageAst) && inner.end <= outer.end;
+}
+
+function ifStatements(root, predicate) {
+  return astNodes(root, node => ts.isIfStatement(node) && predicate(node));
+}
+
+function oneIf(root, predicate, label) {
+  const matches = ifStatements(root, predicate);
+  assert.equal(matches.length, 1, `expected one if statement: ${label}`);
+  return matches[0];
+}
+
+function containsIdentifier(root, name) {
+  return astNodes(root, node => ts.isIdentifier(node) && node.text === name).length > 0;
+}
+
+function containsBinary(root, operatorKind, leftPath, rightValue) {
+  return astNodes(root, node => binaryMatches(node, operatorKind, leftPath, rightValue)).length > 0;
+}
+
+function directReturn(statement) {
+  if (ts.isReturnStatement(statement)) return statement;
+  if (ts.isBlock(statement) && statement.statements.length === 1 && ts.isReturnStatement(statement.statements[0])) return statement.statements[0];
+  return null;
+}
+
+function belongsToFunction(node, functionNode) {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (ts.isFunctionLike(parent)) return parent === functionNode;
+  }
+  return false;
+}
+
+function templateRaw(node) {
+  const value = unwrapExpression(node);
+  assert.ok(ts.isTemplateExpression(value) || ts.isNoSubstitutionTemplateLiteral(value), 'expected template literal AST');
+  return sources.message.slice(value.getStart(messageAst) + 1, value.end - 1);
+}
+
+function returnedTemplate(functionNode) {
+  const returns = astNodes(functionNode.body,
+    node => ts.isReturnStatement(node) && node.expression && belongsToFunction(node, functionNode));
+  assert.equal(returns.length, 1, `expected one returned template in ${functionNode.name?.text || 'function'}`);
+  return templateRaw(returns[0].expression);
+}
+
+function assignedTemplate(functionNode, receiverPath, property) {
+  const assignments = assignmentsToMember(functionNode, receiverPath, property).filter(node =>
+    [ts.SyntaxKind.TemplateExpression, ts.SyntaxKind.NoSubstitutionTemplateLiteral].includes(unwrapExpression(node.right).kind));
+  assert.equal(assignments.length, 1, `expected one template assignment to ${receiverPath}.${property}`);
+  return templateRaw(assignments[0].right);
+}
+
+function astLiteralTexts(root) {
+  const templateKinds = new Set([ts.SyntaxKind.TemplateHead, ts.SyntaxKind.TemplateMiddle, ts.SyntaxKind.TemplateTail]);
+  return astNodes(root, node => ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || templateKinds.has(node.kind))
+    .map(node => node.text);
+}
+
+function staticConcatenatedString(node) {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isParenthesizedExpression(node)) return staticConcatenatedString(node.expression);
+  if (!ts.isBinaryExpression(node) || node.operatorToken.kind !== ts.SyntaxKind.PlusToken) return null;
+  const left = staticConcatenatedString(node.left);
+  const right = staticConcatenatedString(node.right);
+  return left === null || right === null ? null : left + right;
+}
+
+function astCodeTexts(root) {
+  return astNodes(root, node => ts.isIdentifier(node) || ts.isStringLiteral(node) ||
+    ts.isNoSubstitutionTemplateLiteral(node) || [ts.SyntaxKind.TemplateHead, ts.SyntaxKind.TemplateMiddle, ts.SyntaxKind.TemplateTail].includes(node.kind))
+    .map(node => node.text);
+}
+
+function stripHtmlComments(source) {
+  return source.replace(/<!--[\s\S]*?(?:-->|$)/g, '');
+}
+
+function cssTemplateContaining(marker) {
+  const candidates = astNodes(messageAst, node => ts.isBinaryExpression(node) &&
+    node.operatorToken.kind === ts.SyntaxKind.EqualsToken && memberName(node.left) === 'textContent' &&
+    (ts.isTemplateExpression(node.right) || ts.isNoSubstitutionTemplateLiteral(node.right)))
+    .map(node => templateRaw(node.right))
+    .filter(css => css.includes(marker));
+  assert.equal(candidates.length, 1, `expected one CSS template containing ${marker}`);
+  return candidates[0];
+}
+
+function maskCharacter(character) {
+  return character === '\n' || character === '\r' ? character : ' ';
+}
+
+function maskCss(source, maskStrings = false) {
+  const output = source.split('');
+  let quote = '';
+  for (let index = 0; index < source.length; index += 1) {
+    if (quote) {
+      if (maskStrings) output[index] = maskCharacter(source[index]);
+      if (source[index] === '\\') {
+        index += 1;
+        if (maskStrings && index < source.length) output[index] = maskCharacter(source[index]);
+      } else if (source[index] === quote) quote = '';
+      continue;
+    }
+    if (source[index] === "'" || source[index] === '"') {
+      quote = source[index];
+      if (maskStrings) output[index] = maskCharacter(source[index]);
+      continue;
+    }
+    if (source[index] === '/' && source[index + 1] === '*') {
+      let end = index + 2;
+      while (end < source.length && !(source[end] === '*' && source[end + 1] === '/')) end += 1;
+      end = Math.min(source.length, end + 2);
+      for (let cursor = index; cursor < end; cursor += 1) output[cursor] = maskCharacter(source[cursor]);
+      index = end - 1;
+    }
+  }
+  return output.join('');
+}
+
+const stripCssComments = source => maskCss(source);
+const cssCodeMask = source => maskCss(source, true);
+
+function cssBlockAt(source, matchIndex, matchText, label) {
+  const uncommented = stripCssComments(source);
+  const relativeOpen = matchText.lastIndexOf('{');
+  assert.notEqual(relativeOpen, -1, `missing CSS opening brace: ${label}`);
+  const openIndex = matchIndex + relativeOpen;
+  const codeMask = cssCodeMask(source);
+  let depth = 0;
+  let endIndex = -1;
+  for (let index = openIndex; index < codeMask.length; index += 1) {
+    if (codeMask[index] === '{') depth += 1;
+    else if (codeMask[index] === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        endIndex = index;
+        break;
+      }
+    }
+  }
+  assert.notEqual(endIndex, -1, `missing CSS closing brace: ${label}`);
+  return { start: matchIndex, end: endIndex + 1, text: uncommented.slice(matchIndex, endIndex + 1) };
+}
+
+function findCssBlocks(source, pattern, label) {
+  const uncommented = stripCssComments(source);
+  const flags = pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`;
+  const regex = new RegExp(pattern.source, flags);
+  const matches = [...uncommented.matchAll(regex)];
+  return matches.map(match => cssBlockAt(source, match.index, match[0], label));
+}
+
+function cssBlocksMatching(source, pattern, label) {
+  const matches = findCssBlocks(source, pattern, label);
+  assert.ok(matches.length > 0, `missing CSS block: ${label}`);
+  return matches;
+}
+
+function oneCssBlock(source, pattern, label) {
+  const blocks = cssBlocksMatching(source, pattern, label);
+  assert.equal(blocks.length, 1, `expected one CSS block: ${label}`);
+  return blocks[0];
+}
+
+function lastCssDeclaration(ruleText, property) {
+  const body = ruleText.slice(ruleText.lastIndexOf('{') + 1, ruleText.lastIndexOf('}'));
+  const mask = cssCodeMask(body);
+  const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(?:^|;)\\s*${escapedProperty}\\s*:\\s*([^;}]+)`, 'g');
+  let value = null;
+  for (const match of mask.matchAll(pattern)) value = match[1].trim().replace(/\s+/g, ' ');
+  return value;
+}
+
+function finalCssDeclaration(source, selectorPattern, property, viewportWidth = Number.POSITIVE_INFINITY) {
+  const mediaBlocks = findCssBlocks(source, /@media\b[^{]*\{/g, 'CSS media').map(block => ({
+    ...block,
+    maxWidth: Number(block.text.match(/max-width\s*:\s*(\d+)px/)?.[1] ?? Number.NaN),
+  }));
+  let value = null;
+  for (const rule of findCssBlocks(source, selectorPattern, `CSS selector for ${property}`)) {
+    const containers = mediaBlocks.filter(media => media.start < rule.start && rule.end <= media.end);
+    if (containers.some(media => !Number.isFinite(media.maxWidth) || viewportWidth > media.maxWidth)) continue;
+    value = lastCssDeclaration(rule.text, property) ?? value;
+  }
+  return value;
 }
 
 function tavernRegexBlock(name) {
@@ -1219,59 +1566,472 @@ addCheck('phase5', 'H6 memory edit state resets on view switch / unmount / destr
   );
   assert.ok(unregister.includes('hudMemoryEditState = null'), 'unregister must clear memory edit state');
 });
-addCheck('phase5', 'H7 gacha panel embeds inline single/ten pull buttons and pool selector', () => {
-  const gacha = between(sources.message, 'function buildHudGachaPanelHtml', 'function buildHudSystemPanelHtml');
-  assert.ok(gacha.includes('data-mfrs-hud-gacha-action="single"'), 'gacha panel must have single pull button');
-  assert.ok(gacha.includes('data-mfrs-hud-gacha-action="ten"'), 'gacha panel must have ten pull button');
-  assert.ok(gacha.includes('data-mfrs-hud-gacha-pool'), 'gacha panel must have pool type selector');
-  assert.ok(gacha.includes('hudGachaPoolType'), 'gacha panel must track selected pool type');
-  // still keeps the full-panel button
-  assert.ok(gacha.includes('data-mfrs-hud="open-gacha"'), 'gacha panel must still offer the full panel button');
-});
-addCheck('phase5', 'H8 handleHudShellClick dispatches gacha pull and pool selection', () => {
-  const click = between(sources.message, 'function handleHudShellClick', 'function handleHudKeydown');
-  assert.ok(click.includes('data-mfrs-hud-gacha-action'), 'click handler must intercept gacha action buttons');
-  assert.ok(click.includes("act === 'single'"), 'must handle single pull');
-  assert.ok(click.includes("act === 'ten'"), 'must handle ten pull');
-  assert.ok(click.includes('executeHudGachaPull'), 'must call executeHudGachaPull');
-  assert.ok(click.includes('data-mfrs-hud-gacha-pool'), 'must handle pool type selection');
-  assert.ok(click.includes('hudGachaPoolType'), 'must write the selected pool type');
-});
-addCheck('phase5', 'H9 gacha pull calls MFRS.single/ten and renders inline results', () => {
-  const pull = between(sources.message, 'async function executeHudGachaPull', 'function collectHudMemoryFormData');
-  assert.ok(pull.includes('mfrs[kind]'), 'must call MFRS.single or MFRS.ten');
-  assert.ok(pull.includes('hudGachaPoolType'), 'must pass the selected pool type');
-  assert.ok(pull.includes('hudGachaLastResult'), 'must store the result');
-  assert.ok(pull.includes('refreshHudGachaSlot'), 'must refresh the gacha slot after pull');
-  const resultHtml = between(sources.message, 'function buildHudGachaResultHtml', 'function buildHudSystemPanelHtml');
-  assert.ok(resultHtml.includes('mfrs-hud-gacha-item'), 'result must render item elements');
-  assert.ok(resultHtml.includes('rarity'), 'result must display rarity info');
-  assert.ok(resultHtml.includes('stars'), 'result must show rarity stars');
-  assert.ok(resultHtml.includes('color'), 'result must use rarity color');
-});
-addCheck('phase5', 'H10 gacha result state resets on view switch / unmount / destroy / unregister', () => {
-  const setView = between(sources.message, 'function setHudView', 'function refreshHudBusinessPanels');
-  assert.ok(setView.includes("view !== 'gacha'"), 'setHudView must clear gacha result when leaving gacha view');
-  assert.ok(setView.includes('hudGachaLastResult = null'), 'setHudView must null the gacha result');
-  const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');
-  assert.ok(unmount.includes('hudGachaLastResult = null'), 'unmount must clear gacha result');
-  const destroy = between(sources.message, 'function destroyHudImmersive', '$(() => {');
-  assert.ok(destroy.includes('hudGachaLastResult = null'), 'destroy must clear gacha result');
-  const unregister = between(
-    sources.message,
-    'function unregisterHudDatabaseUpdateCallback',
-    'function restoreFixedHostFromHudCabinet',
+addCheck('phase5', 'H7 gacha center renders a stable full-panel host with explicit retry state', () => {
+  const panelHtml = stripHtmlComments(returnedTemplate(messageFunction('buildHudGachaPanelHtml')));
+  const unavailableHtml = stripHtmlComments(returnedTemplate(messageFunction('buildHudGachaUnavailableHtml')));
+  assert.equal(
+    (panelHtml.match(/\bdata-mfrs-hud-gacha-host\b/g) || []).length,
+    1,
+    'gacha center must expose exactly one stable embedded-panel host',
   );
-  assert.ok(unregister.includes('hudGachaLastResult = null'), 'unregister must clear gacha result');
+  assert.match(
+    unavailableHtml,
+    /<div\b(?=[^>]*\bdata-mfrs-hud-gacha-state\b)(?=[^>]*\brole\s*=\s*["']status["'])[^>]*>/,
+    'unavailable state must expose status semantics regardless of attribute order',
+  );
+  assert.ok(unavailableHtml.includes('data-mfrs-hud-gacha-retry'), 'unavailable state must expose an explicit retry control');
+  assert.ok(panelHtml.includes('完整抽卡系统 API 尚未就绪'), 'initial state must explain that the full API is unavailable');
 });
-addCheck('phase5', 'H11 CSS exists for memory CRUD form and gacha result items', () => {
+addCheck('phase5', 'H8 gacha mount uses an owned handle and validates the trusted host root', () => {
+  const handleType = messageTypeAlias('HudGachaPanelHandle');
+  const rootMember = oneAstNode(handleType, node => ts.isPropertySignature(node) && memberName(node.name) === 'root', 'handle root');
+  assert.equal(rootMember.type?.getText(messageAst), 'Element', 'gacha handle root must be an Element');
+  const destroyMember = oneAstNode(handleType, node => ts.isPropertySignature(node) && memberName(node.name) === 'destroy', 'handle destroy');
+  assert.ok(ts.isFunctionTypeNode(destroyMember.type), 'gacha handle must expose destroy ownership');
+
+  const apiType = messageTypeAlias('MfrsGachaApi');
+  const mountMember = oneAstNode(apiType, node => ts.isPropertySignature(node) && memberName(node.name) === 'mountPanel', 'mountPanel API');
+  assert.ok(ts.isFunctionTypeNode(mountMember.type), 'mountPanel must remain a callable API');
+  assert.equal(mountMember.type.parameters[0].type.getText(messageAst), 'HTMLElement', 'mountPanel container must be HTMLElement');
+  const optionsType = mountMember.type.parameters[1].type;
+  assert.ok(ts.isTypeLiteralNode(optionsType), 'mountPanel options must remain an object type');
+  const onCloseMember = oneAstNode(optionsType, node => ts.isPropertySignature(node) && memberName(node.name) === 'onClose', 'onClose option');
+  assert.ok(ts.isFunctionTypeNode(onCloseMember.type), 'mountPanel onClose must remain callable');
+  assert.equal(mountMember.type.type.getText(messageAst), 'HudGachaPanelHandle', 'mountPanel must return its owned handle');
+
+  const rootGuard = messageFunction('isHudGachaPanelRoot');
+  const ownerIf = oneIf(rootGuard, statement =>
+    containsBinary(statement.expression, ts.SyntaxKind.ExclamationEqualsEqualsToken, 'value.ownerDocument', '$path:host.ownerDocument'),
+  'trusted ownerDocument guard');
+  assert.equal(literalValue(directReturn(ownerIf.thenStatement)?.expression), false, 'foreign-document roots must be rejected');
+  assert.equal(expressionPath(variableInitializer('HostElementCtor', rootGuard)), 'host.ownerDocument.defaultView.Element');
+  assert.equal(expressionPath(variableInitializer('NodeCtor', rootGuard)), 'host.ownerDocument.defaultView.Node');
+  const descriptorCall = oneCall(rootGuard, 'getOwnPropertyDescriptor', ['$path:NodeCtor.prototype', 'nodeType'], 'nodeType getter');
+  assert.equal(expressionPath(memberReceiver(descriptorCall.expression)), 'Object', 'nodeType getter must come from Object');
+  const brandedReturn = oneAstNode(rootGuard, node => ts.isReturnStatement(node) && node.expression &&
+    containsBinary(node.expression, ts.SyntaxKind.InstanceOfKeyword, 'value', '$path:HostElementCtor'), 'trusted root return');
+  const brandTerms = logicalTerms(brandedReturn.expression, ts.SyntaxKind.AmpersandAmpersandToken);
+  assert.equal(brandTerms.length, 4, 'root brand checks must remain a four-way conjunction');
+  assert.equal(brandTerms.filter(term => {
+    const value = unwrapExpression(term);
+    return ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+      ts.isTypeOfExpression(unwrapExpression(value.left)) && expressionPath(unwrapExpression(value.left).expression) === 'nodeTypeGetter' &&
+      literalValue(value.right) === 'function';
+  }).length, 1, 'native nodeType getter must be callable');
+  assert.equal(brandTerms.filter(term => binaryMatches(term, ts.SyntaxKind.InstanceOfKeyword, 'value', '$path:HostElementCtor')).length, 1,
+    'root must use the trusted-realm Element brand');
+  assert.equal(brandTerms.filter(term => {
+    const value = unwrapExpression(term);
+    return ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.EqualsEqualsEqualsToken &&
+      literalValue(value.right) === 1 && callExpressionMatches(value.left, 'call', ['$path:value'], 'nodeTypeGetter');
+  }).length, 1, 'root must pass the native element nodeType check');
+  assert.equal(brandTerms.filter(term => binaryMatches(term, ts.SyntaxKind.EqualsEqualsEqualsToken,
+    'value.parentElement', '$path:host')).length, 1, 'root must be directly owned by the stable host');
+
+  const mount = messageFunction('ensureHudGachaPanelMounted');
+  assert.equal(expressionPath(variableInitializer('mountPanel', mount)), 'hostWindow.MFRS.mountPanel', 'HUD must resolve mountPanel');
+  const mountCall = oneCall(mount, 'mountPanel', ['$path:host', undefined], 'embedded gacha mount');
+  const mountOptions = unwrapExpression(mountCall.arguments[1]);
+  assert.ok(ts.isObjectLiteralExpression(mountOptions), 'embedded mount must pass an options object');
+  const onClose = oneAstNode(mountOptions, node => ts.isPropertyAssignment(node) && memberName(node.name) === 'onClose', 'mount onClose');
+  assert.ok(ts.isArrowFunction(onClose.initializer), 'embedded mount onClose must remain an arrow callback');
+  oneCall(onClose.initializer, 'setHudView', ['story'], 'embedded mount close returns to story');
+  const validationIf = oneIf(mount, statement =>
+    callsMatching(statement.expression, 'isHudGachaPanelRoot', ['$path:handle.root', '$path:host']).length === 1 &&
+    astNodes(statement.expression, node => ts.isTypeOfExpression(node) && expressionPath(node.expression) === 'handle.destroy').length === 1,
+  'mounted handle validation');
+  const invalidTerms = logicalTerms(validationIf.expression, ts.SyntaxKind.BarBarToken);
+  assert.equal(invalidTerms.length, 3, 'invalid handle guard must remain a three-way disjunction');
+  assert.equal(invalidTerms.filter(term => negates(term, value => expressionPath(value) === 'handle')).length, 1,
+    'missing handles must be rejected');
+  assert.equal(invalidTerms.filter(term => negates(term, value =>
+    callExpressionMatches(value, 'isHudGachaPanelRoot', ['$path:handle.root', '$path:host']))).length, 1,
+  'untrusted roots must be rejected');
+  assert.equal(invalidTerms.filter(term => {
+    const value = unwrapExpression(term);
+    return ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken &&
+      ts.isTypeOfExpression(unwrapExpression(value.left)) && expressionPath(unwrapExpression(value.left).expression) === 'handle.destroy' &&
+      literalValue(value.right) === 'function';
+  }).length, 1, 'handle.destroy must be a function');
+  const invalidDestroy = oneDirectCall(validationIf.thenStatement, 'destroy', [], 'invalid mounted handle cleanup');
+  assert.equal(expressionPath(memberReceiver(invalidDestroy.expression)), 'handle', 'invalid cleanup must destroy the returned handle');
+  const handleAssignments = assignmentsToIdentifier(mount, 'hudGachaPanelHandle').filter(
+    node => expressionPath(node.right) === 'handle',
+  );
+  assert.equal(handleAssignments.length, 1, 'validated handle must become the sole HUD owner');
+  assert.ok(handleAssignments[0].getStart(messageAst) > validationIf.end, 'handle ownership must occur after validation');
+});
+addCheck('phase5', 'H9 gacha mount failure is latched by API identity and explicit retry can recover', () => {
+  const failedFlag = variableDeclarations('hudGachaPanelMountFailed');
+  assert.equal(failedFlag.length, 1, 'mount failure latch must have one declaration');
+  assert.equal(literalValue(failedFlag[0].initializer), false, 'mount failure latch must start clear');
+  const failedApi = variableDeclarations('hudGachaPanelFailedApi');
+  assert.equal(failedApi.length, 1, 'failed API identity must have one declaration');
+  assert.equal(failedApi[0].type?.getText(messageAst), "MfrsGachaApi['mountPanel']");
+  assert.equal(expressionPath(failedApi[0].initializer), 'undefined', 'failed API identity must start empty');
+  const mount = messageFunction('ensureHudGachaPanelMounted');
+  const failureGuard = oneIf(mount, statement => {
+    const terms = logicalTerms(statement.expression, ts.SyntaxKind.AmpersandAmpersandToken);
+    return terms.length === 3 && terms.some(term => expressionPath(term) === 'hudGachaPanelMountFailed') &&
+      terms.some(term => binaryMatches(term, ts.SyntaxKind.EqualsEqualsEqualsToken, 'hudGachaPanelFailedApi', '$path:mountPanel')) &&
+      terms.some(term => negates(term, value => expressionPath(value) === 'force'));
+  }, 'same failed API identity guard');
+  assert.ok(directReturn(failureGuard.thenStatement), 'same failed API identity guard must return');
+  const missingApi = oneIf(mount, statement => astNodes(statement.expression, node => ts.isBinaryExpression(node) &&
+    node.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken &&
+    ts.isTypeOfExpression(unwrapExpression(node.left)) &&
+    expressionPath(unwrapExpression(node.left).expression) === 'mountPanel' && literalValue(node.right) === 'function').length === 1,
+  'missing gacha mount API branch');
+  const replacementDestroy = callsMatching(mount, 'destroyHudGachaPanel').filter(
+    call => call.getStart(messageAst) > failureGuard.end && call.end < missingApi.getStart(messageAst),
+  );
+  assert.equal(replacementDestroy.length, 1, 'a changed mount API identity must reach the replacement destroy path');
+  assert.equal(callsMatching(missingApi.thenStatement, 'recordHudGachaPanelMountFailure', ['$path:mountPanel']).length, 1,
+    'missing API branch must record exactly one failed identity');
+  const mountCatch = oneAstNode(mount, node => ts.isCatchClause(node), 'gacha mount catch branch');
+  assert.equal(callsMatching(mountCatch.block, 'recordHudGachaPanelMountFailure', ['$path:mountPanel']).length, 1,
+    'throwing API branch must record exactly one failed identity');
+  const mountTry = oneAstNode(mount, node => ts.isTryStatement(node), 'gacha mount try statement');
+  const successClear = oneCall(mountTry.tryBlock, 'clearHudGachaPanelMountFailure', [], 'successful mount failure reset');
+  const successAssignment = assignmentsToIdentifier(mountTry.tryBlock, 'hudGachaPanelHandle').filter(
+    node => expressionPath(node.right) === 'handle',
+  );
+  assert.equal(successAssignment.length, 1, 'successful mount must claim its handle once');
+  assert.ok(successClear.end < successAssignment[0].getStart(messageAst), 'failure state must clear before publishing the handle');
+  oneCall(
+    mountCatch.block,
+    'renderHudGachaUnavailable',
+    ['$path:host', '完整抽卡系统挂载失败', undefined],
+    'mount failure state',
+  );
+  const click = messageFunction('handleHudShellClick');
+  const retryTarget = unwrapExpression(variableInitializer('gachaRetryBtn', click));
+  assert.ok(ts.isCallExpression(retryTarget) && memberName(retryTarget.expression) === 'closest' &&
+    expressionPath(memberReceiver(retryTarget.expression)) === 'target' &&
+    callArgumentsEqual(retryTarget, ['[data-mfrs-hud-gacha-retry]']), 'retry selector must remain bound');
+  const retryIf = oneIf(click, statement => expressionPath(statement.expression) === 'gachaRetryBtn', 'gacha retry branch');
+  const retryMount = oneDirectCall(retryIf.thenStatement, 'ensureHudGachaPanelMounted', ['$path:shell', true], 'forced gacha retry');
+  const retryReturns = directStatements(retryIf.thenStatement).filter(ts.isReturnStatement);
+  assert.equal(retryReturns.length, 1, 'retry branch must stop dispatch');
+  assert.ok(retryMount.end < retryReturns[0].getStart(messageAst), 'forced retry must be directly reachable before branch return');
+});
+addCheck('phase5', 'H10 ordinary HUD refresh preserves a valid mounted gacha root', () => {
+  const mount = messageFunction('ensureHudGachaPanelMounted');
+  const currentRootIf = oneIf(mount, statement => {
+    const terms = logicalTerms(statement.expression, ts.SyntaxKind.AmpersandAmpersandToken);
+    return terms.length === 2 && terms.some(term => expressionPath(term) === 'currentRoot') &&
+      terms.some(term => callExpressionMatches(term, 'isHudGachaPanelRoot', ['$path:currentRoot', '$path:host']));
+  }, 'valid current gacha root guard');
+  assert.ok(directReturn(currentRootIf.thenStatement), 'a valid mounted root must survive ordinary ensure calls');
+  const businessRefresh = messageFunction('refreshHudBusinessPanels');
+  const hostRecoveryGuard = oneIf(businessRefresh, statement => {
+    const terms = logicalTerms(statement.expression, ts.SyntaxKind.AmpersandAmpersandToken);
+    return terms.length === 2 && terms.some(term => expressionPath(term) === 'gachaSlot') && terms.some(term =>
+      negates(term, value => callExpressionMatches(value, 'querySelector', ['[data-mfrs-hud-gacha-host]'], 'gachaSlot')));
+  }, 'gacha host recovery guard');
+  const hostAssignments = assignmentsToMember(businessRefresh, 'gachaSlot', 'innerHTML').filter(node =>
+    ts.isCallExpression(unwrapExpression(node.right)) && memberName(unwrapExpression(node.right).expression) === 'buildHudGachaPanelHtml');
+  assert.equal(hostAssignments.length, 1, 'refresh must have exactly one gacha host rebuild assignment');
+  assert.ok(ts.isExpressionStatement(hostAssignments[0].parent) && hostAssignments[0].parent.parent === hostRecoveryGuard.thenStatement,
+    'host rebuild must be a direct statement inside the missing-host guard');
+  const panelsRefresh = messageFunction('refreshHudPanels');
+  const renderKeyIf = oneIf(panelsRefresh, statement => containsIdentifier(statement.expression, 'force') &&
+    containsBinary(statement.expression, ts.SyntaxKind.EqualsEqualsEqualsToken, 'renderKey', '$path:hudPanelsRenderKey'),
+  'HUD render-key fast path');
+  const ensureCalls = callsMatching(panelsRefresh, 'ensureHudGachaPanelMounted', ['$path:shell']).filter(
+    call => call.arguments.length === 1,
+  );
+  assert.equal(ensureCalls.length, 2, 'fast and full refresh paths must both ensure the gacha mount');
+  assert.equal(ensureCalls.filter(call => nodeContains(renderKeyIf.thenStatement, call)).length, 1, 'render-key hit must reuse the current gacha mount');
+  assert.equal(ensureCalls.filter(call => !nodeContains(renderKeyIf.thenStatement, call)).length, 1, 'full refresh must ensure the current gacha mount');
+  oneCall(panelsRefresh, 'refreshHudBusinessPanels', ['$path:shell', '$path:data'], 'guarded business refresh');
+});
+addCheck('phase5', 'H11 gacha ownership closes across all HUD lifecycles and old inline UI stays absent', () => {
+  const destroy = messageFunction('destroyHudGachaPanel');
+  const handleClear = assignmentsToIdentifier(destroy, 'hudGachaPanelHandle')
+    .filter(node => unwrapExpression(node.right).kind === ts.SyntaxKind.NullKeyword);
+  assert.equal(handleClear.length, 1, 'destroy must release the owned handle once');
+  oneCall(destroy, 'clearHudGachaPanelMountFailure', [], 'destroy failure-identity reset');
+  const handleDestroy = callsMatching(destroy, 'destroy')
+    .filter(call => expressionPath(memberReceiver(call.expression)) === 'handle');
+  assert.equal(handleDestroy.length, 1, 'destroy must delegate to the embedded panel handle');
+  assert.ok(handleClear[0].getStart(messageAst) < handleDestroy[0].getStart(messageAst),
+    'destroy must clear the shared handle before invoking destroy');
+
+  for (const [functionName, leftPath, operator] of [
+    ['setHudView', 'view', ts.SyntaxKind.ExclamationEqualsEqualsToken],
+    ['openHudSettingsPanel', 'hudActiveView', ts.SyntaxKind.EqualsEqualsEqualsToken],
+    ['openHudFullLibrary', 'hudActiveView', ts.SyntaxKind.EqualsEqualsEqualsToken],
+  ]) {
+    const lifecycle = messageFunction(functionName);
+    const cleanupIf = oneIf(lifecycle,
+      statement => containsBinary(statement.expression, operator, leftPath, 'gacha'), `${functionName} cleanup branch`);
+    oneCall(cleanupIf.thenStatement, 'destroyHudGachaPanel', [], `${functionName} gacha cleanup`);
+  }
+  for (const functionName of ['unmountHudImmersive', 'destroyHudImmersive', 'deactivateMessagePanelRuntime']) {
+    oneCall(messageFunction(functionName), 'destroyHudGachaPanel', [], `${functionName} gacha cleanup`);
+  }
+  const cleanup = variableInitializer('cleanup');
+  assert.ok(ts.isArrowFunction(cleanup), 'message-panel cleanup owner must remain an arrow callback');
+  oneCall(cleanup, 'destroyHudGachaPanel', [], 'hot-reload/pagehide gacha cleanup');
+  const pagehideCalls = callsMatching(messageAst, 'addEventListener', ['pagehide', '$path:cleanup', undefined])
+    .filter(call => expressionPath(memberReceiver(call.expression)) === 'window');
+  assert.equal(pagehideCalls.length, 1, 'pagehide must share the cleanup owner');
+
+  const actualMessageCode = astCodeTexts(messageAst);
+  for (const marker of [
+    'data-mfrs-hud-gacha-action',
+    'data-mfrs-hud-gacha-pool',
+    'hudGachaPoolType',
+    'hudGachaLastResult',
+    'executeHudGachaPull',
+    'buildHudGachaResultHtml',
+    'data-mfrs-hud="open-gacha"',
+    'mfrs-hud-gacha-controls',
+    'mfrs-hud-gacha-result',
+    'mfrs-hud-gacha-item',
+  ]) {
+    assert.equal(actualMessageCode.some(text => text.includes(marker)), false, `old inline gacha code marker must stay absent: ${marker}`);
+  }
+
   assert.ok(sources.message.includes('mfrs-hud-memory-form'), 'CSS for memory form must exist');
   assert.ok(sources.message.includes('mfrs-hud-memory-field'), 'CSS for memory field must exist');
   assert.ok(sources.message.includes('mfrs-hud-memory-btn'), 'CSS for memory buttons must exist');
   assert.ok(sources.message.includes('mfrs-hud-memory-add-btn'), 'CSS for add button must exist');
-  assert.ok(sources.message.includes('mfrs-hud-gacha-controls'), 'CSS for gacha controls must exist');
-  assert.ok(sources.message.includes('mfrs-hud-gacha-result'), 'CSS for gacha result must exist');
-  assert.ok(sources.message.includes('mfrs-hud-gacha-item'), 'CSS for gacha items must exist');
+  const hudCss = cssTemplateContaining('#${HUD_SHELL_ID} .mfrs-hud-gacha-host');
+  const hostSelector = /^\s*#\$\{HUD_SHELL_ID\}\s+\.mfrs-hud-gacha-host\s*\{/m;
+  for (const viewport of [Number.POSITIVE_INFINITY, 800, 640]) {
+    assert.equal(finalCssDeclaration(hudCss, hostSelector, 'width', viewport), '100%', 'gacha host must fill the center panel');
+    assert.equal(finalCssDeclaration(hudCss, hostSelector, 'min-width', viewport), '0', 'gacha host must permit shrink');
+  }
+  const unavailableCss = oneCssBlock(hudCss, /#\$\{HUD_SHELL_ID\}\s+\.mfrs-hud-gacha-unavailable\s*\{/, 'gacha unavailable CSS').text;
+  assert.match(unavailableCss, /\bdisplay\s*:\s*grid\s*;/, 'unavailable CSS must retain its centered grid state');
+  assert.match(unavailableCss, /\bmin-height\s*:\s*180px\s*;/, 'unavailable CSS must retain visible empty-state height');
+  const retryCss = oneCssBlock(hudCss, /#\$\{HUD_SHELL_ID\}\s+\.mfrs-hud-gacha-retry\s*\{/, 'gacha retry CSS').text;
+  assert.match(retryCss, /\bmin-height\s*:\s*40px\s*;/, 'retry CSS must retain a usable target height');
+  assert.match(retryCss, /\bcursor\s*:\s*pointer\s*;/, 'retry CSS must retain interactive affordance');
+  const retryFocusCss = oneCssBlock(hudCss,
+    /#\$\{HUD_SHELL_ID\}\s+\.mfrs-hud-gacha-retry:hover\s*,\s*#\$\{HUD_SHELL_ID\}\s+\.mfrs-hud-gacha-retry:focus-visible\s*\{/,
+    'gacha retry focus CSS').text;
+  assert.match(retryFocusCss, /\bborder-color\s*:\s*var\(--mfrs-corpse-cyan\)\s*;/, 'retry focus CSS must retain visible emphasis');
+});
+
+// Phase I: HUD UX follow-up — scoped player-entry removal and bidirectional mode controls.
+addCheck('phase5', 'I1 dossier removes only the player full-library shortcut and keeps shared data paths', () => {
+  const dossier = messageFunction('buildHudDossierHtml');
+  assert.equal(returnedTemplate(dossier).includes('打开全库 · 玩家状态'), false, 'dossier must not restore the removed player shortcut');
+  assert.equal(astLiteralTexts(dossier).some(text => text.includes('打开全库 · 玩家状态')), false,
+    'dossier must not hide the removed shortcut in an indirect string/template literal');
+  assert.equal(
+    astNodes(dossier, node => ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken)
+      .some(node => staticConcatenatedString(node)?.includes('打开全库 · 玩家状态')),
+    false,
+    'dossier must not reconstruct the removed shortcut with static string concatenation',
+  );
+  oneCall(dossier, 'buildDossierSectionsHtml', ['$path:data'], 'dossier player/status source data');
+  oneCall(dossier, 'buildHudInvestigationSectionsHtml', [], 'dossier investigation sections');
+  const investigation = messageFunction('buildHudInvestigationSectionsHtml');
+  oneCall(investigation, 'getHudArchiveRules', [], 'investigation archive rules');
+  oneCall(investigation, 'readHudDatabaseTables', [], 'investigation table data');
+
+  const system = messageFunction('buildHudSystemPanelHtml');
+  const systemHtml = returnedTemplate(system);
+  assert.ok(systemHtml.includes('data-mfrs-hud="open-full-library"'), 'system panel must retain the full-library entry');
+  assert.ok(systemHtml.includes('data-mfrs-hud-open-table="acu_tab_mfrs_global_search"'), 'system panel must retain table-specific full-library entries');
+  const playerValue = callsMatching(system, 'valueText', ['$path:data.姓名', '']);
+  assert.equal(playerValue.length, 1, 'system panel must retain player-state consistency data');
+  assert.ok(
+    astNodes(system, node => ts.isCallExpression(node) && memberName(node.expression) === 'Boolean').some(call =>
+      nodeContains(call, playerValue[0]),
+    ),
+    'player-state consistency data must remain Boolean-normalized',
+  );
+
+  const click = messageFunction('handleHudShellClick');
+  const openTableTarget = unwrapExpression(variableInitializer('openTableBtn', click));
+  assert.ok(
+    ts.isCallExpression(openTableTarget) &&
+      memberName(openTableTarget.expression) === 'closest' &&
+      callArgumentsEqual(openTableTarget, ['[data-mfrs-hud-open-table]']),
+    'generic table navigation selector must remain bound',
+  );
+  const openTableIf = oneIf(
+    click,
+    statement => expressionPath(statement.expression) === 'openTableBtn',
+    'generic table navigation branch',
+  );
+  oneCall(openTableIf.thenStatement, 'openHudFullLibrary', ['$path:table', '$path:returnView'], 'generic table navigation');
+  const visualizerFallback = variableInitializer('renderMfrsTableFallback', visualizerAst);
+  assert.ok(ts.isArrowFunction(visualizerFallback), 'player-state fallback must remain an executable function');
+  const playerKeyCall = oneCall(visualizerFallback, 'includes', ['玩家状态'], 'player-state table support');
+  assert.equal(expressionPath(memberReceiver(playerKeyCall.expression)), 'key', 'player-state support must inspect the table key');
+  oneCall(visualizerFallback, 'renderReadOnlyFallbackRows', ['玩家状态', undefined], 'renderable player-state fallback');
+});
+addCheck('phase5', 'I2 default mode entry stays outside the original seven business navigation keys', () => {
+  const navBuilder = messageFunction('buildNavHtml');
+  const items = unwrapExpression(variableInitializer('items', navBuilder));
+  assert.ok(ts.isArrayLiteralExpression(items), 'business navigation items must remain an array literal');
+  const itemIds = items.elements.map(item => {
+    assert.ok(ts.isObjectLiteralExpression(item), 'each business navigation item must remain an object');
+    const id = item.properties.find(property => ts.isPropertyAssignment(property) && memberName(property.name) === 'id');
+    assert.ok(id && ts.isPropertyAssignment(id), 'each business navigation item must retain its id');
+    return literalValue(id.initializer);
+  });
+  assert.deepEqual(
+    itemIds,
+    ['story', 'dossier', 'relation', 'memory', 'gacha', 'system', 'settings'],
+    'default business navigation keys must remain the original seven in order',
+  );
+  const navHtml = stripHtmlComments(returnedTemplate(navBuilder));
+  const navClose = navHtml.indexOf('</nav>');
+  const defaultModeButton = navHtml.match(
+    /<button\b[^>]*\bdata-mfrs-mode\s*=\s*["']immersive["'][^>]*>[\s\S]*?<\/button>/,
+  )?.[0];
+  assert.ok(defaultModeButton, 'default panel must render an immersive mode button');
+  const modeEntry = navHtml.indexOf(defaultModeButton);
+  assert.ok(navClose !== -1 && modeEntry > navClose, 'mode entry must be outside the business navigation element');
+  assert.match(defaultModeButton, /\bid\s*=\s*["']\$\{panelId\}-mode-immersive["']/, 'mode entry must keep its stable panel-derived id');
+  assert.match(defaultModeButton, /\bclass\s*=\s*["'][^"']*\bfa-expand\b[^"']*["']/, 'default mode entry must use the expand icon');
+  assert.match(defaultModeButton, /<span>\s*沉浸模式\s*<\/span>/, 'default mode entry must name the target mode');
+  assert.match(defaultModeButton, /\baria-label\s*=\s*["']切换到沉浸模式["']/, 'default mode entry must expose target-mode ARIA');
+  assert.match(defaultModeButton, /\btitle\s*=\s*["']沉浸模式 \(Ctrl\+Shift\+G\)["']/, 'default mode entry must expose shortcut help');
+});
+addCheck('phase5', 'I3 default and immersive mode controls use the existing bidirectional lifecycle', () => {
+  const navClick = messageFunction('handleNavClick');
+  const modeBranch = oneIf(navClick, statement => expressionPath(statement.expression) === 'modeBtn', 'default mode click branch');
+  const identityGuard = oneAstNode(modeBranch.thenStatement, node => {
+    if (!ts.isIfStatement(node) || !directReturn(node.thenStatement)) return false;
+    const terms = logicalTerms(node.expression, ts.SyntaxKind.BarBarToken);
+    return terms.length === 4 && terms.some(term => negates(term, value => expressionPath(value) === 'panel')) &&
+      terms.some(term => negates(term, value => expressionPath(value) === 'mes')) &&
+      terms.some(term => negates(term, value => callExpressionMatches(value, 'isLatestAiMessage', ['$path:mes']))) &&
+      terms.some(term => {
+        const value = unwrapExpression(term);
+        return ts.isBinaryExpression(value) && value.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken &&
+          callExpressionMatches(value.left, 'getLatestAiMessageElement') && expressionPath(value.right) === 'mes';
+      });
+  }, 'latest AI identity guard');
+  const modeToggle = oneDirectCall(modeBranch.thenStatement, 'toggleHudImmersive', [], 'default mode toggle');
+  assert.ok(identityGuard.end < modeToggle.getStart(messageAst), 'identity guard must return before the mode toggle');
+  oneCall(modeBranch.thenStatement, 'focusImmersiveModeControl', [], 'immersive reverse-control focus transfer');
+
+  const shell = messageFunction('ensureHudShell');
+  const immersiveModeButton = stripHtmlComments(assignedTemplate(shell, 'shell', 'innerHTML')).match(
+    /<button\b[^>]*\bdata-mfrs-hud\s*=\s*["']exit["'][^>]*>[\s\S]*?<\/button>/,
+  )?.[0];
+  assert.ok(immersiveModeButton, 'immersive shell must retain its reverse mode control');
+  assert.match(immersiveModeButton, /\bclass\s*=\s*["'][^"']*\bfa-compress\b[^"']*["']/, 'immersive reverse control must use the compress icon');
+  assert.match(immersiveModeButton, /<span>\s*默认模式\s*<\/span>/, 'immersive reverse control must name the target mode');
+  assert.match(immersiveModeButton, /\baria-label\s*=\s*["']切换到默认模式["']/, 'immersive reverse control must expose target-mode ARIA');
+  assert.match(immersiveModeButton, /\btitle\s*=\s*["']默认模式 \(Ctrl\+Shift\+G\)["']/, 'immersive reverse control must expose shortcut help');
+  const shellClick = messageFunction('handleHudShellClick');
+  const exitBranch = oneIf(
+    shellClick,
+    statement => callExpressionMatches(statement.expression, 'closest', ['[data-mfrs-hud="exit"]'], 'target'),
+    'immersive exit click branch',
+  );
+  const exitCall = oneDirectCall(exitBranch.thenStatement, 'exitHudImmersive', [], 'immersive reverse-control exit');
+  const exitReturns = directStatements(exitBranch.thenStatement).filter(ts.isReturnStatement);
+  assert.equal(exitReturns.length, 1, 'immersive reverse-control branch must stop further HUD dispatch');
+  assert.ok(exitCall.end < exitReturns[0].getStart(messageAst), 'immersive exit must be directly reachable before branch return');
+
+  const migration = messageFunction('migrateHudShellDom');
+  const ariaMigration = oneCall(migration, 'setAttribute', ['aria-label', '切换到默认模式'], 'reverse-control ARIA migration');
+  assert.equal(expressionPath(memberReceiver(ariaMigration.expression)), 'exitModeBtn');
+  assert.equal(
+    assignmentsToMember(migration, 'icon', 'className').filter(node => literalValue(node.right) === 'fa-solid fa-compress').length,
+    1,
+    'hot reload must migrate the reverse-control icon',
+  );
+  assert.equal(
+    assignmentsToMember(migration, 'label', 'textContent').filter(node => literalValue(node.right) === '默认模式').length,
+    1,
+    'hot reload must migrate the reverse-control label',
+  );
+});
+addCheck('phase5', 'I4 mode preference remains single-source with shortcut and focus restoration', () => {
+  assert.equal(variableDeclarations('hudImmersivePreferred').length, 1, 'hudImmersivePreferred must have one declaration');
+  const storageMethods = new Set(['getItem', 'setItem', 'removeItem']);
+  const storageCalls = astNodes(messageAst, node => ts.isCallExpression(node) &&
+    storageMethods.has(memberName(node.expression)) &&
+    expressionPath(memberReceiver(node.expression))?.split('.').includes('localStorage'));
+  assert.ok(storageCalls.some(call => memberName(call.expression) === 'getItem' &&
+    literalValue(call.arguments[0]) === 'mfrs_hud_low_motion'), 'existing low-motion storage must remain');
+  for (const call of storageCalls) {
+    const key = literalValue(call.arguments[0]);
+    assert.equal(typeof key, 'string', `${memberName(call.expression)} storage key must remain static`);
+    assert.doesNotMatch(key, /mode|immersive/i, 'mode preference must not gain a storage key');
+  }
+  const keydown = messageFunction('handleHudKeydown');
+  const shortcutIf = oneIf(keydown, statement => negates(statement.expression, value => {
+    const terms = logicalTerms(value, ts.SyntaxKind.AmpersandAmpersandToken);
+    if (terms.length !== 3 || !terms.some(term => expressionPath(term) === 'e.ctrlKey') ||
+      !terms.some(term => expressionPath(term) === 'e.shiftKey')) return false;
+    return terms.some(term => {
+      const keys = logicalTerms(term, ts.SyntaxKind.BarBarToken);
+      return keys.length === 2 && keys.some(key => binaryMatches(key, ts.SyntaxKind.EqualsEqualsEqualsToken, 'e.key', 'G')) &&
+        keys.some(key => binaryMatches(key, ts.SyntaxKind.EqualsEqualsEqualsToken, 'e.key', 'g'));
+    });
+  }), 'Ctrl+Shift+G negative guard');
+  assert.ok(directReturn(shortcutIf.thenStatement), 'non-shortcut keydowns must return before mode dispatch');
+  const shortcutToggle = oneDirectCall(keydown.body, 'toggleHudImmersive', [], 'shortcut immersive toggle');
+  assert.ok(shortcutIf.end < shortcutToggle.getStart(messageAst), 'shortcut guard must precede the direct mode toggle');
+
+  const focusType = messageTypeAlias('PanelFocusSnapshot');
+  const modeVariant = oneAstNode(focusType, node => ts.isTypeLiteralNode(node) && node.members.some(member =>
+    ts.isPropertySignature(member) && memberName(member.name) === 'kind' &&
+    ts.isLiteralTypeNode(member.type) && literalValue(member.type.literal) === 'mode'), 'mode focus snapshot');
+  assert.ok(modeVariant.members.some(member => ts.isPropertySignature(member) && memberName(member.name) === 'value' &&
+    member.type?.kind === ts.SyntaxKind.StringKeyword), 'mode focus snapshot must retain its value');
+  const capture = messageFunction('capturePanelFocus');
+  const modeClosest = unwrapExpression(variableInitializer('mode', capture));
+  assert.ok(ts.isCallExpression(modeClosest) && memberName(modeClosest.expression) === 'closest');
+  assert.deepEqual(modeClosest.arguments.map(literalValue), ['[data-mfrs-mode]'], 'refresh must capture mode-control focus');
+  oneAstNode(
+    capture,
+    node => {
+      if (!ts.isReturnStatement(node) || !ts.isObjectLiteralExpression(unwrapExpression(node.expression))) return false;
+      const properties = unwrapExpression(node.expression).properties;
+      return properties.some(property => ts.isPropertyAssignment(property) && memberName(property.name) === 'kind' &&
+        literalValue(property.initializer) === 'mode') && properties.some(property => ts.isPropertyAssignment(property) &&
+        memberName(property.name) === 'value' && expressionPath(property.initializer) === 'modeName');
+    },
+    'stable mode focus snapshot return',
+  );
+  const restore = messageFunction('restorePanelFocus');
+  const restoreIf = oneIf(restore,
+    statement => containsBinary(statement.expression, ts.SyntaxKind.EqualsEqualsEqualsToken, 'snapshot.kind', 'mode'),
+    'mode focus restore branch');
+  const restoreAttribute = oneCall(restoreIf.thenStatement, 'getAttribute', ['data-mfrs-mode'], 'mode focus identity lookup');
+  assert.equal(expressionPath(memberReceiver(restoreAttribute.expression)), 'candidate');
+
+  for (const functionName of ['focusDefaultModeControl', 'focusImmersiveModeControl']) {
+    const focusCall = oneCall(messageFunction(functionName), 'focus', [undefined], `${functionName} focus call`);
+    assert.equal(expressionPath(memberReceiver(focusCall.expression)), 'control');
+  }
+  oneCall(messageFunction('exitHudImmersive'), 'focusDefaultModeControl', [], 'explicit default-mode focus restoration');
+});
+addCheck('phase5', 'I5 mode controls remain latest-only and preserve desktop/mobile rail geometry', () => {
+  const panelCss = cssTemplateContaining('grid-template-columns: minmax(196px, 0.3fr) minmax(0, 1fr) 60px;');
+  const firstTablet = cssBlocksMatching(panelCss, /@media\s*\(\s*max-width\s*:\s*900px\s*\)\s*\{/, '<=900px CSS')[0];
+  const triSelector = /^\s*\.mfrs-msg-panel\.mfrs-msg-tri\s*\{/m;
+  const desktopCandidates = cssBlocksMatching(panelCss, triSelector, 'tri-panel CSS rules')
+    .filter(block => block.start < firstTablet.start && lastCssDeclaration(block.text, 'display') === 'grid');
+  assert.equal(desktopCandidates.length, 1, 'default tri-panel desktop CSS must have one structural rule');
+  const triCss = panelCss.slice(desktopCandidates[0].start);
+  assert.equal(finalCssDeclaration(triCss, triSelector, 'grid-template-columns'),
+    'minmax(196px, 0.3fr) minmax(0, 1fr) 60px', 'desktop tri-panel must reserve a 60px right rail');
+  assert.equal(finalCssDeclaration(triCss, triSelector, 'grid-template-columns', 800),
+    'minmax(0, 1fr) 60px', 'up to 900px must retain the 60px right rail');
+  assert.equal(finalCssDeclaration(triCss, triSelector, 'grid-template-columns', 640), '1fr',
+    'up to 640px must collapse to one column');
+
+  const modeSelector = /^\s*\.mfrs-msg-mode-btn\s*\{/m;
+  assert.equal(finalCssDeclaration(triCss, modeSelector, 'min-height'), '44px', 'desktop mode button must remain 44px');
+  assert.equal(finalCssDeclaration(triCss, modeSelector, 'min-height', 800), '44px', '<=900px mode button must remain 44px');
+  assert.equal(finalCssDeclaration(triCss, modeSelector, 'flex-direction', 640), 'row', 'mobile mode button must use a row layout');
+  const historicalSelector = /^\s*\.mes\[is_user\s*=\s*["']false["']\]:not\(\.last_mes\)\s+\.mfrs-msg-mode-tools\s*\{/m;
+  assert.equal(finalCssDeclaration(triCss, historicalSelector, 'display'), 'none', 'historical AI panels must hide mode tools');
 });
 
 function main() {

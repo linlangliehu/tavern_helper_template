@@ -41,9 +41,7 @@ pnpm install
 ##### 实时开发当前 worktree（推荐）
 
 1. 用 VS Code **打开目标 worktree 根目录**（feature 分支请打开对应 worktree，不要只开主仓库）。
-2. **快捷键**：在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）即可启动默认调试配置 **`MFRS: 实时开发当前工作树`**。  
-   - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。  
-   - 也可运行任务 `MFRS: 开始实时开发`。
+2. 调试配置选择 **`MFRS: 实时开发当前工作树`**（或运行任务 `MFRS: 开始实时开发`）。
 3. 流程会依次：预检 → 启动本 worktree 静态服务（默认 `5510`，占用则 `5511+`）→ `pnpm watch` → 调试 Chrome（CDP `9222`）。
 4. 生成本地开发卡（不修改正式 `index.yaml`）：
    ```bash
@@ -69,7 +67,7 @@ pnpm install
 
 ##### 遗留入口
 
-旧「只 watch + Chrome」已**不再**绑定 F5。若极少数需要，运行任务 **`开始任务`**（不起 551x、不切本地 loader）。日常只用键盘 **F5 / Fn+F5**。
+旧配置 `编译代码并调试酒馆网页 (Chrome)` 仍可用，但**只**启动 watch + 调试 Chrome，**不会**启动 551x 静态服务，也**不会**把 CDN loader 切到本地。feature 验收请用上面的 MFRS 流程。
 
 #### 创建自己的仓库
 
@@ -200,12 +198,12 @@ vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 
 推荐（feature / 任意 worktree）：
 
-1. 键盘 **F5 / Fn+F5**（不是终端输入）→ MFRS 实时开发（预检 → `551x` → watch → 调试 Chrome `9222`）
+1. 调试配置 **`MFRS: 实时开发当前工作树`**（预检 → `551x` 静态服务 → watch → 调试 Chrome `9222`）
 2. `pnpm mfrs:dev-card -- --port <实际端口>`，酒馆加载 **DEV 卡**
 3. Network 确认 loader 为 `http://127.0.0.1:551x/dist/...`，可选 `pnpm verify:mfrs-runtime-identity`
 4. 结束：`MFRS: 结束实时开发`
 
-任务 `开始任务` 只 watch + Chrome，**不会**起 `551x`，日常不要用。
+遗留 `Fn+F5` / `开始任务` 只启动 watch + 调试 Chrome，**不会**起 `551x`，也**不会**把正式 CDN 卡切到本地 dist。
 
 #### 3. 构建发布
 ```bash

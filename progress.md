@@ -1,12 +1,138 @@
 # 进度日志
 
-## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **in_progress**
+## 会话：2026-07-18（重写 HUD-UX-NEXT 任务清单 · MFRS 对齐）— **docs complete**
+
+- 按新开发流程重写 `docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（worktree + main 同步）。
+- **业务 T0–T5 不重做**；T6 增加 T6.0.1–T6.0.4 环境/身份门禁；明确 feature worktree + F5=MFRS + DEV 卡。
+- T7 仍 blocked until T6 全过 + 用户授权发版。
+- 当前进度：28/48 complete；待执行 20。
+## 会话：2026-07-18（统一项目运行流程文档口径）— **docs complete**
+
+- **问题**：主仓库 `PROJECT_FLOW.md`/`README` 仍写 Fn+F5+5500；feature worktree 已落地 MFRS 四链路，文档双轨导致入口混淆。
+- **本轮（worktree）**：在 `PROJECT_FLOW.md` 顶部增加「统一运行口径」；MCP/CDP 写明 Copilot 默认走 `cdp-evaluate`；`README.md` 开发流程与快速开始对齐 MFRS；`docs/mfrs-redesign-phase0/local-test/README.md` 从 5500/β 卡改为 551x + `mfrs:dev-card`。
+- **未做**：未把 MFRS 脚本合入 `main`（主仓仍缺 `scripts/mfrs-dev-*.mjs`）；未 production/发布；未改正式 YAML。
+- **后续**：将 worktree 流程脚本+文档合入主线后，主仓打开时也会与本文档一致。
+## 会话：2026-07-18（PROJECT-FLOW-FIX · P9 真页恢复验收）— **complete（含 P9.5）**
+
+- **环境**：feature worktree `feat-hud-gacha-mode-toggle` @ `650d209`；`pnpm install` 后预检 exit 0。
+- **P9.1**：`mfrs-dev-server` 监听 `127.0.0.1:5510` 并持有会话锁；watch 因主仓库占用 `6621` 改用 `MFRS_SKIP_HMR_SERVER=1` + `MFRS_SKIP_TAVERN_SYNC=1` 编译成功（未 kill 主 watch）。
+- **P9.2**：`prepare-mfrs-dev-card --port 5510` 产物 OK（7/8/33）；`--push` 被主仓库 `6620` 占用阻断；改经 CDP `importRawCharacter` 导入 DEV PNG 成功。
+- **P9.3**：打开 DEV 卡后 `verify-mfrs-runtime-identity` PASS：7 入口均为 `development` / commit `650d209`；资源 URL 指向 `http://127.0.0.1:5510/dist/...`。
+- **阻塞修复**：DEV 卡名不在原 `isMysteryRevivalCardActive` 白名单 → HUD 不挂载；已在消息内面板/固定状态栏/数据库前端增加 DEV 卡名/头像识别。
+- **P9.4 / T6 证据**：`#mfrs-hud-shell` active + body `mfrs-hud-immersive`；抽卡宿主含「神秘复苏抽卡系统」完整区块文案；左栏无「打开全库 · 玩家状态」；系统全库入口保留；`MysteryMessagePanel` 可用。移动端 390 与完整人工模式循环仍可继续。
+- **P9.5 complete**：`mfrs-dev-session release`；停止 feature 静态 5510 与 worktree watch；会话锁已清；主仓库 6620/6621 保留；主 Chrome 未关。
+- **边界**：正式 `index.yaml` / `tavern_sync.yaml` 未污染；未 production/发布；未 kill 主仓库 6620/6621。
+## 会话：2026-07-18（PROJECT-FLOW-FIX · P0–P8 实施）— **complete（P9 pending）**
+
+- **范围**：按 `TASKLIST_PROJECT_FLOW_FIX.md` 实施 P0–P8；**不执行 P9**（真页启动/导入/T6 恢复）。
+- **P0/P8 文档**：重写 `PROJECT_FLOW.md` 四条链路、端口表、流程矩阵、身份清单与 MFRS 入口；更新 `README.md` 实时开发/结束/多 worktree；同步 `task_plan.md` / `findings.md` / 本文件 / 任务清单勾选。
+- **P1–P2**：`scripts/mfrs-dev-server.mjs`（127.0.0.1、CORS、no-store、`/__mfrs_dev_identity`、5510–5514、自检）；`mfrs-dev-preflight.mjs`（退出码 0/1/2/3/4，不 kill）。
+- **P3**：`.vscode/tasks.json` / `launch.json` 增加 MFRS 预检、静态服务、watch、调试 Chrome、开始/结束实时开发；独立 panel；结束任务 release 锁 + terminateAll，不关主 Chrome。
+- **P4**：`prepare-mfrs-dev-card.mjs` 派生到 `.local/`，临时注入 sync 配置后还原；离线验证 7/8/33 + MagVar CDN；正式 YAML 未污染。
+- **P5**：webpack `DefinePlugin` + 7 入口 `registerMfrsRuntimeBuild` + `verify-mfrs-runtime-identity.mjs`。
+- **P6**：`.local/mfrs-dev-session.json`；锁由静态服务持有；预检识别外 worktree 锁。
+- **P7**：`MFRS_SKIP_SCHEMA_DUMP` / `MFRS_SKIP_TAVERN_SYNC` / `MFRS_SKIP_HMR_SERVER`；MFRS watch 设 `MFRS_SKIP_TAVERN_SYNC=1`。
+- **边界**：未改正式 `index.yaml`、发布版、publish-card、release constants、bundle workflow；未 production/发布；未接管用户 watch；未连主 Chrome。
+- **已知阻塞**：本 worktree 无 `node_modules` → 预检 exit 3；完整 watch/dev-card bundle/真页身份验证留 **P9**。
+- **清单**：P0–P8 = 39 complete；P9 = 5 pending。
+
+## 会话：2026-07-18（PROJECT-FLOW-FIX · 本地源码运行流程对比）— **analysis complete**
+
+- 只读分析了本地 `.vscode` 启动配置、`webpack.config.ts`、`tavern_sync`、开发版卡 loader、实时修改模板、β 本地验收脚本和 GitHub bundle workflow。
+- 确认项目由开发编译、角色卡同步、真页资源加载和正式发布四条相互独立的链组成；6620/6621 都不是静态资源服务器，Fn+F5 也不会启动 5500。
+- 确认真页旧 bundle 的首要原因是开发版卡仍固定 import CDN SHA；同时 Fn+F5 watch 绑定主 workspace，而 feature 源码位于嵌套 worktree，5500 根目录也未绑定。
+- 已将详细对比和根因写入 `findings.md`。本轮未执行构建、watch、浏览器、同步或页面操作。
+
+## 会话：2026-07-18（PROJECT-FLOW-FIX · 读取上游参考资料）— **research complete**
+
+- 已读取 `StageDog/tavern_helper_template` 的 README、webpack 流程和相关生命周期示例，以及教程“实时编写前端界面或脚本 / 实际编写”。
+- 确认上游标准实时链路为：目标项目 `pnpm watch` 自动编译 → 酒馆助手实时监听接收 Socket.IO 更新事件 → Live Server 提供目标 `dist` URL → 酒馆实时修改正则/脚本重新请求该 URL → Chrome DevTools MCP 查看和操控页面。
+- 关键结论：watch 通知不会替换资源 URL；Live Server 可访问也不代表服务的是 feature worktree；Fn+F5 若从主 workspace 启动，只会编译主 workspace。当前 T6“端口正常但仍是旧 bundle”与这三个身份映射未对齐相符。
+- 已将上游证据、对 T6 的解释和流程修复原则写入 `findings.md`。本轮只读取外部资料并更新 planning，没有执行构建、watch、浏览器或页面操作。
+
+## 会话：2026-07-18（暂停 HUD-UX-NEXT，新增项目流程修复任务）— **paused / planning**
+
+- 用户要求暂停 HUD-UX-NEXT 当前阶段；T6.1–T6.7 继续保持 blocked/pending，T0–T5 仍为 28/44 complete。
+- 本轮不恢复临时双入口构建、8131 服务、浏览器注入或页面交互，也不执行 production、发布、install 或 watch 操作。
+- 新增任务 **PROJECT-FLOW-FIX：修复项目流程**。下一步只梳理开发入口、worktree、watch、临时开发构建、真页验收、production 与发布链路中的流程问题，并制定边界和验收标准。
+- 在用户确认具体流程修复范围前，不修改 `webpack.config.ts`、`.vscode` 配置、同步/发布脚本或其他流程文件。
+
+## 会话：2026-07-18（HUD-UX-NEXT · T6 真页验收环境阻塞）— **blocked / 未执行**
+
+- **连接边界**：仅连接用户单独以调试模式启动的 Chrome（CDP `127.0.0.1:9222`，SillyTavern `127.0.0.1:8000`）；未连接、读取或操作用户主浏览器。
+- **运行时证据**：当前调试页仍加载旧 bundle：`MFRS.mountPanel` 为 `undefined`、`[data-mfrs-hud-gacha-host]` 数量为 0、`[data-mfrs-mode]` 数量为 0，且左栏旧“打开全库 · 玩家状态”入口仍存在。feature 源码具有新契约，但 feature `dist` 的两个相关 bundle 都不包含该实现；`5500` 与 `8131` 均未监听，不能作为 feature 静态运行时。
+- **Fn+F5 复测（2026-07-18）**：用户确认本地 Fn+F5 已启动后，仍只通过同一调试 Chrome `127.0.0.1:9222` 复测目标页 `http://127.0.0.1:8000/`；探针结果未变化：`MFRS.mountPanel === undefined`、host 为 0、immersive mode button 为 0、旧左栏入口仍为真，body 仍带旧 `mfrs-hud-immersive`。截图：`C:\Users\linlang\.agent-browser\tmp\screenshots\t6-fnf5-stale-runtime-20260718.png`。因此 Fn+F5 当前未把 feature 的两个新 bundle 提供给该页面，T6 仍不可执行。
+- **执行边界**：T6.1–T6.7 均为 BLOCKED，未执行抽卡、重置、导入、文件写入或其他持久化页面动作；任务进度保持 T0–T5 的 28/44 complete，T6 全部 pending。
+- **恢复条件**：用户可启动既有的 VS Code `Fn+F5` feature 调试流程；或明确授权一个隔离、可逆的双入口临时构建和临时 CORS 静态服务。该替代流程必须禁用 schema dump、tavern sync 和自动导入副作用；之后向消息内面板 iframe 依次注入数据库前端与消息内面板 bundle 并清理旧实例。不得使用 `webpack --output-path` 定向构建到仓库外，该方式会因多 entry 的 `index.js` 冲突且普通 build 仍触发项目插件副作用而不可用。
+- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含 `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` / `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
+- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看 `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode selector=0、旧“打开全库 · 玩家状态”=1、body 为 `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
+- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含 `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` / `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
+- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看 `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode selector=0、旧“打开全库 · 玩家状态”=1、body 为 `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
+
+## 会话：2026-07-17（HUD-UX-NEXT · T5 源码提交检查点）— **complete**
+
+- **T5.1 complete / 源码审查**：overlay 与 embedded 继续共用单一完整抽卡 renderer；HUD 与数据库前端的句柄所有权、root 校验和回收边界清晰；模式状态仍只有 `hudImmersivePreferred` 一个真源。独立 verification、反模式与代码质量复核均 APPROVE。
+- **T5.2 complete / 静态检查**：`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend（21 项）、archive-ui（237 checks）和 `pnpm verify:mfrs-gates` 全部 PASS；archive-ui ESLint errors 为 0。
+- **lint 边界**：v10 全文件 `better-tailwindcss` 会把 JavaScript template 中的非 Tailwind HTML/CSS 当成 Tailwind 类规则检查，产生与本轮功能无关的误报；排除该插件误报后，其他 ESLint 规则与 `origin/main` 基线一致，作为已知非阻断限制记录。一行 archive-ui 正则字符类 lint 清理随 T5 规划同步提交，不改变门禁语义。
+- **T5.3 complete / 提交链检查**：`75f4a9a..5dacd2e` 逐提交白名单精确，功能提交均已推送 feature 分支；没有 dist、PNG、版本常量、package、lockfile 或无关文件。T1–T4 已按阶段提交，因此无需为 T5 重复提交相同源码。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/PNG/版本/package/lockfile；T6 尚未开始。
+- **清单进度**：T0–T5 共 28/44 complete，待执行 16；下一项为 **T6.1** Chrome DevTools 桌面完整面板真页验收。
+
+## 会话：2026-07-17（HUD-UX-NEXT · T4 自动化契约更新）— **complete**
+
+- **T4.1 complete**：archive-ui 旧 H7–H11 “简版抽卡 + 完整面板按钮”断言已替换为稳定 host、`MFRS.mountPanel()`、`hudGachaPanelHandle`、幂等 destroy、失败重试、普通刷新保留、切视图/设置/全库/unmount/deactivate/cleanup 回收，以及旧简版 marker 缺席契约。
+- **T4.2 complete**：新增 scoped 左栏精简门禁，只在 `buildHudDossierHtml()` 范围禁止“打开全库 · 玩家状态”；`buildHudInvestigationSectionsHtml()`、通用 `data-mfrs-hud-open-table`、系统全库入口和玩家状态数据仍被正向保护。
+- **T4.3 complete**：新增 I1–I5，覆盖原 7 个 `data-nav` 键保持不变、独立默认“沉浸模式”入口、沉浸顶栏“默认模式”反向入口、唯一 `hudImmersivePreferred`、无新 mode localStorage、`Ctrl+Shift+G`、双向焦点、历史楼隐藏和 60px/≤640px 响应式契约。
+- **测试设计**：门禁通过 TypeScript AST 精确定位函数、分支、调用和赋值；从 AST 提取 CSS template 后按最终声明验证；HTML comments 先屏蔽；仅解析受限静态字符串拼接，避免注释、死代码或同名文本造成假阳性。旧覆盖未被删除降级，而是由新 H7–H11 和 I1–I5 接替。
+- **T4.4–T4.5 complete / 验证**：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs` PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（237 checks）；`pnpm verify:mfrs-gates` 全部 PASS；`git diff --check` PASS。独立反模式与代码质量最终复核均 APPROVE，仅出现既有 CDN_REF warning。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改业务源码/dist/package/lockfile；T4 只改 archive-ui 门禁与规划记录。
+- **清单进度**：T0–T4 共 25/44 complete，待执行 19；下一项为 **T5.1** 源码代码审查，但 T5 尚未开始。
+
+## 会话：2026-07-17（HUD-UX-NEXT · T3 实施）— **complete**
+
+- **T3.1 complete**：`buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”按钮及其拼接；玩家状态数据、镜像、通用 `data-mfrs-hud-open-table` 处理器、调查档案与系统全库入口均保留。
+- **T3.2–T3.3 complete**：默认最新 AI 三栏保持原 7 个业务导航键，在 `nav` 外新增独立 mode tools 与展开图标 + “沉浸模式”按钮；点击复用 `toggleHudImmersive()` 和唯一 `hudImmersivePreferred`，未增加 localStorage 或第二状态真源，`Ctrl+Shift+G` 保留。
+- **T3.4 complete**：沉浸顶栏“退出沉浸”迁移为收起图标 + “默认模式”，继续调用 `exitHudImmersive()`；`migrateHudShellDom()` 可幂等升级热更新前旧 shell 的 class、ARIA、title 与按钮内容。
+- **T3.5 complete**：默认入口按稳定 `panelId` / `data-mfrs-mode` 捕获并恢复刷新焦点；进入沉浸后聚焦顶栏默认模式按钮，显式退出后回焦默认入口，找不到时回退原生输入框。非 latest 历史楼隐藏 mode tools；桌面与 ≤900px 右轨扩为 60px，≤640px 模式按钮独立整行，默认/沉浸按钮点击目标均不小于 44px。
+- **验证**：定向源码复核确认模式按钮不计入 7 键业务导航、latest 守卫与旧 shell 迁移保持幂等，`exitHudImmersive()` 新聚焦只覆盖显式用户退出路径；TypeScript `transpileModule` PASS，T3 静态契约 20/20 PASS，frontend 21 项动态生命周期检查 PASS，`git diff --check` PASS，双路只读反模式/代码质量复核均 APPROVE、无 High/Medium。archive-ui 按计划在旧 H7 首败，H7–H11 留 T4 替换。
+- **本轮非写入错误**：① 主线程两次组合带引号 selector 的 `rg` / 固定字符串查询，被 PowerShell 分别解析为 `unclosed group` 或额外路径参数，改用严格 UTF-8 读取后的 `Select-String` / 独立字面量检查；② 实现代理首次 Node 内联中文路径被代码页转成 `?`，改由 `git diff` 提供路径并使用 Unicode/宿主侧路径传递；③ 最终校验首次在全部 diff 搜索新增 `localStorage`，误命中文档中的“未增加 localStorage”说明，收窄到消息内面板源码 diff 后新增命中为 0。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T3 业务改动仅在消息内面板源码，规划同步仅涉及本任务四份 Markdown。
+- **清单进度**：T0–T3 共 20/44 complete，待执行 24；下一项为 **T4.1**，替换 archive-ui H7–H11 旧抽卡契约。
+
+## 会话：2026-07-17（HUD-UX-NEXT · T2 实施）— **complete**
+
+- **T2.1 complete**：`buildHudGachaPanelHtml()` 只保留稳定的 `[data-mfrs-hud-gacha-host]` 与 API 未就绪/挂载失败状态；旧“中栏抽卡”、简版摘要、池选择、单抽/十连及“完整面板”按钮不再生成。
+- **T2.2 complete**：新增唯一 `hudGachaPanelHandle`，进入 gacha 后调用 `MFRS.mountPanel()`；返回 root 必须通过宿主 document 的可信 realm `Element`、原生 `Node.prototype.nodeType` getter、document identity 与直接父节点校验。失败状态以 mount API identity latch 防止普通 refresh 重试风暴，显式“重试挂载”可 force 重试，API identity 变化后可自动再试。
+- **T2.3 complete**：离开 gacha、直接打开 settings、进入全库/cabinet、unmount、destroy、deactivate、hot reload cleanup 与 pagehide cleanup 均统一调用幂等销毁；unmount 先置 `hudMounted=false` 再销毁，阻止 teardown 期间的关闭回调重新挂载或写回已卸载 HUD。
+- **T2.4 complete**：`refreshHudBusinessPanels()` 仅在稳定 host 缺失时重建 gacha slot；普通数据刷新和 render-key 命中只复用当前 root，因此抽卡结果、展开状态与内部滚动不会被无关 HUD refresh 清空。
+- **T2.5 complete**：删除 `hudGachaLastResult`、`hudGachaPoolType`、简版 result builder/pull handler、池/操作 click 分支、`data-mfrs-hud="open-gacha"` 与专用 CSS；旧简版 marker 定向搜索为 0。
+- **验证**：`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；目标源码/门禁语法检查与 `git diff --check` PASS；独立反模式复核和代码质量复核均无 High/Medium。
+- **T4 预期边界**：`pnpm verify:mfrs-archive-ui` 当前按计划在旧 H7 首败，因为 H7–H11 仍锁定 8.13.36 的“简版 + 完整面板按钮”契约；这不是 T2 实现错误，留待 T4 替换契约后恢复全绿。
+- **本轮非写入错误**：① 一次 `rg` 组合正则因 PowerShell 引号组合产生 `unclosed group`，改为拆分字面量查询；② `prettier` command not found，未安装依赖，改用现有语法/门禁与 diff 校验；③ 首次 Node stdin 中的中文路径被代码页转成 `????` 导致 `ENOENT`，改用 PowerShell `Resolve-Path` 经环境变量传入；④ 实现代理的一次只读验证编排括号语法错误，命令未执行且未写文件，后续拆分验证。
+- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T2 只改消息内面板源码与规划记录。
+- **清单进度**：T0–T2 共 15/44 complete，待执行 29；下一项为 **T3.1**，移除左栏“打开全库 · 玩家状态”入口。
+
+## 会话：2026-07-17（HUD-UX-NEXT · T1 实施）— **complete**
+
+- **T1.1–T1.2 complete**：完整抽卡面板的 DOM、余额/scope/残屑/经济/保底/卡池/抽卡/结果/历史/自定义/导入导出重置逻辑收敛到单一 `createGachaPanelInstance()`；`MFRS.showPanel()` 继续在宿主 body 打开原 overlay。
+- **T1.3–T1.4 complete**：新增 `MFRS.mountPanel(container, { onClose }) -> { root, destroy }`；同一宿主新挂载会销毁旧实例，`destroy()` 幂等，embedded 使用独立文档流与响应式布局，不继承 fixed、overlay、`90vh` 或横向滚动。
+- **T1.5 complete**：残屑商店、物品详情与自定义编辑器保留为二级 overlay，使用主面板所属 document，返回幂等 handle，并由父实例 registry 在销毁时统一回收。
+- **生命周期安全**：FileReader、重置确认、单抽/十连写库 await 等异步 continuation 均检查 current owner；销毁会清 timer、动画、事件与二级 handle，旧实例不能继续写数据或 UI。
+- **审查整改**：3 个 Medium 全部关闭。最终宿主校验只信任 `getHostDocument()`，要求 document identity 相同，构造器来自可信 realm，并调用原生 `Node.prototype.nodeType` getter 拒绝候选自带 `Element=Object` 或伪造 `Element.prototype` 的对象；真实 Chrome 已只读确认 iframe 闭包可接受父页面真实元素并拒绝其他文档/伪造对象。
+- **T1.6 complete / 验证**：两份 JS `node --check` PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（232 checks）；`git diff --check` PASS。独立验证、反模式复核与代码质量复核均 APPROVE，无 High/Medium。
+- **范围保护**：未 install、未启动或停止 watch、未 build、未改 dist/package/lockfile；T1 关单时只有数据库前端源码、专项门禁和规划记录进入 diff。
+- **清单进度**：T0–T1 共 10/44 complete，待执行 34；下一项为 **T2.1**，让右侧抽卡键直接挂载完整面板宿主。
+
+## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **complete**
 
 - **T0.1 complete**：五个规划文件均为无 BOM 严格 UTF-8；tracked `git diff --check` 无报错，两份新规划文件无行尾空白。
-- 规划差异范围精确为 `PLAN_HUD_UX_NEXT.md`、`TASKLIST_HUD_UX_NEXT.md`、`task_plan.md`、`findings.md`、`progress.md`；未混入业务源码或门禁。
-- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/` 差异为 0，未触碰这些产物。
-- 清单复核为 44 个唯一任务 ID，T0–T7 分组数量为 4/6/5/5/5/3/7/9；当前统计 1/44，进行中 0，待执行 43。
-- 下一项：T0.2 精确暂存五个规划文件，以带 `[skip ci]` 的提交入库并推送 `main`。
+- **T0.2 complete**：五个规划文件由提交 `75f4a9a`（`docs(mfrs): plan HUD UX follow-up [skip ci]`）精确入库；本地 `main == origin/main == 75f4a9a`，`v8.13.36` 仍指向 `296c14cd`，无 `v8.13.37`。
+- **T0.3 complete**：独立 worktree 为 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`，分支 `worktree-feat-hud-gacha-mode-toggle`，创建时 `HEAD=75f4a9a` 且 clean；旧 `feat-immersive-center-workspaces@c8961df` 保持 clean，未复用或改动。
+- **T0.4 complete**：实施 worktree 基线 `pnpm verify:mfrs-frontend` PASS；`pnpm verify:mfrs-archive-ui` PASS（232 checks）。
+- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/` 差异为 0，T0 未触碰这些产物。
+- 用户原有 webpack watch PID `21824` 仍存在，并非 T0 启动且不阻塞后续源码阶段；T7 production build 前须由用户停止。
+- 清单复核为 44 个唯一任务 ID，T0–T7 分组数量为 4/6/5/5/5/3/7/9；当前统计 4/44，进行中 0，待执行 40。
+- 下一项：**T1.1**，从 `showGachaPanel()` 提取 overlay/embedded 共用的完整面板 renderer。
 
 ## 会话：2026-07-17（HUD-UX-NEXT 任务清单）— **complete**
 

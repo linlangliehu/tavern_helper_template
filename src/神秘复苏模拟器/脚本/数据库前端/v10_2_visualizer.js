@@ -2402,6 +2402,21 @@
                 .acu-edit-dialog { background-color: var(--acu-bg-panel) !important; width: 90%; max-width: 900px; max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 15px 50px var(--acu-shadow); color: var(--acu-text-main) !important; border: 1px solid var(--acu-border); margin: auto !important; overflow: hidden; padding: 0; }
                 .acu-edit-title { flex: 0 0 auto; margin: 0; padding: 20px 24px; font-size: 16px; font-weight: bold; color: var(--acu-text-main); border-bottom: 1px solid var(--acu-border); }
                 .acu-settings-content { flex: 1; overflow-y: auto; padding: 20px 24px; display: block; }
+                .acu-gacha-panel--overlay > .acu-edit-dialog { max-width: 900px; max-height: 90vh; overflow: hidden; }
+                .acu-gacha-panel--embedded { position: relative !important; inset: auto !important; display: block !important; width: 100% !important; height: auto !important; min-width: 0; max-width: 100%; overflow-x: clip !important; overflow-y: visible !important; background: transparent !important; backdrop-filter: none !important; z-index: auto !important; box-sizing: border-box; }
+                .acu-gacha-panel--embedded *, .acu-gacha-panel--embedded *::before, .acu-gacha-panel--embedded *::after { box-sizing: border-box; }
+                .acu-gacha-panel--embedded > .acu-edit-dialog { position: static !important; inset: auto !important; width: 100% !important; min-width: 0; max-width: none !important; height: auto !important; max-height: none !important; margin: 0 !important; overflow-x: clip !important; overflow-y: visible !important; border-radius: 8px; box-shadow: none; }
+                .acu-gacha-panel--embedded > .acu-edit-dialog > .acu-settings-content { min-width: 0; max-height: none !important; overflow-x: clip !important; overflow-y: visible !important; overflow-wrap: anywhere; }
+                .acu-gacha-panel--embedded .mfrs-gacha-pity-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)) !important; }
+                .acu-gacha-panel--embedded .mfrs-gacha-pool-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)) !important; }
+                .acu-gacha-panel--embedded .mfrs-gacha-result-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)) !important; }
+                @media (max-width: 560px) {
+                    .acu-gacha-panel--embedded .acu-edit-title { align-items: flex-start !important; gap: 10px; padding: 14px 16px; }
+                    .acu-gacha-panel--embedded .mfrs-gacha-title-actions { flex-wrap: wrap; justify-content: flex-end; }
+                    .acu-gacha-panel--embedded > .acu-edit-dialog > .acu-settings-content { padding: 14px 12px !important; }
+                    .acu-gacha-panel--embedded .mfrs-gacha-balance-row { align-items: flex-start !important; gap: 14px; flex-direction: column; }
+                    .acu-gacha-panel--embedded .mfrs-gacha-pull-grid { grid-template-columns: minmax(0, 1fr) !important; }
+                }
                 .acu-edit-textarea { width: 100%; height: 500px; padding: 12px; border: 1px solid var(--acu-border); background-color: var(--acu-input-bg) !important; color: var(--acu-text-main) !important; border-radius: 6px; resize: vertical; box-sizing: border-box; font-size: 14px; line-height: 1.5; font-family: monospace; }
                 .acu-dialog-btns { flex: 0 0 auto; display: flex; justify-content: center; gap: 20px; padding: 16px 24px; border-top: 1px solid var(--acu-border); background: var(--acu-bg-panel); }
                 .acu-dialog-btn { background: none; border: none; cursor: pointer; font-size: 14px; font-weight: bold; display: flex; align-items: center; gap: 6px; color: var(--acu-text-sub); transition: color 0.2s; }
@@ -6751,8 +6766,9 @@
      * 碎片商店 — 用灵异残屑兑换物品（加入已拥有列表）。
      * 全屏 overlay 弹窗，列出所有物品及按稀有度定价，实时刷新余额。
      */
-    const showFragmentShop = () => {
+    const showFragmentShop = (onBalanceChange = null, ownerDocument = getHostDocument(), onDestroy = null) => {
         const { $ } = getCore();
+        const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
 
         const allItems = getAllGachaItemDefinitions();
         const items = [
@@ -6821,14 +6837,27 @@
                     </div>
                 </div>
             </div>
-        `);
+        `, doc);
 
-        $('body').append(shopDialog);
-        shopDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) shopDialog.remove(); });
+        let handle = null;
+        handle = createGachaSecondaryHandle({
+            root: shopDialog[0],
+            cleanup: () => {
+                shopDialog.stop(true, true);
+                shopDialog.find('*').stop(true, true);
+                shopDialog.off('.mfrsGachaSecondary');
+                shopDialog.find('*').off('.mfrsGachaSecondary');
+                shopDialog.remove();
+            },
+            onDestroy,
+        });
+        const closeShop = () => handle.destroy();
+        $(doc.body).append(shopDialog);
+        shopDialog.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeShop(); });
         // 事件委托：统一处理商店内 data-mfrs-action 点击
-        shopDialog.on('click', '[data-mfrs-action]', function() {
+        shopDialog.on('click.mfrsGachaSecondary', '[data-mfrs-action]', function() {
             const action = $(this).data('mfrs-action');
-            if (action === 'shop-close') { shopDialog.remove(); return; }
+            if (action === 'shop-close') { closeShop(); return; }
             if (action === 'frag-buy') {
                 const id = $(this).data('id');
                 const item = items.find(i => i.id === id);
@@ -6836,7 +6865,8 @@
                 const result = exchangeWithFragments(item);
                 if (result.success) {
                     if (window.toastr) window.toastr.success(`兑换成功：${item.name}（消耗 ${result.cost} 灵异残屑）`);
-                    $('#gacha-fragment-display').text(getGachaFragments());
+                    if (typeof onBalanceChange === 'function') onBalanceChange(getGachaFragments());
+                    else $('#gacha-fragment-display').text(getGachaFragments());
                     refresh();
                 } else {
                     if (window.toastr) window.toastr.error(result.error || '兑换失败');
@@ -6844,6 +6874,7 @@
             }
         });
         refresh();
+        return handle;
     };
 
     // 四个物品池类型
@@ -7115,33 +7146,56 @@
         ].forEach(key => localStorage.removeItem(getGachaScopedStorageKey(key)));
     };
 
-    const importGachaSnapshotFromFile = () => {
-        const doc = getHostDocument();
+    const importGachaSnapshotFromFile = (onImported = null, options = {}) => {
+        const doc = options.ownerDocument || getHostDocument();
+        const externalIsAlive = typeof options.isAlive === 'function' ? options.isAlive : () => true;
         const input = doc.createElement('input');
         input.type = 'file';
         input.accept = '.json,application/json';
         input.style.display = 'none';
+        let reader = null;
+        const handle = createGachaSecondaryHandle({
+            root: input,
+            cleanup: () => {
+                if (reader && reader.readyState === 1 && typeof reader.abort === 'function') reader.abort();
+                input.remove();
+            },
+            onDestroy: options.onDestroy || null,
+        });
+        const isAlive = () => handle.isAlive() && externalIsAlive();
         doc.body.appendChild(input);
         input.addEventListener('change', () => {
             const file = input.files && input.files[0];
-            input.remove();
-            if (!file) return;
-            const reader = new FileReader();
+            if (!file || !isAlive()) {
+                handle.destroy();
+                return;
+            }
+            const FileReaderCtor = doc.defaultView?.FileReader || FileReader;
+            reader = new FileReaderCtor();
             reader.onload = async (ev) => {
                 try {
+                    if (!isAlive()) return;
                     const snapshot = JSON.parse(String(ev.target?.result || ''));
+                    if (!isAlive()) return;
                     importGachaScopedSnapshot(snapshot);
-                    const { $ } = getCore();
-                    if ($) $('.acu-edit-overlay').remove();
+                    if (!isAlive()) return;
                     if (window.toastr) window.toastr.success('当前聊天抽卡数据已导入');
-                    showGachaPanel();
+                    if (typeof onImported === 'function') onImported();
+                    else {
+                        const { $ } = getCore();
+                        if ($) $('.acu-edit-overlay').remove();
+                        showGachaPanel();
+                    }
                 } catch (err) {
-                    if (window.toastr) window.toastr.error('抽卡数据导入失败：' + (err.message || '未知错误'));
+                    if (isAlive() && window.toastr) window.toastr.error('抽卡数据导入失败：' + (err.message || '未知错误'));
+                } finally {
+                    handle.destroy();
                 }
             };
             reader.readAsText(file, 'utf-8');
         });
         input.click();
+        return handle;
     };
 
     const validateGachaCatalog = () => {
@@ -7213,9 +7267,84 @@
         };
     };
 
-    // 显示抽卡主面板
-    const showGachaPanel = () => {
+    const gachaPanelMounts = new WeakMap();
+
+    // 只信任宿主文档的 DOM realm，并用原生 Node getter 拒绝伪造 Element 原型链的对象。
+    const isGachaPanelHostElement = (value, trustedDocument = getHostDocument()) => {
+        try {
+            if (value?.ownerDocument !== trustedDocument) return false;
+            const ElementCtor = trustedDocument?.defaultView?.Element;
+            const NodeCtor = trustedDocument?.defaultView?.Node;
+            const nodeTypeGetter = Object.getOwnPropertyDescriptor(NodeCtor?.prototype, 'nodeType')?.get;
+            return typeof ElementCtor === 'function'
+                && typeof nodeTypeGetter === 'function'
+                && value instanceof ElementCtor
+                && nodeTypeGetter.call(value) === 1;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const createGachaPanelLifecycle = ({ container, isEmbedded, mounts, cleanup, onDestroy = null, onClose = null }) => {
+        let alive = true;
+        let handle = null;
+        const bindHandle = (nextHandle) => { handle = nextHandle; };
+        const isCurrentOwner = () => alive && (!isEmbedded || mounts.get(container) === handle);
+        const destroy = () => {
+            if (!alive) return false;
+            alive = false;
+            cleanup();
+            if (typeof onDestroy === 'function') onDestroy(handle);
+            return true;
+        };
+        const requestClose = () => {
+            if (!isCurrentOwner() || !destroy()) return false;
+            if (isEmbedded && typeof onClose === 'function') {
+                try { onClose(); }
+                catch (e) { console.error('[MFRS] embedded 抽卡面板 onClose 回调失败:', e); }
+            }
+            return true;
+        };
+        return { bindHandle, isCurrentOwner, destroy, requestClose };
+    };
+
+    const createGachaSecondaryHandle = ({ root, cleanup, onDestroy = null }) => {
+        let alive = true;
+        let handle = null;
+        const isAlive = () => alive;
+        const destroy = () => {
+            if (!alive) return false;
+            alive = false;
+            cleanup();
+            if (typeof onDestroy === 'function') onDestroy(handle);
+            return true;
+        };
+        handle = { root, destroy, isAlive };
+        return handle;
+    };
+
+    const createGachaSecondaryRegistry = () => {
+        const handles = new Set();
+        return {
+            track: (handle) => {
+                if (handle && typeof handle.destroy === 'function' && handle.isAlive?.()) handles.add(handle);
+                return handle;
+            },
+            release: (handle) => handles.delete(handle),
+            destroyAll: () => {
+                const owned = Array.from(handles);
+                handles.clear();
+                owned.forEach(handle => handle.destroy());
+            },
+            get size() { return handles.size; },
+        };
+    };
+
+    // overlay 与 embedded 的完整 DOM、业务动作和监听器都由这一实例工厂拥有。
+    const createGachaPanelInstance = ({ container, presentation, onClose = null, onDestroy = null }) => {
         const { $ } = getCore();
+        if (!$) throw new Error('[MFRS] 抽卡面板需要可用的 jQuery/DOM 环境');
+        const isEmbedded = presentation === 'embedded';
         const config = getConfig();
         const currency = getGachaCurrency();
         const pity = getGachaPity();
@@ -7223,22 +7352,39 @@
         const catalogReport = validateGachaCatalog();
         const scopeText = economy.scope || 'global';
         const scopeShort = scopeText.length > 18 ? `${scopeText.slice(0, 8)}...${scopeText.slice(-6)}` : scopeText;
-        const incomeText = Object.entries(economy.incomeByType || {})
-            .map(([type, value]) => `${type}:${value}`)
-            .join(' / ') || '暂无收入日志';
-        const rarityText = Object.entries(economy.rarityCounts || {})
-            .map(([name, value]) => `${name}:${value}`)
-            .join(' / ') || '暂无抽卡历史';
+        const buildEconomyDetailHtml = (summary) => {
+            const incomeText = Object.entries(summary.incomeByType || {})
+                .map(([type, value]) => `${type}:${value}`)
+                .join(' / ') || '暂无收入日志';
+            const rarityText = Object.entries(summary.rarityCounts || {})
+                .map(([name, value]) => `${name}:${value}`)
+                .join(' / ') || '暂无抽卡历史';
+            return `收入：${escapeHtml(incomeText)}<br>稀有度：${escapeHtml(rarityText)}`;
+        };
+        const buildPityHtml = (currentPity) => `
+            <div>
+                <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
+                <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
+            </div>
+            <div>
+                <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
+                <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - currentPity.epic)} 抽</div>
+            </div>
+            <div>
+                <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
+                <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - currentPity.total)} 抽</div>
+            </div>
+        `;
         const catalogIssueHtml = catalogReport.issues.length
             ? catalogReport.issues.slice(0, 5).map(issue => `<div style="color:${issue.level === 'error' ? '#ef4444' : 'var(--acu-text-sub)'}; font-size:11px; line-height:1.5;">${escapeHtml(issue.item)}：${escapeHtml(issue.message)}</div>`).join('')
             : '<div style="color:var(--acu-text-sub); font-size:11px;">卡池校验正常</div>';
 
         const dialog = $(`
-            <div class="acu-edit-overlay">
-                <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 900px; max-height: 90vh; overflow: hidden;">
+            <div class="acu-gacha-panel acu-gacha-panel--${presentation}${isEmbedded ? '' : ' acu-edit-overlay'}">
+                <div class="acu-edit-dialog acu-theme-${config.theme}">
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
                         <span>神秘复苏抽卡系统</span>
-                        <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="mfrs-gacha-title-actions" style="display:flex; align-items:center; gap:10px;">
                             <button id="gacha-custom-editor-btn" data-mfrs-action="gacha-custom-editor" style="background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; padding:4px 10px; cursor:pointer; color:var(--acu-text-sub); font-size:12px; transition:all 0.2s;" title="自定义物品编辑器">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> 自定义
                             </button>
@@ -7248,10 +7394,10 @@
                         </div>
                     </div>
 
-                    <div class="acu-settings-content" style="flex:1; overflow-y:auto; padding:20px;">
+                    <div class="acu-settings-content" style="flex:1; padding:20px;">
                         <!-- 货币显示 -->
                         <div style="background:var(--acu-btn-bg); border-radius:12px; padding:20px; margin-bottom:20px; border:2px solid var(--acu-highlight);">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="mfrs-gacha-balance-row" style="display:flex; justify-content:space-between; align-items:center;">
                                 <div>
                                     <div style="color:var(--acu-text-sub); font-size:13px; margin-bottom:8px;">当前余额</div>
                                     <div style="color:var(--acu-highlight); font-size:32px; font-weight:bold; display:flex; align-items:center; gap:10px;">
@@ -7305,30 +7451,19 @@
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
                             <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">经济平衡</div>
                             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:12px; font-size:12px;">
-                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">日志收入</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.incomeTotal}</div></div>
-                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">估算消耗</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.estimatedSpend}</div></div>
-                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">已拥有</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.ownedCount}</div></div>
-                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">历史</div><div style="color:var(--acu-text-main); font-weight:bold;">${economy.historyCount}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">日志收入</div><div id="gacha-economy-income" style="color:var(--acu-text-main); font-weight:bold;">${economy.incomeTotal}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">估算消耗</div><div id="gacha-economy-spend" style="color:var(--acu-text-main); font-weight:bold;">${economy.estimatedSpend}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">已拥有</div><div id="gacha-economy-owned" style="color:var(--acu-text-main); font-weight:bold;">${economy.ownedCount}</div></div>
+                                <div><div style="color:var(--acu-text-sub); margin-bottom:5px;">历史</div><div id="gacha-economy-history" style="color:var(--acu-text-main); font-weight:bold;">${economy.historyCount}</div></div>
                             </div>
-                            <div style="color:var(--acu-text-sub); font-size:11px; margin-top:10px; line-height:1.6;">收入：${escapeHtml(incomeText)}<br>稀有度：${escapeHtml(rarityText)}</div>
+                            <div id="gacha-economy-detail" style="color:var(--acu-text-sub); font-size:11px; margin-top:10px; line-height:1.6;">${buildEconomyDetailHtml(economy)}</div>
                         </div>
 
                         <!-- 保底进度 -->
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
                             <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">保底进度</div>
-                            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; font-size:12px;">
-                                <div>
-                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
-                                    <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
-                                </div>
-                                <div>
-                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
-                                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - pity.epic)} 抽</div>
-                                </div>
-                                <div>
-                                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
-                                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - pity.total)} 抽</div>
-                                </div>
+                            <div id="gacha-pity-grid" class="mfrs-gacha-pity-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; font-size:12px;">
+                                ${buildPityHtml(pity)}
                             </div>
                         </div>
 
@@ -7344,7 +7479,7 @@
                         <!-- 抽卡池选择 -->
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
                             <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:12px; font-size:14px;">选择抽卡池</div>
-                            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">
+                            <div class="mfrs-gacha-pool-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;">
                                 <button data-mfrs-action="gacha-pool-select" class="gacha-pool-btn active" data-pool="all" style="background:var(--acu-btn-bg); border:2px solid var(--acu-highlight); border-radius:8px; padding:12px; cursor:pointer; color:var(--acu-text-main); font-size:13px; transition:all 0.2s;">
                                     <div style="font-weight:bold; margin-bottom:5px;">全物品池</div>
                                     <div style="font-size:11px; color:var(--acu-text-sub);">均匀分布</div>
@@ -7365,7 +7500,7 @@
                         </div>
 
                         <!-- 抽卡按钮 -->
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
+                        <div class="mfrs-gacha-pull-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:20px;">
                             <button id="gacha-single-btn" data-mfrs-action="gacha-single" style="background:linear-gradient(135deg, var(--acu-highlight) 0%, var(--acu-highlight-bg) 100%); border:none; border-radius:12px; padding:20px; cursor:pointer; color:white; font-size:16px; font-weight:bold; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 4px 15px var(--acu-highlight-bg);">
                                 <div style="margin-bottom:8px;">单抽</div>
                                 <div style="font-size:13px; opacity:0.9;">消耗 ${GACHA_CURRENCY.cost.single} 调查点</div>
@@ -7383,7 +7518,7 @@
                         <!-- 结果展示区 -->
                         <div id="gacha-result-container" style="display:none; background:var(--acu-bg-panel); border-radius:12px; padding:20px; margin-bottom:20px;">
                             <div style="color:var(--acu-title-color); font-weight:bold; margin-bottom:15px; font-size:14px; text-align:center;">抽卡结果</div>
-                            <div id="gacha-result-items" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;"></div>
+                            <div id="gacha-result-items" class="mfrs-gacha-result-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px;"></div>
                         </div>
 
                         <!-- 抽卡历史 -->
@@ -7401,24 +7536,95 @@
             </div>
         `);
 
-        $('body').append(dialog);
-
         // 当前选中的抽卡池
         let selectedPool = GACHA_POOL_TYPE.ALL;
+        const pendingTimers = new Set();
+        const secondaryRegistry = createGachaSecondaryRegistry();
+        let lifecycle = null;
+        let handle = null;
+        const isCurrentOwner = () => lifecycle?.isCurrentOwner() === true;
+        const schedule = (callback, delay) => {
+            const timer = setTimeout(() => {
+                pendingTimers.delete(timer);
+                if (isCurrentOwner()) callback();
+            }, delay);
+            pendingTimers.add(timer);
+            return timer;
+        };
 
-        // 关闭对话框
-        const closeDialog = () => dialog.remove();
-        dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDialog(); });
+        const cleanup = () => {
+            pendingTimers.forEach(timer => clearTimeout(timer));
+            pendingTimers.clear();
+            secondaryRegistry.destroyAll();
+            dialog.stop(true, true);
+            dialog.find('*').stop(true, true);
+            dialog.off('.mfrsGachaPanel');
+            dialog.find('*').off('.mfrsGachaPanel');
+            dialog.remove();
+        };
+        lifecycle = createGachaPanelLifecycle({
+            container,
+            isEmbedded,
+            mounts: gachaPanelMounts,
+            cleanup,
+            onDestroy,
+            onClose,
+        });
+        const destroy = lifecycle.destroy;
+        const requestClose = lifecycle.requestClose;
+        handle = { root: dialog[0], destroy };
+        lifecycle.bindHandle(handle);
+        container.appendChild(dialog[0]);
+
+        const trackSecondary = (factory) => {
+            if (!isCurrentOwner()) return null;
+            let secondaryHandle = null;
+            secondaryHandle = factory(() => secondaryRegistry.release(secondaryHandle));
+            if (!secondaryHandle || !secondaryHandle.isAlive?.()) return secondaryHandle;
+            if (!isCurrentOwner()) {
+                secondaryHandle.destroy();
+                return secondaryHandle;
+            }
+            return secondaryRegistry.track(secondaryHandle);
+        };
+
+        const refreshPanelData = ({ resetInteraction = false } = {}) => {
+            if (!isCurrentOwner()) return;
+            const nextEconomy = buildGachaEconomySummary();
+            dialog.find('#gacha-currency-display').text(getGachaCurrency());
+            dialog.find('#gacha-fragment-display').text(getGachaFragments());
+            dialog.find('#gacha-economy-income').text(nextEconomy.incomeTotal);
+            dialog.find('#gacha-economy-spend').text(nextEconomy.estimatedSpend);
+            dialog.find('#gacha-economy-owned').text(nextEconomy.ownedCount);
+            dialog.find('#gacha-economy-history').text(nextEconomy.historyCount);
+            dialog.find('#gacha-economy-detail').html(buildEconomyDetailHtml(nextEconomy));
+            dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
+            if (!resetInteraction) return;
+            selectedPool = GACHA_POOL_TYPE.ALL;
+            dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
+            dialog.find('.gacha-pool-btn[data-pool="all"]').addClass('active').css('border-color', 'var(--acu-highlight)');
+            dialog.find('#gacha-result-items').empty();
+            dialog.find('#gacha-result-container').hide();
+            dialog.find('#gacha-history-content').stop(true, true).hide().empty();
+            dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
+        };
+
+        if (!isEmbedded) {
+            dialog.on('click.mfrsGachaPanel', function(e) {
+                if ($(e.target).hasClass('acu-edit-overlay')) requestClose();
+            });
+        }
 
         // 按钮悬停效果
-        dialog.find('#gacha-single-btn, #gacha-ten-btn').on('mouseenter', function() {
+        dialog.find('#gacha-single-btn, #gacha-ten-btn').on('mouseenter.mfrsGachaPanel', function() {
             $(this).css('transform', 'translateY(-3px) scale(1.02)');
-        }).on('mouseleave', function() {
+        }).on('mouseleave.mfrsGachaPanel', function() {
             $(this).css('transform', 'translateY(0) scale(1)');
         });
 
         // 显示抽卡结果
         const showGachaResult = (items) => {
+            if (!isCurrentOwner()) return;
             const $resultContainer = dialog.find('#gacha-result-container');
             const $resultItems = dialog.find('#gacha-result-items');
 
@@ -7443,7 +7649,7 @@
                     transform: 'rotateY(90deg)'
                 });
 
-                setTimeout(() => {
+                schedule(() => {
                     $card.css({
                         opacity: 1,
                         transform: 'rotateY(0deg)',
@@ -7452,15 +7658,15 @@
                 }, Math.random() * 200);
 
                 // 悬停放大
-                $card.on('mouseenter', function() {
+                $card.on('mouseenter.mfrsGachaPanel', function() {
                     $(this).css('transform', 'scale(1.05)');
-                }).on('mouseleave', function() {
+                }).on('mouseleave.mfrsGachaPanel', function() {
                     $(this).css('transform', 'scale(1)');
                 });
 
                 // 点击显示详情
-                $card.on('click', function() {
-                    showGachaItemDetail(item);
+                $card.on('click.mfrsGachaPanel', function() {
+                    trackSecondary(release => showGachaItemDetail(item, container.ownerDocument, release));
                 });
 
                 $resultItems.append($card);
@@ -7469,7 +7675,7 @@
             $resultContainer.show();
 
             // 滚动到结果区域
-            setTimeout(() => {
+            schedule(() => {
                 $resultContainer[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }, 600);
         };
@@ -7487,21 +7693,7 @@
             dialog.find('#gacha-currency-display').text(result.currency);
 
             // 更新保底显示
-            const newPity = getGachaPity();
-            dialog.find('#gacha-result-container').siblings().eq(1).find('[style*="grid-template-columns"]').html(`
-                <div>
-                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
-                    <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
-                </div>
-                <div>
-                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
-                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - newPity.epic)} 抽</div>
-                </div>
-                <div>
-                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
-                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - newPity.total)} 抽</div>
-                </div>
-            `);
+            dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
 
             // 显示结果
             showGachaResult(result.items);
@@ -7514,6 +7706,8 @@
 
             // 同步到数据库：重复项已转为灵异残屑，不再写入表格
             await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
+            if (!isCurrentOwner()) return;
+            refreshPanelData();
 
             if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
         };
@@ -7531,21 +7725,7 @@
             dialog.find('#gacha-currency-display').text(result.currency);
 
             // 更新保底显示
-            const newPity = getGachaPity();
-            dialog.find('#gacha-result-container').siblings().eq(1).find('[style*="grid-template-columns"]').html(`
-                <div>
-                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
-                    <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
-                </div>
-                <div>
-                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">50抽保底 ★★★★</div>
-                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 50 - newPity.epic)} 抽</div>
-                </div>
-                <div>
-                    <div style="color:var(--acu-text-sub); margin-bottom:5px;">100抽保底 ★★★★★★</div>
-                    <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - newPity.total)} 抽</div>
-                </div>
-            `);
+            dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
 
             // 显示结果
             showGachaResult(result.items);
@@ -7558,6 +7738,8 @@
 
             // 同步到数据库：重复项已转为灵异残屑，不再写入表格
             await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
+            if (!isCurrentOwner()) return;
+            refreshPanelData();
 
             // 统计稀有度
             const rarityCount = {};
@@ -7626,18 +7808,37 @@
         };
 
         // 事件委托：统一处理面板内所有 data-mfrs-action 点击
-        dialog.on('click', '[data-mfrs-action]', async function(e) {
+        dialog.on('click.mfrsGachaPanel', '[data-mfrs-action]', async function(e) {
             e.stopPropagation();
+            if (!isCurrentOwner()) return;
             const action = $(this).data('mfrs-action');
             switch (action) {
-                case 'gacha-close': closeDialog(); break;
-                case 'gacha-custom-editor': closeDialog(); showCustomItemEditor(); break;
+                case 'gacha-close': requestClose(); break;
+                case 'gacha-custom-editor':
+                    // overlay 保持旧的“关闭主面板后打开编辑器”语义；embedded 保留宿主主面板。
+                    if (!isEmbedded) {
+                        destroy();
+                        showCustomItemEditor(container.ownerDocument);
+                    } else {
+                        trackSecondary(release => showCustomItemEditor(container.ownerDocument, release));
+                    }
+                    break;
                 case 'gacha-export':
                     downloadJsonFile(getGachaScopedSnapshot(), `mfrs_gacha_${getActiveGachaChatScope()}_${new Date().toISOString().slice(0, 10)}.json`);
                     if (window.toastr) window.toastr.success('已导出当前聊天抽卡数据');
                     break;
                 case 'gacha-import':
-                    importGachaSnapshotFromFile();
+                    trackSecondary(release => importGachaSnapshotFromFile(() => {
+                            if (isEmbedded) refreshPanelData({ resetInteraction: true });
+                            else {
+                                destroy();
+                                showGachaPanel();
+                            }
+                        }, {
+                            ownerDocument: container.ownerDocument,
+                            isAlive: isCurrentOwner,
+                            onDestroy: release,
+                        }));
                     break;
                 case 'gacha-reset-data': {
                     const ok = await MFRSDialog.showConfirm('只重置当前聊天 scope 下的调查点、保底、历史、奖励日志、残屑和已拥有物品。自定义卡池不会被删除。继续？', {
@@ -7645,11 +7846,15 @@
                         confirmText: '重置',
                         danger: true,
                     });
+                    if (!isCurrentOwner()) break;
                     if (!ok) break;
                     resetGachaScopedData();
                     if (window.toastr) window.toastr.success('已重置当前聊天抽卡数据');
-                    closeDialog();
-                    showGachaPanel();
+                    if (isEmbedded) refreshPanelData({ resetInteraction: true });
+                    else {
+                        destroy();
+                        showGachaPanel();
+                    }
                     break;
                 }
                 case 'gacha-pool-select':
@@ -7659,14 +7864,60 @@
                     break;
                 case 'gacha-single': await doSinglePull(); break;
                 case 'gacha-ten': await doTenPull(); break;
-                case 'gacha-shop': showFragmentShop(); break;
+                case 'gacha-shop':
+                    trackSecondary(release => showFragmentShop(
+                        () => { if (isCurrentOwner()) refreshPanelData(); },
+                        container.ownerDocument,
+                        release,
+                    ));
+                    break;
                 case 'gacha-history-toggle': toggleHistory(); break;
             }
         });
-    };    // 显示物品详情
-    const showGachaItemDetail = (item) => {
+
+        return handle;
+    };
+
+    // 兼容入口：无参调用仍在宿主 body 创建完整屏幕 overlay。
+    const showGachaPanel = () => {
+        const body = getHostDocument().body;
+        if (!isGachaPanelHostElement(body)) throw new Error('[MFRS] 无法找到抽卡 overlay 的宿主 body');
+        return createGachaPanelInstance({ container: body, presentation: 'overlay' });
+    };
+
+    // 公开 ownership 契约：同一宿主只保留一个实例，调用方负责持有并 destroy 返回句柄。
+    const mountGachaPanel = (container, options = {}) => {
+        if (!isGachaPanelHostElement(container)) {
+            throw new TypeError('[MFRS] mountPanel(container) 需要可用的 DOM 元素宿主');
+        }
+        if (options === null || typeof options !== 'object') {
+            throw new TypeError('[MFRS] mountPanel(container, options) 的 options 必须是对象');
+        }
+        const onClose = options.onClose;
+        if (onClose !== undefined && typeof onClose !== 'function') {
+            throw new TypeError('[MFRS] mountPanel 的 onClose 必须是函数');
+        }
+
+        const previous = gachaPanelMounts.get(container);
+        if (previous) previous.destroy();
+
+        const handle = createGachaPanelInstance({
+            container,
+            presentation: 'embedded',
+            onClose: onClose || null,
+            onDestroy: (destroyedHandle) => {
+                if (gachaPanelMounts.get(container) === destroyedHandle) gachaPanelMounts.delete(container);
+            },
+        });
+        gachaPanelMounts.set(container, handle);
+        return handle;
+    };
+
+    // 显示物品详情
+    const showGachaItemDetail = (item, ownerDocument = getHostDocument(), onDestroy = null) => {
         const { $ } = getCore();
         const config = getConfig();
+        const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
 
         const detailDialog = $(`
             <div class="acu-edit-overlay">
@@ -7712,12 +7963,26 @@
                     </div>
                 </div>
             </div>
-        `);
+        `, doc);
 
-        $('body').append(detailDialog);
+        let handle = null;
+        handle = createGachaSecondaryHandle({
+            root: detailDialog[0],
+            cleanup: () => {
+                detailDialog.stop(true, true);
+                detailDialog.find('*').stop(true, true);
+                detailDialog.off('.mfrsGachaSecondary');
+                detailDialog.find('*').off('.mfrsGachaSecondary');
+                detailDialog.remove();
+            },
+            onDestroy,
+        });
+        const closeDetail = () => handle.destroy();
+        $(doc.body).append(detailDialog);
 
-        detailDialog.find('.detail-close').click(() => detailDialog.remove());
-        detailDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) detailDialog.remove(); });
+        detailDialog.find('.detail-close').on('click.mfrsGachaSecondary', closeDetail);
+        detailDialog.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDetail(); });
+        return handle;
     };
 
     // ═══════════════════ 自定义物品编辑器 ═══════════════════
@@ -7726,9 +7991,10 @@
      * 显示自定义物品编辑器 — 列表 + 新增/编辑表单
      * 支持 3 种物品类型的 tab 切换，区分 builtin（只读）与 custom（可编辑/删除）
      */
-    const showCustomItemEditor = () => {
+    const showCustomItemEditor = (ownerDocument = getHostDocument(), onDestroy = null) => {
         const { $ } = getCore();
         const config = getConfig();
+        const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
 
         const RARITY_OPTIONS = Object.entries(GACHA_RARITY).map(([key, val]) =>
             `<option value="${key}">${val.stars} ${val.name}</option>`
@@ -7831,13 +8097,30 @@
                     </div>
                 </div>
             </div>
-        `);
+        `, doc);
 
         let currentType = 'supernatural';
+        const childRegistry = createGachaSecondaryRegistry();
+        const pendingInputs = new Set();
+        let editorHandle = null;
+        editorHandle = createGachaSecondaryHandle({
+            root: editor[0],
+            cleanup: () => {
+                childRegistry.destroyAll();
+                pendingInputs.forEach(input => input.remove());
+                pendingInputs.clear();
+                editor.stop(true, true);
+                editor.find('*').stop(true, true);
+                editor.off('.mfrsGachaSecondary');
+                editor.find('*').off('.mfrsGachaSecondary');
+                editor.remove();
+            },
+            onDestroy,
+        });
 
         // 关闭编辑器
-        const closeEditor = () => editor.remove();
-        editor.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeEditor(); });
+        const closeEditor = () => editorHandle.destroy();
+        editor.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeEditor(); });
 
         // Tab 切换由容器委托处理
 
@@ -7863,15 +8146,17 @@
                     });
                 }
                 const json = JSON.stringify(exportData, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
+                const BlobCtor = doc.defaultView?.Blob || Blob;
+                const urlApi = doc.defaultView?.URL || URL;
+                const blob = new BlobCtor([json], { type: 'application/json' });
+                const url = urlApi.createObjectURL(blob);
+                const a = doc.createElement('a');
                 a.href = url;
                 a.download = `gacha_items_catalog_${new Date().toISOString().slice(0,10)}.json`;
-                document.body.appendChild(a);
+                doc.body.appendChild(a);
                 a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                doc.body.removeChild(a);
+                urlApi.revokeObjectURL(url);
             } catch (e) {
                 console.error('Export failed:', e);
                 await MFRSDialog.showAlert('导出失败: ' + e.message, { title: '导出错误' });
@@ -7880,17 +8165,24 @@
 
         // 导入物品 JSON → 覆盖/新增到 custom 层
         const doImport = () => {
-            const fileInput = document.createElement('input');
+            const fileInput = doc.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = '.json';
             fileInput.style.display = 'none';
             fileInput.addEventListener('change', (e) => {
+                pendingInputs.delete(fileInput);
                 const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
+                if (!file || !editorHandle.isAlive()) {
+                    fileInput.remove();
+                    return;
+                }
+                const FileReaderCtor = doc.defaultView?.FileReader || FileReader;
+                const reader = new FileReaderCtor();
                 reader.onload = async (ev) => {
                     try {
+                        if (!editorHandle.isAlive()) return;
                         const data = JSON.parse(ev.target.result);
+                        if (!editorHandle.isAlive()) return;
                         // 验证格式
                         const validTypes = ['supernatural', 'clue', 'knowledge'];
                         const hasValidType = validTypes.some(t => Array.isArray(data[t]) && data[t].length > 0);
@@ -7900,6 +8192,7 @@
                         }
                         let importCount = 0;
                         for (const type of validTypes) {
+                            if (!editorHandle.isAlive()) return;
                             const items = data[type];
                             if (!Array.isArray(items)) continue;
                             for (const item of items) {
@@ -7910,18 +8203,21 @@
                                 importCount++;
                             }
                         }
+                        if (!editorHandle.isAlive()) return;
                         // 刷新列表
                         editor.find('#custom-item-list').html(buildItemList(currentType));
                         MFRSDialog.showToast(`导入成功！共导入 ${importCount} 个物品到自定义层`, 'success');
                     } catch (parseErr) {
+                        if (!editorHandle.isAlive()) return;
                         console.error('Import parse failed:', parseErr);
                         await MFRSDialog.showAlert('JSON 解析失败: ' + parseErr.message, { title: '解析错误' });
                     }
                 };
                 reader.readAsText(file);
-                document.body.removeChild(fileInput);
+                fileInput.remove();
             });
-            document.body.appendChild(fileInput);
+            pendingInputs.add(fileInput);
+            doc.body.appendChild(fileInput);
             fileInput.click();
         };
 
@@ -8018,6 +8314,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                         value: itemSchema
                     }
                 });
+                if (!editorHandle.isAlive()) return;
 
                 // 解析结果（json_schema 模式下返回 JSON 字符串）
                 let item;
@@ -8119,8 +8416,9 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                         duration: 6000,
                         actionLabel: "查看",
                         onAction: function() {
+                            if (!editorHandle.isAlive()) return;
                             _autoFixes.forEach(function(field) {
-                                var el = field === "图标" ? document.getElementById("form-icon") : document.getElementById("form-effectDetail");
+                                var el = field === "图标" ? doc.getElementById("form-icon") : doc.getElementById("form-effectDetail");
                                 if (el) {
                                     el.scrollIntoView({ behavior: "smooth", block: "center" });
                                     el.style.transition = "box-shadow 0.3s";
@@ -8136,23 +8434,25 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 showItemForm(currentType, item);
 
             } catch (err) {
+                if (!editorHandle.isAlive()) return;
                 console.error('AI generation failed:', err);
                 MFRSDialog.showToast('AI 生成失败: ' + (err.message || '未知错误') + '\n\n请确认当前已连接 AI 代理且可用。', 'error', { duration: 6000 });
             } finally {
-                btn.prop('disabled', false).html(origHtml);
+                if (editorHandle.isAlive()) btn.prop('disabled', false).html(origHtml);
             }
         };
 
         // 列表行 hover 效果（委托绑定，无需逐行重新绑定）
-        editor.on('mouseenter', '.custom-item-row', function() {
+        editor.on('mouseenter.mfrsGachaSecondary', '.custom-item-row', function() {
             $(this).css('border-color', 'var(--acu-highlight)');
-        }).on('mouseleave', '.custom-item-row', function() {
+        }).on('mouseleave.mfrsGachaSecondary', '.custom-item-row', function() {
             $(this).css('border-color', 'var(--acu-border)');
         });
 
         // 事件委托：统一处理编辑器内所有 data-mfrs-action 点击
-        editor.on('click', '[data-mfrs-action]', async function(e) {
+        editor.on('click.mfrsGachaSecondary', '[data-mfrs-action]', async function(e) {
             e.stopPropagation();
+            if (!editorHandle.isAlive()) return;
             const action = $(this).data('mfrs-action');
             switch (action) {
                 case 'editor-close': closeEditor(); break;
@@ -8179,7 +8479,9 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 case 'editor-delete-item': {
                     const id = $(this).data('id');
                     const type = $(this).data('type');
-                    if (await MFRSDialog.showConfirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`, { title: '删除确认', confirmText: '删除', danger: true })) {
+                    const confirmed = await MFRSDialog.showConfirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`, { title: '删除确认', confirmText: '删除', danger: true });
+                    if (!editorHandle.isAlive()) break;
+                    if (confirmed) {
                         removeCustomGachaItem(type, id);
                         editor.find('#custom-item-list').html(buildItemList(currentType));
                     }
@@ -8190,6 +8492,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
         // 显示物品编辑/新增表单
         const showItemForm = (type, existingItem) => {
+            if (!editorHandle.isAlive()) return null;
             const isEdit = !!existingItem;
             const title = isEdit ? `编辑: ${existingItem.name}` : `新增${TYPE_LABELS[type]}`;
 
@@ -8301,18 +8604,32 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                         </div>
                     </div>
                 </div>
-            `);
+            `, doc);
 
             // 设置稀有度下拉默认值
             formDialog.find('#form-rarity').val(rarityKey);
 
             // 关闭表单
-            const closeForm = () => formDialog.remove();
-            formDialog.find('.form-close, .form-cancel-btn').on('click', closeForm);
-            formDialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeForm(); });
+            let formHandle = null;
+            formHandle = createGachaSecondaryHandle({
+                root: formDialog[0],
+                cleanup: () => {
+                    formDialog.stop(true, true);
+                    formDialog.find('*').stop(true, true);
+                    formDialog.off('.mfrsGachaSecondary');
+                    formDialog.find('*').off('.mfrsGachaSecondary');
+                    formDialog.remove();
+                },
+                onDestroy: () => childRegistry.release(formHandle),
+            });
+            childRegistry.track(formHandle);
+            const closeForm = () => formHandle.destroy();
+            formDialog.find('.form-close, .form-cancel-btn').on('click.mfrsGachaSecondary', closeForm);
+            formDialog.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeForm(); });
 
             // 保存
-            formDialog.find('#form-save-btn').on('click', async () => {
+            formDialog.find('#form-save-btn').on('click.mfrsGachaSecondary', async () => {
+                if (!editorHandle.isAlive() || !formHandle.isAlive()) return;
                 const id = formDialog.find('#form-id').val().trim();
                 const name = formDialog.find('#form-name').val().trim();
                 const icon = formDialog.find('#form-icon').val().trim();
@@ -8353,16 +8670,18 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             });
 
             // hover 效果
-            formDialog.find('#form-save-btn').on('mouseenter', function() {
+            formDialog.find('#form-save-btn').on('mouseenter.mfrsGachaSecondary', function() {
                 $(this).css('transform', 'scale(1.02)');
-            }).on('mouseleave', function() {
+            }).on('mouseleave.mfrsGachaSecondary', function() {
                 $(this).css('transform', 'scale(1)');
             });
 
-            $('body').append(formDialog);
+            $(doc.body).append(formDialog);
+            return formHandle;
         };
 
-        $('body').append(editor);
+        $(doc.body).append(editor);
+        return editorHandle;
     };
 
     // ═══════════════════ 抽卡写库预校验 ═══════════════════
@@ -8656,7 +8975,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
     // ==================== window.MFRS 公开 API ====================
     // 把抽卡/碎片/自定义物品核心函数挂到 window.MFRS，供外部脚本或控制台调用。
     // 所有函数均为闭包内定义的原始引用，调用等价于内部直接调用。
-    // UI 类函数（showPanel 等）依赖 jQuery/DOM，需在页面加载后调用。
+    // UI 类函数依赖 jQuery/DOM，需在页面加载后调用；mountPanel 返回调用方拥有的清理句柄。
     // 注意：挂载对象的 key 和 value 不能同名，否则 webpack minifier 会优化为简写
     // {showGachaResult}，但函数变量已被重命名为短名，导致 ReferenceError。
     try {
@@ -8714,6 +9033,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                 danger: true,
             }),
             showPanel: showGachaPanel,
+            mountPanel: mountGachaPanel,
             showFragmentShop: showFragmentShop,
             showCustomEditor: showCustomItemEditor,
             // showGachaResult 是 showGachaPanel 内部局部变量，IIFE 顶层无法引用，已从公开 API 移除
@@ -8725,7 +9045,7 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             version: '1.0',
         });
         if (host !== window) window.MFRS = host.MFRS;
-        console.info('[MFRS] window.MFRS API 已挂载，可用方法：getCurrency/single/ten/getAllItems/showPanel 等');
+        console.info('[MFRS] window.MFRS API 已挂载，可用方法：getCurrency/single/ten/getAllItems/showPanel/mountPanel 等');
     } catch (e) {
         console.error('[MFRS] window.MFRS 挂载失败:', e);
     }

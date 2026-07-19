@@ -43,6 +43,19 @@ function assertPattern(source, pattern, label) {
   assert.ok(pattern.test(source), `${label} missing pattern: ${pattern}`);
 }
 
+function sourceSlice(source, startMarker, endMarker, label) {
+  const start = source.indexOf(startMarker);
+  const end = start < 0 ? -1 : source.indexOf(endMarker, start + startMarker.length);
+  if (start < 0 || end <= start) {
+    throw new Error(`${label} source boundaries missing: ${startMarker} -> ${endMarker}`);
+  }
+  return source.slice(start, end);
+}
+
+function countOccurrences(source, marker) {
+  return source.split(marker).length - 1;
+}
+
 function loadFrontendConfig() {
   const fakeWindow = {};
   fakeWindow.parent = fakeWindow;
@@ -179,6 +192,372 @@ assert.ok(
   'custom gacha catalog must remain global, not chat-scoped',
 );
 
+const gachaPanelSource = sourceSlice(
+  visualizerSource,
+  'const gachaPanelMounts = new WeakMap();',
+  'const showGachaItemDetail = (item, ownerDocument = getHostDocument(), onDestroy = null) => {',
+  'gacha panel implementation',
+);
+const gachaHostGuardSource = sourceSlice(
+  gachaPanelSource,
+  'const isGachaPanelHostElement = (value, trustedDocument = getHostDocument()) => {',
+  'const createGachaPanelLifecycle =',
+  'gacha host validation',
+);
+const gachaLifecycleHelpersSource = sourceSlice(
+  gachaPanelSource,
+  'const createGachaPanelLifecycle =',
+  'const createGachaPanelInstance =',
+  'gacha lifecycle helpers',
+);
+const gachaFactorySource = sourceSlice(
+  gachaPanelSource,
+  'const createGachaPanelInstance =',
+  'const showGachaPanel = () => {',
+  'gacha panel instance factory',
+);
+const gachaShowSource = sourceSlice(
+  gachaPanelSource,
+  'const showGachaPanel = () => {',
+  'const mountGachaPanel = (container, options = {}) => {',
+  'gacha overlay entry',
+);
+const gachaMountSource = sourceSlice(
+  visualizerSource,
+  'const mountGachaPanel = (container, options = {}) => {',
+  'const showGachaItemDetail = (item, ownerDocument = getHostDocument(), onDestroy = null) => {',
+  'gacha embedded entry',
+);
+const gachaDestroySource = sourceSlice(
+  gachaLifecycleHelpersSource,
+  'const destroy = () => {',
+  'const requestClose = () => {',
+  'gacha destroy lifecycle',
+);
+const gachaRequestCloseSource = sourceSlice(
+  gachaLifecycleHelpersSource,
+  'const requestClose = () => {',
+  'return { bindHandle, isCurrentOwner, destroy, requestClose };',
+  'gacha user close lifecycle',
+);
+const gachaActionSource = sourceSlice(
+  gachaFactorySource,
+  "dialog.on('click.mfrsGachaPanel', '[data-mfrs-action]'",
+  'return handle;',
+  'gacha action dispatcher',
+);
+const gachaCustomActionSource = sourceSlice(
+  gachaActionSource,
+  "case 'gacha-custom-editor':",
+  "case 'gacha-export':",
+  'gacha custom editor action',
+);
+const gachaShopActionSource = sourceSlice(
+  gachaActionSource,
+  "case 'gacha-shop':",
+  "case 'gacha-history-toggle':",
+  'gacha shop action',
+);
+const gachaDetailActionSource = sourceSlice(
+  gachaFactorySource,
+  "$card.on('click.mfrsGachaPanel'",
+  '$resultItems.append($card);',
+  'gacha item detail action',
+);
+const gachaEmbeddedCssSource = sourceSlice(
+  visualizerSource,
+  '.acu-gacha-panel--embedded {',
+  '.acu-edit-textarea {',
+  'gacha embedded CSS',
+);
+const gachaShopSource = sourceSlice(
+  visualizerSource,
+  'const showFragmentShop = (onBalanceChange = null, ownerDocument = getHostDocument(), onDestroy = null) => {',
+  'const GACHA_POOL_TYPE = {',
+  'gacha fragment shop',
+);
+const gachaDetailSource = sourceSlice(
+  visualizerSource,
+  'const showGachaItemDetail = (item, ownerDocument = getHostDocument(), onDestroy = null) => {',
+  'const showCustomItemEditor = (ownerDocument = getHostDocument(), onDestroy = null) => {',
+  'gacha item detail overlay',
+);
+const gachaCustomEditorSource = sourceSlice(
+  visualizerSource,
+  'const showCustomItemEditor = (ownerDocument = getHostDocument(), onDestroy = null) => {',
+  'const getNextClueCode = async () => {',
+  'gacha custom editor overlay',
+);
+const gachaImportSource = sourceSlice(
+  visualizerSource,
+  'const importGachaSnapshotFromFile = (onImported = null, options = {}) => {',
+  'const validateGachaCatalog = () => {',
+  'gacha snapshot import lifecycle',
+);
+
+assert.equal(
+  countOccurrences(visualizerSource, 'const createGachaPanelInstance ='),
+  1,
+  'gacha panel must keep one shared instance factory',
+);
+assert.equal(
+  countOccurrences(visualizerSource, '<span>\u795e\u79d8\u590d\u82cf\u62bd\u5361\u7cfb\u7edf</span>'),
+  1,
+  'full gacha panel title/template must have one source',
+);
+assertContains(gachaFactorySource, '<span>\u795e\u79d8\u590d\u82cf\u62bd\u5361\u7cfb\u7edf</span>', 'shared gacha panel template');
+assert.equal(
+  countOccurrences(gachaPanelSource, 'createGachaPanelInstance({'),
+  2,
+  'overlay and embedded must be the only callers of the shared gacha factory',
+);
+assertPattern(
+  gachaShowSource,
+  /return createGachaPanelInstance\(\{\s*container: body,\s*presentation: 'overlay'\s*\}\);/,
+  'showPanel overlay compatibility entry',
+);
+assertPattern(
+  gachaMountSource,
+  /const handle = createGachaPanelInstance\(\{[\s\S]*?container,[\s\S]*?presentation: 'embedded'/,
+  'mountPanel embedded shared-factory entry',
+);
+assertContains(visualizerSource, 'showPanel: showGachaPanel,', 'MFRS showPanel public API');
+assertContains(visualizerSource, 'mountPanel: mountGachaPanel,', 'MFRS mountPanel public API');
+
+assertContains(gachaHostGuardSource, 'trustedDocument = getHostDocument()', 'trusted host document default');
+assertContains(gachaHostGuardSource, 'value?.ownerDocument !== trustedDocument', 'trusted host document identity check');
+assertContains(gachaHostGuardSource, 'trustedDocument?.defaultView?.Element', 'trusted-realm Element constructor');
+assertContains(gachaHostGuardSource, 'trustedDocument?.defaultView?.Node', 'trusted-realm Node constructor');
+assertContains(gachaHostGuardSource, "Object.getOwnPropertyDescriptor(NodeCtor?.prototype, 'nodeType')?.get", 'native Node brand getter');
+assertContains(gachaHostGuardSource, 'value instanceof ElementCtor', 'trusted-realm Element prototype check');
+assertContains(gachaHostGuardSource, 'nodeTypeGetter.call(value) === 1', 'native Node element-type brand check');
+assert.ok(!gachaHostGuardSource.includes('value?.ownerDocument?.defaultView'), 'candidate document must not provide DOM constructors');
+assert.ok(!gachaHostGuardSource.includes('value instanceof Element;'), 'gacha host validation must not use local-realm Element');
+assertContains(gachaShowSource, 'isGachaPanelHostElement(body)', 'overlay host brand validation');
+assertContains(gachaMountSource, 'isGachaPanelHostElement(container)', 'embedded host brand validation');
+
+assertContains(gachaPanelSource, 'const gachaPanelMounts = new WeakMap();', 'gacha mount ownership WeakMap');
+assertContains(gachaMountSource, 'const previous = gachaPanelMounts.get(container);', 'same-host previous mount lookup');
+assertContains(gachaMountSource, 'if (previous) previous.destroy();', 'same-host previous mount destroy');
+assertContains(gachaMountSource, 'gachaPanelMounts.set(container, handle);', 'same-host current mount ownership');
+assertPattern(
+  gachaMountSource,
+  /onDestroy:\s*\(destroyedHandle\) => \{\s*if \(gachaPanelMounts\.get\(container\) === destroyedHandle\) gachaPanelMounts\.delete\(container\);/,
+  'destroyed mount ownership cleanup',
+);
+
+assertContains(gachaFactorySource, 'handle = { root: dialog[0], destroy };', 'gacha mount handle shape');
+assertContains(gachaFactorySource, 'container.appendChild(dialog[0]);', 'gacha root host attachment');
+assertPattern(gachaFactorySource, /return handle;\s*\};/, 'gacha factory handle return');
+assertContains(gachaMountSource, 'return handle;', 'mountPanel handle return');
+assertPattern(gachaDestroySource, /if \(!alive\) return false;\s*alive = false;/, 'idempotent gacha destroy');
+assert.ok(!gachaDestroySource.includes('onClose'), 'programmatic destroy must not emit embedded onClose');
+assertPattern(
+  gachaRequestCloseSource,
+  /if \(!isCurrentOwner\(\) \|\| !destroy\(\)\) return false;\s*if \(isEmbedded && typeof onClose === 'function'\)/,
+  'embedded user close destroys before onClose',
+);
+assert.equal(countOccurrences(gachaLifecycleHelpersSource, 'onClose();'), 1, 'onClose must only run through the user-close path');
+assertContains(gachaLifecycleHelpersSource, 'mounts.get(container) === handle', 'embedded current-owner lifecycle guard');
+assertContains(gachaFactorySource, 'secondaryRegistry.destroyAll();', 'main destroy releases secondary overlays');
+assertContains(gachaFactorySource, 'dialog.stop(true, true);', 'main destroy stops root animation');
+assertContains(gachaFactorySource, "dialog.find('*').stop(true, true);", 'main destroy stops descendant animations');
+assertContains(gachaActionSource, "case 'gacha-close': requestClose(); break;", 'gacha close action ownership path');
+assertContains(gachaActionSource, 'if (!isCurrentOwner()) return;', 'gacha action current-owner guard');
+assert.ok(
+  countOccurrences(gachaFactorySource, 'await syncGachaResultToDatabase') === 2
+    && countOccurrences(gachaFactorySource, 'if (!isCurrentOwner()) return;') >= 5,
+  'single and ten pull async continuations must be owner guarded',
+);
+assertContains(gachaActionSource, 'if (!isCurrentOwner()) break;', 'reset confirmation continuation owner guard');
+assertContains(gachaImportSource, 'if (!isAlive()) return;', 'FileReader import owner guard before state writes');
+assert.ok(
+  gachaImportSource.indexOf('if (!isAlive()) return;') < gachaImportSource.indexOf('importGachaScopedSnapshot(snapshot);'),
+  'FileReader import must check liveness before snapshot mutation',
+);
+
+assertContains(
+  gachaFactorySource,
+  "acu-gacha-panel--${presentation}${isEmbedded ? '' : ' acu-edit-overlay'}",
+  'embedded root excludes main overlay class',
+);
+assertContains(
+  visualizerSource,
+  '.acu-gacha-panel--overlay > .acu-edit-dialog { max-width: 900px; max-height: 90vh; overflow: hidden; }',
+  'gacha overlay 90vh compatibility layout',
+);
+assertContains(gachaEmbeddedCssSource, 'position: relative !important;', 'embedded root document-flow position');
+assertContains(gachaEmbeddedCssSource, 'position: static !important;', 'embedded dialog document-flow position');
+assertContains(gachaEmbeddedCssSource, 'max-height: none !important;', 'embedded panel unlimited document height');
+assertContains(gachaEmbeddedCssSource, 'overflow-x: clip !important;', 'embedded panel horizontal overflow containment');
+assert.ok(!/position:\s*fixed/.test(gachaEmbeddedCssSource), 'embedded panel must not use fixed positioning');
+assert.ok(!gachaEmbeddedCssSource.includes('90vh'), 'embedded panel must not inherit the overlay viewport cap');
+assert.ok(!/overflow-x:\s*(?:auto|scroll)/.test(gachaEmbeddedCssSource), 'embedded panel must not add horizontal scrolling');
+
+assertPattern(
+  gachaCustomActionSource,
+  /if \(!isEmbedded\) \{\s*destroy\(\);\s*showCustomItemEditor\(container\.ownerDocument\);\s*\} else \{\s*trackSecondary/,
+  'custom editor keeps embedded panel and closes legacy overlay panel',
+);
+assertContains(gachaCustomEditorSource, '<div class="acu-edit-overlay">', 'custom editor remains a secondary overlay');
+assertContains(gachaCustomEditorSource, 'const closeEditor = () => editorHandle.destroy();', 'custom editor idempotent close path');
+assertContains(gachaCustomEditorSource, '$(doc.body).append(editor);', 'custom editor uses owner document body');
+assertContains(gachaCustomEditorSource, 'return editorHandle;', 'custom editor returns destroy handle');
+assertContains(gachaShopActionSource, 'trackSecondary(release => showFragmentShop(', 'fragment shop remains owned by parent panel');
+assert.ok(!gachaShopActionSource.includes('destroy()'), 'fragment shop action must not destroy its parent gacha panel');
+assertContains(gachaShopSource, '<div class="acu-edit-overlay"', 'fragment shop remains a secondary overlay');
+assertContains(gachaShopSource, '$(doc.body).append(shopDialog);', 'fragment shop uses owner document body');
+assertContains(gachaShopSource, "if (action === 'shop-close') { closeShop(); return; }", 'fragment shop idempotent close path');
+assertContains(gachaShopSource, 'return handle;', 'fragment shop returns destroy handle');
+assertContains(gachaDetailActionSource, 'trackSecondary(release => showGachaItemDetail(item, container.ownerDocument, release));', 'gacha detail remains owned by parent panel');
+assert.ok(!gachaDetailActionSource.includes('destroy()'), 'item detail action must not destroy its parent gacha panel');
+assertContains(gachaDetailSource, '<div class="acu-edit-overlay">', 'item detail remains a secondary overlay');
+assertContains(gachaDetailSource, '$(doc.body).append(detailDialog);', 'item detail uses owner document body');
+assertContains(gachaDetailSource, 'const closeDetail = () => handle.destroy();', 'item detail idempotent close path');
+assertContains(gachaDetailSource, 'return handle;', 'item detail returns destroy handle');
+
+let dynamicGachaChecks = 0;
+const dynamicGachaCheck = (label, assertion) => {
+  assertion();
+  dynamicGachaChecks++;
+};
+
+const foreignElementRealm = {};
+vm.runInNewContext(`
+  class TrustedNode {
+    #nodeType;
+    constructor(nodeType) { this.#nodeType = nodeType; }
+    get nodeType() { return this.#nodeType; }
+  }
+  class TrustedElement extends TrustedNode {
+    constructor(ownerDocument) {
+      super(1);
+      this.ownerDocument = ownerDocument;
+    }
+    appendChild() {}
+  }
+  const trustedDocument = { defaultView: { Element: TrustedElement, Node: TrustedNode } };
+  const foreignDocument = { defaultView: { Element: TrustedElement, Node: TrustedNode } };
+  const missingDefaultViewDocument = {};
+  const selfBrandedDocument = { defaultView: { Element: Object, Node: TrustedNode } };
+  this.trustedDocument = trustedDocument;
+  this.realElement = new TrustedElement(trustedDocument);
+  this.foreignElement = new TrustedElement(foreignDocument);
+  this.noDefaultView = new TrustedElement(missingDefaultViewDocument);
+  this.selfBrandedPlainObject = { ownerDocument: selfBrandedDocument, appendChild() {}, nodeType: 1 };
+  this.forgedPrototype = { ownerDocument: trustedDocument, appendChild() {} };
+  Object.setPrototypeOf(this.forgedPrototype, TrustedElement.prototype);
+`, foreignElementRealm, { filename: 'foreign-gacha-element-realm.js' });
+
+const hostGuardContext = {
+  getHostDocument: () => foreignElementRealm.trustedDocument,
+};
+vm.runInNewContext(
+  `${gachaHostGuardSource}\nconst gachaPanelMounts = new WeakMap();\nconst createGachaPanelInstance = () => ({ destroy() {} });\n${gachaMountSource}\nthis.mountGachaPanel = mountGachaPanel;`,
+  hostGuardContext,
+  { filename: `${visualizerPath}:gacha-host-guard` },
+);
+
+const mountHostError = {
+  name: 'TypeError',
+  message: '[MFRS] mountPanel(container) 需要可用的 DOM 元素宿主',
+};
+
+dynamicGachaCheck('trusted host-realm Element is accepted', () => {
+  const handle = hostGuardContext.mountGachaPanel(foreignElementRealm.realElement);
+  assert.equal(typeof handle.destroy, 'function');
+});
+dynamicGachaCheck('foreign untrusted document Element is rejected', () => {
+  assert.throws(() => hostGuardContext.mountGachaPanel(foreignElementRealm.foreignElement), mountHostError);
+});
+dynamicGachaCheck('missing defaultView is rejected', () => {
+  assert.throws(() => hostGuardContext.mountGachaPanel(foreignElementRealm.noDefaultView), mountHostError);
+});
+dynamicGachaCheck('candidate-provided Element Object brand is rejected', () => {
+  assert.throws(() => hostGuardContext.mountGachaPanel(foreignElementRealm.selfBrandedPlainObject), mountHostError);
+});
+dynamicGachaCheck('forged trusted Element prototype is rejected', () => {
+  assert.throws(() => hostGuardContext.mountGachaPanel(foreignElementRealm.forgedPrototype), mountHostError);
+});
+
+const lifecycleContext = { console };
+vm.runInNewContext(
+  `${gachaLifecycleHelpersSource}\nthis.helpers = { createGachaPanelLifecycle, createGachaSecondaryHandle, createGachaSecondaryRegistry };`,
+  lifecycleContext,
+  { filename: `${visualizerPath}:gacha-lifecycle-helpers` },
+);
+const { createGachaPanelLifecycle, createGachaSecondaryHandle, createGachaSecondaryRegistry } = lifecycleContext.helpers;
+
+const ownerContainer = {};
+const ownerMounts = new Map();
+let ownerCleanupCount = 0;
+let ownerDestroyCount = 0;
+let ownerCloseCount = 0;
+const ownerLifecycle = createGachaPanelLifecycle({
+  container: ownerContainer,
+  isEmbedded: true,
+  mounts: ownerMounts,
+  cleanup: () => { ownerCleanupCount++; },
+  onDestroy: () => { ownerDestroyCount++; },
+  onClose: () => { ownerCloseCount++; },
+});
+const ownerHandle = { destroy: ownerLifecycle.destroy };
+ownerLifecycle.bindHandle(ownerHandle);
+ownerMounts.set(ownerContainer, ownerHandle);
+
+dynamicGachaCheck('registered embedded owner is current', () => assert.equal(ownerLifecycle.isCurrentOwner(), true));
+ownerMounts.set(ownerContainer, { destroy() {} });
+dynamicGachaCheck('replaced embedded owner becomes stale', () => assert.equal(ownerLifecycle.isCurrentOwner(), false));
+dynamicGachaCheck('stale owner cannot request close', () => assert.equal(ownerLifecycle.requestClose(), false));
+dynamicGachaCheck('stale close has no callbacks', () => {
+  assert.deepEqual([ownerCleanupCount, ownerDestroyCount, ownerCloseCount], [0, 0, 0]);
+});
+ownerMounts.set(ownerContainer, ownerHandle);
+dynamicGachaCheck('current owner can request close once', () => assert.equal(ownerLifecycle.requestClose(), true));
+dynamicGachaCheck('user close releases and emits once', () => {
+  assert.deepEqual([ownerCleanupCount, ownerDestroyCount, ownerCloseCount], [1, 1, 1]);
+});
+dynamicGachaCheck('closed owner is no longer alive', () => assert.equal(ownerLifecycle.isCurrentOwner(), false));
+dynamicGachaCheck('panel destroy is idempotent', () => assert.equal(ownerLifecycle.destroy(), false));
+
+let programmaticCloseCount = 0;
+const overlayLifecycle = createGachaPanelLifecycle({
+  container: {},
+  isEmbedded: false,
+  mounts: new Map(),
+  cleanup: () => {},
+  onClose: () => { programmaticCloseCount++; },
+});
+overlayLifecycle.bindHandle({ destroy: overlayLifecycle.destroy });
+dynamicGachaCheck('programmatic destroy succeeds once', () => assert.equal(overlayLifecycle.destroy(), true));
+dynamicGachaCheck('programmatic destroy does not emit onClose', () => assert.equal(programmaticCloseCount, 0));
+
+const secondaryRegistry = createGachaSecondaryRegistry();
+let secondaryCleanupCount = 0;
+let secondaryHandle = null;
+secondaryHandle = createGachaSecondaryHandle({
+  root: {},
+  cleanup: () => { secondaryCleanupCount++; },
+  onDestroy: () => secondaryRegistry.release(secondaryHandle),
+});
+secondaryRegistry.track(secondaryHandle);
+dynamicGachaCheck('secondary registry tracks live owner', () => assert.equal(secondaryRegistry.size, 1));
+dynamicGachaCheck('secondary self-close succeeds', () => assert.equal(secondaryHandle.destroy(), true));
+dynamicGachaCheck('secondary self-close cleans ownership', () => {
+  assert.deepEqual([secondaryCleanupCount, secondaryRegistry.size], [1, 0]);
+});
+dynamicGachaCheck('secondary destroy is idempotent', () => assert.equal(secondaryHandle.destroy(), false));
+
+let destroyAllCount = 0;
+for (let i = 0; i < 2; i++) {
+  secondaryRegistry.track(createGachaSecondaryHandle({ root: {}, cleanup: () => { destroyAllCount++; } }));
+}
+dynamicGachaCheck('secondary registry owns all live overlays', () => assert.equal(secondaryRegistry.size, 2));
+secondaryRegistry.destroyAll();
+dynamicGachaCheck('parent destroy releases all secondary overlays', () => {
+  assert.deepEqual([destroyAllCount, secondaryRegistry.size], [2, 0]);
+});
+
 for (const marker of [
   "const FIXED_DASHBOARD_HOST_ID = 'mfrs-fixed-status-host'",
   "const FIXED_DASHBOARD_SLOT_ID = 'mfrs-fixed-dashboard-slot'",
@@ -225,4 +604,4 @@ for (const marker of [
   assertContains(smokeSource, marker, 'smoke checklist coverage');
 }
 
-console.log('verify-mfrs-database-frontend-p3: passed');
+console.log(`verify-mfrs-database-frontend-p3: passed (${dynamicGachaChecks} dynamic gacha lifecycle checks)`);
