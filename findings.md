@@ -1,3 +1,18 @@
+## formatOnSave 导致 index.yaml 大重排 · 根因与防护（2026-07-19）
+
+- **现象**：会话中工作树突然出现 14 个文件未提交变更，其中两个 `index.yaml` 各 ~2427 行 diff（行数 6153→8413），列表项缩进从顶格变为 2 空格；源码 `.ts` 也有 import 排序/折行变更。
+- **根因（三条件同时满足才触发，这次首次凑齐）**：
+  1. `.vscode/settings.json` 的 `"editor.formatOnSave": true` 与 `"[yaml]": {"defaultFormatter": "redhat.vscode-yaml"}` —— 由**上游模板 StageDog** 提交 `265a92d`（2025-10-23）通过模板同步带入，**一直都在**。
+  2. 已安装并激活 `redhat.vscode-yaml` 扩展。
+  3. **`index.yaml` 首次在编辑器里被打开并保存** —— 以往 YAML 只由 `toggle-dev-mode.mjs`/`publish-card.mjs`/`tavern_sync` 用 `fs.writeFileSync` 间接改，**绕过编辑器**，从不触发 formatOnSave；这次会话密集切换 dev/prod + 查看文件才第一次触发。
+- **影响评估：零风险，纯格式**。用 `yaml.parse` + JSON 序列化对比，两个 YAML 均 `语义完全相同: true`（顶层键 10=10，内容零丢失）；CDN_REF ×9 保留、版本 8.14.0、`verify-mfrs-regex-ids` 通过。行数增加纯因缩进 + flow 风格（`{ 类型: 蓝灯 }`）展开。
+- **`redhat.vscode-yaml` 与发布纪律冲突**：它把列表缩进改成 2 空格，而 `publish-card`/`tavern_sync` 生成的是**顶格**风格——两者永久对立，只要 YAML 在编辑器保存就被改，且发布版 YAML 只应由 `publish-card` 生成。
+- **防护措施（已落地）**：
+  1. **A+**：`git checkout -- .` 丢弃格式化 + 删重现的 `tasks.simple.json`；`.vscode/settings.json` 的 `[yaml]` 块加 `"editor.formatOnSave": false`（commit `0dc46aa`）——**发布关键 YAML 彻底不再被自动重排**。
+  2. **B1**：`pnpm format`（官方范围 `src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}`）把开发版 18 个源文件统一到 Prettier 规范（commit `7728481` + 收尾 `1023c0c`），消除源码保存时零星 diff。`pnpm build` 编译通过、门禁全绿证明逻辑无损。
+- **Prettier 幂等性坑**：大文件 `v10_2_visualizer.js` 首次 `pnpm format` 未完全收敛，`prettier --check` 仍报警；二次 `--write` 后才达标。批量格式化后应复跑 `--check` 确认收敛。
+- **残留与边界**：根目录 `.md` 与 `scripts/*.mjs` 不在 `pnpm format` 范围，仍可能被 formatOnSave 零星格式化（可控、无害、逻辑不变）；`proseWrap: always` 会硬折行中文 Markdown，慎全量格式化文档。发布版 src 本就合规，未受影响。
+
 ## 彻底废弃 MFRS · 极简单人流程（2026-07-19）
 
 - **决策**：MFRS 复杂机制（worktree 隔离、会话锁、运行时身份验证、DEV 卡派生、四链路契约、`5510–5514` 端口段、`.mcp.json`）对单人开发过度工程化，已彻底删除。
