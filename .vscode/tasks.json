@@ -2,18 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "【简化版】启动开发环境",
-      "dependsOn": [
-        "【简化版】切换到开发模式",
-        "【简化版】pnpm watch",
-        "【简化版】静态服务器",
-        "【简化版】启动 Chrome"
-      ],
+      "label": "启动开发环境",
+      "dependsOn": ["切换到开发模式", "pnpm watch", "静态服务器"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     },
     {
-      "label": "【简化版】切换到开发模式",
+      "label": "切换到开发模式",
       "type": "shell",
       "command": "node",
       "args": ["scripts/toggle-dev-mode.mjs", "--enable"],
@@ -28,7 +23,7 @@
       }
     },
     {
-      "label": "【简化版】切换回生产模式",
+      "label": "切换回生产模式",
       "type": "shell",
       "command": "node",
       "args": ["scripts/toggle-dev-mode.mjs", "--disable"],
@@ -43,7 +38,7 @@
       }
     },
     {
-      "label": "【简化版】查看当前模式",
+      "label": "查看当前模式",
       "type": "shell",
       "command": "node",
       "args": ["scripts/toggle-dev-mode.mjs", "--status"],
@@ -58,20 +53,13 @@
       }
     },
     {
-      "label": "【简化版】pnpm watch",
+      "label": "pnpm watch",
       "type": "shell",
       "command": "pnpm",
       "args": ["watch"],
       "problemMatcher": [
         {
-          "pattern": [
-            {
-              "regexp": ".*",
-              "file": 1,
-              "location": 2,
-              "message": 3
-            }
-          ],
+          "pattern": [{ "regexp": ".*", "file": 1, "location": 2, "message": 3 }],
           "background": {
             "activeOnStart": true,
             "beginsPattern": ".*",
@@ -90,16 +78,14 @@
       }
     },
     {
-      "label": "【简化版】静态服务器",
+      "label": "静态服务器",
       "type": "shell",
       "command": "node",
       "args": ["scripts/mfrs-dev-server-simple.mjs"],
       "isBackground": true,
       "problemMatcher": {
         "owner": "static-server",
-        "pattern": {
-          "regexp": "^$"
-        },
+        "pattern": { "regexp": "^$" },
         "background": {
           "activeOnStart": true,
           "beginsPattern": "Starting static server",
@@ -112,266 +98,6 @@
         "focus": false,
         "panel": "shared",
         "showReuseMessage": false
-      }
-    },
-    {
-      "label": "【简化版】启动 Chrome",
-      "type": "shell",
-      "command": ".vscode\\start-chrome-debug.cmd",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "echo": false,
-        "reveal": "silent",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": false
-      }
-    },
-    {
-      "label": "开始监听源代码并编译",
-      "type": "shell",
-      "command": "pnpm",
-      "args": ["watch"],
-      "problemMatcher": [
-        {
-          "pattern": [
-            {
-              "regexp": ".*",
-              "file": 1,
-              "location": 2,
-              "message": 3
-            }
-          ],
-          "background": {
-            "activeOnStart": true,
-            "beginsPattern": ".*",
-            "endsPattern": "webpack (?:\\d+\\.){2}\\d+ compiled"
-          }
-        }
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": true,
-        "clear": true,
-        "revealProblems": "never"
-      },
-      "isBackground": true
-    },
-    {
-      "label": "启动 Chrome (调试模式)",
-      "type": "shell",
-      "command": ".vscode\\start-chrome-debug.cmd",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "echo": false,
-        "reveal": "silent",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": false,
-        "clear": false
-      }
-    },
-    {
-      "label": "开始任务",
-      "dependsOn": [
-        "开始监听源代码并编译",
-        "启动 Chrome (调试模式)"
-      ],
-      "dependsOrder": "sequence"
-    },
-    {
-      "label": "结束任务",
-      "command": "echo ${input:terminate}",
-      "type": "shell"
-    },
-    {
-      "label": "MFRS: 开发环境预检",
-      "type": "shell",
-      "command": "node",
-      "args": ["scripts/mfrs-dev-target.mjs", "scripts/mfrs-dev-preflight.mjs"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": true
-      }
-    },
-    {
-      "label": "MFRS: 启动当前工作树静态服务",
-      "type": "shell",
-      "command": "node",
-      "args": ["scripts/mfrs-dev-target.mjs", "scripts/mfrs-dev-server.mjs"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "dependsOn": ["MFRS: 开发环境预检"],
-      "dependsOrder": "sequence",
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "mfrs-dev-server",
-        "pattern": {
-          "regexp": "^$"
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "static server ready|listen: http://127\\.0\\.0\\.1:"
-        }
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": true
-      }
-    },
-    {
-      "label": "MFRS: 开始目标工作树 watch",
-      "type": "shell",
-      "command": "node",
-      "args": ["scripts/mfrs-dev-target.mjs", "scripts/mfrs-dev-watch.mjs"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "dependsOn": ["MFRS: 启动当前工作树静态服务"],
-      "dependsOrder": "sequence",
-      "isBackground": true,
-      "problemMatcher": [
-        {
-          "pattern": [
-            {
-              "regexp": ".*",
-              "file": 1,
-              "location": 2,
-              "message": 3
-            }
-          ],
-          "background": {
-            "activeOnStart": true,
-            "beginsPattern": ".*",
-            "endsPattern": "webpack (?:\\d+\\.){2}\\d+ compiled"
-          }
-        }
-      ],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": true
-      }
-    },
-    {
-      "label": "MFRS: 生成当前工作树 DEV 卡",
-      "type": "shell",
-      "command": "node",
-      "args": ["scripts/mfrs-dev-target.mjs", "scripts/prepare-mfrs-dev-card.mjs"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "dependsOn": ["MFRS: 开始目标工作树 watch"],
-      "dependsOrder": "sequence",
-      "problemMatcher": [],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": true
-      }
-    },
-    {
-      "label": "MFRS: 启动调试 Chrome",
-      "type": "shell",
-      "command": ".vscode\\start-chrome-debug.cmd",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "echo": true,
-        "reveal": "silent",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": false
-      }
-    },
-    {
-      "label": "MFRS: 验证当前工作树运行时身份",
-      "type": "shell",
-      "command": "node",
-      "args": [
-        "scripts/mfrs-dev-target.mjs",
-        "scripts/verify-mfrs-runtime-identity.mjs",
-        "--wait-ms",
-        "45000",
-        "--allow-first-import"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": false
-      }
-    },
-    {
-      "label": "MFRS: 开始实时开发",
-      "dependsOn": [
-        "MFRS: 生成当前工作树 DEV 卡",
-        "MFRS: 启动调试 Chrome",
-        "MFRS: 验证当前工作树运行时身份"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": [],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": false
-      }
-    },
-    {
-      "label": "MFRS: 结束实时开发",
-      "type": "shell",
-      "command": "node",
-      "args": ["scripts/mfrs-dev-target.mjs", "scripts/mfrs-dev-stop.mjs"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "dedicated",
-        "showReuseMessage": false,
-        "clear": false
       }
     }
   ]

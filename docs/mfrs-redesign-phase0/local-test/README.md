@@ -13,15 +13,11 @@
 | 仓库 `index.yaml` | **未**留下 localhost（打包后已还原） |
 | 正式发版 | 走 `publish-card` + CDN，不用本地卡 |
 
-**重新生成本地验收卡（改代码后）：**
+**统一实时验收入口：**
 
 ```powershell
-# 推荐：当前 worktree watch/dev 产物 + 派生 DEV 卡
-pnpm mfrs:preflight
-pnpm mfrs:dev-server
-# 另开终端：
-pnpm watch   # 或 MFRS 任务；端口冲突时设 MFRS_SKIP_HMR_SERVER=1
-pnpm mfrs:dev-card -- --port 5510
+# 主仓 VS Code 编辑器中按 F5 / Fn+F5
+# MFRS 自动选择目标 worktree、551x、watch、DEV 卡和 identity
 
 # 历史 β 脚本（仍可能写 5500，仅兼容）：
 # pnpm build
@@ -51,7 +47,7 @@ http://127.0.0.1:5510/dist/神秘复苏模拟器/脚本/消息内面板/index.js
 .local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png
 ```
 
-（由 `pnpm mfrs:dev-card` 生成。）历史 β 卡 `docs/mfrs-redesign-phase0/local-test/神秘复苏模拟器-β本地验收.png` 仅作兼容。
+（由 F5 流程自动生成。）历史 β 卡 `docs/mfrs-redesign-phase0/local-test/神秘复苏模拟器-β本地验收.png` 仅作兼容。
 
 - 可新建角色名，避免覆盖正在用的发布版。  
 - **不要**用正式「神秘复苏模拟器发布版」做本地 feature 验收（仍吃 CDN）。

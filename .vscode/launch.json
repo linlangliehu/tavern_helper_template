@@ -1,59 +1,16 @@
-// 键盘 F5（笔记本常为 Fn+F5）= VS Code「开始调试」= 第一项简化版开发环境（单人开发推荐）。
-// 注意：这是快捷键，不是在终端里输入文字 Fn+F5。
-// 如需 MFRS 完整版（多 worktree/严格验证），请在调试面板下拉菜单选择第二项。
+// 键盘 F5（笔记本常为 Fn+F5）= 启动开发环境。
+// preLaunchTask 触发任务链：切换到开发模式 → pnpm watch → 静态服务器（端口 5510）。
+// 不再启动/附加任何 Chrome —— 用内置浏览器或你自己的浏览器打开 http://127.0.0.1:8000/ 查看效果。
+// 开发完成后运行任务「切换回生产模式」还原 YAML 再发布。
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "【简化版】启动开发环境",
-      "type": "chrome",
-      "request": "attach",
-      "preLaunchTask": "【简化版】启动开发环境",
-      "port": 9222,
-      "timeout": 30000,
-      "sourceMapPathOverrides": {
-        "src://tavern_helper_template/*": "${workspaceFolder}/*",
-        "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
-      },
-      "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
-    },
-    {
-      "name": "MFRS: 实时开发当前目标 worktree",
-      "type": "chrome",
-      "request": "attach",
-      "preLaunchTask": "MFRS: 开始实时开发",
-      "port": 9222,
-      "timeout": 30000,
-      "sourceMapPathOverrides": {
-        "src://tavern_helper_template/*": "${workspaceFolder}/*",
-        "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
-      },
-      "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
-    },
-    {
-      "name": "编译代码并调试酒馆网页 (Chrome)",
-      "type": "chrome",
-      "request": "attach",
-      "preLaunchTask": "开始任务",
-      "port": 9222,
-      "timeout": 30000,
-      "sourceMapPathOverrides": {
-        "src://tavern_helper_template/*": "${workspaceFolder}/*",
-        "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
-      },
-      "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
-    },
-    {
-      "name": "仅附加到 Chrome",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9222,
-      "timeout": 30000,
-      "sourceMapPathOverrides": {
-        "src://tavern_helper_template/*": "${workspaceFolder}/*",
-        "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
-      },
-      "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+      "name": "启动开发环境",
+      "type": "node-terminal",
+      "request": "launch",
+      "preLaunchTask": "启动开发环境",
+      "command": "echo 开发环境已启动（开发模式 + watch + 静态服务 5510）。浏览器打开 http://127.0.0.1:8000/ 查看效果"
     }
   ]
 }

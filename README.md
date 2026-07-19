@@ -35,38 +35,27 @@ cd tavern_helper_template
 pnpm install
 ```
 
-嵌套 worktree 在 lockfile 与依赖集合一致时可复用主仓 toolchain；不一致则预检停止，不自动安装。
+> **统一口径**：本项目为单人开发，采用极简流程。日常开发以 `PROJECT_FLOW.md` 为准：固定端口 5510 静态服务 + 直接切换 YAML 开发/生产模式 + 内置浏览器验收。
 
-> **统一口径**：日常真页开发以 `PROJECT_FLOW.md` 的四条链路 + `MFRS: 实时开发当前目标 worktree` 为准。
-> 旧 `开始任务` / Live Server `5500` 仅为遗留兼容；日常入口是主仓窗口 F5。
+##### 启动开发环境（推荐）
 
-##### 实时开发当前目标 worktree（推荐）
+1. 在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动"启动开发环境"任务链。
+   - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。
+   - 也可用命令面板"运行任务"手动跑：切换到开发模式 → pnpm watch → 静态服务器。
+2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 编译到 `dist/**` → 固定端口 5510 静态服务。
+3. 首次生成并导入开发卡：
+   ```bash
+   node tavern_sync.mjs bundle 神秘复苏模拟器
+   # 导入 src/神秘复苏模拟器/神秘复苏模拟器.png（脚本 URL 指向 127.0.0.1:5510）
+   ```
+4. 用浏览器打开 `http://127.0.0.1:8000/` 查看效果；改源码 → watch 自动编译 → 刷新页面即可，无需重新导卡。
 
-1. VS Code 保持打开主仓库；本地 `.local/mfrs-dev-target.json` 选择目标 worktree，文件被 Git 忽略。
-2. **快捷键**：在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动 **`MFRS: 实时开发当前目标 worktree`**。
-   - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。  
-   - 也可运行任务 `MFRS: 开始实时开发`。
-3. 流程会自动：目标解析 → 预检 → `5510–5514` → 目标 watch/卡 watcher → DEV 卡 → Chrome `9222` → identity。
-4. 首次只导入一次目标 `.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png`；以后保存脚本或卡配置都会自动编译、更新和刷新。
-5. 在 SillyTavern 保持 **`神秘复苏模拟器 · DEV · <branch>`**；不要手填端口、重复导卡或手动刷新。
+> 开发卡（`src/神秘复苏模拟器/神秘复苏模拟器.png`，localhost）与发布卡（`src/神秘复苏模拟器发布版/…png`，CDN）不同，别导错。
 
-##### 结束实时开发
+##### 结束开发
 
-- 运行任务 **`MFRS: 结束实时开发`**：只停止目标 worktree 登记的 MFRS 进程树并释放目标 session。
-- 不调用全局 `terminateAll`，不会停止主仓用户常驻 watch。
-- **不关闭主 Chrome**；调试 Chrome 由用户自行决定是否关闭。
-- 正式 `src/神秘复苏模拟器/index.yaml` 与 `tavern_sync.yaml` 正式配置应保持未污染。
-
-##### 多 worktree 并行注意
-
-- 每个 worktree 持有自己的 MFRS session；`5510–5514` 自动避让，可并行运行。
-- `6620` 留给主仓同步；`6621` 被占用时目标 watch 改走独立 SSE reload，**不会自动 kill** 占用进程。
-- 身份不变量：`源码 worktree == watch cwd == dist 所属 == 静态服务器 root == Network loader 来源`。
-- 详细契约见根目录 `PROJECT_FLOW.md`。
-
-##### 遗留入口
-
-旧配置 `编译代码并调试酒馆网页 (Chrome)` 仍可用，但**只**启动 watch + 调试 Chrome，**不会**启动 551x 静态服务，也**不会**把 CDN loader 切到本地。feature 验收请用上面的 MFRS 流程。
+- 运行任务 **切换回生产模式**（`toggle-dev-mode --disable`）还原 YAML 的 CDN URL，再进入发布流程。
+- 正式 `src/神秘复苏模拟器/index.yaml` 应保持未污染（切回生产模式即可）。
 
 #### 创建自己的仓库
 
@@ -195,21 +184,18 @@ vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 
 #### 2. 实时验证（与 PROJECT_FLOW 统一）
 
-推荐（feature / 任意 worktree）：
-
-1. 主仓编辑器中按 **F5 / Fn+F5**（不是终端输入）
-2. 首次导入目标 **DEV 卡**一次；以后保存即自动编译、同步、刷新和身份校验
-3. 结束：`MFRS: 结束实时开发`，只停止目标 MFRS 会话
-
-遗留 `Fn+F5` / `开始任务` 只启动 watch + 调试 Chrome，**不会**起 `551x`，也**不会**把正式 CDN 卡切到本地 dist。
+1. 编辑器中按 **F5 / Fn+F5** 启动开发环境（切换到开发模式 + pnpm watch + 静态服务 5510）
+2. 首次生成并导入开发卡：`node tavern_sync.mjs bundle 神秘复苏模拟器`
+3. 浏览器打开 `http://127.0.0.1:8000/`；改源码 → watch 自动编译 → 刷新页面查看效果
+4. 结束：运行任务 **切换回生产模式** 还原 YAML
 
 #### 3. 构建发布
 ```bash
 # 停止 watch 后，本地可按需 production 验证（默认不提交 dist）
 pnpm build
 
-# 正式发布：source 进 main → 等 bot bundle/tag → 再同步发布版
-pnpm run publish-card -- 神秘复苏模拟器发布版
+# 正式发布：source 进 main → 等 bot bundle/tag → 更新 CDN_REF → 同步发布版
+node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build
 ```
 
 #### 4. 提交推送
@@ -261,15 +247,13 @@ node scripts/verify-table-change-adapter.mjs
 node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png"
 ```
 
-### Chrome DevTools Protocol
+### 真页验证
 
-项目包含 CDP 工具用于真页验证：
+用**内置浏览器**或你自己的浏览器打开 `http://127.0.0.1:8000/` 查看效果、手动交互。AI（如 Copilot）可用内置浏览器做自动化验证（点击、读取快照、evaluate）。
+
+如需脚本化 evaluate，可用裸 CDP 工具（需自行启动带 `--remote-debugging-port` 的浏览器）：
 
 ```bash
-# 使用 MCP（推荐）
-# 在 .mcp.json 配置 chrome-devtools 指向 http://127.0.0.1:9222
-
-# 使用裸 CDP（fallback）
 node scripts/cdp-evaluate.mjs "document.title"
 ```
 
