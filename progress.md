@@ -11,7 +11,7 @@
 - **提交与推送**：commit `3841c30`（rebase 到远端 `23e3927` 之上，17 files，+152/-2159）已推送 `origin/main`，本地与远端一致。提交前清理了 dev 模式污染的 `index.yaml`、webpack 噪声 `dist/.../状态栏/index.html`、`.d.ts` 空行；未提交本地导出物 `酒馆助手脚本-tavern_sync.json`。
 - **门禁**：`verify:mfrs-gates` 全通过（version=8.14.0, refs=7, regex=33, scripts=8, 退出码 0）；唯一 warning「CDN_REF 落后 HEAD 2 提交」为预期（改造不涉及 dist/CDN）。
 - **发布版检查**：`src/神秘复苏模拟器发布版/index.yaml` 干净——version 8.14.0、无 localhost 污染、CDN_REF ×7、git 无改动。
-- **待办**：SIMPLIFIED_WORKFLOW.md 升级为唯一主流程文档；源码注释残留 `prepare-mfrs-dev-card` 提及（低优先，仅注释）。
+- **收尾完成**：SIMPLIFIED_WORKFLOW.md 已重写为唯一主流程使用手册（commit `92e3782`）；源码 3 处 `prepare-mfrs-dev-card` 注释残留已清理（commit `437ee8a`，纯注释、dist 不变）。planning 三件套已更新。
 
 ## 会话：2026-07-18（重写 HUD-UX-NEXT 任务清单 · MFRS 对齐）— **docs complete**
 

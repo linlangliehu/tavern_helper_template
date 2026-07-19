@@ -32,7 +32,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 | 问题 | 答案 |
 |------|------|
 | 我在哪里？ | 8.14.0 已发布并推送；MFRS 复杂机制已彻底废弃，改极简流程；改造 commit `3841c30` 在 `origin/main` |
-| 我要去哪里？ | 收尾：SIMPLIFIED_WORKFLOW.md 升级为唯一主流程文档；清理源码里 `prepare-mfrs-dev-card` 注释残留（低优先） |
+| 我要去哪里？ | 收尾已全部完成（8.14.0 发布 + MFRS 废弃 + 文档升级 + 注释清理均已推送）；等待下一个功能/修复任务 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `toggle-dev --disable` 回生产 → `publish-card` 发布 |
 | 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist |
 | 我做了什么？ | 发布 8.14.0；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；验证 F5；提交推送；更新 planning |
@@ -55,7 +55,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 | 仓库运行时基线 | **`23e3927`**（tag `v8.14.1`，8.14.0 后 CI bot bundle）；本地/远端 `main` = `3841c30`（废弃 MFRS 改造） |
 | 开发流程 | 极简单人：`toggle-dev --enable`（YAML→localhost:5510）+ `pnpm watch` + `mfrs-dev-server-simple.mjs`（固定 5510）+ 内置浏览器验证 |
 | 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync（可选） |
-| 下一阶段 | 收尾：SIMPLIFIED_WORKFLOW.md 升级为主流程文档；源码注释清理（低优先） |
+| 下一阶段 | 收尾已全部完成；等待下一个功能/修复任务 |
 
 ## 各阶段
 
