@@ -9934,13 +9934,11 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
             .find('.custom-type-tab')
             .removeClass('active')
             .css({ color: 'var(--acu-text-sub)', 'border-bottom-color': 'transparent', 'font-weight': 'normal' });
-          $(this)
-            .addClass('active')
-            .css({
-              color: 'var(--acu-highlight)',
-              'border-bottom-color': 'var(--acu-highlight)',
-              'font-weight': 'bold',
-            });
+          $(this).addClass('active').css({
+            color: 'var(--acu-highlight)',
+            'border-bottom-color': 'var(--acu-highlight)',
+            'font-weight': 'bold',
+          });
           currentType = $(this).data('type');
           editor.find('#custom-item-list').html(buildItemList(currentType));
           break;
