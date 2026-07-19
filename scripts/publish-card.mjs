@@ -71,6 +71,10 @@ const flags = new Set(args.filter(a => a.startsWith('--')));
 const targets = args.filter(a => !a.startsWith('--'));
 const NO_BUNDLE = flags.has('--no-bundle');
 const DRY_RUN = flags.has('--dry-run');
+// --dist-no-build：dist 已由 CI bot bundle 在一致环境构建并推送（CDN_REF 指向该 commit），
+// G1 只校验 dist == CDN_REF 提交一致性，跳过本地 production build。
+// 用途：规避 task_plan 记录的“本地 pnpm install 依赖漂移导致 dist 重建带 module-id 噪音”已知问题。
+const DIST_NO_BUILD = flags.has('--dist-no-build');
 
 const log = msg => console.log(`[publish-card] ${msg}`);
 const die = msg => { console.error(`[publish-card] ✖ ${msg}`); process.exit(1); };
@@ -173,16 +177,18 @@ function runBundle(syncName) {
 
 function verifyDistFreshness(card) {
   if (!card.distDir) return;
-  log(`运行 G1 dist 新鲜度门禁 (${card.distDir}) ...`);
+  log(`运行 G1 dist 新鲜度门禁 (${card.distDir})${DIST_NO_BUILD ? ' [--no-build]' : ''} ...`);
+  const gateArgs = [
+    join(ROOT, 'scripts', 'verify-mfrs-dist-freshness.mjs'),
+    '--ref',
+    CDN_REF,
+    '--dist-dir',
+    card.distDir,
+  ];
+  if (DIST_NO_BUILD) gateArgs.push('--no-build');
   const r = spawnSync(
     'node',
-    [
-      join(ROOT, 'scripts', 'verify-mfrs-dist-freshness.mjs'),
-      '--ref',
-      CDN_REF,
-      '--dist-dir',
-      card.distDir,
-    ],
+    gateArgs,
     {
       stdio: 'inherit',
       cwd: ROOT,

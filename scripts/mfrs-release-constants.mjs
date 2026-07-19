@@ -4,7 +4,7 @@
  */
 export const REPO = 'linlangliehu/tavern_helper_template';
 // v8.14.0: 抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换
-export const CDN_REF = '9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f';
+export const CDN_REF = '5af93cec47cc02ed20fd60a36d3aa1f68770cb27';
 export const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 export const CDN_CACHE_VERSION = 'v81400_20260719_01';
 export const RELEASE_VERSION = '8.14.0';
