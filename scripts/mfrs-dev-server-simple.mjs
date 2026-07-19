@@ -120,7 +120,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n✅ 静态服务器已启动`);
   console.log(`   地址: http://127.0.0.1:${PORT}/`);
   console.log(`   根目录: ${ROOT}`);
-  console.log(`\n💡 提示：确保已运行 "简化版：切换到开发模式" 任务，将 YAML 中的 CDN 链接改为本地地址\n`);
+  console.log(`\n💡 提示：确保已运行「切换到开发模式」任务，将 YAML 中的 CDN 链接改为本地地址\n`);
   console.log('Static server running');
 });
 

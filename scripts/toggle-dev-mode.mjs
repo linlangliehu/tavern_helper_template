@@ -72,7 +72,7 @@ function enableDevMode() {
   console.log('💡 提示：');
   console.log('   1. 现在可以修改源码，pnpm watch 会自动编译');
   console.log('   2. 修改后刷新酒馆页面即可看到效果');
-  console.log('   3. 开发完成后运行 "简化版：切换回生产模式" 还原 YAML\n');
+  console.log('   3. 开发完成后运行「切换回生产模式」任务还原 YAML\n');
 }
 
 function disableDevMode() {
