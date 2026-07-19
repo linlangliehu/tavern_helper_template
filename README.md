@@ -176,6 +176,8 @@ tavern_helper_template/
 
 ### 开发流程
 
+> 📖 面向使用者的完整操作手册见 **[docs/SIMPLIFIED_WORKFLOW.md](docs/SIMPLIFIED_WORKFLOW.md)**（怎么按键、跑什么任务、遇到问题怎么办）；流程契约与边界真源见 `PROJECT_FLOW.md`。
+
 #### 1. 修改开发版
 ```bash
 # 只改 src/神秘复苏模拟器/，不要手工改发布版
