@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 .vscode/chrome-debug-profile/
 
@@ -46,3 +47,5 @@ et --hard
 # 用户本地截图
 屏幕截图*.png
 2026-*.png
+=======
+>>>>>>> a4d60f52b8b1b0f872a80088ba7e339b0933eeb2
