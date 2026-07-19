@@ -1,8 +1,24 @@
+// 键盘 F5（笔记本常为 Fn+F5）= VS Code「开始调试」= 第一项简化版开发环境（单人开发推荐）。
+// 注意：这是快捷键，不是在终端里输入文字 Fn+F5。
+// 如需 MFRS 完整版（多 worktree/严格验证），请在调试面板下拉菜单选择第二项。
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "MFRS: 实时开发当前工作树",
+      "name": "【简化版】启动开发环境",
+      "type": "chrome",
+      "request": "attach",
+      "preLaunchTask": "【简化版】启动开发环境",
+      "port": 9222,
+      "timeout": 30000,
+      "sourceMapPathOverrides": {
+        "src://tavern_helper_template/*": "${workspaceFolder}/*",
+        "webpack://tavern_helper_template/*": "${workspaceFolder}/*"
+      },
+      "skipFiles": ["**/jquery*.min.js", "**/node_modules/**"]
+    },
+    {
+      "name": "MFRS: 实时开发当前目标 worktree",
       "type": "chrome",
       "request": "attach",
       "preLaunchTask": "MFRS: 开始实时开发",

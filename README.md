@@ -31,37 +31,36 @@
 git clone https://github.com/linlangliehu/tavern_helper_template.git
 cd tavern_helper_template
 
-# 安装依赖（每个 worktree 都需要自己的 node_modules）
+# 初次克隆由用户安装一次依赖；不要在运行 watch 时重装
 pnpm install
 ```
 
-> **统一口径**：日常真页开发以 `PROJECT_FLOW.md` 的四条链路 + `MFRS: 实时开发当前工作树` 为准。  
-> 旧 `Fn+F5` / Live Server `5500` 仅为遗留兼容，不能单独证明 feature bundle。
+嵌套 worktree 在 lockfile 与依赖集合一致时可复用主仓 toolchain；不一致则预检停止，不自动安装。
 
-##### 实时开发当前 worktree（推荐）
+> **统一口径**：日常真页开发以 `PROJECT_FLOW.md` 的四条链路 + `MFRS: 实时开发当前目标 worktree` 为准。
+> 旧 `开始任务` / Live Server `5500` 仅为遗留兼容；日常入口是主仓窗口 F5。
 
-1. 用 VS Code **打开目标 worktree 根目录**（feature 分支请打开对应 worktree，不要只开主仓库）。
-2. 调试配置选择 **`MFRS: 实时开发当前工作树`**（或运行任务 `MFRS: 开始实时开发`）。
-3. 流程会依次：预检 → 启动本 worktree 静态服务（默认 `5510`，占用则 `5511+`）→ `pnpm watch` → 调试 Chrome（CDP `9222`）。
-4. 生成本地开发卡（不修改正式 `index.yaml`）：
-   ```bash
-   pnpm mfrs:dev-card -- --port 5510
-   # 若 tavern_sync 已连接，可直接推送独立 DEV 卡：
-   pnpm mfrs:dev-card -- --port 5510 --push
-   ```
-5. 在 SillyTavern 加载 **`神秘复苏模拟器 · DEV · <branch>`**，确认 Network 中脚本来自 `http://127.0.0.1:551x/dist/...`。
-6. 可选身份门禁：`pnpm verify:mfrs-runtime-identity`（读取 `window.__mfrsRuntimeBuilds__`）。
+##### 实时开发当前目标 worktree（推荐）
+
+1. VS Code 保持打开主仓库；本地 `.local/mfrs-dev-target.json` 选择目标 worktree，文件被 Git 忽略。
+2. **快捷键**：在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动 **`MFRS: 实时开发当前目标 worktree`**。
+   - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。  
+   - 也可运行任务 `MFRS: 开始实时开发`。
+3. 流程会自动：目标解析 → 预检 → `5510–5514` → 目标 watch/卡 watcher → DEV 卡 → Chrome `9222` → identity。
+4. 首次只导入一次目标 `.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png`；以后保存脚本或卡配置都会自动编译、更新和刷新。
+5. 在 SillyTavern 保持 **`神秘复苏模拟器 · DEV · <branch>`**；不要手填端口、重复导卡或手动刷新。
 
 ##### 结束实时开发
 
-- 运行任务 **`MFRS: 结束实时开发`**：释放 `.local/mfrs-dev-session.json`，终止本会话启动的 watch/静态服务。
+- 运行任务 **`MFRS: 结束实时开发`**：只停止目标 worktree 登记的 MFRS 进程树并释放目标 session。
+- 不调用全局 `terminateAll`，不会停止主仓用户常驻 watch。
 - **不关闭主 Chrome**；调试 Chrome 由用户自行决定是否关闭。
 - 正式 `src/神秘复苏模拟器/index.yaml` 与 `tavern_sync.yaml` 正式配置应保持未污染。
 
 ##### 多 worktree 并行注意
 
-- 同一时间只应有一个 worktree 持有 MFRS 实时开发会话锁。
-- 静态端口在 `5510–5514` 自动避让；`6620`/`6621` 冲突时预检会失败并报告，**不会自动 kill** 占用进程。
+- 每个 worktree 持有自己的 MFRS session；`5510–5514` 自动避让，可并行运行。
+- `6620` 留给主仓同步；`6621` 被占用时目标 watch 改走独立 SSE reload，**不会自动 kill** 占用进程。
 - 身份不变量：`源码 worktree == watch cwd == dist 所属 == 静态服务器 root == Network loader 来源`。
 - 详细契约见根目录 `PROJECT_FLOW.md`。
 
@@ -198,10 +197,9 @@ vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 
 推荐（feature / 任意 worktree）：
 
-1. 调试配置 **`MFRS: 实时开发当前工作树`**（预检 → `551x` 静态服务 → watch → 调试 Chrome `9222`）
-2. `pnpm mfrs:dev-card -- --port <实际端口>`，酒馆加载 **DEV 卡**
-3. Network 确认 loader 为 `http://127.0.0.1:551x/dist/...`，可选 `pnpm verify:mfrs-runtime-identity`
-4. 结束：`MFRS: 结束实时开发`
+1. 主仓编辑器中按 **F5 / Fn+F5**（不是终端输入）
+2. 首次导入目标 **DEV 卡**一次；以后保存即自动编译、同步、刷新和身份校验
+3. 结束：`MFRS: 结束实时开发`，只停止目标 MFRS 会话
 
 遗留 `Fn+F5` / `开始任务` 只启动 watch + 调试 Chrome，**不会**起 `551x`，也**不会**把正式 CDN 卡切到本地 dist。
 

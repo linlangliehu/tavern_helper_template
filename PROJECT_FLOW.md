@@ -6,17 +6,67 @@
 
 ## 统一运行口径（唯一真源）
 
-本仓库**只认**下列口径；旧教程里的 `Fn+F5` / Live Server `5500` / “开发卡=本地实时卡” 一律降级为遗留兼容，不再作为默认流程。
+本仓库**支持两套开发流程**；根据实际场景选择：
+
+### 简化版（单人开发推荐）
+
+**适用场景**：单人开发、单分支工作、快速迭代
+
+| 场景 | 推荐入口 | 特点 |
+|------|----------|------|
+| 日常开发 | F5 → `【简化版】启动开发环境` | 固定端口 5510、直接修改 YAML、无 worktree/identity 检查 |
+| 开发完成 | `【简化版】切换回生产模式` | 自动还原 YAML 为 CDN |
+
+**核心原理**：
+- 固定端口 `5510` 启动静态服务器
+- 直接修改 `src/神秘复苏模拟器/index.yaml`，CDN URL → localhost（自动备份原始 CDN_REF）
+- 跳过 worktree 检测、身份验证、会话锁、DEV 卡派生
+- 保留 F5 便利性、发布门禁验证、GitHub Actions、CDP 调试脚本
+
+**详细文档**：[docs/SIMPLIFIED_WORKFLOW.md](docs/SIMPLIFIED_WORKFLOW.md)
+
+### MFRS 完整版（多人协作/多分支场景）
+
+**适用场景**：多 worktree 并行、多人协作、严格发布验证
 
 | 场景 | 唯一推荐入口 | 禁止当作默认 |
 |------|--------------|--------------|
-| feature / worktree 日常改代码并真页验收 | `MFRS: 实时开发当前工作树` + `pnpm mfrs:dev-card` + DEV 卡 + `5510–5514` | 只按 `Fn+F5`/`开始任务` 却期望加载本 worktree dist |
+| feature / worktree 日常改代码并真页验收 | 主仓窗口 F5 → `MFRS: 实时开发当前目标 worktree`；调度器自动完成 551x/watch/DEV 卡/identity | 旧 `开始任务`、手填端口、重复导卡、手动刷新 |
 | 主仓库只编译/附加调试 | 遗留 `编译代码并调试酒馆网页`（watch + 9222） | 用正式 CDN 卡验收未发布 feature |
 | 正式发版 | 停 watch → 门禁 → source 进 main → bot bundle → `publish-card` | 发布 watch dist、永久改正式 YAML 为 localhost、`CDN_REF=@main` |
 
 **四条链路必须分开证明**（详见下文）：开发编译链 · 角色卡同步链 · 真页资源加载链 · 正式发布链。  
 **身份不变量**：`源码 worktree == watch cwd == dist 所属 == 静态 root == Network loader 来源`。  
 **正式 `src/神秘复苏模拟器/index.yaml` 固定 pin CDN**；本地实时只用 `.local/` 派生 DEV 卡，bundle/push 后不得污染正式 YAML / `tavern_sync.yaml`。
+
+---
+
+## 简化版 vs MFRS 完整版选择指南
+
+| 维度 | **简化版** | **MFRS 完整版** |
+|------|-----------|----------------|
+| **启动命令** | F5 → `【简化版】启动开发环境` | F5 → `MFRS: 实时开发当前目标 worktree` |
+| **端口** | 固定 `5510` | 动态 `5510-5514`（检测冲突后递增） |
+| **YAML 修改** | 直接修改 `src/神秘复苏模拟器/index.yaml` | 派生 DEV 卡到 `.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png` |
+| **Worktree 支持** | 不支持多 worktree | 自动检测目标 worktree（`.local/mfrs-dev-target.json`） |
+| **身份验证** | 无 | 7 项 runtime identity 检查 |
+| **预检流程** | 仅端口冲突检查 | worktree/端口/依赖/会话锁/node_modules 完整预检 |
+| **会话管理** | 无 | 会话锁机制（`.local/mfrs-dev-session.json`） |
+| **适用场景** | 单人开发，单分支工作，快速迭代 | 多分支并行开发，多人协作，严格发布验证 |
+| **启动速度** | 快（~5 秒） | 较慢（~15-20 秒，含预检和身份验证） |
+| **学习曲线** | 低（接近原始上游流程） | 高（需理解 worktree/identity/四链路） |
+
+**推荐使用简化版的情况**：
+- 你是单人开发者
+- 只在主分支或单个分支工作
+- 希望快速启动，不需要复杂的身份验证
+- 熟悉原始 StageDog/tavern_helper_template 流程
+
+**必须使用 MFRS 完整版的情况**：
+- 需要同时开发多个 feature 分支（worktree 并行）
+- 多人协作，需要隔离各自的开发环境
+- 需要严格的运行时身份验证（确保 loader URL 和源码一致）
+- 发布前需要完整的四链路验证
 
 ## Planning 文件分工
 
@@ -119,7 +169,7 @@
 
 ## worktree 身份检查清单（T6 / 真页前必过）
 
-1. **源码 worktree**：`git rev-parse --show-toplevel` 等于当前 VS Code `workspaceFolder`。
+1. **源码 worktree**：`git rev-parse --show-toplevel` 等于 `.local/mfrs-dev-target.json` 解析出的目标；未配置目标时才等于 VS Code `workspaceFolder`。
 2. **watch cwd**：`MFRS: 开始目标工作树 watch` / `pnpm watch` 的 cwd 是该 worktree，不是主仓库。
 3. **dist 所属**：`dist/神秘复苏模拟器/脚本/消息内面板/index.js` 由该 worktree 的 watch 生成。
 4. **静态服务器 root**：`http://127.0.0.1:<port>/__mfrs_dev_identity` 的 `workspace/branch/commit` 与当前 worktree 一致。
@@ -129,27 +179,25 @@
 
 ## 真实开发入口（PROJECT-FLOW-FIX 后）
 
-### 推荐：当前 worktree 实时开发
+### 推荐：主仓窗口启动当前目标 worktree
 
-1. 用 VS Code **打开目标 worktree 根目录**（不要只开主仓库却改嵌套 worktree）。
-2. 调试配置选 **`MFRS: 实时开发当前工作树`**（或任务 `MFRS: 开始实时开发`）。
-3. 复合任务顺序：
+1. VS Code 保持打开主仓库。主仓 `.local/mfrs-dev-target.json` 记录当前目标 worktree；该文件被 Git 忽略。未配置时默认目标为主仓本身。
+2. **快捷键启动（就是键盘 F5 / Fn+F5）**：
+   - **不是**在终端里输入字符串 `Fn+F5`；终端无法识别这种“按键名”。
+   - 在编辑器焦点下按键盘 **F5**（笔记本常为 **Fn+F5**）= VS Code「开始调试」。
+   - 默认配置是 **`MFRS: 实时开发当前目标 worktree`**（`launch.json` 第一项）→ 调度器解析目标后自动跑预检 + 551x + watch/卡同步 + DEV 卡 + 调试 Chrome + identity。
+   - 也可：运行和调试面板点绿色三角，或任务 **`MFRS: 开始实时开发`**。
+   - 旧的「只 watch + Chrome、不起 551x」已从调试下拉框移除；若极少数需要，用任务 **`开始任务`**。
+3. 复合任务顺序（每一步都在目标 worktree 中执行）：
    1. `MFRS: 开发环境预检` → `scripts/mfrs-dev-preflight.mjs`
    2. `MFRS: 启动当前工作树静态服务` → `scripts/mfrs-dev-server.mjs`（写会话锁、提供 551x）
-   3. `MFRS: 开始目标工作树 watch` → `pnpm watch`（`MFRS_SKIP_TAVERN_SYNC=1`）
-   4. `MFRS: 启动调试 Chrome` → `.vscode/start-chrome-debug.cmd`（9222）
-4. 另开终端生成本地开发卡：
-   ```bash
-   pnpm mfrs:dev-card -- --port 5510
-   # 或推送到酒馆（需 6620 已连接）：
-   pnpm mfrs:dev-card -- --port 5510 --push
-   ```
-5. 在酒馆加载 **`神秘复苏模拟器 · DEV · <branch>`**，不要用正式 CDN 卡做 feature 验收。
-6. 真页身份门禁：
-   ```bash
-   pnpm verify:mfrs-runtime-identity
-   ```
-7. 结束：`MFRS: 结束实时开发`（释放会话锁并 terminate 本会话任务；**不关闭主 Chrome**，调试 Chrome 由用户决定）。
+   3. `MFRS: 开始目标工作树 watch` → 独立 reload channel + 卡配置 watcher；不接管主仓 6620/6621
+   4. `MFRS: 生成当前工作树 DEV 卡` → 从活 session 读取实际 551x
+   5. `MFRS: 启动调试 Chrome` → `.vscode/start-chrome-debug.cmd`（9222）
+   6. `MFRS: 验证当前工作树运行时身份` → 自动等待并核对 7 个 bundle
+4. 首次只导入一次目标 `.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png`；以后不手填端口、不重复导卡、不手动刷新。
+5. 结束时运行 `MFRS: 结束实时开发`。它只停止目标 worktree 登记的 MFRS 进程树并清理目标 session；不会调用 `terminateAll`，不会停止主仓用户 watch，也不关闭主 Chrome。
+6. 主仓窗口足以完成运行和真页验收；若需要在嵌套 feature 的 TypeScript 源码上使用 VS Code 断点，建议另开目标 worktree 窗口以获得准确 source-map 路径。该编辑器映射限制不影响运行时 identity、自动 reload 或 DEV 卡同步。
 
 ### 遗留入口（兼容保留）
 
@@ -163,6 +211,8 @@
 |----|-----------|
 | 预检 | `pnpm mfrs:preflight` / `scripts/mfrs-dev-preflight.mjs` |
 | 静态服务 | `pnpm mfrs:dev-server` / `scripts/mfrs-dev-server.mjs` |
+| 主仓目标调度 | `scripts/mfrs-dev-target.mjs`；本地目标 `.local/mfrs-dev-target.json` |
+| 精确结束 | `scripts/mfrs-dev-stop.mjs`；只处理目标 `.local/mfrs-dev-processes/` 登记进程 |
 | 会话锁 | `.local/mfrs-dev-session.json`；`pnpm mfrs:session -- status\|acquire\|release` |
 | 派生开发卡 | `pnpm mfrs:dev-card` → `.local/mfrs-dev/神秘复苏模拟器-DEV-<branch>.png` |
 | 运行时身份 | `pnpm verify:mfrs-runtime-identity`；`window.__mfrsRuntimeBuilds__` |
