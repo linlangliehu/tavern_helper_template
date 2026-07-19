@@ -39,7 +39,7 @@ const ownedMessageUiSelector = '.mfrs-msg-panel, .mfrs-msg-narrative-wrapper, .m
 function isMysteryCardIdentity(name?: string | null, avatar?: string | null): boolean {
   if (name) {
     if (mysteryCardNames.has(name)) return true;
-    // 本地 DEV 卡：prepare-mfrs-dev-card 命名为「神秘复苏模拟器 · DEV · <branch>」
+    // 兼容任何以「神秘复苏模拟器 · DEV …」命名的本地开发卡（如手动导入的调试卡）
     if (/^神秘复苏模拟器(?:\s*[·•-]\s*|\s+)DEV\b/u.test(name)) return true;
   }
   if (avatar) {
