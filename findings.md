@@ -1,3 +1,13 @@
+## 彻底废弃 MFRS · 极简单人流程（2026-07-19）
+
+- **决策**：MFRS 复杂机制（worktree 隔离、会话锁、运行时身份验证、DEV 卡派生、四链路契约、`5510–5514` 端口段、`.mcp.json`）对单人开发过度工程化，已彻底删除。
+- **新流程**：极简单人闭环 = `toggle-dev --enable`（`index.yaml` CDN→`http://127.0.0.1:5510`）→ `pnpm watch` 编译 dist → `mfrs-dev-server-simple.mjs`（**固定** 5510，非端口段）静态服务 → 内置浏览器验证 → `toggle-dev --disable` 回生产 → `publish-card` 发布。
+- **端口职责**：8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync（可选）。不再有 5510–5514 段、6621 HMR、会话锁端口。
+- **验证工具**：内置浏览器（VS Code 集成）替代调试 Chrome；`scripts/cdp-evaluate.mjs` 作为回退。删除 `start-chrome-debug.cmd`。
+- **提交纪律教训**：`toggle-dev --enable` 会把 `index.yaml` 全部 loadModule URL 改成 localhost 并加 `DEV_MODE_ORIGINAL_CDN_REF` 注释——提交前必须 `toggle-dev --disable` + `git checkout index.yaml`。本地 `pnpm watch`/`build` 产生的 `dist` 与 CI bot bundle 有依赖漂移噪声，也不应提交（`publish-card --dist-no-build` 已处理发布场景）。
+- **rebase 教训**：发布后 CI 会追加 `[bot] bundle` 提交（仅改 `dist/`），本地改造推送前需 `git rebase origin/main`（与 bot 提交零文件重叠，安全线性化）。
+- **保留**：8 脚本/33 正则/7 CDN_REF 门禁不变；`verify:mfrs-gates` 及各子门禁全部保留并通过。
+
 ## 运行流程统一口径（2026-07-18）
 
 - 文档真源：`PROJECT_FLOW.md` 顶部「统一运行口径」+ 四条链路；README 快速开始与「开发流程」必须与之同构。

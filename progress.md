@@ -1,5 +1,18 @@
 # 进度日志
 
+## 会话：2026-07-19（8.14.0 发布 + 彻底废弃 MFRS + 极简单人流程）— **complete / 已推送**
+
+- **8.14.0 已发布**：抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换（feature 分支已合并；tag `v8.14.0`；CDN_REF `5af93cec47cc02ed20fd60a36d3aa1f68770cb27`；cache `v81400_20260719_01`；bot bundle `5af93ce`）。发布后远端又有 CI bot 提交 `23e3927`（tag `v8.14.1`，仅 7 个 dist bundle 文件）。
+- **彻底废弃 MFRS 复杂机制**：删除 8 个 MFRS 脚本（`mfrs-dev-common/preflight/server/session/target/stop`、`prepare-mfrs-dev-card`、`verify-mfrs-runtime-identity`）+ `.mcp.json` + `start-chrome-debug.cmd` + `tasks.simple.json`。
+- **改用极简单人流程**：固定端口 5510 静态服务器（`mfrs-dev-server-simple.mjs`）+ `toggle-dev-mode.mjs`（YAML CDN↔localhost 切换）+ 内置浏览器验证。不再有 worktree / 会话锁 / 运行时身份验证 / DEV 卡派生 / 四链路契约。
+- **配置重写**：`tasks.json` 精简为 6 任务（启动开发环境任务链 + 模式切换）；`launch.json` 改 node-terminal + preLaunchTask，不再管理调试 Chrome；`package.json` 移除 `mfrs:*` 与 `verify:mfrs-runtime-identity`，新增 `dev-server`/`toggle-dev`。
+- **文档重写**：`PROJECT_FLOW.md` 由 350+ 行精简为极简版；`README.md`、`docs/mfrs-redesign-phase0/local-test/README.md` 同步更新为 F5 极简流程。
+- **F5 流程验证通过**：静态服务器任务经 VS Code `run_task` 成功启动、资源 HTTP 200、dist 含 mountPanel；`launch.json`/`tasks.json` 无语法错误。
+- **提交与推送**：commit `3841c30`（rebase 到远端 `23e3927` 之上，17 files，+152/-2159）已推送 `origin/main`，本地与远端一致。提交前清理了 dev 模式污染的 `index.yaml`、webpack 噪声 `dist/.../状态栏/index.html`、`.d.ts` 空行；未提交本地导出物 `酒馆助手脚本-tavern_sync.json`。
+- **门禁**：`verify:mfrs-gates` 全通过（version=8.14.0, refs=7, regex=33, scripts=8, 退出码 0）；唯一 warning「CDN_REF 落后 HEAD 2 提交」为预期（改造不涉及 dist/CDN）。
+- **发布版检查**：`src/神秘复苏模拟器发布版/index.yaml` 干净——version 8.14.0、无 localhost 污染、CDN_REF ×7、git 无改动。
+- **待办**：SIMPLIFIED_WORKFLOW.md 升级为唯一主流程文档；源码注释残留 `prepare-mfrs-dev-card` 提及（低优先，仅注释）。
+
 ## 会话：2026-07-18（重写 HUD-UX-NEXT 任务清单 · MFRS 对齐）— **docs complete**
 
 - 按新开发流程重写 `docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（worktree + main 同步）。

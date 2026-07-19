@@ -1,9 +1,9 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
 ## 目标
-BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → bot bundle `296c14cd`）。
+BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链；8.14.0 进一步交付抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换（tag `v8.14.0`；CDN_REF `5af93cec47cc…`；cache `v81400_20260719_01`；bot bundle `5af93ce`）。
 
-下一阶段已规划三项 HUD 交互调整：抽卡键直达中栏完整系统、移除左栏玩家状态全库入口、增加默认/沉浸双向可见切换。详细计划见 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`；T0–T5 已完成，下一项为 T6 Chrome DevTools 真页验收。
+**MFRS 复杂机制已彻底废弃**（2026-07-19）：删除 worktree/会话锁/运行时身份验证/DEV 卡派生/四链路契约，改用极简单人流程 = 固定端口 5510 静态服务器 + `toggle-dev-mode` YAML 切换 + 内置浏览器验证。改造 commit `3841c30` 已推送 `origin/main`。
 
 ## 当前阶段
 **阶段 A：审计与清单入库 — complete**  
@@ -23,18 +23,19 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 **阶段 HUD-CENTER-RELEASE：沉浸 HUD 中栏改造发版 — complete（8.13.36）**
 **阶段 WORKSPACE-CLEANUP：主工作树本地文件归档与清理 — complete（2026-07-17）**
 **阶段 HUD-UX-NEXT-PLAN：抽卡完整面板、左栏精简与模式切换规划 — complete（2026-07-17）**
-**阶段 HUD-UX-NEXT：三项交互调整实施 — active（T0–T5 complete；T6 可执行 / MFRS；T7 blocked until 授权）**
-**阶段 PROJECT-FLOW-FIX：修复项目流程 — P0–P9.4 complete（P9.5 会话保持可选）**
+**阶段 HUD-UX-NEXT：三项交互调整实施 — complete（8.14.0 已发布）**
+**阶段 PROJECT-FLOW-FIX：修复项目流程 — 已废弃（MFRS 机制 2026-07-19 彻底移除，改极简流程）**
+**阶段 WORKFLOW-SIMPLIFY：废弃 MFRS + 极简单人流程 — complete（2026-07-19，commit `3841c30` 已推送）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.13.36 已发布；PROJECT-FLOW-FIX P0–P9.4 完成；feature worktree 真页已加载 DEV 本地 bundle（`650d209`/development）；T6 可继续人工细验 |
-| 我要去哪里？ | 继续 T6 人工细验/补齐 390；通过后进入 T7 发布评估；不 production 直到用户明确授权 |
-| 目标是什么？ | 让「源码 worktree == watch cwd == dist == 静态 root == Network loader」可证明，从而恢复 feature 真页验收 |
-| 我学到了什么？ | Fn+F5 旧链路不会启动静态服务也不会切 CDN；`tavern_sync` 不是 bundle 加载器；HTTP 200 ≠ feature bundle；会话锁必须由长生命周期进程持有 |
-| 我做了什么？ | 实现 mfrs-dev 预检/静态服务/会话锁/派生开发卡/运行时身份标记与校验，重写 `PROJECT_FLOW.md` 四条链路与流程矩阵，更新 README/tasks/launch |
+| 我在哪里？ | 8.14.0 已发布并推送；MFRS 复杂机制已彻底废弃，改极简流程；改造 commit `3841c30` 在 `origin/main` |
+| 我要去哪里？ | 收尾：SIMPLIFIED_WORKFLOW.md 升级为唯一主流程文档；清理源码里 `prepare-mfrs-dev-card` 注释残留（低优先） |
+| 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `toggle-dev --disable` 回生产 → `publish-card` 发布 |
+| 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist |
+| 我做了什么？ | 发布 8.14.0；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；验证 F5；提交推送；更新 planning |
 
 ## 硬约束（勿破）
 
@@ -44,16 +45,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31 与 **8.13.36** 发布均已完成。沉
 - 拟办/选项：**只填不自动发送**
 - 契约真源顺序：`schema.ts` → 变量输出格式 → 系统提示词 → 对话示例 → 脚本解析
 - 开发源 `index.yaml` CDN 仍可能 pin 旧 hash；发布以 `publish-card.mjs` 的 `CDN_REF` 为准
+- **提交前必清**：dev 模式污染的 `index.yaml`（localhost:5510）、本地 webpack 噪声 `dist`、本地导出物
 
 ## 当前基线
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.13.36**（release `0726289`；CDN_REF `9c5a467a3481…`；cache `v81336_20260716_01`；tag `v8.13.36` → `296c14cd`） |
-| 仓库运行时基线 | **`296c14cd`**（8.13.36 发布后的 bot bundle） |
-| 实施基线 | `origin/main@75f4a9a`；worktree `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`；分支 `worktree-feat-hud-gacha-mode-toggle` |
-| 工作树状态 | 实施 worktree 已完成 T0–T5；`75f4a9a..5dacd2e` 功能提交链白名单精确，一行 archive-ui lint 清理随 T5 规划同步，不含 dist/PNG/版本/package/lockfile；主工作树的 10 个 watch dev dist 未触碰 |
-| 下一阶段 | **HUD-UX-NEXT T6.0→T6.7（feature worktree + MFRS + DEV 卡）；T7 待授权** |
+| 发布内容版本 | **8.14.0**（tag `v8.14.0`；CDN_REF `5af93cec47cc02ed20fd60a36d3aa1f68770cb27`；cache `v81400_20260719_01`；bot bundle `5af93ce`） |
+| 仓库运行时基线 | **`23e3927`**（tag `v8.14.1`，8.14.0 后 CI bot bundle）；本地/远端 `main` = `3841c30`（废弃 MFRS 改造） |
+| 开发流程 | 极简单人：`toggle-dev --enable`（YAML→localhost:5510）+ `pnpm watch` + `mfrs-dev-server-simple.mjs`（固定 5510）+ 内置浏览器验证 |
+| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync（可选） |
+| 下一阶段 | 收尾：SIMPLIFIED_WORKFLOW.md 升级为主流程文档；源码注释清理（低优先） |
 
 ## 各阶段
 
