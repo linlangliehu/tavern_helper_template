@@ -70,10 +70,12 @@ function getCandidateScriptUrlsFromDocument(doc: Document | undefined | null) {
 
 function getCandidateScriptUrlsFromPerformance(targetWindow: Window | undefined | null) {
   try {
-    return targetWindow?.performance
-      ?.getEntriesByType?.('resource')
-      ?.map(entry => entry.name)
-      ?.reverse() ?? [];
+    return (
+      targetWindow?.performance
+        ?.getEntriesByType?.('resource')
+        ?.map(entry => entry.name)
+        ?.reverse() ?? []
+    );
   } catch {
     return [];
   }

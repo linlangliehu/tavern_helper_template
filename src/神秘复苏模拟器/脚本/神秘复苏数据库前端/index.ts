@@ -20,7 +20,7 @@ let panelState: PanelState = {
   templateLoaded: false,
   tableCount: 0,
   lastRefresh: '未刷新',
-  error: null
+  error: null,
 };
 
 /**
@@ -194,7 +194,7 @@ async function initMysteryDatabaseFrontend(): Promise<void> {
     refreshDatabase,
     exportCurrentData,
     checkClueLocks,
-    getPanelState: () => ({ ...panelState })
+    getPanelState: () => ({ ...panelState }),
   };
 
   console.log('[神秘复苏数据库前端] 初始化完成');

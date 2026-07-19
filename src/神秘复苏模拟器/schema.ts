@@ -1,5 +1,9 @@
-const PercentSchema = z.coerce.number().transform(value => _.clamp(Math.round(Number.isFinite(value) ? value : 0), 0, 100));
-const NonNegativeNumberSchema = z.coerce.number().transform(value => Math.max(0, Math.round(Number.isFinite(value) ? value : 0)));
+const PercentSchema = z.coerce
+  .number()
+  .transform(value => _.clamp(Math.round(Number.isFinite(value) ? value : 0), 0, 100));
+const NonNegativeNumberSchema = z.coerce
+  .number()
+  .transform(value => Math.max(0, Math.round(Number.isFinite(value) ? value : 0)));
 
 const EventSchema = z.object({
   事件代号: z.string().default('未立案灵异事件'),
@@ -103,24 +107,28 @@ const MainlineProgressSchema = z.object({
   已完成节点: z.array(z.string()).default([]),
   可触发节点: z.array(z.string()).default([]),
   偏移等级: NonNegativeNumberSchema.default(0),
-  正史锚点: z.object({
-    当前锚点: z.string().default('自定义开局'),
-    默认走向: z.string().default('等待玩家开局地点与身份确定'),
-    玩家偏移: z.array(z.string()).default([]),
-  }).default({
-    当前锚点: '自定义开局',
-    默认走向: '等待玩家开局地点与身份确定',
-    玩家偏移: [],
-  }),
-  世界压力: z.object({
-    灵异复苏强度: PercentSchema.default(0),
-    总部关注度: PercentSchema.default(0),
-    社会公开度: PercentSchema.default(0),
-  }).default({
-    灵异复苏强度: 0,
-    总部关注度: 0,
-    社会公开度: 0,
-  }),
+  正史锚点: z
+    .object({
+      当前锚点: z.string().default('自定义开局'),
+      默认走向: z.string().default('等待玩家开局地点与身份确定'),
+      玩家偏移: z.array(z.string()).default([]),
+    })
+    .default({
+      当前锚点: '自定义开局',
+      默认走向: '等待玩家开局地点与身份确定',
+      玩家偏移: [],
+    }),
+  世界压力: z
+    .object({
+      灵异复苏强度: PercentSchema.default(0),
+      总部关注度: PercentSchema.default(0),
+      社会公开度: PercentSchema.default(0),
+    })
+    .default({
+      灵异复苏强度: 0,
+      总部关注度: 0,
+      社会公开度: 0,
+    }),
   下一步推进提示: z.string().default('等待首个灵异征兆或开局事件立案'),
 });
 
@@ -134,25 +142,33 @@ export const Schema = z.object({
   角色背景: z.string().default(''),
   身份: z.string().default(''),
   驾驭厉鬼: z.preprocess(
-    (val) => {
-      if (Array.isArray(val)) return val
-      if (typeof val === 'string' && val && val !== '无') return [{ 厉鬼名称: val, 杀人规律: '无' }]
-      return []
+    val => {
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'string' && val && val !== '无') return [{ 厉鬼名称: val, 杀人规律: '无' }];
+      return [];
     },
-    z.array(z.object({
-      厉鬼名称: z.string().default(''),
-      杀人规律: z.string().default('无'),
-    })).default([]),
+    z
+      .array(
+        z.object({
+          厉鬼名称: z.string().default(''),
+          杀人规律: z.string().default('无'),
+        }),
+      )
+      .default([]),
   ),
   特殊能力描述: z.string().default(''),
   消耗代价: z.string().default('无'),
   灵异物品: z.preprocess(
-    (val) => Array.isArray(val) ? val : [],
-    z.array(z.object({
-      名称: z.string().default(''),
-      效果: z.string().default(''),
-      使用限制: z.string().default('无'),
-    })).default([]),
+    val => (Array.isArray(val) ? val : []),
+    z
+      .array(
+        z.object({
+          名称: z.string().default(''),
+          效果: z.string().default(''),
+          使用限制: z.string().default('无'),
+        }),
+      )
+      .default([]),
   ),
   状态: z.string().default('健康'),
   风险值: PercentSchema.default(0),
@@ -162,7 +178,11 @@ export const Schema = z.object({
   剧情阶段: z.enum(['序章', '调查', '接触', '对抗', '终局']).default('序章'),
   is_supernatural_scene: z.boolean().default(false),
   has_entered_supernatural: z.boolean().default(false),
-  revive_streak: z.coerce.number().int().transform(value => Math.max(0, Math.round(value))).default(0),
+  revive_streak: z.coerce
+    .number()
+    .int()
+    .transform(value => Math.max(0, Math.round(value)))
+    .default(0),
   is_dead: z.boolean().default(false),
   当前灵异事件: EventSchema.default({
     事件代号: '未立案灵异事件',
@@ -192,56 +212,72 @@ export const Schema = z.object({
   }),
   行动建议: z.array(ActionSuggestionSchema).default([]),
   在场人物: z.array(z.string()).default([]),
-  驭鬼者状态: z.object({
-    总复苏风险: PercentSchema.default(0),
-    已驾驭厉鬼: z.array(ControlledGhostSchema).default([]),
-  }).default({
-    总复苏风险: 0,
-    已驾驭厉鬼: [],
-  }),
+  驭鬼者状态: z
+    .object({
+      总复苏风险: PercentSchema.default(0),
+      已驾驭厉鬼: z.array(ControlledGhostSchema).default([]),
+    })
+    .default({
+      总复苏风险: 0,
+      已驾驭厉鬼: [],
+    }),
   收录档案: z.array(ArchivedGhostSchema).default([]),
   收录规律: z.array(CollectedRuleSchema).default([]),
-  灵异资源: z.object({
-    鬼拼图: z.array(z.string()).default([]),
-    灵异物品: z.array(SupernaturalItemSchema).default([]),
-    黄金储备: z.string().default('未准备'),
-  }).default({
-    鬼拼图: [],
-    灵异物品: [],
-    黄金储备: '未准备',
-  }),
-  势力关系: z.object({
-    总部备案状态: z.string().default('未备案'),
-    所属城市: z.string().default('未知'),
-    联系人: z.array(z.string()).default([]),
-    敌对势力: z.array(z.string()).default([]),
-    可调用资源: z.array(z.string()).default([]),
-  }).default({
-    总部备案状态: '未备案',
-    所属城市: '未知',
-    联系人: [],
-    敌对势力: [],
-    可调用资源: [],
-  }),
-  世界线记录: z.array(z.object({
-    时间点: z.string().default('开局前'),
-    事件: z.string().default('等待初始化'),
-    影响: z.string().default('未产生影响'),
-  })).default([]),
-  可见档案: z.object({
-    玩家已知: z.array(z.string()).default([]),
-    NPC已知: z.array(z.object({
-      人物: z.string().default('未知'),
-      已知信息: z.array(z.string()).default([]),
-    })).default([]),
-    已验证线索: z.array(z.string()).default([]),
-    未验证猜测: z.array(z.string()).default([]),
-  }).default({
-    玩家已知: [],
-    NPC已知: [],
-    已验证线索: [],
-    未验证猜测: [],
-  }),
+  灵异资源: z
+    .object({
+      鬼拼图: z.array(z.string()).default([]),
+      灵异物品: z.array(SupernaturalItemSchema).default([]),
+      黄金储备: z.string().default('未准备'),
+    })
+    .default({
+      鬼拼图: [],
+      灵异物品: [],
+      黄金储备: '未准备',
+    }),
+  势力关系: z
+    .object({
+      总部备案状态: z.string().default('未备案'),
+      所属城市: z.string().default('未知'),
+      联系人: z.array(z.string()).default([]),
+      敌对势力: z.array(z.string()).default([]),
+      可调用资源: z.array(z.string()).default([]),
+    })
+    .default({
+      总部备案状态: '未备案',
+      所属城市: '未知',
+      联系人: [],
+      敌对势力: [],
+      可调用资源: [],
+    }),
+  世界线记录: z
+    .array(
+      z.object({
+        时间点: z.string().default('开局前'),
+        事件: z.string().default('等待初始化'),
+        影响: z.string().default('未产生影响'),
+      }),
+    )
+    .default([]),
+  可见档案: z
+    .object({
+      玩家已知: z.array(z.string()).default([]),
+      NPC已知: z
+        .array(
+          z.object({
+            人物: z.string().default('未知'),
+            已知信息: z.array(z.string()).default([]),
+          }),
+        )
+        .default([]),
+      已验证线索: z.array(z.string()).default([]),
+      未验证猜测: z.array(z.string()).default([]),
+    })
+    .default({
+      玩家已知: [],
+      NPC已知: [],
+      已验证线索: [],
+      未验证猜测: [],
+    }),
   主线进度: MainlineProgressSchema.default({
     当前阶段: '开局接入',
     阶段序号: 0,
@@ -264,16 +300,18 @@ export const Schema = z.object({
     },
     下一步推进提示: '等待首个灵异征兆或开局事件立案',
   }),
-  隐藏档案: z.object({
-    真实杀人规律: z.string().default('未生成'),
-    关键生路: z.string().default('未生成'),
-    误导线索: z.array(z.string()).default([]),
-    鬼的真实位置: z.string().default('未确认'),
-  }).default({
-    真实杀人规律: '未生成',
-    关键生路: '未生成',
-    误导线索: [],
-    鬼的真实位置: '未确认',
-  }),
+  隐藏档案: z
+    .object({
+      真实杀人规律: z.string().default('未生成'),
+      关键生路: z.string().default('未生成'),
+      误导线索: z.array(z.string()).default([]),
+      鬼的真实位置: z.string().default('未确认'),
+    })
+    .default({
+      真实杀人规律: '未生成',
+      关键生路: '未生成',
+      误导线索: [],
+      鬼的真实位置: '未确认',
+    }),
 });
 export type Schema = z.output<typeof Schema>;

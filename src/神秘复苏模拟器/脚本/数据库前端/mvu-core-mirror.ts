@@ -41,9 +41,10 @@ function textOrFallback(value: unknown, fallback = '无') {
 }
 
 function truncateDbText(value: unknown, max = 80, fallback = '未知') {
-  const text = String(value ?? '')
-    .replace(/\s+/g, ' ')
-    .trim() || fallback;
+  const text =
+    String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim() || fallback;
   return text.length > max ? text.slice(0, max) : text;
 }
 
@@ -266,7 +267,10 @@ function buildCorePlans(stat: StatData, currentData: unknown, messageId: number)
         source_text: '当前剧情/MVU',
         clue_text: truncateDbText(visibleSummary, 120),
         reliability: '中',
-        inference_text: truncateDbText(suspectedLaws === '无' ? '需要继续验证异常与事件规律的关系。' : suspectedLaws, 160),
+        inference_text: truncateDbText(
+          suspectedLaws === '无' ? '需要继续验证异常与事件规律的关系。' : suspectedLaws,
+          160,
+        ),
         verification_status: '未验证',
         visibility: '玩家可见',
       },
@@ -299,7 +303,11 @@ function buildActionSuggestionPlans(stat: StatData): TableChangePlan[] {
       option_key: key,
       idea_text: truncateDbText(row.思路 ?? (key === 'D' ? '自定义行动' : '推进当前调查'), 80, '未知'),
       main_risk: truncateDbText(row.主要风险, 80, '未知'),
-      expected_gain: truncateDbText(row.预期收益 ?? (key === 'D' ? '取决于自定义行动' : '推进当前调查或降低不确定性'), 80, '未知'),
+      expected_gain: truncateDbText(
+        row.预期收益 ?? (key === 'D' ? '取决于自定义行动' : '推进当前调查或降低不确定性'),
+        80,
+        '未知',
+      ),
       death_risk_level: normalizeRiskLevel(row.死亡风险, 0),
       revival_risk_level: normalizeRiskLevel(row.复苏风险, 0),
     };

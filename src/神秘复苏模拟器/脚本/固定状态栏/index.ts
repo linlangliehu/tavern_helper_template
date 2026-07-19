@@ -39,9 +39,7 @@ type HostWindow = Window & {
   };
 };
 
-declare const eventOn:
-  | undefined
-  | ((event: unknown, listener: (...args: unknown[]) => void) => void);
+declare const eventOn: undefined | ((event: unknown, listener: (...args: unknown[]) => void) => void);
 declare const tavern_events: undefined | { CHAT_CHANGED?: unknown };
 
 // 酒馆助手「脚本」运行在 JS-Slash-Runner 的 TH-script iframe 中，该 iframe 的 document
@@ -54,9 +52,11 @@ const hostWindow: HostWindow = (() => {
   }
 })();
 const doc: Document = hostWindow.document ?? document;
-let nativeChatChangedSubscription:
-  | { eventSource: NonNullable<ReturnType<typeof getSillyTavernContext>>['eventSource']; eventType: unknown; listener: () => void }
-  | null = null;
+let nativeChatChangedSubscription: {
+  eventSource: NonNullable<ReturnType<typeof getSillyTavernContext>>['eventSource'];
+  eventType: unknown;
+  listener: () => void;
+} | null = null;
 
 function getSillyTavernContext() {
   for (const st of [hostWindow.SillyTavern, (window as HostWindow).SillyTavern]) {
@@ -76,9 +76,7 @@ function getCurrentCharacter() {
   if (characterId === undefined || characterId === null) return null;
 
   const characters = context?.characters;
-  const character = Array.isArray(characters)
-    ? characters[Number(characterId)]
-    : characters?.[String(characterId)];
+  const character = Array.isArray(characters) ? characters[Number(characterId)] : characters?.[String(characterId)];
 
   return character ? { id: String(characterId), ...character } : { id: String(characterId) };
 }

@@ -299,12 +299,13 @@ export function createMemoryMutationExecutor() {
     planInput: unknown,
     currentData: unknown,
     templateData?: unknown,
-  ) => applyResolvedTableChange(
-    api,
-    resolvePlan(planInput, currentData, templateData, { strictMemory: true }),
-    currentData,
-    { strictMemory: true },
-  );
+  ) =>
+    applyResolvedTableChange(
+      api,
+      resolvePlan(planInput, currentData, templateData, { strictMemory: true }),
+      currentData,
+      { strictMemory: true },
+    );
 
   const applyConfirmedMemoryDelete = async (
     api: AutoCardUpdaterCrudApi,
@@ -417,7 +418,7 @@ async function applyResolvedTableChange(
 
   if (resolved.plan.action === 'deleteRow') {
     if (!api.deleteRow) {
-      if (!options.strictMemory && await tryImportJsonDeleteFallback(api, resolved, currentData)) return preview;
+      if (!options.strictMemory && (await tryImportJsonDeleteFallback(api, resolved, currentData))) return preview;
       return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 deleteRow。');
     }
     const ok = await api.deleteRow({
@@ -426,8 +427,9 @@ async function applyResolvedTableChange(
       skipChatSave: resolved.plan.skipChatSave,
       silent: resolved.plan.silent,
     });
-    if (!ok && await verifyDeleteAppliedAfterFailedResult(api, resolved, baselineData)) return preview;
-    if (!ok && !options.strictMemory && await tryImportJsonDeleteFallback(api, resolved, baselineData)) return preview;
+    if (!ok && (await verifyDeleteAppliedAfterFailedResult(api, resolved, baselineData))) return preview;
+    if (!ok && !options.strictMemory && (await tryImportJsonDeleteFallback(api, resolved, baselineData)))
+      return preview;
     return ok ? preview : withError(preview, 'API_MUTATION_FAILED', 'deleteRow 执行失败。');
   }
 
@@ -448,7 +450,7 @@ async function applyResolvedTableChange(
   }
 
   if (!api.updateCell) {
-    if (!options.strictMemory && await tryImportJsonUpdateFallback(api, resolved, currentData)) return preview;
+    if (!options.strictMemory && (await tryImportJsonUpdateFallback(api, resolved, currentData))) return preview;
     return withError(preview, 'API_UNAVAILABLE', '数据库 API 不支持 updateCell。');
   }
   for (const column of resolved.columns) {
@@ -462,7 +464,7 @@ async function applyResolvedTableChange(
     });
     if (!ok) {
       if (await verifyUpdateAppliedAfterFailedResult(api, resolved, column)) continue;
-      if (!options.strictMemory && await tryImportJsonUpdateFallback(api, resolved, baselineData)) return preview;
+      if (!options.strictMemory && (await tryImportJsonUpdateFallback(api, resolved, baselineData))) return preview;
       return withError(preview, 'API_MUTATION_FAILED', `updateCell 执行失败：${column.header}。`, column.header);
     }
   }
@@ -526,10 +528,12 @@ async function verifyUpdateAppliedAfterFailedResult(
   const verifiedContent = getSheetContent(verifiedData, resolved.table);
   const row = verifiedContent?.[resolved.rowIndex];
   const columns = onlyColumn ? [onlyColumn] : resolved.columns;
-  return Array.isArray(row)
-    && columns.every(column =>
-      normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]),
-    );
+  return (
+    Array.isArray(row) &&
+    columns.every(
+      column => normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]),
+    )
+  );
 }
 
 async function exportVerifiedData(api: AutoCardUpdaterCrudApi) {
@@ -564,8 +568,8 @@ function findRowsMatchingResolvedValues(content: unknown[][], resolved: Resolved
 
 function rowMatchesResolvedValues(row: unknown[], resolved: ResolvedPlan) {
   if (resolved.columns.length === 0) return false;
-  return resolved.columns.every(column =>
-    normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]),
+  return resolved.columns.every(
+    column => normalizeCellValue(row[column.index]) === normalizeCellValue(resolved.values[column.header]),
   );
 }
 
@@ -585,15 +589,13 @@ function countRowsEqualTo(content: unknown[][], targetRow: unknown[]) {
 }
 
 function rowsEqual(left: unknown[], right: unknown[]) {
-  return left.length === right.length
-    && left.every((value, index) => normalizeCellValue(value) === normalizeCellValue(right[index]));
+  return (
+    left.length === right.length &&
+    left.every((value, index) => normalizeCellValue(value) === normalizeCellValue(right[index]))
+  );
 }
 
-async function tryImportJsonInsertFallback(
-  api: AutoCardUpdaterCrudApi,
-  resolved: ResolvedPlan,
-  currentData: unknown,
-) {
+async function tryImportJsonInsertFallback(api: AutoCardUpdaterCrudApi, resolved: ResolvedPlan, currentData: unknown) {
   const cloned = cloneImportableData(api, currentData);
   if (!cloned) return null;
   const sheet = findSheetInData(cloned, resolved.table);
@@ -612,14 +614,10 @@ async function tryImportJsonInsertFallback(
   }
 
   sheet.content.push(newRow);
-  return await importJsonData(api, cloned, resolved) ? sheet.content.length - 1 : null;
+  return (await importJsonData(api, cloned, resolved)) ? sheet.content.length - 1 : null;
 }
 
-async function tryImportJsonUpdateFallback(
-  api: AutoCardUpdaterCrudApi,
-  resolved: ResolvedPlan,
-  currentData: unknown,
-) {
+async function tryImportJsonUpdateFallback(api: AutoCardUpdaterCrudApi, resolved: ResolvedPlan, currentData: unknown) {
   if (resolved.rowIndex === undefined) return false;
   const cloned = cloneImportableData(api, currentData);
   if (!cloned) return false;
@@ -633,11 +631,7 @@ async function tryImportJsonUpdateFallback(
   return importJsonData(api, cloned, resolved);
 }
 
-async function tryImportJsonDeleteFallback(
-  api: AutoCardUpdaterCrudApi,
-  resolved: ResolvedPlan,
-  currentData: unknown,
-) {
+async function tryImportJsonDeleteFallback(api: AutoCardUpdaterCrudApi, resolved: ResolvedPlan, currentData: unknown) {
   if (resolved.rowIndex === undefined) return false;
   const cloned = cloneImportableData(api, currentData);
   if (!cloned) return false;
@@ -686,7 +680,7 @@ function ensureImportSheetUsesResolvedHeader(sheet: SheetLike, table: TableMeta)
   try {
     sheet.content = JSON.parse(JSON.stringify(table.sheet.content));
   } catch {
-    sheet.content = table.sheet.content.map(row => Array.isArray(row) ? [...row] : row);
+    sheet.content = table.sheet.content.map(row => (Array.isArray(row) ? [...row] : row));
   }
 }
 
@@ -865,15 +859,12 @@ function tryPromoteDuplicateInsertToUpdate(
   };
 }
 
-function findDuplicateInsertRowIndex(
-  table: TableMeta,
-  values: Record<string, Primitive>,
-  columns: ColumnMeta[],
-) {
-  const keyColumns = columns.filter(column =>
-    (column.primaryKey || column.unique)
-    && Object.prototype.hasOwnProperty.call(values, column.header)
-    && !isBlank(values[column.header])
+function findDuplicateInsertRowIndex(table: TableMeta, values: Record<string, Primitive>, columns: ColumnMeta[]) {
+  const keyColumns = columns.filter(
+    column =>
+      (column.primaryKey || column.unique) &&
+      Object.prototype.hasOwnProperty.call(values, column.header) &&
+      !isBlank(values[column.header]),
   );
 
   for (const column of keyColumns) {
@@ -896,7 +887,12 @@ function applyGeneratedInsertDefaults(
 ) {
   if (plan.action !== 'insertRow') return;
   const rowIdColumn = getRowIdPrimaryKeyColumn(table);
-  if (options.strictMemory && isMemoryMutationTable(table) && rowIdColumn && !hasColumnValue(table, values, rowIdColumn)) {
+  if (
+    options.strictMemory &&
+    isMemoryMutationTable(table) &&
+    rowIdColumn &&
+    !hasColumnValue(table, values, rowIdColumn)
+  ) {
     values[rowIdColumn.header] = nextPrimaryKeyValue(table.rows, rowIdColumn.index);
   }
   if (!isChronicleTable(table)) return;
@@ -916,13 +912,16 @@ function tryPromoteMissingFixedRowUpdateToInsert(
   if (!errors.some(error => error.code === 'ROW_NOT_FOUND')) return null;
 
   const primaryKeyColumn = getRowIdPrimaryKeyColumn(table);
-  if (!primaryKeyColumn || primaryKeyColumn.minValue === undefined || primaryKeyColumn.maxValue === undefined) return null;
+  if (!primaryKeyColumn || primaryKeyColumn.minValue === undefined || primaryKeyColumn.maxValue === undefined)
+    return null;
   const matchedRowId = getPromotablePrimaryKeyValue(table, plan.match, primaryKeyColumn);
   if (matchedRowId === undefined || matchedRowId === null) return null;
   const numericRowId = typeof matchedRowId === 'number' ? matchedRowId : Number(String(matchedRowId).trim());
-  if (!Number.isFinite(numericRowId)
-    || numericRowId < primaryKeyColumn.minValue
-    || numericRowId > primaryKeyColumn.maxValue) {
+  if (
+    !Number.isFinite(numericRowId) ||
+    numericRowId < primaryKeyColumn.minValue ||
+    numericRowId > primaryKeyColumn.maxValue
+  ) {
     return null;
   }
   if (tableHasPrimaryKeyRow(table, primaryKeyColumn, matchedRowId)) return null;
@@ -1005,7 +1004,8 @@ function buildTables(currentData: unknown, templateData?: unknown): TableMeta[] 
 function normalizeSheets(data: unknown): SheetLike[] {
   if (!data || typeof data !== 'object') return [];
   const record = data as Record<string, unknown>;
-  const sheets = record.sheets && typeof record.sheets === 'object' ? (record.sheets as Record<string, unknown>) : record;
+  const sheets =
+    record.sheets && typeof record.sheets === 'object' ? (record.sheets as Record<string, unknown>) : record;
   return Object.entries(sheets)
     .map(([recordKey, value]) => (isSheetLike(value) ? { ...(value as SheetLike), __recordKey: recordKey } : null))
     .filter((sheet): sheet is SheetLike => Boolean(sheet));
@@ -1023,12 +1023,7 @@ function buildSheetAliasMap(sheets: SheetLike[]) {
 }
 
 function findTemplateSheetFallback(templateAliases: Map<string, SheetLike>, sheet: SheetLike) {
-  const candidates = [
-    sheet.__recordKey,
-    sheet.uid,
-    sheet.name,
-    parseDdl(sheet.sourceData?.ddl).tableName,
-  ];
+  const candidates = [sheet.__recordKey, sheet.uid, sheet.name, parseDdl(sheet.sourceData?.ddl).tableName];
   for (const candidate of candidates) {
     const fallback = templateAliases.get(normalizeAlias(candidate));
     if (fallback) return fallback;
@@ -1098,7 +1093,9 @@ function mergeContentWithTemplateHeader(sheet: SheetLike, fallback: SheetLike | 
     findTemplateHeaderIndex(fallbackHeader, fallbackDdlColumns, header),
   );
   const hasMissingTemplateColumns = fallbackHeader.some((_, index) => !targetIndexes.includes(index));
-  const hasReorderedTemplateColumns = targetIndexes.some((targetIndex, index) => targetIndex >= 0 && targetIndex !== index);
+  const hasReorderedTemplateColumns = targetIndexes.some(
+    (targetIndex, index) => targetIndex >= 0 && targetIndex !== index,
+  );
   const hasPhysicalOrAliasHeaders = currentHeader.some((header, index) => {
     const targetIndex = targetIndexes[index];
     return targetIndex >= 0 && normalizeAlias(header) !== normalizeAlias(fallbackHeader[targetIndex]);
@@ -1138,21 +1135,19 @@ function findTemplateHeaderIndex(fallbackHeader: string[], fallbackDdlColumns: C
   const normalizedHeader = normalizeAlias(header);
   return fallbackHeader.findIndex((templateHeader, index) => {
     const ddlColumn = findDdlColumnForHeader(fallbackDdlColumns, templateHeader) ?? fallbackDdlColumns[index];
-    return [
-      templateHeader,
-      ddlColumn?.header,
-      ddlColumn?.physicalName,
-      ddlColumn?.commentAlias,
-    ].some(alias => normalizeAlias(alias) === normalizedHeader);
+    return [templateHeader, ddlColumn?.header, ddlColumn?.physicalName, ddlColumn?.commentAlias].some(
+      alias => normalizeAlias(alias) === normalizedHeader,
+    );
   });
 }
 
 function findDdlColumnForHeader(columns: ColumnMeta[], header: string) {
   const normalizedHeader = normalizeAlias(header);
-  return columns.find(column =>
-    normalizeAlias(column.physicalName) === normalizedHeader
-    || normalizeAlias(column.commentAlias) === normalizedHeader
-    || normalizeAlias(column.header) === normalizedHeader
+  return columns.find(
+    column =>
+      normalizeAlias(column.physicalName) === normalizedHeader ||
+      normalizeAlias(column.commentAlias) === normalizedHeader ||
+      normalizeAlias(column.header) === normalizedHeader,
   );
 }
 
@@ -1186,7 +1181,10 @@ function parseDdlColumn(line: string): ColumnMeta | null {
     .filter(Boolean);
   const escapedPhysicalName = escapeRegExp(physicalName);
   const betweenValue = definition.match(
-    new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s+BETWEEN\\s+(-?\\d+(?:\\.\\d+)?)\\s+AND\\s+(-?\\d+(?:\\.\\d+)?)`, 'i'),
+    new RegExp(
+      `CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s+BETWEEN\\s+(-?\\d+(?:\\.\\d+)?)\\s+AND\\s+(-?\\d+(?:\\.\\d+)?)`,
+      'i',
+    ),
   );
   const exactValue = definition.match(
     new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s*=\\s*(-?\\d+(?:\\.\\d+)?)\\s*\\)`, 'i'),
@@ -1195,8 +1193,12 @@ function parseDdlColumn(line: string): ColumnMeta | null {
   const checkGlob = definition.match(
     new RegExp(`CHECK\\s*\\(\\s*[\`"]?${escapedPhysicalName}[\`"]?\\s+GLOB\\s+(['"])(.*?)\\1\\s*\\)`, 'i'),
   )?.[2];
-  const maxLength = Number(definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*<=\s*(\d+)/i)?.[1] ?? betweenLength?.[2]);
-  const minLength = Number(definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*>=\s*(\d+)/i)?.[1] ?? betweenLength?.[1]);
+  const maxLength = Number(
+    definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*<=\s*(\d+)/i)?.[1] ?? betweenLength?.[2],
+  );
+  const minLength = Number(
+    definition.match(/LENGTH\s*\(\s*`?[A-Za-z_][\w]*`?\s*\)\s*>=\s*(\d+)/i)?.[1] ?? betweenLength?.[1],
+  );
   const minValue = Number(betweenValue?.[1] ?? exactValue?.[1]);
   const maxValue = Number(betweenValue?.[2] ?? exactValue?.[1]);
 
@@ -1220,11 +1222,14 @@ function parseDdlColumn(line: string): ColumnMeta | null {
 function findTable(tables: TableMeta[], tableRef: string | undefined) {
   const normalized = normalizeAlias(tableRef);
   if (!normalized) return null;
-  return tables.find(table =>
-    normalizeAlias(table.name) === normalized
-    || normalizeAlias(table.uid) === normalized
-    || normalizeAlias(table.sqlName) === normalized
-  ) ?? null;
+  return (
+    tables.find(
+      table =>
+        normalizeAlias(table.name) === normalized ||
+        normalizeAlias(table.uid) === normalized ||
+        normalizeAlias(table.sqlName) === normalized,
+    ) ?? null
+  );
 }
 
 function resolveColumns(table: TableMeta, values: Record<string, Primitive>, errors: TableChangeError[]) {
@@ -1259,9 +1264,12 @@ function validateColumnValues(
   action: TableChangeAction,
   errors: TableChangeError[],
 ) {
-  const targetColumns = action === 'insertRow'
-    ? table.columns.filter(column => !column.primaryKey || Object.prototype.hasOwnProperty.call(values, column.header))
-    : columns;
+  const targetColumns =
+    action === 'insertRow'
+      ? table.columns.filter(
+          column => !column.primaryKey || Object.prototype.hasOwnProperty.call(values, column.header),
+        )
+      : columns;
 
   for (const column of targetColumns) {
     const hasValue = Object.prototype.hasOwnProperty.call(values, column.header);
@@ -1308,9 +1316,11 @@ function validateColumnValues(
 
     if (column.minValue !== undefined || column.maxValue !== undefined) {
       const numericValue = typeof value === 'number' ? value : Number(text);
-      if (!Number.isFinite(numericValue)
-        || (column.minValue !== undefined && numericValue < column.minValue)
-        || (column.maxValue !== undefined && numericValue > column.maxValue)) {
+      if (
+        !Number.isFinite(numericValue) ||
+        (column.minValue !== undefined && numericValue < column.minValue) ||
+        (column.maxValue !== undefined && numericValue > column.maxValue)
+      ) {
         const range = `${column.minValue ?? '-∞'}-${column.maxValue ?? '+∞'}`;
         errors.push({
           code: 'CHECK_RANGE_VIOLATION',
@@ -1545,22 +1555,32 @@ function resolveRowIndex(table: TableMeta, match: TableChangeMatch | undefined, 
   if (match.row_id !== undefined && match.row_id !== null) conditions.row_id = match.row_id;
   const conditionEntries = Object.entries(conditions);
   if (conditionEntries.length === 0) {
-    errors.push({ code: 'ROW_NOT_FOUND', message: 'match 至少需要 rowIndex、row_id 或 conditions。', table: table.name });
+    errors.push({
+      code: 'ROW_NOT_FOUND',
+      message: 'match 至少需要 rowIndex、row_id 或 conditions。',
+      table: table.name,
+    });
     return undefined;
   }
 
   const matched = table.rows
     .map((row, rowIndex) => ({ row, rowIndex }))
     .filter(({ rowIndex }) => rowIndex > 0)
-    .filter(({ row }) => conditionEntries.every(([rawColumn, expected]) => {
-      const column = table.columnAliases.get(normalizeAlias(rawColumn));
-      if (!column) return false;
-      return normalizeCellValue(row[column.index]) === normalizeCellValue(expected);
-    }));
+    .filter(({ row }) =>
+      conditionEntries.every(([rawColumn, expected]) => {
+        const column = table.columnAliases.get(normalizeAlias(rawColumn));
+        if (!column) return false;
+        return normalizeCellValue(row[column.index]) === normalizeCellValue(expected);
+      }),
+    );
 
   if (matched.length === 1) return matched[0].rowIndex;
   if (matched.length > 1) {
-    errors.push({ code: 'MULTIPLE_ROWS_MATCHED', message: `match 命中 ${matched.length} 行，已阻止写入。`, table: table.name });
+    errors.push({
+      code: 'MULTIPLE_ROWS_MATCHED',
+      message: `match 命中 ${matched.length} 行，已阻止写入。`,
+      table: table.name,
+    });
     return undefined;
   }
 
@@ -1569,9 +1589,13 @@ function resolveRowIndex(table: TableMeta, match: TableChangeMatch | undefined, 
 }
 
 function getRowIdPrimaryKeyColumn(table: TableMeta) {
-  return table.columns.find(column => column.primaryKey && normalizeAlias(column.physicalName ?? column.header) === 'row_id')
-    ?? table.columns.find(column => column.primaryKey && normalizeAlias(column.header) === 'row_id')
-    ?? null;
+  return (
+    table.columns.find(
+      column => column.primaryKey && normalizeAlias(column.physicalName ?? column.header) === 'row_id',
+    ) ??
+    table.columns.find(column => column.primaryKey && normalizeAlias(column.header) === 'row_id') ??
+    null
+  );
 }
 
 function getMatchedPrimaryKeyValue(
@@ -1606,9 +1630,7 @@ function getPromotablePrimaryKeyValue(
 }
 
 function tableHasPrimaryKeyRow(table: TableMeta, primaryKeyColumn: ColumnMeta, rowId: Primitive) {
-  return table.rows
-    .slice(1)
-    .some(row => normalizeCellValue(row[primaryKeyColumn.index]) === normalizeCellValue(rowId));
+  return table.rows.slice(1).some(row => normalizeCellValue(row[primaryKeyColumn.index]) === normalizeCellValue(rowId));
 }
 
 function findColumnByAlias(table: TableMeta, alias: string) {
@@ -1616,18 +1638,13 @@ function findColumnByAlias(table: TableMeta, alias: string) {
 }
 
 function isChronicleTextColumn(column: ColumnMeta) {
-  return [
-    column.header,
-    column.physicalName,
-    column.commentAlias,
-  ].some(alias => normalizeAlias(alias) === 'chronicle_text'
-    || normalizeAlias(alias) === normalizeAlias('纪要'));
+  return [column.header, column.physicalName, column.commentAlias].some(
+    alias => normalizeAlias(alias) === 'chronicle_text' || normalizeAlias(alias) === normalizeAlias('纪要'),
+  );
 }
 
 function hasColumnValue(table: TableMeta, values: Record<string, Primitive>, column: ColumnMeta) {
-  const aliases = [column.header, column.physicalName, column.commentAlias]
-    .map(normalizeAlias)
-    .filter(Boolean);
+  const aliases = [column.header, column.physicalName, column.commentAlias].map(normalizeAlias).filter(Boolean);
   return Object.keys(values).some(key => aliases.includes(normalizeAlias(key)));
 }
 
@@ -1645,11 +1662,13 @@ function makeInvalidMemoryDeleteResult(table?: string): TableChangeResult {
     ok: false,
     action: 'deleteRow',
     table,
-    errors: [{
-      code: 'TABLE_DELETE_FORBIDDEN',
-      message: '人工确认删除仅限事件纪要、收录档案和收录规律。',
-      table,
-    }],
+    errors: [
+      {
+        code: 'TABLE_DELETE_FORBIDDEN',
+        message: '人工确认删除仅限事件纪要、收录档案和收录规律。',
+        table,
+      },
+    ],
   };
 }
 
@@ -1658,18 +1677,22 @@ function makeUnauthorizedMemoryDeleteResult(table?: string): TableChangeResult {
     ok: false,
     action: 'deleteRow',
     table,
-    errors: [{
-      code: 'UNAUTHORIZED',
-      message: '记忆删除未授权：缺少内部闭包令牌，已阻止。仅数据库前端在人工确认后可发起。',
-      table,
-    }],
+    errors: [
+      {
+        code: 'UNAUTHORIZED',
+        message: '记忆删除未授权：缺少内部闭包令牌，已阻止。仅数据库前端在人工确认后可发起。',
+        table,
+      },
+    ],
   };
 }
 
 function isChronicleTable(table: TableMeta) {
-  return normalizeAlias(table.sqlName) === 'chronicle'
-    || normalizeAlias(table.name) === normalizeAlias('事件纪要')
-    || normalizeAlias(table.uid) === 'sheet_chronicle';
+  return (
+    normalizeAlias(table.sqlName) === 'chronicle' ||
+    normalizeAlias(table.name) === normalizeAlias('事件纪要') ||
+    normalizeAlias(table.uid) === 'sheet_chronicle'
+  );
 }
 
 function nextChronicleCodeIndex(table: TableMeta, codeIndexColumn: ColumnMeta) {
@@ -1749,10 +1772,8 @@ function validateUniqueValues(
     if ((!column.primaryKey && !column.unique) || !hasColumnValue(table, values, column)) continue;
     const expected = normalizeCellValue(values[column.header]);
     if (!expected) continue;
-    const duplicate = table.rows.some((row, index) =>
-      index > 0
-      && index !== rowIndex
-      && normalizeCellValue(row[column.index]) === expected,
+    const duplicate = table.rows.some(
+      (row, index) => index > 0 && index !== rowIndex && normalizeCellValue(row[column.index]) === expected,
     );
     if (duplicate) {
       errors.push({
@@ -1791,7 +1812,8 @@ function validateCollectedArchiveProgress(
       message: '收录状态为「已收录」时，收录进度必须为 100。',
       table: table.name,
       column: progressColumn.header,
-      value: typeof progress === 'string' || typeof progress === 'number' || typeof progress === 'boolean' ? progress : null,
+      value:
+        typeof progress === 'string' || typeof progress === 'number' || typeof progress === 'boolean' ? progress : null,
     });
   }
 }
@@ -1853,9 +1875,8 @@ function validateChronicleAppendOnly(
   const codeIndexColumn = findColumnByAlias(table, 'code_index');
   if (!codeIndexColumn || !hasColumnValue(table, values, codeIndexColumn)) return;
   const newCode = String(values[codeIndexColumn.header] ?? '').trim();
-  const existingCode = rowIndex !== undefined && rowIndex > 0
-    ? String(table.rows[rowIndex]?.[codeIndexColumn.index] ?? '').trim()
-    : '';
+  const existingCode =
+    rowIndex !== undefined && rowIndex > 0 ? String(table.rows[rowIndex]?.[codeIndexColumn.index] ?? '').trim() : '';
   if (existingCode && newCode && normalizeCellValue(newCode) !== normalizeCellValue(existingCode)) {
     errors.push({
       code: 'CHRONICLE_CODE_IMMUTABLE',
@@ -1890,14 +1911,38 @@ function addBuiltInColumnAliases(table: TableMeta) {
   // 线索：物理列 / 中文表头 / AI 近义列名互通，避免 COLUMN_NOT_FOUND + NOT_NULL 推断
   if (isTableNamed(table, ['clues', 'sheet_clues', '线索'])) {
     const aliasPairs: Array<[string[], string[]]> = [
-      [['clue_code', '线索编号', '线索编码', '编号'], ['clue_code', '线索编号']],
-      [['event_code', '关联事件', '事件代号', '所属事件'], ['event_code', '关联事件']],
-      [['source_text', '来源', '线索来源'], ['source_text', '来源']],
-      [['clue_text', '内容', '线索内容', '正文'], ['clue_text', '内容']],
-      [['reliability', '可信度'], ['reliability', '可信度']],
-      [['inference_text', 'inference', '推断', '推断结论', '推理'], ['inference_text', '推断']],
-      [['verification_status', '验证状态'], ['verification_status', '验证状态']],
-      [['visibility', '可见性'], ['visibility', '可见性']],
+      [
+        ['clue_code', '线索编号', '线索编码', '编号'],
+        ['clue_code', '线索编号'],
+      ],
+      [
+        ['event_code', '关联事件', '事件代号', '所属事件'],
+        ['event_code', '关联事件'],
+      ],
+      [
+        ['source_text', '来源', '线索来源'],
+        ['source_text', '来源'],
+      ],
+      [
+        ['clue_text', '内容', '线索内容', '正文'],
+        ['clue_text', '内容'],
+      ],
+      [
+        ['reliability', '可信度'],
+        ['reliability', '可信度'],
+      ],
+      [
+        ['inference_text', 'inference', '推断', '推断结论', '推理'],
+        ['inference_text', '推断'],
+      ],
+      [
+        ['verification_status', '验证状态'],
+        ['verification_status', '验证状态'],
+      ],
+      [
+        ['visibility', '可见性'],
+        ['visibility', '可见性'],
+      ],
     ];
     for (const [aliases, targets] of aliasPairs) {
       let column: ColumnMeta | undefined;
@@ -1913,11 +1958,26 @@ function addBuiltInColumnAliases(table: TableMeta) {
   // 驾驭厉鬼：MVU ControlledGhost 字段名 ↔ DB 表头
   if (isTableNamed(table, ['controlled_ghosts', 'sheet_controlled_ghosts', '驾驭厉鬼'])) {
     const aliasPairs: Array<[string[], string[]]> = [
-      [['ghost_code', '厉鬼代号', '代号', '厉鬼名称'], ['ghost_code', '厉鬼代号']],
-      [['terror_level', '恐怖程度', '恐怖等级'], ['terror_level', '恐怖程度']],
-      [['usable_power', '可用能力', '使用能力'], ['usable_power', '可用能力']],
-      [['death_machine_status', '死机状态', '是否死机'], ['death_machine_status', '死机状态']],
-      [['public_summary', '可见摘要', '摘要'], ['public_summary', '可见摘要']],
+      [
+        ['ghost_code', '厉鬼代号', '代号', '厉鬼名称'],
+        ['ghost_code', '厉鬼代号'],
+      ],
+      [
+        ['terror_level', '恐怖程度', '恐怖等级'],
+        ['terror_level', '恐怖程度'],
+      ],
+      [
+        ['usable_power', '可用能力', '使用能力'],
+        ['usable_power', '可用能力'],
+      ],
+      [
+        ['death_machine_status', '死机状态', '是否死机'],
+        ['death_machine_status', '死机状态'],
+      ],
+      [
+        ['public_summary', '可见摘要', '摘要'],
+        ['public_summary', '可见摘要'],
+      ],
     ];
     for (const [aliases, targets] of aliasPairs) {
       let column: ColumnMeta | undefined;
@@ -1932,8 +1992,10 @@ function addBuiltInColumnAliases(table: TableMeta) {
 }
 
 function normalizeColumnValueForColumn(table: TableMeta, column: ColumnMeta, value: Primitive): Primitive {
-  if (isTableNamed(table, ['global_state', 'sheet_global_state', '全局状态'])
-    && isColumnNamed(column, ['game_time', 'current_time', 'cur_time', 'time', '当前时间'])) {
+  if (
+    isTableNamed(table, ['global_state', 'sheet_global_state', '全局状态']) &&
+    isColumnNamed(column, ['game_time', 'current_time', 'cur_time', 'time', '当前时间'])
+  ) {
     return normalizeDateTimeMinuteValue(value);
   }
   return value;
@@ -1976,7 +2038,10 @@ function createMissingTable(name = '未知表'): TableMeta {
 }
 
 function normalizeAlias(value: unknown) {
-  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
 }
 
 function escapeRegExp(value: string) {
@@ -2031,11 +2096,13 @@ function isPrimitiveRecord(value: unknown): value is Record<string, Primitive> {
 }
 
 function isSheetLike(value: unknown): value is SheetLike {
-  return isRecord(value)
-    && (typeof value.name === 'string'
-      || typeof value.uid === 'string'
-      || Array.isArray(value.content)
-      || isRecord(value.sourceData));
+  return (
+    isRecord(value) &&
+    (typeof value.name === 'string' ||
+      typeof value.uid === 'string' ||
+      Array.isArray(value.content) ||
+      isRecord(value.sourceData))
+  );
 }
 
 function isTableChangeAction(action: unknown): action is TableChangeAction {

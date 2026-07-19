@@ -12,184 +12,213 @@
       <h1 class="main-title">神秘复苏模拟器</h1>
       <div class="title-deco-line"></div>
       <div class="header-quote quote-right">
-        <span class="quote-mark">"</span>这个世界上，有些东西注定无法被科学解释，它们只会在夜里，悄然归来。<span class="quote-mark">"</span>
+        <span class="quote-mark">"</span>这个世界上，有些东西注定无法被科学解释，它们只会在夜里，悄然归来。<span
+          class="quote-mark"
+          >"</span
+        >
       </div>
     </header>
 
     <template v-if="isFirstFloor">
-    <section class="card-module">
-      <div class="module-header">
-        <span class="module-icon">◆</span>
-        <span class="module-title">基本信息</span>
-        <div class="module-line"></div>
-      </div>
-      <div class="module-body info-grid">
-        <div class="form-field">
-          <label class="field-label">姓名</label>
-          <input type="text" class="field-input" v-model="姓名" placeholder="请输入你的名字" />
+      <section class="card-module">
+        <div class="module-header">
+          <span class="module-icon">◆</span>
+          <span class="module-title">基本信息</span>
+          <div class="module-line"></div>
         </div>
-        <div class="form-field">
-          <label class="field-label">性别</label>
-          <div class="radio-group">
-            <label class="radio-item" :class="{ active: 性别 === '男' }" @click="性别 = '男'">
-              <span class="radio-dot"></span>男
-            </label>
-            <label class="radio-item" :class="{ active: 性别 === '女' }" @click="性别 = '女'">
-              <span class="radio-dot"></span>女
-            </label>
+        <div class="module-body info-grid">
+          <div class="form-field">
+            <label class="field-label">姓名</label>
+            <input type="text" class="field-input" v-model="姓名" placeholder="请输入你的名字" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">性别</label>
+            <div class="radio-group">
+              <label class="radio-item" :class="{ active: 性别 === '男' }" @click="性别 = '男'">
+                <span class="radio-dot"></span>男
+              </label>
+              <label class="radio-item" :class="{ active: 性别 === '女' }" @click="性别 = '女'">
+                <span class="radio-dot"></span>女
+              </label>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">开局地点</label>
+            <select class="field-select" v-model="开局地点">
+              <option value="">请选择开局地点</option>
+              <option v-for="option in startLocationOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="field-label">初始年龄</label>
+            <select class="field-select" v-model="初始年龄">
+              <option value="16岁">16岁</option>
+              <option value="17岁">17岁</option>
+              <option value="18岁">18岁</option>
+              <option value="19岁">19岁</option>
+              <option value="20岁">20岁</option>
+              <option value="21岁">21岁</option>
+              <option value="22岁">22岁</option>
+              <option value="25岁">25岁</option>
+              <option value="30岁">30岁</option>
+            </select>
           </div>
         </div>
-        <div class="form-field">
-          <label class="field-label">开局地点</label>
-          <select class="field-select" v-model="开局地点">
-            <option value="">请选择开局地点</option>
-            <option v-for="option in startLocationOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </div>
-        <div class="form-field">
-          <label class="field-label">初始年龄</label>
-          <select class="field-select" v-model="初始年龄">
-            <option value="16岁">16岁</option>
-            <option value="17岁">17岁</option>
-            <option value="18岁">18岁</option>
-            <option value="19岁">19岁</option>
-            <option value="20岁">20岁</option>
-            <option value="21岁">21岁</option>
-            <option value="22岁">22岁</option>
-            <option value="25岁">25岁</option>
-            <option value="30岁">30岁</option>
-          </select>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="card-module">
-      <div class="module-header">
-        <span class="module-icon">♰</span>
-        <span class="module-title">背景设定</span>
-        <div class="module-line"></div>
-      </div>
-      <div class="module-body">
-        <div class="form-field">
-          <label class="field-label field-label-long">你的过去，你的经历，你是如何卷入这个诡异的世界的…</label>
-          <textarea class="field-textarea" v-model="角色背景" maxlength="200" placeholder="描述你的角色背景..." rows="3"></textarea>
-          <div class="char-count">{{ (角色背景 || '').length }}/200</div>
+      <section class="card-module">
+        <div class="module-header">
+          <span class="module-icon">♰</span>
+          <span class="module-title">背景设定</span>
+          <div class="module-line"></div>
         </div>
-        <div class="form-field">
-          <label class="field-label">身份</label>
-          <select class="field-select" v-model="身份">
-            <option value="">请选择你的身份</option>
-            <option value="普通人">普通人</option>
-            <option value="驭鬼者">驭鬼者</option>
-            <option value="民间异类">民间异类</option>
-            <option value="总部调查员">总部调查员</option>
-            <option value="失控者">失控者</option>
-          </select>
+        <div class="module-body">
+          <div class="form-field">
+            <label class="field-label field-label-long">你的过去，你的经历，你是如何卷入这个诡异的世界的…</label>
+            <textarea
+              class="field-textarea"
+              v-model="角色背景"
+              maxlength="200"
+              placeholder="描述你的角色背景..."
+              rows="3"
+            ></textarea>
+            <div class="char-count">{{ (角色背景 || '').length }}/200</div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">身份</label>
+            <select class="field-select" v-model="身份">
+              <option value="">请选择你的身份</option>
+              <option value="普通人">普通人</option>
+              <option value="驭鬼者">驭鬼者</option>
+              <option value="民间异类">民间异类</option>
+              <option value="总部调查员">总部调查员</option>
+              <option value="失控者">失控者</option>
+            </select>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="card-module">
-      <div class="module-header">
-        <span class="module-icon">◇</span>
-        <span class="module-title">驾驭厉鬼</span>
-        <div class="module-line"></div>
-      </div>
-      <div class="module-body">
-        <div class="item-list" v-if="ghosts.length > 0">
-          <div class="item-card" v-for="(ghost, idx) in ghosts" :key="idx">
-            <div class="item-card-header">
-              <span class="item-number">厉鬼 #{{ idx + 1 }}</span>
-              <button class="item-remove" @click="removeGhost(idx)">×</button>
+      <section class="card-module">
+        <div class="module-header">
+          <span class="module-icon">◇</span>
+          <span class="module-title">驾驭厉鬼</span>
+          <div class="module-line"></div>
+        </div>
+        <div class="module-body">
+          <div class="item-list" v-if="ghosts.length > 0">
+            <div class="item-card" v-for="(ghost, idx) in ghosts" :key="idx">
+              <div class="item-card-header">
+                <span class="item-number">厉鬼 #{{ idx + 1 }}</span>
+                <button class="item-remove" @click="removeGhost(idx)">×</button>
+              </div>
+              <div class="form-field">
+                <label class="field-label">厉鬼名称</label>
+                <input type="text" class="field-input" v-model="ghost.厉鬼名称" placeholder="描述驾驭的厉鬼名称" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">杀人规律</label>
+                <textarea
+                  class="field-textarea"
+                  v-model="ghost.杀人规律"
+                  maxlength="150"
+                  placeholder="描述厉鬼的杀人规律..."
+                  rows="2"
+                ></textarea>
+              </div>
             </div>
-            <div class="form-field">
-              <label class="field-label">厉鬼名称</label>
-              <input type="text" class="field-input" v-model="ghost.厉鬼名称" placeholder="描述驾驭的厉鬼名称" />
-            </div>
-            <div class="form-field">
-              <label class="field-label">杀人规律</label>
-              <textarea class="field-textarea" v-model="ghost.杀人规律" maxlength="150" placeholder="描述厉鬼的杀人规律..." rows="2"></textarea>
+          </div>
+          <div class="item-add-row">
+            <button class="btn-add" @click="addGhost" :disabled="ghosts.length >= 3">+ 添加驾驭厉鬼（最多3个）</button>
+            <div class="item-empty" v-if="ghosts.length === 0">
+              <div class="eye-icon">◎</div>
+              <span>暂无驾驭厉鬼</span>
             </div>
           </div>
         </div>
-        <div class="item-add-row">
-          <button class="btn-add" @click="addGhost" :disabled="ghosts.length >= 3">
-            + 添加驾驭厉鬼（最多3个）
-          </button>
-          <div class="item-empty" v-if="ghosts.length === 0">
-            <div class="eye-icon">◎</div>
-            <span>暂无驾驭厉鬼</span>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="card-module">
-      <div class="module-header">
-        <span class="module-icon">※</span>
-        <span class="module-title">特殊能力</span>
-        <div class="module-line"></div>
-      </div>
-      <div class="module-body">
-        <div class="form-field">
-          <label class="field-label">能力描述</label>
-          <textarea class="field-textarea" v-model="特殊能力描述" maxlength="200" placeholder="描述能力的具体效果、触发条件与限制..." rows="3"></textarea>
-          <div class="char-count">{{ (特殊能力描述 || '').length }}/200</div>
+      <section class="card-module">
+        <div class="module-header">
+          <span class="module-icon">※</span>
+          <span class="module-title">特殊能力</span>
+          <div class="module-line"></div>
         </div>
-        <div class="form-field">
-          <label class="field-label">消耗代价</label>
-          <select class="field-select" v-model="消耗代价">
-            <option value="无">无</option>
-            <option value="体力消耗">体力消耗</option>
-            <option value="精神损耗">精神损耗</option>
-            <option value="复苏加速">复苏加速</option>
-            <option value="生命力">生命力</option>
-            <option value="记忆丧失">记忆丧失</option>
-          </select>
+        <div class="module-body">
+          <div class="form-field">
+            <label class="field-label">能力描述</label>
+            <textarea
+              class="field-textarea"
+              v-model="特殊能力描述"
+              maxlength="200"
+              placeholder="描述能力的具体效果、触发条件与限制..."
+              rows="3"
+            ></textarea>
+            <div class="char-count">{{ (特殊能力描述 || '').length }}/200</div>
+          </div>
+          <div class="form-field">
+            <label class="field-label">消耗代价</label>
+            <select class="field-select" v-model="消耗代价">
+              <option value="无">无</option>
+              <option value="体力消耗">体力消耗</option>
+              <option value="精神损耗">精神损耗</option>
+              <option value="复苏加速">复苏加速</option>
+              <option value="生命力">生命力</option>
+              <option value="记忆丧失">记忆丧失</option>
+            </select>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="card-module">
-      <div class="module-header">
-        <span class="module-icon">▽</span>
-        <span class="module-title">灵异物品</span>
-        <div class="module-line"></div>
-      </div>
-      <div class="module-body">
-        <div class="item-list" v-if="items.length > 0">
-          <div class="item-card" v-for="(item, idx) in items" :key="idx">
-            <div class="item-card-header">
-              <span class="item-number">物品 #{{ idx + 1 }}</span>
-              <button class="item-remove" @click="removeItem(idx)">×</button>
+      <section class="card-module">
+        <div class="module-header">
+          <span class="module-icon">▽</span>
+          <span class="module-title">灵异物品</span>
+          <div class="module-line"></div>
+        </div>
+        <div class="module-body">
+          <div class="item-list" v-if="items.length > 0">
+            <div class="item-card" v-for="(item, idx) in items" :key="idx">
+              <div class="item-card-header">
+                <span class="item-number">物品 #{{ idx + 1 }}</span>
+                <button class="item-remove" @click="removeItem(idx)">×</button>
+              </div>
+              <div class="form-field">
+                <label class="field-label">物品名称</label>
+                <input type="text" class="field-input" v-model="item.名称" placeholder="请输入物品名称" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">物品效果</label>
+                <textarea
+                  class="field-textarea"
+                  v-model="item.效果"
+                  maxlength="150"
+                  placeholder="描述物品的效果与用途..."
+                  rows="2"
+                ></textarea>
+              </div>
+              <div class="form-field">
+                <label class="field-label">使用限制</label>
+                <textarea
+                  class="field-textarea"
+                  v-model="item.使用限制"
+                  maxlength="150"
+                  placeholder="描述使用条件、代价或副作用..."
+                  rows="2"
+                ></textarea>
+              </div>
             </div>
-            <div class="form-field">
-              <label class="field-label">物品名称</label>
-              <input type="text" class="field-input" v-model="item.名称" placeholder="请输入物品名称" />
-            </div>
-            <div class="form-field">
-              <label class="field-label">物品效果</label>
-              <textarea class="field-textarea" v-model="item.效果" maxlength="150" placeholder="描述物品的效果与用途..." rows="2"></textarea>
-            </div>
-            <div class="form-field">
-              <label class="field-label">使用限制</label>
-              <textarea class="field-textarea" v-model="item.使用限制" maxlength="150" placeholder="描述使用条件、代价或副作用..." rows="2"></textarea>
+          </div>
+          <div class="item-add-row">
+            <button class="btn-add" @click="addItem" :disabled="items.length >= 5">+ 添加灵异物品（最多5件）</button>
+            <div class="item-empty" v-if="items.length === 0">
+              <div class="eye-icon">◎</div>
+              <span>暂无物品</span>
             </div>
           </div>
         </div>
-        <div class="item-add-row">
-          <button class="btn-add" @click="addItem" :disabled="items.length >= 5">
-            + 添加灵异物品（最多5件）
-          </button>
-          <div class="item-empty" v-if="items.length === 0">
-            <div class="eye-icon">◎</div>
-            <span>暂无物品</span>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
     </template>
 
     <section class="card-module dossier-module">
@@ -251,7 +280,11 @@
         <section class="runtime-detail-block">
           <div class="runtime-detail-title">驾驭厉鬼</div>
           <div v-if="controlledGhostPanelItems.length" class="runtime-detail-list">
-            <article class="runtime-detail-item" v-for="ghost in controlledGhostPanelItems" :key="ghost.title + ghost.meta">
+            <article
+              class="runtime-detail-item"
+              v-for="ghost in controlledGhostPanelItems"
+              :key="ghost.title + ghost.meta"
+            >
               <div class="runtime-detail-head">
                 <strong>{{ ghost.title }}</strong>
                 <span>{{ ghost.meta }}</span>
@@ -270,7 +303,11 @@
         <section class="runtime-detail-block">
           <div class="runtime-detail-title">收录档案</div>
           <div v-if="archivedGhostPanelItems.length" class="runtime-detail-list">
-            <article class="runtime-detail-item" v-for="archive in archivedGhostPanelItems" :key="archive.title + archive.meta">
+            <article
+              class="runtime-detail-item"
+              v-for="archive in archivedGhostPanelItems"
+              :key="archive.title + archive.meta"
+            >
               <div class="runtime-detail-head">
                 <strong>{{ archive.title }}</strong>
                 <span>{{ archive.meta }}</span>
@@ -321,13 +358,7 @@
       <div class="option-action-line"></div>
       <div class="option-action-text">请选择下一步行动</div>
       <div class="module-body option-list">
-        <button
-          v-for="opt in options"
-          :key="opt.key"
-          class="option-btn"
-          type="button"
-          @click="pickOption(opt)"
-        >
+        <button v-for="opt in options" :key="opt.key" class="option-btn" type="button" @click="pickOption(opt)">
           <span class="opt-key">{{ opt.key }}.</span>
           <span class="opt-text">{{ opt.text }}</span>
           <span class="opt-risk" :class="optionRiskClass(opt.risk)">{{ optionRiskLabel(opt.risk) }}</span>
@@ -348,80 +379,80 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRaw, watchEffect } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useDataStore } from './store'
-import { Schema } from '../../schema'
+import { computed, ref, toRaw, watchEffect } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useDataStore } from './store';
+import { Schema } from '../../schema';
 
-const store = useDataStore()
-const { data } = storeToRefs(store)
-const isStarting = ref(false)
+const store = useDataStore();
+const { data } = storeToRefs(store);
+const isStarting = ref(false);
 
 // 开局表单（基本信息 / 背景设定 / 驾驭厉鬼 / 特殊能力 / 灵异物品 / 底部按钮）
 // 只在开场白（楼 0）显示；楼 1+ 只渲染"灵异档案"动态状态面板。
-const isFirstFloor = getCurrentMessageId() === 0
+const isFirstFloor = getCurrentMessageId() === 0;
 
 // 解析当前楼 AI 文本里的「推演选项」并渲染为按钮，点击后把选项文本填进酒馆输入框。
-type OptionRisk = { death: number; revive: number; source: string; tagged: boolean }
-type OptionItem = { key: string; text: string; risk: OptionRisk }
+type OptionRisk = { death: number; revive: number; source: string; tagged: boolean };
+type OptionItem = { key: string; text: string; risk: OptionRisk };
 type TableChangePlanInput = {
-  action: 'updateCell' | 'insertRow'
-  table: string
-  match?: Record<string, string | number>
-  set?: Record<string, string | number>
-  data?: Record<string, string | number>
-  reason?: string
-  confidence?: number
-  skipChatSave?: boolean
-  silent?: boolean
-}
+  action: 'updateCell' | 'insertRow';
+  table: string;
+  match?: Record<string, string | number>;
+  set?: Record<string, string | number>;
+  data?: Record<string, string | number>;
+  reason?: string;
+  confidence?: number;
+  skipChatSave?: boolean;
+  silent?: boolean;
+};
 type TableChangeResultLike = {
-  ok?: boolean
-  errors?: Array<{ code?: string; message?: string }>
-}
+  ok?: boolean;
+  errors?: Array<{ code?: string; message?: string }>;
+};
 type MysteryDatabaseFrontendApi = {
-  applyTableChangePlan?: (plan: TableChangePlanInput) => Promise<TableChangeResultLike> | TableChangeResultLike
-  exportCurrentData?: () => Promise<unknown> | unknown
-}
+  applyTableChangePlan?: (plan: TableChangePlanInput) => Promise<TableChangeResultLike> | TableChangeResultLike;
+  exportCurrentData?: () => Promise<unknown> | unknown;
+};
 
-const optionRiskOpenTagPattern = /<risk\b[^>]*\/?>/i
-const optionRiskTagPattern = /<\/?risk\b[^>]*>/gi
-const actionSuggestionKeys = ['A', 'B', 'C', 'D'] as const
-let lastMirroredChoicesSignature = ''
-let lastMirroredMvuChoicesSignature = ''
-let lastMirroredCoreStateSignature = ''
-let choicesMirrorQueue: Promise<unknown> = Promise.resolve()
-let choicesMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null
-let coreStateMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null
+const optionRiskOpenTagPattern = /<risk\b[^>]*\/?>/i;
+const optionRiskTagPattern = /<\/?risk\b[^>]*>/gi;
+const actionSuggestionKeys = ['A', 'B', 'C', 'D'] as const;
+let lastMirroredChoicesSignature = '';
+let lastMirroredMvuChoicesSignature = '';
+let lastMirroredCoreStateSignature = '';
+let choicesMirrorQueue: Promise<unknown> = Promise.resolve();
+let choicesMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null;
+let coreStateMirrorRetryTimer: ReturnType<typeof window.setTimeout> | null = null;
 
 function clampRiskDelta(value: unknown) {
-  const n = Number(value)
-  if (!Number.isFinite(n)) return 0
-  return Math.max(0, Math.min(100, Math.round(n)))
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
 }
 
 function normalizeOptionRiskDelta(value: unknown, fallback = 0) {
-  const numeric = Number(value)
-  if (Number.isFinite(numeric)) return clampRiskDelta(numeric)
-  const text = String(value ?? '').trim()
-  if (/致命|自杀|极高/.test(text)) return 10
-  if (/高|死亡|必死|厉鬼|接触/.test(text)) return 7
-  if (/中|异常|调查|危险/.test(text)) return 4
-  if (/低|轻微|日常/.test(text)) return 2
-  if (/无|安全|自定义/.test(text)) return 0
-  return fallback
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) return clampRiskDelta(numeric);
+  const text = String(value ?? '').trim();
+  if (/致命|自杀|极高/.test(text)) return 10;
+  if (/高|死亡|必死|厉鬼|接触/.test(text)) return 7;
+  if (/中|异常|调查|危险/.test(text)) return 4;
+  if (/低|轻微|日常/.test(text)) return 2;
+  if (/无|安全|自定义/.test(text)) return 0;
+  return fallback;
 }
 
 function readRiskNumber(tag: string, name: string) {
-  const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'))
-  return clampRiskDelta(match?.[1])
+  const match = tag.match(new RegExp(`\\b${name}\\s*=\\s*["']?(-?\\d+(?:\\.\\d+)?)["']?`, 'i'));
+  return clampRiskDelta(match?.[1]);
 }
 
 function readRiskText(tag: string, name: string) {
-  const quoted = tag.match(new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, 'i'))
-  if (quoted) return quoted[2].trim()
-  const bare = tag.match(new RegExp(`\\b${name}\\s*=\\s*([^\\s>]+)`, 'i'))
-  return bare?.[1]?.trim() ?? ''
+  const quoted = tag.match(new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, 'i'));
+  if (quoted) return quoted[2].trim();
+  const bare = tag.match(new RegExp(`\\b${name}\\s*=\\s*([^\\s>]+)`, 'i'));
+  return bare?.[1]?.trim() ?? '';
 }
 
 function optionDeathRiskDelta(text: string) {
@@ -431,23 +462,23 @@ function optionDeathRiskDelta(text: string) {
     { pattern: /靠近|接近|进入|开门|触碰|回应|回头|盯住|查看|调查|追上|跟踪|声音源头|敲门声源头|高危/, delta: 10 },
     { pattern: /大喊|制造声音|暴露|冲出去|立刻站起来|奔跑|撞开|强行/, delta: 8 },
     { pattern: /等待|躲|藏|屏住呼吸|保持安静|远离|撤离|后退|离开|绕开|黄金|鬼烛|替死|求援/, delta: 3 },
-  ]
-  const matched = riskRules.find(rule => rule.pattern.test(text))
-  return matched?.delta ?? 5
+  ];
+  const matched = riskRules.find(rule => rule.pattern.test(text));
+  return matched?.delta ?? 5;
 }
 
 function parseOptionRisk(rawText: string) {
-  const tag = rawText.match(optionRiskOpenTagPattern)?.[0]
+  const tag = rawText.match(optionRiskOpenTagPattern)?.[0];
   const text = rawText
     .replace(optionRiskTagPattern, '')
     .replace(/[。；;]?\s*(?:死亡风险|复苏风险|风险来源|风险)[\s\S]*$/i, '')
     .replace(/\s+/g, ' ')
-    .trim()
+    .trim();
   if (!tag) {
     return {
       text,
       risk: { death: optionDeathRiskDelta(text), revive: 0, source: '关键词兜底', tagged: false },
-    }
+    };
   }
   return {
     text,
@@ -457,7 +488,7 @@ function parseOptionRisk(rawText: string) {
       source: readRiskText(tag, 'source'),
       tagged: true,
     },
-  }
+  };
 }
 
 function stripThinkingBlocks(message: string) {
@@ -466,72 +497,76 @@ function stripThinkingBlocks(message: string) {
     .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
     .replace(/<thought[^>]*>[\s\S]*?<\/thought>/gi, '')
     .replace(/<reasoning[^>]*>[\s\S]*?<\/reasoning>/gi, '')
-    .replace(/<\/(?:think|thinking|thought|reasoning)>/gi, '')
-  const openPattern = /<(?:think|thinking|thought|reasoning)\b[^>]*>/i
-  let openMatch = openPattern.exec(source)
+    .replace(/<\/(?:think|thinking|thought|reasoning)>/gi, '');
+  const openPattern = /<(?:think|thinking|thought|reasoning)\b[^>]*>/i;
+  let openMatch = openPattern.exec(source);
   while (openMatch) {
-    const prefix = source.slice(0, openMatch.index)
-    const rest = source.slice(openMatch.index + openMatch[0].length)
+    const prefix = source.slice(0, openMatch.index);
+    const rest = source.slice(openMatch.index + openMatch[0].length);
     const protocolPatterns = [
       /<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/i,
       /<choices\b[^>]*>[\s\S]*?<\/choices>/i,
       /<sp_status\b[^>]*>[\s\S]*?<\/sp_status>/i,
       /<sp_clue_deduce\b[^>]*>[\s\S]*?<\/sp_clue_deduce>/i,
       /<sp_choices\b[^>]*>[\s\S]*?<\/sp_choices>/i,
-    ]
-    let keepIndex = -1
+    ];
+    let keepIndex = -1;
     for (const pattern of protocolPatterns) {
-      const protocolMatch = pattern.exec(rest)
-      if (protocolMatch && (keepIndex < 0 || protocolMatch.index < keepIndex)) keepIndex = protocolMatch.index
+      const protocolMatch = pattern.exec(rest);
+      if (protocolMatch && (keepIndex < 0 || protocolMatch.index < keepIndex)) keepIndex = protocolMatch.index;
     }
-    source = keepIndex >= 0 ? `${prefix}${rest.slice(keepIndex)}` : prefix
-    openMatch = openPattern.exec(source)
+    source = keepIndex >= 0 ? `${prefix}${rest.slice(keepIndex)}` : prefix;
+    openMatch = openPattern.exec(source);
   }
-  return source
-    .replace(/<\/?(?:think|thinking|thought|reasoning)[^>]*>/gi, '')
-    .trim()
+  return source.replace(/<\/?(?:think|thinking|thought|reasoning)[^>]*>/gi, '').trim();
 }
 
 function parseStructuredChoices(message: string): OptionItem[] {
-  const match = stripThinkingBlocks(message).match(/<choices>\s*([\s\S]*?)\s*<\/choices>/i)
-  if (!match) return []
+  const match = stripThinkingBlocks(message).match(/<choices>\s*([\s\S]*?)\s*<\/choices>/i);
+  if (!match) return [];
 
   try {
     const source = match[1]
       .replace(/^\s*```(?:json)?\s*/i, '')
       .replace(/\s*```\s*$/i, '')
-      .trim()
-    let parsed: unknown
+      .trim();
+    let parsed: unknown;
     try {
-      parsed = JSON.parse(source)
+      parsed = JSON.parse(source);
     } catch {
-      parsed = JSON.parse(source.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"))
+      parsed = JSON.parse(source.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"));
     }
-    if (!Array.isArray(parsed)) return []
+    if (!Array.isArray(parsed)) return [];
 
-    const seen = new Set<string>()
-    const out: OptionItem[] = []
+    const seen = new Set<string>();
+    const out: OptionItem[] = [];
     for (const item of parsed) {
-      if (!item || typeof item !== 'object') continue
-      const key = normalizeOptionKey(String(item.key ?? item.id ?? item.option ?? item.选项 ?? ''))
-      if (!key || seen.has(key)) continue
+      if (!item || typeof item !== 'object') continue;
+      const key = normalizeOptionKey(String(item.key ?? item.id ?? item.option ?? item.选项 ?? ''));
+      if (!key || seen.has(key)) continue;
 
-      const text = String(item.text ?? '').replace(optionRiskTagPattern, '').replace(/\s+/g, ' ').trim()
-      if (!text) continue
+      const text = String(item.text ?? '')
+        .replace(optionRiskTagPattern, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!text) continue;
 
-      const risk = item.risk && typeof item.risk === 'object' ? item.risk : {}
-      const fallbackDeath = optionDeathRiskDelta(text)
+      const risk = item.risk && typeof item.risk === 'object' ? item.risk : {};
+      const fallbackDeath = optionDeathRiskDelta(text);
       out.push({
         key,
         text,
         risk: {
           death: clampRiskDelta(risk.death ?? item.death ?? item.death_risk ?? item.死亡风险 ?? fallbackDeath),
           revive: clampRiskDelta(risk.revive ?? item.revive ?? item.revival_risk ?? item.复苏风险),
-          source: String(risk.source ?? '结构化选项').replace(/\s+/g, ' ').trim() || '结构化选项',
+          source:
+            String(risk.source ?? '结构化选项')
+              .replace(/\s+/g, ' ')
+              .trim() || '结构化选项',
           tagged: true,
         },
-      })
-      seen.add(key)
+      });
+      seen.add(key);
     }
 
     if (!seen.has('D')) {
@@ -539,61 +574,61 @@ function parseStructuredChoices(message: string): OptionItem[] {
         key: 'D',
         text: '自定义行动',
         risk: { death: 0, revive: 0, source: '自定义行动', tagged: true },
-      })
+      });
     }
-    return out
+    return out;
   } catch (e) {
-    console.warn('[MFRS Status] 解析结构化推演选项失败', e)
-    return []
+    console.warn('[MFRS Status] 解析结构化推演选项失败', e);
+    return [];
   }
 }
 
 function extractFirstJsonArrayText(text: string) {
-  let depth = 0
-  let start = -1
-  let inString = false
-  let quote = ''
-  let escape = false
+  let depth = 0;
+  let start = -1;
+  let inString = false;
+  let quote = '';
+  let escape = false;
   for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
+    const ch = text[i];
     if (inString) {
-      if (escape) escape = false
-      else if (ch === '\\') escape = true
-      else if (ch === quote) inString = false
-      continue
+      if (escape) escape = false;
+      else if (ch === '\\') escape = true;
+      else if (ch === quote) inString = false;
+      continue;
     }
     if (ch === '"' || ch === "'") {
-      inString = true
-      quote = ch
-      continue
+      inString = true;
+      quote = ch;
+      continue;
     }
     if (ch === '[') {
-      if (depth === 0) start = i
-      depth += 1
+      if (depth === 0) start = i;
+      depth += 1;
     } else if (ch === ']') {
       if (depth > 0) {
-        depth -= 1
-        if (depth === 0 && start !== -1) return text.slice(start, i + 1)
+        depth -= 1;
+        if (depth === 0 && start !== -1) return text.slice(start, i + 1);
       }
     }
   }
-  return ''
+  return '';
 }
 
 function parseUpdateVariablePatchArray(message: string) {
-  const match = stripThinkingBlocks(message).match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i)
-  if (!match) return []
-  const arrayText = extractUpdateVariableJsonPatchArrayText(match[1])
-  if (!arrayText) return []
+  const match = stripThinkingBlocks(message).match(/<UpdateVariable\b[^>]*>\s*([\s\S]*?)\s*<\/UpdateVariable>/i);
+  if (!match) return [];
+  const arrayText = extractUpdateVariableJsonPatchArrayText(match[1]);
+  if (!arrayText) return [];
   try {
-    const parsed = JSON.parse(arrayText)
-    return Array.isArray(parsed) ? coerceDirectActionOptionsPatchArray(parsed) : []
+    const parsed = JSON.parse(arrayText);
+    return Array.isArray(parsed) ? coerceDirectActionOptionsPatchArray(parsed) : [];
   } catch {
     try {
-      const parsed = JSON.parse(arrayText.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"))
-      return Array.isArray(parsed) ? coerceDirectActionOptionsPatchArray(parsed) : []
+      const parsed = JSON.parse(arrayText.replace(/[“”]/g, '"').replace(/[‘’]/g, "'"));
+      return Array.isArray(parsed) ? coerceDirectActionOptionsPatchArray(parsed) : [];
     } catch {
-      return []
+      return [];
     }
   }
 }
@@ -601,73 +636,94 @@ function parseUpdateVariablePatchArray(message: string) {
 function extractUpdateVariableJsonPatchArrayText(inner: string) {
   const source = String(inner || '')
     .replace(/<Analysis\b[^>]*>[\s\S]*?<\/Analysis>/gi, '')
-    .trim()
-  const jsonPatchPattern = /<JSON[P]atch\b[^>]*>\s*([\s\S]*?)\s*<\/JSON[P]atch>/gi
+    .trim();
+  const jsonPatchPattern = /<JSON[P]atch\b[^>]*>\s*([\s\S]*?)\s*<\/JSON[P]atch>/gi;
   for (const jsonPatchMatch of source.matchAll(jsonPatchPattern)) {
-    const arrayText = extractFirstJsonArrayText(jsonPatchMatch[1])
-    if (arrayText) return arrayText
+    const arrayText = extractFirstJsonArrayText(jsonPatchMatch[1]);
+    if (arrayText) return arrayText;
   }
-  return extractFirstJsonArrayText(source.replace(/<\/?JSON[P]atch\b[^>]*>/gi, ''))
+  return extractFirstJsonArrayText(source.replace(/<\/?JSON[P]atch\b[^>]*>/gi, ''));
 }
 
 function isDirectActionOption(item: unknown) {
-  if (!item || typeof item !== 'object') return false
-  const record = item as Record<string, unknown>
-  if ('path' in record || 'op' in record) return false
-  const risk = record.risk && typeof record.risk === 'object' ? record.risk as Record<string, unknown> : {}
-  const key = normalizeOptionKey(String(record.key ?? record.id ?? record.option ?? record.option_key ?? record.选项 ?? ''))
-  const text = String(record.text ?? record.idea_text ?? record.思路 ?? record.行动 ?? record.内容 ?? risk.source ?? record.主要风险 ?? '')
+  if (!item || typeof item !== 'object') return false;
+  const record = item as Record<string, unknown>;
+  if ('path' in record || 'op' in record) return false;
+  const risk = record.risk && typeof record.risk === 'object' ? (record.risk as Record<string, unknown>) : {};
+  const key = normalizeOptionKey(
+    String(record.key ?? record.id ?? record.option ?? record.option_key ?? record.选项 ?? ''),
+  );
+  const text = String(
+    record.text ??
+      record.idea_text ??
+      record.思路 ??
+      record.行动 ??
+      record.内容 ??
+      risk.source ??
+      record.主要风险 ??
+      '',
+  )
     .replace(/\s+/g, ' ')
-    .trim()
-  return !!key && !!text
+    .trim();
+  return !!key && !!text;
 }
 
 function coerceDirectActionOptionsPatchArray(parsed: unknown[]) {
-  const options = parsed.filter(isDirectActionOption)
-  if (options.length === 0) return parsed
-  return [{ op: 'replace', path: '/行动建议', value: options }]
+  const options = parsed.filter(isDirectActionOption);
+  if (options.length === 0) return parsed;
+  return [{ op: 'replace', path: '/行动建议', value: options }];
 }
 
 function parseUpdateVariableActionSuggestions(message: string): OptionItem[] {
   try {
-    const patches = parseUpdateVariablePatchArray(message)
-    const rawItems: unknown[] = []
+    const patches = parseUpdateVariablePatchArray(message);
+    const rawItems: unknown[] = [];
     for (const patch of patches) {
-      if (!patch || typeof patch !== 'object') continue
-      const record = patch as { path?: unknown; value?: unknown }
-      const root = String(record.path ?? '').replace(/^\/+/, '').split('/')[0]
-      if (root === '行动建议' && Array.isArray(record.value)) rawItems.push(...record.value)
+      if (!patch || typeof patch !== 'object') continue;
+      const record = patch as { path?: unknown; value?: unknown };
+      const root = String(record.path ?? '')
+        .replace(/^\/+/, '')
+        .split('/')[0];
+      if (root === '行动建议' && Array.isArray(record.value)) rawItems.push(...record.value);
     }
-    if (rawItems.length === 0) return []
+    if (rawItems.length === 0) return [];
 
-    const seen = new Set<string>()
-    const out: OptionItem[] = []
+    const seen = new Set<string>();
+    const out: OptionItem[] = [];
     for (const raw of rawItems) {
-      if (!raw || typeof raw !== 'object') continue
-      const item = raw as Record<string, unknown>
-      const risk = item.risk && typeof item.risk === 'object' ? item.risk as Record<string, unknown> : {}
-      const key = normalizeOptionKey(String(item.key ?? item.id ?? item.option ?? item.option_key ?? item.选项 ?? ''))
-      if (!key || seen.has(key)) continue
+      if (!raw || typeof raw !== 'object') continue;
+      const item = raw as Record<string, unknown>;
+      const risk = item.risk && typeof item.risk === 'object' ? (item.risk as Record<string, unknown>) : {};
+      const key = normalizeOptionKey(String(item.key ?? item.id ?? item.option ?? item.option_key ?? item.选项 ?? ''));
+      if (!key || seen.has(key)) continue;
 
-      const source = String(risk.source ?? item.main_risk ?? item.主要风险 ?? item.风险 ?? '').replace(/\s+/g, ' ').trim()
+      const source = String(risk.source ?? item.main_risk ?? item.主要风险 ?? item.风险 ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
       const text = String(item.text ?? item.idea_text ?? item.思路 ?? item.行动 ?? item.内容 ?? source ?? '')
         .replace(optionRiskTagPattern, '')
         .replace(/\s+/g, ' ')
-        .trim()
-      if (!text) continue
+        .trim();
+      if (!text) continue;
 
-      const riskText = `${text} ${source}`
+      const riskText = `${text} ${source}`;
       out.push({
         key,
         text,
         risk: {
-          death: normalizeOptionRiskDelta(risk.death ?? item.death ?? item.death_risk ?? item.死亡风险 ?? item.death_risk_level, optionDeathRiskDelta(riskText)),
-          revive: normalizeOptionRiskDelta(risk.revive ?? item.revive ?? item.revival_risk ?? item.复苏风险 ?? item.revival_risk_level, /复苏|厉鬼/.test(riskText) ? 3 : 0),
+          death: normalizeOptionRiskDelta(
+            risk.death ?? item.death ?? item.death_risk ?? item.死亡风险 ?? item.death_risk_level,
+            optionDeathRiskDelta(riskText),
+          ),
+          revive: normalizeOptionRiskDelta(
+            risk.revive ?? item.revive ?? item.revival_risk ?? item.复苏风险 ?? item.revival_risk_level,
+            /复苏|厉鬼/.test(riskText) ? 3 : 0,
+          ),
           source: source || 'UpdateVariable 行动建议',
           tagged: true,
         },
-      })
-      seen.add(key)
+      });
+      seen.add(key);
     }
 
     if (!seen.has('D') && out.length >= 3) {
@@ -675,103 +731,118 @@ function parseUpdateVariableActionSuggestions(message: string): OptionItem[] {
         key: 'D',
         text: '自定义行动',
         risk: { death: 0, revive: 0, source: '自定义行动', tagged: true },
-      })
+      });
     }
-    return actionSuggestionKeys.map(key => out.find(option => option.key === key)).filter(Boolean) as OptionItem[]
+    return actionSuggestionKeys.map(key => out.find(option => option.key === key)).filter(Boolean) as OptionItem[];
   } catch (e) {
-    console.warn('[MFRS Status] 从 UpdateVariable 解析行动建议失败', e)
-    return []
+    console.warn('[MFRS Status] 从 UpdateVariable 解析行动建议失败', e);
+    return [];
   }
 }
 
 function optionRiskLabel(risk: OptionRisk) {
-  if (risk.revive >= 5) return '沾染'
-  if (risk.death >= 9) return '自杀式'
-  if (risk.death >= 6) return '接触异常'
-  if (risk.death >= 3) return '调查'
-  if (risk.death > 0) return '日常'
-  return '自定'
+  if (risk.revive >= 5) return '沾染';
+  if (risk.death >= 9) return '自杀式';
+  if (risk.death >= 6) return '接触异常';
+  if (risk.death >= 3) return '调查';
+  if (risk.death > 0) return '日常';
+  return '自定';
 }
 
 function optionRiskClass(risk: OptionRisk) {
-  if (risk.revive >= 5) return 'risk-revive'
-  if (risk.death >= 9) return 'risk-suicide'
-  if (risk.death >= 6) return 'risk-contact'
-  if (risk.death >= 3) return 'risk-investigate'
-  if (risk.death > 0) return 'risk-daily'
-  return 'risk-free'
+  if (risk.revive >= 5) return 'risk-revive';
+  if (risk.death >= 9) return 'risk-suicide';
+  if (risk.death >= 6) return 'risk-contact';
+  if (risk.death >= 3) return 'risk-investigate';
+  if (risk.death > 0) return 'risk-daily';
+  return 'risk-free';
 }
 
 function normalizeOptionKey(rawKey: string) {
-  const key = rawKey.trim().toUpperCase()
+  const key = rawKey.trim().toUpperCase();
   const map: Record<string, string> = {
-    '1': 'A', '①': 'A', '一': 'A', '壹': 'A',
-    '2': 'B', '②': 'B', '二': 'B', '贰': 'B',
-    '3': 'C', '③': 'C', '三': 'C', '叁': 'C',
-    '4': 'D', '④': 'D', '四': 'D', '肆': 'D',
-  }
-  if (/^[A-D]$/.test(key)) return key
-  return map[key] ?? ''
+    '1': 'A',
+    '①': 'A',
+    一: 'A',
+    壹: 'A',
+    '2': 'B',
+    '②': 'B',
+    二: 'B',
+    贰: 'B',
+    '3': 'C',
+    '③': 'C',
+    三: 'C',
+    叁: 'C',
+    '4': 'D',
+    '④': 'D',
+    四: 'D',
+    肆: 'D',
+  };
+  if (/^[A-D]$/.test(key)) return key;
+  return map[key] ?? '';
 }
 
 function truncateDbText(value: unknown, max = 80, fallback = '未知') {
-  const text = String(value ?? '').replace(/\s+/g, ' ').trim() || fallback
-  return text.length > max ? text.slice(0, max) : text
+  const text =
+    String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim() || fallback;
+  return text.length > max ? text.slice(0, max) : text;
 }
 
 function riskLevelFromDelta(value: number) {
-  if (value <= 0) return '无'
-  if (value <= 2) return '低'
-  if (value <= 5) return '中'
-  if (value <= 8) return '高'
-  return '致命'
+  if (value <= 0) return '无';
+  if (value <= 2) return '低';
+  if (value <= 5) return '中';
+  if (value <= 8) return '高';
+  return '致命';
 }
 
 function getMysteryDatabaseFrontendApi() {
-  const candidates: unknown[] = []
+  const candidates: unknown[] = [];
   try {
-    candidates.push(window.parent)
+    candidates.push(window.parent);
   } catch {
     // ignore cross-frame access errors
   }
-  candidates.push(window)
+  candidates.push(window);
 
   for (const candidate of candidates) {
     const frontend = (candidate as { MysteryDatabaseFrontend?: MysteryDatabaseFrontendApi } | undefined)
-      ?.MysteryDatabaseFrontend
-    if (frontend?.applyTableChangePlan) return frontend
+      ?.MysteryDatabaseFrontend;
+    if (frontend?.applyTableChangePlan) return frontend;
   }
-  return null
+  return null;
 }
 
 function isChoicesCrudMirrorEnabled() {
   try {
-    return window.localStorage?.getItem('acu_mfrs_choices_crud_mirror') !== 'false'
+    return window.localStorage?.getItem('acu_mfrs_choices_crud_mirror') !== 'false';
   } catch {
-    return true
+    return true;
   }
 }
 
 function normalizeOptionsForDatabase(sourceOptions: OptionItem[]) {
-  const byKey = new Map(sourceOptions.map(option => [option.key, option]))
+  const byKey = new Map(sourceOptions.map(option => [option.key, option]));
   if (!byKey.has('D') && sourceOptions.length >= 3) {
     byKey.set('D', {
       key: 'D',
       text: '自定义行动',
       risk: { death: 0, revive: 0, source: '自定义行动', tagged: true },
-    })
+    });
   }
-  if (!actionSuggestionKeys.every(key => byKey.has(key))) return []
-  return actionSuggestionKeys.map(key => byKey.get(key) as OptionItem)
+  if (!actionSuggestionKeys.every(key => byKey.has(key))) return [];
+  return actionSuggestionKeys.map(key => byKey.get(key) as OptionItem);
 }
 
 function findMvuActionSuggestion(key: string) {
-  const suggestions = Array.isArray(d().行动建议) ? d().行动建议 : []
-  return suggestions.find(item => normalizeOptionKey(String(item?.选项 ?? '')) === key)
+  const suggestions = Array.isArray(d().行动建议) ? d().行动建议 : [];
+  return suggestions.find(item => normalizeOptionKey(String(item?.选项 ?? '')) === key);
 }
 
 function buildActionSuggestionSet(option: OptionItem) {
-  const mvuSuggestion = findMvuActionSuggestion(option.key)
+  const mvuSuggestion = findMvuActionSuggestion(option.key);
   return {
     option_key: option.key,
     idea_text: truncateDbText(mvuSuggestion?.思路 || option.text),
@@ -781,18 +852,14 @@ function buildActionSuggestionSet(option: OptionItem) {
     ),
     death_risk_level: riskLevelFromDelta(option.risk.death),
     revival_risk_level: riskLevelFromDelta(option.risk.revive),
-  }
+  };
 }
 
 function hasRowNotFoundError(result: TableChangeResultLike) {
-  return result.errors?.some(error => error.code === 'ROW_NOT_FOUND') ?? false
+  return result.errors?.some(error => error.code === 'ROW_NOT_FOUND') ?? false;
 }
 
-async function applyActionSuggestionPlan(
-  api: MysteryDatabaseFrontendApi,
-  rowId: number,
-  set: Record<string, string>,
-) {
+async function applyActionSuggestionPlan(api: MysteryDatabaseFrontendApi, rowId: number, set: Record<string, string>) {
   const updateResult = await api.applyTableChangePlan?.({
     action: 'updateCell',
     table: '行动建议',
@@ -800,8 +867,8 @@ async function applyActionSuggestionPlan(
     set,
     reason: '状态栏推演选项镜像',
     confidence: 1,
-  })
-  if (updateResult?.ok || !updateResult || !hasRowNotFoundError(updateResult)) return updateResult
+  });
+  if (updateResult?.ok || !updateResult || !hasRowNotFoundError(updateResult)) return updateResult;
 
   return api.applyTableChangePlan?.({
     action: 'insertRow',
@@ -809,32 +876,32 @@ async function applyActionSuggestionPlan(
     data: { row_id: rowId, ...set },
     reason: '状态栏推演选项镜像补行',
     confidence: 1,
-  })
+  });
 }
 
 function buildMvuActionSuggestionPayload(sourceOptions: OptionItem[]) {
-  const normalizedOptions = normalizeOptionsForDatabase(sourceOptions)
-  if (normalizedOptions.length === 0) return []
+  const normalizedOptions = normalizeOptionsForDatabase(sourceOptions);
+  if (normalizedOptions.length === 0) return [];
   return normalizedOptions.map(option => {
-    const set = buildActionSuggestionSet(option)
+    const set = buildActionSuggestionSet(option);
     return {
       选项: set.option_key,
       思路: set.idea_text,
       主要风险: set.main_risk,
       预期收益: set.expected_gain,
-    }
-  })
+    };
+  });
 }
 
 /** 解析成功后的双保险：把 A–D 写回 MVU，供 HUD/后续轮次读取（不替代 hotfix parseMessage） */
 function mirrorActionSuggestionsToMvu(sourceOptions: OptionItem[]) {
-  const payload = buildMvuActionSuggestionPayload(sourceOptions)
-  if (payload.length === 0) return
+  const payload = buildMvuActionSuggestionPayload(sourceOptions);
+  if (payload.length === 0) return;
 
-  const signature = JSON.stringify({ messageId: getCurrentMessageId(), payload })
-  if (signature === lastMirroredMvuChoicesSignature) return
+  const signature = JSON.stringify({ messageId: getCurrentMessageId(), payload });
+  if (signature === lastMirroredMvuChoicesSignature) return;
 
-  const current = Array.isArray(d().行动建议) ? d().行动建议 : []
+  const current = Array.isArray(d().行动建议) ? d().行动建议 : [];
   const currentSignature = JSON.stringify(
     current.map(item => ({
       选项: String(item?.选项 ?? ''),
@@ -842,14 +909,14 @@ function mirrorActionSuggestionsToMvu(sourceOptions: OptionItem[]) {
       主要风险: String(item?.主要风险 ?? ''),
       预期收益: String(item?.预期收益 ?? ''),
     })),
-  )
+  );
   if (currentSignature === JSON.stringify(payload)) {
-    lastMirroredMvuChoicesSignature = signature
-    return
+    lastMirroredMvuChoicesSignature = signature;
+    return;
   }
 
-  if (!data.value) data.value = { ...defaults }
-  data.value.行动建议 = payload
+  if (!data.value) data.value = { ...defaults };
+  data.value.行动建议 = payload;
   if (!Object.prototype.hasOwnProperty.call(data.value, '最近行动判定') || !data.value.最近行动判定) {
     data.value.最近行动判定 = {
       类型: '未判定',
@@ -860,117 +927,140 @@ function mirrorActionSuggestionsToMvu(sourceOptions: OptionItem[]) {
       死亡风险变化: '无变化',
       复苏风险变化: '无变化',
       可见结论: '',
-    }
+    };
   }
 
   try {
-    const statData = normalizeStatData(data.value)
-    updateVariablesWith(variables => {
-      _.set(variables, 'stat_data', statData)
-      return variables
-    }, { type: 'message', message_id: getCurrentMessageId() })
-    lastMirroredMvuChoicesSignature = signature
+    const statData = normalizeStatData(data.value);
+    updateVariablesWith(
+      variables => {
+        _.set(variables, 'stat_data', statData);
+        return variables;
+      },
+      { type: 'message', message_id: getCurrentMessageId() },
+    );
+    lastMirroredMvuChoicesSignature = signature;
   } catch (error) {
-    console.warn('[MFRS Status] 行动建议 MVU 回写失败。', error)
+    console.warn('[MFRS Status] 行动建议 MVU 回写失败。', error);
   }
 }
 
 function mirrorActionSuggestionsToDatabase(sourceOptions: OptionItem[]) {
-  if (!isChoicesCrudMirrorEnabled()) return
-  const normalizedOptions = normalizeOptionsForDatabase(sourceOptions)
-  if (normalizedOptions.length === 0) return
+  if (!isChoicesCrudMirrorEnabled()) return;
+  const normalizedOptions = normalizeOptionsForDatabase(sourceOptions);
+  if (normalizedOptions.length === 0) return;
 
-  const payload = normalizedOptions.map(option => ({ rowId: actionSuggestionKeys.indexOf(option.key as 'A' | 'B' | 'C' | 'D') + 1, set: buildActionSuggestionSet(option) }))
-  const signature = JSON.stringify({ messageId: getCurrentMessageId(), payload })
-  if (signature === lastMirroredChoicesSignature) return
+  const payload = normalizedOptions.map(option => ({
+    rowId: actionSuggestionKeys.indexOf(option.key as 'A' | 'B' | 'C' | 'D') + 1,
+    set: buildActionSuggestionSet(option),
+  }));
+  const signature = JSON.stringify({ messageId: getCurrentMessageId(), payload });
+  if (signature === lastMirroredChoicesSignature) return;
 
-  const api = getMysteryDatabaseFrontendApi()
+  const api = getMysteryDatabaseFrontendApi();
   if (!api?.applyTableChangePlan) {
     if (choicesMirrorRetryTimer == null) {
       choicesMirrorRetryTimer = window.setTimeout(() => {
-        choicesMirrorRetryTimer = null
-        mirrorActionSuggestionsToDatabase(sourceOptions)
-      }, 1000)
+        choicesMirrorRetryTimer = null;
+        mirrorActionSuggestionsToDatabase(sourceOptions);
+      }, 1000);
     }
-    return
+    return;
   }
   if (choicesMirrorRetryTimer != null) {
-    window.clearTimeout(choicesMirrorRetryTimer)
-    choicesMirrorRetryTimer = null
+    window.clearTimeout(choicesMirrorRetryTimer);
+    choicesMirrorRetryTimer = null;
   }
 
-  lastMirroredChoicesSignature = signature
-  choicesMirrorQueue = choicesMirrorQueue.then(async () => {
-    for (const item of payload) {
-      const result = await applyActionSuggestionPlan(api, item.rowId, item.set)
-      if (!result?.ok) {
-        lastMirroredChoicesSignature = ''
-        console.warn('[MFRS Status] 行动建议 CRUD 镜像失败。', { item, result })
-        return
+  lastMirroredChoicesSignature = signature;
+  choicesMirrorQueue = choicesMirrorQueue
+    .then(async () => {
+      for (const item of payload) {
+        const result = await applyActionSuggestionPlan(api, item.rowId, item.set);
+        if (!result?.ok) {
+          lastMirroredChoicesSignature = '';
+          console.warn('[MFRS Status] 行动建议 CRUD 镜像失败。', { item, result });
+          return;
+        }
       }
-    }
-  }).catch(error => {
-    lastMirroredChoicesSignature = ''
-    console.warn('[MFRS Status] 行动建议 CRUD 镜像异常。', error)
-  })
+    })
+    .catch(error => {
+      lastMirroredChoicesSignature = '';
+      console.warn('[MFRS Status] 行动建议 CRUD 镜像异常。', error);
+    });
 }
 
 function isCoreStateCrudMirrorEnabled() {
   try {
-    return window.localStorage?.getItem('acu_mfrs_core_state_crud_mirror') !== 'false'
+    return window.localStorage?.getItem('acu_mfrs_core_state_crud_mirror') !== 'false';
   } catch {
-    return true
+    return true;
   }
 }
 
 function sheetHasEffectiveRows(sheet: unknown) {
-  if (!sheet || typeof sheet !== 'object') return false
-  const content = Array.isArray((sheet as { content?: unknown }).content) ? (sheet as { content: unknown[] }).content : []
-  const headers = Array.isArray(content[0]) ? content[0].map(item => String(item ?? '').trim()) : []
-  return content.slice(1).some(row => Array.isArray(row) && row.some((cell, index) => {
-    const header = String(headers[index] ?? '').trim().toLowerCase()
-    if (header === 'row_id' || header === '行号') return false
-    return String(cell ?? '').trim() !== ''
-  }))
+  if (!sheet || typeof sheet !== 'object') return false;
+  const content = Array.isArray((sheet as { content?: unknown }).content)
+    ? (sheet as { content: unknown[] }).content
+    : [];
+  const headers = Array.isArray(content[0]) ? content[0].map(item => String(item ?? '').trim()) : [];
+  return content.slice(1).some(
+    row =>
+      Array.isArray(row) &&
+      row.some((cell, index) => {
+        const header = String(headers[index] ?? '')
+          .trim()
+          .toLowerCase();
+        if (header === 'row_id' || header === '行号') return false;
+        return String(cell ?? '').trim() !== '';
+      }),
+  );
 }
 
 function findSheetByTableName(dataSource: unknown, names: string[]) {
-  if (!dataSource || typeof dataSource !== 'object') return null
-  const entries = Object.entries(dataSource as Record<string, unknown>)
-  return entries.find(([key, value]) => {
-    if (!key.startsWith('sheet_') || !value || typeof value !== 'object') return false
-    const sheet = value as { name?: unknown; uid?: unknown; sourceData?: { ddl?: unknown } }
-    const haystack = [sheet.name, sheet.uid, sheet.sourceData?.ddl].map(item => String(item ?? '').toLowerCase()).join('\n')
-    return names.some(name => haystack.includes(name.toLowerCase()))
-  })?.[1] ?? null
+  if (!dataSource || typeof dataSource !== 'object') return null;
+  const entries = Object.entries(dataSource as Record<string, unknown>);
+  return (
+    entries.find(([key, value]) => {
+      if (!key.startsWith('sheet_') || !value || typeof value !== 'object') return false;
+      const sheet = value as { name?: unknown; uid?: unknown; sourceData?: { ddl?: unknown } };
+      const haystack = [sheet.name, sheet.uid, sheet.sourceData?.ddl]
+        .map(item => String(item ?? '').toLowerCase())
+        .join('\n');
+      return names.some(name => haystack.includes(name.toLowerCase()));
+    })?.[1] ?? null
+  );
 }
 
 function nextClueCode(messageId: number) {
-  return `C${String(Math.abs(messageId) % 10000).padStart(4, '0')}`
+  return `C${String(Math.abs(messageId) % 10000).padStart(4, '0')}`;
 }
 
 function normalizeHandlingStatusForDatabase(value: unknown) {
-  const text = String(value ?? '').trim()
-  if (['未处理', '调查中', '对抗中', '已压制', '已关押', '失控扩散', '结束'].includes(text)) return text
-  if (text === '未接触' || text === '待处理' || text === '未处置' || text === '未开始') return '未处理'
-  if (/爆发|扩散|失控|蔓延/.test(text)) return '失控扩散'
-  if (/压制|控制/.test(text)) return '已压制'
-  if (/关押|收容/.test(text)) return '已关押'
-  if (/结束|解决|完结/.test(text)) return '结束'
-  if (/对抗|处理中|处置|交战|应对/.test(text)) return '对抗中'
-  return '未处理'
+  const text = String(value ?? '').trim();
+  if (['未处理', '调查中', '对抗中', '已压制', '已关押', '失控扩散', '结束'].includes(text)) return text;
+  if (text === '未接触' || text === '待处理' || text === '未处置' || text === '未开始') return '未处理';
+  if (/爆发|扩散|失控|蔓延/.test(text)) return '失控扩散';
+  if (/压制|控制/.test(text)) return '已压制';
+  if (/关押|收容/.test(text)) return '已关押';
+  if (/结束|解决|完结/.test(text)) return '结束';
+  if (/对抗|处理中|处置|交战|应对/.test(text)) return '对抗中';
+  return '未处理';
 }
 
 function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanInput[] {
-  if (!data.value) return []
-  const current = d() as Record<string, unknown>
-  const event = eventFile.value as Record<string, unknown>
-  const plans: TableChangePlanInput[] = []
-  const location = displayLocation.value
-  const eventCode = textOrFallback(displayEvent.value.事件代号, '开局灵异征兆')
-  const knownLaws = displayKnownLaws.value
-  const suspectedLaws = displaySuspectedLaws.value
-  const visibleSummary = textOrFallback(event.可见摘要 ?? statusPanel.value.当前灵异事件 ?? getCurrentMessageId(), '当前剧情出现可见异常，等待进一步验证。')
+  if (!data.value) return [];
+  const current = d() as Record<string, unknown>;
+  const event = eventFile.value as Record<string, unknown>;
+  const plans: TableChangePlanInput[] = [];
+  const location = displayLocation.value;
+  const eventCode = textOrFallback(displayEvent.value.事件代号, '开局灵异征兆');
+  const knownLaws = displayKnownLaws.value;
+  const suspectedLaws = displaySuspectedLaws.value;
+  const visibleSummary = textOrFallback(
+    event.可见摘要 ?? statusPanel.value.当前灵异事件 ?? getCurrentMessageId(),
+    '当前剧情出现可见异常，等待进一步验证。',
+  );
 
   if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['global_state', '全局状态']))) {
     plans.push({
@@ -991,7 +1081,7 @@ function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanIn
       },
       reason: '状态栏 MVU 关键表镜像兜底',
       confidence: 1,
-    })
+    });
   }
 
   if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['player_state', '玩家状态']))) {
@@ -1014,7 +1104,7 @@ function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanIn
       },
       reason: '状态栏 MVU 关键表镜像兜底',
       confidence: 1,
-    })
+    });
   }
 
   if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['supernatural_events', '灵异事件']))) {
@@ -1036,7 +1126,7 @@ function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanIn
       },
       reason: '状态栏 MVU 关键表镜像兜底',
       confidence: 1,
-    })
+    });
   }
 
   if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['clues', '线索']))) {
@@ -1055,14 +1145,14 @@ function buildCoreStatePlansForDatabase(currentData: unknown): TableChangePlanIn
       },
       reason: '状态栏 MVU 关键表镜像兜底',
       confidence: 1,
-    })
+    });
   }
 
-  return plans
+  return plans;
 }
 
 function mirrorCoreStateToDatabase() {
-  if (isFirstFloor || !isCoreStateCrudMirrorEnabled()) return
+  if (isFirstFloor || !isCoreStateCrudMirrorEnabled()) return;
   const signature = JSON.stringify({
     messageId: getCurrentMessageId(),
     status: statusPanel.value,
@@ -1070,215 +1160,259 @@ function mirrorCoreStateToDatabase() {
     location: displayLocation.value,
     deathRisk: deathRiskValue.value,
     reviveRisk: resurrectionRiskValue.value,
-  })
-  if (signature === lastMirroredCoreStateSignature) return
+  });
+  if (signature === lastMirroredCoreStateSignature) return;
 
-  const api = getMysteryDatabaseFrontendApi()
+  const api = getMysteryDatabaseFrontendApi();
   if (!api?.applyTableChangePlan || !api.exportCurrentData) {
     if (coreStateMirrorRetryTimer == null) {
       coreStateMirrorRetryTimer = window.setTimeout(() => {
-        coreStateMirrorRetryTimer = null
-        mirrorCoreStateToDatabase()
-      }, 1000)
+        coreStateMirrorRetryTimer = null;
+        mirrorCoreStateToDatabase();
+      }, 1000);
     }
-    return
+    return;
   }
   if (coreStateMirrorRetryTimer != null) {
-    window.clearTimeout(coreStateMirrorRetryTimer)
-    coreStateMirrorRetryTimer = null
+    window.clearTimeout(coreStateMirrorRetryTimer);
+    coreStateMirrorRetryTimer = null;
   }
 
-  lastMirroredCoreStateSignature = signature
+  lastMirroredCoreStateSignature = signature;
 
-  choicesMirrorQueue = choicesMirrorQueue.then(async () => {
-    const currentData = await api.exportCurrentData?.()
-    const plans = buildCoreStatePlansForDatabase(currentData)
-    let hasFailure = false
-    for (const plan of plans) {
-      const result = await api.applyTableChangePlan?.({ ...plan, skipChatSave: true, silent: true } as TableChangePlanInput)
-      if (!result?.ok) {
-        hasFailure = true
-        console.warn('[MFRS Status] 关键状态 CRUD 镜像兜底失败。', { plan, result })
+  choicesMirrorQueue = choicesMirrorQueue
+    .then(async () => {
+      const currentData = await api.exportCurrentData?.();
+      const plans = buildCoreStatePlansForDatabase(currentData);
+      let hasFailure = false;
+      for (const plan of plans) {
+        const result = await api.applyTableChangePlan?.({
+          ...plan,
+          skipChatSave: true,
+          silent: true,
+        } as TableChangePlanInput);
+        if (!result?.ok) {
+          hasFailure = true;
+          console.warn('[MFRS Status] 关键状态 CRUD 镜像兜底失败。', { plan, result });
+        }
       }
-    }
-    if (hasFailure) lastMirroredCoreStateSignature = ''
-  }).catch(error => {
-    lastMirroredCoreStateSignature = ''
-    console.warn('[MFRS Status] 关键状态 CRUD 镜像兜底异常。', error)
-  })
+      if (hasFailure) lastMirroredCoreStateSignature = '';
+    })
+    .catch(error => {
+      lastMirroredCoreStateSignature = '';
+      console.warn('[MFRS Status] 关键状态 CRUD 镜像兜底异常。', error);
+    });
 }
 
 function splitOptionLines(rawBlock: string) {
-  const text = rawBlock.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').trim()
-  const marker = /(?:^|[\n\r\s。；;！？!?，,、])([A-Da-d1-4①②③④一二三四壹贰叁肆])\s*[.、:：)）]\s*/g
-  const matches = Array.from(text.matchAll(marker))
-  if (!matches.length) return text.split('\n')
+  const text = rawBlock
+    .replace(/\r\n?/g, '\n')
+    .replace(/\u00a0/g, ' ')
+    .trim();
+  const marker = /(?:^|[\n\r\s。；;！？!?，,、])([A-Da-d1-4①②③④一二三四壹贰叁肆])\s*[.、:：)）]\s*/g;
+  const matches = Array.from(text.matchAll(marker));
+  if (!matches.length) return text.split('\n');
 
   return matches
     .map((match, index) => {
-      const markerText = match[0]
-      const keyOffset = markerText.search(/[A-Da-d1-4①②③④一二三四壹贰叁肆]/)
-      const bodyStart = (match.index ?? 0) + markerText.length
-      const next = matches[index + 1]
-      const nextMarkerText = next?.[0] ?? ''
-      const nextKeyOffset = nextMarkerText.search(/[A-Da-d1-4①②③④一二三四壹贰叁肆]/)
-      const bodyEnd = next ? (next.index ?? text.length) + Math.max(0, nextKeyOffset) : text.length
-      const key = match[1]
-      const body = text.slice(bodyStart, bodyEnd).trim()
-      const normalizedKey = normalizeOptionKey(key)
-      return body && normalizedKey ? `${normalizedKey}. ${body}` : ''
+      const markerText = match[0];
+      const keyOffset = markerText.search(/[A-Da-d1-4①②③④一二三四壹贰叁肆]/);
+      const bodyStart = (match.index ?? 0) + markerText.length;
+      const next = matches[index + 1];
+      const nextMarkerText = next?.[0] ?? '';
+      const nextKeyOffset = nextMarkerText.search(/[A-Da-d1-4①②③④一二三四壹贰叁肆]/);
+      const bodyEnd = next ? (next.index ?? text.length) + Math.max(0, nextKeyOffset) : text.length;
+      const key = match[1];
+      const body = text.slice(bodyStart, bodyEnd).trim();
+      const normalizedKey = normalizeOptionKey(key);
+      return body && normalizedKey ? `${normalizedKey}. ${body}` : '';
     })
-    .filter(Boolean)
+    .filter(Boolean);
 }
 
 function extractOptions(): OptionItem[] {
   try {
-    const msg = getChatMessages(getCurrentMessageId())[0] as any
-    const rawExtra = typeof msg?.extra?._mfrs_raw_protocol_message === 'string' ? msg.extra._mfrs_raw_protocol_message : ''
-    const mes = (rawExtra && /<choices\b|<UpdateVariable\b/i.test(rawExtra) ? rawExtra : '') || String(msg?.message ?? msg?.mes ?? '')
-    const structured = parseStructuredChoices(mes)
-    if (structured.length > 0) return structured
-    const fromUpdateVariable = parseUpdateVariableActionSuggestions(mes)
-    if (fromUpdateVariable.length > 0) return fromUpdateVariable
+    const msg = getChatMessages(getCurrentMessageId())[0] as any;
+    const rawExtra =
+      typeof msg?.extra?._mfrs_raw_protocol_message === 'string' ? msg.extra._mfrs_raw_protocol_message : '';
+    const mes =
+      (rawExtra && /<choices\b|<UpdateVariable\b/i.test(rawExtra) ? rawExtra : '') ||
+      String(msg?.message ?? msg?.mes ?? '');
+    const structured = parseStructuredChoices(mes);
+    if (structured.length > 0) return structured;
+    const fromUpdateVariable = parseUpdateVariableActionSuggestions(mes);
+    if (fromUpdateVariable.length > 0) return fromUpdateVariable;
 
     // MVU 行动建议回退
     try {
-      const mvuSuggestions = Array.isArray(d()?.行动建议) ? d().行动建议 : []
+      const mvuSuggestions = Array.isArray(d()?.行动建议) ? d().行动建议 : [];
       if (mvuSuggestions.length > 0) {
-        const out: OptionItem[] = []
-        const seen = new Set<string>()
+        const out: OptionItem[] = [];
+        const seen = new Set<string>();
         mvuSuggestions.forEach((item: any, i: number) => {
-          const key = normalizeOptionKey(String(item?.选项 ?? item?.option ?? item?.key ?? String.fromCharCode(65 + i)))
-          if (!key || seen.has(key)) return
-          const text = String(item?.思路 ?? item?.text ?? item?.行动 ?? '').replace(/\s+/g, ' ').trim()
-          if (!text) return
+          const key = normalizeOptionKey(
+            String(item?.选项 ?? item?.option ?? item?.key ?? String.fromCharCode(65 + i)),
+          );
+          if (!key || seen.has(key)) return;
+          const text = String(item?.思路 ?? item?.text ?? item?.行动 ?? '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (!text) return;
           out.push({
             key,
             text,
             risk: {
               death: clampRiskDelta(item?.死亡风险 ?? 0),
               revive: clampRiskDelta(item?.复苏风险 ?? 0),
-              source: String(item?.主要风险 ?? 'MVU行动建议').replace(/\s+/g, ' ').trim() || 'MVU行动建议',
+              source:
+                String(item?.主要风险 ?? 'MVU行动建议')
+                  .replace(/\s+/g, ' ')
+                  .trim() || 'MVU行动建议',
               tagged: true,
             },
-          })
-          seen.add(key)
-        })
-        if (out.length > 0) return out
+          });
+          seen.add(key);
+        });
+        if (out.length > 0) return out;
       }
     } catch {
       // ignore MVU fallback
     }
 
     // 优先解析本卡格式；同时兼容常见预设的“行动/选择/Options/Choices”标题和数字序号。
-    const blockRe = /【[^】]*(?:选项|行动|选择|Options|Choices)[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/gi
-    let bm: RegExpExecArray | null
+    const blockRe = /【[^】]*(?:选项|行动|选择|Options|Choices)[^】]*】\s*([\s\S]*?)(?=\n\s*【|\n\s*<|$)/gi;
+    let bm: RegExpExecArray | null;
     while ((bm = blockRe.exec(mes)) !== null) {
-      const out: OptionItem[] = []
+      const out: OptionItem[] = [];
       for (const line of splitOptionLines(bm[1])) {
-        const lm = line.match(/^\s*(?:选项\s*)?([A-Da-d1-4①②③④一二三四壹贰叁肆])[.、:：)）]\s*(.+?)\s*$/)
-        if (!lm) continue
-        const key = normalizeOptionKey(lm[1])
-        if (!key) continue
-        const body = lm[2].trim().replace(/^\[(.*)\]$/, '$1').trim()
-        const parsed = parseOptionRisk(body)
-        if (parsed.text) out.push({ key, text: parsed.text, risk: parsed.risk })
+        const lm = line.match(/^\s*(?:选项\s*)?([A-Da-d1-4①②③④一二三四壹贰叁肆])[.、:：)）]\s*(.+?)\s*$/);
+        if (!lm) continue;
+        const key = normalizeOptionKey(lm[1]);
+        if (!key) continue;
+        const body = lm[2]
+          .trim()
+          .replace(/^\[(.*)\]$/, '$1')
+          .trim();
+        const parsed = parseOptionRisk(body);
+        if (parsed.text) out.push({ key, text: parsed.text, risk: parsed.risk });
       }
-      if (out.length > 0) return out
+      if (out.length > 0) return out;
     }
-    return []
+    return [];
   } catch (e) {
-    console.warn('[MFRS Status] 解析推演选项失败', e)
-    return []
+    console.warn('[MFRS Status] 解析推演选项失败', e);
+    return [];
   }
 }
 
-const options = ref<OptionItem[]>(extractOptions())
+const options = ref<OptionItem[]>(extractOptions());
 
 function applyOptionRisk(risk: OptionRisk) {
-  if (!data.value) data.value = { ...defaults }
-  if (!data.value.驭鬼者状态) data.value.驭鬼者状态 = { ...defaultGhostState }
+  if (!data.value) data.value = { ...defaults };
+  if (!data.value.驭鬼者状态) data.value.驭鬼者状态 = { ...defaultGhostState };
 
-  const currentDeath = Math.max(0, Math.min(100, Math.max(Number(data.value.风险值 ?? 0), panelDeathRiskValue.value ?? 0)))
-  const legacyRevive = Number(data.value.厉鬼复苏程度 ?? 0)
-  const currentTotalRevive = Math.max(0, Math.min(100, Math.max(Number(data.value.驭鬼者状态.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0, legacyRevive)))
+  const currentDeath = Math.max(
+    0,
+    Math.min(100, Math.max(Number(data.value.风险值 ?? 0), panelDeathRiskValue.value ?? 0)),
+  );
+  const legacyRevive = Number(data.value.厉鬼复苏程度 ?? 0);
+  const currentTotalRevive = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.max(Number(data.value.驭鬼者状态.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0, legacyRevive),
+    ),
+  );
 
-  let deathIncrement = 0
-  if (risk.death >= 9) deathIncrement = 10
-  else if (risk.death >= 6) deathIncrement = 4
-  else if (risk.death >= 3) deathIncrement = 2
-  else deathIncrement = 0
+  let deathIncrement = 0;
+  if (risk.death >= 9) deathIncrement = 10;
+  else if (risk.death >= 6) deathIncrement = 4;
+  else if (risk.death >= 3) deathIncrement = 2;
+  else deathIncrement = 0;
 
-  const nextDeath = Math.min(100, currentDeath + deathIncrement)
-  const nextTotalRevive = Math.min(100, currentTotalRevive + risk.revive)
+  const nextDeath = Math.min(100, currentDeath + deathIncrement);
+  const nextTotalRevive = Math.min(100, currentTotalRevive + risk.revive);
 
-  data.value.风险值 = nextDeath
-  data.value.驭鬼者状态.总复苏风险 = nextTotalRevive
-  data.value.厉鬼复苏程度 = nextTotalRevive
+  data.value.风险值 = nextDeath;
+  data.value.驭鬼者状态.总复苏风险 = nextTotalRevive;
+  data.value.厉鬼复苏程度 = nextTotalRevive;
 
-  const currentStreak = Number(data.value.revive_streak ?? 0)
-  data.value.revive_streak = risk.revive >= 5 ? currentStreak + 1 : 0
+  const currentStreak = Number(data.value.revive_streak ?? 0);
+  data.value.revive_streak = risk.revive >= 5 ? currentStreak + 1 : 0;
 
-  const statData = normalizeStatData(data.value)
-  updateVariablesWith(variables => {
-    _.set(variables, 'stat_data', statData)
-    return variables
-  }, { type: 'message', message_id: getCurrentMessageId() })
+  const statData = normalizeStatData(data.value);
+  updateVariablesWith(
+    variables => {
+      _.set(variables, 'stat_data', statData);
+      return variables;
+    },
+    { type: 'message', message_id: getCurrentMessageId() },
+  );
 
   return {
     death: nextDeath - currentDeath,
     revive: nextTotalRevive - currentTotalRevive,
     totalRevive: nextTotalRevive - currentTotalRevive,
-  }
+  };
 }
 
 function findSendTextarea() {
-  const docs: Document[] = []
+  const docs: Document[] = [];
   try {
-    if (window.parent?.document) docs.push(window.parent.document)
+    if (window.parent?.document) docs.push(window.parent.document);
   } catch {
     // ignore cross-frame access errors
   }
-  docs.push(document)
+  docs.push(document);
 
   for (const doc of docs) {
-    const textarea = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null
-    if (textarea) return textarea
+    const textarea = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null;
+    if (textarea) return textarea;
   }
-  return null
+  return null;
 }
 
 function pickOption(opt: OptionItem) {
   if (isDeathRiskCritical.value) {
-    toastr.warning('角色已经死亡，不能继续选择行动。', '模拟结束')
-    return
+    toastr.warning('角色已经死亡，不能继续选择行动。', '模拟结束');
+    return;
   }
 
-  const ta = findSendTextarea()
+  const ta = findSendTextarea();
   if (!ta) {
-    toastr.warning('找不到酒馆输入框 #send_textarea', '推演选项')
-    return
+    toastr.warning('找不到酒馆输入框 #send_textarea', '推演选项');
+    return;
   }
-  applyOptionRisk(opt.risk)
-  ta.value = `我选择：${opt.text}`
-  ta.dispatchEvent(new Event('input', { bubbles: true }))
-  ta.dispatchEvent(new Event('change', { bubbles: true }))
-  ta.focus()
-  toastr.success(`已填入选项 ${opt.key}`, '推演选项')
+  applyOptionRisk(opt.risk);
+  ta.value = `我选择：${opt.text}`;
+  ta.dispatchEvent(new Event('input', { bubbles: true }));
+  ta.dispatchEvent(new Event('change', { bubbles: true }));
+  ta.focus();
+  toastr.success(`已填入选项 ${opt.key}`, '推演选项');
 }
 
 const startLocationOptions = [
   { value: '大昌市七中', label: '大昌市七中', stage: '阶段0：开局与七中前后', anchor: '七中课堂' },
   { value: '富仁商场', label: '富仁商场', stage: '阶段1：大昌市早期事件', anchor: '阶段1 商场无头鬼影初次袭击后' },
-  { value: '大昌市封锁线', label: '大昌市封锁线', stage: '阶段3：大昌市城市级灾害', anchor: '阶段3 大昌市外环高速封锁线建立中' },
+  {
+    value: '大昌市封锁线',
+    label: '大昌市封锁线',
+    stage: '阶段3：大昌市城市级灾害',
+    anchor: '阶段3 大昌市外环高速封锁线建立中',
+  },
   { value: '鬼邮局', label: '鬼邮局', stage: '阶段5：规则型地点与任务链', anchor: '阶段5 鬼邮局一楼首次送信前' },
-  { value: '太平古镇', label: '太平古镇', stage: '阶段6：队长计划与高危档案', anchor: '阶段6 太平古镇：祠堂夜巡旧规矩执行中' },
+  {
+    value: '太平古镇',
+    label: '太平古镇',
+    stage: '阶段6：队长计划与高危档案',
+    anchor: '阶段6 太平古镇：祠堂夜巡旧规矩执行中',
+  },
   { value: '大海市繁华街区', label: '大海市繁华街区', stage: '阶段4：势力冲突与中期扩张', anchor: '大海市灵异论坛' },
   { value: '偏远荒村', label: '偏远荒村', stage: '阶段2：总部与负责人体系', anchor: '黄岗村' },
   { value: '诡异公交车', label: '诡异公交车', stage: '阶段5：规则型地点与任务链', anchor: '灵异公交' },
   { value: '灵异公司大楼', label: '灵异公司大楼', stage: '阶段4：势力冲突与中期扩张', anchor: '总部备案' },
   { value: '自定义', label: '自定义地点' },
-]
+];
 
 const defaultEventFile = {
   事件代号: '未立案灵异事件',
@@ -1291,21 +1425,21 @@ const defaultEventFile = {
   已死亡人数: 0,
   扩散趋势: '未观察',
   处理状态: '未接触',
-}
+};
 
 const defaultGhostState = {
   总复苏风险: 0,
   已驾驭厉鬼: [],
-}
+};
 
-const defaultCollectedArchives: unknown[] = []
-const defaultCollectedRules: unknown[] = []
+const defaultCollectedArchives: unknown[] = [];
+const defaultCollectedRules: unknown[] = [];
 
 const defaultResources = {
   鬼拼图: [],
   灵异物品: [],
   黄金储备: '未准备',
-}
+};
 
 const defaultFactionState = {
   总部备案状态: '未备案',
@@ -1313,14 +1447,14 @@ const defaultFactionState = {
   联系人: [],
   敌对势力: [],
   可调用资源: [],
-}
+};
 
 const defaultHiddenFile = {
   真实杀人规律: '未生成',
   关键生路: '未生成',
   误导线索: [],
   鬼的真实位置: '未确认',
-}
+};
 
 const defaultMainlineProgress = {
   当前阶段: '开局接入',
@@ -1340,7 +1474,7 @@ const defaultMainlineProgress = {
     社会公开度: 0,
   },
   下一步推进提示: '等待首个灵异征兆或开局事件立案',
-}
+};
 
 const defaults = {
   姓名: '',
@@ -1371,52 +1505,77 @@ const defaults = {
   世界线记录: [],
   主线进度: defaultMainlineProgress,
   隐藏档案: defaultHiddenFile,
-}
+};
 
 function d() {
-  return data.value ?? defaults
+  return data.value ?? defaults;
 }
 
 function bindField(key: string, def = '') {
   return computed<string>({
     get: () => String((d() as Record<string, unknown>)[key] ?? def),
     set: val => {
-      if (!data.value) data.value = { ...defaults }
-      ;(data.value as Record<string, unknown>)[key] = val
+      if (!data.value) data.value = { ...defaults };
+      (data.value as Record<string, unknown>)[key] = val;
     },
-  })
+  });
 }
 
-const 姓名 = bindField('姓名')
-const 性别 = bindField('性别', '男')
-const 开局地点 = bindField('开局地点')
-const 初始年龄 = bindField('初始年龄', '18岁')
-const 角色背景 = bindField('角色背景')
-const 身份 = bindField('身份')
-const 特殊能力描述 = bindField('特殊能力描述')
-const 消耗代价 = bindField('消耗代价', '无')
+const 姓名 = bindField('姓名');
+const 性别 = bindField('性别', '男');
+const 开局地点 = bindField('开局地点');
+const 初始年龄 = bindField('初始年龄', '18岁');
+const 角色背景 = bindField('角色背景');
+const 身份 = bindField('身份');
+const 特殊能力描述 = bindField('特殊能力描述');
+const 消耗代价 = bindField('消耗代价', '无');
 
-const ghosts = computed(() => d().驾驭厉鬼 ?? [])
-const items = computed(() => d().灵异物品 ?? [])
-const eventFile = computed(() => d().当前灵异事件 ?? defaultEventFile)
-const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState)
-const collectedArchives = computed(() => Array.isArray(d().收录档案) ? d().收录档案 : defaultCollectedArchives)
-const collectedRules = computed(() => Array.isArray(d().收录规律) ? d().收录规律 : defaultCollectedRules)
-const factionState = computed(() => d().势力关系 ?? defaultFactionState)
-const mainlineProgress = computed(() => d().主线进度 ?? defaultMainlineProgress)
+const ghosts = computed(() => d().驾驭厉鬼 ?? []);
+const items = computed(() => d().灵异物品 ?? []);
+const eventFile = computed(() => d().当前灵异事件 ?? defaultEventFile);
+const ghostState = computed(() => d().驭鬼者状态 ?? defaultGhostState);
+const collectedArchives = computed(() => (Array.isArray(d().收录档案) ? d().收录档案 : defaultCollectedArchives));
+const collectedRules = computed(() => (Array.isArray(d().收录规律) ? d().收录规律 : defaultCollectedRules));
+const factionState = computed(() => d().势力关系 ?? defaultFactionState);
+const mainlineProgress = computed(() => d().主线进度 ?? defaultMainlineProgress);
 
-type StatusPanelKey = '姓名' | '身份' | '所在位置' | '当前状态' | '当前灵异事件' | '鬼域状态' | '已知规律' | '猜测规律' | '风险值' | '死亡风险' | '复苏风险' | '持有拼图/灵异物品'
-type StatusPanelData = Partial<Record<StatusPanelKey, string>>
+type StatusPanelKey =
+  | '姓名'
+  | '身份'
+  | '所在位置'
+  | '当前状态'
+  | '当前灵异事件'
+  | '鬼域状态'
+  | '已知规律'
+  | '猜测规律'
+  | '风险值'
+  | '死亡风险'
+  | '复苏风险'
+  | '持有拼图/灵异物品';
+type StatusPanelData = Partial<Record<StatusPanelKey, string>>;
 
 function currentMessageText() {
   try {
-    return getChatMessages(getCurrentMessageId())[0]?.message ?? ''
+    return getChatMessages(getCurrentMessageId())[0]?.message ?? '';
   } catch {
-    return ''
+    return '';
   }
 }
 
-const statusPanelKeys: StatusPanelKey[] = ['姓名', '身份', '所在位置', '当前状态', '当前灵异事件', '鬼域状态', '已知规律', '猜测规律', '风险值', '死亡风险', '复苏风险', '持有拼图/灵异物品']
+const statusPanelKeys: StatusPanelKey[] = [
+  '姓名',
+  '身份',
+  '所在位置',
+  '当前状态',
+  '当前灵异事件',
+  '鬼域状态',
+  '已知规律',
+  '猜测规律',
+  '风险值',
+  '死亡风险',
+  '复苏风险',
+  '持有拼图/灵异物品',
+];
 const spStatusKeyMap: Record<string, StatusPanelKey> = {
   name: '姓名',
   姓名: '姓名',
@@ -1447,134 +1606,149 @@ const spStatusKeyMap: Record<string, StatusPanelKey> = {
   resources: '持有拼图/灵异物品',
   持有拼图: '持有拼图/灵异物品',
   '持有拼图/灵异物品': '持有拼图/灵异物品',
-}
+};
 
 function parseStatusLines(source: string): StatusPanelData {
-  const panel: StatusPanelData = {}
+  const panel: StatusPanelData = {};
   for (const line of source.split('\n')) {
-    const lineMatch = line.match(/^\s*([^：:]+)[：:]\s*(.*?)\s*$/)
-    if (!lineMatch) continue
-    const rawKey = lineMatch[1].trim()
-    const mappedKey = spStatusKeyMap[rawKey] ?? spStatusKeyMap[rawKey.toLowerCase()]
-    if (!mappedKey || !statusPanelKeys.includes(mappedKey)) continue
-    const value = lineMatch[2].trim()
-    if (value) panel[mappedKey] = value
+    const lineMatch = line.match(/^\s*([^：:]+)[：:]\s*(.*?)\s*$/);
+    if (!lineMatch) continue;
+    const rawKey = lineMatch[1].trim();
+    const mappedKey = spStatusKeyMap[rawKey] ?? spStatusKeyMap[rawKey.toLowerCase()];
+    if (!mappedKey || !statusPanelKeys.includes(mappedKey)) continue;
+    const value = lineMatch[2].trim();
+    if (value) panel[mappedKey] = value;
   }
-  return panel
+  return panel;
 }
 
 function parseStatusPanel(): StatusPanelData {
-  const message = currentMessageText()
-  const legacyMatch = message.match(/【状态面板】([\s\S]*?)(?:《\/状态面板[^》]*》|<UpdateVariable>|$)/)
-  if (legacyMatch) return parseStatusLines(legacyMatch[1])
+  const message = currentMessageText();
+  const legacyMatch = message.match(/【状态面板】([\s\S]*?)(?:《\/状态面板[^》]*》|<UpdateVariable>|$)/);
+  if (legacyMatch) return parseStatusLines(legacyMatch[1]);
 
-  const spStatusMatch = message.match(/<sp_status>\s*([\s\S]*?)\s*<\/sp_status>/i)
-  if (spStatusMatch) return parseStatusLines(spStatusMatch[1])
+  const spStatusMatch = message.match(/<sp_status>\s*([\s\S]*?)\s*<\/sp_status>/i);
+  if (spStatusMatch) return parseStatusLines(spStatusMatch[1]);
 
-  return {}
+  return {};
 }
 
-const statusPanel = computed(parseStatusPanel)
+const statusPanel = computed(parseStatusPanel);
 
 function parseAIMarkers() {
-  const message = currentMessageText()
-  if (!data.value) return
+  const message = currentMessageText();
+  if (!data.value) return;
 
   if (message.includes('<death/>')) {
-    data.value.is_dead = true
-    const statData = normalizeStatData(data.value)
-    updateVariablesWith(variables => {
-      _.set(variables, 'stat_data', statData)
-      return variables
-    }, { type: 'message', message_id: getCurrentMessageId() })
+    data.value.is_dead = true;
+    const statData = normalizeStatData(data.value);
+    updateVariablesWith(
+      variables => {
+        _.set(variables, 'stat_data', statData);
+        return variables;
+      },
+      { type: 'message', message_id: getCurrentMessageId() },
+    );
   }
 
   if (message.includes('<awaken/>')) {
-    data.value.状态 = '驭鬼者觉醒'
-    const statData = normalizeStatData(data.value)
-    updateVariablesWith(variables => {
-      _.set(variables, 'stat_data', statData)
-      return variables
-    }, { type: 'message', message_id: getCurrentMessageId() })
+    data.value.状态 = '驭鬼者觉醒';
+    const statData = normalizeStatData(data.value);
+    updateVariablesWith(
+      variables => {
+        _.set(variables, 'stat_data', statData);
+        return variables;
+      },
+      { type: 'message', message_id: getCurrentMessageId() },
+    );
   }
 
-  const stageMatch = message.match(/<stage>(序章|调查|接触|对抗|终局)<\/stage>/)
+  const stageMatch = message.match(/<stage>(序章|调查|接触|对抗|终局)<\/stage>/);
   if (stageMatch) {
-    const newStage = stageMatch[1] as '序章' | '调查' | '接触' | '对抗' | '终局'
-    const stages = ['序章', '调查', '接触', '对抗', '终局']
-    const currentIndex = stages.indexOf(data.value.剧情阶段 ?? '序章')
-    const newIndex = stages.indexOf(newStage)
+    const newStage = stageMatch[1] as '序章' | '调查' | '接触' | '对抗' | '终局';
+    const stages = ['序章', '调查', '接触', '对抗', '终局'];
+    const currentIndex = stages.indexOf(data.value.剧情阶段 ?? '序章');
+    const newIndex = stages.indexOf(newStage);
     if (newIndex > currentIndex) {
-      data.value.剧情阶段 = newStage
-      const statData = normalizeStatData(data.value)
-      updateVariablesWith(variables => {
-        _.set(variables, 'stat_data', statData)
-        return variables
-      }, { type: 'message', message_id: getCurrentMessageId() })
+      data.value.剧情阶段 = newStage;
+      const statData = normalizeStatData(data.value);
+      updateVariablesWith(
+        variables => {
+          _.set(variables, 'stat_data', statData);
+          return variables;
+        },
+        { type: 'message', message_id: getCurrentMessageId() },
+      );
     }
   }
 
   if (data.value.is_supernatural_scene && !data.value.has_entered_supernatural) {
-    data.value.has_entered_supernatural = true
-    const statData = normalizeStatData(data.value)
-    updateVariablesWith(variables => {
-      _.set(variables, 'stat_data', statData)
-      return variables
-    }, { type: 'message', message_id: getCurrentMessageId() })
+    data.value.has_entered_supernatural = true;
+    const statData = normalizeStatData(data.value);
+    updateVariablesWith(
+      variables => {
+        _.set(variables, 'stat_data', statData);
+        return variables;
+      },
+      { type: 'message', message_id: getCurrentMessageId() },
+    );
   }
 
   if (!data.value.is_supernatural_scene && !data.value.is_dead) {
-    const currentRisk = Number(data.value.风险值 ?? 0)
+    const currentRisk = Number(data.value.风险值 ?? 0);
     if (currentRisk > 0) {
-      data.value.风险值 = Math.max(0, currentRisk - 2)
-      const statData = normalizeStatData(data.value)
-      updateVariablesWith(variables => {
-        _.set(variables, 'stat_data', statData)
-        return variables
-      }, { type: 'message', message_id: getCurrentMessageId() })
+      data.value.风险值 = Math.max(0, currentRisk - 2);
+      const statData = normalizeStatData(data.value);
+      updateVariablesWith(
+        variables => {
+          _.set(variables, 'stat_data', statData);
+          return variables;
+        },
+        { type: 'message', message_id: getCurrentMessageId() },
+      );
     }
   }
 }
 
 watchEffect(() => {
-  void statusPanel.value
-  const nextOptions = extractOptions()
-  options.value = nextOptions
-  mirrorActionSuggestionsToMvu(nextOptions)
-  mirrorActionSuggestionsToDatabase(nextOptions)
-  parseAIMarkers()
-})
+  void statusPanel.value;
+  const nextOptions = extractOptions();
+  options.value = nextOptions;
+  mirrorActionSuggestionsToMvu(nextOptions);
+  mirrorActionSuggestionsToDatabase(nextOptions);
+  parseAIMarkers();
+});
 
 function textOrFallback(value: unknown, fallback = '无') {
-  const text = String(value ?? '').trim()
-  return text || fallback
+  const text = String(value ?? '').trim();
+  return text || fallback;
 }
 
 function riskNumberFromText(value: unknown) {
-  const match = String(value ?? '').match(/\d+(?:\.\d+)?/)
-  if (!match) return undefined
-  return Math.max(0, Math.min(100, Math.round(Number(match[0]))))
+  const match = String(value ?? '').match(/\d+(?:\.\d+)?/);
+  if (!match) return undefined;
+  return Math.max(0, Math.min(100, Math.round(Number(match[0]))));
 }
 
 function clonePlainData<T>(value: T): T {
-  return JSON.parse(JSON.stringify(toRaw(value))) as T
+  return JSON.parse(JSON.stringify(toRaw(value))) as T;
 }
 
 function normalizeStatData(value: unknown) {
-  return clonePlainData(Schema.parse(value))
+  return clonePlainData(Schema.parse(value));
 }
 
 function filledGhosts() {
   return ghosts.value
     .filter(ghost => {
-      const name = textOrFallback(ghost.厉鬼名称, '')
-      const rule = textOrFallback(ghost.杀人规律, '')
-      return name || (rule && rule !== '无')
+      const name = textOrFallback(ghost.厉鬼名称, '');
+      const rule = textOrFallback(ghost.杀人规律, '');
+      return name || (rule && rule !== '无');
     })
     .map(ghost => ({
       厉鬼名称: textOrFallback(ghost.厉鬼名称, '未命名厉鬼'),
       杀人规律: textOrFallback(ghost.杀人规律),
-    }))
+    }));
 }
 
 function filledItems() {
@@ -1584,93 +1758,175 @@ function filledItems() {
       名称: textOrFallback(item.名称, '未命名灵异物品'),
       效果: textOrFallback(item.效果),
       使用限制: textOrFallback(item.使用限制),
-    }))
+    }));
 }
 
 function listText(values: unknown, fallback = '无') {
-  if (!Array.isArray(values) || values.length === 0) return fallback
-  return values.map(value => textOrFallback(value, '')).filter(Boolean).join('；') || fallback
+  if (!Array.isArray(values) || values.length === 0) return fallback;
+  return (
+    values
+      .map(value => textOrFallback(value, ''))
+      .filter(Boolean)
+      .join('；') || fallback
+  );
 }
 
 function objectText(value: unknown, key: string, fallback = '无') {
-  if (!value || typeof value !== 'object') return fallback
-  return textOrFallback((value as Record<string, unknown>)[key], fallback)
+  if (!value || typeof value !== 'object') return fallback;
+  return textOrFallback((value as Record<string, unknown>)[key], fallback);
 }
 
 function arrayToPanelItems<T>(values: T[], limit = 3) {
-  return values.slice(0, limit)
+  return values.slice(0, limit);
 }
 
 function includesAny(text: string, keywords: string[]) {
-  return keywords.some(keyword => text.includes(keyword))
+  return keywords.some(keyword => text.includes(keyword));
 }
 
-function resolveStartCanonBinding(locationValue: unknown, stageValue: unknown, anchorValue: unknown, identityValue?: unknown, contextValues: unknown[] = []) {
-  const location = textOrFallback(locationValue, '')
-  const stage = textOrFallback(stageValue, '')
-  const anchor = textOrFallback(anchorValue, '')
-  const identity = textOrFallback(identityValue, '')
-  const context = [location, identity, ...contextValues.map(value => textOrFallback(value, ''))].join(' ')
+function resolveStartCanonBinding(
+  locationValue: unknown,
+  stageValue: unknown,
+  anchorValue: unknown,
+  identityValue?: unknown,
+  contextValues: unknown[] = [],
+) {
+  const location = textOrFallback(locationValue, '');
+  const stage = textOrFallback(stageValue, '');
+  const anchor = textOrFallback(anchorValue, '');
+  const identity = textOrFallback(identityValue, '');
+  const context = [location, identity, ...contextValues.map(value => textOrFallback(value, ''))].join(' ');
 
   if (stage || anchor) {
-    return { stage, anchor }
+    return { stage, anchor };
   }
 
   const keywordBindings = [
-    { keywords: ['七中', '学校', '课堂', '学生', '老师', '教师', '保安', '敲门鬼', '鬼敲门', '敲门声', '鬼眼', '羊皮纸', '人皮纸'], stage: '阶段0：开局与七中前后', anchor: '七中课堂' },
-    { keywords: ['富仁商场', '商场', '无头鬼影', '假模特', '人头气球', '王珊珊', '小强俱乐部', '黄岗村', '鬼棺', '鬼镜'], stage: '阶段1：大昌市早期事件', anchor: '阶段1 大昌市早期线：七中后续至黄岗村/鬼棺鬼镜争夺前后' },
-    { keywords: ['总部', '调查员', '接线员', '负责人', '刑警', '备案', '王小明', '赵建国', '刘小雨'], stage: '阶段2：总部与负责人体系', anchor: '总部备案与负责人体系接入' },
-    { keywords: ['饿死鬼', '鬼婴', '大昌市封锁', '封锁线', '城市级灾害', '饥饿', '哭声'], stage: '阶段3：大昌市城市级灾害', anchor: '阶段3 大昌市城市级灾害征兆期' },
-    { keywords: ['朋友圈', '方世明', '大海市', '灵异论坛', '叶真', '灵异公司'], stage: '阶段4：势力冲突与中期扩张', anchor: '阶段4 势力冲突与中期扩张接入' },
-    { keywords: ['鬼邮局', '信使', '送信', '灵异公交', '公交车', '凯撒', '大酒店', '守夜', '送葬', '白水镇', '坟场', '老坟'], stage: '阶段5：规则型地点与任务链', anchor: '阶段5 规则型地点线' },
-    { keywords: ['队长计划', '鬼画', '鬼湖', '太平古镇', '招魂人', '秦老', '王家三代', '民国'], stage: '阶段6：队长计划与高危档案', anchor: '阶段6 队长计划与高危档案接入' },
-    { keywords: ['国王组织', '幽灵船', '岛国', '海外', '全球'], stage: '阶段7：国际冲突与世界失衡', anchor: '阶段7 国际冲突与世界失衡接入' },
-  ]
-  const keywordBinding = keywordBindings.find(binding => includesAny(context, binding.keywords))
+    {
+      keywords: [
+        '七中',
+        '学校',
+        '课堂',
+        '学生',
+        '老师',
+        '教师',
+        '保安',
+        '敲门鬼',
+        '鬼敲门',
+        '敲门声',
+        '鬼眼',
+        '羊皮纸',
+        '人皮纸',
+      ],
+      stage: '阶段0：开局与七中前后',
+      anchor: '七中课堂',
+    },
+    {
+      keywords: [
+        '富仁商场',
+        '商场',
+        '无头鬼影',
+        '假模特',
+        '人头气球',
+        '王珊珊',
+        '小强俱乐部',
+        '黄岗村',
+        '鬼棺',
+        '鬼镜',
+      ],
+      stage: '阶段1：大昌市早期事件',
+      anchor: '阶段1 大昌市早期线：七中后续至黄岗村/鬼棺鬼镜争夺前后',
+    },
+    {
+      keywords: ['总部', '调查员', '接线员', '负责人', '刑警', '备案', '王小明', '赵建国', '刘小雨'],
+      stage: '阶段2：总部与负责人体系',
+      anchor: '总部备案与负责人体系接入',
+    },
+    {
+      keywords: ['饿死鬼', '鬼婴', '大昌市封锁', '封锁线', '城市级灾害', '饥饿', '哭声'],
+      stage: '阶段3：大昌市城市级灾害',
+      anchor: '阶段3 大昌市城市级灾害征兆期',
+    },
+    {
+      keywords: ['朋友圈', '方世明', '大海市', '灵异论坛', '叶真', '灵异公司'],
+      stage: '阶段4：势力冲突与中期扩张',
+      anchor: '阶段4 势力冲突与中期扩张接入',
+    },
+    {
+      keywords: [
+        '鬼邮局',
+        '信使',
+        '送信',
+        '灵异公交',
+        '公交车',
+        '凯撒',
+        '大酒店',
+        '守夜',
+        '送葬',
+        '白水镇',
+        '坟场',
+        '老坟',
+      ],
+      stage: '阶段5：规则型地点与任务链',
+      anchor: '阶段5 规则型地点线',
+    },
+    {
+      keywords: ['队长计划', '鬼画', '鬼湖', '太平古镇', '招魂人', '秦老', '王家三代', '民国'],
+      stage: '阶段6：队长计划与高危档案',
+      anchor: '阶段6 队长计划与高危档案接入',
+    },
+    {
+      keywords: ['国王组织', '幽灵船', '岛国', '海外', '全球'],
+      stage: '阶段7：国际冲突与世界失衡',
+      anchor: '阶段7 国际冲突与世界失衡接入',
+    },
+  ];
+  const keywordBinding = keywordBindings.find(binding => includesAny(context, binding.keywords));
   if (keywordBinding) {
-    return { stage: keywordBinding.stage, anchor: keywordBinding.anchor }
+    return { stage: keywordBinding.stage, anchor: keywordBinding.anchor };
   }
 
-  const matchedOption = startLocationOptions.find(option => option.stage && location.includes(option.value))
+  const matchedOption = startLocationOptions.find(option => option.stage && location.includes(option.value));
   if (matchedOption) {
-    return { stage: matchedOption.stage ?? '', anchor: matchedOption.anchor ?? '' }
+    return { stage: matchedOption.stage ?? '', anchor: matchedOption.anchor ?? '' };
   }
-  return { stage, anchor }
+  return { stage, anchor };
 }
 
 function applyStartCanonBinding() {
   if (!data.value) {
-    data.value = { ...defaults }
+    data.value = { ...defaults };
   }
   const ghostKeywords = Array.isArray(data.value.驾驭厉鬼)
     ? data.value.驾驭厉鬼.flatMap(ghost => [ghost.厉鬼名称, ghost.杀人规律])
-    : []
+    : [];
   const itemKeywords = Array.isArray(data.value.灵异物品)
     ? data.value.灵异物品.flatMap(item => [item.名称, item.效果, item.使用限制])
-    : []
-  const binding = resolveStartCanonBinding(data.value.开局地点, data.value.原著阶段, data.value.剧情锚点, data.value.身份, [
-    data.value.角色背景,
-    data.value.特殊能力描述,
-    ...ghostKeywords,
-    ...itemKeywords,
-  ])
-  if (binding.stage) data.value.原著阶段 = binding.stage
-  if (binding.anchor) data.value.剧情锚点 = binding.anchor
-  return binding
+    : [];
+  const binding = resolveStartCanonBinding(
+    data.value.开局地点,
+    data.value.原著阶段,
+    data.value.剧情锚点,
+    data.value.身份,
+    [data.value.角色背景, data.value.特殊能力描述, ...ghostKeywords, ...itemKeywords],
+  );
+  if (binding.stage) data.value.原著阶段 = binding.stage;
+  if (binding.anchor) data.value.剧情锚点 = binding.anchor;
+  return binding;
 }
 
 function hazardLevelFor(identity: string, ghostCount: number) {
-  if (identity === '失控者') return 'B级起步，存在复苏外溢风险'
-  if (ghostCount > 1) return 'B级观察，疑似多拼图冲突'
-  if (ghostCount === 1 || identity === '驭鬼者' || identity === '民间异类') return 'C级观察，驭鬼者介入'
-  return '未知，待第一起死亡案例确认'
+  if (identity === '失控者') return 'B级起步，存在复苏外溢风险';
+  if (ghostCount > 1) return 'B级观察，疑似多拼图冲突';
+  if (ghostCount === 1 || identity === '驭鬼者' || identity === '民间异类') return 'C级观察，驭鬼者介入';
+  return '未知，待第一起死亡案例确认';
 }
 
 function filingStateFor(identity: string) {
-  if (identity === '总部调查员') return '总部内部记录'
-  if (identity === '驭鬼者' || identity === '民间异类') return '待总部备案'
-  if (identity === '失控者') return '高危观察'
-  return '未备案'
+  if (identity === '总部调查员') return '总部内部记录';
+  if (identity === '驭鬼者' || identity === '民间异类') return '待总部备案';
+  if (identity === '失控者') return '高危观察';
+  return '未备案';
 }
 
 function controlledGhostsFrom(ghostList: ReturnType<typeof filledGhosts>) {
@@ -1684,7 +1940,7 @@ function controlledGhostsFrom(ghostList: ReturnType<typeof filledGhosts>) {
     复苏进度: Number(d().厉鬼复苏程度 ?? 0),
     是否死机: textOrFallback(d().特殊能力描述, '').includes('死机'),
     压制关系: ghostList.length > 1 ? '多只厉鬼存在潜在压制，也可能失衡' : '单拼图，复苏压力直接作用于宿主',
-  }))
+  }));
 }
 
 function resourcesFrom(itemList: ReturnType<typeof filledItems>, ghostList: ReturnType<typeof filledGhosts>) {
@@ -1692,61 +1948,84 @@ function resourcesFrom(itemList: ReturnType<typeof filledItems>, ghostList: Retu
     鬼拼图: ghostList.map(ghost => ghost.厉鬼名称),
     灵异物品: itemList.map(item => ({
       名称: item.名称,
-      类型: item.名称.includes('鬼烛') ? '鬼烛' : item.名称.includes('黄金') ? '黄金容器' : item.名称.includes('替死') ? '替死娃娃' : '其他',
+      类型: item.名称.includes('鬼烛')
+        ? '鬼烛'
+        : item.名称.includes('黄金')
+          ? '黄金容器'
+          : item.名称.includes('替死')
+            ? '替死娃娃'
+            : '其他',
       剩余次数: '未知',
       效果: item.效果,
       副作用: item.使用限制,
     })),
     黄金储备: itemList.some(item => item.名称.includes('黄金') || item.效果.includes('黄金')) ? '已准备' : '未准备',
-  }
+  };
 }
 
 const resourceSummary = computed(() => {
-  const resource = d().灵异资源 ?? defaultResources
-  const ghostPieces = listText(resource.鬼拼图)
+  const resource = d().灵异资源 ?? defaultResources;
+  const ghostPieces = listText(resource.鬼拼图);
   const itemNames = Array.isArray(resource.灵异物品)
     ? resource.灵异物品.map(item => textOrFallback(item.名称, '')).filter(Boolean)
-    : []
-  return `拼图：${ghostPieces}；物品：${itemNames.length ? itemNames.join('、') : '无'}；黄金：${textOrFallback(resource.黄金储备, '未准备')}`
-})
+    : [];
+  return `拼图：${ghostPieces}；物品：${itemNames.length ? itemNames.join('、') : '无'}；黄金：${textOrFallback(resource.黄金储备, '未准备')}`;
+});
 
 function panelValue(value: string | undefined) {
-  return value?.replace(/^([^：:]+)[：:]/, '').trim()
+  return value?.replace(/^([^：:]+)[：:]/, '').trim();
 }
 
 function splitEventLine(value: string): Partial<Record<'事件代号' | '危害等级' | '处理状态', string>> {
-  const parts = value.split(/[；;]/).map(part => panelValue(part.trim())).filter(Boolean)
+  const parts = value
+    .split(/[；;]/)
+    .map(part => panelValue(part.trim()))
+    .filter(Boolean);
   return {
     事件代号: parts[0],
     危害等级: parts[1],
     处理状态: parts[2],
-  }
+  };
 }
 
 const displayEvent = computed(() => {
-  const panelEvent = statusPanel.value.当前灵异事件 ? splitEventLine(statusPanel.value.当前灵异事件) : {}
+  const panelEvent = statusPanel.value.当前灵异事件 ? splitEventLine(statusPanel.value.当前灵异事件) : {};
   return {
     事件代号: textOrFallback(panelEvent.事件代号, eventFile.value.事件代号),
     危害等级: textOrFallback(panelEvent.危害等级, eventFile.value.危害等级),
     鬼域状态: textOrFallback(statusPanel.value.鬼域状态, eventFile.value.鬼域状态),
     处理状态: textOrFallback(panelEvent.处理状态, eventFile.value.处理状态),
-  }
-})
+  };
+});
 
-const panelDeathRiskValue = computed(() => riskNumberFromText(statusPanel.value.死亡风险 ?? statusPanel.value.风险值))
-const panelResurrectionRiskValue = computed(() => riskNumberFromText(statusPanel.value.复苏风险))
-const deathRiskValue = computed(() => Math.max(0, Math.min(100, Math.max(Number(d().风险值 ?? 0), panelDeathRiskValue.value ?? 0))))
-const resurrectionRiskValue = computed(() => Math.max(0, Math.min(100, Math.max(Number(ghostState.value.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0))))
-const isDeathRiskCritical = computed(() => Boolean(d().is_dead))
-const displayDeathRisk = computed(() => `${deathRiskValue.value}/100`)
-const displayKnownLaws = computed(() => textOrFallback(statusPanel.value.已知规律, listText(eventFile.value.已知杀人规律)))
-const displaySuspectedLaws = computed(() => textOrFallback(statusPanel.value.猜测规律, listText(eventFile.value.猜测杀人规律)))
-const displayResurrectionRisk = computed(() => `${resurrectionRiskValue.value}%`)
-const displayLocation = computed(() => textOrFallback(statusPanel.value.所在位置, d().所在位置 ?? eventFile.value.发生地点))
-const displayPlayerStatus = computed(() => textOrFallback(statusPanel.value.当前状态, d().状态))
-const displayResourceSummary = computed(() => textOrFallback(statusPanel.value['持有拼图/灵异物品'], resourceSummary.value))
-const displayMainlineStage = computed(() => `${textOrFallback(mainlineProgress.value.当前阶段, '开局接入')} #${mainlineProgress.value.阶段序号 ?? 0}`)
-const displayMainlineStatus = computed(() => textOrFallback(mainlineProgress.value.阶段状态, '未启动'))
+const panelDeathRiskValue = computed(() => riskNumberFromText(statusPanel.value.死亡风险 ?? statusPanel.value.风险值));
+const panelResurrectionRiskValue = computed(() => riskNumberFromText(statusPanel.value.复苏风险));
+const deathRiskValue = computed(() =>
+  Math.max(0, Math.min(100, Math.max(Number(d().风险值 ?? 0), panelDeathRiskValue.value ?? 0))),
+);
+const resurrectionRiskValue = computed(() =>
+  Math.max(0, Math.min(100, Math.max(Number(ghostState.value.总复苏风险 ?? 0), panelResurrectionRiskValue.value ?? 0))),
+);
+const isDeathRiskCritical = computed(() => Boolean(d().is_dead));
+const displayDeathRisk = computed(() => `${deathRiskValue.value}/100`);
+const displayKnownLaws = computed(() =>
+  textOrFallback(statusPanel.value.已知规律, listText(eventFile.value.已知杀人规律)),
+);
+const displaySuspectedLaws = computed(() =>
+  textOrFallback(statusPanel.value.猜测规律, listText(eventFile.value.猜测杀人规律)),
+);
+const displayResurrectionRisk = computed(() => `${resurrectionRiskValue.value}%`);
+const displayLocation = computed(() =>
+  textOrFallback(statusPanel.value.所在位置, d().所在位置 ?? eventFile.value.发生地点),
+);
+const displayPlayerStatus = computed(() => textOrFallback(statusPanel.value.当前状态, d().状态));
+const displayResourceSummary = computed(() =>
+  textOrFallback(statusPanel.value['持有拼图/灵异物品'], resourceSummary.value),
+);
+const displayMainlineStage = computed(
+  () => `${textOrFallback(mainlineProgress.value.当前阶段, '开局接入')} #${mainlineProgress.value.阶段序号 ?? 0}`,
+);
+const displayMainlineStatus = computed(() => textOrFallback(mainlineProgress.value.阶段状态, '未启动'));
 const archiveCards = computed(() => [
   { icon: '⌖', label: '当前位置', value: displayLocation.value },
   { icon: '◌', label: '当前状态', value: displayPlayerStatus.value },
@@ -1754,33 +2033,35 @@ const archiveCards = computed(() => [
   { icon: '♜', label: '总部备案', value: factionState.value.总部备案状态 },
   { icon: '◈', label: '鬼域状态', value: displayEvent.value.鬼域状态 },
   { icon: '▤', label: '灵异资源', value: displayResourceSummary.value },
-])
+]);
 const intelligenceNotes = computed(() => [
   { label: '已知规律', value: displayKnownLaws.value },
   { label: '猜测规律', value: displaySuspectedLaws.value },
   { label: '资源档案', value: displayResourceSummary.value },
-])
+]);
 
 watchEffect(() => {
-  void displayEvent.value
-  void displayLocation.value
-  void displayPlayerStatus.value
-  mirrorCoreStateToDatabase()
-})
+  void displayEvent.value;
+  void displayLocation.value;
+  void displayPlayerStatus.value;
+  mirrorCoreStateToDatabase();
+});
 
 const controlledGhostPanelItems = computed(() => {
-  const runtimeGhosts = Array.isArray(ghostState.value.已驾驭厉鬼) ? ghostState.value.已驾驭厉鬼 : []
-  const source = runtimeGhosts.length ? runtimeGhosts : ghosts.value.map(ghost => ({
-    代号: ghost.厉鬼名称,
-    恐怖等级: '未知',
-    拼图特征: ghost.厉鬼名称,
-    杀人规律: ghost.杀人规律,
-    使用能力: '未确认',
-    使用代价: '未确认',
-    复苏进度: d().厉鬼复苏程度 ?? 0,
-    是否死机: false,
-    压制关系: '开局设定，等待首轮验证',
-  }))
+  const runtimeGhosts = Array.isArray(ghostState.value.已驾驭厉鬼) ? ghostState.value.已驾驭厉鬼 : [];
+  const source = runtimeGhosts.length
+    ? runtimeGhosts
+    : ghosts.value.map(ghost => ({
+        代号: ghost.厉鬼名称,
+        恐怖等级: '未知',
+        拼图特征: ghost.厉鬼名称,
+        杀人规律: ghost.杀人规律,
+        使用能力: '未确认',
+        使用代价: '未确认',
+        复苏进度: d().厉鬼复苏程度 ?? 0,
+        是否死机: false,
+        压制关系: '开局设定，等待首轮验证',
+      }));
   return arrayToPanelItems(source).map(ghost => ({
     title: objectText(ghost, '代号', '未命名厉鬼'),
     meta: `复苏 ${objectText(ghost, '复苏进度', '0')}% / ${(ghost as Record<string, unknown>).是否死机 ? '死机' : '未死机'}`,
@@ -1791,54 +2072,71 @@ const controlledGhostPanelItems = computed(() => {
       { label: '代价', value: objectText(ghost, '使用代价', '未确认') },
       { label: '压制', value: objectText(ghost, '压制关系', '未形成压制') },
     ],
-  }))
-})
+  }));
+});
 
-const archivedGhostPanelItems = computed(() => arrayToPanelItems(collectedArchives.value).map(archive => ({
-  title: objectText(archive, '档案厉鬼名称', '未命名档案厉鬼'),
-  meta: `${objectText(archive, '收录状态', '未收录')} / 进度 ${objectText(archive, '收录进度', '0')}%`,
-  rows: [
-    { label: '信息', value: objectText(archive, '厉鬼信息', '未确认') },
-    { label: '已知', value: objectText(archive, '已知规律', '未确认') },
-    { label: '猜测', value: objectText(archive, '猜测规律', '未确认') },
-    { label: '鬼域', value: objectText(archive, '鬼域', '未确认') },
-    { label: '完整度', value: objectText(archive, '档案完整度', '0%') },
-    { label: '调用', value: objectText(archive, '可调用范围', '未确认') },
-  ],
-})))
+const archivedGhostPanelItems = computed(() =>
+  arrayToPanelItems(collectedArchives.value).map(archive => ({
+    title: objectText(archive, '档案厉鬼名称', '未命名档案厉鬼'),
+    meta: `${objectText(archive, '收录状态', '未收录')} / 进度 ${objectText(archive, '收录进度', '0')}%`,
+    rows: [
+      { label: '信息', value: objectText(archive, '厉鬼信息', '未确认') },
+      { label: '已知', value: objectText(archive, '已知规律', '未确认') },
+      { label: '猜测', value: objectText(archive, '猜测规律', '未确认') },
+      { label: '鬼域', value: objectText(archive, '鬼域', '未确认') },
+      { label: '完整度', value: objectText(archive, '档案完整度', '0%') },
+      { label: '调用', value: objectText(archive, '可调用范围', '未确认') },
+    ],
+  })),
+);
 
-const collectedRulePanelItems = computed(() => arrayToPanelItems(collectedRules.value).map(rule => ({
-  title: objectText(rule, '规律内容', '未确认规律'),
-  meta: `${objectText(rule, '获取方式', '未确认')} / ${objectText(rule, '规律类型', '未分类')}`,
-  rows: [
-    { label: '来源', value: objectText(rule, '来源厉鬼', '未确认') },
-    { label: '进阶', value: objectText(rule, '规律进阶', '未形成') },
-    { label: '分解', value: objectText(rule, '规律分解', '未分解') },
-    { label: '完整', value: objectText(rule, '完整度', '未知') },
-    { label: '风险', value: objectText(rule, '风险备注', '无') },
-  ],
-})))
+const collectedRulePanelItems = computed(() =>
+  arrayToPanelItems(collectedRules.value).map(rule => ({
+    title: objectText(rule, '规律内容', '未确认规律'),
+    meta: `${objectText(rule, '获取方式', '未确认')} / ${objectText(rule, '规律类型', '未分类')}`,
+    rows: [
+      { label: '来源', value: objectText(rule, '来源厉鬼', '未确认') },
+      { label: '进阶', value: objectText(rule, '规律进阶', '未形成') },
+      { label: '分解', value: objectText(rule, '规律分解', '未分解') },
+      { label: '完整', value: objectText(rule, '完整度', '未知') },
+      { label: '风险', value: objectText(rule, '风险备注', '无') },
+    ],
+  })),
+);
 
 function buildStartMessage() {
-  const current = d()
-  const ghostList = filledGhosts()
-  const itemList = filledItems()
-  applyStartCanonBinding()
-  const event = current.当前灵异事件 ?? defaultEventFile
-  const controlledGhosts = current.驭鬼者状态?.已驾驭厉鬼 ?? []
-  const resources = current.灵异资源 ?? defaultResources
+  const current = d();
+  const ghostList = filledGhosts();
+  const itemList = filledItems();
+  applyStartCanonBinding();
+  const event = current.当前灵异事件 ?? defaultEventFile;
+  const controlledGhosts = current.驭鬼者状态?.已驾驭厉鬼 ?? [];
+  const resources = current.灵异资源 ?? defaultResources;
   const ghostText = ghostList.length
     ? ghostList.map((ghost, index) => `${index + 1}. ${ghost.厉鬼名称}（杀人规律：${ghost.杀人规律}）`).join('\n')
-    : '无'
+    : '无';
   const controlledGhostText = controlledGhosts.length
-    ? controlledGhosts.map((ghost, index) => `${index + 1}. ${ghost.代号}（复苏进度：${ghost.复苏进度}%；死机：${ghost.是否死机 ? '是' : '否'}；压制关系：${ghost.压制关系}）`).join('\n')
-    : '无'
+    ? controlledGhosts
+        .map(
+          (ghost, index) =>
+            `${index + 1}. ${ghost.代号}（复苏进度：${ghost.复苏进度}%；死机：${ghost.是否死机 ? '是' : '否'}；压制关系：${ghost.压制关系}）`,
+        )
+        .join('\n')
+    : '无';
   const itemText = itemList.length
-    ? itemList.map((item, index) => `${index + 1}. ${item.名称}（效果：${item.效果}；限制：${item.使用限制}）`).join('\n')
-    : '无'
-  const resourceText = Array.isArray(resources.灵异物品) && resources.灵异物品.length
-    ? resources.灵异物品.map((item, index) => `${index + 1}. ${item.名称}（类型：${item.类型}；效果：${item.效果}；副作用：${item.副作用}）`).join('\n')
-    : '无'
+    ? itemList
+        .map((item, index) => `${index + 1}. ${item.名称}（效果：${item.效果}；限制：${item.使用限制}）`)
+        .join('\n')
+    : '无';
+  const resourceText =
+    Array.isArray(resources.灵异物品) && resources.灵异物品.length
+      ? resources.灵异物品
+          .map(
+            (item, index) =>
+              `${index + 1}. ${item.名称}（类型：${item.类型}；效果：${item.效果}；副作用：${item.副作用}）`,
+          )
+          .join('\n')
+      : '无';
 
   return `【开局设定已确认】
 姓名：${textOrFallback(current.姓名, '未知')}
@@ -1878,23 +2176,23 @@ ${resourceText}
 
 系统将根据开局地点、身份、事件关键词和世界书触发情况自动匹配原著正史锚点；不要向玩家展示锚点字段本身，只根据匹配到的固定场景生成自然开局。不要直接剧透真实杀人规律、关键生路和后续结局。
 
-【推演选项】必须按 A/B/C/D 列出，每项末尾附加隐藏风险标签 <risk death="0" revive="0" source="简短原因">。death 是点击该选项时应预先结算的死亡风险增量；revive 是点击该选项时应预先结算的厉鬼复苏风险增量。状态栏会隐藏该标签，只显示选项正文。`
+【推演选项】必须按 A/B/C/D 列出，每项末尾附加隐藏风险标签 <risk death="0" revive="0" source="简短原因">。death 是点击该选项时应预先结算的死亡风险增量；revive 是点击该选项时应预先结算的厉鬼复苏风险增量。状态栏会隐藏该标签，只显示选项正文。`;
 }
 
 function commitStartData() {
   if (!data.value) {
-    data.value = { ...defaults }
+    data.value = { ...defaults };
   }
 
-  const ghostList = filledGhosts()
-  const itemList = filledItems()
-  const identity = textOrFallback(data.value.身份, '普通人')
-  const location = textOrFallback(data.value.开局地点, '未知')
-  const { stage: canonStage, anchor: canonAnchor } = applyStartCanonBinding()
-  const selectedCanonAnchor = canonAnchor || canonStage
-  const controlledGhosts = controlledGhostsFrom(ghostList)
-  const resources = resourcesFrom(itemList, ghostList)
-  const initialReviveRisk = Number(data.value.驭鬼者状态?.总复苏风险 ?? data.value.厉鬼复苏程度 ?? 0)
+  const ghostList = filledGhosts();
+  const itemList = filledItems();
+  const identity = textOrFallback(data.value.身份, '普通人');
+  const location = textOrFallback(data.value.开局地点, '未知');
+  const { stage: canonStage, anchor: canonAnchor } = applyStartCanonBinding();
+  const selectedCanonAnchor = canonAnchor || canonStage;
+  const controlledGhosts = controlledGhostsFrom(ghostList);
+  const resources = resourcesFrom(itemList, ghostList);
+  const initialReviveRisk = Number(data.value.驭鬼者状态?.总复苏风险 ?? data.value.厉鬼复苏程度 ?? 0);
   const eventFile = {
     事件代号: `${location}异常接入事件`,
     危害等级: hazardLevelFor(identity, ghostList.length),
@@ -1906,7 +2204,7 @@ function commitStartData() {
     已死亡人数: 0,
     扩散趋势: '未观察',
     处理状态: '初始化',
-  }
+  };
   Object.assign(data.value, {
     驾驭厉鬼: ghostList,
     所在位置: location,
@@ -1960,90 +2258,107 @@ function commitStartData() {
       误导线索: [],
       鬼的真实位置: '未确认',
     },
-  })
-  const statData = normalizeStatData(data.value)
-  updateVariablesWith(variables => {
-    _.set(variables, 'stat_data', statData)
-    return variables
-  }, { type: 'message', message_id: getCurrentMessageId() })
+  });
+  const statData = normalizeStatData(data.value);
+  updateVariablesWith(
+    variables => {
+      _.set(variables, 'stat_data', statData);
+      return variables;
+    },
+    { type: 'message', message_id: getCurrentMessageId() },
+  );
 }
 
 function addGhost() {
   if (!data.value) {
-    data.value = { ...defaults }
+    data.value = { ...defaults };
   }
-  if (!data.value.驾驭厉鬼) data.value.驾驭厉鬼 = []
-  if (data.value.驾驭厉鬼.length >= 3) return
-  data.value.驾驭厉鬼.push({ 厉鬼名称: '', 杀人规律: '无' })
+  if (!data.value.驾驭厉鬼) data.value.驾驭厉鬼 = [];
+  if (data.value.驾驭厉鬼.length >= 3) return;
+  data.value.驾驭厉鬼.push({ 厉鬼名称: '', 杀人规律: '无' });
 }
 
 function removeGhost(idx: number) {
-  if (!data.value) return
-  if (!data.value.驾驭厉鬼) return
-  data.value.驾驭厉鬼.splice(idx, 1)
+  if (!data.value) return;
+  if (!data.value.驾驭厉鬼) return;
+  data.value.驾驭厉鬼.splice(idx, 1);
 }
 
 function addItem() {
   if (!data.value) {
-    data.value = { ...defaults }
+    data.value = { ...defaults };
   }
-  if (!data.value.灵异物品) data.value.灵异物品 = []
-  if (data.value.灵异物品.length >= 5) return
-  data.value.灵异物品.push({ 名称: '', 效果: '', 使用限制: '无' })
+  if (!data.value.灵异物品) data.value.灵异物品 = [];
+  if (data.value.灵异物品.length >= 5) return;
+  data.value.灵异物品.push({ 名称: '', 效果: '', 使用限制: '无' });
 }
 
 function removeItem(idx: number) {
-  if (!data.value) return
-  if (!data.value.灵异物品) return
-  data.value.灵异物品.splice(idx, 1)
+  if (!data.value) return;
+  if (!data.value.灵异物品) return;
+  data.value.灵异物品.splice(idx, 1);
 }
 
 async function handleStart() {
-  if (isStarting.value) return
+  if (isStarting.value) return;
 
-  const current = d()
+  const current = d();
   if (!textOrFallback(current.姓名, '') || !textOrFallback(current.开局地点, '')) {
-    toastr.warning('请至少填写姓名和开局地点。', '初始化未完成')
-    return
+    toastr.warning('请至少填写姓名和开局地点。', '初始化未完成');
+    return;
   }
 
-  isStarting.value = true
+  isStarting.value = true;
   try {
-    commitStartData()
-    const message = buildStartMessage()
-    console.info('[MFRS] 开始模拟', message)
-    await createChatMessages([{ role: 'user', message }])
-    await triggerSlash('/trigger')
-    toastr.success('世界线已经开始推演。', '神秘复苏模拟器')
+    commitStartData();
+    const message = buildStartMessage();
+    console.info('[MFRS] 开始模拟', message);
+    await createChatMessages([{ role: 'user', message }]);
+    await triggerSlash('/trigger');
+    toastr.success('世界线已经开始推演。', '神秘复苏模拟器');
   } catch (error) {
-    console.error('[MFRS] 启动模拟失败', error)
-    toastr.error(String(error instanceof Error ? error.message : error), '启动模拟失败')
+    console.error('[MFRS] 启动模拟失败', error);
+    toastr.error(String(error instanceof Error ? error.message : error), '启动模拟失败');
   } finally {
-    isStarting.value = false
+    isStarting.value = false;
   }
 }
 
 function handleReset() {
   if (!data.value) {
-    data.value = { ...defaults }
-    return
+    data.value = { ...defaults };
+    return;
   }
   Object.assign(data.value, {
-    姓名: '', 性别: '男', 开局地点: '', 原著阶段: '', 剧情锚点: '', 初始年龄: '18岁',
-    角色背景: '', 身份: '', 驾驭厉鬼: [],
-    特殊能力描述: '', 消耗代价: '无', 灵异物品: [],
-    状态: '健康', 风险值: 0, 厉鬼复苏程度: 0, 持有拼图: '无', 所在位置: '未知',
+    姓名: '',
+    性别: '男',
+    开局地点: '',
+    原著阶段: '',
+    剧情锚点: '',
+    初始年龄: '18岁',
+    角色背景: '',
+    身份: '',
+    驾驭厉鬼: [],
+    特殊能力描述: '',
+    消耗代价: '无',
+    灵异物品: [],
+    状态: '健康',
+    风险值: 0,
+    厉鬼复苏程度: 0,
+    持有拼图: '无',
+    所在位置: '未知',
     当前灵异事件: { ...defaultEventFile },
     规律推理记录: [],
     在场人物: [],
     驭鬼者状态: { 总复苏风险: 0, 已驾驭厉鬼: [] },
-    收录档案: [], 收录规律: [],
+    收录档案: [],
+    收录规律: [],
     灵异资源: { 鬼拼图: [], 灵异物品: [], 黄金储备: '未准备' },
     势力关系: { ...defaultFactionState },
     世界线记录: [],
     主线进度: { ...defaultMainlineProgress },
     隐藏档案: { ...defaultHiddenFile },
-  })
+  });
 }
 </script>
 
@@ -2088,19 +2403,35 @@ function handleReset() {
   pointer-events: none;
   border-radius: 0 0 2px 2px;
 }
-.blood-drip-1 { left: 15%; height: 60px; }
-.blood-drip-2 { left: 55%; height: 40px; }
-.blood-drip-3 { right: 20%; height: 50px; }
+.blood-drip-1 {
+  left: 15%;
+  height: 60px;
+}
+.blood-drip-2 {
+  left: 55%;
+  height: 40px;
+}
+.blood-drip-3 {
+  right: 20%;
+  height: 50px;
+}
 
 .crack-overlay {
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background:
-    linear-gradient(90deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 100%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 100%),
     repeating-linear-gradient(180deg, transparent 0 7px, rgba(120, 0, 0, 0.025) 8px, transparent 9px),
-    linear-gradient(45deg, transparent 48%, rgba(30, 5, 5, 0.10) 49%, rgba(30, 5, 5, 0.10) 51%, transparent 52%),
+    linear-gradient(45deg, transparent 48%, rgba(30, 5, 5, 0.1) 49%, rgba(30, 5, 5, 0.1) 51%, transparent 52%),
     radial-gradient(circle at 75% 18%, rgba(110, 15, 15, 0.08), transparent 22%);
-  background-size: 9px 100%, auto, auto, auto;
+  background-size:
+    9px 100%,
+    auto,
+    auto,
+    auto;
   pointer-events: none;
   z-index: 1;
 }
@@ -2121,7 +2452,7 @@ function handleReset() {
 
 .header-quote {
   color: #8a5a5a;
-  font-family: "Noto Serif SC", "SimSun", serif;
+  font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 11px;
   font-style: italic;
   line-height: 1.7;
@@ -2138,7 +2469,7 @@ function handleReset() {
 
 .main-title {
   color: #ff1010;
-  font-family: "Noto Serif SC", "SimSun", serif;
+  font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 25px;
   font-weight: 800;
   letter-spacing: 9px;
@@ -2204,7 +2535,7 @@ function handleReset() {
 
 .module-title {
   color: #ff2020;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 3px;
@@ -2239,7 +2570,7 @@ function handleReset() {
 
 .field-label {
   color: #9d7373;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -2250,7 +2581,7 @@ function handleReset() {
   font-size: 11px;
   letter-spacing: 0.5px;
   text-transform: none;
-  font-family: "Noto Serif SC", "SimSun", serif;
+  font-family: 'Noto Serif SC', 'SimSun', serif;
   font-style: italic;
   color: #9a5c5c;
   line-height: 1.5;
@@ -2263,13 +2594,16 @@ function handleReset() {
   border: 1px solid rgba(180, 0, 0, 0.58);
   border-radius: 0;
   color: #d6b0b0;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 13px;
   padding: 8px 10px;
   outline: none;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
   box-shadow:
     inset 0 0 14px rgba(0, 0, 0, 0.78),
     0 0 5px rgba(255, 0, 0, 0.16);
@@ -2293,15 +2627,22 @@ function handleReset() {
   border: 1px solid rgba(180, 0, 0, 0.58);
   border-radius: 0;
   color: #d6b0b0;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
   padding: 8px 28px 8px 10px;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23ff1010' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"), linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23ff1010' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
   background-repeat: no-repeat, no-repeat;
-  background-position: right 8px center, 0 0;
+  background-position:
+    right 8px center,
+    0 0;
   box-shadow:
     inset 0 0 14px rgba(0, 0, 0, 0.78),
     0 0 5px rgba(255, 0, 0, 0.16);
@@ -2330,10 +2671,14 @@ function handleReset() {
   align-items: center;
   gap: 6px;
   color: #8a6a6a;
-  font-family: "Noto Sans SC", sans-serif;
+  font-family: 'Noto Sans SC', sans-serif;
   font-size: 13px;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
   padding: 6px 14px;
   border: 1px solid rgba(120, 0, 0, 0.46);
   border-radius: 0;
@@ -2370,7 +2715,9 @@ function handleReset() {
   border-radius: 50%;
   background: #180000;
   border: 1px solid #9a0000;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .field-textarea {
@@ -2378,7 +2725,7 @@ function handleReset() {
   border: 1px solid rgba(180, 0, 0, 0.58);
   border-radius: 0;
   color: #d6b0b0;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
   padding: 8px 10px;
   outline: none;
@@ -2387,7 +2734,10 @@ function handleReset() {
   line-height: 1.7;
   width: 100%;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
   box-shadow:
     inset 0 0 14px rgba(0, 0, 0, 0.78),
     0 0 5px rgba(255, 0, 0, 0.16);
@@ -2409,7 +2759,7 @@ function handleReset() {
 .char-count {
   text-align: right;
   color: #7a4040;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 9px;
   margin-top: 2px;
   text-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
@@ -2423,8 +2773,7 @@ function handleReset() {
 }
 
 .item-card {
-  background:
-    linear-gradient(180deg, rgba(18, 0, 0, 0.78), rgba(4, 0, 0, 0.9));
+  background: linear-gradient(180deg, rgba(18, 0, 0, 0.78), rgba(4, 0, 0, 0.9));
   border: 1px solid rgba(200, 0, 0, 0.58);
   border-left: 4px solid #d00000;
   padding: 10px 12px;
@@ -2443,7 +2792,7 @@ function handleReset() {
 
 .item-number {
   color: #ff3030;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 10px;
   letter-spacing: 1px;
   text-shadow: 0 0 7px rgba(255, 0, 0, 0.56);
@@ -2478,7 +2827,7 @@ function handleReset() {
   background: linear-gradient(180deg, rgba(28, 0, 0, 0.76), rgba(4, 0, 0, 0.9));
   border: 1px dashed rgba(220, 0, 0, 0.72);
   color: #ff3030;
-  font-family: "Noto Sans SC", sans-serif;
+  font-family: 'Noto Sans SC', sans-serif;
   font-size: 12px;
   font-weight: 700;
   padding: 8px 16px;
@@ -2532,7 +2881,7 @@ function handleReset() {
   margin: 6px 20px 14px;
   padding: 16px 18px;
   color: #ff1010;
-  font-family: "Noto Serif SC", "SimSun", serif;
+  font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 24px;
   font-weight: 900;
   letter-spacing: 5px;
@@ -2561,8 +2910,8 @@ function handleReset() {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-areas:
-    "icon label"
-    "icon value";
+    'icon label'
+    'icon value';
   column-gap: 10px;
   align-items: center;
   min-width: 0;
@@ -2600,7 +2949,7 @@ function handleReset() {
 .survival-icon {
   grid-area: icon;
   color: #ff2020;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 24px;
   text-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
 }
@@ -2608,7 +2957,7 @@ function handleReset() {
 .survival-label {
   grid-area: label;
   color: #9b6666;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 1.6px;
 }
@@ -2658,7 +3007,7 @@ function handleReset() {
 
 .event-file-no {
   color: #8b5c5c;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 9px;
   letter-spacing: 1.2px;
   margin-bottom: 6px;
@@ -2667,7 +3016,7 @@ function handleReset() {
 .event-dossier-card h2 {
   margin: 0 0 12px;
   color: #ff2828;
-  font-family: "Noto Serif SC", "SimSun", serif;
+  font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 18px;
   letter-spacing: 2px;
   line-height: 1.45;
@@ -2711,7 +3060,7 @@ function handleReset() {
   width: 32px;
   height: 32px;
   color: #ff2020;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 19px;
   line-height: 32px;
   text-align: center;
@@ -2727,7 +3076,7 @@ function handleReset() {
 .archive-copy span {
   display: block;
   color: #9b6666;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 1.3px;
   margin-bottom: 4px;
@@ -2761,7 +3110,7 @@ function handleReset() {
 
 .intel-card span {
   color: #ff3030;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 11px;
   letter-spacing: 1px;
   text-shadow: 0 0 7px rgba(255, 0, 0, 0.4);
@@ -2798,7 +3147,7 @@ function handleReset() {
 .runtime-detail-title {
   margin-bottom: 8px;
   color: #ff3030;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.2px;
@@ -2834,7 +3183,7 @@ function handleReset() {
 
 .runtime-detail-head span {
   color: #9b6666;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 9px;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -2872,8 +3221,15 @@ function handleReset() {
 }
 
 @keyframes eye-glow {
-  0%, 100% { opacity: 0.28; text-shadow: none; }
-  50% { opacity: 0.52; text-shadow: 0 0 5px rgba(159, 52, 47, 0.35); }
+  0%,
+  100% {
+    opacity: 0.28;
+    text-shadow: none;
+  }
+  50% {
+    opacity: 0.52;
+    text-shadow: 0 0 5px rgba(159, 52, 47, 0.35);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2906,7 +3262,7 @@ function handleReset() {
 
 .btn {
   flex: 1;
-  font-family: "Noto Sans SC", sans-serif;
+  font-family: 'Noto Sans SC', sans-serif;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -2972,7 +3328,7 @@ function handleReset() {
 
 .footer-warning {
   color: #9a5d5d;
-  font-family: "Noto Serif SC", serif;
+  font-family: 'Noto Serif SC', serif;
   font-size: 10px;
   font-style: italic;
   text-align: center;
@@ -3011,7 +3367,7 @@ function handleReset() {
   background: linear-gradient(90deg, rgba(95, 0, 0, 0.72), rgba(22, 0, 0, 0.66));
   border-left: 7px solid #d80000;
   color: #9d8c8c;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 12px;
   letter-spacing: 1px;
   text-shadow: 0 0 6px rgba(255, 0, 0, 0.24);
@@ -3025,7 +3381,7 @@ function handleReset() {
   gap: 18px;
   margin: 4px 0 16px;
   color: #ff1010;
-  font-family: "Noto Serif SC", "SimSun", serif;
+  font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 25px;
   font-weight: 800;
   letter-spacing: 5px;
@@ -3038,7 +3394,7 @@ function handleReset() {
 
 .warning-cross {
   color: #f20000;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 27px;
   filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.88));
 }
@@ -3057,7 +3413,7 @@ function handleReset() {
 .option-action-text {
   margin-bottom: 18px;
   color: #ff1515;
-  font-family: "Share Tech Mono", "Courier New", monospace;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 4px;
@@ -3089,10 +3445,14 @@ function handleReset() {
   color: #d8abab;
   cursor: pointer;
   text-align: left;
-  font-family: "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 14px;
   line-height: 1.7;
-  transition: border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease, transform 0.12s ease;
+  transition:
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.12s ease;
   outline: none;
   text-shadow: 0 0 6px rgba(255, 0, 0, 0.2);
   box-shadow:
@@ -3122,7 +3482,7 @@ function handleReset() {
   flex-shrink: 0;
   min-width: 32px;
   color: #ff3030;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -3238,5 +3598,4 @@ function handleReset() {
     font-size: 12px;
   }
 }
-
 </style>

@@ -1,1286 +1,1430 @@
 ﻿(function () {
-    'use strict';
-    
-    const SCRIPT_ID = 'acu_visualizer_ui_v20_pagination';
-    const STORAGE_KEY_TABLE_ORDER = 'acu_table_order';
-    const STORAGE_KEY_ACTION_ORDER = 'acu_action_order';
-    const STORAGE_KEY_ACTIVE_TAB = 'acu_active_tab';
-    const STORAGE_KEY_UI_CONFIG = 'acu_ui_config_v18';
-    const STORAGE_KEY_LAST_SNAPSHOT = 'acu_data_snapshot_v18_5'; 
-    const STORAGE_KEY_UI_COLLAPSE = 'acu_ui_collapse_state';
-    const STORAGE_KEY_TABLE_HEIGHTS = 'acu_table_heights';
-    const STORAGE_KEY_REVERSE_TABLES = 'acu_reverse_tables';
-    const STORAGE_KEY_HIDDEN_TABLES = 'acu_hidden_tables';
-    const STORAGE_KEY_TABLE_STYLES = 'acu_table_styles';
-    const STORAGE_KEY_MFRS_CRUD_MIGRATION = 'acu_mfrs_visualizer_crud_migration';
-    const FIXED_DASHBOARD_HOST_ID = 'mfrs-fixed-status-host';
-    const FIXED_DASHBOARD_SLOT_ID = 'mfrs-fixed-dashboard-slot';
-    const FIXED_FRONTEND_SLOT_ID = 'mfrs-fixed-frontend-slot';
-    const FIXED_STATUS_SLOT_ID = 'mfrs-fixed-status-slot';
-    
-    const TAB_DASHBOARD = 'acu_tab_dashboard_home';
-    const TAB_GLOBAL = 'acu_tab_mfrs_global_search';
-    const TAB_RECALL = 'acu_tab_mfrs_recall';
-    const TAB_CONSISTENCY = 'acu_tab_mfrs_consistency';
-    const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
-    const STORAGE_KEY_GLOBAL_QUERY = 'acu_mfrs_global_query_v1';
-    const STORAGE_KEY_RECALL_QUERY = 'acu_mfrs_recall_query_v1';
-    const STORAGE_KEY_RECALL_PINS = 'acu_mfrs_recall_pins_v1';
-    const AUTO_RECALL_PROMPT_ID = 'mfrs_auto_plot_memory_recall';
-    const isVirtualTab = (tableName) => [TAB_DASHBOARD, TAB_GLOBAL, TAB_RECALL, TAB_CONSISTENCY].includes(tableName);
-    const getFrontendConfig = () => {
-        try {
-            const host = window.parent || window;
-            return host.MFRS_DATABASE_FRONTEND_CONFIG || window.MFRS_DATABASE_FRONTEND_CONFIG || {};
-        } catch (e) {
-            return window.MFRS_DATABASE_FRONTEND_CONFIG || {};
-        }
-    };
-    const MFRS_FRONTEND_CONFIG = getFrontendConfig();
-    const MFRS_DASHBOARD_SLOTS = MFRS_FRONTEND_CONFIG.dashboardSlots || [];
-    const MFRS_LEGACY_DASHBOARD_KEYWORDS = MFRS_FRONTEND_CONFIG.legacyDashboardKeywords || [];
-    const MFRS_RECALL_TABLE_RULES = MFRS_FRONTEND_CONFIG.recallTableRules || [];
-    let isDashEditing = false;
+  'use strict';
 
+  const SCRIPT_ID = 'acu_visualizer_ui_v20_pagination';
+  const STORAGE_KEY_TABLE_ORDER = 'acu_table_order';
+  const STORAGE_KEY_ACTION_ORDER = 'acu_action_order';
+  const STORAGE_KEY_ACTIVE_TAB = 'acu_active_tab';
+  const STORAGE_KEY_UI_CONFIG = 'acu_ui_config_v18';
+  const STORAGE_KEY_LAST_SNAPSHOT = 'acu_data_snapshot_v18_5';
+  const STORAGE_KEY_UI_COLLAPSE = 'acu_ui_collapse_state';
+  const STORAGE_KEY_TABLE_HEIGHTS = 'acu_table_heights';
+  const STORAGE_KEY_REVERSE_TABLES = 'acu_reverse_tables';
+  const STORAGE_KEY_HIDDEN_TABLES = 'acu_hidden_tables';
+  const STORAGE_KEY_TABLE_STYLES = 'acu_table_styles';
+  const STORAGE_KEY_MFRS_CRUD_MIGRATION = 'acu_mfrs_visualizer_crud_migration';
+  const FIXED_DASHBOARD_HOST_ID = 'mfrs-fixed-status-host';
+  const FIXED_DASHBOARD_SLOT_ID = 'mfrs-fixed-dashboard-slot';
+  const FIXED_FRONTEND_SLOT_ID = 'mfrs-fixed-frontend-slot';
+  const FIXED_STATUS_SLOT_ID = 'mfrs-fixed-status-slot';
 
-    let isInitialized = false;
-    let isSaving = false;
-    let isEditingOrder = false;
-    let currentDiffMap = new Set();
-    let pendingDeletes = new Set();
-    let observer = null;
-    let isCollapsed = localStorage.getItem(STORAGE_KEY_UI_COLLAPSE) === 'true';
-    let globalScrollTop = 0;
-    let currentPage = 1;
-    let currentSearchTerm = '';
-    let globalSearchTerm = localStorage.getItem(STORAGE_KEY_GLOBAL_QUERY) || '';
-    let recallSearchTerm = localStorage.getItem(STORAGE_KEY_RECALL_QUERY) || '';
-    let lastRecallItemMap = {};
-    let lastAutoRecallResult = null;
-    let autoRecallListenerRegistered = false;
-    let lastGlobalItemMap = {};
-    let lastTableDataError = '';
-    
-    let hideOptionsUntilUpdate = false;
-    let lastOptionDataCheck = '';
+  const TAB_DASHBOARD = 'acu_tab_dashboard_home';
+  const TAB_GLOBAL = 'acu_tab_mfrs_global_search';
+  const TAB_RECALL = 'acu_tab_mfrs_recall';
+  const TAB_CONSISTENCY = 'acu_tab_mfrs_consistency';
+  const STORAGE_KEY_DASH_CONFIG = 'acu_dash_config_v1';
+  const STORAGE_KEY_GLOBAL_QUERY = 'acu_mfrs_global_query_v1';
+  const STORAGE_KEY_RECALL_QUERY = 'acu_mfrs_recall_query_v1';
+  const STORAGE_KEY_RECALL_PINS = 'acu_mfrs_recall_pins_v1';
+  const AUTO_RECALL_PROMPT_ID = 'mfrs_auto_plot_memory_recall';
+  const isVirtualTab = tableName => [TAB_DASHBOARD, TAB_GLOBAL, TAB_RECALL, TAB_CONSISTENCY].includes(tableName);
+  const getFrontendConfig = () => {
+    try {
+      const host = window.parent || window;
+      return host.MFRS_DATABASE_FRONTEND_CONFIG || window.MFRS_DATABASE_FRONTEND_CONFIG || {};
+    } catch (e) {
+      return window.MFRS_DATABASE_FRONTEND_CONFIG || {};
+    }
+  };
+  const MFRS_FRONTEND_CONFIG = getFrontendConfig();
+  const MFRS_DASHBOARD_SLOTS = MFRS_FRONTEND_CONFIG.dashboardSlots || [];
+  const MFRS_LEGACY_DASHBOARD_KEYWORDS = MFRS_FRONTEND_CONFIG.legacyDashboardKeywords || [];
+  const MFRS_RECALL_TABLE_RULES = MFRS_FRONTEND_CONFIG.recallTableRules || [];
+  let isDashEditing = false;
 
-    const UpdateController = {
-        _suppressNext: false,
-        _resetTimer: null,
-        runSilently: async (action) => {
-            UpdateController._suppressNext = true;
-            try {
-                await action();
-            } catch (e) {
-                UpdateController._suppressNext = false;
-                console.error(e);
-            }
-            setTimeout(() => { UpdateController._suppressNext = false; }, 2000);
-        },
-        handleUpdate: () => {
-            if (UpdateController._suppressNext) {
-                clearTimeout(UpdateController._resetTimer);
-                UpdateController._resetTimer = setTimeout(() => {
-                    UpdateController._suppressNext = false; 
-                }, 500);
-                return;
-            }
-            if (isEditingOrder) return;
-            renderInterface();
-        }
-    };
+  let isInitialized = false;
+  let isSaving = false;
+  let isEditingOrder = false;
+  let currentDiffMap = new Set();
+  let pendingDeletes = new Set();
+  let observer = null;
+  let isCollapsed = localStorage.getItem(STORAGE_KEY_UI_COLLAPSE) === 'true';
+  let globalScrollTop = 0;
+  let currentPage = 1;
+  let currentSearchTerm = '';
+  let globalSearchTerm = localStorage.getItem(STORAGE_KEY_GLOBAL_QUERY) || '';
+  let recallSearchTerm = localStorage.getItem(STORAGE_KEY_RECALL_QUERY) || '';
+  let lastRecallItemMap = {};
+  let lastAutoRecallResult = null;
+  let autoRecallListenerRegistered = false;
+  let lastGlobalItemMap = {};
+  let lastTableDataError = '';
 
-    const escapeHtml = (value) => String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  let hideOptionsUntilUpdate = false;
+  let lastOptionDataCheck = '';
 
-    const getHost = () => {
-        try { return window.parent || window; } catch (e) { return window; }
-    };
+  const UpdateController = {
+    _suppressNext: false,
+    _resetTimer: null,
+    runSilently: async action => {
+      UpdateController._suppressNext = true;
+      try {
+        await action();
+      } catch (e) {
+        UpdateController._suppressNext = false;
+        console.error(e);
+      }
+      setTimeout(() => {
+        UpdateController._suppressNext = false;
+      }, 2000);
+    },
+    handleUpdate: () => {
+      if (UpdateController._suppressNext) {
+        clearTimeout(UpdateController._resetTimer);
+        UpdateController._resetTimer = setTimeout(() => {
+          UpdateController._suppressNext = false;
+        }, 500);
+        return;
+      }
+      if (isEditingOrder) return;
+      renderInterface();
+    },
+  };
 
-    const getPath = (source, path, fallback = undefined) => {
-        try {
-            return path.split('.').reduce((obj, key) => obj && obj[key] !== undefined ? obj[key] : undefined, source) ?? fallback;
-        } catch (e) {
-            return fallback;
-        }
-    };
+  const escapeHtml = value =>
+    String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
 
-    const textValue = (value, fallback = '未知') => {
-        if (Array.isArray(value)) {
-            const text = value.map(item => textValue(item, '')).filter(Boolean).join('；');
-            return text || fallback;
-        }
-        if (value && typeof value === 'object') {
-            const text = Object.entries(value).map(([k, v]) => `${k}：${textValue(v, '')}`).filter(Boolean).join('；');
-            return text || fallback;
-        }
-        const text = String(value ?? '').trim();
-        return text || fallback;
-    };
+  const getHost = () => {
+    try {
+      return window.parent || window;
+    } catch (e) {
+      return window;
+    }
+  };
 
-    const findHeaderIndex = (headers, names) => {
-        const wanted = names.map(name => String(name).trim());
-        return headers.findIndex(header => {
-            const text = String(header ?? '').trim();
-            return wanted.some(name => text === name || text.includes(name));
-        });
-    };
+  const getPath = (source, path, fallback = undefined) => {
+    try {
+      return (
+        path.split('.').reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), source) ?? fallback
+      );
+    } catch (e) {
+      return fallback;
+    }
+  };
 
-    const getRowValueByHeader = (headers, row, names, fallback = '') => {
-        const idx = findHeaderIndex(headers, names);
-        if (idx < 0) return fallback;
-        return textValue(row[idx], fallback);
-    };
+  const textValue = (value, fallback = '未知') => {
+    if (Array.isArray(value)) {
+      const text = value
+        .map(item => textValue(item, ''))
+        .filter(Boolean)
+        .join('；');
+      return text || fallback;
+    }
+    if (value && typeof value === 'object') {
+      const text = Object.entries(value)
+        .map(([k, v]) => `${k}：${textValue(v, '')}`)
+        .filter(Boolean)
+        .join('；');
+      return text || fallback;
+    }
+    const text = String(value ?? '').trim();
+    return text || fallback;
+  };
 
-    const isActionSuggestionsTable = (tableName, tableData) => {
-        const key = String(tableData?.key || '');
-        const name = String(tableName || tableData?.name || '');
-        return key === 'sheet_action_suggestions' || name.includes('行动建议');
-    };
+  const findHeaderIndex = (headers, names) => {
+    const wanted = names.map(name => String(name).trim());
+    return headers.findIndex(header => {
+      const text = String(header ?? '').trim();
+      return wanted.some(name => text === name || text.includes(name));
+    });
+  };
 
-    const isSupernaturalItemsTable = (tableName, tableData) => {
-        const key = String(tableData?.key || '');
-        const name = String(tableName || tableData?.name || '');
-        return key === 'sheet_supernatural_items' || name.includes('灵异物品');
-    };
+  const getRowValueByHeader = (headers, row, names, fallback = '') => {
+    const idx = findHeaderIndex(headers, names);
+    if (idx < 0) return fallback;
+    return textValue(row[idx], fallback);
+  };
 
-    const isClueTable = (tableName, tableData) => {
-        const key = String(tableData?.key || '');
-        const name = String(tableName || tableData?.name || '');
-        return key === 'sheet_clues' || name.includes('线索');
-    };
+  const isActionSuggestionsTable = (tableName, tableData) => {
+    const key = String(tableData?.key || '');
+    const name = String(tableName || tableData?.name || '');
+    return key === 'sheet_action_suggestions' || name.includes('行动建议');
+  };
 
-    const isRulesTable = (tableName, tableData) => {
-        const key = String(tableData?.key || '');
-        const name = String(tableName || tableData?.name || '');
-        return key === 'sheet_collected_rules' || name.includes('收录规律');
-    };
+  const isSupernaturalItemsTable = (tableName, tableData) => {
+    const key = String(tableData?.key || '');
+    const name = String(tableName || tableData?.name || '');
+    return key === 'sheet_supernatural_items' || name.includes('灵异物品');
+  };
 
-    const isOptionPanelTable = (tableName, tableData) => {
-        return String(tableName || '').includes('选项') || isActionSuggestionsTable(tableName, tableData);
-    };
+  const isClueTable = (tableName, tableData) => {
+    const key = String(tableData?.key || '');
+    const name = String(tableName || tableData?.name || '');
+    return key === 'sheet_clues' || name.includes('线索');
+  };
 
-    const normalizePromptText = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+  const isRulesTable = (tableName, tableData) => {
+    const key = String(tableData?.key || '');
+    const name = String(tableName || tableData?.name || '');
+    return key === 'sheet_collected_rules' || name.includes('收录规律');
+  };
 
-    const buildActionSuggestionLabel = (headers, row) => {
-        const optionKey = getRowValueByHeader(headers, row, ['选项'], '');
-        const idea = getRowValueByHeader(headers, row, ['思路'], '');
-        return normalizePromptText(`${optionKey ? optionKey + '. ' : ''}${idea || '自定义行动'}`);
-    };
+  const isOptionPanelTable = (tableName, tableData) => {
+    return String(tableName || '').includes('选项') || isActionSuggestionsTable(tableName, tableData);
+  };
 
-    const buildActionSuggestionPrompt = (headers, row) => {
-        const optionKey = getRowValueByHeader(headers, row, ['选项'], '');
-        const idea = getRowValueByHeader(headers, row, ['思路'], '自定义行动');
-        return normalizePromptText(`我选择${optionKey ? optionKey + '：' : '：'}${idea}`);
-    };
+  const normalizePromptText = value =>
+    String(value ?? '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    const buildSupernaturalItemPrompt = (headers, row) => {
-        const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '该灵异物品');
-        const effect = getRowValueByHeader(headers, row, ['效果'], '');
-        const sideEffect = getRowValueByHeader(headers, row, ['副作用'], '');
-        const usageLimit = getRowValueByHeader(headers, row, ['使用限制'], '');
-        const parts = [`我使用灵异物品【${itemName}】。`];
-        if (effect) parts.push(`效果：${effect}。`);
-        if (sideEffect) parts.push(`我会承担副作用：${sideEffect}。`);
-        if (usageLimit) parts.push(`使用限制：${usageLimit}。`);
-        return normalizePromptText(parts.join(''));
-    };
+  const buildActionSuggestionLabel = (headers, row) => {
+    const optionKey = getRowValueByHeader(headers, row, ['选项'], '');
+    const idea = getRowValueByHeader(headers, row, ['思路'], '');
+    return normalizePromptText(`${optionKey ? optionKey + '. ' : ''}${idea || '自定义行动'}`);
+  };
 
-    const buildCluePrompt = (headers, row) => {
-        const clueCode = getRowValueByHeader(headers, row, ['线索编号', '线索编码'], '');
-        const content = getRowValueByHeader(headers, row, ['内容', '线索描述'], '');
-        const inference = getRowValueByHeader(headers, row, ['推断', '推断结论'], '');
-        const credibility = getRowValueByHeader(headers, row, ['可信度', '重要程度'], '');
-        const parts = [`我使用线索【${clueCode || content || '线索'}】。`];
-        if (content) parts.push(`内容：${content}。`);
-        if (inference) parts.push(`推断：${inference}。`);
-        if (credibility) parts.push(`可信度：${credibility}。`);
-        return normalizePromptText(parts.join(''));
-    };
+  const buildActionSuggestionPrompt = (headers, row) => {
+    const optionKey = getRowValueByHeader(headers, row, ['选项'], '');
+    const idea = getRowValueByHeader(headers, row, ['思路'], '自定义行动');
+    return normalizePromptText(`我选择${optionKey ? optionKey + '：' : '：'}${idea}`);
+  };
 
-    const buildRulePrompt = (headers, row) => {
-        const ruleType = getRowValueByHeader(headers, row, ['规律类型', '规律名称'], '');
-        const ruleContent = getRowValueByHeader(headers, row, ['规律内容', '规律描述'], '');
-        const completeness = getRowValueByHeader(headers, row, ['完整度', '完成度'], '');
-        const risk = getRowValueByHeader(headers, row, ['风险备注', '风险'], '');
-        const parts = [`我运用知识【${ruleType || ruleContent || '规律知识'}】。`];
-        if (ruleContent) parts.push(`规律内容：${ruleContent}。`);
-        if (completeness) parts.push(`完整度：${completeness}。`);
-        if (risk) parts.push(`风险：${risk}。`);
-        return normalizePromptText(parts.join(''));
-    };
+  const buildSupernaturalItemPrompt = (headers, row) => {
+    const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '该灵异物品');
+    const effect = getRowValueByHeader(headers, row, ['效果'], '');
+    const sideEffect = getRowValueByHeader(headers, row, ['副作用'], '');
+    const usageLimit = getRowValueByHeader(headers, row, ['使用限制'], '');
+    const parts = [`我使用灵异物品【${itemName}】。`];
+    if (effect) parts.push(`效果：${effect}。`);
+    if (sideEffect) parts.push(`我会承担副作用：${sideEffect}。`);
+    if (usageLimit) parts.push(`使用限制：${usageLimit}。`);
+    return normalizePromptText(parts.join(''));
+  };
 
-    const buildGenericRowText = (tableName, tableData, row, limit = 10) => {
-        const headers = tableData.headers || [];
-        const parts = [];
-        row.forEach((cell, idx) => {
-            if (idx === 0) return;
-            const value = normalizePromptText(cell);
-            if (!value || value === 'auto_merged') return;
-            const header = normalizePromptText(headers[idx] || `字段${idx}`);
-            parts.push(`${header}：${value}`);
-        });
-        return [`【数据库记录】${tableName}`, ...parts.slice(0, limit)].join('\n');
-    };
+  const buildCluePrompt = (headers, row) => {
+    const clueCode = getRowValueByHeader(headers, row, ['线索编号', '线索编码'], '');
+    const content = getRowValueByHeader(headers, row, ['内容', '线索描述'], '');
+    const inference = getRowValueByHeader(headers, row, ['推断', '推断结论'], '');
+    const credibility = getRowValueByHeader(headers, row, ['可信度', '重要程度'], '');
+    const parts = [`我使用线索【${clueCode || content || '线索'}】。`];
+    if (content) parts.push(`内容：${content}。`);
+    if (inference) parts.push(`推断：${inference}。`);
+    if (credibility) parts.push(`可信度：${credibility}。`);
+    return normalizePromptText(parts.join(''));
+  };
 
-    const getGenericRowTitle = (tableName, tableData, row) => {
-        const headers = tableData.headers || [];
-        const preferred = ['名称', '姓名', '事件代号', '地点名', '物品名', '线索编号', '档案编号', '规律类型', '纪要编号'];
-        const value = getRowValueByHeader(headers, row, preferred, '');
-        if (value) return value;
-        return normalizePromptText(row.find((cell, idx) => idx > 0 && normalizePromptText(cell)) || tableName);
-    };
+  const buildRulePrompt = (headers, row) => {
+    const ruleType = getRowValueByHeader(headers, row, ['规律类型', '规律名称'], '');
+    const ruleContent = getRowValueByHeader(headers, row, ['规律内容', '规律描述'], '');
+    const completeness = getRowValueByHeader(headers, row, ['完整度', '完成度'], '');
+    const risk = getRowValueByHeader(headers, row, ['风险备注', '风险'], '');
+    const parts = [`我运用知识【${ruleType || ruleContent || '规律知识'}】。`];
+    if (ruleContent) parts.push(`规律内容：${ruleContent}。`);
+    if (completeness) parts.push(`完整度：${completeness}。`);
+    if (risk) parts.push(`风险：${risk}。`);
+    return normalizePromptText(parts.join(''));
+  };
 
-    const buildRowActionButtons = ({ fillLabel = '填入', fillIcon = 'fa-arrow-up-right-from-square', fillPrompt, copyText }) => {
-        const encodedFill = escapeHtml(encodeURIComponent(fillPrompt || copyText || ''));
-        const encodedCopy = escapeHtml(encodeURIComponent(copyText || fillPrompt || ''));
-        return `
+  const buildGenericRowText = (tableName, tableData, row, limit = 10) => {
+    const headers = tableData.headers || [];
+    const parts = [];
+    row.forEach((cell, idx) => {
+      if (idx === 0) return;
+      const value = normalizePromptText(cell);
+      if (!value || value === 'auto_merged') return;
+      const header = normalizePromptText(headers[idx] || `字段${idx}`);
+      parts.push(`${header}：${value}`);
+    });
+    return [`【数据库记录】${tableName}`, ...parts.slice(0, limit)].join('\n');
+  };
+
+  const getGenericRowTitle = (tableName, tableData, row) => {
+    const headers = tableData.headers || [];
+    const preferred = ['名称', '姓名', '事件代号', '地点名', '物品名', '线索编号', '档案编号', '规律类型', '纪要编号'];
+    const value = getRowValueByHeader(headers, row, preferred, '');
+    if (value) return value;
+    return normalizePromptText(row.find((cell, idx) => idx > 0 && normalizePromptText(cell)) || tableName);
+  };
+
+  const buildRowActionButtons = ({
+    fillLabel = '填入',
+    fillIcon = 'fa-arrow-up-right-from-square',
+    fillPrompt,
+    copyText,
+  }) => {
+    const encodedFill = escapeHtml(encodeURIComponent(fillPrompt || copyText || ''));
+    const encodedCopy = escapeHtml(encodeURIComponent(copyText || fillPrompt || ''));
+    return `
             <button type="button" class="acu-row-action-btn" data-row-action="copy" data-copy="${encodedCopy}" title="复制记录"><i class="fa-solid fa-copy"></i><span>复制</span></button>
             <button type="button" class="acu-row-action-btn" data-row-action="fill" data-prompt="${encodedFill}" title="填入输入框"><i class="fa-solid ${fillIcon}"></i><span>${escapeHtml(fillLabel)}</span></button>
         `;
-    };
+  };
 
-    const buildRowInteractionHtml = (tableName, tableData, row) => {
-        const headers = tableData.headers || [];
-        const copyText = buildGenericRowText(tableName, tableData, row);
-        if (isActionSuggestionsTable(tableName, tableData)) {
-            const label = buildActionSuggestionLabel(headers, row);
-            const prompt = buildActionSuggestionPrompt(headers, row);
-            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '选择', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
-        }
-        if (isSupernaturalItemsTable(tableName, tableData)) {
-            const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '灵异物品');
-            const prompt = buildSupernaturalItemPrompt(headers, row);
-            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-hand-sparkles', fillPrompt: prompt, copyText })}<span>${escapeHtml(itemName)}</span></div>`;
-        }
-        if (isClueTable(tableName, tableData)) {
-            const label = getRowValueByHeader(headers, row, ['线索编号', '内容', '线索描述'], '线索');
-            const prompt = buildCluePrompt(headers, row);
-            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-magnifying-glass', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
-        }
-        if (isRulesTable(tableName, tableData)) {
-            const label = getRowValueByHeader(headers, row, ['规律类型', '规律名称', '规律内容'], '规律');
-            const prompt = buildRulePrompt(headers, row);
-            return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-book-open', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
-        }
-        const label = getGenericRowTitle(tableName, tableData, row);
-        return `<div class="acu-row-actions">${buildRowActionButtons({ fillPrompt: copyText, copyText })}<span>${escapeHtml(label)}</span></div>`;
-    };
+  const buildRowInteractionHtml = (tableName, tableData, row) => {
+    const headers = tableData.headers || [];
+    const copyText = buildGenericRowText(tableName, tableData, row);
+    if (isActionSuggestionsTable(tableName, tableData)) {
+      const label = buildActionSuggestionLabel(headers, row);
+      const prompt = buildActionSuggestionPrompt(headers, row);
+      return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '选择', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
+    }
+    if (isSupernaturalItemsTable(tableName, tableData)) {
+      const itemName = getRowValueByHeader(headers, row, ['物品名', '物品名称'], '灵异物品');
+      const prompt = buildSupernaturalItemPrompt(headers, row);
+      return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-hand-sparkles', fillPrompt: prompt, copyText })}<span>${escapeHtml(itemName)}</span></div>`;
+    }
+    if (isClueTable(tableName, tableData)) {
+      const label = getRowValueByHeader(headers, row, ['线索编号', '内容', '线索描述'], '线索');
+      const prompt = buildCluePrompt(headers, row);
+      return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-magnifying-glass', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
+    }
+    if (isRulesTable(tableName, tableData)) {
+      const label = getRowValueByHeader(headers, row, ['规律类型', '规律名称', '规律内容'], '规律');
+      const prompt = buildRulePrompt(headers, row);
+      return `<div class="acu-row-actions">${buildRowActionButtons({ fillLabel: '使用', fillIcon: 'fa-book-open', fillPrompt: prompt, copyText })}<span>${escapeHtml(label)}</span></div>`;
+    }
+    const label = getGenericRowTitle(tableName, tableData, row);
+    return `<div class="acu-row-actions">${buildRowActionButtons({ fillPrompt: copyText, copyText })}<span>${escapeHtml(label)}</span></div>`;
+  };
 
-    const fillChatInput = (promptText, options = {}) => {
-        const prompt = String(promptText ?? '').trim();
-        if (!prompt) return false;
-        const host = getHost();
-        const parentDoc = host.document || document;
-        const ta = parentDoc.getElementById('send_textarea') || document.getElementById('send_textarea');
-        if (!ta) {
-            if (window.toastr) window.toastr.error('未找到酒馆输入框');
-            return false;
-        }
+  const fillChatInput = (promptText, options = {}) => {
+    const prompt = String(promptText ?? '').trim();
+    if (!prompt) return false;
+    const host = getHost();
+    const parentDoc = host.document || document;
+    const ta = parentDoc.getElementById('send_textarea') || document.getElementById('send_textarea');
+    if (!ta) {
+      if (window.toastr) window.toastr.error('未找到酒馆输入框');
+      return false;
+    }
 
-        const { $ } = getCore();
-        const $ta = $ ? $(ta) : null;
-        const previousPrompt = String(ta._mfrsDbInsertedPrompt || ($ta && $ta.data('mfrs-db-inserted-prompt')) || '').trim();
-        const currentText = String(ta.value || '');
-        let nextText = prompt;
-        if (currentText.trim()) {
-            nextText = previousPrompt && currentText.includes(previousPrompt)
-                ? currentText.replace(previousPrompt, prompt)
-                : `${currentText.trimEnd()}\n${prompt}`;
-        }
+    const { $ } = getCore();
+    const $ta = $ ? $(ta) : null;
+    const previousPrompt = String(
+      ta._mfrsDbInsertedPrompt || ($ta && $ta.data('mfrs-db-inserted-prompt')) || '',
+    ).trim();
+    const currentText = String(ta.value || '');
+    let nextText = prompt;
+    if (currentText.trim()) {
+      nextText =
+        previousPrompt && currentText.includes(previousPrompt)
+          ? currentText.replace(previousPrompt, prompt)
+          : `${currentText.trimEnd()}\n${prompt}`;
+    }
 
-        ta.value = nextText;
-        ta._mfrsDbInsertedPrompt = prompt;
-        if ($ta) $ta.data('mfrs-db-inserted-prompt', prompt);
+    ta.value = nextText;
+    ta._mfrsDbInsertedPrompt = prompt;
+    if ($ta) $ta.data('mfrs-db-inserted-prompt', prompt);
 
-        const eventWindow = ta.ownerDocument?.defaultView || host || window;
-        ta.dispatchEvent(new eventWindow.Event('input', { bubbles: true }));
-        ta.dispatchEvent(new eventWindow.Event('change', { bubbles: true }));
+    const eventWindow = ta.ownerDocument?.defaultView || host || window;
+    ta.dispatchEvent(new eventWindow.Event('input', { bubbles: true }));
+    ta.dispatchEvent(new eventWindow.Event('change', { bubbles: true }));
 
-        if (options.autoSend) {
-            const sendBtn = parentDoc.getElementById('send_but');
-            if (sendBtn) sendBtn.click();
-        } else {
-            ta.focus();
-        }
-        if (window.toastr && options.toast !== false) window.toastr.info('已填入输入框');
+    if (options.autoSend) {
+      const sendBtn = parentDoc.getElementById('send_but');
+      if (sendBtn) sendBtn.click();
+    } else {
+      ta.focus();
+    }
+    if (window.toastr && options.toast !== false) window.toastr.info('已填入输入框');
+    return true;
+  };
+
+  const getRecallTableRule = (tableName, tableData = {}) => {
+    const key = String(tableData.key || tableData.source?.uid || '').trim();
+    const name = String(tableName || tableData.name || '').trim();
+    return MFRS_RECALL_TABLE_RULES.find(rule => rule.key === key || rule.names.some(n => name.includes(n))) || null;
+  };
+
+  const getRecallFieldValue = (headers, row, names, fallback = '') => {
+    const value = getRowValueByHeader(headers, row, names, fallback);
+    return value === fallback ? '' : value;
+  };
+
+  const compactRecallText = (value, limit = 180) => {
+    const text = normalizePromptText(value);
+    if (text.length <= limit) return text;
+    return `${text.slice(0, limit - 1)}…`;
+  };
+
+  const uniqRecallParts = parts => {
+    const seen = new Set();
+    return parts
+      .map(part => normalizePromptText(part))
+      .filter(part => {
+        if (!part || seen.has(part)) return false;
+        seen.add(part);
         return true;
-    };
+      });
+  };
 
-    const getRecallTableRule = (tableName, tableData = {}) => {
-        const key = String(tableData.key || tableData.source?.uid || '').trim();
-        const name = String(tableName || tableData.name || '').trim();
-        return MFRS_RECALL_TABLE_RULES.find(rule => rule.key === key || rule.names.some(n => name.includes(n))) || null;
-    };
+  const getRecallInjectionState = (tableData, rule) => {
+    const cfg = tableData?.source?.exportConfig || tableData?.source || {};
+    if (typeof cfg.extraIndexEnabled === 'boolean') return cfg.extraIndexEnabled;
+    if (typeof tableData?.extraIndexEnabled === 'boolean') return tableData.extraIndexEnabled;
+    return !!rule?.injected;
+  };
 
-    const getRecallFieldValue = (headers, row, names, fallback = '') => {
-        const value = getRowValueByHeader(headers, row, names, fallback);
-        return value === fallback ? '' : value;
-    };
+  const getRecallVisibilityPolicy = rule => {
+    const visibility = rule?.archivePreview?.visibility;
+    if (!visibility || !visibility.header) return null;
+    return visibility;
+  };
 
-    const compactRecallText = (value, limit = 180) => {
-        const text = normalizePromptText(value);
-        if (text.length <= limit) return text;
-        return `${text.slice(0, limit - 1)}…`;
-    };
+  // 共享可见性策略：内部记录线索一律不进入召回/复制/固定提示词链路。
+  // missing='deny' 时缺失可见性字段 fail closed；其余情况按 allowed 白名单判断。
+  const isRecallRowVisible = (headers, row, rule) => {
+    const policy = getRecallVisibilityPolicy(rule);
+    if (!policy) return true;
+    const raw = getRecallFieldValue(headers, row, [policy.header], '');
+    const value = normalizePromptText(raw);
+    if (!value) {
+      return policy.missing !== 'deny';
+    }
+    const allowed = Array.isArray(policy.allowed)
+      ? policy.allowed.map(v => normalizePromptText(v)).filter(Boolean)
+      : [];
+    if (!allowed.length) return true;
+    return allowed.includes(value);
+  };
 
-    const uniqRecallParts = (parts) => {
-        const seen = new Set();
-        return parts
-            .map(part => normalizePromptText(part))
-            .filter(part => {
-                if (!part || seen.has(part)) return false;
-                seen.add(part);
-                return true;
-            });
-    };
+  // 稳定召回 ID：优先 tableKey + row_id，缺失 row_id 才回退 rowIndex。
+  // matchKey 供旧固定项迁移到新稳定 ID 使用。
+  const buildRecallRowIdentity = (tableKey, tableName, headers, row, rowIndex) => {
+    const rowIdRaw = getRecallFieldValue(headers, row, ['row_id'], '');
+    const rowId = String(rowIdRaw || '').trim();
+    const rowLabel = rowId || String(rowIndex + 1);
+    const id = rowId ? `${tableKey || tableName}:rid:${rowId}` : `${tableKey || tableName}:idx:${rowIndex}`;
+    const matchKey = `${tableName}::${rowLabel}`;
+    return { id, rowLabel, matchKey };
+  };
 
-    const getRecallInjectionState = (tableData, rule) => {
-        const cfg = tableData?.source?.exportConfig || tableData?.source || {};
-        if (typeof cfg.extraIndexEnabled === 'boolean') return cfg.extraIndexEnabled;
-        if (typeof tableData?.extraIndexEnabled === 'boolean') return tableData.extraIndexEnabled;
-        return !!rule?.injected;
-    };
+  const buildRecallItemText = item => {
+    const parts = [
+      `【${item.kind}召回】${item.tableName}#${item.rowLabel} ${item.title}`,
+      item.summary ? `摘要：${item.summary}` : '',
+      item.tags.length ? `标签：${item.tags.join(' / ')}` : '',
+      `提示词注入：${item.injected ? '是' : '否'}`,
+    ];
+    return parts.filter(Boolean).join('\n');
+  };
 
-    const getRecallVisibilityPolicy = (rule) => {
-        const visibility = rule?.archivePreview?.visibility;
-        if (!visibility || !visibility.header) return null;
-        return visibility;
-    };
+  const buildPinnedRecallPrompt = items => {
+    const list = (items || []).filter(Boolean).slice(0, 8);
+    if (!list.length) return '';
+    return [
+      '【本轮固定召回】',
+      '请在本轮回复中优先参考以下已固定的剧情/记忆信息，不要把未发生内容当成事实。',
+      ...list.map((item, index) => `${index + 1}. ${buildRecallItemText(item).replace(/\n/g, '；')}`),
+    ].join('\n');
+  };
 
-    // 共享可见性策略：内部记录线索一律不进入召回/复制/固定提示词链路。
-    // missing='deny' 时缺失可见性字段 fail closed；其余情况按 allowed 白名单判断。
-    const isRecallRowVisible = (headers, row, rule) => {
-        const policy = getRecallVisibilityPolicy(rule);
-        if (!policy) return true;
-        const raw = getRecallFieldValue(headers, row, [policy.header], '');
-        const value = normalizePromptText(raw);
-        if (!value) {
-            return policy.missing !== 'deny';
-        }
-        const allowed = Array.isArray(policy.allowed)
-            ? policy.allowed.map(v => normalizePromptText(v)).filter(Boolean)
-            : [];
-        if (!allowed.length) return true;
-        return allowed.includes(value);
-    };
+  const getPinnedRecallItems = () => {
+    try {
+      const items = JSON.parse(localStorage.getItem(STORAGE_KEY_RECALL_PINS) || '[]');
+      return Array.isArray(items) ? items.filter(item => item && item.id) : [];
+    } catch (e) {
+      return [];
+    }
+  };
 
-    // 稳定召回 ID：优先 tableKey + row_id，缺失 row_id 才回退 rowIndex。
-    // matchKey 供旧固定项迁移到新稳定 ID 使用。
-    const buildRecallRowIdentity = (tableKey, tableName, headers, row, rowIndex) => {
-        const rowIdRaw = getRecallFieldValue(headers, row, ['row_id'], '');
-        const rowId = String(rowIdRaw || '').trim();
-        const rowLabel = rowId || String(rowIndex + 1);
-        const id = rowId
-            ? `${tableKey || tableName}:rid:${rowId}`
-            : `${tableKey || tableName}:idx:${rowIndex}`;
-        const matchKey = `${tableName}::${rowLabel}`;
-        return { id, rowLabel, matchKey };
-    };
+  const savePinnedRecallItems = items => {
+    try {
+      localStorage.setItem(STORAGE_KEY_RECALL_PINS, JSON.stringify((items || []).slice(0, 8)));
+    } catch (e) {
+      console.warn('[MFRS Recall] 保存固定召回失败:', e);
+    }
+  };
 
-    const buildRecallItemText = (item) => {
-        const parts = [
-            `【${item.kind}召回】${item.tableName}#${item.rowLabel} ${item.title}`,
-            item.summary ? `摘要：${item.summary}` : '',
-            item.tags.length ? `标签：${item.tags.join(' / ')}` : '',
-            `提示词注入：${item.injected ? '是' : '否'}`,
-        ];
-        return parts.filter(Boolean).join('\n');
-    };
-
-    const buildPinnedRecallPrompt = (items) => {
-        const list = (items || []).filter(Boolean).slice(0, 8);
-        if (!list.length) return '';
-        return [
-            '【本轮固定召回】',
-            '请在本轮回复中优先参考以下已固定的剧情/记忆信息，不要把未发生内容当成事实。',
-            ...list.map((item, index) => `${index + 1}. ${buildRecallItemText(item).replace(/\n/g, '；')}`),
-        ].join('\n');
-    };
-
-    const getPinnedRecallItems = () => {
-        try {
-            const items = JSON.parse(localStorage.getItem(STORAGE_KEY_RECALL_PINS) || '[]');
-            return Array.isArray(items) ? items.filter(item => item && item.id) : [];
-        } catch (e) {
-            return [];
-        }
-    };
-
-    const savePinnedRecallItems = (items) => {
-        try {
-            localStorage.setItem(STORAGE_KEY_RECALL_PINS, JSON.stringify((items || []).slice(0, 8)));
-        } catch (e) {
-            console.warn('[MFRS Recall] 保存固定召回失败:', e);
-        }
-    };
-
-    // 旧版固定召回以 `${tableKey || tableName}:${rowIndex}` 作为 id，且未应用可见性策略，
-    // 可能包含内部记录线索、已被删除/失效的行。读出时与当前“可见召回集合”交叉验证：
-    //   1. 旧 id 可迁移到稳定 id 的，按 table + row label 映射。
-    //   2. 内部线索 / 已删除 / 失效项剔除，并回写净化后的 localStorage。
-    // 调用方可传当前 collectRecallItems 结果做校验；不传则不净化（仅迁移已知旧 id）。
-    const sanitizePinnedRecallItems = (visibleItems) => {
-        const pinned = getPinnedRecallItems();
-        if (!pinned.length) return pinned;
-        const visibleMap = new Map();
-        const visibleMatchKeys = new Set();
-        (visibleItems || []).forEach(item => {
-            if (!item?.id) return;
-            visibleMap.set(item.id, item);
-            if (item.matchKey) visibleMatchKeys.add(item.matchKey);
+  // 旧版固定召回以 `${tableKey || tableName}:${rowIndex}` 作为 id，且未应用可见性策略，
+  // 可能包含内部记录线索、已被删除/失效的行。读出时与当前“可见召回集合”交叉验证：
+  //   1. 旧 id 可迁移到稳定 id 的，按 table + row label 映射。
+  //   2. 内部线索 / 已删除 / 失效项剔除，并回写净化后的 localStorage。
+  // 调用方可传当前 collectRecallItems 结果做校验；不传则不净化（仅迁移已知旧 id）。
+  const sanitizePinnedRecallItems = visibleItems => {
+    const pinned = getPinnedRecallItems();
+    if (!pinned.length) return pinned;
+    const visibleMap = new Map();
+    const visibleMatchKeys = new Set();
+    (visibleItems || []).forEach(item => {
+      if (!item?.id) return;
+      visibleMap.set(item.id, item);
+      if (item.matchKey) visibleMatchKeys.add(item.matchKey);
+    });
+    const migrated = [];
+    const seenIds = new Set();
+    pinned.forEach(old => {
+      // 直接命中稳定 id（新版本）
+      if (visibleMap.has(old.id)) {
+        const fresh = visibleMap.get(old.id);
+        migrated.push({
+          id: fresh.id,
+          tableName: fresh.tableName,
+          rowLabel: fresh.rowLabel,
+          kind: fresh.kind,
+          icon: fresh.icon,
+          title: fresh.title,
+          summary: fresh.summary,
+          tags: fresh.tags || [],
+          injected: !!fresh.injected,
         });
-        const migrated = [];
-        const seenIds = new Set();
-        pinned.forEach(old => {
-            // 直接命中稳定 id（新版本）
-            if (visibleMap.has(old.id)) {
-                const fresh = visibleMap.get(old.id);
-                migrated.push({
-                    id: fresh.id,
-                    tableName: fresh.tableName,
-                    rowLabel: fresh.rowLabel,
-                    kind: fresh.kind,
-                    icon: fresh.icon,
-                    title: fresh.title,
-                    summary: fresh.summary,
-                    tags: fresh.tags || [],
-                    injected: !!fresh.injected,
-                });
-                seenIds.add(fresh.id);
-                return;
-            }
-            // 旧版 id 形如 `${tableKey}:${rowIndex}` / `${tableName}:${rowIndex}`：按 table + rowLabel 映射。
-            // 旧固定项只存了 tableName/rowLabel/title，用 tableName + rowLabel 构造 matchKey 去命中当前可见集合。
-            const tableName = String(old.tableName || '');
-            const rowLabel = String(old.rowLabel || '');
-            const matchKey = rowLabel ? `${tableName}::${rowLabel}` : '';
-            if (matchKey && visibleMatchKeys.has(matchKey)) {
-                // 找到可见集合中第一条匹配项
-                const fresh = (visibleItems || []).find(item => item.matchKey === matchKey);
-                if (fresh && !seenIds.has(fresh.id)) {
-                    migrated.push({
-                        id: fresh.id,
-                        tableName: fresh.tableName,
-                        rowLabel: fresh.rowLabel,
-                        kind: fresh.kind,
-                        icon: fresh.icon,
-                        title: fresh.title,
-                        summary: fresh.summary,
-                        tags: fresh.tags || [],
-                        injected: !!fresh.injected,
-                    });
-                    seenIds.add(fresh.id);
-                    return;
-                }
-            }
-            // 既不在稳定 id 也不在 matchKey 集合中：已删除/失效/内部线索，剔除。
-        });
-        if (migrated.length !== pinned.length) {
-            savePinnedRecallItems(migrated);
+        seenIds.add(fresh.id);
+        return;
+      }
+      // 旧版 id 形如 `${tableKey}:${rowIndex}` / `${tableName}:${rowIndex}`：按 table + rowLabel 映射。
+      // 旧固定项只存了 tableName/rowLabel/title，用 tableName + rowLabel 构造 matchKey 去命中当前可见集合。
+      const tableName = String(old.tableName || '');
+      const rowLabel = String(old.rowLabel || '');
+      const matchKey = rowLabel ? `${tableName}::${rowLabel}` : '';
+      if (matchKey && visibleMatchKeys.has(matchKey)) {
+        // 找到可见集合中第一条匹配项
+        const fresh = (visibleItems || []).find(item => item.matchKey === matchKey);
+        if (fresh && !seenIds.has(fresh.id)) {
+          migrated.push({
+            id: fresh.id,
+            tableName: fresh.tableName,
+            rowLabel: fresh.rowLabel,
+            kind: fresh.kind,
+            icon: fresh.icon,
+            title: fresh.title,
+            summary: fresh.summary,
+            tags: fresh.tags || [],
+            injected: !!fresh.injected,
+          });
+          seenIds.add(fresh.id);
+          return;
         }
-        return migrated;
+      }
+      // 既不在稳定 id 也不在 matchKey 集合中：已删除/失效/内部线索，剔除。
+    });
+    if (migrated.length !== pinned.length) {
+      savePinnedRecallItems(migrated);
+    }
+    return migrated;
+  };
+
+  const pinRecallItem = item => {
+    if (!item || !item.id) return getPinnedRecallItems();
+    const current = getPinnedRecallItems().filter(old => old.id !== item.id);
+    const clean = {
+      id: item.id,
+      tableName: item.tableName,
+      tableKey: item.tableKey || '',
+      rowLabel: item.rowLabel,
+      kind: item.kind,
+      icon: item.icon || 'fa-thumbtack',
+      title: item.title,
+      summary: item.summary,
+      tags: item.tags || [],
+      injected: !!item.injected,
     };
+    const next = [clean, ...current].slice(0, 8);
+    savePinnedRecallItems(next);
+    return next;
+  };
 
-    const pinRecallItem = (item) => {
-        if (!item || !item.id) return getPinnedRecallItems();
-        const current = getPinnedRecallItems().filter(old => old.id !== item.id);
-        const clean = {
-            id: item.id,
-            tableName: item.tableName,
-            tableKey: item.tableKey || '',
-            rowLabel: item.rowLabel,
-            kind: item.kind,
-            icon: item.icon || 'fa-thumbtack',
-            title: item.title,
-            summary: item.summary,
-            tags: item.tags || [],
-            injected: !!item.injected,
-        };
-        const next = [clean, ...current].slice(0, 8);
-        savePinnedRecallItems(next);
-        return next;
-    };
+  const unpinRecallItem = id => {
+    const next = getPinnedRecallItems().filter(item => item.id !== id);
+    savePinnedRecallItems(next);
+    return next;
+  };
 
-    const unpinRecallItem = (id) => {
-        const next = getPinnedRecallItems().filter(item => item.id !== id);
-        savePinnedRecallItems(next);
-        return next;
-    };
-
-    const copyTextToClipboard = async (text) => {
-        const value = String(text || '');
-        if (!value) return false;
-        try {
-            const nav = getHost().navigator || navigator;
-            if (nav?.clipboard?.writeText) {
-                await nav.clipboard.writeText(value);
-                return true;
-            }
-        } catch (e) {
-            console.warn('[MFRS Recall] Clipboard API 不可用，尝试 fallback。', e);
-        }
-        try {
-            const doc = getHostDocument();
-            const ta = doc.createElement('textarea');
-            ta.value = value;
-            ta.style.position = 'fixed';
-            ta.style.left = '-9999px';
-            doc.body.appendChild(ta);
-            ta.select();
-            const ok = doc.execCommand('copy');
-            ta.remove();
-            return ok;
-        } catch (e) {
-            console.warn('[MFRS Recall] fallback 复制失败:', e);
-            return false;
-        }
-    };
-
-    const downloadJsonFile = (data, filename) => {
-        const doc = getHostDocument();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = doc.createElement('a');
-        a.href = url;
-        a.download = filename;
-        doc.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    };
-
-    const getFrontendBridge = () => {
-        const host = getHost();
-        return host.MysteryDatabaseFrontend || window.MysteryDatabaseFrontend || null;
-    };
-
-    const readAcuStoredConfig = () => {
-        const parse = (storage, key) => {
-            try {
-                const raw = storage?.getItem?.(key);
-                return raw ? JSON.parse(raw) : null;
-            } catch (e) {
-                return null;
-            }
-        };
-        try {
-            const storage = getHost().localStorage || localStorage;
-            const globalMeta = parse(storage, 'shujuku_v120_globalMeta_v1') || parse(storage, 'shujuku_v34_globalMeta_v1') || {};
-            const candidates = [
-                parse(storage, 'shujuku_v120_allSettings_v2'),
-                parse(storage, 'shujuku_v34_allSettings_v2'),
-            ].filter(Boolean);
-            for (let i = 0; i < storage.length; i++) {
-                const key = storage.key(i);
-                if (key && key.includes('_profile_v1') && key.endsWith('__settings')) {
-                    const value = parse(storage, key);
-                    if (value) candidates.push(value);
-                }
-            }
-            const settings = candidates.find(item => item?.plotSettings || item?.summaryVectorIndexModeDefault !== undefined) || candidates[0] || {};
-            return { settings, globalMeta };
-        } catch (e) {
-            return { settings: {}, globalMeta: {} };
-        }
-    };
-
-    const collectRecallItems = (tables, query = '') => {
-        const q = normalizePromptText(query).toLowerCase();
-        const items = [];
-        Object.keys(tables || {}).forEach(tableName => {
-            const table = tables[tableName];
-            const rule = getRecallTableRule(tableName, table);
-            if (!rule || !Array.isArray(table?.rows)) return;
-            const headers = table.headers || [];
-            const injected = getRecallInjectionState(table, rule);
-            table.rows.forEach((row, rowIndex) => {
-                if (!Array.isArray(row)) return;
-                // 共享可见性策略：在构造任何召回文本前过滤内部记录线索。
-                if (!isRecallRowVisible(headers, row, rule)) return;
-                const rowText = row.map(cell => normalizePromptText(cell)).filter(Boolean).join(' ');
-                if (q && !rowText.toLowerCase().includes(q) && !tableName.toLowerCase().includes(q)) return;
-                const identity = buildRecallRowIdentity(table.key, tableName, headers, row, rowIndex);
-                const rowLabel = identity.rowLabel;
-                const title = getRecallFieldValue(headers, row, rule.titleHeaders, '') || `${tableName} ${rowLabel}`;
-                const summaryParts = uniqRecallParts(rule.summaryHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
-                const tagParts = uniqRecallParts(rule.tagHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
-                const summary = compactRecallText(summaryParts.join('；') || rowText, 220);
-                let score = 0;
-                if (q) {
-                    const titleLower = title.toLowerCase();
-                    const summaryLower = summary.toLowerCase();
-                    if (titleLower.includes(q)) score += 10;
-                    if (summaryLower.includes(q)) score += 5;
-                    if (tagParts.join(' ').toLowerCase().includes(q)) score += 3;
-                }
-                items.push({
-                    id: identity.id,
-                    matchKey: identity.matchKey,
-                    tableName,
-                    tableKey: table.key,
-                    rowIndex,
-                    rowLabel,
-                    kind: rule.kind,
-                    icon: rule.icon,
-                    title: compactRecallText(title, 80),
-                    summary,
-                    tags: tagParts.slice(0, 5),
-                    injected,
-                    searchText: `${tableName} ${title} ${summary} ${tagParts.join(' ')} ${rowText}`,
-                    score,
-                });
-            });
-        });
-        return items
-            .sort((a, b) => {
-                if (b.score !== a.score) return b.score - a.score;
-                if (a.tableKey === 'sheet_chronicle' && b.tableKey === 'sheet_chronicle') return b.rowIndex - a.rowIndex;
-                if (a.tableKey === 'sheet_chronicle') return -1;
-                if (b.tableKey === 'sheet_chronicle') return 1;
-                return a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex;
-            })
-            .slice(0, 80);
-    };
-
-    const AUTO_RECALL_STOPWORDS = new Set([
-        '当前', '现在', '刚才', '然后', '继续', '需要', '应该', '可以', '这个', '那个', '什么', '怎么', '为什么',
-        '玩家', '用户', '助手', '回复', '剧情', '记忆', '召回', '信息', '内容', '数据', '状态', '进行', '没有',
-    ]);
-
-    const clampRecallNumber = (value, min, max, fallback) => {
-        const num = Number(value);
-        if (!Number.isFinite(num)) return fallback;
-        return Math.max(min, Math.min(max, Math.round(num)));
-    };
-
-    const getAutoRecallConfig = () => {
-        const config = getConfig();
-        return {
-            plotEnabled: config.autoPlotRecallEnabled !== false,
-            memoryEnabled: config.autoMemoryRecallEnabled !== false,
-            maxItems: clampRecallNumber(config.autoRecallMaxItems, 2, 16, 8),
-            maxChars: clampRecallNumber(config.autoRecallMaxChars, 800, 6000, 2400),
-            recentMessages: clampRecallNumber(config.autoRecallRecentMessages, 2, 20, 8),
-        };
-    };
-
-    const getAutoRecallBucket = (item) => String(item?.kind || '') === '记忆' ? 'memory' : 'plot';
-
-    const isAutoRecallKindEnabled = (item, config = getAutoRecallConfig()) => {
-        const bucket = getAutoRecallBucket(item);
-        return bucket === 'memory' ? config.memoryEnabled : config.plotEnabled;
-    };
-
-    const getCurrentInputText = () => {
-        try {
-            const doc = getHostDocument();
-            const ta = doc.getElementById('send_textarea') || document.getElementById('send_textarea');
-            return normalizePromptText(ta?.value || '');
-        } catch (e) {
-            return '';
-        }
-    };
-
-    const readRecentChatTexts = (limit = 8) => {
-        const out = [];
-        try {
-            const context = getSillyTavernContext();
-            const chat = Array.isArray(context?.chat) ? context.chat : [];
-            chat.slice(-limit).forEach(msg => {
-                const text = normalizePromptText(msg?.mes || msg?.message || msg?.text || '');
-                if (text) out.push(`${msg?.is_user ? '用户' : 'AI'}：${text}`);
-            });
-        } catch (e) {}
-        if (out.length) return out;
-        try {
-            const doc = getHostDocument();
-            Array.from(doc.querySelectorAll('#chat .mes')).slice(-limit).forEach(node => {
-                const text = normalizePromptText(node.textContent || '');
-                if (text) out.push(text);
-            });
-        } catch (e) {}
-        return out;
-    };
-
-    const buildAutoRecallContextText = (config = getAutoRecallConfig()) => {
-        const parts = [...readRecentChatTexts(config.recentMessages), getCurrentInputText()];
-        return normalizePromptText(parts.filter(Boolean).join('\n')).slice(-12000);
-    };
-
-    const addAutoRecallKeyword = (set, value) => {
-        const text = normalizePromptText(value)
-            .replace(/^[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+|[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+$/g, '');
-        if (!text || text.length < 2 || text.length > 24) return;
-        if (/^\d+$/.test(text) || AUTO_RECALL_STOPWORDS.has(text)) return;
-        set.add(text);
-    };
-
-    const extractAutoRecallKeywords = (contextText, items = []) => {
-        const keywords = new Set();
-        const text = normalizePromptText(contextText);
-        const lower = text.toLowerCase();
-        const domainPatterns = [
-            /[\u4e00-\u9fa5A-Za-z0-9_]{0,8}(?:厉鬼|鬼域|鬼奴|鬼差|鬼眼|鬼烛|鬼镜|鬼|杀人规律|规律|灵异物品|线索|档案|事件|地点|驭鬼者|总部)[\u4e00-\u9fa5A-Za-z0-9_]{0,8}/g,
-            /[A-Za-z][A-Za-z0-9_-]{1,31}/g,
-        ];
-        domainPatterns.forEach(pattern => {
-            for (const match of text.matchAll(pattern)) addAutoRecallKeyword(keywords, match[0]);
-        });
-        text.split(/[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+/)
-            .forEach(part => addAutoRecallKeyword(keywords, part));
-        items.forEach(item => {
-            [item.title, ...(item.tags || [])].forEach(term => {
-                const clean = normalizePromptText(term);
-                if (clean.length >= 2 && lower.includes(clean.toLowerCase())) addAutoRecallKeyword(keywords, clean);
-            });
-        });
-        return Array.from(keywords).sort((a, b) => b.length - a.length).slice(0, 24);
-    };
-
-    const mergePinnedRecallCandidates = (items, pinnedOverride) => {
-        const byId = new Map();
-        (items || []).forEach(item => {
-            if (item?.id) byId.set(item.id, item);
-        });
-        const pinned = Array.isArray(pinnedOverride) ? pinnedOverride : getPinnedRecallItems();
-        pinned.forEach(item => {
-            if (!item?.id || byId.has(item.id)) return;
-            byId.set(item.id, {
-                ...item,
-                tags: item.tags || [],
-                icon: item.icon || 'fa-thumbtack',
-                tableKey: item.tableKey || '',
-                rowIndex: Number.isFinite(item.rowIndex) ? item.rowIndex : 0,
-                searchText: `${item.tableName || ''} ${item.title || ''} ${item.summary || ''} ${(item.tags || []).join(' ')}`,
-            });
-        });
-        return Array.from(byId.values());
-    };
-
-    const scoreAutoRecallItem = (item, keywords, pinnedIds) => {
-        let score = pinnedIds.has(item.id) ? 80 : 0;
-        const hits = pinnedIds.has(item.id) ? ['固定'] : [];
-        const title = normalizePromptText(item.title).toLowerCase();
-        const tags = normalizePromptText((item.tags || []).join(' ')).toLowerCase();
-        const summary = normalizePromptText(item.summary).toLowerCase();
-        const haystack = normalizePromptText(item.searchText || `${item.tableName} ${item.kind} ${item.title} ${item.summary} ${(item.tags || []).join(' ')}`).toLowerCase();
-        keywords.forEach(keyword => {
-            const k = String(keyword || '').toLowerCase();
-            if (!k || k.length < 2) return;
-            let matched = false;
-            if (title.includes(k)) { score += 18; matched = true; }
-            else if (tags.includes(k)) { score += 12; matched = true; }
-            else if (summary.includes(k)) { score += 7; matched = true; }
-            else if (haystack.includes(k)) { score += 4; matched = true; }
-            if (matched && !hits.includes(keyword)) hits.push(keyword);
-        });
-        return { score, hits: hits.slice(0, 5) };
-    };
-
-    const fitAutoRecallBudget = (items, config) => {
-        const selected = [];
-        let used = 0;
-        for (const item of items) {
-            if (selected.length >= config.maxItems) break;
-            const text = buildRecallItemText(item).replace(/\n/g, '；');
-            const nextUsed = used + text.length + 8;
-            if (selected.length && nextUsed > config.maxChars) continue;
-            selected.push(item);
-            used = nextUsed;
-        }
-        return selected;
-    };
-
-    const buildAutoRecallPrompt = (result) => {
-        const items = (result?.items || []).filter(Boolean);
-        if (!items.length) return '';
-        const keywords = (result.keywords || []).slice(0, 10).join(' / ') || '无显式关键词';
-        return [
-            '<自动剧情记忆召回>',
-            '以下内容由神秘复苏数据库前端按当前对话自动筛选，用于防止高楼层遗忘。只参考已记录事实；若与最新对话或当前 MVU 状态冲突，以最新上下文为准。',
-            `命中关键词：${keywords}`,
-            ...items.map((item, index) => `${index + 1}. ${buildRecallItemText(item).replace(/\n/g, '；')}`),
-            '</自动剧情记忆召回>',
-        ].join('\n');
-    };
-
-    const buildAutoRecallResult = (tables) => {
-        const config = getAutoRecallConfig();
-        const enabled = config.plotEnabled || config.memoryEnabled;
-        const baseItems = collectRecallItems(tables || {}, '');
-        // 读旧固定项时应用共享可见性策略并迁移到稳定 id：内部线索/已删除项不进入自动召回。
-        const pinnedItems = sanitizePinnedRecallItems(baseItems);
-        const candidates = mergePinnedRecallCandidates(baseItems, pinnedItems).filter(item => isAutoRecallKindEnabled(item, config));
-        const pinnedIds = new Set(pinnedItems.map(item => item.id));
-        const contextText = buildAutoRecallContextText(config);
-        const keywords = extractAutoRecallKeywords(contextText, candidates);
-        if (!enabled) {
-            return { config, enabled, contextText, keywords, items: [], prompt: '', updatedAt: Date.now(), injected: false };
-        }
-        const scored = candidates.map(item => {
-            const { score, hits } = scoreAutoRecallItem(item, keywords, pinnedIds);
-            const tags = uniqRecallParts([...(item.tags || []), ...hits.map(hit => `命中:${hit}`)]).slice(0, 6);
-            return { ...item, tags, autoInjected: true, injected: true, autoScore: score, autoMatchedKeywords: hits };
-        });
-        const selectedByScore = scored
-            .filter(item => item.autoScore > 0)
-            .sort((a, b) => {
-                if (b.autoScore !== a.autoScore) return b.autoScore - a.autoScore;
-                if ((b.rowIndex || 0) !== (a.rowIndex || 0)) return (b.rowIndex || 0) - (a.rowIndex || 0);
-                return String(a.tableName || '').localeCompare(String(b.tableName || ''), 'zh-CN');
-            });
-        const selectedIds = new Set(selectedByScore.map(item => item.id));
-        const fallbackChronicle = config.memoryEnabled
-            ? scored
-                .filter(item => item.tableKey === 'sheet_chronicle' && !selectedIds.has(item.id))
-                .sort((a, b) => (b.rowIndex || 0) - (a.rowIndex || 0))
-                .slice(0, 2)
-            : [];
-        const items = fitAutoRecallBudget([...selectedByScore, ...fallbackChronicle], config);
-        const result = { config, enabled, contextText, keywords, items, updatedAt: Date.now(), injected: false };
-        result.prompt = buildAutoRecallPrompt(result);
-        return result;
-    };
-
-    const buildAutoRecallResultFromCurrentData = () => {
-        const rawData = getTableData();
-        const tables = rawData ? (processJsonData(rawData) || {}) : {};
-        return buildAutoRecallResult(tables);
-    };
-
-    const getPromptInjectionApi = () => {
-        const host = getHost();
-        const th = host.TavernHelper || window.TavernHelper || {};
-        return {
-            injectPrompts: th.injectPrompts || (typeof injectPrompts === 'function' ? injectPrompts : null) || host.injectPrompts || window.injectPrompts,
-            uninjectPrompts: th.uninjectPrompts || (typeof uninjectPrompts === 'function' ? uninjectPrompts : null) || host.uninjectPrompts || window.uninjectPrompts,
-        };
-    };
-
-    const injectAutoRecallPrompt = (result) => {
-        const prompt = result?.prompt || buildAutoRecallPrompt(result);
-        if (!prompt) return false;
-        const api = getPromptInjectionApi();
-        if (typeof api.injectPrompts !== 'function') {
-            console.warn('[MFRS Auto Recall] injectPrompts 不可用，自动召回未注入。');
-            return false;
-        }
-        try {
-            if (typeof api.uninjectPrompts === 'function') api.uninjectPrompts([AUTO_RECALL_PROMPT_ID]);
-        } catch (e) {}
-        api.injectPrompts([{
-            id: AUTO_RECALL_PROMPT_ID,
-            position: 'in_chat',
-            depth: 4,
-            role: 'system',
-            content: prompt,
-            should_scan: true,
-        }], { once: true });
+  const copyTextToClipboard = async text => {
+    const value = String(text || '');
+    if (!value) return false;
+    try {
+      const nav = getHost().navigator || navigator;
+      if (nav?.clipboard?.writeText) {
+        await nav.clipboard.writeText(value);
         return true;
-    };
+      }
+    } catch (e) {
+      console.warn('[MFRS Recall] Clipboard API 不可用，尝试 fallback。', e);
+    }
+    try {
+      const doc = getHostDocument();
+      const ta = doc.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      doc.body.appendChild(ta);
+      ta.select();
+      const ok = doc.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) {
+      console.warn('[MFRS Recall] fallback 复制失败:', e);
+      return false;
+    }
+  };
 
-    const handleAutoRecallGeneration = () => {
-        const result = buildAutoRecallResultFromCurrentData();
-        const injected = injectAutoRecallPrompt(result);
-        lastAutoRecallResult = { ...result, injected, updatedAt: Date.now() };
-        if (injected) {
-            console.info(`[MFRS Auto Recall] 已注入自动剧情/记忆召回：${result.items.length} 条。`);
+  const downloadJsonFile = (data, filename) => {
+    const doc = getHostDocument();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = doc.createElement('a');
+    a.href = url;
+    a.download = filename;
+    doc.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const getFrontendBridge = () => {
+    const host = getHost();
+    return host.MysteryDatabaseFrontend || window.MysteryDatabaseFrontend || null;
+  };
+
+  const readAcuStoredConfig = () => {
+    const parse = (storage, key) => {
+      try {
+        const raw = storage?.getItem?.(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    try {
+      const storage = getHost().localStorage || localStorage;
+      const globalMeta =
+        parse(storage, 'shujuku_v120_globalMeta_v1') || parse(storage, 'shujuku_v34_globalMeta_v1') || {};
+      const candidates = [
+        parse(storage, 'shujuku_v120_allSettings_v2'),
+        parse(storage, 'shujuku_v34_allSettings_v2'),
+      ].filter(Boolean);
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i);
+        if (key && key.includes('_profile_v1') && key.endsWith('__settings')) {
+          const value = parse(storage, key);
+          if (value) candidates.push(value);
         }
-        return injected;
-    };
+      }
+      const settings =
+        candidates.find(item => item?.plotSettings || item?.summaryVectorIndexModeDefault !== undefined) ||
+        candidates[0] ||
+        {};
+      return { settings, globalMeta };
+    } catch (e) {
+      return { settings: {}, globalMeta: {} };
+    }
+  };
 
-    const registerAutoRecallInjection = () => {
-        if (autoRecallListenerRegistered) return true;
-        const host = getHost();
-        const localEventOn = (typeof eventOn === 'function' ? eventOn : null) || host.eventOn || window.eventOn;
-        const localTavernEvents = (typeof tavern_events !== 'undefined' ? tavern_events : null) || host.tavern_events || window.tavern_events || {};
-        const eventName = localTavernEvents.GENERATION_AFTER_COMMANDS || 'GENERATION_AFTER_COMMANDS';
-        const listener = (_type, _option, dryRun) => {
-            if (dryRun) return;
-            handleAutoRecallGeneration();
-        };
-        if (typeof localEventOn === 'function') {
-            localEventOn(eventName, listener);
-            autoRecallListenerRegistered = true;
-            return true;
+  const collectRecallItems = (tables, query = '') => {
+    const q = normalizePromptText(query).toLowerCase();
+    const items = [];
+    Object.keys(tables || {}).forEach(tableName => {
+      const table = tables[tableName];
+      const rule = getRecallTableRule(tableName, table);
+      if (!rule || !Array.isArray(table?.rows)) return;
+      const headers = table.headers || [];
+      const injected = getRecallInjectionState(table, rule);
+      table.rows.forEach((row, rowIndex) => {
+        if (!Array.isArray(row)) return;
+        // 共享可见性策略：在构造任何召回文本前过滤内部记录线索。
+        if (!isRecallRowVisible(headers, row, rule)) return;
+        const rowText = row
+          .map(cell => normalizePromptText(cell))
+          .filter(Boolean)
+          .join(' ');
+        if (q && !rowText.toLowerCase().includes(q) && !tableName.toLowerCase().includes(q)) return;
+        const identity = buildRecallRowIdentity(table.key, tableName, headers, row, rowIndex);
+        const rowLabel = identity.rowLabel;
+        const title = getRecallFieldValue(headers, row, rule.titleHeaders, '') || `${tableName} ${rowLabel}`;
+        const summaryParts = uniqRecallParts(
+          rule.summaryHeaders.map(name => getRecallFieldValue(headers, row, [name], '')),
+        );
+        const tagParts = uniqRecallParts(rule.tagHeaders.map(name => getRecallFieldValue(headers, row, [name], '')));
+        const summary = compactRecallText(summaryParts.join('；') || rowText, 220);
+        let score = 0;
+        if (q) {
+          const titleLower = title.toLowerCase();
+          const summaryLower = summary.toLowerCase();
+          if (titleLower.includes(q)) score += 10;
+          if (summaryLower.includes(q)) score += 5;
+          if (tagParts.join(' ').toLowerCase().includes(q)) score += 3;
         }
-        try {
-            const context = getSillyTavernContext();
-            const eventSource = context?.eventSource || host.eventSource;
-            const eventTypes = context?.eventTypes || context?.event_types || host.event_types || {};
-            const nativeEventName = eventTypes.GENERATION_AFTER_COMMANDS || eventName;
-            if (eventSource && typeof eventSource.on === 'function') {
-                eventSource.on(nativeEventName, listener);
-                autoRecallListenerRegistered = true;
-                return true;
-            }
-        } catch (e) {
-            console.warn('[MFRS Auto Recall] 注册生成前召回监听失败:', e);
-        }
-        console.warn('[MFRS Auto Recall] 未找到 GENERATION_AFTER_COMMANDS 事件通道，自动召回暂不可用。');
-        return false;
-    };
+        items.push({
+          id: identity.id,
+          matchKey: identity.matchKey,
+          tableName,
+          tableKey: table.key,
+          rowIndex,
+          rowLabel,
+          kind: rule.kind,
+          icon: rule.icon,
+          title: compactRecallText(title, 80),
+          summary,
+          tags: tagParts.slice(0, 5),
+          injected,
+          searchText: `${tableName} ${title} ${summary} ${tagParts.join(' ')} ${rowText}`,
+          score,
+        });
+      });
+    });
+    return items
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (a.tableKey === 'sheet_chronicle' && b.tableKey === 'sheet_chronicle') return b.rowIndex - a.rowIndex;
+        if (a.tableKey === 'sheet_chronicle') return -1;
+        if (b.tableKey === 'sheet_chronicle') return 1;
+        return a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex;
+      })
+      .slice(0, 80);
+  };
 
-    const buildRecallHealthChecks = (tables) => {
-        const api = getCore().getDB();
-        const tableNames = Object.keys(tables || {});
-        const settingsSnapshot = readAcuStoredConfig();
-        const settings = settingsSnapshot.settings || {};
-        const globalMeta = settingsSnapshot.globalMeta || {};
-        const chronicle = tableNames.map(name => tables[name]).find(table => table?.key === 'sheet_chronicle' || String(table?.name || '').includes('事件纪要'));
-        const matchedRecallTables = tableNames.filter(name => getRecallTableRule(name, tables[name]));
-        const plotEnabled = settings?.plotSettings?.enabled === true || (api?.getPlotPresetNames && api.getPlotPresetNames().length > 0);
-        const vectorEnabled = settings?.summaryVectorIndexModeDefault === true
-            || settings?.summaryVectorIndexModeEnabled === true
-            || globalMeta?.summaryVectorIndexModeGlobal === true;
-        return [
-            {
-                label: 'AutoCardUpdaterAPI',
-                value: api?.exportTableAsJson ? '可用' : '不可用',
-                status: api?.exportTableAsJson ? 'ok' : 'error',
-            },
-            {
-                label: '14表模板',
-                value: `${tableNames.length}/14`,
-                status: tableNames.length >= 14 ? 'ok' : 'warn',
-            },
-            {
-                label: '事件纪要',
-                value: `${chronicle?.rows?.length || 0} 行`,
-                status: (chronicle?.rows?.length || 0) > 0 ? 'ok' : 'warn',
-            },
-            {
-                label: '召回索引表',
-                value: `${matchedRecallTables.length} 张`,
-                status: matchedRecallTables.length >= 6 ? 'ok' : 'warn',
-            },
-            {
-                label: '剧情召回',
-                value: plotEnabled ? '已启用/有预设' : '未确认',
-                status: plotEnabled ? 'ok' : 'warn',
-            },
-            {
-                label: '向量召回',
-                value: vectorEnabled ? '已启用' : '未启用',
-                status: vectorEnabled ? 'ok' : 'warn',
-            },
-        ];
-    };
+  const AUTO_RECALL_STOPWORDS = new Set([
+    '当前',
+    '现在',
+    '刚才',
+    '然后',
+    '继续',
+    '需要',
+    '应该',
+    '可以',
+    '这个',
+    '那个',
+    '什么',
+    '怎么',
+    '为什么',
+    '玩家',
+    '用户',
+    '助手',
+    '回复',
+    '剧情',
+    '记忆',
+    '召回',
+    '信息',
+    '内容',
+    '数据',
+    '状态',
+    '进行',
+    '没有',
+  ]);
 
-    const getTableDisplayText = (tableName, tableData) => {
-        const headers = tableData?.headers || [];
-        const rows = tableData?.rows || [];
-        return rows.map(row => buildGenericRowText(tableName, tableData, row, headers.length)).join('\n');
-    };
+  const clampRecallNumber = (value, min, max, fallback) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return fallback;
+    return Math.max(min, Math.min(max, Math.round(num)));
+  };
 
-    const getTableLatestMarker = (tableData) => {
-        const headers = tableData?.headers || [];
-        const rows = tableData?.rows || [];
-        const timeIdx = headers.findIndex(header => /时间|日期|更新|发现|记录/.test(String(header || '')));
-        if (timeIdx < 0) return '无时间字段';
-        for (let i = rows.length - 1; i >= 0; i--) {
-            const value = normalizePromptText(rows[i]?.[timeIdx]);
-            if (value) return value;
-        }
-        return '未填写';
+  const getAutoRecallConfig = () => {
+    const config = getConfig();
+    return {
+      plotEnabled: config.autoPlotRecallEnabled !== false,
+      memoryEnabled: config.autoMemoryRecallEnabled !== false,
+      maxItems: clampRecallNumber(config.autoRecallMaxItems, 2, 16, 8),
+      maxChars: clampRecallNumber(config.autoRecallMaxChars, 800, 6000, 2400),
+      recentMessages: clampRecallNumber(config.autoRecallRecentMessages, 2, 20, 8),
     };
+  };
 
-    const getTableIssues = (tableData) => {
-        const headers = tableData?.headers || [];
-        const rows = tableData?.rows || [];
-        const issues = [];
-        if (!headers.length) issues.push('缺少表头');
-        if (!rows.length) issues.push('空表');
-        const rowIdIdx = findHeaderIndex(headers, ['row_id']);
-        if (rowIdIdx >= 0) {
-            const missing = rows.filter(row => !normalizePromptText(row?.[rowIdIdx])).length;
-            if (missing) issues.push(`${missing} 行 row_id 为空`);
-        }
-        const mismatch = rows.filter(row => Array.isArray(row) && row.length !== headers.length).length;
-        if (mismatch) issues.push(`${mismatch} 行列数异常`);
-        return issues;
+  const getAutoRecallBucket = item => (String(item?.kind || '') === '记忆' ? 'memory' : 'plot');
+
+  const isAutoRecallKindEnabled = (item, config = getAutoRecallConfig()) => {
+    const bucket = getAutoRecallBucket(item);
+    return bucket === 'memory' ? config.memoryEnabled : config.plotEnabled;
+  };
+
+  const getCurrentInputText = () => {
+    try {
+      const doc = getHostDocument();
+      const ta = doc.getElementById('send_textarea') || document.getElementById('send_textarea');
+      return normalizePromptText(ta?.value || '');
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const readRecentChatTexts = (limit = 8) => {
+    const out = [];
+    try {
+      const context = getSillyTavernContext();
+      const chat = Array.isArray(context?.chat) ? context.chat : [];
+      chat.slice(-limit).forEach(msg => {
+        const text = normalizePromptText(msg?.mes || msg?.message || msg?.text || '');
+        if (text) out.push(`${msg?.is_user ? '用户' : 'AI'}：${text}`);
+      });
+    } catch (e) {}
+    if (out.length) return out;
+    try {
+      const doc = getHostDocument();
+      Array.from(doc.querySelectorAll('#chat .mes'))
+        .slice(-limit)
+        .forEach(node => {
+          const text = normalizePromptText(node.textContent || '');
+          if (text) out.push(text);
+        });
+    } catch (e) {}
+    return out;
+  };
+
+  const buildAutoRecallContextText = (config = getAutoRecallConfig()) => {
+    const parts = [...readRecentChatTexts(config.recentMessages), getCurrentInputText()];
+    return normalizePromptText(parts.filter(Boolean).join('\n')).slice(-12000);
+  };
+
+  const addAutoRecallKeyword = (set, value) => {
+    const text = normalizePromptText(value).replace(
+      /^[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+|[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+$/g,
+      '',
+    );
+    if (!text || text.length < 2 || text.length > 24) return;
+    if (/^\d+$/.test(text) || AUTO_RECALL_STOPWORDS.has(text)) return;
+    set.add(text);
+  };
+
+  const extractAutoRecallKeywords = (contextText, items = []) => {
+    const keywords = new Set();
+    const text = normalizePromptText(contextText);
+    const lower = text.toLowerCase();
+    const domainPatterns = [
+      /[\u4e00-\u9fa5A-Za-z0-9_]{0,8}(?:厉鬼|鬼域|鬼奴|鬼差|鬼眼|鬼烛|鬼镜|鬼|杀人规律|规律|灵异物品|线索|档案|事件|地点|驭鬼者|总部)[\u4e00-\u9fa5A-Za-z0-9_]{0,8}/g,
+      /[A-Za-z][A-Za-z0-9_-]{1,31}/g,
+    ];
+    domainPatterns.forEach(pattern => {
+      for (const match of text.matchAll(pattern)) addAutoRecallKeyword(keywords, match[0]);
+    });
+    text.split(/[\s,.;:!?，。！？；、：/\\|()[\]{}<>《》“”"']+/).forEach(part => addAutoRecallKeyword(keywords, part));
+    items.forEach(item => {
+      [item.title, ...(item.tags || [])].forEach(term => {
+        const clean = normalizePromptText(term);
+        if (clean.length >= 2 && lower.includes(clean.toLowerCase())) addAutoRecallKeyword(keywords, clean);
+      });
+    });
+    return Array.from(keywords)
+      .sort((a, b) => b.length - a.length)
+      .slice(0, 24);
+  };
+
+  const mergePinnedRecallCandidates = (items, pinnedOverride) => {
+    const byId = new Map();
+    (items || []).forEach(item => {
+      if (item?.id) byId.set(item.id, item);
+    });
+    const pinned = Array.isArray(pinnedOverride) ? pinnedOverride : getPinnedRecallItems();
+    pinned.forEach(item => {
+      if (!item?.id || byId.has(item.id)) return;
+      byId.set(item.id, {
+        ...item,
+        tags: item.tags || [],
+        icon: item.icon || 'fa-thumbtack',
+        tableKey: item.tableKey || '',
+        rowIndex: Number.isFinite(item.rowIndex) ? item.rowIndex : 0,
+        searchText: `${item.tableName || ''} ${item.title || ''} ${item.summary || ''} ${(item.tags || []).join(' ')}`,
+      });
+    });
+    return Array.from(byId.values());
+  };
+
+  const scoreAutoRecallItem = (item, keywords, pinnedIds) => {
+    let score = pinnedIds.has(item.id) ? 80 : 0;
+    const hits = pinnedIds.has(item.id) ? ['固定'] : [];
+    const title = normalizePromptText(item.title).toLowerCase();
+    const tags = normalizePromptText((item.tags || []).join(' ')).toLowerCase();
+    const summary = normalizePromptText(item.summary).toLowerCase();
+    const haystack = normalizePromptText(
+      item.searchText || `${item.tableName} ${item.kind} ${item.title} ${item.summary} ${(item.tags || []).join(' ')}`,
+    ).toLowerCase();
+    keywords.forEach(keyword => {
+      const k = String(keyword || '').toLowerCase();
+      if (!k || k.length < 2) return;
+      let matched = false;
+      if (title.includes(k)) {
+        score += 18;
+        matched = true;
+      } else if (tags.includes(k)) {
+        score += 12;
+        matched = true;
+      } else if (summary.includes(k)) {
+        score += 7;
+        matched = true;
+      } else if (haystack.includes(k)) {
+        score += 4;
+        matched = true;
+      }
+      if (matched && !hits.includes(keyword)) hits.push(keyword);
+    });
+    return { score, hits: hits.slice(0, 5) };
+  };
+
+  const fitAutoRecallBudget = (items, config) => {
+    const selected = [];
+    let used = 0;
+    for (const item of items) {
+      if (selected.length >= config.maxItems) break;
+      const text = buildRecallItemText(item).replace(/\n/g, '；');
+      const nextUsed = used + text.length + 8;
+      if (selected.length && nextUsed > config.maxChars) continue;
+      selected.push(item);
+      used = nextUsed;
+    }
+    return selected;
+  };
+
+  const buildAutoRecallPrompt = result => {
+    const items = (result?.items || []).filter(Boolean);
+    if (!items.length) return '';
+    const keywords = (result.keywords || []).slice(0, 10).join(' / ') || '无显式关键词';
+    return [
+      '<自动剧情记忆召回>',
+      '以下内容由神秘复苏数据库前端按当前对话自动筛选，用于防止高楼层遗忘。只参考已记录事实；若与最新对话或当前 MVU 状态冲突，以最新上下文为准。',
+      `命中关键词：${keywords}`,
+      ...items.map((item, index) => `${index + 1}. ${buildRecallItemText(item).replace(/\n/g, '；')}`),
+      '</自动剧情记忆召回>',
+    ].join('\n');
+  };
+
+  const buildAutoRecallResult = tables => {
+    const config = getAutoRecallConfig();
+    const enabled = config.plotEnabled || config.memoryEnabled;
+    const baseItems = collectRecallItems(tables || {}, '');
+    // 读旧固定项时应用共享可见性策略并迁移到稳定 id：内部线索/已删除项不进入自动召回。
+    const pinnedItems = sanitizePinnedRecallItems(baseItems);
+    const candidates = mergePinnedRecallCandidates(baseItems, pinnedItems).filter(item =>
+      isAutoRecallKindEnabled(item, config),
+    );
+    const pinnedIds = new Set(pinnedItems.map(item => item.id));
+    const contextText = buildAutoRecallContextText(config);
+    const keywords = extractAutoRecallKeywords(contextText, candidates);
+    if (!enabled) {
+      return { config, enabled, contextText, keywords, items: [], prompt: '', updatedAt: Date.now(), injected: false };
+    }
+    const scored = candidates.map(item => {
+      const { score, hits } = scoreAutoRecallItem(item, keywords, pinnedIds);
+      const tags = uniqRecallParts([...(item.tags || []), ...hits.map(hit => `命中:${hit}`)]).slice(0, 6);
+      return { ...item, tags, autoInjected: true, injected: true, autoScore: score, autoMatchedKeywords: hits };
+    });
+    const selectedByScore = scored
+      .filter(item => item.autoScore > 0)
+      .sort((a, b) => {
+        if (b.autoScore !== a.autoScore) return b.autoScore - a.autoScore;
+        if ((b.rowIndex || 0) !== (a.rowIndex || 0)) return (b.rowIndex || 0) - (a.rowIndex || 0);
+        return String(a.tableName || '').localeCompare(String(b.tableName || ''), 'zh-CN');
+      });
+    const selectedIds = new Set(selectedByScore.map(item => item.id));
+    const fallbackChronicle = config.memoryEnabled
+      ? scored
+          .filter(item => item.tableKey === 'sheet_chronicle' && !selectedIds.has(item.id))
+          .sort((a, b) => (b.rowIndex || 0) - (a.rowIndex || 0))
+          .slice(0, 2)
+      : [];
+    const items = fitAutoRecallBudget([...selectedByScore, ...fallbackChronicle], config);
+    const result = { config, enabled, contextText, keywords, items, updatedAt: Date.now(), injected: false };
+    result.prompt = buildAutoRecallPrompt(result);
+    return result;
+  };
+
+  const buildAutoRecallResultFromCurrentData = () => {
+    const rawData = getTableData();
+    const tables = rawData ? processJsonData(rawData) || {} : {};
+    return buildAutoRecallResult(tables);
+  };
+
+  const getPromptInjectionApi = () => {
+    const host = getHost();
+    const th = host.TavernHelper || window.TavernHelper || {};
+    return {
+      injectPrompts:
+        th.injectPrompts ||
+        (typeof injectPrompts === 'function' ? injectPrompts : null) ||
+        host.injectPrompts ||
+        window.injectPrompts,
+      uninjectPrompts:
+        th.uninjectPrompts ||
+        (typeof uninjectPrompts === 'function' ? uninjectPrompts : null) ||
+        host.uninjectPrompts ||
+        window.uninjectPrompts,
     };
+  };
 
-    const buildTableOverview = (tables) => Object.keys(tables || {}).map(tableName => {
+  const injectAutoRecallPrompt = result => {
+    const prompt = result?.prompt || buildAutoRecallPrompt(result);
+    if (!prompt) return false;
+    const api = getPromptInjectionApi();
+    if (typeof api.injectPrompts !== 'function') {
+      console.warn('[MFRS Auto Recall] injectPrompts 不可用，自动召回未注入。');
+      return false;
+    }
+    try {
+      if (typeof api.uninjectPrompts === 'function') api.uninjectPrompts([AUTO_RECALL_PROMPT_ID]);
+    } catch (e) {}
+    api.injectPrompts(
+      [
+        {
+          id: AUTO_RECALL_PROMPT_ID,
+          position: 'in_chat',
+          depth: 4,
+          role: 'system',
+          content: prompt,
+          should_scan: true,
+        },
+      ],
+      { once: true },
+    );
+    return true;
+  };
+
+  const handleAutoRecallGeneration = () => {
+    const result = buildAutoRecallResultFromCurrentData();
+    const injected = injectAutoRecallPrompt(result);
+    lastAutoRecallResult = { ...result, injected, updatedAt: Date.now() };
+    if (injected) {
+      console.info(`[MFRS Auto Recall] 已注入自动剧情/记忆召回：${result.items.length} 条。`);
+    }
+    return injected;
+  };
+
+  const registerAutoRecallInjection = () => {
+    if (autoRecallListenerRegistered) return true;
+    const host = getHost();
+    const localEventOn = (typeof eventOn === 'function' ? eventOn : null) || host.eventOn || window.eventOn;
+    const localTavernEvents =
+      (typeof tavern_events !== 'undefined' ? tavern_events : null) || host.tavern_events || window.tavern_events || {};
+    const eventName = localTavernEvents.GENERATION_AFTER_COMMANDS || 'GENERATION_AFTER_COMMANDS';
+    const listener = (_type, _option, dryRun) => {
+      if (dryRun) return;
+      handleAutoRecallGeneration();
+    };
+    if (typeof localEventOn === 'function') {
+      localEventOn(eventName, listener);
+      autoRecallListenerRegistered = true;
+      return true;
+    }
+    try {
+      const context = getSillyTavernContext();
+      const eventSource = context?.eventSource || host.eventSource;
+      const eventTypes = context?.eventTypes || context?.event_types || host.event_types || {};
+      const nativeEventName = eventTypes.GENERATION_AFTER_COMMANDS || eventName;
+      if (eventSource && typeof eventSource.on === 'function') {
+        eventSource.on(nativeEventName, listener);
+        autoRecallListenerRegistered = true;
+        return true;
+      }
+    } catch (e) {
+      console.warn('[MFRS Auto Recall] 注册生成前召回监听失败:', e);
+    }
+    console.warn('[MFRS Auto Recall] 未找到 GENERATION_AFTER_COMMANDS 事件通道，自动召回暂不可用。');
+    return false;
+  };
+
+  const buildRecallHealthChecks = tables => {
+    const api = getCore().getDB();
+    const tableNames = Object.keys(tables || {});
+    const settingsSnapshot = readAcuStoredConfig();
+    const settings = settingsSnapshot.settings || {};
+    const globalMeta = settingsSnapshot.globalMeta || {};
+    const chronicle = tableNames
+      .map(name => tables[name])
+      .find(table => table?.key === 'sheet_chronicle' || String(table?.name || '').includes('事件纪要'));
+    const matchedRecallTables = tableNames.filter(name => getRecallTableRule(name, tables[name]));
+    const plotEnabled =
+      settings?.plotSettings?.enabled === true || (api?.getPlotPresetNames && api.getPlotPresetNames().length > 0);
+    const vectorEnabled =
+      settings?.summaryVectorIndexModeDefault === true ||
+      settings?.summaryVectorIndexModeEnabled === true ||
+      globalMeta?.summaryVectorIndexModeGlobal === true;
+    return [
+      {
+        label: 'AutoCardUpdaterAPI',
+        value: api?.exportTableAsJson ? '可用' : '不可用',
+        status: api?.exportTableAsJson ? 'ok' : 'error',
+      },
+      {
+        label: '14表模板',
+        value: `${tableNames.length}/14`,
+        status: tableNames.length >= 14 ? 'ok' : 'warn',
+      },
+      {
+        label: '事件纪要',
+        value: `${chronicle?.rows?.length || 0} 行`,
+        status: (chronicle?.rows?.length || 0) > 0 ? 'ok' : 'warn',
+      },
+      {
+        label: '召回索引表',
+        value: `${matchedRecallTables.length} 张`,
+        status: matchedRecallTables.length >= 6 ? 'ok' : 'warn',
+      },
+      {
+        label: '剧情召回',
+        value: plotEnabled ? '已启用/有预设' : '未确认',
+        status: plotEnabled ? 'ok' : 'warn',
+      },
+      {
+        label: '向量召回',
+        value: vectorEnabled ? '已启用' : '未启用',
+        status: vectorEnabled ? 'ok' : 'warn',
+      },
+    ];
+  };
+
+  const getTableDisplayText = (tableName, tableData) => {
+    const headers = tableData?.headers || [];
+    const rows = tableData?.rows || [];
+    return rows.map(row => buildGenericRowText(tableName, tableData, row, headers.length)).join('\n');
+  };
+
+  const getTableLatestMarker = tableData => {
+    const headers = tableData?.headers || [];
+    const rows = tableData?.rows || [];
+    const timeIdx = headers.findIndex(header => /时间|日期|更新|发现|记录/.test(String(header || '')));
+    if (timeIdx < 0) return '无时间字段';
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const value = normalizePromptText(rows[i]?.[timeIdx]);
+      if (value) return value;
+    }
+    return '未填写';
+  };
+
+  const getTableIssues = tableData => {
+    const headers = tableData?.headers || [];
+    const rows = tableData?.rows || [];
+    const issues = [];
+    if (!headers.length) issues.push('缺少表头');
+    if (!rows.length) issues.push('空表');
+    const rowIdIdx = findHeaderIndex(headers, ['row_id']);
+    if (rowIdIdx >= 0) {
+      const missing = rows.filter(row => !normalizePromptText(row?.[rowIdIdx])).length;
+      if (missing) issues.push(`${missing} 行 row_id 为空`);
+    }
+    const mismatch = rows.filter(row => Array.isArray(row) && row.length !== headers.length).length;
+    if (mismatch) issues.push(`${mismatch} 行列数异常`);
+    return issues;
+  };
+
+  const buildTableOverview = tables =>
+    Object.keys(tables || {})
+      .map(tableName => {
         const table = tables[tableName] || {};
         const issues = getTableIssues(table);
         return {
-            tableName,
-            key: table.key,
-            rowCount: Array.isArray(table.rows) ? table.rows.length : 0,
-            colCount: Array.isArray(table.headers) ? table.headers.length : 0,
-            latest: getTableLatestMarker(table),
-            issues,
-            status: issues.some(item => item.includes('缺少') || item.includes('异常')) ? 'error' : (issues.length ? 'warn' : 'ok'),
+          tableName,
+          key: table.key,
+          rowCount: Array.isArray(table.rows) ? table.rows.length : 0,
+          colCount: Array.isArray(table.headers) ? table.headers.length : 0,
+          latest: getTableLatestMarker(table),
+          issues,
+          status: issues.some(item => item.includes('缺少') || item.includes('异常'))
+            ? 'error'
+            : issues.length
+              ? 'warn'
+              : 'ok',
         };
-    }).sort((a, b) => {
+      })
+      .sort((a, b) => {
         const rank = { error: 0, warn: 1, ok: 2 };
         return rank[a.status] - rank[b.status] || a.tableName.localeCompare(b.tableName, 'zh-CN');
+      });
+
+  const collectGlobalSearchItems = (tables, query = '') => {
+    const q = normalizePromptText(query).toLowerCase();
+    const items = [];
+    Object.keys(tables || {}).forEach(tableName => {
+      const table = tables[tableName];
+      if (!Array.isArray(table?.rows)) return;
+      const headers = table.headers || [];
+      table.rows.forEach((row, rowIndex) => {
+        if (!Array.isArray(row)) return;
+        const rowText = row
+          .map(cell => normalizePromptText(cell))
+          .filter(Boolean)
+          .join(' ');
+        const searchable = `${tableName} ${headers.join(' ')} ${rowText}`.toLowerCase();
+        if (q && !searchable.includes(q)) return;
+        const rowLabel = getRecallFieldValue(headers, row, ['row_id'], '') || String(rowIndex + 1);
+        const title = compactRecallText(getGenericRowTitle(tableName, table, row), 90);
+        const summary = compactRecallText(rowText, 240);
+        let score = 0;
+        if (q) {
+          if (String(title).toLowerCase().includes(q)) score += 12;
+          if (tableName.toLowerCase().includes(q)) score += 8;
+          if (summary.toLowerCase().includes(q)) score += 4;
+        }
+        items.push({
+          id: `${table.key || tableName}:${rowIndex}`,
+          tableName,
+          tableKey: table.key,
+          rowIndex,
+          rowLabel,
+          title,
+          summary,
+          text: buildGenericRowText(tableName, table, row, headers.length),
+          score,
+          headers,
+          row,
+        });
+      });
     });
+    return items
+      .sort((a, b) => b.score - a.score || a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex)
+      .slice(0, 120);
+  };
 
-    const collectGlobalSearchItems = (tables, query = '') => {
-        const q = normalizePromptText(query).toLowerCase();
-        const items = [];
-        Object.keys(tables || {}).forEach(tableName => {
-            const table = tables[tableName];
-            if (!Array.isArray(table?.rows)) return;
-            const headers = table.headers || [];
-            table.rows.forEach((row, rowIndex) => {
-                if (!Array.isArray(row)) return;
-                const rowText = row.map(cell => normalizePromptText(cell)).filter(Boolean).join(' ');
-                const searchable = `${tableName} ${headers.join(' ')} ${rowText}`.toLowerCase();
-                if (q && !searchable.includes(q)) return;
-                const rowLabel = getRecallFieldValue(headers, row, ['row_id'], '') || String(rowIndex + 1);
-                const title = compactRecallText(getGenericRowTitle(tableName, table, row), 90);
-                const summary = compactRecallText(rowText, 240);
-                let score = 0;
-                if (q) {
-                    if (String(title).toLowerCase().includes(q)) score += 12;
-                    if (tableName.toLowerCase().includes(q)) score += 8;
-                    if (summary.toLowerCase().includes(q)) score += 4;
-                }
-                items.push({
-                    id: `${table.key || tableName}:${rowIndex}`,
-                    tableName,
-                    tableKey: table.key,
-                    rowIndex,
-                    rowLabel,
-                    title,
-                    summary,
-                    text: buildGenericRowText(tableName, table, row, headers.length),
-                    score,
-                    headers,
-                    row,
-                });
-            });
+  const flattenStatValues = (value, path = '') => {
+    if (value === null || value === undefined) return [];
+    if (Array.isArray(value)) {
+      return value.flatMap((item, index) => flattenStatValues(item, `${path}[${index}]`));
+    }
+    if (typeof value === 'object') {
+      return Object.entries(value).flatMap(([key, nested]) => flattenStatValues(nested, path ? `${path}.${key}` : key));
+    }
+    const text = normalizePromptText(value);
+    return text ? [{ path, text }] : [];
+  };
+
+  const getStatPathValue = (stat, path) => {
+    try {
+      return String(path)
+        .split('.')
+        .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : undefined), stat);
+    } catch (e) {
+      return undefined;
+    }
+  };
+
+  const extractStatRuleValues = (stat, paths) => {
+    const values = [];
+    (paths || []).forEach(path => {
+      flattenStatValues(getStatPathValue(stat, path), path).forEach(item => {
+        if (item.text.length <= 1) return;
+        values.push(item);
+      });
+    });
+    const seen = new Set();
+    return values
+      .filter(item => {
+        const key = `${item.path}:${item.text}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 12);
+  };
+
+  const MFRS_CONSISTENCY_RULES = MFRS_FRONTEND_CONFIG.consistencyRules || [];
+
+  const getTablesByNames = (tables, names) =>
+    Object.keys(tables || {})
+      .filter(tableName =>
+        names.some(name => tableName.includes(name) || String(tables[tableName]?.name || '').includes(name)),
+      )
+      .map(tableName => ({ tableName, table: tables[tableName] }));
+
+  const collectMfrsConsistencyIssues = tables => {
+    const stat = readMfrsState();
+    const issues = [];
+    const summaries = [];
+    MFRS_CONSISTENCY_RULES.forEach(rule => {
+      const matchedTables = getTablesByNames(tables, rule.tableNames);
+      const dbText = matchedTables.map(({ tableName, table }) => getTableDisplayText(tableName, table)).join('\n');
+      const dbRows = matchedTables.reduce((sum, item) => sum + (item.table?.rows?.length || 0), 0);
+      const statValues = stat ? extractStatRuleValues(stat, rule.statPaths) : [];
+      const statOnly = [];
+      statValues.forEach(item => {
+        if (item.text.length > 80) return;
+        if (dbText && dbText.includes(item.text)) return;
+        statOnly.push(item);
+      });
+      if (statValues.length && !dbRows) {
+        issues.push({
+          type: 'stat-only',
+          label: rule.label,
+          message: '状态栏有内容，但数据库关键表没有对应记录。',
+          values: statValues.slice(0, 5),
+          tables: rule.tableNames,
         });
-        return items.sort((a, b) => b.score - a.score || a.tableName.localeCompare(b.tableName, 'zh-CN') || a.rowIndex - b.rowIndex).slice(0, 120);
-    };
-
-    const flattenStatValues = (value, path = '') => {
-        if (value === null || value === undefined) return [];
-        if (Array.isArray(value)) {
-            return value.flatMap((item, index) => flattenStatValues(item, `${path}[${index}]`));
-        }
-        if (typeof value === 'object') {
-            return Object.entries(value).flatMap(([key, nested]) => flattenStatValues(nested, path ? `${path}.${key}` : key));
-        }
-        const text = normalizePromptText(value);
-        return text ? [{ path, text }] : [];
-    };
-
-    const getStatPathValue = (stat, path) => {
-        try {
-            return String(path).split('.').reduce((obj, key) => obj && obj[key] !== undefined ? obj[key] : undefined, stat);
-        } catch (e) {
-            return undefined;
-        }
-    };
-
-    const extractStatRuleValues = (stat, paths) => {
-        const values = [];
-        (paths || []).forEach(path => {
-            flattenStatValues(getStatPathValue(stat, path), path).forEach(item => {
-                if (item.text.length <= 1) return;
-                values.push(item);
-            });
+      } else {
+        statOnly.slice(0, 5).forEach(item => {
+          issues.push({
+            type: 'stat-only',
+            label: rule.label,
+            message: '状态栏字段未在数据库中找到直接匹配。',
+            values: [item],
+            tables: rule.tableNames,
+          });
         });
-        const seen = new Set();
-        return values.filter(item => {
-            const key = `${item.path}:${item.text}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-        }).slice(0, 12);
-    };
-
-    const MFRS_CONSISTENCY_RULES = MFRS_FRONTEND_CONFIG.consistencyRules || [];
-
-    const getTablesByNames = (tables, names) => Object.keys(tables || {})
-        .filter(tableName => names.some(name => tableName.includes(name) || String(tables[tableName]?.name || '').includes(name)))
-        .map(tableName => ({ tableName, table: tables[tableName] }));
-
-    const collectMfrsConsistencyIssues = (tables) => {
-        const stat = readMfrsState();
-        const issues = [];
-        const summaries = [];
-        MFRS_CONSISTENCY_RULES.forEach(rule => {
-            const matchedTables = getTablesByNames(tables, rule.tableNames);
-            const dbText = matchedTables.map(({ tableName, table }) => getTableDisplayText(tableName, table)).join('\n');
-            const dbRows = matchedTables.reduce((sum, item) => sum + (item.table?.rows?.length || 0), 0);
-            const statValues = stat ? extractStatRuleValues(stat, rule.statPaths) : [];
-            const statOnly = [];
-            statValues.forEach(item => {
-                if (item.text.length > 80) return;
-                if (dbText && dbText.includes(item.text)) return;
-                statOnly.push(item);
-            });
-            if (statValues.length && !dbRows) {
-                issues.push({ type: 'stat-only', label: rule.label, message: '状态栏有内容，但数据库关键表没有对应记录。', values: statValues.slice(0, 5), tables: rule.tableNames });
-            } else {
-                statOnly.slice(0, 5).forEach(item => {
-                    issues.push({ type: 'stat-only', label: rule.label, message: '状态栏字段未在数据库中找到直接匹配。', values: [item], tables: rule.tableNames });
-                });
-            }
-            if (dbRows > 0 && !statValues.length) {
-                issues.push({ type: 'db-only', label: rule.label, message: '数据库有记录，但状态栏未读到对应字段。', values: [], tables: matchedTables.map(item => item.tableName) });
-            }
-            summaries.push({
-                label: rule.label,
-                statCount: statValues.length,
-                dbRows,
-                status: (!stat && dbRows) || (statValues.length && !dbRows) || statOnly.length ? 'warn' : 'ok',
-            });
+      }
+      if (dbRows > 0 && !statValues.length) {
+        issues.push({
+          type: 'db-only',
+          label: rule.label,
+          message: '数据库有记录，但状态栏未读到对应字段。',
+          values: [],
+          tables: matchedTables.map(item => item.tableName),
         });
-        return { stat, summaries, issues: issues.slice(0, 40) };
-    };
+      }
+      summaries.push({
+        label: rule.label,
+        statCount: statValues.length,
+        dbRows,
+        status: (!stat && dbRows) || (statValues.length && !dbRows) || statOnly.length ? 'warn' : 'ok',
+      });
+    });
+    return { stat, summaries, issues: issues.slice(0, 40) };
+  };
 
-    const buildMfrsStateSnapshot = (tables) => {
-        const consistency = collectMfrsConsistencyIssues(tables);
-        return {
-            exportedAt: new Date().toISOString(),
-            stat_data: consistency.stat,
-            tableOverview: buildTableOverview(tables),
-            consistency: {
-                summaries: consistency.summaries,
-                issues: consistency.issues,
-            },
-        };
+  const buildMfrsStateSnapshot = tables => {
+    const consistency = collectMfrsConsistencyIssues(tables);
+    return {
+      exportedAt: new Date().toISOString(),
+      stat_data: consistency.stat,
+      tableOverview: buildTableOverview(tables),
+      consistency: {
+        summaries: consistency.summaries,
+        issues: consistency.issues,
+      },
     };
+  };
 
-    const riskValue = (value, suffix) => {
-        const text = textValue(value, '0');
-        return text.includes('/') || text.includes('%') ? text : `${text}${suffix}`;
-    };
+  const riskValue = (value, suffix) => {
+    const text = textValue(value, '0');
+    return text.includes('/') || text.includes('%') ? text : `${text}${suffix}`;
+  };
 
-    const readMfrsState = () => {
-        const host = getHost();
-        const readers = [
-            () => host.getVariables && host.getVariables({ type: 'message', message_id: 'latest' }),
-            () => window.getVariables && window.getVariables({ type: 'message', message_id: 'latest' }),
-            () => host.getVariables && host.getVariables({ type: 'chat' }),
-            () => window.getVariables && window.getVariables({ type: 'chat' }),
-        ];
-        for (const read of readers) {
-            try {
-                const variables = read();
-                const stat = variables && variables.stat_data;
-                if (stat && typeof stat === 'object') return stat;
-            } catch (e) {}
-        }
-        return null;
-    };
+  const readMfrsState = () => {
+    const host = getHost();
+    const readers = [
+      () => host.getVariables && host.getVariables({ type: 'message', message_id: 'latest' }),
+      () => window.getVariables && window.getVariables({ type: 'message', message_id: 'latest' }),
+      () => host.getVariables && host.getVariables({ type: 'chat' }),
+      () => window.getVariables && window.getVariables({ type: 'chat' }),
+    ];
+    for (const read of readers) {
+      try {
+        const variables = read();
+        const stat = variables && variables.stat_data;
+        if (stat && typeof stat === 'object') return stat;
+      } catch (e) {}
+    }
+    return null;
+  };
 
-    const statusLine = (label, value, fallback = '未知') => `
+  const statusLine = (label, value, fallback = '未知') => `
         <div class="acu-dash-stat-row mfrs-status-row" style="display:flex; justify-content:flex-start; align-items:flex-start; gap:8px; padding:8px 10px; background:var(--acu-btn-bg); border-radius:8px; border:1px solid transparent; width:100%; box-sizing:border-box;">
             <span class="acu-dash-stat-label" style="color:var(--acu-title-color); font-size:1em; flex:0 0 92px; white-space:normal; overflow-wrap:break-word;">${escapeHtml(label)}</span>
             <span class="acu-dash-stat-val" style="color:var(--acu-text-main); font-weight:bold; font-size:1em; white-space:pre-wrap; word-break:break-word; text-align:left;">${escapeHtml(textValue(value, fallback))}</span>
         </div>`;
-    const renderReadOnlyFallbackRows = (title, rows) => {
-        const rowHtml = rows
-            .filter(row => row && textValue(row.value, '') !== '')
-            .map(row => statusLine(row.label, row.value, row.fallback || '未知'))
-            .join('');
-        return `
+  const renderReadOnlyFallbackRows = (title, rows) => {
+    const rowHtml = rows
+      .filter(row => row && textValue(row.value, '') !== '')
+      .map(row => statusLine(row.label, row.value, row.fallback || '未知'))
+      .join('');
+    return `
             <div class="acu-dash-char-info mfrs-readonly-fallback" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; height:100%; padding-right:4px;">
                 <div style="padding:8px 10px; color:var(--acu-text-sub); font-size:12px; line-height:1.7; border:1px dashed var(--acu-border); border-radius:8px;">
                     ${escapeHtml(title)}：数据库尚未落盘，以下为 MVU / 状态面板只读摘要。
                 </div>
                 ${rowHtml || statusLine('摘要', '暂无可读状态')}
             </div>`;
-    };
+  };
 
-    const renderMfrsTableFallback = (keyword) => {
-        const stat = readMfrsState();
-        if (!stat) return '';
-        const key = String(keyword || '');
-        const event = stat.当前灵异事件 || {};
-        const ghostState = stat.驭鬼者状态 || {};
-        const mainline = stat.主线进度 || {};
-        const resources = stat.灵异资源 || {};
-        if (key.includes('玩家状态')) {
-            return renderReadOnlyFallbackRows('玩家状态', [
-                { label: '姓名', value: stat.姓名 },
-                { label: '身份', value: stat.身份 },
-                { label: '所在地点', value: stat.所在位置 || event.发生地点 },
-                { label: '当前状态', value: stat.状态 },
-                { label: '死亡风险', value: riskValue(stat.风险值, '/100') },
-                { label: '复苏风险', value: riskValue(ghostState.总复苏风险 ?? stat.厉鬼复苏程度, '%') },
-                { label: '灵异资源', value: resources },
-                { label: '最近行动', value: getPath(stat, '最近行动判定.行动', '无') },
-            ]);
-        }
-        if (key.includes('全局状态')) {
-            return renderReadOnlyFallbackRows('全局状态', [
-                { label: '当前时间', value: stat.当前时间 || stat.game_time },
-                { label: '当前地点', value: stat.所在位置 || event.发生地点 },
-                { label: '当前城市', value: stat.当前城市 || stat.城市 },
-                { label: '原著阶段', value: stat.原著阶段 },
-                { label: '剧情锚点', value: stat.剧情锚点 },
-                { label: '主线阶段', value: mainline.当前阶段 },
-                { label: '世界压力', value: stat.世界压力 },
-            ]);
-        }
-        if (key.includes('灵异事件')) {
-            return renderReadOnlyFallbackRows('灵异事件', [
-                { label: '事件代号', value: event.事件代号 },
-                { label: '危害等级', value: event.危害等级 },
-                { label: '发生地点', value: event.发生地点 || stat.所在位置 },
-                { label: '鬼域状态', value: event.鬼域状态 },
-                { label: '已知规律', value: event.已知杀人规律 },
-                { label: '猜测规律', value: event.猜测杀人规律 },
-                { label: '处理状态', value: event.处理状态 },
-                { label: '可见摘要', value: event.可见摘要 || getPath(stat, '最近行动判定.可见结论', '') },
-            ]);
-        }
-        if (key.includes('线索')) {
-            return renderReadOnlyFallbackRows('线索', [
-                { label: '关联事件', value: event.事件代号 },
-                { label: '来源', value: '当前剧情/MVU' },
-                { label: '内容', value: event.可见摘要 || getPath(stat, '最近行动判定.可见结论', '') },
-                { label: '推断', value: event.猜测杀人规律 || event.已知杀人规律 },
-                { label: '验证状态', value: '未验证' },
-                { label: '可见性', value: '玩家可见' },
-            ]);
-        }
-        return '';
-    };
-    const tableHasEffectiveRows = (table) => {
-        const headers = Array.isArray(table?.headers) ? table.headers : [];
-        const rows = Array.isArray(table?.rows) ? table.rows : [];
-        return rows.some(row => Array.isArray(row) && row.some((cell, index) => {
-            const header = String(headers[index] || '').trim().toLowerCase();
-            if (header === 'row_id' || header === '行号') return false;
-            return String(cell ?? '').trim() !== '';
-        }));
-    };
+  const renderMfrsTableFallback = keyword => {
+    const stat = readMfrsState();
+    if (!stat) return '';
+    const key = String(keyword || '');
+    const event = stat.当前灵异事件 || {};
+    const ghostState = stat.驭鬼者状态 || {};
+    const mainline = stat.主线进度 || {};
+    const resources = stat.灵异资源 || {};
+    if (key.includes('玩家状态')) {
+      return renderReadOnlyFallbackRows('玩家状态', [
+        { label: '姓名', value: stat.姓名 },
+        { label: '身份', value: stat.身份 },
+        { label: '所在地点', value: stat.所在位置 || event.发生地点 },
+        { label: '当前状态', value: stat.状态 },
+        { label: '死亡风险', value: riskValue(stat.风险值, '/100') },
+        { label: '复苏风险', value: riskValue(ghostState.总复苏风险 ?? stat.厉鬼复苏程度, '%') },
+        { label: '灵异资源', value: resources },
+        { label: '最近行动', value: getPath(stat, '最近行动判定.行动', '无') },
+      ]);
+    }
+    if (key.includes('全局状态')) {
+      return renderReadOnlyFallbackRows('全局状态', [
+        { label: '当前时间', value: stat.当前时间 || stat.game_time },
+        { label: '当前地点', value: stat.所在位置 || event.发生地点 },
+        { label: '当前城市', value: stat.当前城市 || stat.城市 },
+        { label: '原著阶段', value: stat.原著阶段 },
+        { label: '剧情锚点', value: stat.剧情锚点 },
+        { label: '主线阶段', value: mainline.当前阶段 },
+        { label: '世界压力', value: stat.世界压力 },
+      ]);
+    }
+    if (key.includes('灵异事件')) {
+      return renderReadOnlyFallbackRows('灵异事件', [
+        { label: '事件代号', value: event.事件代号 },
+        { label: '危害等级', value: event.危害等级 },
+        { label: '发生地点', value: event.发生地点 || stat.所在位置 },
+        { label: '鬼域状态', value: event.鬼域状态 },
+        { label: '已知规律', value: event.已知杀人规律 },
+        { label: '猜测规律', value: event.猜测杀人规律 },
+        { label: '处理状态', value: event.处理状态 },
+        { label: '可见摘要', value: event.可见摘要 || getPath(stat, '最近行动判定.可见结论', '') },
+      ]);
+    }
+    if (key.includes('线索')) {
+      return renderReadOnlyFallbackRows('线索', [
+        { label: '关联事件', value: event.事件代号 },
+        { label: '来源', value: '当前剧情/MVU' },
+        { label: '内容', value: event.可见摘要 || getPath(stat, '最近行动判定.可见结论', '') },
+        { label: '推断', value: event.猜测杀人规律 || event.已知杀人规律 },
+        { label: '验证状态', value: '未验证' },
+        { label: '可见性', value: '玩家可见' },
+      ]);
+    }
+    return '';
+  };
+  const tableHasEffectiveRows = table => {
+    const headers = Array.isArray(table?.headers) ? table.headers : [];
+    const rows = Array.isArray(table?.rows) ? table.rows : [];
+    return rows.some(
+      row =>
+        Array.isArray(row) &&
+        row.some((cell, index) => {
+          const header = String(headers[index] || '')
+            .trim()
+            .toLowerCase();
+          if (header === 'row_id' || header === '行号') return false;
+          return String(cell ?? '').trim() !== '';
+        }),
+    );
+  };
 
-    const renderMfrsStatusModule = () => {
-        const stat = readMfrsState();
-        if (!stat) {
-            return `
+  const renderMfrsStatusModule = () => {
+    const stat = readMfrsState();
+    if (!stat) {
+      return `
                 <div id="mfrs-current-status-card" class="acu-dash-card" style="width:100%; box-sizing:border-box; margin-bottom:8px; padding:14px 16px;">
                     <div class="acu-dash-title">当前状态</div>
                     <div style="color:var(--acu-text-sub); font-size:12px; line-height:1.8;">即时状态未加载。这里读取 MVU 的 <code>stat_data</code>，不会反写数据库表。</div>
                 </div>`;
-        }
+    }
 
-        const event = stat.当前灵异事件 || {};
-        const ghostState = stat.驭鬼者状态 || {};
-        const faction = stat.势力关系 || {};
-        const mainline = stat.主线进度 || {};
-        const action = stat.最近行动判定 || {};
-        const suggestions = Array.isArray(stat.行动建议) ? stat.行动建议 : [];
-        const suggestionHtml = suggestions.length
-            ? suggestions.slice(0, 4).map(item => statusLine(textValue(item.选项, '建议'), `${textValue(item.思路, '')}｜风险：${textValue(item.主要风险, '未知')}｜收益：${textValue(item.预期收益, '未知')}`, '无')).join('')
-            : statusLine('行动建议', '暂无');
+    const event = stat.当前灵异事件 || {};
+    const ghostState = stat.驭鬼者状态 || {};
+    const faction = stat.势力关系 || {};
+    const mainline = stat.主线进度 || {};
+    const action = stat.最近行动判定 || {};
+    const suggestions = Array.isArray(stat.行动建议) ? stat.行动建议 : [];
+    const suggestionHtml = suggestions.length
+      ? suggestions
+          .slice(0, 4)
+          .map(item =>
+            statusLine(
+              textValue(item.选项, '建议'),
+              `${textValue(item.思路, '')}｜风险：${textValue(item.主要风险, '未知')}｜收益：${textValue(item.预期收益, '未知')}`,
+              '无',
+            ),
+          )
+          .join('')
+      : statusLine('行动建议', '暂无');
 
-        return `
+    return `
             <div id="mfrs-current-status-card" class="acu-dash-card" style="width:100%; box-sizing:border-box; margin-bottom:8px; padding:0; overflow:hidden;">
                 <div class="acu-tab-header" role="tablist" aria-label="即时状态档案" style="padding:10px 16px 0 16px; margin-bottom:0;">
                     <button type="button" class="acu-tab-btn active" id="mfrs-status-risk-tab" data-target="mfrs-status-risk" role="tab" aria-selected="true" aria-controls="mfrs-status-risk" tabindex="0">风险</button>
@@ -1320,289 +1464,571 @@
                     </div>
                 </div>
             </div>`;
+  };
+
+  const DEFAULT_CONFIG = {
+    theme: 'aurora',
+    fontFamily: 'default',
+    cardWidth: 280,
+    fontSize: 13,
+    optionFontSize: 13,
+    dashboardFontSize: 13,
+    itemsPerPage: 20,
+    highlightNew: false,
+    highlightColor: 'red',
+    layout: 'vertical',
+    limitLongText: false,
+    showDashboard: true,
+    checkConsistency: true,
+    customTitleColor: false,
+    titleColor: 'orange',
+    gridColumns: window.innerWidth <= 768 ? 4 : 0,
+    showOptionPanel: false,
+    clickOptionToAutoSend: false,
+    collapseStyle: 'bar',
+    collapsePosition: 'center',
+    frontendPosition: 'fixed_status',
+    dashboardPosition: 'fixed_status',
+    autoPlotRecallEnabled: true,
+    autoMemoryRecallEnabled: true,
+    autoRecallMaxItems: 8,
+    autoRecallMaxChars: 2400,
+    autoRecallRecentMessages: 8,
+    dbTheme: 'default',
+    dbTransparentMap: {},
+  };
+
+  const THEMES = [
+    { id: 'retro', name: '复古羊皮' },
+    { id: 'dark', name: '极夜深空' },
+    { id: 'modern', name: '现代清爽' },
+    { id: 'forest', name: '森之物语' },
+    { id: 'ocean', name: '深海幽蓝' },
+    { id: 'cyber', name: '赛博霓虹' },
+    { id: 'sakura', name: '浅粉落樱' },
+    { id: 'aurora', name: '卷宗线框' },
+    { id: 'sunset', name: '日落沙滩' },
+    { id: 'starship', name: '星际迷航' },
+    { id: 'sky', name: '天空之境' },
+  ];
+
+  const FONTS = [
+    { id: 'default', name: '系统默认', val: `'Segoe UI', 'Microsoft YaHei', sans-serif` },
+    { id: 'noto-sans', name: '思源黑体', val: `'Noto Sans SC', sans-serif` },
+    { id: 'noto-serif', name: '思源宋体', val: `'Noto Serif SC', serif` },
+    { id: 'mashanzheng', name: '古风书法', val: `'Ma Shan Zheng', cursive` },
+    { id: 'zcool', name: '快乐圆体', val: `'ZCOOL KuaiLe', cursive` },
+    { id: 'longcang', name: '行书手写', val: `'Long Cang', cursive` },
+    { id: 'mono', name: '代码等宽', val: `'Consolas', 'Monaco', monospace` },
+    { id: 'kaiti', name: '清雅楷体', val: `'KaiTi', 'STKaiti', '楷体', serif` },
+  ];
+
+  const HIGHLIGHT_COLORS = {
+    orange: { main: '#d35400', bg: 'rgba(211, 84, 0, 0.1)', name: '活力橙' },
+    red: { main: '#8f2a24', bg: 'rgba(143, 42, 36, 0.16)', name: '绯红' },
+    blue: { main: '#2196f3', bg: 'rgba(33, 150, 243, 0.1)', name: '海蓝' },
+    green: { main: '#27ae60', bg: 'rgba(39, 174, 96, 0.1)', name: '翠绿' },
+    purple: { main: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)', name: '梦幻紫' },
+    cyan: { main: '#00bcd4', bg: 'rgba(0, 188, 212, 0.1)', name: '青空蓝' },
+    teal: { main: '#1abc9c', bg: 'rgba(26, 188, 156, 0.1)', name: '青绿' },
+  };
+
+  const THEME_VARS = {
+    retro: {
+      bgNav: '#e6e2d3',
+      bgPanel: '#e6e2d3',
+      border: '#bfb29e',
+      textMain: '#5e4b35',
+      textSub: '#888',
+      btnBg: '#d6ccbc',
+      btnHover: '#cbbba8',
+      btnActiveBg: '#8d7b6f',
+      btnActiveText: '#fdfaf5',
+      tableHead: '#efebe4',
+      tableHover: '#f0ebe0',
+      shadow: 'rgba(0,0,0,0.1)',
+      menuBg: '#fff',
+      menuText: '#333',
+      cardBg: '#fffef9',
+      badgeBg: '#efebe4',
+      inputBg: 'rgba(255,255,255,0.5)',
+      overlayBg: 'rgba(94, 75, 53, 0.4)',
+    },
+    dark: {
+      bgNav: 'rgba(30, 30, 30, 0.95)',
+      bgPanel: 'rgba(25, 25, 25, 0.95)',
+      border: '#555',
+      textMain: '#eee',
+      textSub: '#aaa',
+      btnBg: '#3a3a3a',
+      btnHover: '#4a4a4a',
+      btnActiveBg: '#6a5acd',
+      btnActiveText: '#fff',
+      tableHead: 'rgba(40, 40, 40, 0.9)',
+      tableHover: 'rgba(58, 58, 58, 0.5)',
+      shadow: 'rgba(0,0,0,0.6)',
+      cardBg: 'rgba(35, 35, 35, 0.9)',
+      badgeBg: '#3a3f4b',
+      menuBg: '#333',
+      menuText: '#eee',
+      inputBg: 'rgba(0,0,0,0.3)',
+      overlayBg: 'rgba(0,0,0,0.75)',
+    },
+    modern: {
+      bgNav: '#ffffff',
+      bgPanel: '#f8f9fa',
+      border: '#dee2e6',
+      textMain: '#333',
+      textSub: '#6c757d',
+      btnBg: '#e9ecef',
+      btnHover: '#dee2e6',
+      btnActiveBg: '#0d6efd',
+      btnActiveText: '#fff',
+      tableHead: '#f8f9fa',
+      tableHover: '#e9ecef',
+      shadow: 'rgba(0,0,0,0.08)',
+      cardBg: '#ffffff',
+      badgeBg: '#f1f3f5',
+      menuBg: '#fff',
+      menuText: '#333',
+      inputBg: '#ffffff',
+      overlayBg: 'rgba(0,0,0,0.3)',
+    },
+    forest: {
+      bgNav: '#e8f5e9',
+      bgPanel: '#e8f5e9',
+      border: '#a5d6a7',
+      textMain: '#333333',
+      textSub: '#555555',
+      uiColor: '#1b5e20',
+      btnBg: '#c8e6c9',
+      btnHover: '#a5d6a7',
+      btnActiveBg: '#2e7d32',
+      btnActiveText: '#fff',
+      tableHead: '#dcedc8',
+      tableHover: '#f1f8e9',
+      shadow: 'rgba(0,0,0,0.1)',
+      cardBg: '#ffffff',
+      badgeBg: '#dcedc8',
+      menuBg: '#fff',
+      menuText: '#2e7d32',
+      inputBg: 'rgba(255,255,255,0.7)',
+      overlayBg: 'rgba(27, 94, 32, 0.2)',
+    },
+    ocean: {
+      bgNav: '#f0f9ff',
+      bgPanel: '#f0f9ff',
+      border: '#bae6fd',
+      textMain: '#333333',
+      textSub: '#555555',
+      uiColor: '#0369a1',
+      btnBg: '#e0f2fe',
+      btnHover: '#bae6fd',
+      btnActiveBg: '#0ea5e9',
+      btnActiveText: '#fff',
+      tableHead: '#e0f2fe',
+      tableHover: '#f0f9ff',
+      shadow: 'rgba(3, 105, 161, 0.15)',
+      cardBg: '#ffffff',
+      badgeBg: '#e0f2fe',
+      menuBg: '#fff',
+      menuText: '#0369a1',
+      inputBg: 'rgba(255,255,255,0.75)',
+      overlayBg: 'rgba(3, 105, 161, 0.2)',
+    },
+    cyber: {
+      bgNav: '#050505',
+      bgPanel: '#0a0a0a',
+      border: '#444',
+      textMain: '#00ffcc',
+      textSub: '#ff00ff',
+      btnBg: '#1f1f1f',
+      btnHover: '#333',
+      btnActiveBg: '#ff00ff',
+      btnActiveText: '#fff',
+      tableHead: '#111',
+      tableHover: '#1a1a1a',
+      shadow: '0 0 10px rgba(0,255,204,0.3)',
+      cardBg: '#050505',
+      badgeBg: '#222',
+      menuBg: '#111',
+      menuText: '#00ffcc',
+      inputBg: '#111',
+      overlayBg: 'rgba(0,0,0,0.85)',
+    },
+    sakura: {
+      bgNav: '#fff9fb',
+      bgPanel: '#fff9fb',
+      border: '#f0d4df',
+      textMain: '#333333',
+      textSub: '#555555',
+      uiColor: '#a85876',
+      btnBg: '#fff0f5',
+      btnHover: '#f8deea',
+      btnActiveBg: '#e090ad',
+      btnActiveText: '#fff',
+      tableHead: '#fff0f5',
+      tableHover: '#fff5fa',
+      shadow: 'rgba(168, 88, 118, 0.1)',
+      cardBg: '#ffffff',
+      badgeBg: '#fff0f5',
+      menuBg: '#fff',
+      menuText: '#a85876',
+      inputBg: 'rgba(255,255,255,0.8)',
+      overlayBg: 'rgba(168, 88, 118, 0.15)',
+    },
+    aurora: {
+      bgNav: 'linear-gradient(180deg, rgba(10, 12, 12, 0.97), rgba(12, 14, 14, 0.95))',
+      bgPanel: 'linear-gradient(180deg, rgba(12, 14, 14, 0.98) 0%, rgba(10, 12, 12, 0.96) 100%)',
+      border: 'rgba(61, 107, 102, 0.72)',
+      textMain: '#c8c0ae',
+      textSub: '#9a9186',
+      btnBg: 'linear-gradient(180deg, rgba(61, 107, 102, 0.16), rgba(18, 20, 20, 0.42))',
+      btnHover: 'linear-gradient(180deg, rgba(61, 107, 102, 0.28), rgba(24, 26, 26, 0.5))',
+      btnActiveBg: 'linear-gradient(180deg, #3d6b66, #2a4a47)',
+      btnActiveText: '#c8c0ae',
+      tableHead: 'linear-gradient(90deg, rgba(61, 107, 102, 0.18), rgba(22, 24, 24, 0.22))',
+      tableHover: 'rgba(61, 107, 102, 0.12)',
+      shadow: '0 6px 16px rgba(0, 0, 0, 0.32)',
+      cardBg: 'linear-gradient(180deg, rgba(18, 20, 20, 0.98), rgba(12, 14, 14, 0.99))',
+      badgeBg: 'rgba(61, 107, 102, 0.22)',
+      menuBg: '#121414',
+      menuText: '#c8c0ae',
+      inputBg: 'rgba(8, 10, 10, 0.72)',
+      overlayBg: 'rgba(6, 8, 8, 0.84)',
+    },
+    sunset: {
+      bgNav: 'linear-gradient(135deg, #fffaf0 0%, #fff9e6 50%, #fff5fa 100%)',
+      bgPanel: 'linear-gradient(180deg, #fffcf5 0%, #fffafa 100%)',
+      border: 'rgba(251, 146, 60, 0.85)',
+      textMain: '#8a4a3b',
+      textSub: '#d97757',
+      btnBg: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(244, 114, 182, 0.1))',
+      btnHover: 'linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(244, 114, 182, 0.2))',
+      btnActiveBg: 'linear-gradient(135deg, #ffab73, #f48fb1)',
+      btnActiveText: '#fff',
+      tableHead: 'linear-gradient(90deg, rgba(251, 191, 36, 0.1), rgba(251, 113, 133, 0.1))',
+      tableHover: 'rgba(251, 146, 60, 0.05)',
+      shadow: '0 8px 32px rgba(251, 146, 60, 0.15), 0 4px 16px rgba(244, 114, 182, 0.1)',
+      cardBg: 'linear-gradient(145deg, #fffcf7, #fffafa)',
+      badgeBg: '#fffaf5',
+      menuBg: '#fff',
+      menuText: '#8a4a3b',
+      inputBg: 'rgba(255,255,255,0.7)',
+      overlayBg: 'rgba(124, 45, 18, 0.1)',
+    },
+    starship: {
+      bgNav:
+        'radial-gradient(ellipse at top, rgba(30, 27, 75, 0.98), rgba(15, 23, 42, 0.95)), linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)',
+      bgPanel: 'linear-gradient(180deg, rgba(30, 27, 75, 0.98) 0%, rgba(49, 46, 129, 0.95) 100%)',
+      border: 'rgba(199, 210, 254, 0.6)',
+      textMain: '#e0e7ff',
+      textSub: '#a5b4fc',
+      btnBg: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.15), rgba(34, 211, 238, 0.1))',
+      btnHover: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(236, 72, 153, 0.25), rgba(34, 211, 238, 0.2))',
+      btnActiveBg: 'linear-gradient(135deg, #6366f1, #ec4899, #22d3ee)',
+      btnActiveText: '#fff',
+      tableHead: 'linear-gradient(90deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.1))',
+      tableHover: 'rgba(99, 102, 241, 0.1)',
+      shadow: '0 8px 40px rgba(99, 102, 241, 0.2), 0 4px 20px rgba(236, 72, 153, 0.1)',
+      cardBg: 'linear-gradient(145deg, rgba(30, 27, 75, 0.95), rgba(49, 46, 129, 0.9))',
+      badgeBg: 'rgba(99, 102, 241, 0.2)',
+      menuBg: '#1e1b4b',
+      menuText: '#e0e7ff',
+      inputBg: 'rgba(0,0,0,0.4)',
+      overlayBg: 'rgba(0,0,0,0.85)',
+    },
+    sky: {
+      bgNav: 'linear-gradient(135deg, rgba(224, 242, 254, 0.95), rgba(238, 242, 255, 0.95))',
+      bgPanel: 'linear-gradient(180deg, rgba(240, 249, 255, 0.95) 0%, rgba(230, 240, 255, 0.9) 100%)',
+      border: 'rgba(56, 189, 248, 0.6)',
+      textMain: '#0f172a',
+      textSub: '#3b82f6',
+      uiColor: '#3b82f6',
+      btnBg: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.15))',
+      btnHover: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(129, 140, 248, 0.25))',
+      btnActiveBg: 'linear-gradient(135deg, #38bdf8, #818cf8)',
+      btnActiveText: '#fff',
+      tableHead: 'linear-gradient(90deg, rgba(56, 189, 248, 0.1), rgba(129, 140, 248, 0.1))',
+      tableHover: 'rgba(56, 189, 248, 0.08)',
+      shadow: '0 8px 32px rgba(56, 189, 248, 0.15), 0 4px 16px rgba(129, 140, 248, 0.1)',
+      cardBg: 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.95))',
+      badgeBg: 'rgba(56, 189, 248, 0.2)',
+      menuBg: '#f0f9ff',
+      menuText: '#0f172a',
+      inputBg: 'rgba(255, 255, 255, 0.6)',
+      overlayBg: 'rgba(15, 23, 42, 0.15)',
+    },
+  };
+
+  const bindScrollFade = $els => {
+    if (!$els || !$els.length) return;
+    $els.each(function () {
+      const $t = $(this);
+      $t.off('scroll.fade').on('scroll.fade', function () {
+        $t.addClass('acu-show-scroll');
+        clearTimeout($t.data('fadeT'));
+        $t.data(
+          'fadeT',
+          setTimeout(() => {
+            $t.removeClass('acu-show-scroll');
+          }, 500),
+        );
+      });
+    });
+  };
+
+  const getCore = () => {
+    const w = window.parent || window;
+    return {
+      $: window.jQuery || w.jQuery,
+      getDB: () => w.AutoCardUpdaterAPI || window.AutoCardUpdaterAPI,
+    };
+  };
+
+  const getHostDocument = () => {
+    try {
+      return (window.parent || window).document || document;
+    } catch (e) {
+      return document;
+    }
+  };
+
+  const isFixedDashboardPosition = () => getConfig().dashboardPosition === 'fixed_status';
+  const isFixedFrontendPosition = () => {
+    const config = getConfig();
+    return config.frontendPosition === 'fixed_status' || config.dashboardPosition === 'fixed_status';
+  };
+
+  const ensureFixedDashboardHost = () => {
+    const hostDocument = getHostDocument();
+    const sendForm = hostDocument.querySelector('#send_form') || hostDocument.querySelector('#form_sheld');
+    if (!sendForm || !sendForm.parentElement) return null;
+
+    let host = hostDocument.getElementById(FIXED_DASHBOARD_HOST_ID);
+    if (!host) {
+      host = hostDocument.createElement('div');
+      host.id = FIXED_DASHBOARD_HOST_ID;
+      sendForm.parentElement.insertBefore(host, sendForm);
+    }
+
+    host.style.width = '100%';
+    host.style.margin = '0 auto 6px';
+    host.style.border = '0';
+    host.style.borderRadius = '0';
+    host.style.background = 'transparent';
+    host.style.boxShadow = 'none';
+    host.style.overflow = 'visible';
+    host.style.maxHeight = 'none';
+    host.style.clear = 'both';
+    host.style.display = 'flex';
+    host.style.flexDirection = 'column';
+    host.style.gap = '6px';
+
+    const ensureSlot = (id, order) => {
+      let slot = host.querySelector(`#${id}`);
+      if (!slot) {
+        slot = hostDocument.createElement('div');
+        slot.id = id;
+      }
+      slot.style.width = '100%';
+      slot.style.minWidth = '0';
+      slot.style.order = order;
+      return slot;
     };
 
-    const DEFAULT_CONFIG = {
-        theme: 'aurora',
-        fontFamily: 'default',
-        cardWidth: 280,
-        fontSize: 13,
-        optionFontSize: 13,
-        dashboardFontSize: 13,
-        itemsPerPage: 20, 
-        highlightNew: false,
-        highlightColor: 'red',
-        layout: 'vertical',
-        limitLongText: false,
-        showDashboard: true,
-        checkConsistency: true,
-        customTitleColor: false,
-        titleColor: 'orange',
-        gridColumns: (window.innerWidth <= 768 ? 4 : 0),
-        showOptionPanel: false,
-        clickOptionToAutoSend: false,
-        collapseStyle: 'bar',
-        collapsePosition: 'center',
-        frontendPosition: 'fixed_status',
-        dashboardPosition: 'fixed_status',
-        autoPlotRecallEnabled: true,
-        autoMemoryRecallEnabled: true,
-        autoRecallMaxItems: 8,
-        autoRecallMaxChars: 2400,
-        autoRecallRecentMessages: 8,
-        dbTheme: 'default',
-        dbTransparentMap: {}
-    };
+    const dashboardSlot = ensureSlot(FIXED_DASHBOARD_SLOT_ID, '10');
+    const frontendSlot = ensureSlot(FIXED_FRONTEND_SLOT_ID, '20');
+    Array.from(host.children).forEach(child => {
+      if (child === dashboardSlot || child === frontendSlot) return;
+      if (child.classList.contains('acu-embedded-dashboard-container')) dashboardSlot.appendChild(child);
+      else if (child.classList.contains('acu-wrapper')) frontendSlot.appendChild(child);
+      else if (
+        child.id === FIXED_STATUS_SLOT_ID ||
+        child.id === 'mfrs-fixed-status-summary' ||
+        child.id === 'mfrs-fixed-status-detail'
+      ) {
+        child.remove();
+      }
+    });
 
-    const THEMES = [
-        { id: 'retro', name: '复古羊皮' },
-        { id: 'dark', name: '极夜深空' },
-        { id: 'modern', name: '现代清爽' },
-        { id: 'forest', name: '森之物语' },
-        { id: 'ocean', name: '深海幽蓝' },
-        { id: 'cyber', name: '赛博霓虹' },
-        { id: 'sakura', name: '浅粉落樱' },
-        { id: 'aurora', name: '卷宗线框' },
-        { id: 'sunset', name: '日落沙滩' },
-        { id: 'starship', name: '星际迷航' },
-        { id: 'sky', name: '天空之境' }
-    ];
+    host.append(dashboardSlot, frontendSlot);
+    return host;
+  };
 
-        const FONTS = [
-        { id: 'default', name: '系统默认', val: `'Segoe UI', 'Microsoft YaHei', sans-serif` },
-        { id: 'noto-sans', name: '思源黑体', val: `'Noto Sans SC', sans-serif` },
-        { id: 'noto-serif', name: '思源宋体', val: `'Noto Serif SC', serif` },
-        { id: 'mashanzheng', name: '古风书法', val: `'Ma Shan Zheng', cursive` },
-        { id: 'zcool', name: '快乐圆体', val: `'ZCOOL KuaiLe', cursive` },
-        { id: 'longcang', name: '行书手写', val: `'Long Cang', cursive` },
-        { id: 'mono', name: '代码等宽', val: `'Consolas', 'Monaco', monospace` },
-        { id: 'kaiti', name: '清雅楷体', val: `'KaiTi', 'STKaiti', '楷体', serif` },
-    ];
+  const getFixedDashboardSlot = () => {
+    const host = ensureFixedDashboardHost();
+    return host ? host.querySelector(`#${FIXED_DASHBOARD_SLOT_ID}`) : null;
+  };
 
-    const HIGHLIGHT_COLORS = {
-        orange: { main: '#d35400', bg: 'rgba(211, 84, 0, 0.1)', name: '活力橙' },
-        red:    { main: '#8f2a24', bg: 'rgba(143, 42, 36, 0.16)', name: '绯红' },
-        blue:   { main: '#2196f3', bg: 'rgba(33, 150, 243, 0.1)', name: '海蓝' },
-        green:  { main: '#27ae60', bg: 'rgba(39, 174, 96, 0.1)', name: '翠绿' },
-        purple: { main: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)', name: '梦幻紫' },
-        cyan:   { main: '#00bcd4', bg: 'rgba(0, 188, 212, 0.1)', name: '青空蓝' },
-        teal:   { main: '#1abc9c', bg: 'rgba(26, 188, 156, 0.1)', name: '青绿' }
-    };
+  const getFixedFrontendSlot = () => {
+    const host = ensureFixedDashboardHost();
+    return host ? host.querySelector(`#${FIXED_FRONTEND_SLOT_ID}`) : null;
+  };
 
-    const THEME_VARS = {
-        retro: { bgNav: '#e6e2d3', bgPanel: '#e6e2d3', border: '#bfb29e', textMain: '#5e4b35', textSub: '#888', btnBg: '#d6ccbc', btnHover: '#cbbba8', btnActiveBg: '#8d7b6f', btnActiveText: '#fdfaf5', tableHead: '#efebe4', tableHover: '#f0ebe0', shadow: 'rgba(0,0,0,0.1)', menuBg: '#fff', menuText: '#333', cardBg: '#fffef9', badgeBg: '#efebe4', inputBg: 'rgba(255,255,255,0.5)', overlayBg: 'rgba(94, 75, 53, 0.4)' },
-        dark: { bgNav: 'rgba(30, 30, 30, 0.95)', bgPanel: 'rgba(25, 25, 25, 0.95)', border: '#555', textMain: '#eee', textSub: '#aaa', btnBg: '#3a3a3a', btnHover: '#4a4a4a', btnActiveBg: '#6a5acd', btnActiveText: '#fff', tableHead: 'rgba(40, 40, 40, 0.9)', tableHover: 'rgba(58, 58, 58, 0.5)', shadow: 'rgba(0,0,0,0.6)', cardBg: 'rgba(35, 35, 35, 0.9)', badgeBg: '#3a3f4b', menuBg: '#333', menuText: '#eee', inputBg: 'rgba(0,0,0,0.3)', overlayBg: 'rgba(0,0,0,0.75)' },
-        modern: { bgNav: '#ffffff', bgPanel: '#f8f9fa', border: '#dee2e6', textMain: '#333', textSub: '#6c757d', btnBg: '#e9ecef', btnHover: '#dee2e6', btnActiveBg: '#0d6efd', btnActiveText: '#fff', tableHead: '#f8f9fa', tableHover: '#e9ecef', shadow: 'rgba(0,0,0,0.08)', cardBg: '#ffffff', badgeBg: '#f1f3f5', menuBg: '#fff', menuText: '#333', inputBg: '#ffffff', overlayBg: 'rgba(0,0,0,0.3)' },
-        forest: { bgNav: '#e8f5e9', bgPanel: '#e8f5e9', border: '#a5d6a7', textMain: '#333333', textSub: '#555555', uiColor: '#1b5e20', btnBg: '#c8e6c9', btnHover: '#a5d6a7', btnActiveBg: '#2e7d32', btnActiveText: '#fff', tableHead: '#dcedc8', tableHover: '#f1f8e9', shadow: 'rgba(0,0,0,0.1)', cardBg: '#ffffff', badgeBg: '#dcedc8', menuBg: '#fff', menuText: '#2e7d32', inputBg: 'rgba(255,255,255,0.7)', overlayBg: 'rgba(27, 94, 32, 0.2)' },
-        ocean: { bgNav: '#f0f9ff', bgPanel: '#f0f9ff', border: '#bae6fd', textMain: '#333333', textSub: '#555555', uiColor: '#0369a1', btnBg: '#e0f2fe', btnHover: '#bae6fd', btnActiveBg: '#0ea5e9', btnActiveText: '#fff', tableHead: '#e0f2fe', tableHover: '#f0f9ff', shadow: 'rgba(3, 105, 161, 0.15)', cardBg: '#ffffff', badgeBg: '#e0f2fe', menuBg: '#fff', menuText: '#0369a1', inputBg: 'rgba(255,255,255,0.75)', overlayBg: 'rgba(3, 105, 161, 0.2)' },
-        cyber: { bgNav: '#050505', bgPanel: '#0a0a0a', border: '#444', textMain: '#00ffcc', textSub: '#ff00ff', btnBg: '#1f1f1f', btnHover: '#333', btnActiveBg: '#ff00ff', btnActiveText: '#fff', tableHead: '#111', tableHover: '#1a1a1a', shadow: '0 0 10px rgba(0,255,204,0.3)', cardBg: '#050505', badgeBg: '#222', menuBg: '#111', menuText: '#00ffcc', inputBg: '#111', overlayBg: 'rgba(0,0,0,0.85)' },
-        sakura: { bgNav: '#fff9fb', bgPanel: '#fff9fb', border: '#f0d4df', textMain: '#333333', textSub: '#555555', uiColor: '#a85876', btnBg: '#fff0f5', btnHover: '#f8deea', btnActiveBg: '#e090ad', btnActiveText: '#fff', tableHead: '#fff0f5', tableHover: '#fff5fa', shadow: 'rgba(168, 88, 118, 0.1)', cardBg: '#ffffff', badgeBg: '#fff0f5', menuBg: '#fff', menuText: '#a85876', inputBg: 'rgba(255,255,255,0.8)', overlayBg: 'rgba(168, 88, 118, 0.15)' },
-        aurora: { bgNav: 'linear-gradient(180deg, rgba(10, 12, 12, 0.97), rgba(12, 14, 14, 0.95))', bgPanel: 'linear-gradient(180deg, rgba(12, 14, 14, 0.98) 0%, rgba(10, 12, 12, 0.96) 100%)', border: 'rgba(61, 107, 102, 0.72)', textMain: '#c8c0ae', textSub: '#9a9186', btnBg: 'linear-gradient(180deg, rgba(61, 107, 102, 0.16), rgba(18, 20, 20, 0.42))', btnHover: 'linear-gradient(180deg, rgba(61, 107, 102, 0.28), rgba(24, 26, 26, 0.5))', btnActiveBg: 'linear-gradient(180deg, #3d6b66, #2a4a47)', btnActiveText: '#c8c0ae', tableHead: 'linear-gradient(90deg, rgba(61, 107, 102, 0.18), rgba(22, 24, 24, 0.22))', tableHover: 'rgba(61, 107, 102, 0.12)', shadow: '0 6px 16px rgba(0, 0, 0, 0.32)', cardBg: 'linear-gradient(180deg, rgba(18, 20, 20, 0.98), rgba(12, 14, 14, 0.99))', badgeBg: 'rgba(61, 107, 102, 0.22)', menuBg: '#121414', menuText: '#c8c0ae', inputBg: 'rgba(8, 10, 10, 0.72)', overlayBg: 'rgba(6, 8, 8, 0.84)' },
-        sunset: { bgNav: 'linear-gradient(135deg, #fffaf0 0%, #fff9e6 50%, #fff5fa 100%)', bgPanel: 'linear-gradient(180deg, #fffcf5 0%, #fffafa 100%)', border: 'rgba(251, 146, 60, 0.85)', textMain: '#8a4a3b', textSub: '#d97757', btnBg: 'linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(244, 114, 182, 0.1))', btnHover: 'linear-gradient(135deg, rgba(251, 146, 60, 0.2), rgba(244, 114, 182, 0.2))', btnActiveBg: 'linear-gradient(135deg, #ffab73, #f48fb1)', btnActiveText: '#fff', tableHead: 'linear-gradient(90deg, rgba(251, 191, 36, 0.1), rgba(251, 113, 133, 0.1))', tableHover: 'rgba(251, 146, 60, 0.05)', shadow: '0 8px 32px rgba(251, 146, 60, 0.15), 0 4px 16px rgba(244, 114, 182, 0.1)', cardBg: 'linear-gradient(145deg, #fffcf7, #fffafa)', badgeBg: '#fffaf5', menuBg: '#fff', menuText: '#8a4a3b', inputBg: 'rgba(255,255,255,0.7)', overlayBg: 'rgba(124, 45, 18, 0.1)' },
-        starship: { bgNav: 'radial-gradient(ellipse at top, rgba(30, 27, 75, 0.98), rgba(15, 23, 42, 0.95)), linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)', bgPanel: 'linear-gradient(180deg, rgba(30, 27, 75, 0.98) 0%, rgba(49, 46, 129, 0.95) 100%)', border: 'rgba(199, 210, 254, 0.6)', textMain: '#e0e7ff', textSub: '#a5b4fc', btnBg: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.15), rgba(34, 211, 238, 0.1))', btnHover: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(236, 72, 153, 0.25), rgba(34, 211, 238, 0.2))', btnActiveBg: 'linear-gradient(135deg, #6366f1, #ec4899, #22d3ee)', btnActiveText: '#fff', tableHead: 'linear-gradient(90deg, rgba(99, 102, 241, 0.15), rgba(236, 72, 153, 0.1))', tableHover: 'rgba(99, 102, 241, 0.1)', shadow: '0 8px 40px rgba(99, 102, 241, 0.2), 0 4px 20px rgba(236, 72, 153, 0.1)', cardBg: 'linear-gradient(145deg, rgba(30, 27, 75, 0.95), rgba(49, 46, 129, 0.9))', badgeBg: 'rgba(99, 102, 241, 0.2)', menuBg: '#1e1b4b', menuText: '#e0e7ff', inputBg: 'rgba(0,0,0,0.4)', overlayBg: 'rgba(0,0,0,0.85)' },
-        sky: { bgNav: 'linear-gradient(135deg, rgba(224, 242, 254, 0.95), rgba(238, 242, 255, 0.95))', bgPanel: 'linear-gradient(180deg, rgba(240, 249, 255, 0.95) 0%, rgba(230, 240, 255, 0.9) 100%)', border: 'rgba(56, 189, 248, 0.6)', textMain: '#0f172a', textSub: '#3b82f6', uiColor: '#3b82f6', btnBg: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.15))', btnHover: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(129, 140, 248, 0.25))', btnActiveBg: 'linear-gradient(135deg, #38bdf8, #818cf8)', btnActiveText: '#fff', tableHead: 'linear-gradient(90deg, rgba(56, 189, 248, 0.1), rgba(129, 140, 248, 0.1))', tableHover: 'rgba(56, 189, 248, 0.08)', shadow: '0 8px 32px rgba(56, 189, 248, 0.15), 0 4px 16px rgba(129, 140, 248, 0.1)', cardBg: 'linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.95))', badgeBg: 'rgba(56, 189, 248, 0.2)', menuBg: '#f0f9ff', menuText: '#0f172a', inputBg: 'rgba(255, 255, 255, 0.6)', overlayBg: 'rgba(15, 23, 42, 0.15)' }
-    };
+  const getMysteryFrontendApi = () => {
+    try {
+      const w = window.parent || window;
+      return w.MysteryDatabaseFrontend || window.MysteryDatabaseFrontend || null;
+    } catch (e) {
+      return window.MysteryDatabaseFrontend || null;
+    }
+  };
 
-    
-    const bindScrollFade = ($els) => {
-        if (!$els || !$els.length) return;
-        $els.each(function() {
-            const $t = $(this);
-            $t.off('scroll.fade').on('scroll.fade', function() {
-                $t.addClass('acu-show-scroll');
-                clearTimeout($t.data('fadeT'));
-                $t.data('fadeT', setTimeout(() => {
-                    $t.removeClass('acu-show-scroll');
-                }, 500));
-            });
-        });
-    };
+  const isMfrsCrudMigrationEnabled = () => {
+    try {
+      const w = window.parent || window;
+      const value = (w.localStorage || window.localStorage).getItem(STORAGE_KEY_MFRS_CRUD_MIGRATION);
+      return value !== 'false';
+    } catch (e) {
+      return true;
+    }
+  };
 
-    const getCore = () => {
-        const w = window.parent || window;
-        return {
-            $: window.jQuery || w.jQuery,
-            getDB: () => w.AutoCardUpdaterAPI || window.AutoCardUpdaterAPI
-        };
-    };
+  const formatTableChangeErrors = errors => {
+    if (!Array.isArray(errors) || errors.length === 0) return '未知错误';
+    return errors
+      .map(error => {
+        const column = error.column ? ` / ${error.column}` : '';
+        return `${error.code || 'ERROR'}${column}: ${error.message || ''}`;
+      })
+      .join('；');
+  };
 
-    const getHostDocument = () => {
-        try {
-            return (window.parent || window).document || document;
-        } catch (e) {
-            return document;
-        }
-    };
+  const applyMfrsCrudPlan = async (plan, fallbackLabel = '旧保存路径') => {
+    if (!isMfrsCrudMigrationEnabled()) return false;
+    const api = getMysteryFrontendApi();
+    if (!api || typeof api.applyTableChangePlan !== 'function') return false;
+    try {
+      const result = await api.applyTableChangePlan(plan);
+      if (result && result.ok) return true;
+      console.warn('[MFRS Visualizer] CRUD 写入预检/执行失败，回退旧保存路径。', { plan, result });
+      if (window.toastr)
+        window.toastr.warning(`CRUD 写入未通过，已回退${fallbackLabel}：${formatTableChangeErrors(result?.errors)}`);
+    } catch (error) {
+      console.warn('[MFRS Visualizer] CRUD 写入异常，回退旧保存路径。', { plan, error });
+      if (window.toastr) window.toastr.warning(`CRUD 写入异常，已回退${fallbackLabel}`);
+    }
+    return false;
+  };
 
-    const isFixedDashboardPosition = () => getConfig().dashboardPosition === 'fixed_status';
-    const isFixedFrontendPosition = () => {
-        const config = getConfig();
-        return config.frontendPosition === 'fixed_status' || config.dashboardPosition === 'fixed_status';
-    };
+  const previewMfrsCrudPlan = async plan => {
+    if (!isMfrsCrudMigrationEnabled()) return null;
+    const api = getMysteryFrontendApi();
+    if (!api || typeof api.previewTableChangePlan !== 'function') return null;
+    try {
+      return await api.previewTableChangePlan(plan);
+    } catch (error) {
+      console.warn('[MFRS Visualizer] CRUD 预检异常。', { plan, error });
+      return null;
+    }
+  };
 
-    const ensureFixedDashboardHost = () => {
-        const hostDocument = getHostDocument();
-        const sendForm = hostDocument.querySelector('#send_form') || hostDocument.querySelector('#form_sheld');
-        if (!sendForm || !sendForm.parentElement) return null;
+  const getIconForTableName = name => {
+    if (!name) return 'fa-table';
+    const n = name.toLowerCase();
+    if (n.includes('主角') || n.includes('角色')) return 'fa-user-circle';
+    if (n.includes('通用') || n.includes('全局') || n.includes('世界') || n.includes('设定')) return 'fa-globe-asia';
+    if (n.includes('背包') || n.includes('物品') || n.includes('资源') || n.includes('物资')) return 'fa-briefcase';
+    if (
+      n.includes('技能') ||
+      n.includes('武魂') ||
+      n.includes('功法') ||
+      n.includes('能力') ||
+      n.includes('神通') ||
+      n.includes('法术')
+    )
+      return 'fa-dragon';
+    if (n.includes('势力') || n.includes('阵营') || n.includes('门派') || n.includes('组织')) return 'fa-flag';
+    if (n.includes('关系') || n.includes('周边') || n.includes('npc') || n.includes('人物')) return 'fa-address-book';
+    if (n.includes('任务') || n.includes('日志')) return 'fa-scroll';
+    if (n.includes('地点') || n.includes('位置')) return 'fa-map-marker-alt';
+    if (n.includes('总结') || n.includes('大纲')) return 'fa-book-reader';
+    if (n.includes('装备') || n.includes('武器')) return 'fa-shield-alt';
+    if (n.includes('事件') || n.includes('备忘') || n.includes('记录') || n.includes('日程'))
+      return 'fa-clipboard-list';
+    return 'fa-table';
+  };
 
-        let host = hostDocument.getElementById(FIXED_DASHBOARD_HOST_ID);
-        if (!host) {
-            host = hostDocument.createElement('div');
-            host.id = FIXED_DASHBOARD_HOST_ID;
-            sendForm.parentElement.insertBefore(host, sendForm);
-        }
+  const getBadgeStyle = text => {
+    return '';
+  };
 
-        host.style.width = '100%';
-        host.style.margin = '0 auto 6px';
-        host.style.border = '0';
-        host.style.borderRadius = '0';
-        host.style.background = 'transparent';
-        host.style.boxShadow = 'none';
-        host.style.overflow = 'visible';
-        host.style.maxHeight = 'none';
-        host.style.clear = 'both';
-        host.style.display = 'flex';
-        host.style.flexDirection = 'column';
-        host.style.gap = '6px';
+  const getActiveTabState = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_ACTIVE_TAB));
+    } catch (e) {
+      return null;
+    }
+  };
+  const saveActiveTabState = tableName => {
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTIVE_TAB, JSON.stringify(tableName));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const getSavedTableOrder = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_ORDER));
+    } catch (e) {
+      return null;
+    }
+  };
+  const saveTableOrder = tableNames => {
+    try {
+      localStorage.setItem(STORAGE_KEY_TABLE_ORDER, JSON.stringify(tableNames));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const getSavedActionOrder = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_ACTION_ORDER));
+    } catch (e) {
+      return null;
+    }
+  };
+  const saveActionOrder = list => {
+    try {
+      localStorage.setItem(STORAGE_KEY_ACTION_ORDER, JSON.stringify(list));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const getConfig = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_UI_CONFIG));
+      return { ...DEFAULT_CONFIG, ...saved };
+    } catch (e) {
+      return DEFAULT_CONFIG;
+    }
+  };
+  const saveConfig = newConfig => {
+    const current = getConfig();
+    const merged = { ...current, ...newConfig };
+    try {
+      localStorage.setItem(STORAGE_KEY_UI_CONFIG, JSON.stringify(merged));
+    } catch (e) {
+      console.error(e);
+    }
+    applyConfigStyles(merged);
+  };
 
-        const ensureSlot = (id, order) => {
-            let slot = host.querySelector(`#${id}`);
-            if (!slot) {
-                slot = hostDocument.createElement('div');
-                slot.id = id;
-            }
-            slot.style.width = '100%';
-            slot.style.minWidth = '0';
-            slot.style.order = order;
-            return slot;
-        };
+  // ── MFRSDialog：替换浏览器原生 alert / confirm 的通用弹窗 + 可操作 toast ──
+  // 复用现有 acu-theme CSS 变量体系，风格与数据库前端一致。
+  const MFRSDialog = (() => {
+    let toastContainer = null;
+    let dialogStylesInjected = false;
 
-        const dashboardSlot = ensureSlot(FIXED_DASHBOARD_SLOT_ID, '10');
-        const frontendSlot = ensureSlot(FIXED_FRONTEND_SLOT_ID, '20');
-        Array.from(host.children).forEach(child => {
-            if (child === dashboardSlot || child === frontendSlot) return;
-            if (child.classList.contains('acu-embedded-dashboard-container')) dashboardSlot.appendChild(child);
-            else if (child.classList.contains('acu-wrapper')) frontendSlot.appendChild(child);
-            else if (
-                child.id === FIXED_STATUS_SLOT_ID ||
-                child.id === 'mfrs-fixed-status-summary' ||
-                child.id === 'mfrs-fixed-status-detail'
-            ) {
-                child.remove();
-            }
-        });
-
-        host.append(dashboardSlot, frontendSlot);
-        return host;
-    };
-
-    const getFixedDashboardSlot = () => {
-        const host = ensureFixedDashboardHost();
-        return host ? host.querySelector(`#${FIXED_DASHBOARD_SLOT_ID}`) : null;
-    };
-
-    const getFixedFrontendSlot = () => {
-        const host = ensureFixedDashboardHost();
-        return host ? host.querySelector(`#${FIXED_FRONTEND_SLOT_ID}`) : null;
-    };
-
-    const getMysteryFrontendApi = () => {
-        try {
-            const w = window.parent || window;
-            return w.MysteryDatabaseFrontend || window.MysteryDatabaseFrontend || null;
-        } catch (e) {
-            return window.MysteryDatabaseFrontend || null;
-        }
-    };
-
-    const isMfrsCrudMigrationEnabled = () => {
-        try {
-            const w = window.parent || window;
-            const value = (w.localStorage || window.localStorage).getItem(STORAGE_KEY_MFRS_CRUD_MIGRATION);
-            return value !== 'false';
-        } catch (e) {
-            return true;
-        }
-    };
-
-    const formatTableChangeErrors = (errors) => {
-        if (!Array.isArray(errors) || errors.length === 0) return '未知错误';
-        return errors.map(error => {
-            const column = error.column ? ` / ${error.column}` : '';
-            return `${error.code || 'ERROR'}${column}: ${error.message || ''}`;
-        }).join('；');
-    };
-
-    const applyMfrsCrudPlan = async (plan, fallbackLabel = '旧保存路径') => {
-        if (!isMfrsCrudMigrationEnabled()) return false;
-        const api = getMysteryFrontendApi();
-        if (!api || typeof api.applyTableChangePlan !== 'function') return false;
-        try {
-            const result = await api.applyTableChangePlan(plan);
-            if (result && result.ok) return true;
-            console.warn('[MFRS Visualizer] CRUD 写入预检/执行失败，回退旧保存路径。', { plan, result });
-            if (window.toastr) window.toastr.warning(`CRUD 写入未通过，已回退${fallbackLabel}：${formatTableChangeErrors(result?.errors)}`);
-        } catch (error) {
-            console.warn('[MFRS Visualizer] CRUD 写入异常，回退旧保存路径。', { plan, error });
-            if (window.toastr) window.toastr.warning(`CRUD 写入异常，已回退${fallbackLabel}`);
-        }
-        return false;
-    };
-
-    const previewMfrsCrudPlan = async (plan) => {
-        if (!isMfrsCrudMigrationEnabled()) return null;
-        const api = getMysteryFrontendApi();
-        if (!api || typeof api.previewTableChangePlan !== 'function') return null;
-        try {
-            return await api.previewTableChangePlan(plan);
-        } catch (error) {
-            console.warn('[MFRS Visualizer] CRUD 预检异常。', { plan, error });
-            return null;
-        }
-    };
-
-    const getIconForTableName = (name) => {
-        if (!name) return 'fa-table';
-        const n = name.toLowerCase();
-        if (n.includes('主角') || n.includes('角色')) return 'fa-user-circle';
-        if (n.includes('通用') || n.includes('全局') || n.includes('世界') || n.includes('设定')) return 'fa-globe-asia';
-        if (n.includes('背包') || n.includes('物品') || n.includes('资源') || n.includes('物资')) return 'fa-briefcase';
-        if (n.includes('技能') || n.includes('武魂') || n.includes('功法') || n.includes('能力') || n.includes('神通') || n.includes('法术')) return 'fa-dragon';
-        if (n.includes('势力') || n.includes('阵营') || n.includes('门派') || n.includes('组织')) return 'fa-flag';
-        if (n.includes('关系') || n.includes('周边') || n.includes('npc') || n.includes('人物')) return 'fa-address-book';
-        if (n.includes('任务') || n.includes('日志')) return 'fa-scroll';
-        if (n.includes('地点') || n.includes('位置')) return 'fa-map-marker-alt';
-        if (n.includes('总结') || n.includes('大纲')) return 'fa-book-reader';
-        if (n.includes('装备') || n.includes('武器')) return 'fa-shield-alt';
-        if (n.includes('事件') || n.includes('备忘') || n.includes('记录') || n.includes('日程')) return 'fa-clipboard-list';
-        return 'fa-table';
-    };
-
-    const getBadgeStyle = (text) => { return ''; };
-
-    const getActiveTabState = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_ACTIVE_TAB)); } catch (e) { return null; } };
-    const saveActiveTabState = (tableName) => { try { localStorage.setItem(STORAGE_KEY_ACTIVE_TAB, JSON.stringify(tableName)); } catch (e) { console.error(e); } };
-    const getSavedTableOrder = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_ORDER)); } catch (e) { return null; } };
-    const saveTableOrder = (tableNames) => { try { localStorage.setItem(STORAGE_KEY_TABLE_ORDER, JSON.stringify(tableNames)); } catch (e) { console.error(e); } };
-    const getSavedActionOrder = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_ACTION_ORDER)); } catch (e) { return null; } };
-    const saveActionOrder = (list) => { try { localStorage.setItem(STORAGE_KEY_ACTION_ORDER, JSON.stringify(list)); } catch (e) { console.error(e); } };
-    const getConfig = () => { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY_UI_CONFIG)); return { ...DEFAULT_CONFIG, ...saved }; } catch (e) { return DEFAULT_CONFIG; } };
-    const saveConfig = (newConfig) => { const current = getConfig(); const merged = { ...current, ...newConfig }; try { localStorage.setItem(STORAGE_KEY_UI_CONFIG, JSON.stringify(merged)); } catch (e) { console.error(e); } applyConfigStyles(merged); };
-
-// ── MFRSDialog：替换浏览器原生 alert / confirm 的通用弹窗 + 可操作 toast ──
-    // 复用现有 acu-theme CSS 变量体系，风格与数据库前端一致。
-    const MFRSDialog = (() => {
-        let toastContainer = null;
-        let dialogStylesInjected = false;
-
-        const ensureStyles = () => {
-            if (dialogStylesInjected) return;
-            dialogStylesInjected = true;
-            const styleId = 'mfrs-dialog-styles';
-            if (document.getElementById(styleId)) return;
-            const style = document.createElement('style');
-            style.id = styleId;
-            style.textContent = `
+    const ensureStyles = () => {
+      if (dialogStylesInjected) return;
+      dialogStylesInjected = true;
+      const styleId = 'mfrs-dialog-styles';
+      if (document.getElementById(styleId)) return;
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
 .mfrs-confirm-overlay { position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; background: var(--acu-overlay-bg, rgba(0,0,0,0.5)) !important; z-index: 2147483647 !important; display: flex !important; justify-content: center !important; align-items: center !important; backdrop-filter: blur(3px); opacity: 0; animation: mfrsDlgFadeIn 0.18s forwards; }
 .mfrs-confirm-dialog { background-color: var(--acu-bg-panel, #1a1a2e) !important; color: var(--acu-text-main, #eee) !important; border: 1px solid var(--acu-border, #555) !important; border-radius: 12px; width: 90%; max-width: 440px; max-height: 80vh; box-shadow: 0 15px 50px rgba(0,0,0,0.4); overflow: hidden; display: flex; flex-direction: column; transform: scale(0.92); animation: mfrsDlgPop 0.2s forwards; }
 .mfrs-confirm-title { font-size: 17px; font-weight: 700; padding: 18px 24px 0; color: var(--acu-text-main, #eee); text-align: center; }
@@ -1630,26 +2056,30 @@
 @keyframes mfrsToastIn { to { opacity: 1; transform: translateX(0); } }
 @keyframes mfrsToastOut { to { opacity: 0; transform: translateX(120%); } }
 `;
-            (document.head || document.documentElement).appendChild(style);
-        };
+      (document.head || document.documentElement).appendChild(style);
+    };
 
-        const getThemeClass = () => {
-            try { return `acu-theme-${getConfig().theme}`; } catch (e) { return ''; }
-        };
+    const getThemeClass = () => {
+      try {
+        return `acu-theme-${getConfig().theme}`;
+      } catch (e) {
+        return '';
+      }
+    };
 
-        // showConfirm：返回 Promise<boolean>，替代 confirm()
-        const showConfirm = (message, opts = {}) => {
-            ensureStyles();
-            const themeClass = getThemeClass();
-            const title = opts.title || '确认操作';
-            const confirmText = opts.confirmText || '确定';
-            const cancelText = opts.cancelText || '取消';
-            const danger = opts.danger ? 'mfrs-btn-danger' : 'mfrs-btn-primary';
+    // showConfirm：返回 Promise<boolean>，替代 confirm()
+    const showConfirm = (message, opts = {}) => {
+      ensureStyles();
+      const themeClass = getThemeClass();
+      const title = opts.title || '确认操作';
+      const confirmText = opts.confirmText || '确定';
+      const cancelText = opts.cancelText || '取消';
+      const danger = opts.danger ? 'mfrs-btn-danger' : 'mfrs-btn-primary';
 
-            return new Promise((resolve) => {
-                const overlay = document.createElement('div');
-                overlay.className = 'mfrs-confirm-overlay';
-                overlay.innerHTML = `
+      return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'mfrs-confirm-overlay';
+        overlay.innerHTML = `
                     <div class="mfrs-confirm-dialog ${themeClass}">
                         <div class="mfrs-confirm-title">${escapeHtml(title)}</div>
                         <div class="mfrs-confirm-body">${escapeHtml(message)}</div>
@@ -1658,26 +2088,31 @@
                             <button class="mfrs-confirm-btn ${danger}" data-act="ok"><i class="fa-solid fa-check"></i> ${escapeHtml(confirmText)}</button>
                         </div>
                     </div>`;
-                document.body.appendChild(overlay);
+        document.body.appendChild(overlay);
 
-                const close = (val) => { overlay.remove(); resolve(val); };
-                overlay.querySelector('[data-act="ok"]').addEventListener('click', () => close(true));
-                overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => close(false));
-                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
-                overlay.querySelector('[data-act="ok"]').focus();
-            });
+        const close = val => {
+          overlay.remove();
+          resolve(val);
         };
+        overlay.querySelector('[data-act="ok"]').addEventListener('click', () => close(true));
+        overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => close(false));
+        overlay.addEventListener('click', e => {
+          if (e.target === overlay) close(false);
+        });
+        overlay.querySelector('[data-act="ok"]').focus();
+      });
+    };
 
-        // showAlert：返回 Promise<void>，替代 alert()
-        const showAlert = (message, opts = {}) => {
-            ensureStyles();
-            const themeClass = getThemeClass();
-            const title = opts.title || '提示';
+    // showAlert：返回 Promise<void>，替代 alert()
+    const showAlert = (message, opts = {}) => {
+      ensureStyles();
+      const themeClass = getThemeClass();
+      const title = opts.title || '提示';
 
-            return new Promise((resolve) => {
-                const overlay = document.createElement('div');
-                overlay.className = 'mfrs-confirm-overlay';
-                overlay.innerHTML = `
+      return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'mfrs-confirm-overlay';
+        overlay.innerHTML = `
                     <div class="mfrs-confirm-dialog ${themeClass}">
                         <div class="mfrs-confirm-title">${escapeHtml(title)}</div>
                         <div class="mfrs-confirm-body">${escapeHtml(message)}</div>
@@ -1685,137 +2120,224 @@
                             <button class="mfrs-confirm-btn mfrs-btn-primary" data-act="ok"><i class="fa-solid fa-check"></i> 确定</button>
                         </div>
                     </div>`;
-                document.body.appendChild(overlay);
+        document.body.appendChild(overlay);
 
-                const close = () => { overlay.remove(); resolve(); };
-                overlay.querySelector('[data-act="ok"]').addEventListener('click', close);
-                overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-                overlay.querySelector('[data-act="ok"]').focus();
-            });
+        const close = () => {
+          overlay.remove();
+          resolve();
         };
-
-        // showToast：非阻塞通知，可选操作按钮
-        const showToast = (message, type = 'info', opts = {}) => {
-            ensureStyles();
-            if (!toastContainer || !document.body.contains(toastContainer)) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'mfrs-toast-container';
-                document.body.appendChild(toastContainer);
-            }
-            const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
-            const duration = opts.duration || (type === 'error' ? 6000 : 3500);
-
-            const toast = document.createElement('div');
-            toast.className = `mfrs-toast mfrs-toast-${type}`;
-            let actionHtml = '';
-            if (opts.actionLabel && typeof opts.onAction === 'function') {
-                actionHtml = `<button class="mfrs-toast-action" data-act="action">${opts.actionLabel}</button>`;
-            }
-            toast.innerHTML = `<span class="mfrs-toast-icon">${icons[type] || icons.info}</span><span class="mfrs-toast-content">${message}</span>${actionHtml}`;
-            toastContainer.appendChild(toast);
-
-            const removeToast = (el) => {
-                if (!el || !el.parentNode) return;
-                el.classList.add('mfrs-toast-out');
-                setTimeout(() => el.remove(), 280);
-            };
-
-            if (opts.actionLabel && typeof opts.onAction === 'function') {
-                toast.querySelector('[data-act="action"]').addEventListener('click', () => {
-                    try { opts.onAction(); } catch (e) { console.error('[MFRSDialog] toast action error:', e); }
-                    removeToast(toast);
-                });
-            }
-
-            const timerId = setTimeout(() => removeToast(toast), duration);
-            toast.addEventListener('mouseenter', () => clearTimeout(timerId));
-            toast.addEventListener('mouseleave', () => setTimeout(() => removeToast(toast), 1500));
-        };
-
-        return { showConfirm, showAlert, showToast };
-    })();
-    
-    const getTableHeights = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_HEIGHTS)) || {}; } catch (e) { return {}; } };
-    const saveTableHeights = (heights) => { try { localStorage.setItem(STORAGE_KEY_TABLE_HEIGHTS, JSON.stringify(heights)); } catch (e) { console.error(e); } };
-
-    const getTableStyles = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_STYLES)) || {}; } catch (e) { return {}; } };
-    const saveTableStyles = (styles) => { try { localStorage.setItem(STORAGE_KEY_TABLE_STYLES, JSON.stringify(styles)); } catch (e) { console.error(e); } };
-    const getDashConfig = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_DASH_CONFIG)) || {}; } catch (e) { return {}; } };
-    const saveDashConfig = (cfg) => { try { localStorage.setItem(STORAGE_KEY_DASH_CONFIG, JSON.stringify(cfg)); } catch (e) { console.error(e); } };
-    const hasLegacyMfrsDashConfig = (cfg) => Object.values(cfg || {}).some(slot => {
-        if (!slot || slot.isEmpty) return false;
-        const text = String(slot.text || '');
-        const title = String(slot.title || '');
-        return MFRS_LEGACY_DASHBOARD_KEYWORDS.some(keyword => text.includes(keyword) || title.includes(keyword));
-    });
-
-
-    const getReverseOrderTables = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_REVERSE_TABLES)) || []; } catch (e) { return []; } };
-    const saveReverseOrderTables = (list) => { try { localStorage.setItem(STORAGE_KEY_REVERSE_TABLES, JSON.stringify(list)); } catch (e) { console.error(e); } };
-
-    const getHiddenTables = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_HIDDEN_TABLES)) || []; } catch (e) { return []; } };
-    const saveHiddenTables = (list) => { try { localStorage.setItem(STORAGE_KEY_HIDDEN_TABLES, JSON.stringify(list)); } catch (e) { console.error(e); } };
-
-    const loadSnapshot = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY_LAST_SNAPSHOT)); } catch (e) { return null; } };
-    const saveSnapshot = (data) => { try { localStorage.setItem(STORAGE_KEY_LAST_SNAPSHOT, JSON.stringify(data)); } catch (e) { console.error(e); } };
-
-    const generateDiffMap = (currentData) => {
-        const lastData = loadSnapshot();
-        const diffSet = new Set();
-        if (!lastData) return diffSet;
-        for (const sheetId in currentData) {
-            const newSheet = currentData[sheetId];
-            const oldSheet = lastData[sheetId];
-            if (!newSheet || !newSheet.name) continue;
-            const tableName = newSheet.name;
-            if (!oldSheet) {
-                if (newSheet.content) {
-                     newSheet.content.forEach((row, rIdx) => { if (rIdx > 0) diffSet.add(`${tableName}-row-${rIdx-1}`); });
-                }
-                continue;
-            }
-            const newRows = newSheet.content || [];
-            const oldRows = oldSheet.content || [];
-            newRows.forEach((row, rIdx) => {
-                if (rIdx === 0) return; 
-                const oldRow = oldRows[rIdx];
-                if (!oldRow) { diffSet.add(`${tableName}-row-${rIdx-1}`); } else {
-                    row.forEach((cell, cIdx) => {
-                        if (cIdx === 0) return; 
-                        const oldCell = oldRow[cIdx];
-                        if (String(cell) !== String(oldCell)) { diffSet.add(`${tableName}-${rIdx-1}-${cIdx}`); }
-                    });
-                }
-            });
-        }
-        return diffSet;
+        overlay.querySelector('[data-act="ok"]').addEventListener('click', close);
+        overlay.addEventListener('click', e => {
+          if (e.target === overlay) close();
+        });
+        overlay.querySelector('[data-act="ok"]').focus();
+      });
     };
 
-    const injectDatabaseStyles = (config) => {
-        const { $ } = getCore();
-        if (!$) return;
-        const $style = $('#acu-db-beautify');
-        if (config.dbTheme && config.dbTheme !== 'default') {
-            const t = THEME_VARS[config.dbTheme] || THEME_VARS.aurora;
-            let h = HIGHLIGHT_COLORS[config.highlightColor];
-            if (!h && config.highlightColor && String(config.highlightColor).startsWith('#')) {
-                h = { main: config.highlightColor, bg: config.highlightColor + '1a' };
-            }
-            h = h || HIGHLIGHT_COLORS.orange;
-            const fontVal = FONTS.find(f => f.id === config.fontFamily)?.val || FONTS[0].val;
-            
-            let finalBg0 = t.bgPanel;
-            let finalBg1 = t.bgNav;
-            
-            const transMap = config.dbTransparentMap || {};
-            const isTrans = transMap[config.dbTheme] === true;
+    // showToast：非阻塞通知，可选操作按钮
+    const showToast = (message, type = 'info', opts = {}) => {
+      ensureStyles();
+      if (!toastContainer || !document.body.contains(toastContainer)) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'mfrs-toast-container';
+        document.body.appendChild(toastContainer);
+      }
+      const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+      const duration = opts.duration || (type === 'error' ? 6000 : 3500);
 
-            if (isTrans && (['aurora', 'starship', 'sky'].includes(config.dbTheme))) {
-                finalBg0 = 'transparent';
-                finalBg1 = 'transparent';
-            }
+      const toast = document.createElement('div');
+      toast.className = `mfrs-toast mfrs-toast-${type}`;
+      let actionHtml = '';
+      if (opts.actionLabel && typeof opts.onAction === 'function') {
+        actionHtml = `<button class="mfrs-toast-action" data-act="action">${opts.actionLabel}</button>`;
+      }
+      toast.innerHTML = `<span class="mfrs-toast-icon">${icons[type] || icons.info}</span><span class="mfrs-toast-content">${message}</span>${actionHtml}`;
+      toastContainer.appendChild(toast);
 
-            const css = `
+      const removeToast = el => {
+        if (!el || !el.parentNode) return;
+        el.classList.add('mfrs-toast-out');
+        setTimeout(() => el.remove(), 280);
+      };
+
+      if (opts.actionLabel && typeof opts.onAction === 'function') {
+        toast.querySelector('[data-act="action"]').addEventListener('click', () => {
+          try {
+            opts.onAction();
+          } catch (e) {
+            console.error('[MFRSDialog] toast action error:', e);
+          }
+          removeToast(toast);
+        });
+      }
+
+      const timerId = setTimeout(() => removeToast(toast), duration);
+      toast.addEventListener('mouseenter', () => clearTimeout(timerId));
+      toast.addEventListener('mouseleave', () => setTimeout(() => removeToast(toast), 1500));
+    };
+
+    return { showConfirm, showAlert, showToast };
+  })();
+
+  const getTableHeights = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_HEIGHTS)) || {};
+    } catch (e) {
+      return {};
+    }
+  };
+  const saveTableHeights = heights => {
+    try {
+      localStorage.setItem(STORAGE_KEY_TABLE_HEIGHTS, JSON.stringify(heights));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const getTableStyles = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_TABLE_STYLES)) || {};
+    } catch (e) {
+      return {};
+    }
+  };
+  const saveTableStyles = styles => {
+    try {
+      localStorage.setItem(STORAGE_KEY_TABLE_STYLES, JSON.stringify(styles));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const getDashConfig = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_DASH_CONFIG)) || {};
+    } catch (e) {
+      return {};
+    }
+  };
+  const saveDashConfig = cfg => {
+    try {
+      localStorage.setItem(STORAGE_KEY_DASH_CONFIG, JSON.stringify(cfg));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+  const hasLegacyMfrsDashConfig = cfg =>
+    Object.values(cfg || {}).some(slot => {
+      if (!slot || slot.isEmpty) return false;
+      const text = String(slot.text || '');
+      const title = String(slot.title || '');
+      return MFRS_LEGACY_DASHBOARD_KEYWORDS.some(keyword => text.includes(keyword) || title.includes(keyword));
+    });
+
+  const getReverseOrderTables = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_REVERSE_TABLES)) || [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const saveReverseOrderTables = list => {
+    try {
+      localStorage.setItem(STORAGE_KEY_REVERSE_TABLES, JSON.stringify(list));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const getHiddenTables = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_HIDDEN_TABLES)) || [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const saveHiddenTables = list => {
+    try {
+      localStorage.setItem(STORAGE_KEY_HIDDEN_TABLES, JSON.stringify(list));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadSnapshot = () => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY_LAST_SNAPSHOT));
+    } catch (e) {
+      return null;
+    }
+  };
+  const saveSnapshot = data => {
+    try {
+      localStorage.setItem(STORAGE_KEY_LAST_SNAPSHOT, JSON.stringify(data));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const generateDiffMap = currentData => {
+    const lastData = loadSnapshot();
+    const diffSet = new Set();
+    if (!lastData) return diffSet;
+    for (const sheetId in currentData) {
+      const newSheet = currentData[sheetId];
+      const oldSheet = lastData[sheetId];
+      if (!newSheet || !newSheet.name) continue;
+      const tableName = newSheet.name;
+      if (!oldSheet) {
+        if (newSheet.content) {
+          newSheet.content.forEach((row, rIdx) => {
+            if (rIdx > 0) diffSet.add(`${tableName}-row-${rIdx - 1}`);
+          });
+        }
+        continue;
+      }
+      const newRows = newSheet.content || [];
+      const oldRows = oldSheet.content || [];
+      newRows.forEach((row, rIdx) => {
+        if (rIdx === 0) return;
+        const oldRow = oldRows[rIdx];
+        if (!oldRow) {
+          diffSet.add(`${tableName}-row-${rIdx - 1}`);
+        } else {
+          row.forEach((cell, cIdx) => {
+            if (cIdx === 0) return;
+            const oldCell = oldRow[cIdx];
+            if (String(cell) !== String(oldCell)) {
+              diffSet.add(`${tableName}-${rIdx - 1}-${cIdx}`);
+            }
+          });
+        }
+      });
+    }
+    return diffSet;
+  };
+
+  const injectDatabaseStyles = config => {
+    const { $ } = getCore();
+    if (!$) return;
+    const $style = $('#acu-db-beautify');
+    if (config.dbTheme && config.dbTheme !== 'default') {
+      const t = THEME_VARS[config.dbTheme] || THEME_VARS.aurora;
+      let h = HIGHLIGHT_COLORS[config.highlightColor];
+      if (!h && config.highlightColor && String(config.highlightColor).startsWith('#')) {
+        h = { main: config.highlightColor, bg: config.highlightColor + '1a' };
+      }
+      h = h || HIGHLIGHT_COLORS.orange;
+      const fontVal = FONTS.find(f => f.id === config.fontFamily)?.val || FONTS[0].val;
+
+      let finalBg0 = t.bgPanel;
+      let finalBg1 = t.bgNav;
+
+      const transMap = config.dbTransparentMap || {};
+      const isTrans = transMap[config.dbTheme] === true;
+
+      if (isTrans && ['aurora', 'starship', 'sky'].includes(config.dbTheme)) {
+        finalBg0 = 'transparent';
+        finalBg1 = 'transparent';
+      }
+
+      const css = `
                 <style id="acu-db-beautify">
                     
                     html body .auto-card-updater-popup .button-group.acu-data-mgmt-buttons button,
@@ -2042,89 +2564,91 @@
 
                 </style>
             `;
-            if ($style.length) $style.replaceWith(css); else $('head').append(css);
-        } else {
-            $style.remove();
-        }
-    };
+      if ($style.length) $style.replaceWith(css);
+      else $('head').append(css);
+    } else {
+      $style.remove();
+    }
+  };
 
-    const applyConfigStyles = (config) => {
-        const { $ } = getCore();
-        if (!$) return;
-        const $wrapper = $('.acu-wrapper');
-        const $embedded = $('.acu-embedded-options-container .acu-option-panel');
-        const fontVal = FONTS.find(f => f.id === config.fontFamily)?.val || FONTS[0].val;
-        $('#acu-dynamic-font').remove();
-        $('head').append(`
+  const applyConfigStyles = config => {
+    const { $ } = getCore();
+    if (!$) return;
+    const $wrapper = $('.acu-wrapper');
+    const $embedded = $('.acu-embedded-options-container .acu-option-panel');
+    const fontVal = FONTS.find(f => f.id === config.fontFamily)?.val || FONTS[0].val;
+    $('#acu-dynamic-font').remove();
+    $('head').append(`
             <style id="acu-dynamic-font">
                 .acu-wrapper, .acu-edit-dialog, .acu-cell-menu, .acu-nav-container, .acu-data-card, .acu-panel-title, .acu-settings-label, .acu-checkbox-label, .acu-btn-block, .acu-nav-btn, .acu-dash-card, .acu-quick-view-card, .acu-option-panel, .acu-opt-btn, .acu-opt-header, .acu-nice-select, .acu-edit-dialog select, .acu-edit-dialog input, .acu-edit-dialog textarea, .acu-close-pill, .acu-embedded-dashboard-container, .acu-embedded-options-container {
                     font-family: ${fontVal} !important;
                 }
             </style>
         `);
-        
-        let colorVal = HIGHLIGHT_COLORS[config.highlightColor];
-        if (!colorVal && config.highlightColor && String(config.highlightColor).startsWith('#')) {
-            colorVal = { main: config.highlightColor, bg: config.highlightColor + '1a' };
-        }
-        colorVal = colorVal || HIGHLIGHT_COLORS.orange;
-        let titleColorVal = 'var(--acu-text-main)';
-        if (config.customTitleColor) {
-             const tRaw = config.titleColor;
-             if (tRaw && String(tRaw).startsWith('#')) {
-                 titleColorVal = tRaw;
-             } else {
-                 titleColorVal = (HIGHLIGHT_COLORS[tRaw] || HIGHLIGHT_COLORS.orange).main;
-             }
-        }
-        const gridCols = config.gridColumns > 0 ? `repeat(${config.gridColumns}, 1fr)` : 'repeat(auto-fill, minmax(110px, 1fr))';
-        
-        const cssProps = { 
-            '--acu-card-width': `${config.cardWidth}px`, 
-            '--acu-font-size': `${config.fontSize}px`,
-            '--acu-opt-font-size': `${config.optionFontSize || 13}px`,
-            '--acu-dash-font-size': `${config.dashboardFontSize || 13}px`,
-            '--acu-highlight': colorVal.main,
-            '--acu-highlight-bg': colorVal.bg,
-            '--acu-accent': colorVal.main,
-            '--acu-title-color': titleColorVal,
-            '--acu-nav-cols': gridCols
-        };
-        
-        if ($wrapper.length) {
-            $wrapper.removeClass(THEMES.map(t => `acu-theme-${t.id}`).join(' '));
-            $wrapper.addClass(`acu-theme-${config.theme}`);
-            $wrapper.css(cssProps);
-            const $display = $('.acu-data-display');
-            $display.removeClass('acu-layout-vertical acu-layout-horizontal').addClass(`acu-layout-${config.layout}`);
-        }
 
-        if ($embedded.length) {
-             $embedded.removeClass(THEMES.map(t => `acu-theme-${t.id}`).join(' '));
-             $embedded.addClass(`acu-theme-${config.theme}`);
-             $embedded.css(cssProps);
-        }
-        const $embDash = $('.acu-embedded-dashboard-container');
-        if ($embDash.length) {
-             $embDash.removeClass(THEMES.map(t => `acu-theme-${t.id}`).join(' '));
-             $embDash.addClass(`acu-theme-${config.theme}`);
-             $embDash.css(cssProps);
-        }
+    let colorVal = HIGHLIGHT_COLORS[config.highlightColor];
+    if (!colorVal && config.highlightColor && String(config.highlightColor).startsWith('#')) {
+      colorVal = { main: config.highlightColor, bg: config.highlightColor + '1a' };
+    }
+    colorVal = colorVal || HIGHLIGHT_COLORS.orange;
+    let titleColorVal = 'var(--acu-text-main)';
+    if (config.customTitleColor) {
+      const tRaw = config.titleColor;
+      if (tRaw && String(tRaw).startsWith('#')) {
+        titleColorVal = tRaw;
+      } else {
+        titleColorVal = (HIGHLIGHT_COLORS[tRaw] || HIGHLIGHT_COLORS.orange).main;
+      }
+    }
+    const gridCols =
+      config.gridColumns > 0 ? `repeat(${config.gridColumns}, 1fr)` : 'repeat(auto-fill, minmax(110px, 1fr))';
 
-        injectDatabaseStyles(config);
+    const cssProps = {
+      '--acu-card-width': `${config.cardWidth}px`,
+      '--acu-font-size': `${config.fontSize}px`,
+      '--acu-opt-font-size': `${config.optionFontSize || 13}px`,
+      '--acu-dash-font-size': `${config.dashboardFontSize || 13}px`,
+      '--acu-highlight': colorVal.main,
+      '--acu-highlight-bg': colorVal.bg,
+      '--acu-accent': colorVal.main,
+      '--acu-title-color': titleColorVal,
+      '--acu-nav-cols': gridCols,
     };
 
-    const addStyles = () => {
-        const { $ } = getCore();
-        if (!$) return;
-        $(`#${SCRIPT_ID}-styles`).remove();
-        let themeCss = '';
-        Object.keys(THEME_VARS).forEach(k => {
-            const t = THEME_VARS[k];
-            themeCss += `.acu-theme-${k} { --acu-bg-nav: ${t.bgNav}; --acu-bg-panel: ${t.bgPanel}; --acu-border: ${t.border}; --acu-text-main: ${t.textMain}; --acu-ui-color: ${t.uiColor || t.textMain}; --acu-text-sub: ${t.textSub}; --acu-btn-bg: ${t.btnBg}; --acu-btn-hover: ${t.btnHover}; --acu-btn-active-bg: ${t.btnActiveBg}; --acu-btn-active-text: ${t.btnActiveText}; --acu-table-head: ${t.tableHead}; --acu-table-hover: ${t.tableHover}; --acu-shadow: ${t.shadow}; --acu-card-bg: ${t.cardBg}; --acu-badge-bg: ${t.badgeBg}; --acu-menu-bg: ${t.menuBg}; --acu-menu-text: ${t.menuText}; --acu-input-bg: ${t.inputBg}; --acu-overlay-bg: ${t.overlayBg}; }\n`;
-        });
+    if ($wrapper.length) {
+      $wrapper.removeClass(THEMES.map(t => `acu-theme-${t.id}`).join(' '));
+      $wrapper.addClass(`acu-theme-${config.theme}`);
+      $wrapper.css(cssProps);
+      const $display = $('.acu-data-display');
+      $display.removeClass('acu-layout-vertical acu-layout-horizontal').addClass(`acu-layout-${config.layout}`);
+    }
 
-        const styles = `
+    if ($embedded.length) {
+      $embedded.removeClass(THEMES.map(t => `acu-theme-${t.id}`).join(' '));
+      $embedded.addClass(`acu-theme-${config.theme}`);
+      $embedded.css(cssProps);
+    }
+    const $embDash = $('.acu-embedded-dashboard-container');
+    if ($embDash.length) {
+      $embDash.removeClass(THEMES.map(t => `acu-theme-${t.id}`).join(' '));
+      $embDash.addClass(`acu-theme-${config.theme}`);
+      $embDash.css(cssProps);
+    }
+
+    injectDatabaseStyles(config);
+  };
+
+  const addStyles = () => {
+    const { $ } = getCore();
+    if (!$) return;
+    $(`#${SCRIPT_ID}-styles`).remove();
+    let themeCss = '';
+    Object.keys(THEME_VARS).forEach(k => {
+      const t = THEME_VARS[k];
+      themeCss += `.acu-theme-${k} { --acu-bg-nav: ${t.bgNav}; --acu-bg-panel: ${t.bgPanel}; --acu-border: ${t.border}; --acu-text-main: ${t.textMain}; --acu-ui-color: ${t.uiColor || t.textMain}; --acu-text-sub: ${t.textSub}; --acu-btn-bg: ${t.btnBg}; --acu-btn-hover: ${t.btnHover}; --acu-btn-active-bg: ${t.btnActiveBg}; --acu-btn-active-text: ${t.btnActiveText}; --acu-table-head: ${t.tableHead}; --acu-table-hover: ${t.tableHover}; --acu-shadow: ${t.shadow}; --acu-card-bg: ${t.cardBg}; --acu-badge-bg: ${t.badgeBg}; --acu-menu-bg: ${t.menuBg}; --acu-menu-text: ${t.menuText}; --acu-input-bg: ${t.inputBg}; --acu-overlay-bg: ${t.overlayBg}; }\n`;
+    });
+
+    const styles = `
             <style id="${SCRIPT_ID}-styles">
                 /* 国内镜像字体源，无需VPN */
                 @import url('https://fonts.loli.net/css2?family=Long+Cang&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@400;700&family=ZCOOL+KuaiLe&family=Zhi+Mang+Xing&display=swap');
@@ -2599,281 +3123,296 @@
                 }
             </style>
         `;
-        $('head').append(styles);
-    };
+    $('head').append(styles);
+  };
 
-    const getTableData = () => {
-        try {
-            const api = getCore().getDB();
-            if (!api || typeof api.exportTableAsJson !== 'function') {
-                lastTableDataError = '数据库 API 不可用或缺少 exportTableAsJson';
-                return null;
-            }
-            const data = api.exportTableAsJson();
-            if (!data) lastTableDataError = '数据库导出为空';
-            else lastTableDataError = '';
-            return data || null;
-        } catch (e) {
-            lastTableDataError = e?.message || String(e);
-            console.error('[MFRS Visualizer] 数据库导出失败:', e);
-            return null;
+  const getTableData = () => {
+    try {
+      const api = getCore().getDB();
+      if (!api || typeof api.exportTableAsJson !== 'function') {
+        lastTableDataError = '数据库 API 不可用或缺少 exportTableAsJson';
+        return null;
+      }
+      const data = api.exportTableAsJson();
+      if (!data) lastTableDataError = '数据库导出为空';
+      else lastTableDataError = '';
+      return data || null;
+    } catch (e) {
+      lastTableDataError = e?.message || String(e);
+      console.error('[MFRS Visualizer] 数据库导出失败:', e);
+      return null;
+    }
+  };
+
+  const updateSaveBtnState = () => {
+    const { $ } = getCore();
+    if (!$) return;
+    const $btn = $('#acu-btn-save-global');
+    if (pendingDeletes.size > 0) {
+      $btn.addClass('acu-save-alert');
+    } else {
+      $btn.removeClass('acu-save-alert');
+    }
+  };
+
+  const saveDataToDatabase = async (tableData, skipRender = false, commitDeletes = false) => {
+    if (isSaving) return false;
+    if (tableData && typeof tableData === 'object') {
+      if (!tableData.mate) {
+        tableData.mate = { type: 'chatSheets', version: 1 };
+      }
+      if (!Object.keys(tableData).some(k => k.startsWith('sheet_'))) {
+        if (tableData.content && tableData.name) {
+          const tempKey = tableData.uid || 'sheet_' + Math.random().toString(36).substr(2, 9);
+          const wrapper = { mate: { type: 'chatSheets', version: 1 } };
+          wrapper[tempKey] = tableData;
+          tableData = wrapper;
         }
-    };
-    
-    const updateSaveBtnState = () => {
-        const { $ } = getCore();
-        if (!$) return;
-        const $btn = $('#acu-btn-save-global');
-        if (pendingDeletes.size > 0) {
-            $btn.addClass('acu-save-alert');
-        } else {
-            $btn.removeClass('acu-save-alert');
-        }
-    };
+      }
+    }
+    const { $ } = getCore();
+    const $saveBtn = $('#acu-btn-save-global');
+    let originalIcon = '';
 
-    const saveDataToDatabase = async (tableData, skipRender = false, commitDeletes = false) => {
-        if (isSaving) return false;
-        if (tableData && typeof tableData === 'object') {
-            if (!tableData.mate) {
-                tableData.mate = { type: 'chatSheets', version: 1 };
-            }
-            if (!Object.keys(tableData).some(k => k.startsWith('sheet_'))) {
-                if (tableData.content && tableData.name) {
-                    const tempKey = tableData.uid || ('sheet_' + Math.random().toString(36).substr(2, 9));
-                    const wrapper = { mate: { type: 'chatSheets', version: 1 } };
-                    wrapper[tempKey] = tableData;
-                    tableData = wrapper;
-                }
-            }
-        }
-        const { $ } = getCore();
-        const $saveBtn = $('#acu-btn-save-global');
-        let originalIcon = '';
+    const executeCoreSave = async () => {
+      isSaving = true;
 
-        const executeCoreSave = async () => {
-            isSaving = true;
-
-            if (commitDeletes && pendingDeletes.size > 0) {
-                 for (const sheetId in tableData) {
-                      const sheet = tableData[sheetId];
-                     if (!sheet || !sheet.name || !sheet.content) continue;
-                     const newContent = [sheet.content[0]];
-                     for (let i = 1; i < sheet.content.length; i++) {
-                         const realIdx = i - 1;
-                         if (!pendingDeletes.has(`${sheet.name}-row-${realIdx}`)) {
-                             newContent.push(sheet.content[i]);
-                          }
-                     }
-                     sheet.content = newContent;
-                 }
-            }
-
-            const api = getCore().getDB();
-            let injectedDirectly = false;
-
-            try {
-                let ST = window.SillyTavern || (window.parent ? window.parent.SillyTavern : null);
-                if (!ST && window.top && window.top.SillyTavern) ST = window.top.SillyTavern;
-
-                let isolationKey = '';
-                const STORAGE_KEY_V5_SETTINGS = 'shujuku_v34_allSettings_v2';
-                try {
-                    let storage = window.localStorage;
-                    if (!storage.getItem(STORAGE_KEY_V5_SETTINGS) && window.parent) {
-                        try { storage = window.parent.localStorage; } catch(e){}
-                    }
-                    const settingsStr = storage.getItem(STORAGE_KEY_V5_SETTINGS);
-                    if (settingsStr) {
-                        const settings = JSON.parse(settingsStr);
-                        if (settings.dataIsolationEnabled && settings.dataIsolationCode) {
-                            isolationKey = settings.dataIsolationCode;
-                        }
-                    }
-                } catch (e) { }
-
-                if (ST && ST.chat && ST.chat.length > 0) {
-                    let targetMsg = null;
-                    for (let i = ST.chat.length - 1; i >= 0; i--) {
-                        if (!ST.chat[i].is_user) {
-                            targetMsg = ST.chat[i];
-                            break;
-                        }
-                    }
-
-                    if (targetMsg) {
-                        if (!targetMsg.TavernDB_ACU_IsolatedData) targetMsg.TavernDB_ACU_IsolatedData = {};
-                        if (!targetMsg.TavernDB_ACU_IsolatedData[isolationKey]) {
-                            targetMsg.TavernDB_ACU_IsolatedData[isolationKey] = {
-                                independentData: {},
-                                modifiedKeys: [],
-                                updateGroupKeys: []
-                            };
-                        }
-
-                        const tagData = targetMsg.TavernDB_ACU_IsolatedData[isolationKey];
-                        if (!tagData.independentData) tagData.independentData = {};
-
-                        const sheetsToSave = Object.keys(tableData).filter(k => k.startsWith('sheet_'));
-                        sheetsToSave.forEach(k => {
-                            tagData.independentData[k] = JSON.parse(JSON.stringify(tableData[k]));
-                        });
-
-                        const existingKeys = tagData.modifiedKeys || [];
-                        tagData.modifiedKeys = [...new Set([...existingKeys, ...sheetsToSave])];
-
-                        if (ST.saveChat) {
-                            await ST.saveChat();
-                            injectedDirectly = true;
-                        }
-                    }
-                }
-            } catch (directErr) { console.error(directErr); }
-
-            let apiSuccess = false;
-            if (api && api.importTableAsJson) {
-                apiSuccess = await api.importTableAsJson(JSON.stringify(tableData));
-            }
-
-            return apiSuccess || injectedDirectly;
-        };
-
-        try {
-            if (!skipRender) {
-                originalIcon = $saveBtn.html();
-                $saveBtn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
-            }
-
-            await UpdateController.runSilently(executeCoreSave);
-
-            if (!skipRender) {
-                if (window.toastr) window.toastr.success('保存成功！');
-                $('.acu-highlight-changed').removeClass('acu-highlight-changed');
-                currentDiffMap.clear();
-                if (commitDeletes) { pendingDeletes.clear(); updateSaveBtnState(); }
-                saveSnapshot(tableData);
-                renderInterface();
-            }
-            return true;
-        } catch (e) {
-            console.error("Save failed:", e);
-            if (!skipRender && window.toastr) window.toastr.error('保存失败');
-            return false;
-        } finally {
-            isSaving = false;
-            if (!skipRender && $saveBtn.length) {
-                $saveBtn.html(originalIcon || '<i class="fa-solid fa-save"></i>').prop('disabled', false);
-            }
-        }
-    };
-
-    const applyCellEditWithCrud = async (tableName, rowIndex, columnName, value) => {
-        if (!tableName || !columnName) return false;
-        return applyMfrsCrudPlan({
-            action: 'updateCell',
-            table: tableName,
-            match: { rowIndex: rowIndex + 1 },
-            column: columnName,
-            value: value ?? '',
-            reason: 'v10.2 可视化器单元格编辑',
-            confidence: 1
-        }, '单元格快照保存');
-    };
-
-    const applyRowEditWithCrud = async (tableName, rowIndex, changes) => {
-        if (!tableName || !changes || Object.keys(changes).length === 0) return false;
-        return applyMfrsCrudPlan({
-            action: 'updateCell',
-            table: tableName,
-            match: { rowIndex: rowIndex + 1 },
-            set: changes,
-            reason: 'v10.2 可视化器整体编辑',
-            confidence: 1
-        }, '整行快照保存');
-    };
-
-    const buildPendingDeletePlans = (tableData) => {
-        const plans = [];
-        if (!tableData || !pendingDeletes.size) return plans;
+      if (commitDeletes && pendingDeletes.size > 0) {
         for (const sheetId in tableData) {
-            const sheet = tableData[sheetId];
-            if (!sheet || !sheet.name || !Array.isArray(sheet.content)) continue;
-            const prefix = `${sheet.name}-row-`;
-            for (const deleteKey of pendingDeletes) {
-                if (!String(deleteKey).startsWith(prefix)) continue;
-                const realIndex = Number(String(deleteKey).slice(prefix.length));
-                if (!Number.isInteger(realIndex) || realIndex < 0) continue;
-                const contentIndex = realIndex + 1;
-                const row = sheet.content[contentIndex];
-                if (!Array.isArray(row)) continue;
-                plans.push({
-                    action: 'deleteRow',
-                    table: sheet.name,
-                    match: row[0] !== undefined && row[0] !== null && String(row[0]).trim() !== ''
-                        ? { row_id: row[0] }
-                        : { rowIndex: contentIndex },
-                    reason: 'v10.2 可视化器待删除行提交',
-                    confidence: 1
-                });
+          const sheet = tableData[sheetId];
+          if (!sheet || !sheet.name || !sheet.content) continue;
+          const newContent = [sheet.content[0]];
+          for (let i = 1; i < sheet.content.length; i++) {
+            const realIdx = i - 1;
+            if (!pendingDeletes.has(`${sheet.name}-row-${realIdx}`)) {
+              newContent.push(sheet.content[i]);
             }
+          }
+          sheet.content = newContent;
         }
-        return plans;
+      }
+
+      const api = getCore().getDB();
+      let injectedDirectly = false;
+
+      try {
+        let ST = window.SillyTavern || (window.parent ? window.parent.SillyTavern : null);
+        if (!ST && window.top && window.top.SillyTavern) ST = window.top.SillyTavern;
+
+        let isolationKey = '';
+        const STORAGE_KEY_V5_SETTINGS = 'shujuku_v34_allSettings_v2';
+        try {
+          let storage = window.localStorage;
+          if (!storage.getItem(STORAGE_KEY_V5_SETTINGS) && window.parent) {
+            try {
+              storage = window.parent.localStorage;
+            } catch (e) {}
+          }
+          const settingsStr = storage.getItem(STORAGE_KEY_V5_SETTINGS);
+          if (settingsStr) {
+            const settings = JSON.parse(settingsStr);
+            if (settings.dataIsolationEnabled && settings.dataIsolationCode) {
+              isolationKey = settings.dataIsolationCode;
+            }
+          }
+        } catch (e) {}
+
+        if (ST && ST.chat && ST.chat.length > 0) {
+          let targetMsg = null;
+          for (let i = ST.chat.length - 1; i >= 0; i--) {
+            if (!ST.chat[i].is_user) {
+              targetMsg = ST.chat[i];
+              break;
+            }
+          }
+
+          if (targetMsg) {
+            if (!targetMsg.TavernDB_ACU_IsolatedData) targetMsg.TavernDB_ACU_IsolatedData = {};
+            if (!targetMsg.TavernDB_ACU_IsolatedData[isolationKey]) {
+              targetMsg.TavernDB_ACU_IsolatedData[isolationKey] = {
+                independentData: {},
+                modifiedKeys: [],
+                updateGroupKeys: [],
+              };
+            }
+
+            const tagData = targetMsg.TavernDB_ACU_IsolatedData[isolationKey];
+            if (!tagData.independentData) tagData.independentData = {};
+
+            const sheetsToSave = Object.keys(tableData).filter(k => k.startsWith('sheet_'));
+            sheetsToSave.forEach(k => {
+              tagData.independentData[k] = JSON.parse(JSON.stringify(tableData[k]));
+            });
+
+            const existingKeys = tagData.modifiedKeys || [];
+            tagData.modifiedKeys = [...new Set([...existingKeys, ...sheetsToSave])];
+
+            if (ST.saveChat) {
+              await ST.saveChat();
+              injectedDirectly = true;
+            }
+          }
+        }
+      } catch (directErr) {
+        console.error(directErr);
+      }
+
+      let apiSuccess = false;
+      if (api && api.importTableAsJson) {
+        apiSuccess = await api.importTableAsJson(JSON.stringify(tableData));
+      }
+
+      return apiSuccess || injectedDirectly;
     };
 
-    const commitPendingDeletesWithCrud = async (tableData) => {
-        if (!isMfrsCrudMigrationEnabled() || pendingDeletes.size === 0) return false;
-        const plans = buildPendingDeletePlans(tableData);
-        if (plans.length !== pendingDeletes.size) return false;
-        for (const plan of plans) {
-            const preview = await previewMfrsCrudPlan(plan);
-            if (!preview || !preview.ok) {
-                console.warn('[MFRS Visualizer] 删除行 CRUD 预检失败，回退旧保存路径。', { plan, preview });
-                if (window.toastr) window.toastr.warning(`删除行 CRUD 预检失败，已回退旧保存路径：${formatTableChangeErrors(preview?.errors)}`);
-                return false;
-            }
-        }
-        for (const plan of plans) {
-            const ok = await applyMfrsCrudPlan(plan, '删除快照保存');
-            if (!ok) return false;
-        }
-        pendingDeletes.clear();
-        updateSaveBtnState();
-        currentDiffMap.clear();
+    try {
+      if (!skipRender) {
+        originalIcon = $saveBtn.html();
+        $saveBtn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+      }
+
+      await UpdateController.runSilently(executeCoreSave);
+
+      if (!skipRender) {
+        if (window.toastr) window.toastr.success('保存成功！');
         $('.acu-highlight-changed').removeClass('acu-highlight-changed');
-        const latestData = getTableData();
-        if (latestData) saveSnapshot(latestData);
-        renderInterface();
-        if (window.toastr) window.toastr.success('已通过 CRUD 删除选中行。');
-        return true;
-    };
-
-    const processJsonData = (json) => {
-        const tables = {};
-        if (!json || typeof json !== 'object') return {};
-        for (const sheetId in json) {
-            if (json[sheetId]?.name) {
-                 const sheet = json[sheetId];
-                tables[sheet.name] = {
-                    key: sheetId,
-                    name: sheet.name,
-                    headers: sheet.content[0] || [],
-                    rows: sheet.content.slice(1),
-                    source: sheet,
-                };
-            }
+        currentDiffMap.clear();
+        if (commitDeletes) {
+          pendingDeletes.clear();
+          updateSaveBtnState();
         }
-        return Object.keys(tables).length > 0 ? tables : null;
-    };
-    
-    const showSettingsModal = () => {
-        const { $ } = getCore();
-        $('.acu-edit-overlay').remove();
-        const config = getConfig();
-        const rawData = getTableData();
-        const allTableNames = rawData ? Object.keys(processJsonData(rawData)) : [];
-        const reversedTables = getReverseOrderTables();
-        const hiddenTables = getHiddenTables();
-        
-        const modalStyles = `
+        saveSnapshot(tableData);
+        renderInterface();
+      }
+      return true;
+    } catch (e) {
+      console.error('Save failed:', e);
+      if (!skipRender && window.toastr) window.toastr.error('保存失败');
+      return false;
+    } finally {
+      isSaving = false;
+      if (!skipRender && $saveBtn.length) {
+        $saveBtn.html(originalIcon || '<i class="fa-solid fa-save"></i>').prop('disabled', false);
+      }
+    }
+  };
+
+  const applyCellEditWithCrud = async (tableName, rowIndex, columnName, value) => {
+    if (!tableName || !columnName) return false;
+    return applyMfrsCrudPlan(
+      {
+        action: 'updateCell',
+        table: tableName,
+        match: { rowIndex: rowIndex + 1 },
+        column: columnName,
+        value: value ?? '',
+        reason: 'v10.2 可视化器单元格编辑',
+        confidence: 1,
+      },
+      '单元格快照保存',
+    );
+  };
+
+  const applyRowEditWithCrud = async (tableName, rowIndex, changes) => {
+    if (!tableName || !changes || Object.keys(changes).length === 0) return false;
+    return applyMfrsCrudPlan(
+      {
+        action: 'updateCell',
+        table: tableName,
+        match: { rowIndex: rowIndex + 1 },
+        set: changes,
+        reason: 'v10.2 可视化器整体编辑',
+        confidence: 1,
+      },
+      '整行快照保存',
+    );
+  };
+
+  const buildPendingDeletePlans = tableData => {
+    const plans = [];
+    if (!tableData || !pendingDeletes.size) return plans;
+    for (const sheetId in tableData) {
+      const sheet = tableData[sheetId];
+      if (!sheet || !sheet.name || !Array.isArray(sheet.content)) continue;
+      const prefix = `${sheet.name}-row-`;
+      for (const deleteKey of pendingDeletes) {
+        if (!String(deleteKey).startsWith(prefix)) continue;
+        const realIndex = Number(String(deleteKey).slice(prefix.length));
+        if (!Number.isInteger(realIndex) || realIndex < 0) continue;
+        const contentIndex = realIndex + 1;
+        const row = sheet.content[contentIndex];
+        if (!Array.isArray(row)) continue;
+        plans.push({
+          action: 'deleteRow',
+          table: sheet.name,
+          match:
+            row[0] !== undefined && row[0] !== null && String(row[0]).trim() !== ''
+              ? { row_id: row[0] }
+              : { rowIndex: contentIndex },
+          reason: 'v10.2 可视化器待删除行提交',
+          confidence: 1,
+        });
+      }
+    }
+    return plans;
+  };
+
+  const commitPendingDeletesWithCrud = async tableData => {
+    if (!isMfrsCrudMigrationEnabled() || pendingDeletes.size === 0) return false;
+    const plans = buildPendingDeletePlans(tableData);
+    if (plans.length !== pendingDeletes.size) return false;
+    for (const plan of plans) {
+      const preview = await previewMfrsCrudPlan(plan);
+      if (!preview || !preview.ok) {
+        console.warn('[MFRS Visualizer] 删除行 CRUD 预检失败，回退旧保存路径。', { plan, preview });
+        if (window.toastr)
+          window.toastr.warning(`删除行 CRUD 预检失败，已回退旧保存路径：${formatTableChangeErrors(preview?.errors)}`);
+        return false;
+      }
+    }
+    for (const plan of plans) {
+      const ok = await applyMfrsCrudPlan(plan, '删除快照保存');
+      if (!ok) return false;
+    }
+    pendingDeletes.clear();
+    updateSaveBtnState();
+    currentDiffMap.clear();
+    $('.acu-highlight-changed').removeClass('acu-highlight-changed');
+    const latestData = getTableData();
+    if (latestData) saveSnapshot(latestData);
+    renderInterface();
+    if (window.toastr) window.toastr.success('已通过 CRUD 删除选中行。');
+    return true;
+  };
+
+  const processJsonData = json => {
+    const tables = {};
+    if (!json || typeof json !== 'object') return {};
+    for (const sheetId in json) {
+      if (json[sheetId]?.name) {
+        const sheet = json[sheetId];
+        tables[sheet.name] = {
+          key: sheetId,
+          name: sheet.name,
+          headers: sheet.content[0] || [],
+          rows: sheet.content.slice(1),
+          source: sheet,
+        };
+      }
+    }
+    return Object.keys(tables).length > 0 ? tables : null;
+  };
+
+  const showSettingsModal = () => {
+    const { $ } = getCore();
+    $('.acu-edit-overlay').remove();
+    const config = getConfig();
+    const rawData = getTableData();
+    const allTableNames = rawData ? Object.keys(processJsonData(rawData)) : [];
+    const reversedTables = getReverseOrderTables();
+    const hiddenTables = getHiddenTables();
+
+    const modalStyles = `
         <style>
             .acu-edit-overlay { 
                 position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; 
@@ -3072,10 +3611,10 @@
 
         `;
 
-        const transMap = config.dbTransparentMap || {};
-        const isTrans = transMap[config.dbTheme] === true;
+    const transMap = config.dbTransparentMap || {};
+    const isTrans = transMap[config.dbTheme] === true;
 
-        const dialog = $(`
+    const dialog = $(`
             <div class="acu-edit-overlay">
                 ${modalStyles}
                 <div class="acu-edit-dialog acu-theme-${config.theme}">
@@ -3097,7 +3636,7 @@
                             <div class="acu-control-row">
                                 <div class="acu-label-col"><span class="acu-label-main">数据库主题</span></div>
                                 <div class="acu-input-col" style="gap:5px">
-                                    <select id="cfg-db-transparent" class="acu-nice-select" style="display:${(['aurora', 'starship', 'sky'].includes(config.dbTheme)) ? 'block' : 'none'}; width:auto; min-width:80px;">
+                                    <select id="cfg-db-transparent" class="acu-nice-select" style="display:${['aurora', 'starship', 'sky'].includes(config.dbTheme) ? 'block' : 'none'}; width:auto; min-width:80px;">
                                         <option value="false" ${!isTrans ? 'selected' : ''}>不透明</option>
                                         <option value="true" ${isTrans ? 'selected' : ''}>透明</option>
                                     </select>
@@ -3150,11 +3689,16 @@
                             </div><div class="acu-control-row" id="row-highlight-color" style="display:${config.highlightNew ? 'flex' : 'none'}; border-top:none; border-bottom:none; padding-top:8px;">
                                   <div style="width:100%">
                                       <div class="acu-color-row" id="cfg-color-opts" style="justify-content: flex-start; align-items: center;">
-                                        ${Object.keys(HIGHLIGHT_COLORS).map(k => `<div class="acu-color-circle ${config.highlightColor === k ? 'selected' : ''}" data-val="${k}" data-type="highlight" title="${HIGHLIGHT_COLORS[k].name}" style="background-color:${HIGHLIGHT_COLORS[k].main}"></div>`).join('')}
+                                        ${Object.keys(HIGHLIGHT_COLORS)
+                                          .map(
+                                            k =>
+                                              `<div class="acu-color-circle ${config.highlightColor === k ? 'selected' : ''}" data-val="${k}" data-type="highlight" title="${HIGHLIGHT_COLORS[k].name}" style="background-color:${HIGHLIGHT_COLORS[k].main}"></div>`,
+                                          )
+                                          .join('')}
                                       <div style="width:1px;height:20px;background:var(--acu-border);margin:0 8px;"></div>
-                                      <div class="acu-custom-color-btn ${(config.highlightColor && !HIGHLIGHT_COLORS[config.highlightColor] && String(config.highlightColor).startsWith('#')) ? 'selected' : ''}" title="自定义颜色">
-                                          <div class="acu-custom-bg" style="background:${(config.highlightColor && !HIGHLIGHT_COLORS[config.highlightColor] && String(config.highlightColor).startsWith('#')) ? config.highlightColor : 'conic-gradient(red, orange, yellow, green, blue, indigo, violet, red)'}"></div>
-                                          <input type="color" id="cfg-highlight-custom" value="${(config.highlightColor && String(config.highlightColor).startsWith('#')) ? config.highlightColor : '#d35400'}">
+                                      <div class="acu-custom-color-btn ${config.highlightColor && !HIGHLIGHT_COLORS[config.highlightColor] && String(config.highlightColor).startsWith('#') ? 'selected' : ''}" title="自定义颜色">
+                                          <div class="acu-custom-bg" style="background:${config.highlightColor && !HIGHLIGHT_COLORS[config.highlightColor] && String(config.highlightColor).startsWith('#') ? config.highlightColor : 'conic-gradient(red, orange, yellow, green, blue, indigo, violet, red)'}"></div>
+                                          <input type="color" id="cfg-highlight-custom" value="${config.highlightColor && String(config.highlightColor).startsWith('#') ? config.highlightColor : '#d35400'}">
                                       </div>
                                       </div>
                                 </div>
@@ -3171,11 +3715,16 @@
                             </div><div class="acu-control-row" id="row-title-color" style="display:${config.customTitleColor ? 'flex' : 'none'}; border-top:none; padding-top:8px;">
                                   <div style="width:100%">
                                       <div class="acu-color-row" id="cfg-title-color-opts" style="justify-content: flex-start; align-items: center;">
-                                        ${Object.keys(HIGHLIGHT_COLORS).map(k => `<div class="acu-color-circle ${config.titleColor === k ? 'selected' : ''}" data-val="${k}" data-type="title" title="${HIGHLIGHT_COLORS[k].name}" style="background-color:${HIGHLIGHT_COLORS[k].main}"></div>`).join('')}
+                                        ${Object.keys(HIGHLIGHT_COLORS)
+                                          .map(
+                                            k =>
+                                              `<div class="acu-color-circle ${config.titleColor === k ? 'selected' : ''}" data-val="${k}" data-type="title" title="${HIGHLIGHT_COLORS[k].name}" style="background-color:${HIGHLIGHT_COLORS[k].main}"></div>`,
+                                          )
+                                          .join('')}
                                       <div style="width:1px;height:20px;background:var(--acu-border);margin:0 8px;"></div>
-                                      <div class="acu-custom-color-btn ${(config.titleColor && !HIGHLIGHT_COLORS[config.titleColor] && String(config.titleColor).startsWith('#')) ? 'selected' : ''}" title="自定义颜色">
-                                          <div class="acu-custom-bg" style="background:${(config.titleColor && !HIGHLIGHT_COLORS[config.titleColor] && String(config.titleColor).startsWith('#')) ? config.titleColor : 'conic-gradient(red, orange, yellow, green, blue, indigo, violet, red)'}"></div>
-                                          <input type="color" id="cfg-title-custom" value="${(config.titleColor && String(config.titleColor).startsWith('#')) ? config.titleColor : '#d35400'}">
+                                      <div class="acu-custom-color-btn ${config.titleColor && !HIGHLIGHT_COLORS[config.titleColor] && String(config.titleColor).startsWith('#') ? 'selected' : ''}" title="自定义颜色">
+                                          <div class="acu-custom-bg" style="background:${config.titleColor && !HIGHLIGHT_COLORS[config.titleColor] && String(config.titleColor).startsWith('#') ? config.titleColor : 'conic-gradient(red, orange, yellow, green, blue, indigo, violet, red)'}"></div>
+                                          <input type="color" id="cfg-title-custom" value="${config.titleColor && String(config.titleColor).startsWith('#') ? config.titleColor : '#d35400'}">
                                       </div>
                                       </div>
                                 </div>
@@ -3317,7 +3866,12 @@
                             
                         </div></div><button type="button" class="acu-section-header" data-target="sec-tables" aria-expanded="false" aria-controls="sec-tables"><span class="acu-section-title"><i class="fa-solid fa-table"></i> 表格管理 <span class="acu-section-desc">点击眼睛显隐，开启开关倒序</span></span><i class="fa-solid fa-chevron-right acu-section-icon"></i></button><div class="acu-section-content" id="sec-tables"><div class="acu-settings-group" id="list-reverse-tables" style="padding: 0;">
                             <div style="max-height: 200px; overflow-y: auto;">
-                                ${allTableNames.length > 0 ? allTableNames.filter(n => !n.includes('选项')).map(name => `
+                                ${
+                                  allTableNames.length > 0
+                                    ? allTableNames
+                                        .filter(n => !n.includes('选项'))
+                                        .map(
+                                          name => `
                                     <div class="acu-control-row" style="padding: 10px 15px;">
                                         <div class="acu-label-col" style="max-width:70%; display:flex; flex-direction:row; align-items:center; gap:8px;">
                                             <button type="button" class="acu-visibility-toggle" data-table="${name}" aria-label="${hiddenTables.includes(name) ? '显示' : '隐藏'} ${name}" style="cursor:pointer; color:var(--acu-text-sub); width:44px; height:44px; padding:0; border:0; background:transparent; text-align:center; -webkit-tap-highlight-color:transparent;"><i class="fa-solid ${hiddenTables.includes(name) ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
@@ -3330,7 +3884,11 @@
                                             </label>
                                         </div>
                                     </div>
-                                `).join('') : '<div style="padding:20px; text-align:center; color:var(--acu-text-sub)">暂无表格数据</div>'}
+                                `,
+                                        )
+                                        .join('')
+                                    : '<div style="padding:20px; text-align:center; color:var(--acu-text-sub)">暂无表格数据</div>'
+                                }
                             </div>
                         </div></div><div style="display:flex; gap:10px; margin: 10px 0;">
                             <button class="acu-btn-block" id="btn-enter-sort" style="margin:0; flex:1; justify-content:center; font-weight:bold; padding:12px;">进入表格排序模式</button>
@@ -3340,293 +3898,350 @@
                 </div>
             </div>
         `);
-        $('body').append(dialog); bindScrollFade(dialog.find('.acu-settings-content, .acu-dash-npc-grid'));
-        dialog.find('.acu-section-header').on('click', function() {
-            const $this = $(this);
-            const $target = dialog.find('#' + $this.data('target'));
-            const isOpen = $this.hasClass('active');
-            dialog.find('.acu-section-header.active').not(this).removeClass('active').attr('aria-expanded', 'false');
-            dialog.find('.acu-section-content:visible').not($target).slideUp(200);
-            if (isOpen) { $this.removeClass('active').attr('aria-expanded', 'false'); $target.slideUp(200); }
-            else { $this.addClass('active').attr('aria-expanded', 'true'); $target.slideDown(200); }
-        });
+    $('body').append(dialog);
+    bindScrollFade(dialog.find('.acu-settings-content, .acu-dash-npc-grid'));
+    dialog.find('.acu-section-header').on('click', function () {
+      const $this = $(this);
+      const $target = dialog.find('#' + $this.data('target'));
+      const isOpen = $this.hasClass('active');
+      dialog.find('.acu-section-header.active').not(this).removeClass('active').attr('aria-expanded', 'false');
+      dialog.find('.acu-section-content:visible').not($target).slideUp(200);
+      if (isOpen) {
+        $this.removeClass('active').attr('aria-expanded', 'false');
+        $target.slideUp(200);
+      } else {
+        $this.addClass('active').attr('aria-expanded', 'true');
+        $target.slideDown(200);
+      }
+    });
 
-        dialog.find('#cfg-theme').on('change', function() { 
-              const newTheme = $(this).val();
-            const allThemes = THEMES.map(t => 'acu-theme-' + t.id).join(' ');
-            dialog.find('.acu-edit-dialog').removeClass(allThemes).addClass('acu-theme-' + newTheme);
-            saveConfig({ theme: newTheme });
-        });
-        dialog.find('#cfg-layout').on('change', function() { saveConfig({ layout: $(this).val() }); renderInterface(); });
-        dialog.find('#cfg-frontend-pos').on('change', function() { saveConfig({ frontendPosition: $(this).val() }); renderInterface(); });
-        dialog.find('#cfg-font-family').on('change', function() { saveConfig({ fontFamily: $(this).val() }); });
-        
-        dialog.find('#cfg-highlight-custom').on('input change', function() {
-            const hex = $(this).val();
-            dialog.find('#cfg-color-opts .acu-color-circle').removeClass('selected');
-            const $btn = $(this).closest('.acu-custom-color-btn');
-            $btn.addClass('selected').find('.acu-custom-bg').css('background', hex);
-            saveConfig({ highlightColor: hex });
-        });
-        dialog.find('#cfg-title-custom').on('input change', function() {
-            const hex = $(this).val();
-            dialog.find('#cfg-title-color-opts .acu-color-circle').removeClass('selected');
-            const $btn = $(this).closest('.acu-custom-color-btn');
-            $btn.addClass('selected').find('.acu-custom-bg').css('background', hex);
-            saveConfig({ titleColor: hex });
-        });
-        dialog.find('.acu-color-circle').on('click', function() {
-            const type = $(this).data('type');
-            $(this).siblings().removeClass('selected'); $(this).addClass('selected');
-            $(this).parent().find('.acu-custom-color-btn').removeClass('selected').find('.acu-custom-bg').css('background', 'conic-gradient(red, orange, yellow, green, blue, indigo, violet, red)');
-            if (type === 'highlight') {
-                 saveConfig({ highlightColor: $(this).data('val') });
-            } else if (type === 'title') {
-                 saveConfig({ titleColor: $(this).data('val') });
-            }
-        });
-        
-        
+    dialog.find('#cfg-theme').on('change', function () {
+      const newTheme = $(this).val();
+      const allThemes = THEMES.map(t => 'acu-theme-' + t.id).join(' ');
+      dialog
+        .find('.acu-edit-dialog')
+        .removeClass(allThemes)
+        .addClass('acu-theme-' + newTheme);
+      saveConfig({ theme: newTheme });
+    });
+    dialog.find('#cfg-layout').on('change', function () {
+      saveConfig({ layout: $(this).val() });
+      renderInterface();
+    });
+    dialog.find('#cfg-frontend-pos').on('change', function () {
+      saveConfig({ frontendPosition: $(this).val() });
+      renderInterface();
+    });
+    dialog.find('#cfg-font-family').on('change', function () {
+      saveConfig({ fontFamily: $(this).val() });
+    });
 
-        
-        dialog.find('.acu-step-btn').on('click', function() {
-            const $btn = $(this);
-            const key = $btn.data('key');
-            const step = parseInt($btn.data('step'));
-            const min = parseInt($btn.data('min'));
-            const max = parseInt($btn.data('max'));
-            const isPlus = $btn.hasClass('plus');
-            const $disp = dialog.find('#val-' + key);
+    dialog.find('#cfg-highlight-custom').on('input change', function () {
+      const hex = $(this).val();
+      dialog.find('#cfg-color-opts .acu-color-circle').removeClass('selected');
+      const $btn = $(this).closest('.acu-custom-color-btn');
+      $btn.addClass('selected').find('.acu-custom-bg').css('background', hex);
+      saveConfig({ highlightColor: hex });
+    });
+    dialog.find('#cfg-title-custom').on('input change', function () {
+      const hex = $(this).val();
+      dialog.find('#cfg-title-color-opts .acu-color-circle').removeClass('selected');
+      const $btn = $(this).closest('.acu-custom-color-btn');
+      $btn.addClass('selected').find('.acu-custom-bg').css('background', hex);
+      saveConfig({ titleColor: hex });
+    });
+    dialog.find('.acu-color-circle').on('click', function () {
+      const type = $(this).data('type');
+      $(this).siblings().removeClass('selected');
+      $(this).addClass('selected');
+      $(this)
+        .parent()
+        .find('.acu-custom-color-btn')
+        .removeClass('selected')
+        .find('.acu-custom-bg')
+        .css('background', 'conic-gradient(red, orange, yellow, green, blue, indigo, violet, red)');
+      if (type === 'highlight') {
+        saveConfig({ highlightColor: $(this).data('val') });
+      } else if (type === 'title') {
+        saveConfig({ titleColor: $(this).data('val') });
+      }
+    });
 
-            let val = parseInt($disp.text());
-            if (isNaN(val)) val = min;
+    dialog.find('.acu-step-btn').on('click', function () {
+      const $btn = $(this);
+      const key = $btn.data('key');
+      const step = parseInt($btn.data('step'));
+      const min = parseInt($btn.data('min'));
+      const max = parseInt($btn.data('max'));
+      const isPlus = $btn.hasClass('plus');
+      const $disp = dialog.find('#val-' + key);
 
-            if (isPlus) val += step; else val -= step;
+      let val = parseInt($disp.text());
+      if (isNaN(val)) val = min;
 
-            if (val < min) val = min;
-            if (val > max) val = max;
+      if (isPlus) val += step;
+      else val -= step;
 
-            $disp.text(val);
+      if (val < min) val = min;
+      if (val > max) val = max;
 
-            const cfg = {};
-            cfg[key] = val;
-            saveConfig(cfg);
+      $disp.text(val);
 
-            if (key === 'itemsPerPage') renderInterface();
-        });
+      const cfg = {};
+      cfg[key] = val;
+      saveConfig(cfg);
 
-        dialog.find('#cfg-show-dash').on('change', function() { 
-            const checked = $(this).is(':checked');
-            saveConfig({ showDashboard: checked }); 
-            renderInterface(); 
-        });
-        dialog.find('#cfg-dash-pos').on('change', function() { saveConfig({ dashboardPosition: $(this).val() }); renderInterface(); });
-        dialog.find('#cfg-consistency-check').on('change', function() { saveConfig({ checkConsistency: $(this).is(':checked') }); renderInterface(); });
-        dialog.find('#cfg-show-option').on('change', function() { 
-            const checked = $(this).is(':checked');
-            saveConfig({ showOptionPanel: checked }); 
-            renderInterface(); 
-        });
-        dialog.find('#cfg-auto-send').on('change', function() { saveConfig({ clickOptionToAutoSend: $(this).is(':checked') }); });
-        dialog.find('#cfg-new').on('change', function() { 
-            const checked = $(this).is(':checked');
-            saveConfig({ highlightNew: checked }); 
-            const $row = dialog.find('#row-highlight-color');
-            const $hint = dialog.find('#hint-new');
-            const $parent = $(this).closest('.acu-control-row');
-            if(checked) { 
-                $row.slideDown(200).css('display', 'flex');
-                $hint.fadeIn(200).css('display', 'inline');
-                $parent.css({'border-bottom': 'none', 'padding-bottom': '5px'});
-            } else { 
-                $row.slideUp(200); 
-                $hint.fadeOut(200);
-                $parent.css({'border-bottom': 'none', 'padding-bottom': '12px'});
-            }
-            renderInterface(); 
-        });
-        dialog.find('#cfg-grid-cols').on('change', function () { saveConfig({ gridColumns: parseInt($(this).val()) }); renderInterface(); });
-        
-        dialog.find('#cfg-collapse-style').on('change', function() { 
-            const val = $(this).val();
-            saveConfig({ collapseStyle: val }); 
-            const $posSelect = dialog.find('#cfg-collapse-pos');
-            if (val === 'pill') {
-                $posSelect.fadeIn(200);
-            } else {
-                $posSelect.fadeOut(200);
-            }
-            renderInterface(); 
-        });
-        dialog.find('#cfg-collapse-pos').on('change', function() { saveConfig({ collapsePosition: $(this).val() }); renderInterface(); });
-        
-        dialog.find('#cfg-limit-height').on('change', function() { saveConfig({ limitLongText: $(this).is(':checked') }); renderInterface(); });
-        dialog.find('#cfg-custom-title').on('change', function() { 
-            const checked = $(this).is(':checked');
-            saveConfig({ customTitleColor: checked }); 
-            const $row = dialog.find('#row-title-color');
-            const $hint = dialog.find('#hint-title');
-            const $parent = $(this).closest('.acu-control-row');
-            if(checked) { 
-                $row.slideDown(200).css('display', 'flex');
-                $hint.fadeIn(200).css('display', 'inline');
-                $parent.css({'border-bottom': 'none', 'padding-bottom': '5px'});
-            } else { 
-                $row.slideUp(200);
-                $hint.fadeOut(200);
-                $parent.css({'border-bottom': '', 'padding-bottom': '12px'});
-            }
-        });
+      if (key === 'itemsPerPage') renderInterface();
+    });
 
-        dialog.find('#cfg-db-theme').on('change', function() {
-            const val = $(this).val();
-            const currentConfig = getConfig();
-            const map = currentConfig.dbTransparentMap || {};
-            const isTrans = map[val] === true;
-            dialog.find('#cfg-db-transparent').val(isTrans ? 'true' : 'false');
+    dialog.find('#cfg-show-dash').on('change', function () {
+      const checked = $(this).is(':checked');
+      saveConfig({ showDashboard: checked });
+      renderInterface();
+    });
+    dialog.find('#cfg-dash-pos').on('change', function () {
+      saveConfig({ dashboardPosition: $(this).val() });
+      renderInterface();
+    });
+    dialog.find('#cfg-consistency-check').on('change', function () {
+      saveConfig({ checkConsistency: $(this).is(':checked') });
+      renderInterface();
+    });
+    dialog.find('#cfg-show-option').on('change', function () {
+      const checked = $(this).is(':checked');
+      saveConfig({ showOptionPanel: checked });
+      renderInterface();
+    });
+    dialog.find('#cfg-auto-send').on('change', function () {
+      saveConfig({ clickOptionToAutoSend: $(this).is(':checked') });
+    });
+    dialog.find('#cfg-new').on('change', function () {
+      const checked = $(this).is(':checked');
+      saveConfig({ highlightNew: checked });
+      const $row = dialog.find('#row-highlight-color');
+      const $hint = dialog.find('#hint-new');
+      const $parent = $(this).closest('.acu-control-row');
+      if (checked) {
+        $row.slideDown(200).css('display', 'flex');
+        $hint.fadeIn(200).css('display', 'inline');
+        $parent.css({ 'border-bottom': 'none', 'padding-bottom': '5px' });
+      } else {
+        $row.slideUp(200);
+        $hint.fadeOut(200);
+        $parent.css({ 'border-bottom': 'none', 'padding-bottom': '12px' });
+      }
+      renderInterface();
+    });
+    dialog.find('#cfg-grid-cols').on('change', function () {
+      saveConfig({ gridColumns: parseInt($(this).val()) });
+      renderInterface();
+    });
 
-            const $trans = dialog.find('#cfg-db-transparent');
-            if (['aurora', 'starship', 'sky'].includes(val)) {
-                $trans.fadeIn(200);
-            } else {
-                $trans.fadeOut(200);
-            }
-            saveConfig({ dbTheme: val });
-        });
-        dialog.find('#cfg-db-transparent').on('change', function() {
-            const val = $(this).val() === 'true';
-            const currentConfig = getConfig();
-            const theme = dialog.find('#cfg-db-theme').val();
-            const map = currentConfig.dbTransparentMap || {};
-            map[theme] = val;
-            saveConfig({ dbTransparentMap: map });
-        });
+    dialog.find('#cfg-collapse-style').on('change', function () {
+      const val = $(this).val();
+      saveConfig({ collapseStyle: val });
+      const $posSelect = dialog.find('#cfg-collapse-pos');
+      if (val === 'pill') {
+        $posSelect.fadeIn(200);
+      } else {
+        $posSelect.fadeOut(200);
+      }
+      renderInterface();
+    });
+    dialog.find('#cfg-collapse-pos').on('change', function () {
+      saveConfig({ collapsePosition: $(this).val() });
+      renderInterface();
+    });
 
-        dialog.find('.acu-reverse-check').on('change', function() {
-            const tName = $(this).val();
-            const checked = $(this).is(':checked');
-            let currentList = getReverseOrderTables();
-            if (checked) { if (!currentList.includes(tName)) currentList.push(tName); }
-            else { currentList = currentList.filter(n => n !== tName); }
-            saveReverseOrderTables(currentList);
-            const activeTab = getActiveTabState();
-            if (activeTab === tName) renderInterface();
-        });
-        dialog.find('.acu-visibility-toggle').on('click', function() {
-            const tName = $(this).data('table');
-            const $icon = $(this).find('i');
-            let currentList = getHiddenTables();
-            if (currentList.includes(tName)) {
-                currentList = currentList.filter(n => n !== tName);
-                $icon.removeClass('fa-eye-slash').addClass('fa-eye');
-            } else {
-                currentList.push(tName);
-                $icon.removeClass('fa-eye').addClass('fa-eye-slash');
-            }
-            saveHiddenTables(currentList);
-            renderInterface();
-        });
-        dialog.find('#btn-enter-sort').click(() => { dialog.remove(); toggleOrderEditMode(); });
-        dialog.find('#dlg-close').click(() => { dialog.remove(); renderInterface(); });
-        dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) dialog.remove(); });
+    dialog.find('#cfg-limit-height').on('change', function () {
+      saveConfig({ limitLongText: $(this).is(':checked') });
+      renderInterface();
+    });
+    dialog.find('#cfg-custom-title').on('change', function () {
+      const checked = $(this).is(':checked');
+      saveConfig({ customTitleColor: checked });
+      const $row = dialog.find('#row-title-color');
+      const $hint = dialog.find('#hint-title');
+      const $parent = $(this).closest('.acu-control-row');
+      if (checked) {
+        $row.slideDown(200).css('display', 'flex');
+        $hint.fadeIn(200).css('display', 'inline');
+        $parent.css({ 'border-bottom': 'none', 'padding-bottom': '5px' });
+      } else {
+        $row.slideUp(200);
+        $hint.fadeOut(200);
+        $parent.css({ 'border-bottom': '', 'padding-bottom': '12px' });
+      }
+    });
+
+    dialog.find('#cfg-db-theme').on('change', function () {
+      const val = $(this).val();
+      const currentConfig = getConfig();
+      const map = currentConfig.dbTransparentMap || {};
+      const isTrans = map[val] === true;
+      dialog.find('#cfg-db-transparent').val(isTrans ? 'true' : 'false');
+
+      const $trans = dialog.find('#cfg-db-transparent');
+      if (['aurora', 'starship', 'sky'].includes(val)) {
+        $trans.fadeIn(200);
+      } else {
+        $trans.fadeOut(200);
+      }
+      saveConfig({ dbTheme: val });
+    });
+    dialog.find('#cfg-db-transparent').on('change', function () {
+      const val = $(this).val() === 'true';
+      const currentConfig = getConfig();
+      const theme = dialog.find('#cfg-db-theme').val();
+      const map = currentConfig.dbTransparentMap || {};
+      map[theme] = val;
+      saveConfig({ dbTransparentMap: map });
+    });
+
+    dialog.find('.acu-reverse-check').on('change', function () {
+      const tName = $(this).val();
+      const checked = $(this).is(':checked');
+      let currentList = getReverseOrderTables();
+      if (checked) {
+        if (!currentList.includes(tName)) currentList.push(tName);
+      } else {
+        currentList = currentList.filter(n => n !== tName);
+      }
+      saveReverseOrderTables(currentList);
+      const activeTab = getActiveTabState();
+      if (activeTab === tName) renderInterface();
+    });
+    dialog.find('.acu-visibility-toggle').on('click', function () {
+      const tName = $(this).data('table');
+      const $icon = $(this).find('i');
+      let currentList = getHiddenTables();
+      if (currentList.includes(tName)) {
+        currentList = currentList.filter(n => n !== tName);
+        $icon.removeClass('fa-eye-slash').addClass('fa-eye');
+      } else {
+        currentList.push(tName);
+        $icon.removeClass('fa-eye').addClass('fa-eye-slash');
+      }
+      saveHiddenTables(currentList);
+      renderInterface();
+    });
+    dialog.find('#btn-enter-sort').click(() => {
+      dialog.remove();
+      toggleOrderEditMode();
+    });
+    dialog.find('#dlg-close').click(() => {
+      dialog.remove();
+      renderInterface();
+    });
+    dialog.on('click', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) dialog.remove();
+    });
+  };
+
+  const injectEmbeddedDashboard = (htmlContent, themeClass, cssVars) => {
+    const { $ } = getCore();
+    if (!htmlContent) {
+      $('.acu-embedded-dashboard-container').remove();
+      return;
+    }
+
+    const getTargetContainer = () => {
+      if (isFixedDashboardPosition()) {
+        return getFixedDashboardSlot();
+      }
+
+      const $allMes = $('#chat .mes');
+      const $aiMes = $allMes.filter(function () {
+        const $this = $(this);
+        if ($this.attr('is_user') === 'true' || $this.attr('is_system') === 'true' || $this.hasClass('sys_mes'))
+          return false;
+        if ($this.find('.name_text').text().trim() === 'System') return false;
+        if ($this.css('display') === 'none') return false;
+        return true;
+      });
+      if ($aiMes.length === 0) return null;
+      const $targetMes = $aiMes.last();
+      const $targetBlock = $targetMes.find('.mes_block');
+      return $targetBlock.length ? $targetBlock : $targetMes;
     };
 
-        
-    const injectEmbeddedDashboard = (htmlContent, themeClass, cssVars) => {
-        const { $ } = getCore();
-        if (!htmlContent) {
-            $('.acu-embedded-dashboard-container').remove();
-            return;
+    const rawTarget = getTargetContainer();
+    const $target = rawTarget && rawTarget.jquery ? rawTarget : rawTarget ? $(rawTarget) : null;
+    if ($target && $target.length) {
+      const $existing = $('.acu-embedded-dashboard-container');
+      const isFixedDashboard = isFixedDashboardPosition();
+      const containerBaseStyle = isFixedDashboard
+        ? 'margin: 0; width: 100%; clear: both;'
+        : 'margin-top: 6px; width: 100%; clear: both;';
+      const expandedContentCss = isFixedDashboard
+        ? { height: 'auto', maxHeight: 'min(52vh, 520px)', opacity: '1', padding: '0', overflow: 'auto' }
+        : {
+            height: window.innerWidth <= 768 ? 'auto' : '500px',
+            maxHeight: '',
+            opacity: '1',
+            padding: '0',
+            overflow: 'hidden',
+          };
+      const expandedContentStyle = isFixedDashboard
+        ? 'height: auto; max-height: min(52vh, 520px); opacity: 1; padding: 0; overflow: auto;'
+        : window.innerWidth <= 768
+          ? 'height: auto; opacity: 1; padding: 0; overflow: hidden;'
+          : 'height: 500px; opacity: 1; padding: 0; overflow: hidden;';
+      let shouldUpdate = false;
+      // 检查是否存在且在正确的位置
+      if ($existing.length && $existing.parent()[0] === $target[0]) {
+        shouldUpdate = true;
+      } else {
+        $existing.remove();
+      }
+
+      if (shouldUpdate) {
+        // 原地更新，避免滚动条跳动
+        const $container = $('.acu-embedded-dashboard-container');
+        $container.removeClass().addClass(`acu-embedded-dashboard-container ${themeClass}`);
+        // 保留基本样式并更新变量
+        $container.attr('style', containerBaseStyle + ' ' + cssVars);
+        if (isFixedDashboard) {
+          $target.prepend($container);
         }
 
-        const getTargetContainer = () => {
-            if (isFixedDashboardPosition()) {
-                return getFixedDashboardSlot();
-            }
+        const $wrapper = $container.find('.acu-dash-content-wrapper');
+        $wrapper.html(htmlContent);
 
-            const $allMes = $('#chat .mes');
-            const $aiMes = $allMes.filter(function() {
-                const $this = $(this);
-                if ($this.attr('is_user') === 'true' || $this.attr('is_system') === 'true' || $this.hasClass('sys_mes')) return false;
-                if ($this.find('.name_text').text().trim() === 'System') return false; 
-                if ($this.css('display') === 'none') return false;
-                return true;
-            });
-            if ($aiMes.length === 0) return null;
-            const $targetMes = $aiMes.last();
-            const $targetBlock = $targetMes.find('.mes_block');
-            return $targetBlock.length ? $targetBlock : $targetMes;
-        };
+        // 处理编辑模式下的状态同步
+        const $editBtn = $container.find('#acu-btn-dash-edit-emb');
+        const $editIcon = $editBtn.find('i');
+        const $header = $container.find('.acu-dash-ctrl-bar');
 
-        const rawTarget = getTargetContainer();
-        const $target = rawTarget && rawTarget.jquery ? rawTarget : (rawTarget ? $(rawTarget) : null);
-        if ($target && $target.length) {
-            const $existing = $('.acu-embedded-dashboard-container');
-            const isFixedDashboard = isFixedDashboardPosition();
-            const containerBaseStyle = isFixedDashboard
-                ? 'margin: 0; width: 100%; clear: both;'
-                : 'margin-top: 6px; width: 100%; clear: both;';
-            const expandedContentCss = isFixedDashboard
-                ? { height: 'auto', maxHeight: 'min(52vh, 520px)', opacity: '1', padding: '0', overflow: 'auto' }
-                : { height: (window.innerWidth <= 768 ? 'auto' : '500px'), maxHeight: '', opacity: '1', padding: '0', overflow: 'hidden' };
-            const expandedContentStyle = isFixedDashboard
-                ? 'height: auto; max-height: min(52vh, 520px); opacity: 1; padding: 0; overflow: auto;'
-                : (window.innerWidth <= 768 ? 'height: auto; opacity: 1; padding: 0; overflow: hidden;' : 'height: 500px; opacity: 1; padding: 0; overflow: hidden;');
-            let shouldUpdate = false;
-            // 检查是否存在且在正确的位置
-            if ($existing.length && $existing.parent()[0] === $target[0]) {
-                shouldUpdate = true;
-            } else {
-                $existing.remove();
-            }
+        if (isDashEditing) {
+          // 编辑模式强制展开
+          if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
+            $wrapper.css(expandedContentCss);
+            $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
+            $header.attr('aria-expanded', 'true');
+          }
+          $editBtn.css('display', 'inline-flex');
+          $editIcon.removeClass('fa-edit').addClass('fa-check').css('color', 'var(--acu-highlight)');
+        } else {
+          $editIcon.removeClass('fa-check').addClass('fa-edit').css('color', '');
+          // 非编辑模式下，根据折叠状态显示/隐藏编辑按钮
+          if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
+            $editBtn.hide();
+            $header.attr('aria-expanded', 'false');
+          } else {
+            $editBtn.css('display', 'inline-flex');
+            $header.attr('aria-expanded', 'true');
+          }
+        }
+      } else {
+        // 首次创建或位置变更
+        let isCollapsed = !isFixedDashboard;
+        if (isDashEditing) isCollapsed = false;
 
-            if (shouldUpdate) {
-                // 原地更新，避免滚动条跳动
-                const $container = $('.acu-embedded-dashboard-container');
-                $container.removeClass().addClass(`acu-embedded-dashboard-container ${themeClass}`);
-                // 保留基本样式并更新变量
-                $container.attr('style', containerBaseStyle + ' ' + cssVars);
-                if (isFixedDashboard) {
-                    $target.prepend($container);
-                }
+        const $container = $(`<div class="acu-embedded-dashboard-container" style="${containerBaseStyle}"></div>`);
+        $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
 
-                const $wrapper = $container.find('.acu-dash-content-wrapper');
-                $wrapper.html(htmlContent);
-
-                // 处理编辑模式下的状态同步
-                const $editBtn = $container.find('#acu-btn-dash-edit-emb');
-                const $editIcon = $editBtn.find('i');
-                const $header = $container.find('.acu-dash-ctrl-bar');
-
-                if (isDashEditing) {
-                    // 编辑模式强制展开
-                    if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
-                        $wrapper.css(expandedContentCss);
-                        $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
-                        $header.attr('aria-expanded', 'true');
-                    }
-                    $editBtn.css('display', 'inline-flex');
-                    $editIcon.removeClass('fa-edit').addClass('fa-check').css('color', 'var(--acu-highlight)');
-                } else {
-                    $editIcon.removeClass('fa-check').addClass('fa-edit').css('color', '');
-                    // 非编辑模式下，根据折叠状态显示/隐藏编辑按钮
-                    if ($wrapper.css('height') === '0px' || $wrapper.css('opacity') === '0') {
-                        $editBtn.hide();
-                        $header.attr('aria-expanded', 'false');
-                    } else {
-                        $editBtn.css('display', 'inline-flex');
-                        $header.attr('aria-expanded', 'true');
-                    }
-                }
-            } else {
-                // 首次创建或位置变更
-                let isCollapsed = !isFixedDashboard;
-                if (isDashEditing) isCollapsed = false;
-
-                const $container = $(`<div class="acu-embedded-dashboard-container" style="${containerBaseStyle}"></div>`);
-                $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
-
-                const headerHtml = `
+        const headerHtml = `
                     <div class="acu-dash-ctrl-bar" role="button" tabindex="0" aria-expanded="${!isCollapsed}" aria-controls="acu-dash-content" style="
                         display: flex; justify-content: space-between; align-items: center;
                         padding: 10px 12px;
@@ -3651,8 +4266,10 @@
                     </div>
                 `;
 
-                const contentStyle = isCollapsed ? 'height: 0; opacity: 0; padding: 0; overflow: hidden;' : expandedContentStyle;
-                const contentWrapperHtml = `
+        const contentStyle = isCollapsed
+          ? 'height: 0; opacity: 0; padding: 0; overflow: hidden;'
+          : expandedContentStyle;
+        const contentWrapperHtml = `
                     <div class="acu-dash-content-wrapper" id="acu-dash-content" style="
                         overflow: hidden;
                         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3667,98 +4284,104 @@
                     </div>
                 `;
 
-                $container.append(headerHtml);
-                $container.append(contentWrapperHtml);
+        $container.append(headerHtml);
+        $container.append(contentWrapperHtml);
 
-                const $header = $container.find('.acu-dash-ctrl-bar');
-                const $wrapper = $container.find('.acu-dash-content-wrapper');
+        const $header = $container.find('.acu-dash-ctrl-bar');
+        const $wrapper = $container.find('.acu-dash-content-wrapper');
 
-                $header.on('click', function(e) {
-                    if ($(e.target).closest('button').length) return;
-                    e.stopPropagation();
+        $header.on('click', function (e) {
+          if ($(e.target).closest('button').length) return;
+          e.stopPropagation();
 
-                    const currentOpacity = $wrapper.css('opacity');
-                    const isCurrentlyCollapsed = (currentOpacity === '0' || $wrapper.css('height') === '0px');
+          const currentOpacity = $wrapper.css('opacity');
+          const isCurrentlyCollapsed = currentOpacity === '0' || $wrapper.css('height') === '0px';
 
-                    if (isCurrentlyCollapsed) {
-                        $wrapper.css(expandedContentCss);
-                        $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
-                        $header.attr('aria-expanded', 'true');
-                        $container.find('#acu-btn-dash-edit-emb').css('display', 'inline-flex');
-                    } else {
-                        $wrapper.css({ 'height': '0', 'max-height': '', 'opacity': '0', 'padding': '0', 'overflow': 'hidden' });
-                        $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
-                        $header.attr('aria-expanded', 'false');
-                        $container.find('#acu-btn-dash-edit-emb').hide();
-                    }
-                });
-                $header.on('keydown', function(e) {
-                    if (e.key !== 'Enter' && e.key !== ' ') return;
-                    e.preventDefault();
-                    $(this).trigger('click');
-                });
+          if (isCurrentlyCollapsed) {
+            $wrapper.css(expandedContentCss);
+            $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
+            $header.attr('aria-expanded', 'true');
+            $container.find('#acu-btn-dash-edit-emb').css('display', 'inline-flex');
+          } else {
+            $wrapper.css({ height: '0', 'max-height': '', opacity: '0', padding: '0', overflow: 'hidden' });
+            $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
+            $header.attr('aria-expanded', 'false');
+            $container.find('#acu-btn-dash-edit-emb').hide();
+          }
+        });
+        $header.on('keydown', function (e) {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          $(this).trigger('click');
+        });
 
-                if (isFixedDashboard) {
-                    $target.prepend($container);
-                } else {
-                    const $opts = $target.find('.acu-embedded-options-container');
-                    if ($opts.length) { $opts.before($container); } else { $target.append($container); }
-                }
-            }
+        if (isFixedDashboard) {
+          $target.prepend($container);
         } else {
-            $('.acu-embedded-dashboard-container').remove();
+          const $opts = $target.find('.acu-embedded-options-container');
+          if ($opts.length) {
+            $opts.before($container);
+          } else {
+            $target.append($container);
+          }
         }
+      }
+    } else {
+      $('.acu-embedded-dashboard-container').remove();
+    }
+  };
+
+  const injectIndependentOptions = (htmlContent, themeClass, cssVars) => {
+    const { $ } = getCore();
+    if (!htmlContent) {
+      $('.acu-embedded-options-container').remove();
+      return;
+    }
+
+    const getTargetContainer = () => {
+      const $allMes = $('#chat .mes');
+      const $aiMes = $allMes.filter(function () {
+        const $this = $(this);
+        if ($this.attr('is_user') === 'true' || $this.attr('is_system') === 'true' || $this.hasClass('sys_mes'))
+          return false;
+        if ($this.find('.name_text').text().trim() === 'System') return false;
+        if ($this.css('display') === 'none') return false;
+        return true;
+      });
+      if ($aiMes.length === 0) return null;
+
+      const $targetMes = $aiMes.last();
+      const $targetBlock = $targetMes.find('.mes_block');
+      return $targetBlock.length ? $targetBlock : $targetMes;
     };
 
+    const $target = getTargetContainer();
+    if ($target && $target.length) {
+      const $existing = $('.acu-embedded-options-container');
+      let shouldUpdate = false;
+      if ($existing.length && $existing.parent()[0] === $target[0]) {
+        shouldUpdate = true;
+      } else {
+        $existing.remove();
+      }
 
-    const injectIndependentOptions = (htmlContent, themeClass, cssVars) => {
-        const { $ } = getCore();
-        if (!htmlContent) {
-            $('.acu-embedded-options-container').remove();
-            return;
-        }
+      if (shouldUpdate) {
+        const $container = $('.acu-embedded-options-container');
+        $container.removeClass().addClass(`acu-embedded-options-container ${themeClass}`);
+        $container.attr('style', 'margin-top: 6px; width: 100%; clear: both; ' + cssVars);
 
-        const getTargetContainer = () => {
-            const $allMes = $('#chat .mes');
-            const $aiMes = $allMes.filter(function() {
-                const $this = $(this);
-                if ($this.attr('is_user') === 'true' || $this.attr('is_system') === 'true' || $this.hasClass('sys_mes')) return false;
-                if ($this.find('.name_text').text().trim() === 'System') return false; 
-                if ($this.css('display') === 'none') return false;
-                return true;
-            });
-            if ($aiMes.length === 0) return null;
+        const $panel = $container.find('.acu-option-panel');
+        $panel.html(htmlContent);
+      } else {
+        const STORAGE_KEY_OPT_COLLAPSE = 'acu_opt_collapse_state';
+        const isCollapsed = localStorage.getItem(STORAGE_KEY_OPT_COLLAPSE) === 'true';
 
-            const $targetMes = $aiMes.last();
-            const $targetBlock = $targetMes.find('.mes_block');
-            return $targetBlock.length ? $targetBlock : $targetMes;
-        };
+        const $container = $(
+          '<div class="acu-embedded-options-container" style="margin-top: 6px; width: 100%; clear: both;"></div>',
+        );
+        $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
 
-        const $target = getTargetContainer();
-        if ($target && $target.length) {
-            const $existing = $('.acu-embedded-options-container');
-            let shouldUpdate = false;
-            if ($existing.length && $existing.parent()[0] === $target[0]) {
-                shouldUpdate = true;
-            } else {
-                $existing.remove();
-            }
-
-            if (shouldUpdate) {
-                const $container = $('.acu-embedded-options-container');
-                $container.removeClass().addClass(`acu-embedded-options-container ${themeClass}`);
-                $container.attr('style', 'margin-top: 6px; width: 100%; clear: both; ' + cssVars);
-
-                const $panel = $container.find('.acu-option-panel');
-                $panel.html(htmlContent);
-            } else {
-                const STORAGE_KEY_OPT_COLLAPSE = 'acu_opt_collapse_state';
-                const isCollapsed = localStorage.getItem(STORAGE_KEY_OPT_COLLAPSE) === 'true';
-
-                const $container = $('<div class="acu-embedded-options-container" style="margin-top: 6px; width: 100%; clear: both;"></div>');
-                $container.addClass(themeClass).attr('style', $container.attr('style') + '; ' + cssVars);
-
-                const headerHtml = `
+        const headerHtml = `
                     <div class="acu-opt-ctrl-bar" role="button" tabindex="0" aria-expanded="${!isCollapsed}" aria-controls="acu-opt-content" style="
                         display: flex; justify-content: center; align-items: center;
                         padding: 10px 12px;
@@ -3777,8 +4400,10 @@
                     </div>
                 `;
 
-                const contentStyle = isCollapsed ? 'max-height: 0; opacity: 0; padding: 0;' : 'max-height: 1000px; opacity: 1; padding: 8px;';
-                const contentWrapperHtml = `
+        const contentStyle = isCollapsed
+          ? 'max-height: 0; opacity: 0; padding: 0;'
+          : 'max-height: 1000px; opacity: 1; padding: 8px;';
+        const contentWrapperHtml = `
                     <div class="acu-opt-content-wrapper" id="acu-opt-content" style="
                         overflow: hidden;
                         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3795,223 +4420,238 @@
                     </div>
                 `;
 
-                $container.append(headerHtml);
-                $container.append(contentWrapperHtml);
+        $container.append(headerHtml);
+        $container.append(contentWrapperHtml);
 
-                const $header = $container.find('.acu-opt-ctrl-bar');
-                const $wrapper = $container.find('.acu-opt-content-wrapper');
+        const $header = $container.find('.acu-opt-ctrl-bar');
+        const $wrapper = $container.find('.acu-opt-content-wrapper');
 
-                $header.on('click', function(e) {
-                    e.stopPropagation();
-                    const currentIsCollapsed = localStorage.getItem(STORAGE_KEY_OPT_COLLAPSE) === 'true';
+        $header.on('click', function (e) {
+          e.stopPropagation();
+          const currentIsCollapsed = localStorage.getItem(STORAGE_KEY_OPT_COLLAPSE) === 'true';
 
-                    if (currentIsCollapsed) {
-                        $wrapper.css({ 'max-height': '1000px', 'opacity': '1', 'padding': '8px' });
-                        $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
-                        $header.attr('aria-expanded', 'true');
-                        localStorage.setItem(STORAGE_KEY_OPT_COLLAPSE, 'false');
-                    } else {
-                        $wrapper.css({ 'max-height': '0', 'opacity': '0', 'padding': '0' });
-                        $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
-                        $header.attr('aria-expanded', 'false');
-                        localStorage.setItem(STORAGE_KEY_OPT_COLLAPSE, 'true');
-                    }
-                });
-                $header.on('keydown', function(e) {
-                    if (e.key !== 'Enter' && e.key !== ' ') return;
-                    e.preventDefault();
-                    $(this).trigger('click');
-                });
+          if (currentIsCollapsed) {
+            $wrapper.css({ 'max-height': '1000px', opacity: '1', padding: '8px' });
+            $header.css({ 'border-radius': '12px 12px 0 0', 'margin-bottom': '-1px' });
+            $header.attr('aria-expanded', 'true');
+            localStorage.setItem(STORAGE_KEY_OPT_COLLAPSE, 'false');
+          } else {
+            $wrapper.css({ 'max-height': '0', opacity: '0', padding: '0' });
+            $header.css({ 'border-radius': '12px', 'margin-bottom': '0' });
+            $header.attr('aria-expanded', 'false');
+            localStorage.setItem(STORAGE_KEY_OPT_COLLAPSE, 'true');
+          }
+        });
+        $header.on('keydown', function (e) {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          $(this).trigger('click');
+        });
 
-                $target.append($container);
+        $target.append($container);
+      }
+    } else {
+      $('.acu-embedded-options-container').remove();
+    }
+  };
+
+  const renderInterface = () => {
+    const { $ } = getCore();
+    if (!$) return;
+    try {
+      const $lastPanel = $('.acu-panel-content');
+      if ($lastPanel.length) {
+        globalScrollTop = $lastPanel.scrollTop();
+      }
+
+      const rawData = getTableData() || {};
+      const allTables = processJsonData(rawData);
+      const tables = {};
+      const optionTables = [];
+
+      const config = getConfig();
+
+      if (allTables) {
+        Object.keys(allTables).forEach(k => {
+          const tableData = allTables[k];
+          if (isOptionPanelTable(k, tableData)) {
+            if (config.showOptionPanel !== false) {
+              optionTables.push(tableData);
             }
+          }
+          if (!k.includes('选项')) {
+            tables[k] = tableData;
+          }
+        });
+      }
+
+      const consistencyWarnings = new Set();
+      if (config.checkConsistency !== false) {
+        const indexedTables = [];
+        Object.keys(tables).forEach(tName => {
+          const tData = tables[tName];
+          if (tData.headers) {
+            const idx = tData.headers.findIndex(h => String(h).includes('编码索引'));
+            if (idx !== -1) {
+              const indices = new Set();
+              if (tData.rows)
+                tData.rows.forEach(r => {
+                  if (r[idx]) indices.add(String(r[idx]).trim());
+                });
+              indexedTables.push({ name: tName, indices: indices, count: indices.size });
+            }
+          }
+        });
+        if (indexedTables.length > 1) {
+          indexedTables.sort((a, b) => b.count - a.count);
+          const baseSet = indexedTables[0].indices;
+          indexedTables.forEach(item => {
+            if (item.count < baseSet.size) {
+              consistencyWarnings.add(item.name);
+              for (const id of baseSet) {
+                if (!item.indices.has(id)) {
+                  if (tables[item.name]) tables[item.name]._missingInfo = id;
+                  break;
+                }
+              }
+            }
+          });
+        }
+        Object.keys(tables).forEach(k => {
+          if (tables[k]) tables[k]._hasWarning = consistencyWarnings.has(k);
+        });
+      }
+
+      currentDiffMap = generateDiffMap(rawData);
+      const savedOrder = getSavedTableOrder();
+      let orderedNames = Object.keys(tables);
+      if (savedOrder)
+        orderedNames = savedOrder.filter(n => tables[n]).concat(orderedNames.filter(n => !savedOrder.includes(n)));
+
+      const hiddenTables = getHiddenTables();
+      const showDash = config.showDashboard !== false;
+      const activeTab = getActiveTabState();
+      let currentTabName = activeTab;
+
+      if (isEditingOrder) currentTabName = null;
+
+      if (currentTabName === TAB_DASHBOARD && config.dashboardPosition !== 'panel') currentTabName = null;
+      if (currentTabName && !isVirtualTab(currentTabName) && !tables[currentTabName]) currentTabName = null;
+
+      let colorVal = HIGHLIGHT_COLORS[config.highlightColor];
+      if (!colorVal && config.highlightColor && String(config.highlightColor).startsWith('#')) {
+        colorVal = { main: config.highlightColor, bg: config.highlightColor + '1a' };
+      }
+      colorVal = colorVal || HIGHLIGHT_COLORS.orange;
+      let titleColorVal = 'var(--acu-text-main)';
+      if (config.customTitleColor) {
+        const tRaw = config.titleColor;
+        if (tRaw && String(tRaw).startsWith('#')) {
+          titleColorVal = tRaw;
         } else {
-             $('.acu-embedded-options-container').remove();
+          titleColorVal = (HIGHLIGHT_COLORS[tRaw] || HIGHLIGHT_COLORS.orange).main;
         }
-    };
+      }
+      const showPanel = !isCollapsed && currentTabName !== null;
+      const tableHeights = getTableHeights();
+      let styleHeight = 'height:auto; max-height:500px;';
 
-    const renderInterface = () => {
-        const { $ } = getCore();
-        if (!$) return;
-        try {
-             const $lastPanel = $('.acu-panel-content');
-            if ($lastPanel.length) { globalScrollTop = $lastPanel.scrollTop(); }
+      if (currentTabName && (tables[currentTabName] || isVirtualTab(currentTabName))) {
+        const h = tableHeights[currentTabName];
+        styleHeight = h ? `height:${h}px; max-height:95vh;` : `height:60vh; max-height:95vh;`;
+      }
 
-            const rawData = getTableData() || {};
-            const allTables = processJsonData(rawData);
-            const tables = {};
-            const optionTables = [];
+      const gridCols =
+        config.gridColumns > 0 ? `repeat(${config.gridColumns}, 1fr)` : 'repeat(auto-fill, minmax(110px, 1fr))';
+      const collapseStyle = config.collapseStyle || 'bar';
+      const collapsePos = config.collapsePosition || 'center';
 
-            const config = getConfig();
+      const isAlreadyVisible = $('#acu-data-area').hasClass('visible');
 
-            if(allTables) {
-                 Object.keys(allTables).forEach(k => {
-                     const tableData = allTables[k];
-                     if (isOptionPanelTable(k, tableData)) {
-                          if (config.showOptionPanel !== false) {
-                              optionTables.push(tableData);
-                          }
-                      }
-                      if (!k.includes('选项')) {
-                          tables[k] = tableData;
-                      }
-                  });
-             }
+      const actionBtns = {
+        'acu-btn-gacha': `<button class="acu-action-btn" id="acu-btn-gacha" title="抽卡系统"><i class="fa-solid fa-gift"></i></button>`,
+        'acu-btn-save-global': `<button class="acu-action-btn" id="acu-btn-save-global" title="保存所有修改"><i class="fa-solid fa-save"></i></button>`,
+        'acu-btn-open-native': `<button class="acu-action-btn" id="acu-btn-open-native" title="打开原生编辑器"><i class="fa-solid fa-external-link-alt"></i></button>`,
+        'acu-btn-manual-update': `<button class="acu-action-btn" id="acu-btn-manual-update" title="立即手动更新"><i class="fa-solid fa-bolt"></i></button>`,
+        'acu-btn-settings': `<button class="acu-action-btn" id="acu-btn-settings" title="全能设置"><i class="fa-solid fa-cog"></i></button>`,
+        'acu-btn-toggle': `<button type="button" class="acu-action-btn" id="acu-btn-toggle" title="${isCollapsed ? '展开档案柜' : '收起档案柜'}" aria-expanded="${!isCollapsed}" aria-controls="acu-nav-tabs"><i class="fa-solid ${isCollapsed ? 'fa-chevron-up' : 'fa-chevron-down'}"></i></button>`,
+      };
 
-            const consistencyWarnings = new Set();
-            if (config.checkConsistency !== false) {
-                const indexedTables = [];
-                Object.keys(tables).forEach(tName => {
-                    const tData = tables[tName];
-                    if (tData.headers) {
-                        const idx = tData.headers.findIndex(h => String(h).includes('编码索引'));
-                        if (idx !== -1) {
-                             const indices = new Set();
-                             if(tData.rows) tData.rows.forEach(r => { if(r[idx]) indices.add(String(r[idx]).trim()); });
-                             indexedTables.push({ name: tName, indices: indices, count: indices.size });
-                        }
-                    }
-                });
-                if (indexedTables.length > 1) {
-                    indexedTables.sort((a, b) => b.count - a.count);
-                    const baseSet = indexedTables[0].indices;
-                    indexedTables.forEach(item => {
-                        if (item.count < baseSet.size) {
-                            consistencyWarnings.add(item.name);
-                            for (const id of baseSet) {
-                                if (!item.indices.has(id)) {
-                                    if(tables[item.name]) tables[item.name]._missingInfo = id;
-                                    break;
-                                }
-                            }
-                        }
-                    });
+      const savedActionOrder = getSavedActionOrder() || Object.keys(actionBtns);
+      let finalActionOrder = savedActionOrder.filter(k => actionBtns[k]);
+      Object.keys(actionBtns).forEach(k => {
+        if (!finalActionOrder.includes(k)) finalActionOrder.push(k);
+      });
+
+      let navActionsHtml = '';
+      finalActionOrder.forEach(k => {
+        navActionsHtml += actionBtns[k];
+      });
+
+      const orderControlsHtml = isEditingOrder
+        ? `<div class="acu-order-controls visible" id="acu-order-hint" style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--acu-title-color);font-weight:bold;">点击表格调整位置</span><div><button id="acu-btn-cancel-mode" style="margin-right:5px;cursor:pointer;background:var(--acu-btn-bg);border:1px solid var(--acu-border);padding:3px 8px;border-radius:4px;color:var(--acu-title-color)">取消</button><button id="acu-btn-save-mode" style="cursor:pointer;background:var(--acu-btn-active-bg);border:none;padding:3px 8px;border-radius:4px;color:var(--acu-btn-active-text);font-weight:bold">保存</button></div></div>`
+        : `<div class="acu-order-controls" id="acu-order-hint"></div>`;
+
+      let contentHtml = '';
+      if (currentTabName === TAB_DASHBOARD) {
+        contentHtml = renderDashboard(tables);
+      } else if (currentTabName === TAB_GLOBAL) {
+        contentHtml = renderGlobalPanel(tables);
+      } else if (currentTabName === TAB_RECALL) {
+        contentHtml = renderRecallPanel(tables);
+      } else if (currentTabName === TAB_CONSISTENCY) {
+        contentHtml = renderConsistencyPanel(tables);
+      } else if (currentTabName && tables[currentTabName]) {
+        contentHtml = renderTableContent(tables[currentTabName], currentTabName);
+      }
+
+      const currentOptionStr = JSON.stringify(optionTables);
+      if (currentOptionStr !== lastOptionDataCheck) {
+        hideOptionsUntilUpdate = false;
+        lastOptionDataCheck = currentOptionStr;
+      }
+
+      let optionBtnContent = '';
+      let optBtnCount = 0;
+      if (optionTables.length > 0 && !hideOptionsUntilUpdate) {
+        let buttonsHtml = '';
+        let hasBtns = false;
+        optionTables.forEach(table => {
+          if (table.rows) {
+            table.rows.forEach(row => {
+              if (isActionSuggestionsTable(table.name, table)) {
+                const label = buildActionSuggestionLabel(table.headers || [], row);
+                const prompt = buildActionSuggestionPrompt(table.headers || [], row);
+                buttonsHtml += `<button class="acu-opt-btn" data-val="${escapeHtml(encodeURIComponent(prompt))}">${escapeHtml(label)}</button>`;
+                hasBtns = true;
+                optBtnCount++;
+                return;
+              }
+              row.forEach((cell, idx) => {
+                if (idx > 0 && cell) {
+                  buttonsHtml += `<button class="acu-opt-btn" data-val="${escapeHtml(encodeURIComponent(cell))}">${escapeHtml(cell)}</button>`;
+                  hasBtns = true;
+                  optBtnCount++;
                 }
-                Object.keys(tables).forEach(k => { if(tables[k]) tables[k]._hasWarning = consistencyWarnings.has(k); });
-            }
-
-            currentDiffMap = generateDiffMap(rawData);
-            const savedOrder = getSavedTableOrder();
-            let orderedNames = Object.keys(tables);
-            if (savedOrder) orderedNames = savedOrder.filter(n => tables[n]).concat(orderedNames.filter(n => !savedOrder.includes(n)));
-
-            const hiddenTables = getHiddenTables();
-            const showDash = config.showDashboard !== false;
-            const activeTab = getActiveTabState();
-            let currentTabName = activeTab;
-
-            if (isEditingOrder) currentTabName = null;
-
-            if (currentTabName === TAB_DASHBOARD && config.dashboardPosition !== 'panel') currentTabName = null;
-            if (currentTabName && !isVirtualTab(currentTabName) && !tables[currentTabName]) currentTabName = null;
-
-            let colorVal = HIGHLIGHT_COLORS[config.highlightColor];
-        if (!colorVal && config.highlightColor && String(config.highlightColor).startsWith('#')) {
-            colorVal = { main: config.highlightColor, bg: config.highlightColor + '1a' };
+              });
+            });
+          }
+        });
+        if (hasBtns) {
+          optionBtnContent = buttonsHtml;
         }
-        colorVal = colorVal || HIGHLIGHT_COLORS.orange;
-            let titleColorVal = 'var(--acu-text-main)';
-        if (config.customTitleColor) {
-             const tRaw = config.titleColor;
-             if (tRaw && String(tRaw).startsWith('#')) {
-                 titleColorVal = tRaw;
-             } else {
-                 titleColorVal = (HIGHLIGHT_COLORS[tRaw] || HIGHLIGHT_COLORS.orange).main;
-             }
-        }
-            const showPanel = !isCollapsed && currentTabName !== null;
-            const tableHeights = getTableHeights();
-            let styleHeight = 'height:auto; max-height:500px;';
+      }
 
-            if (currentTabName && (tables[currentTabName] || isVirtualTab(currentTabName))) {
-                const h = tableHeights[currentTabName];
-                styleHeight = h ? `height:${h}px; max-height:95vh;` : `height:60vh; max-height:95vh;`;
-            }
+      let optGridCols = 4;
+      if (optBtnCount > 0) {
+        if (optBtnCount <= 4) optGridCols = optBtnCount;
+        else if (optBtnCount % 4 === 0) optGridCols = 4;
+        else if (optBtnCount % 3 === 0) optGridCols = 3;
+        else optGridCols = 4;
+      }
+      const cssVars = `--acu-opt-cols:repeat(${optGridCols}, 1fr); --acu-card-width:${config.cardWidth}px; --acu-font-size:${config.fontSize}px; --acu-opt-font-size:${config.optionFontSize || 13}px; --acu-dash-font-size:${config.dashboardFontSize || 13}px; --acu-highlight:${colorVal.main}; --acu-highlight-bg:${colorVal.bg}; --acu-accent:${colorVal.main}; --acu-title-color:${titleColorVal}; --acu-nav-cols:${gridCols}; --acu-text-max-height:${config.limitLongText !== false ? '80px' : 'none'}; --acu-text-overflow:${config.limitLongText !== false ? 'auto' : 'visible'}`;
 
-            const gridCols = config.gridColumns > 0 ? `repeat(${config.gridColumns}, 1fr)` : 'repeat(auto-fill, minmax(110px, 1fr))';
-            const collapseStyle = config.collapseStyle || 'bar';
-            const collapsePos = config.collapsePosition || 'center';
-
-            const isAlreadyVisible = $('#acu-data-area').hasClass('visible');
-
-            const actionBtns = {
-                'acu-btn-gacha': `<button class="acu-action-btn" id="acu-btn-gacha" title="抽卡系统"><i class="fa-solid fa-gift"></i></button>`,
-                'acu-btn-save-global': `<button class="acu-action-btn" id="acu-btn-save-global" title="保存所有修改"><i class="fa-solid fa-save"></i></button>`,
-                'acu-btn-open-native': `<button class="acu-action-btn" id="acu-btn-open-native" title="打开原生编辑器"><i class="fa-solid fa-external-link-alt"></i></button>`,
-                'acu-btn-manual-update': `<button class="acu-action-btn" id="acu-btn-manual-update" title="立即手动更新"><i class="fa-solid fa-bolt"></i></button>`,
-                'acu-btn-settings': `<button class="acu-action-btn" id="acu-btn-settings" title="全能设置"><i class="fa-solid fa-cog"></i></button>`,
-                'acu-btn-toggle': `<button type="button" class="acu-action-btn" id="acu-btn-toggle" title="${isCollapsed ? '展开档案柜' : '收起档案柜'}" aria-expanded="${!isCollapsed}" aria-controls="acu-nav-tabs"><i class="fa-solid ${isCollapsed ? 'fa-chevron-up' : 'fa-chevron-down'}"></i></button>`
-            };
-
-            const savedActionOrder = getSavedActionOrder() || Object.keys(actionBtns);
-            let finalActionOrder = savedActionOrder.filter(k => actionBtns[k]);
-            Object.keys(actionBtns).forEach(k => { if (!finalActionOrder.includes(k)) finalActionOrder.push(k); });
-
-            let navActionsHtml = '';
-            finalActionOrder.forEach(k => { navActionsHtml += actionBtns[k]; });
-
-            const orderControlsHtml = isEditingOrder 
-                ? `<div class="acu-order-controls visible" id="acu-order-hint" style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--acu-title-color);font-weight:bold;">点击表格调整位置</span><div><button id="acu-btn-cancel-mode" style="margin-right:5px;cursor:pointer;background:var(--acu-btn-bg);border:1px solid var(--acu-border);padding:3px 8px;border-radius:4px;color:var(--acu-title-color)">取消</button><button id="acu-btn-save-mode" style="cursor:pointer;background:var(--acu-btn-active-bg);border:none;padding:3px 8px;border-radius:4px;color:var(--acu-btn-active-text);font-weight:bold">保存</button></div></div>`
-                : `<div class="acu-order-controls" id="acu-order-hint"></div>`;
-
-            let contentHtml = '';
-            if (currentTabName === TAB_DASHBOARD) {
-                contentHtml = renderDashboard(tables);
-            } else if (currentTabName === TAB_GLOBAL) {
-                contentHtml = renderGlobalPanel(tables);
-            } else if (currentTabName === TAB_RECALL) {
-                contentHtml = renderRecallPanel(tables);
-            } else if (currentTabName === TAB_CONSISTENCY) {
-                contentHtml = renderConsistencyPanel(tables);
-            } else if (currentTabName && tables[currentTabName]) {
-                contentHtml = renderTableContent(tables[currentTabName], currentTabName);
-            }
-
-            const currentOptionStr = JSON.stringify(optionTables);
-            if (currentOptionStr !== lastOptionDataCheck) {
-                hideOptionsUntilUpdate = false;
-                lastOptionDataCheck = currentOptionStr;
-            }
-
-            let optionBtnContent = '';
-            let optBtnCount = 0; if (optionTables.length > 0 && !hideOptionsUntilUpdate) {
-                let buttonsHtml = '';
-                let hasBtns = false;
-                optionTables.forEach(table => {
-                    if(table.rows) {
-                          table.rows.forEach(row => {
-                              if (isActionSuggestionsTable(table.name, table)) {
-                                  const label = buildActionSuggestionLabel(table.headers || [], row);
-                                  const prompt = buildActionSuggestionPrompt(table.headers || [], row);
-                                  buttonsHtml += `<button class="acu-opt-btn" data-val="${escapeHtml(encodeURIComponent(prompt))}">${escapeHtml(label)}</button>`;
-                                  hasBtns = true; optBtnCount++;
-                                  return;
-                              }
-                              row.forEach((cell, idx) => {
-                                   if(idx > 0 && cell) {
-                                       buttonsHtml += `<button class="acu-opt-btn" data-val="${escapeHtml(encodeURIComponent(cell))}">${escapeHtml(cell)}</button>`;
-                                       hasBtns = true; optBtnCount++;
-                                   }
-                              });
-                          });
-                     }
-                 });
-                if (hasBtns) {
-                    optionBtnContent = buttonsHtml;
-                }
-            }
-
-
-            let optGridCols = 4;
-            if (optBtnCount > 0) {
-                 if (optBtnCount <= 4) optGridCols = optBtnCount;
-                 else if (optBtnCount % 4 === 0) optGridCols = 4;
-                 else if (optBtnCount % 3 === 0) optGridCols = 3;
-                 else optGridCols = 4;
-            }
-            const cssVars = `--acu-opt-cols:repeat(${optGridCols}, 1fr); --acu-card-width:${config.cardWidth}px; --acu-font-size:${config.fontSize}px; --acu-opt-font-size:${config.optionFontSize || 13}px; --acu-dash-font-size:${config.dashboardFontSize || 13}px; --acu-highlight:${colorVal.main}; --acu-highlight-bg:${colorVal.bg}; --acu-accent:${colorVal.main}; --acu-title-color:${titleColorVal}; --acu-nav-cols:${gridCols}; --acu-text-max-height:${config.limitLongText!==false?'80px':'none'}; --acu-text-overflow:${config.limitLongText!==false?'auto':'visible'}`;
-
-            let html = `
+      let html = `
                 <div class="acu-wrapper acu-theme-${config.theme}" style="${cssVars}">
                     <div class="acu-data-display acu-layout-${config.layout} ${showPanel ? 'visible' : ''} ${isAlreadyVisible ? 'acu-no-anim' : ''}" id="acu-data-area" style="${styleHeight}">
                         ${contentHtml}
@@ -4019,27 +4659,27 @@
                     <div class="acu-nav-container ${isCollapsed ? 'collapsed' : ''} ${isEditingOrder ? 'editing-order' : ''} acu-collapse-${collapseStyle} acu-pill-${collapsePos}" id="acu-nav-bar" style="${consistencyWarnings.size > 0 && isCollapsed ? 'border: 2px solid #e74c3c !important; box-shadow: 0 0 10px rgba(231, 76, 60, 0.5) !important;' : ''}">
                         ${orderControlsHtml}
                         <div class="acu-nav-tabs-area" id="acu-nav-tabs">
-                            ${(showDash && config.dashboardPosition === 'panel') ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-box-archive"></i><span>档案柜</span></button>` : ''}
+                            ${showDash && config.dashboardPosition === 'panel' ? `<button class="acu-nav-btn ${currentTabName === TAB_DASHBOARD ? 'active' : ''}" data-table="${TAB_DASHBOARD}"><i class="fa-solid fa-box-archive"></i><span>档案柜</span></button>` : ''}
                             <button class="acu-nav-btn ${currentTabName === TAB_GLOBAL ? 'active' : ''}" data-table="${TAB_GLOBAL}"><i class="fa-solid fa-layer-group"></i><span>总览</span></button>
                             <button class="acu-nav-btn ${currentTabName === TAB_RECALL ? 'active' : ''}" data-table="${TAB_RECALL}"><i class="fa-solid fa-magnifying-glass"></i><span>召回</span></button>
                             <button class="acu-nav-btn ${currentTabName === TAB_CONSISTENCY ? 'active' : ''}" data-table="${TAB_CONSISTENCY}"><i class="fa-solid fa-scale-balanced"></i><span>一致性</span></button>
             `;
-            orderedNames.forEach(name => {
-                if (hiddenTables.includes(name)) return;
-                let iconClass = getIconForTableName(name);
-                let btnStyle = '';
-                let iconStyle = '';
+      orderedNames.forEach(name => {
+        if (hiddenTables.includes(name)) return;
+        let iconClass = getIconForTableName(name);
+        let btnStyle = '';
+        let iconStyle = '';
 
-                if (consistencyWarnings.has(name)) {
-                     iconClass = 'fa-exclamation-circle';
-                     btnStyle = 'border: 1px solid #e74c3c !important;';
-                     iconStyle = 'color: #e74c3c;';
-                }
+        if (consistencyWarnings.has(name)) {
+          iconClass = 'fa-exclamation-circle';
+          btnStyle = 'border: 1px solid #e74c3c !important;';
+          iconStyle = 'color: #e74c3c;';
+        }
 
-                const isActive = currentTabName === name ? 'active' : '';
-                html += `<button class="acu-nav-btn ${isActive}" data-table="${name}" style="${btnStyle}"><i class="fa-solid ${iconClass}" style="${iconStyle}"></i><span>${name}</span></button>`;
-              });
-            html += `   </div>
+        const isActive = currentTabName === name ? 'active' : '';
+        html += `<button class="acu-nav-btn ${isActive}" data-table="${name}" style="${btnStyle}"><i class="fa-solid ${iconClass}" style="${iconStyle}"></i><span>${name}</span></button>`;
+      });
+      html += `   </div>
                         <div class="acu-nav-separator"></div>
                         <div class="acu-nav-actions-area">
                             ${navActionsHtml}
@@ -4047,266 +4687,303 @@
                         <button type="button" class="acu-collapsed-trigger" aria-expanded="false" aria-controls="acu-nav-tabs"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>展开档案柜</span></button>
                     </div>
                 </div>`;
-            insertHtmlToPage(html); 
+      insertHtmlToPage(html);
 
-            if (showDash && (config.dashboardPosition === 'embedded' || config.dashboardPosition === 'fixed_status')) {
-                 const dashHtml = renderDashboard(tables, true);
-                 injectEmbeddedDashboard(dashHtml, `acu-theme-${config.theme}`, cssVars);
-            } else {
-                 $('.acu-embedded-dashboard-container').remove();
-            }
+      if (showDash && (config.dashboardPosition === 'embedded' || config.dashboardPosition === 'fixed_status')) {
+        const dashHtml = renderDashboard(tables, true);
+        injectEmbeddedDashboard(dashHtml, `acu-theme-${config.theme}`, cssVars);
+      } else {
+        $('.acu-embedded-dashboard-container').remove();
+      }
 
-            if (optionBtnContent) {
-                injectIndependentOptions(optionBtnContent, `acu-theme-${config.theme}`, cssVars);
-            } else {
-                $('.acu-embedded-options-container').remove();
-            }
+      if (optionBtnContent) {
+        injectIndependentOptions(optionBtnContent, `acu-theme-${config.theme}`, cssVars);
+      } else {
+        $('.acu-embedded-options-container').remove();
+      }
 
-            bindEvents(tables);
-            if (globalScrollTop > 0) {
-                $('.acu-panel-content').scrollTop(globalScrollTop);
-            }
-            updateSaveBtnState();
-            if (isEditingOrder) initSortable();
-        } catch(e) { console.error("UI Render Error:", e); }
+      bindEvents(tables);
+      if (globalScrollTop > 0) {
+        $('.acu-panel-content').scrollTop(globalScrollTop);
+      }
+      updateSaveBtnState();
+      if (isEditingOrder) initSortable();
+    } catch (e) {
+      console.error('UI Render Error:', e);
+    }
+  };
+
+  const renderDashboard = (tables, isEmbedded = false) => {
+    const config = getConfig();
+    const dashConfig = getDashConfig() || {};
+    if (hasLegacyMfrsDashConfig(dashConfig)) {
+      MFRS_DASHBOARD_SLOTS.forEach(s => {
+        delete dashConfig[s.id];
+      });
+    }
+
+    const defaults = {
+      slot_1_1: { isEmpty: true },
+      slot_1_2: { isEmpty: true },
+      slot_2_1: { isEmpty: true },
+      slot_2_2: { isEmpty: true },
+      slot_3_1: { isEmpty: true },
+      slot_3_2: { isEmpty: true },
+      slot_4_1: { isEmpty: true },
+      slot_4_2: { isEmpty: true },
+      slot_5_1: { isEmpty: true },
+      slot_5_2: { isEmpty: true },
+      slot_6_1: { isEmpty: true },
+      slot_6_2: { isEmpty: true },
     };
 
-    
-    const renderDashboard = (tables, isEmbedded = false) => {
-        const config = getConfig();
-        const dashConfig = getDashConfig() || {};
-        if (hasLegacyMfrsDashConfig(dashConfig)) {
-            MFRS_DASHBOARD_SLOTS.forEach(s => { delete dashConfig[s.id]; });
+    const getSlotCfg = id => ({ ...defaults[id], ...(dashConfig[id] || {}) });
+
+    const findKey = (keyword, exact = false) => {
+      if (!keyword) return null;
+      return Object.keys(tables).find(k => (exact ? k === keyword : k.includes(keyword)));
+    };
+
+    let _cfgChanged = false;
+    const _autoSetup = MFRS_DASHBOARD_SLOTS;
+    _autoSetup.forEach(s => {
+      if (!dashConfig[s.id]) {
+        const k = findKey(s.kw);
+        if (k && tables[k]) {
+          const t = tables[k];
+          const entry = {
+            isEmpty: false,
+            title: s.title || (k.endsWith('表') ? k.slice(0, -1) : k),
+            text: k,
+            rule: s.rule,
+          };
+          let valid = false;
+          if (s.rule === 'kv') {
+            if (t.rows && t.rows.length) {
+              entry.card = t.rows[0][1];
+            }
+            if (s.cols) entry.showCols = s.cols;
+            valid = true;
+          } else if (s.rule === 'capsule') {
+            entry.capCol = s.col;
+            if (s.capCols) entry.capCols = s.capCols;
+            valid = true;
+          }
+          if (valid) {
+            dashConfig[s.id] = entry;
+            _cfgChanged = true;
+          }
         }
+      }
+    });
+    if (_cfgChanged) saveDashConfig(dashConfig);
 
-        const defaults = {
-            'slot_1_1': {isEmpty:true}, 'slot_1_2': {isEmpty:true}, 
-            'slot_2_1': {isEmpty:true}, 'slot_2_2': {isEmpty:true}, 
-            'slot_3_1': {isEmpty:true}, 'slot_3_2': {isEmpty:true}, 
-            'slot_4_1': {isEmpty:true}, 'slot_4_2': {isEmpty:true}, 
-            'slot_5_1': {isEmpty:true}, 'slot_5_2': {isEmpty:true}, 
-            'slot_6_1': {isEmpty:true}, 'slot_6_2': {isEmpty:true}
-        };
+    const renderFirstRowAllCols = slotId => {
+      const cfg = getSlotCfg(slotId);
+      const keyword = cfg.text;
+      const key = findKey(keyword);
+      const table = key ? tables[key] : null;
 
-        const getSlotCfg = (id) => ({ ...defaults[id], ...(dashConfig[id] || {}) });
+      if (!table || !table.rows || table.rows.length === 0 || !tableHasEffectiveRows(table)) {
+        const fallbackHtml = renderMfrsTableFallback(keyword);
+        if (fallbackHtml) return fallbackHtml;
+        return `<div style="padding:15px; color:var(--acu-text-sub); font-size:12px; text-align:center;">未找到表格: ${keyword}</div>`;
+      }
 
-        const findKey = (keyword, exact = false) => {
-            if (!keyword) return null;
-            return Object.keys(tables).find(k => exact ? k === keyword : k.includes(keyword));
-        };
+      const headers = table.headers || [];
+      let targetRow = table.rows[0];
 
-        let _cfgChanged = false;
-        const _autoSetup = MFRS_DASHBOARD_SLOTS;
-        _autoSetup.forEach(s => {
-            if (!dashConfig[s.id]) {
-                const k = findKey(s.kw);
-                if (k && tables[k]) {
-                    const t = tables[k];
-                    const entry = { isEmpty: false, title: s.title || (k.endsWith('表') ? k.slice(0, -1) : k), text: k, rule: s.rule };
-                    let valid = false;
-                    if (s.rule === 'kv') {
-                        if (t.rows && t.rows.length) { entry.card = t.rows[0][1]; }
-                        if (s.cols) entry.showCols = s.cols;
-                        valid = true;
-                    } else if (s.rule === 'capsule') {
-                        entry.capCol = s.col;
-                        if (s.capCols) entry.capCols = s.capCols;
-                        valid = true;
-                    }
-                    if (valid) { dashConfig[s.id] = entry; _cfgChanged = true; }
-                }
-            }
-        });
-        if (_cfgChanged) saveDashConfig(dashConfig);
+      if (cfg.card) {
+        const found = table.rows.find(r => r[1] === cfg.card);
+        if (found) targetRow = found;
+      }
 
-        const renderFirstRowAllCols = (slotId) => {
-            const cfg = getSlotCfg(slotId);
-            const keyword = cfg.text;
-            const key = findKey(keyword);
-            const table = key ? tables[key] : null;
+      let itemsHtml = '';
+      const colsToShow = cfg.showCols && cfg.showCols.length > 0 ? cfg.showCols.map(Number) : null;
 
-            if (!table || !table.rows || table.rows.length === 0 || !tableHasEffectiveRows(table)) {
-                const fallbackHtml = renderMfrsTableFallback(keyword);
-                if (fallbackHtml) return fallbackHtml;
-                return `<div style="padding:15px; color:var(--acu-text-sub); font-size:12px; text-align:center;">未找到表格: ${keyword}</div>`;
-            }
+      targetRow.forEach((cell, idx) => {
+        if (idx === 0) return;
+        if (colsToShow && !colsToShow.includes(idx)) return;
 
-            const headers = table.headers || [];
-            let targetRow = table.rows[0];
-
-            if (cfg.card) {
-                const found = table.rows.find(r => r[1] === cfg.card);
-                if (found) targetRow = found;
-            }
-
-            let itemsHtml = '';
-            const colsToShow = (cfg.showCols && cfg.showCols.length > 0) ? cfg.showCols.map(Number) : null;
-
-            targetRow.forEach((cell, idx) => {
-                if (idx === 0) return; 
-                if (colsToShow && !colsToShow.includes(idx)) return;
-
-                const label = headers[idx] || `列${idx}`;
-                if (cell !== undefined && cell !== null && String(cell).trim() !== '') {
-                    itemsHtml += `
+        const label = headers[idx] || `列${idx}`;
+        if (cell !== undefined && cell !== null && String(cell).trim() !== '') {
+          itemsHtml += `
                         <div class="acu-dash-stat-row" style="display:flex; justify-content:flex-start; align-items:center; padding:8px 10px; background:var(--acu-btn-bg); border-radius:8px; border:1px solid transparent; width:100%; box-sizing:border-box;">
                             <span class="acu-dash-stat-label" style="color:var(--acu-title-color); font-size:1em; margin-right:8px; white-space:normal; overflow-wrap:break-word; flex-shrink:0; width:90px;">${label}</span>
                             <span class="acu-dash-stat-val" style="color:var(--acu-text-main); font-weight:bold; font-size:1em; white-space:pre-wrap; word-break:break-word; text-align:left;">${cell}</span>
                         </div>
                     `;
-                }
-            });
+        }
+      });
 
-            return `<div class="acu-dash-char-info" style="display:flex; flex-direction:column; gap:8px; overflow-y: auto; height: 100%; padding-right: 4px;">${itemsHtml}</div>`;
-        };
+      return `<div class="acu-dash-char-info" style="display:flex; flex-direction:column; gap:8px; overflow-y: auto; height: 100%; padding-right: 4px;">${itemsHtml}</div>`;
+    };
 
-        const renderSecondColCapsules = (slotId) => {
-            const cfg = getSlotCfg(slotId);
-            const keyword = cfg.text;
-            const key = findKey(keyword);
-            const table = key ? tables[key] : null;
+    const renderSecondColCapsules = slotId => {
+      const cfg = getSlotCfg(slotId);
+      const keyword = cfg.text;
+      const key = findKey(keyword);
+      const table = key ? tables[key] : null;
 
-            if (!table || !table.rows || table.rows.length === 0 || !tableHasEffectiveRows(table)) {
-                 const fallbackHtml = renderMfrsTableFallback(keyword);
-                 if (fallbackHtml) return fallbackHtml;
-                 return `<div style="padding:15px; color:var(--acu-text-sub); font-size:12px; text-align:center;">未找到表格: ${keyword}</div>`;
-            }
+      if (!table || !table.rows || table.rows.length === 0 || !tableHasEffectiveRows(table)) {
+        const fallbackHtml = renderMfrsTableFallback(keyword);
+        if (fallbackHtml) return fallbackHtml;
+        return `<div style="padding:15px; color:var(--acu-text-sub); font-size:12px; text-align:center;">未找到表格: ${keyword}</div>`;
+      }
 
-            const targetColIdx = (cfg.capCol !== undefined && cfg.capCol !== null) ? parseInt(cfg.capCol) : 1;
-            const capCols = cfg.capCols || 0;
+      const targetColIdx = cfg.capCol !== undefined && cfg.capCol !== null ? parseInt(cfg.capCol) : 1;
+      const capCols = cfg.capCols || 0;
 
-            let gridStyleOverride = '';
-            if (capCols > 0) {
-                gridStyleOverride = `grid-template-columns: repeat(${capCols}, 1fr) !important;`;
-            }
+      let gridStyleOverride = '';
+      if (capCols > 0) {
+        gridStyleOverride = `grid-template-columns: repeat(${capCols}, 1fr) !important;`;
+      }
 
-            let iconHtml = '';
-            if (capCols === 2) {
-                const iconClass = getIconForTableName(key);
-                iconHtml = `<i class="fa-solid ${iconClass}" style="margin-right:6px; opacity:0.7; font-size:0.9em;"></i>`;
-            }
+      let iconHtml = '';
+      if (capCols === 2) {
+        const iconClass = getIconForTableName(key);
+        iconHtml = `<i class="fa-solid ${iconClass}" style="margin-right:6px; opacity:0.7; font-size:0.9em;"></i>`;
+      }
 
-            let itemsHtml = '';
-            table.rows.forEach((row, rIdx) => {
-                const val = row[targetColIdx] !== undefined ? row[targetColIdx] : '';
-                if (val && String(val).trim() !== '') {
-                    const flexStyle = capCols === 2 ? 'display:flex; align-items:center; justify-content:center;' : '';
-                    itemsHtml += `<div class="acu-dash-npc-item acu-dash-interactive" data-tname="${key}" data-row="${rIdx}" data-col="${targetColIdx}" style="cursor:pointer; padding:10px 10px; background:var(--acu-table-head); border-radius:8px; border:1px solid transparent; font-size:0.9em; font-weight:500; transition:all 0.2s; ${flexStyle}">${iconHtml}${val}</div>`;
-                }
-            });
+      let itemsHtml = '';
+      table.rows.forEach((row, rIdx) => {
+        const val = row[targetColIdx] !== undefined ? row[targetColIdx] : '';
+        if (val && String(val).trim() !== '') {
+          const flexStyle = capCols === 2 ? 'display:flex; align-items:center; justify-content:center;' : '';
+          itemsHtml += `<div class="acu-dash-npc-item acu-dash-interactive" data-tname="${key}" data-row="${rIdx}" data-col="${targetColIdx}" style="cursor:pointer; padding:10px 10px; background:var(--acu-table-head); border-radius:8px; border:1px solid transparent; font-size:0.9em; font-weight:500; transition:all 0.2s; ${flexStyle}">${iconHtml}${val}</div>`;
+        }
+      });
 
-            const noLimitSlots = ['slot_tab1', 'slot_tab1_2', 'slot_tab1_3'];
-            const customStyle = 'height: 100%; ' + gridStyleOverride + (window.innerWidth <= 768 ? 'max-height: 200px;' : '');
+      const noLimitSlots = ['slot_tab1', 'slot_tab1_2', 'slot_tab1_3'];
+      const customStyle = 'height: 100%; ' + gridStyleOverride + (window.innerWidth <= 768 ? 'max-height: 200px;' : '');
 
-            return `<div class="acu-dash-npc-grid acu-no-scrollbar" style="${customStyle}">${itemsHtml}</div>`;
-        };
+      return `<div class="acu-dash-npc-grid acu-no-scrollbar" style="${customStyle}">${itemsHtml}</div>`;
+    };
 
-        const renderSlotContent = (slotId) => {
-            const cfg = getSlotCfg(slotId);
-            if (cfg.isEmpty) {
-                return `<div style="width:100%; height:100%; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.6;">
+    const renderSlotContent = slotId => {
+      const cfg = getSlotCfg(slotId);
+      if (cfg.isEmpty) {
+        return `<div style="width:100%; height:100%; min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0.6;">
                     <button class="acu-slot-setting-btn" data-slot="${slotId}" style="width:40px; height:40px; border-radius:50%; background:transparent; color:var(--acu-text-sub); border:2px dashed var(--acu-text-sub); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s;">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                     <div style="margin-top:8px; font-size:12px; color:var(--acu-text-sub);">点击配置</div>
                 </div>`;
-            }
-            if (cfg.rule === 'kv') return renderFirstRowAllCols(slotId);
-            return renderSecondColCapsules(slotId);
-        };
+      }
+      if (cfg.rule === 'kv') return renderFirstRowAllCols(slotId);
+      return renderSecondColCapsules(slotId);
+    };
 
-        const getSlotTitle = (slotId) => {
-            const cfg = getSlotCfg(slotId);
-            return cfg.isEmpty ? '未配置' : cfg.title;
-        };
+    const getSlotTitle = slotId => {
+      const cfg = getSlotCfg(slotId);
+      return cfg.isEmpty ? '未配置' : cfg.title;
+    };
 
-        const renderSlotWrapper = (slotId, contentHtml) => {
-             const cfg = getSlotCfg(slotId);
-             if (cfg.isEmpty) {
-                 return `<div class="acu-dash-card" style="position:relative; border: 2px dashed var(--acu-border); background: rgba(0,0,0,0.02); box-shadow:none;">
+    const renderSlotWrapper = (slotId, contentHtml) => {
+      const cfg = getSlotCfg(slotId);
+      if (cfg.isEmpty) {
+        return `<div class="acu-dash-card" style="position:relative; border: 2px dashed var(--acu-border); background: rgba(0,0,0,0.02); box-shadow:none;">
                     ${contentHtml}
                  </div>`;
-             }
-             const editBtn = isDashEditing ? 
-                `<button class="acu-slot-setting-btn" data-slot="${slotId}" style="position:absolute; top:8px; right:8px; z-index:10; width:24px; height:24px; border-radius:50%; background:var(--acu-btn-active-bg); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-cog" style="font-size:12px;"></i></button>` : '';
+      }
+      const editBtn = isDashEditing
+        ? `<button class="acu-slot-setting-btn" data-slot="${slotId}" style="position:absolute; top:8px; right:8px; z-index:10; width:24px; height:24px; border-radius:50%; background:var(--acu-btn-active-bg); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-cog" style="font-size:12px;"></i></button>`
+        : '';
 
-             return `
+      return `
                 <div class="acu-dash-card" style="position:relative; width:100%; box-sizing:border-box; flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden;">
                     ${editBtn}
                     <div class="acu-dash-title">${cfg.title || '未命名'}</div>
                     ${contentHtml}
                 </div>
              `;
-        };
+    };
 
-        const getTabEditBtn = (sid) => isDashEditing ?
-             `<button type="button" class="acu-slot-setting-btn" data-slot="${sid}" aria-label="编辑此档案槽位" style="margin-left:5px; width:44px; height:44px; border-radius:4px; background:var(--acu-btn-active-bg); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-cog" style="font-size:12px;"></i></button>` : '';
+    const getTabEditBtn = sid =>
+      isDashEditing
+        ? `<button type="button" class="acu-slot-setting-btn" data-slot="${sid}" aria-label="编辑此档案槽位" style="margin-left:5px; width:44px; height:44px; border-radius:4px; background:var(--acu-btn-active-bg); color:#fff; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;"><i class="fa-solid fa-cog" style="font-size:12px;"></i></button>`
+        : '';
 
-        const render3In1Group = (groupId, slotIds, minHeight, isAutoHeight) => {
-            let visibleIds = slotIds.filter(id => !getSlotCfg(id).isEmpty);
-            if (isDashEditing) visibleIds = slotIds; 
+    const render3In1Group = (groupId, slotIds, minHeight, isAutoHeight) => {
+      let visibleIds = slotIds.filter(id => !getSlotCfg(id).isEmpty);
+      if (isDashEditing) visibleIds = slotIds;
 
-            if (visibleIds.length === 0) return '';
+      if (visibleIds.length === 0) return '';
 
-            let header = `<div class="acu-tab-header" role="tablist" aria-label="${groupId} 档案分类">`;
-            let body = '<div class="acu-tab-content-container" style="flex:1;">';
+      let header = `<div class="acu-tab-header" role="tablist" aria-label="${groupId} 档案分类">`;
+      let body = '<div class="acu-tab-content-container" style="flex:1;">';
 
-            visibleIds.forEach((sid, i) => {
-                const active = i === 0 ? 'active' : '';
-                const title = getSlotTitle(sid);
-                const tabId = `${groupId}-${sid}`;
-                header += `<div class="acu-tab-item"><button type="button" class="acu-tab-btn ${active}" id="${tabId}-tab" data-target="${tabId}" role="tab" aria-selected="${i === 0}" aria-controls="${tabId}" tabindex="${i === 0 ? '0' : '-1'}">${title}</button>${getTabEditBtn(sid)}</div>`;
-                body += `<div id="${tabId}" class="acu-tab-pane ${active}" role="tabpanel" aria-labelledby="${tabId}-tab" ${i === 0 ? '' : 'hidden'}>${renderSlotContent(sid)}</div>`;
-            });
-            header += '</div>';
-            body += '</div>';
+      visibleIds.forEach((sid, i) => {
+        const active = i === 0 ? 'active' : '';
+        const title = getSlotTitle(sid);
+        const tabId = `${groupId}-${sid}`;
+        header += `<div class="acu-tab-item"><button type="button" class="acu-tab-btn ${active}" id="${tabId}-tab" data-target="${tabId}" role="tab" aria-selected="${i === 0}" aria-controls="${tabId}" tabindex="${i === 0 ? '0' : '-1'}">${title}</button>${getTabEditBtn(sid)}</div>`;
+        body += `<div id="${tabId}" class="acu-tab-pane ${active}" role="tabpanel" aria-labelledby="${tabId}-tab" ${i === 0 ? '' : 'hidden'}>${renderSlotContent(sid)}</div>`;
+      });
+      header += '</div>';
+      body += '</div>';
 
-                const flexStyle = 'flex: 1 1 auto;';
+      const flexStyle = 'flex: 1 1 auto;';
 
-            return `<div class="acu-dash-card" style="${minHeight ? 'min-height:'+minHeight+';' : ''} width:100%; box-sizing:border-box; display:flex; flex-direction:column; padding:0; overflow:hidden; gap:0; ${flexStyle} min-height: 0;">
+      return `<div class="acu-dash-card" style="${minHeight ? 'min-height:' + minHeight + ';' : ''} width:100%; box-sizing:border-box; display:flex; flex-direction:column; padding:0; overflow:hidden; gap:0; ${flexStyle} min-height: 0;">
                 <div style="padding:10px 16px 0 16px;">${header}</div>
                 <div class="acu-no-scrollbar" style="padding:6px 16px 16px 16px; flex:1; overflow-y:auto;">${body}</div>
             </div>`;
-        };
+    };
 
-                const c1Ids = ['slot_1_1', 'slot_1_2', 'slot_2_1', 'slot_2_2'];
-        const c2Ids = ['slot_3_1', 'slot_3_2', 'slot_4_1', 'slot_4_2'];
-        const c3Ids = ['slot_5_1', 'slot_5_2', 'slot_6_1', 'slot_6_2'];
+    const c1Ids = ['slot_1_1', 'slot_1_2', 'slot_2_1', 'slot_2_2'];
+    const c2Ids = ['slot_3_1', 'slot_3_2', 'slot_4_1', 'slot_4_2'];
+    const c3Ids = ['slot_5_1', 'slot_5_2', 'slot_6_1', 'slot_6_2'];
 
-        const hasC1 = isDashEditing || c1Ids.some(id => !getSlotCfg(id).isEmpty);
-        const hasC2 = isDashEditing || c2Ids.some(id => !getSlotCfg(id).isEmpty);
-        const hasC3 = isDashEditing || c3Ids.some(id => !getSlotCfg(id).isEmpty);
+    const hasC1 = isDashEditing || c1Ids.some(id => !getSlotCfg(id).isEmpty);
+    const hasC2 = isDashEditing || c2Ids.some(id => !getSlotCfg(id).isEmpty);
+    const hasC3 = isDashEditing || c3Ids.some(id => !getSlotCfg(id).isEmpty);
 
-        let activeCols = 0;
-        if (hasC1) activeCols++;
-        if (hasC2) activeCols++;
-        if (hasC3) activeCols++;
+    let activeCols = 0;
+    if (hasC1) activeCols++;
+    if (hasC2) activeCols++;
+    if (hasC3) activeCols++;
 
-        const gridStyle = activeCols > 0 ? `grid-template-columns: repeat(${activeCols}, 1fr) !important;` : 'display: flex; flex-direction: column;';
+    const gridStyle =
+      activeCols > 0
+        ? `grid-template-columns: repeat(${activeCols}, 1fr) !important;`
+        : 'display: flex; flex-direction: column;';
 
-        const content = `
+    const content = `
             ${renderMfrsStatusModule()}
             <div class="acu-dash-container" style="${gridStyle}">
-                ${hasC1 ? `<div class="acu-dash-col">
+                ${
+                  hasC1
+                    ? `<div class="acu-dash-col">
                     ${render3In1Group('grp_1', ['slot_1_1', 'slot_1_2'], null, true)}
                     ${render3In1Group('grp_2', ['slot_2_1', 'slot_2_2'], null, false)}
-                </div>` : ''}
-                ${hasC2 ? `<div class="acu-dash-col">
+                </div>`
+                    : ''
+                }
+                ${
+                  hasC2
+                    ? `<div class="acu-dash-col">
                     ${render3In1Group('grp_3', ['slot_3_1', 'slot_3_2'], null, true)}
                     ${render3In1Group('grp_4', ['slot_4_1', 'slot_4_2'], null, false)}
-                </div>` : ''}
-                ${hasC3 ? `<div class="acu-dash-col">
+                </div>`
+                    : ''
+                }
+                ${
+                  hasC3
+                    ? `<div class="acu-dash-col">
                     ${render3In1Group('grp_5', ['slot_5_1', 'slot_5_2'], null, true)}
                     ${render3In1Group('grp_6', ['slot_6_1', 'slot_6_2'], null, false)}
-                </div>` : ''}
+                </div>`
+                    : ''
+                }
             </div>
         `;
 
-        if (isEmbedded) {
-            return content;
-        }
+    if (isEmbedded) {
+      return content;
+    }
 
-        const html = `
+    const html = `
             <div class="acu-panel-header">
                 <div class="acu-panel-title">
                     <i class="fa-solid fa-box-archive"></i> 档案柜
@@ -4332,88 +5009,93 @@
                 ${content}
             </div>
         `;
-        return html;
-    };
+    return html;
+  };
 
-    const insertHtmlToPage = (html) => {
-        const { $ } = getCore();
-        const $chat = $('#chat');
-        const config = getConfig();
-        const useFixedHost = isFixedFrontendPosition();
-        
-        $('.acu-wrapper').remove();
-        
-        const $newContent = $(html);
-        
-        if (useFixedHost) {
-            const fixedFrontendSlot = getFixedFrontendSlot();
-            if (fixedFrontendSlot) {
-                $(fixedFrontendSlot).append($newContent);
-            } else if ($chat.length) {
-                $chat.append($newContent);
-            } else {
-                $('body').append($newContent);
-            }
-        } else if (config.frontendPosition === 'message') {
-             const $lastMes = $chat.find('.mes').last();
-             if ($lastMes.length) {
-                 const $targetBlock = $lastMes.find('.mes_block').length ? $lastMes.find('.mes_block') : $lastMes;
-                 $targetBlock.append($newContent);
-             } else {
-                 if ($chat.length) $chat.append($newContent); else $('body').append($newContent);
-             }
-        } else {
-            if ($chat.length) { $chat.append($newContent); } else { $('body').append($newContent); }
+  const insertHtmlToPage = html => {
+    const { $ } = getCore();
+    const $chat = $('#chat');
+    const config = getConfig();
+    const useFixedHost = isFixedFrontendPosition();
+
+    $('.acu-wrapper').remove();
+
+    const $newContent = $(html);
+
+    if (useFixedHost) {
+      const fixedFrontendSlot = getFixedFrontendSlot();
+      if (fixedFrontendSlot) {
+        $(fixedFrontendSlot).append($newContent);
+      } else if ($chat.length) {
+        $chat.append($newContent);
+      } else {
+        $('body').append($newContent);
+      }
+    } else if (config.frontendPosition === 'message') {
+      const $lastMes = $chat.find('.mes').last();
+      if ($lastMes.length) {
+        const $targetBlock = $lastMes.find('.mes_block').length ? $lastMes.find('.mes_block') : $lastMes;
+        $targetBlock.append($newContent);
+      } else {
+        if ($chat.length) $chat.append($newContent);
+        else $('body').append($newContent);
+      }
+    } else {
+      if ($chat.length) {
+        $chat.append($newContent);
+      } else {
+        $('body').append($newContent);
+      }
+    }
+
+    if (observer) observer.disconnect();
+    if (useFixedHost) return;
+    observer = new MutationObserver(mutations => {
+      const currentConfig = getConfig();
+      const $chatNode = $('#chat');
+      const $wrapper = $('.acu-wrapper');
+
+      if (!$chatNode.length || !$wrapper.length) return;
+
+      if (currentConfig.frontendPosition === 'message') {
+        const $lastMes = $chatNode.find('.mes').last();
+        if ($lastMes.length) {
+          const $targetBlock = $lastMes.find('.mes_block').length ? $lastMes.find('.mes_block') : $lastMes;
+          if (!$targetBlock.find('.acu-wrapper').length) {
+            $targetBlock.append($wrapper);
+          } else if ($targetBlock.children().last()[0] !== $wrapper[0]) {
+            $targetBlock.append($wrapper);
+          }
         }
-
-        if (observer) observer.disconnect();
-        if (useFixedHost) return;
-        observer = new MutationObserver((mutations) => {
-            const currentConfig = getConfig();
-            const $chatNode = $('#chat');
-            const $wrapper = $('.acu-wrapper');
-            
-            if (!$chatNode.length || !$wrapper.length) return;
-
-            if (currentConfig.frontendPosition === 'message') {
-                const $lastMes = $chatNode.find('.mes').last();
-                if ($lastMes.length) {
-                    const $targetBlock = $lastMes.find('.mes_block').length ? $lastMes.find('.mes_block') : $lastMes;
-                    if (!$targetBlock.find('.acu-wrapper').length) {
-                         $targetBlock.append($wrapper);
-                    }
-                    else if ($targetBlock.children().last()[0] !== $wrapper[0]) {
-                         $targetBlock.append($wrapper);
-                    }
-                }
-            } else {
-                const children = $chatNode.children();
-                const lastChild = children.last()[0];
-                if (lastChild && lastChild !== $wrapper[0]) {
-                    if ($(lastChild).hasClass('mes') || $(lastChild).hasClass('message-body')) {
-                        $chatNode.append($wrapper);
-                    }
-                }
-            }
-        });
-        
-        if ($chat.length) { 
-            observer.observe($chat[0], { childList: true, subtree: true }); 
+      } else {
+        const children = $chatNode.children();
+        const lastChild = children.last()[0];
+        if (lastChild && lastChild !== $wrapper[0]) {
+          if ($(lastChild).hasClass('mes') || $(lastChild).hasClass('message-body')) {
+            $chatNode.append($wrapper);
+          }
         }
-    };
+      }
+    });
 
-    const renderRecallCardList = (items, options = {}) => {
-        const list = (items || []).filter(Boolean);
-        if (!list.length) {
-            return `<div class="acu-recall-empty">${escapeHtml(options.emptyText || '暂无召回结果')}</div>`;
-        }
-        return `<div class="acu-recall-list">${list.map(item => {
-            lastRecallItemMap[item.id] = item;
-            const tags = (item.tags || []).map(tag => `<span class="acu-recall-pill">${escapeHtml(tag)}</span>`).join('');
-            const action = options.pinned
-                ? `<button type="button" class="acu-recall-action-btn" data-recall-action="unpin" data-recall-id="${escapeHtml(item.id)}" title="取消固定"><i class="fa-solid fa-xmark"></i><span>移除</span></button>`
-                : `<button type="button" class="acu-recall-action-btn" data-recall-action="pin" data-recall-id="${escapeHtml(item.id)}" title="固定到本轮提示词"><i class="fa-solid fa-thumbtack"></i><span>固定</span></button>`;
-            return `
+    if ($chat.length) {
+      observer.observe($chat[0], { childList: true, subtree: true });
+    }
+  };
+
+  const renderRecallCardList = (items, options = {}) => {
+    const list = (items || []).filter(Boolean);
+    if (!list.length) {
+      return `<div class="acu-recall-empty">${escapeHtml(options.emptyText || '暂无召回结果')}</div>`;
+    }
+    return `<div class="acu-recall-list">${list
+      .map(item => {
+        lastRecallItemMap[item.id] = item;
+        const tags = (item.tags || []).map(tag => `<span class="acu-recall-pill">${escapeHtml(tag)}</span>`).join('');
+        const action = options.pinned
+          ? `<button type="button" class="acu-recall-action-btn" data-recall-action="unpin" data-recall-id="${escapeHtml(item.id)}" title="取消固定"><i class="fa-solid fa-xmark"></i><span>移除</span></button>`
+          : `<button type="button" class="acu-recall-action-btn" data-recall-action="pin" data-recall-id="${escapeHtml(item.id)}" title="固定到本轮提示词"><i class="fa-solid fa-thumbtack"></i><span>固定</span></button>`;
+        return `
                 <div class="acu-recall-card">
                     <div class="acu-recall-card-header">
                         <span class="acu-recall-card-icon"><i class="fa-solid ${escapeHtml(item.icon || 'fa-magnifying-glass')}"></i></span>
@@ -4433,24 +5115,26 @@
                     </div>
                 </div>
             `;
-        }).join('')}</div>`;
-    };
+      })
+      .join('')}</div>`;
+  };
 
-    const renderAutoRecallStatus = (autoResult) => {
-        const config = autoResult.config || getAutoRecallConfig();
-        const plotClass = config.plotEnabled ? 'active' : '';
-        const memoryClass = config.memoryEnabled ? 'active' : '';
-        const keywords = (autoResult.keywords || []).slice(0, 8);
-        const keywordText = keywords.length ? keywords.join(' / ') : '无显式关键词';
-        const lastText = lastAutoRecallResult?.injected
-            ? `上次已注入 ${lastAutoRecallResult.items?.length || 0} 条`
-            : '等待下一轮生成';
-        const promptState = (!config.plotEnabled && !config.memoryEnabled)
-            ? '自动召回已关闭'
-            : (autoResult.items || []).length
-                ? '生成前自动注入'
-                : '暂无相关命中';
-        return `
+  const renderAutoRecallStatus = autoResult => {
+    const config = autoResult.config || getAutoRecallConfig();
+    const plotClass = config.plotEnabled ? 'active' : '';
+    const memoryClass = config.memoryEnabled ? 'active' : '';
+    const keywords = (autoResult.keywords || []).slice(0, 8);
+    const keywordText = keywords.length ? keywords.join(' / ') : '无显式关键词';
+    const lastText = lastAutoRecallResult?.injected
+      ? `上次已注入 ${lastAutoRecallResult.items?.length || 0} 条`
+      : '等待下一轮生成';
+    const promptState =
+      !config.plotEnabled && !config.memoryEnabled
+        ? '自动召回已关闭'
+        : (autoResult.items || []).length
+          ? '生成前自动注入'
+          : '暂无相关命中';
+    return `
             <div class="acu-auto-recall-box">
                 <div class="acu-auto-recall-head">
                     <div class="acu-recall-section-title" style="margin:0;">
@@ -4474,24 +5158,31 @@
                 <div class="acu-auto-recall-note">命中关键词：${escapeHtml(keywordText)}</div>
             </div>
         `;
-    };
+  };
 
-    const renderRecallPanel = (tables) => {
-        lastRecallItemMap = {};
-        const healthChecks = buildRecallHealthChecks(tables);
-        const query = String(recallSearchTerm || '').trim();
-        const items = collectRecallItems(tables, query);
-        const autoResult = buildAutoRecallResult(tables);
-        // 渲染固定区时净化旧固定项：内部线索/已删除项不展示，并回写净化后的 storage。
-        const pinned = sanitizePinnedRecallItems(items);
-        pinned.forEach(item => { if (item?.id) lastRecallItemMap[item.id] = item; });
-        const healthHtml = healthChecks.map(item => `
+  const renderRecallPanel = tables => {
+    lastRecallItemMap = {};
+    const healthChecks = buildRecallHealthChecks(tables);
+    const query = String(recallSearchTerm || '').trim();
+    const items = collectRecallItems(tables, query);
+    const autoResult = buildAutoRecallResult(tables);
+    // 渲染固定区时净化旧固定项：内部线索/已删除项不展示，并回写净化后的 storage。
+    const pinned = sanitizePinnedRecallItems(items);
+    pinned.forEach(item => {
+      if (item?.id) lastRecallItemMap[item.id] = item;
+    });
+    const healthHtml = healthChecks
+      .map(
+        item => `
             <div class="acu-recall-health-item ${escapeHtml(item.status)}">
                 <strong>${escapeHtml(item.label)}</strong>
                 <span>${escapeHtml(item.value)}</span>
             </div>
-        `).join('');
-        const pinnedHtml = pinned.length ? `
+        `,
+      )
+      .join('');
+    const pinnedHtml = pinned.length
+      ? `
             <div class="acu-recall-section-title">
                 <span><i class="fa-solid fa-thumbtack"></i> 已固定到本轮</span>
                 <span style="display:flex; gap:6px;">
@@ -4500,9 +5191,10 @@
                 </span>
             </div>
             ${renderRecallCardList(pinned, { pinned: true, emptyText: '尚未固定召回' })}
-        ` : '';
+        `
+      : '';
 
-        return `
+    return `
             <div class="acu-panel-header">
                 <div class="acu-panel-title"><i class="fa-solid fa-magnifying-glass"></i> 剧情召回 / 记忆召回 <span style="color:var(--acu-text-sub);font-weight:normal;">${items.length}</span></div>
                 <div class="acu-header-actions">
@@ -4538,46 +5230,63 @@
                 </div>
             </div>
         `;
-    };
+  };
 
-    const renderGlobalPanel = (tables) => {
-        lastGlobalItemMap = {};
-        const query = String(globalSearchTerm || '').trim();
-        const overview = buildTableOverview(tables);
-        const items = collectGlobalSearchItems(tables, query);
-        const totalRows = overview.reduce((sum, item) => sum + item.rowCount, 0);
-        const emptyCount = overview.filter(item => item.rowCount === 0).length;
-        const issueCount = overview.filter(item => item.issues.length).length;
-        const overviewCards = [
-            { label: '数据库 API', value: lastTableDataError ? lastTableDataError : '可用', status: lastTableDataError ? 'error' : 'ok' },
-            { label: '表数量', value: `${overview.length}/14`, status: overview.length >= 14 ? 'ok' : 'warn' },
-            { label: '总行数', value: `${totalRows} 行`, status: totalRows > 0 ? 'ok' : 'warn' },
-            { label: '空表', value: `${emptyCount} 张`, status: emptyCount ? 'warn' : 'ok' },
-            { label: '异常表', value: `${issueCount} 张`, status: issueCount ? 'warn' : 'ok' },
-        ].map(item => `
+  const renderGlobalPanel = tables => {
+    lastGlobalItemMap = {};
+    const query = String(globalSearchTerm || '').trim();
+    const overview = buildTableOverview(tables);
+    const items = collectGlobalSearchItems(tables, query);
+    const totalRows = overview.reduce((sum, item) => sum + item.rowCount, 0);
+    const emptyCount = overview.filter(item => item.rowCount === 0).length;
+    const issueCount = overview.filter(item => item.issues.length).length;
+    const overviewCards = [
+      {
+        label: '数据库 API',
+        value: lastTableDataError ? lastTableDataError : '可用',
+        status: lastTableDataError ? 'error' : 'ok',
+      },
+      { label: '表数量', value: `${overview.length}/14`, status: overview.length >= 14 ? 'ok' : 'warn' },
+      { label: '总行数', value: `${totalRows} 行`, status: totalRows > 0 ? 'ok' : 'warn' },
+      { label: '空表', value: `${emptyCount} 张`, status: emptyCount ? 'warn' : 'ok' },
+      { label: '异常表', value: `${issueCount} 张`, status: issueCount ? 'warn' : 'ok' },
+    ]
+      .map(
+        item => `
             <div class="acu-insight-card ${escapeHtml(item.status)}">
                 <strong>${escapeHtml(item.label)}</strong>
                 <span>${escapeHtml(item.value)}</span>
             </div>
-        `).join('');
+        `,
+      )
+      .join('');
 
-        const tableCards = overview.map(item => `
+    const tableCards = overview
+      .map(
+        item => `
             <div class="acu-insight-card ${escapeHtml(item.status)}">
                 <strong>${escapeHtml(item.tableName)}</strong>
                 <span>${escapeHtml(item.rowCount)} 行 / ${escapeHtml(item.colCount)} 列</span>
                 <p>最近：${escapeHtml(item.latest)}</p>
                 <p>${item.issues.length ? escapeHtml(item.issues.join('；')) : '状态正常'}</p>
             </div>
-        `).join('');
+        `,
+      )
+      .join('');
 
-        const resultHtml = items.length ? `<div class="acu-insight-list">${items.map(item => {
+    const resultHtml = items.length
+      ? `<div class="acu-insight-list">${items
+          .map(item => {
             lastGlobalItemMap[item.id] = item;
-            const detailRows = item.headers.map((header, idx) => {
+            const detailRows = item.headers
+              .map((header, idx) => {
                 if (idx === 0) return '';
                 const value = normalizePromptText(item.row[idx]);
                 if (!value || value === 'auto_merged') return '';
                 return `<div><strong>${escapeHtml(header || `字段${idx}`)}：</strong>${escapeHtml(value)}</div>`;
-            }).filter(Boolean).join('');
+              })
+              .filter(Boolean)
+              .join('');
             return `
                 <div class="acu-insight-result">
                     <div style="display:flex; align-items:flex-start; gap:8px;">
@@ -4602,9 +5311,11 @@
                     </div>
                 </div>
             `;
-        }).join('')}</div>` : `<div class="acu-recall-empty">${query ? '未找到匹配记录' : '输入关键词可快速筛选全部表记录'}</div>`;
+          })
+          .join('')}</div>`
+      : `<div class="acu-recall-empty">${query ? '未找到匹配记录' : '输入关键词可快速筛选全部表记录'}</div>`;
 
-        return `
+    return `
             <div class="acu-panel-header">
                 <div class="acu-panel-title"><i class="fa-solid fa-layer-group"></i> 全局搜索 / 表状态 <span style="color:var(--acu-text-sub);font-weight:normal;">${items.length}</span></div>
                 <div class="acu-header-actions">
@@ -4628,29 +5339,36 @@
                 </div>
             </div>
         `;
-    };
+  };
 
-    const renderConsistencyPanel = (tables) => {
-        const snapshot = buildMfrsStateSnapshot(tables);
-        const summaries = snapshot.consistency.summaries || [];
-        const issues = snapshot.consistency.issues || [];
-        const statAvailable = !!snapshot.stat_data;
-        const summaryCards = [
-            { label: 'stat_data', value: statAvailable ? '可读取' : '未读取到', status: statAvailable ? 'ok' : 'warn' },
-            { label: '差异项', value: `${issues.length} 条`, status: issues.length ? 'warn' : 'ok' },
-            ...summaries.map(item => ({
-                label: item.label,
-                value: `状态字段 ${item.statCount} / 数据库 ${item.dbRows}`,
-                status: item.status,
-            })),
-        ].map(item => `
+  const renderConsistencyPanel = tables => {
+    const snapshot = buildMfrsStateSnapshot(tables);
+    const summaries = snapshot.consistency.summaries || [];
+    const issues = snapshot.consistency.issues || [];
+    const statAvailable = !!snapshot.stat_data;
+    const summaryCards = [
+      { label: 'stat_data', value: statAvailable ? '可读取' : '未读取到', status: statAvailable ? 'ok' : 'warn' },
+      { label: '差异项', value: `${issues.length} 条`, status: issues.length ? 'warn' : 'ok' },
+      ...summaries.map(item => ({
+        label: item.label,
+        value: `状态字段 ${item.statCount} / 数据库 ${item.dbRows}`,
+        status: item.status,
+      })),
+    ]
+      .map(
+        item => `
             <div class="acu-insight-card ${escapeHtml(item.status)}">
                 <strong>${escapeHtml(item.label)}</strong>
                 <span>${escapeHtml(item.value)}</span>
             </div>
-        `).join('');
+        `,
+      )
+      .join('');
 
-        const issueHtml = issues.length ? `<div class="acu-insight-list">${issues.map(item => `
+    const issueHtml = issues.length
+      ? `<div class="acu-insight-list">${issues
+          .map(
+            item => `
             <div class="acu-insight-result">
                 <div class="acu-insight-meta">
                     <span class="acu-insight-pill">${item.type === 'stat-only' ? '状态栏有 / 数据库缺' : '数据库有 / 状态栏缺'}</span>
@@ -4660,9 +5378,12 @@
                 <div class="acu-insight-summary">${escapeHtml(item.message)}</div>
                 ${(item.values || []).length ? `<div class="acu-insight-detail">${item.values.map(value => `<div><strong>${escapeHtml(value.path || '字段')}：</strong>${escapeHtml(value.text)}</div>`).join('')}</div>` : ''}
             </div>
-        `).join('')}</div>` : '<div class="acu-recall-empty">未发现明显差异</div>';
+        `,
+          )
+          .join('')}</div>`
+      : '<div class="acu-recall-empty">未发现明显差异</div>';
 
-        return `
+    return `
             <div class="acu-panel-header">
                 <div class="acu-panel-title"><i class="fa-solid fa-scale-balanced"></i> MVU / 数据库一致性 <span style="color:var(--acu-text-sub);font-weight:normal;">${issues.length}</span></div>
                 <div class="acu-header-actions">
@@ -4688,71 +5409,76 @@
                 </div>
             </div>
         `;
+  };
+
+  const renderTableContent = (tableData, tableName) => {
+    if (!tableData || !tableData.rows.length)
+      return `<div class="acu-panel-header"><div class="acu-panel-title">${tableName} ${tableData && tableData._missingInfo ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : tableData && tableData._hasWarning ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">0</span>'}</div><div class="acu-header-actions"><button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button></div></div><div class="acu-panel-content"><div style="text-align:center;color:var(--acu-text-sub);padding:40px 20px;"><i class="fa-solid fa-inbox" style="font-size:48px;opacity:0.3;margin-bottom:15px;"></i><div style="font-size:16px;margin-bottom:8px;">暂无数据</div><div style="font-size:12px;opacity:0.7;">该表格当前没有任何记录</div></div></div>`;
+
+    const headers = tableData.headers.slice(1);
+    let titleColIndex = 1;
+    const codeIdx = tableData.headers.findIndex(h => h && (String(h).includes('编码') || String(h).includes('索引')));
+    if (codeIdx > 0) titleColIndex = codeIdx;
+
+    const config = getConfig();
+    const itemsPerPage = config.itemsPerPage || 20;
+
+    const savedStyles = getTableStyles();
+    const currentStyle = savedStyles[tableName] || 'list';
+    const isListMode = currentStyle === 'list';
+
+    const checkRowChanged = (realIdx, row) => {
+      if (currentDiffMap.has(`${tableName}-row-${realIdx}`)) return true;
+      if (pendingDeletes.has(`${tableName}-row-${realIdx}`)) return true;
+      for (let c = 1; c < row.length; c++) {
+        if (currentDiffMap.has(`${tableName}-${realIdx}-${c}`)) return true;
+      }
+      return false;
     };
 
-    const renderTableContent = (tableData, tableName) => {
-        if (!tableData || !tableData.rows.length) return `<div class="acu-panel-header"><div class="acu-panel-title">${tableName} ${(tableData && tableData._missingInfo) ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : ((tableData && tableData._hasWarning) ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">0</span>')}</div><div class="acu-header-actions"><button class="acu-header-btn" id="acu-btn-close" title="关闭"><i class="fa-solid fa-times"></i></button></div></div><div class="acu-panel-content"><div style="text-align:center;color:var(--acu-text-sub);padding:40px 20px;"><i class="fa-solid fa-inbox" style="font-size:48px;opacity:0.3;margin-bottom:15px;"></i><div style="font-size:16px;margin-bottom:8px;">暂无数据</div><div style="font-size:12px;opacity:0.7;">该表格当前没有任何记录</div></div></div>`;
+    let processedRows = tableData.rows.map((row, index) => ({
+      data: row,
+      originalIndex: index,
+      hasChange: checkRowChanged(index, row),
+    }));
 
-        const headers = tableData.headers.slice(1);
-        let titleColIndex = 1;const codeIdx = tableData.headers.findIndex(h => h && (String(h).includes('编码') || String(h).includes('索引')));if (codeIdx > 0) titleColIndex = codeIdx;
-        
-        const config = getConfig();
-        const itemsPerPage = config.itemsPerPage || 20;
-        
-        const savedStyles = getTableStyles();
-        const currentStyle = savedStyles[tableName] || 'list';
-        const isListMode = currentStyle === 'list';
+    if (currentSearchTerm) {
+      processedRows = processedRows.filter(item =>
+        item.data.some(cell => String(cell).toLowerCase().includes(currentSearchTerm)),
+      );
+    }
 
-        const checkRowChanged = (realIdx, row) => {
-            if (currentDiffMap.has(`${tableName}-row-${realIdx}`)) return true;
-            if (pendingDeletes.has(`${tableName}-row-${realIdx}`)) return true;
-            for (let c = 1; c < row.length; c++) {
-                if (currentDiffMap.has(`${tableName}-${realIdx}-${c}`)) return true;
-            }
-            return false;
-        };
+    const reverseTables = getReverseOrderTables();
+    const isReversed = reverseTables.includes(tableName);
+    const isSortModified = true;
 
-        let processedRows = tableData.rows.map((row, index) => ({
-            data: row,
-            originalIndex: index,
-            hasChange: checkRowChanged(index, row)
-        }));
+    processedRows.sort((a, b) => {
+      if (isSortModified) {
+        if (a.hasChange && !b.hasChange) return -1;
+        if (!a.hasChange && b.hasChange) return 1;
+      }
+      if (isReversed) {
+        return b.originalIndex - a.originalIndex;
+      } else {
+        return a.originalIndex - b.originalIndex;
+      }
+    });
 
-        if (currentSearchTerm) {
-               processedRows = processedRows.filter(item => item.data.some(cell => String(cell).toLowerCase().includes(currentSearchTerm)));
-        }
+    const displayTotal = processedRows.length;
+    const totalPages = Math.ceil(displayTotal / itemsPerPage) || 1;
+    const displayPages = Math.ceil(displayTotal / itemsPerPage) || 1;
 
-        const reverseTables = getReverseOrderTables();
-        const isReversed = reverseTables.includes(tableName);
-        const isSortModified = true;
-        
-        processedRows.sort((a, b) => {
-            if (isSortModified) {
-                if (a.hasChange && !b.hasChange) return -1;
-                if (!a.hasChange && b.hasChange) return 1;
-            }
-            if (isReversed) {
-                return b.originalIndex - a.originalIndex;
-            } else {
-                return a.originalIndex - b.originalIndex;
-            }
-        });
+    if (currentPage > totalPages) currentPage = 1;
+    if (currentPage < 1) currentPage = 1;
 
-        const displayTotal = processedRows.length;
-        const totalPages = Math.ceil(displayTotal / itemsPerPage) || 1;
-        const displayPages = Math.ceil(displayTotal / itemsPerPage) || 1;
-        
-        if (currentPage > totalPages) currentPage = 1;
-        if (currentPage < 1) currentPage = 1;
-        
-        const startIdx = (currentPage - 1) * itemsPerPage;
-        const endIdx = startIdx + itemsPerPage;
-        const slicedRows = processedRows.slice(startIdx, endIdx);
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const endIdx = startIdx + itemsPerPage;
+    const slicedRows = processedRows.slice(startIdx, endIdx);
 
-        let html = `
+    let html = `
             <div class="acu-panel-header">
                   <div class="acu-panel-title">
-                    ${tableName} ${(tableData && tableData._missingInfo) ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : ((tableData && tableData._hasWarning) ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">' + displayTotal + '</span>')}
+                    ${tableName} ${tableData && tableData._missingInfo ? '<span style="color:#e74c3c;font-weight:bold;">缺少' + tableData._missingInfo + '</span>' : tableData && tableData._hasWarning ? '<span style="color:#e74c3c;font-weight:bold;">数量异常</span>' : '<span style="color:var(--acu-text-sub);font-weight:normal;">' + displayTotal + '</span>'}
                 </div>
                 <div class="acu-header-actions">
                     <div class="acu-header-btn-group" style="display:flex; gap:6px; align-items:center;">
@@ -4760,7 +5486,7 @@
                             <i class="fa-solid fa-search"></i>
                         </button>
                         <input type="text" class="acu-search-input" id="acu-search-input" placeholder="搜索..." value="${currentSearchTerm}" style="${currentSearchTerm ? '' : 'display:none'}; width: 120px; margin-right: 4px; padding-left: 10px;" />
-                        <button class="acu-header-btn" id="acu-btn-switch-style" data-table="${tableName}" title="切换视图 (当前: ${isListMode?'单列':'双列'})">
+                        <button class="acu-header-btn" id="acu-btn-switch-style" data-table="${tableName}" title="切换视图 (当前: ${isListMode ? '单列' : '双列'})">
                             <i class="fa-solid ${isListMode ? 'fa-list' : 'fa-th-large'}"></i>
                         </button>
                         <button class="acu-header-btn acu-height-drag-handle" data-table="${tableName}" title="按住拖动调整高度 (双击重置)">
@@ -4779,697 +5505,856 @@
             <div class="acu-panel-content">
                 <div class="acu-card-grid">`;
 
-        slicedRows.forEach((item) => {
-            const row = item.data;
-            const realIndex = item.originalIndex;
-             const cardTitle = row[titleColIndex] || '未命名';
-            const showDefaultIndex = (titleColIndex === 1);
-            const isRowNew = currentDiffMap.has(`${tableName}-row-${realIndex}`);
-            const isPendingDelete = pendingDeletes.has(`${tableName}-row-${realIndex}`);
-            const rowClass = isRowNew && config.highlightNew ? 'acu-highlight-changed' : '';
+    slicedRows.forEach(item => {
+      const row = item.data;
+      const realIndex = item.originalIndex;
+      const cardTitle = row[titleColIndex] || '未命名';
+      const showDefaultIndex = titleColIndex === 1;
+      const isRowNew = currentDiffMap.has(`${tableName}-row-${realIndex}`);
+      const isPendingDelete = pendingDeletes.has(`${tableName}-row-${realIndex}`);
+      const rowClass = isRowNew && config.highlightNew ? 'acu-highlight-changed' : '';
 
-            html += `<div class="acu-data-card">
+      html += `<div class="acu-data-card">
                         ${isPendingDelete ? '<div class="acu-badge-pending">待删除</div>' : ''}
                         <div class="acu-card-header">
                             <span class="acu-card-index">${showDefaultIndex ? '#' + (realIndex + 1) : ''}</span>
                             <span class="acu-cell acu-editable-title" data-key="${tableData.key}" data-tname="${tableName}" data-row="${realIndex}" data-col="${titleColIndex}" data-val="${encodeURIComponent(cardTitle)}" title="点击编辑标题">${cardTitle}</span>
                         </div>
                         <div class="acu-card-body">`;
-            let gridHtml = ''; let fullHtml = '';
-            row.forEach((cell, cIdx) => {
-                if (cIdx > 0 && cIdx !== titleColIndex) {
-                    const headerName = headers[cIdx - 1] || `属性${cIdx}`;
-                    const cellStr = String(cell);
-                    const displayCell = cellStr.trim();
-                    if (displayCell === 'auto_merged') return;
-                    const badgeStyle = getBadgeStyle(displayCell);
-                    const isCellChanged = currentDiffMap.has(`${tableName}-${realIndex}-${cIdx}`);
-                    const cellHighlight = isCellChanged && config.highlightNew ? 'acu-highlight-changed' : '';
-                    const dataAttrs = `data-key="${tableData.key}" data-tname="${tableName}" data-row="${realIndex}" data-col="${cIdx}" data-val="${encodeURIComponent(cell)}"`;
-                    const contentHtml = badgeStyle ? `<span class="acu-badge ${badgeStyle}">${displayCell}</span>` : displayCell;
+      let gridHtml = '';
+      let fullHtml = '';
+      row.forEach((cell, cIdx) => {
+        if (cIdx > 0 && cIdx !== titleColIndex) {
+          const headerName = headers[cIdx - 1] || `属性${cIdx}`;
+          const cellStr = String(cell);
+          const displayCell = cellStr.trim();
+          if (displayCell === 'auto_merged') return;
+          const badgeStyle = getBadgeStyle(displayCell);
+          const isCellChanged = currentDiffMap.has(`${tableName}-${realIndex}-${cIdx}`);
+          const cellHighlight = isCellChanged && config.highlightNew ? 'acu-highlight-changed' : '';
+          const dataAttrs = `data-key="${tableData.key}" data-tname="${tableName}" data-row="${realIndex}" data-col="${cIdx}" data-val="${encodeURIComponent(cell)}"`;
+          const contentHtml = badgeStyle ? `<span class="acu-badge ${badgeStyle}">${displayCell}</span>` : displayCell;
 
-                    if (isListMode) {
-                         fullHtml += `<div class="acu-cell acu-inline-item" ${dataAttrs}><div class="acu-inline-label">${headerName}</div><div class="acu-inline-value ${cellHighlight}">${contentHtml}</div></div>`;
-                    } else {
-                         if (codeIdx > 0) {
-                             fullHtml += `<div class="acu-cell acu-full-item" ${dataAttrs}><div class="acu-full-label">${headerName}</div><div class="acu-full-value ${cellHighlight}">${displayCell}</div></div>`;
-                         } else {
-                            if (cellStr.length > 50) {
-                                fullHtml += `<div class="acu-cell acu-full-item" ${dataAttrs}><div class="acu-full-label">${headerName}</div><div class="acu-full-value ${cellHighlight}">${displayCell}</div></div>`;
-                            }
-                            else {
-                                gridHtml += `<div class="acu-cell acu-grid-item" ${dataAttrs}><div class="acu-grid-label">${headerName}</div><div class="acu-grid-value ${cellHighlight}">${contentHtml}</div></div>`;
-                            }
-                         }
-                    }
-                }
-            });
-            if (gridHtml) html += `<div class="acu-card-main-grid">${gridHtml}</div>`;
-            if (fullHtml) html += `<div class="acu-card-full-area">${fullHtml}</div>`;
-            const rowActionHtml = buildRowInteractionHtml(tableName, tableData, row);
-            if (rowActionHtml) html += rowActionHtml;
-            html += `   </div></div>`;
-        });
-        html += `</div></div>`;
-        if (displayPages > 1) {
-             html += `<div class="acu-panel-footer"><button class="acu-page-btn" data-page="${currentPage - 1}" ${currentPage===1?'disabled':''}><i class="fa-solid fa-angle-left"></i></button>`;
-             const range = [];
-             if (displayPages <= 7) { for (let i = 1; i <= displayPages; i++) range.push(i); }
-             else { if (currentPage <= 4) range.push(1, 2, 3, 4, 5, '...', displayPages); else if (currentPage >= displayPages - 3) range.push(1, '...', displayPages - 4, displayPages - 3, displayPages - 2, displayPages - 1, displayPages); else range.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', displayPages); }
-             range.forEach(p => { if (p === '...') html += `<span class="acu-page-info">...</span>`; else html += `<button class="acu-page-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`; });
-             html += `<button class="acu-page-btn" data-page="${currentPage + 1}" ${currentPage===displayPages?'disabled':''}><i class="fa-solid fa-angle-right"></i></button></div>`;
+          if (isListMode) {
+            fullHtml += `<div class="acu-cell acu-inline-item" ${dataAttrs}><div class="acu-inline-label">${headerName}</div><div class="acu-inline-value ${cellHighlight}">${contentHtml}</div></div>`;
+          } else {
+            if (codeIdx > 0) {
+              fullHtml += `<div class="acu-cell acu-full-item" ${dataAttrs}><div class="acu-full-label">${headerName}</div><div class="acu-full-value ${cellHighlight}">${displayCell}</div></div>`;
+            } else {
+              if (cellStr.length > 50) {
+                fullHtml += `<div class="acu-cell acu-full-item" ${dataAttrs}><div class="acu-full-label">${headerName}</div><div class="acu-full-value ${cellHighlight}">${displayCell}</div></div>`;
+              } else {
+                gridHtml += `<div class="acu-cell acu-grid-item" ${dataAttrs}><div class="acu-grid-label">${headerName}</div><div class="acu-grid-value ${cellHighlight}">${contentHtml}</div></div>`;
+              }
+            }
+          }
         }
-        return html;
+      });
+      if (gridHtml) html += `<div class="acu-card-main-grid">${gridHtml}</div>`;
+      if (fullHtml) html += `<div class="acu-card-full-area">${fullHtml}</div>`;
+      const rowActionHtml = buildRowInteractionHtml(tableName, tableData, row);
+      if (rowActionHtml) html += rowActionHtml;
+      html += `   </div></div>`;
+    });
+    html += `</div></div>`;
+    if (displayPages > 1) {
+      html += `<div class="acu-panel-footer"><button class="acu-page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}><i class="fa-solid fa-angle-left"></i></button>`;
+      const range = [];
+      if (displayPages <= 7) {
+        for (let i = 1; i <= displayPages; i++) range.push(i);
+      } else {
+        if (currentPage <= 4) range.push(1, 2, 3, 4, 5, '...', displayPages);
+        else if (currentPage >= displayPages - 3)
+          range.push(1, '...', displayPages - 4, displayPages - 3, displayPages - 2, displayPages - 1, displayPages);
+        else range.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', displayPages);
+      }
+      range.forEach(p => {
+        if (p === '...') html += `<span class="acu-page-info">...</span>`;
+        else html += `<button class="acu-page-btn ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+      });
+      html += `<button class="acu-page-btn" data-page="${currentPage + 1}" ${currentPage === displayPages ? 'disabled' : ''}><i class="fa-solid fa-angle-right"></i></button></div>`;
+    }
+    return html;
+  };
+
+  const closePanel = () => {
+    const { $ } = getCore();
+    if (!$) return;
+
+    const $chat = $('#chat');
+    const config = getConfig();
+    const currentScroll = $chat.length ? $chat.scrollTop() : 0;
+
+    $('#acu-data-area').removeClass('visible');
+    $('.acu-nav-btn').removeClass('active');
+    saveActiveTabState(null);
+    pendingDeletes.clear();
+    updateSaveBtnState();
+
+    if ($chat.length) {
+      setTimeout(() => {
+        $chat.scrollTop(currentScroll);
+      }, 10);
+    }
+  };
+
+  const bindEvents = tables => {
+    const { $ } = getCore();
+    const stopSelectors =
+      '.acu-data-display, .acu-nav-container, .acu-wrapper, .acu-edit-overlay, .acu-quick-view-overlay, .acu-cell-menu';
+    $('body')
+      .off('wheel touchstart touchmove touchend click', stopSelectors)
+      .on('wheel touchstart touchmove touchend click', stopSelectors, function (e) {
+        e.stopPropagation();
+      });
+
+    $('body')
+      .off('click.acu_autoclose')
+      .on('click.acu_autoclose', function (e) {
+        if (isEditingOrder) return;
+
+        if (!$('#acu-data-area').hasClass('visible')) return;
+
+        const $target = $(e.target);
+
+        if ($target.closest('.acu-wrapper').length) return;
+
+        if ($target.closest('.acu-cell-menu').length) return;
+        if ($target.closest('.acu-edit-overlay').length) return;
+        if ($target.closest('.acu-popup-overlay').length) return;
+        if ($target.closest('.acu-quick-view-overlay').length) return;
+
+        if ($target.closest('#send_textarea, #send_but, #send_form, .bottom_bar_container').length) return;
+        if ($target.is('input, textarea') || $target.prop('isContentEditable')) return;
+
+        closePanel();
+      });
+
+    const renderRecallArea = (options = {}) => {
+      const $area = $('#acu-data-area');
+      const scrollTop = options.keepScroll ? $area.find('.acu-panel-content').scrollTop() || 0 : 0;
+      $area.html(renderRecallPanel(tables)).addClass('visible');
+      bindDataAreaEvents();
+      if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
+      if (options.focusSearch) {
+        const input = $('#acu-recall-search-input')[0];
+        if (input) {
+          input.focus();
+          const len = input.value.length;
+          try {
+            input.setSelectionRange(len, len);
+          } catch (e) {}
+        }
+      }
     };
 
-    const closePanel = () => {
-        const { $ } = getCore();
-        if (!$) return;
-
-        const $chat = $('#chat');
-        const config = getConfig();
-        const currentScroll = $chat.length ? $chat.scrollTop() : 0;
-
-        $('#acu-data-area').removeClass('visible');
-        $('.acu-nav-btn').removeClass('active');
-        saveActiveTabState(null);
-        pendingDeletes.clear();
-        updateSaveBtnState();
-
-        if ($chat.length) {
-            setTimeout(() => {
-                 $chat.scrollTop(currentScroll);
-            }, 10);
+    const renderGlobalArea = (options = {}) => {
+      const $area = $('#acu-data-area');
+      const scrollTop = options.keepScroll ? $area.find('.acu-panel-content').scrollTop() || 0 : 0;
+      $area.html(renderGlobalPanel(tables)).addClass('visible');
+      bindDataAreaEvents();
+      if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
+      if (options.focusSearch) {
+        const input = $('#acu-global-search-input')[0];
+        if (input) {
+          input.focus();
+          const len = input.value.length;
+          try {
+            input.setSelectionRange(len, len);
+          } catch (e) {}
         }
+      }
     };
 
-    const bindEvents = (tables) => {
-        const { $ } = getCore();
-        const stopSelectors = '.acu-data-display, .acu-nav-container, .acu-wrapper, .acu-edit-overlay, .acu-quick-view-overlay, .acu-cell-menu';
-        $('body').off('wheel touchstart touchmove touchend click', stopSelectors).on('wheel touchstart touchmove touchend click', stopSelectors, function(e) {
-            e.stopPropagation();
+    const renderConsistencyArea = (options = {}) => {
+      const $area = $('#acu-data-area');
+      const scrollTop = options.keepScroll ? $area.find('.acu-panel-content').scrollTop() || 0 : 0;
+      $area.html(renderConsistencyPanel(tables)).addClass('visible');
+      bindDataAreaEvents();
+      if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
+    };
+
+    const switchTab = tableName => {
+      currentPage = 1;
+      currentSearchTerm = '';
+      globalScrollTop = 0;
+
+      if (tableName === TAB_DASHBOARD) {
+        $('#acu-data-area').html(renderDashboard(tables)).addClass('visible');
+        const h = getTableHeights()[TAB_DASHBOARD];
+        $('#acu-data-area').css({ height: h ? h + 'px' : '60vh', maxHeight: '95vh' });
+        bindDataAreaEvents();
+      } else if (tableName === TAB_GLOBAL) {
+        $('#acu-data-area').html(renderGlobalPanel(tables)).addClass('visible');
+        const h = getTableHeights()[TAB_GLOBAL];
+        $('#acu-data-area').css({ height: h ? h + 'px' : '60vh', maxHeight: '95vh' });
+        bindDataAreaEvents();
+      } else if (tableName === TAB_RECALL) {
+        $('#acu-data-area').html(renderRecallPanel(tables)).addClass('visible');
+        const h = getTableHeights()[TAB_RECALL];
+        $('#acu-data-area').css({ height: h ? h + 'px' : '60vh', maxHeight: '95vh' });
+        bindDataAreaEvents();
+      } else if (tableName === TAB_CONSISTENCY) {
+        $('#acu-data-area').html(renderConsistencyPanel(tables)).addClass('visible');
+        const h = getTableHeights()[TAB_CONSISTENCY];
+        $('#acu-data-area').css({ height: h ? h + 'px' : '60vh', maxHeight: '95vh' });
+        bindDataAreaEvents();
+      } else if (tables[tableName]) {
+        $('#acu-data-area').html(renderTableContent(tables[tableName], tableName)).addClass('visible');
+        const h = getTableHeights()[tableName];
+        $('#acu-data-area').css({ height: h ? h + 'px' : '60vh', maxHeight: '95vh' });
+        bindDataAreaEvents();
+      }
+      $('.acu-nav-btn').removeClass('active');
+      $(`.acu-nav-btn[data-table="${tableName}"]`).addClass('active');
+      saveActiveTabState(tableName);
+      bindDataAreaEvents();
+    };
+
+    $('.acu-nav-btn')
+      .off('click')
+      .on('click', function (e) {
+        e.stopPropagation();
+        if (isEditingOrder) return;
+        const tableName = $(this).data('table');
+        if ($(this).hasClass('active')) {
+          closePanel();
+        } else {
+          switchTab(tableName);
+        }
+      });
+
+    const bindDynamicContentEvents = () => {
+      $('.acu-row-action-btn')
+        .off('click')
+        .on('click', async function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const action = $(this).data('row-action') || 'fill';
+          if (action === 'copy') {
+            const text = decodeURIComponent($(this).attr('data-copy') || '');
+            const ok = await copyTextToClipboard(text);
+            if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制记录' : '复制失败');
+            return;
+          }
+          const prompt = decodeURIComponent($(this).attr('data-prompt') || '');
+          fillChatInput(prompt, { autoSend: false });
         });
-        
-        $('body').off('click.acu_autoclose').on('click.acu_autoclose', function(e) {
-            if (isEditingOrder) return;
-            
-            if (!$('#acu-data-area').hasClass('visible')) return;
+      $('.acu-cell')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          showCellMenu(e, this);
+        });
+      $('.acu-dash-interactive')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          const tableName = $(this).data('tname');
+          const rowIdx = $(this).data('row');
+          const colIdx = $(this).data('col');
+          if (tableName && tables[tableName]) {
+            const table = tables[tableName];
+            const row = table.rows[rowIdx];
+            if (row) showQuickView(row, table.headers, tableName, colIdx);
+          }
+        });
+      const activateArchiveTab = ($tab, focusTab = false) => {
+        const $container = $tab.closest('.acu-dash-card');
+        const targetId = String($tab.data('target') || '');
+        const $tabs = $container.find('.acu-tab-header').first().find('.acu-tab-btn');
+        const $panes = $container.find('.acu-tab-pane');
 
-            const $target = $(e.target);
-            
-            if ($target.closest('.acu-wrapper').length) return;
+        $tabs.removeClass('active').attr({ 'aria-selected': 'false', tabindex: '-1' });
+        $tab.addClass('active').attr({ 'aria-selected': 'true', tabindex: '0' });
+        $panes.removeClass('active').attr('hidden', true);
+        if (targetId) $container.find(`#${targetId}`).addClass('active').removeAttr('hidden');
+        if (focusTab) $tab.trigger('focus');
+      };
+      $('.acu-tab-btn')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          activateArchiveTab($(this));
+        })
+        .off('keydown')
+        .on('keydown', function (e) {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const $tabs = $(this).closest('.acu-tab-header').find('.acu-tab-btn');
+          const currentIndex = $tabs.index(this);
+          const nextIndex =
+            e.key === 'Home'
+              ? 0
+              : e.key === 'End'
+                ? $tabs.length - 1
+                : (currentIndex + (e.key === 'ArrowRight' ? 1 : -1) + $tabs.length) % $tabs.length;
+          activateArchiveTab($tabs.eq(nextIndex), true);
+        });
+      $('.acu-page-btn')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          if ($(this).hasClass('disabled') || $(this).attr('disabled') || $(this).hasClass('active')) return;
+          const p = parseInt($(this).data('page'));
+          if (!p) return;
+          currentPage = p;
+          globalScrollTop = 0;
+          const tableName = $('.acu-nav-btn.active').data('table');
+          if (tableName && tables[tableName]) {
+            $('#acu-data-area').html(renderTableContent(tables[tableName], tableName));
+            bindDataAreaEvents();
+          }
+        });
+    };
 
-            if ($target.closest('.acu-cell-menu').length) return;
-            if ($target.closest('.acu-edit-overlay').length) return;
-            if ($target.closest('.acu-popup-overlay').length) return;
-            if ($target.closest('.acu-quick-view-overlay').length) return;
-            
-            if ($target.closest('#send_textarea, #send_but, #send_form, .bottom_bar_container').length) return;
-            if ($target.is('input, textarea') || $target.prop('isContentEditable')) return;
-
-            closePanel();
+    const bindDataAreaEvents = () => {
+      $('#acu-btn-close')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          closePanel();
         });
 
-        const renderRecallArea = (options = {}) => {
-            const $area = $('#acu-data-area');
-            const scrollTop = options.keepScroll ? ($area.find('.acu-panel-content').scrollTop() || 0) : 0;
-            $area.html(renderRecallPanel(tables)).addClass('visible');
-            bindDataAreaEvents();
-            if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
-            if (options.focusSearch) {
-                const input = $('#acu-recall-search-input')[0];
-                if (input) {
-                    input.focus();
-                    const len = input.value.length;
-                    try { input.setSelectionRange(len, len); } catch (e) {}
-                }
-            }
-        };
+      $('#acu-btn-search-toggle')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          $(this).hide();
+          $('#acu-search-input').show().focus();
+        });
 
-        const renderGlobalArea = (options = {}) => {
-            const $area = $('#acu-data-area');
-            const scrollTop = options.keepScroll ? ($area.find('.acu-panel-content').scrollTop() || 0) : 0;
-            $area.html(renderGlobalPanel(tables)).addClass('visible');
-            bindDataAreaEvents();
-            if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
-            if (options.focusSearch) {
-                const input = $('#acu-global-search-input')[0];
-                if (input) {
-                    input.focus();
-                    const len = input.value.length;
-                    try { input.setSelectionRange(len, len); } catch (e) {}
-                }
-            }
-        };
+      $('#acu-search-input')
+        .off('blur')
+        .on('blur', function () {
+          if (!$(this).val()) {
+            $(this).hide();
+            $('#acu-btn-search-toggle').show();
+          }
+        });
 
-        const renderConsistencyArea = (options = {}) => {
-            const $area = $('#acu-data-area');
-            const scrollTop = options.keepScroll ? ($area.find('.acu-panel-content').scrollTop() || 0) : 0;
-            $area.html(renderConsistencyPanel(tables)).addClass('visible');
-            bindDataAreaEvents();
-            if (scrollTop) $area.find('.acu-panel-content').scrollTop(scrollTop);
-        };
-
-        const switchTab = (tableName) => {
+      let searchDebounceTimer = null;
+      $('.acu-search-input')
+        .off('input')
+        .on('input', function () {
+          const inputValue = $(this).val().toLowerCase();
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(() => {
+            currentSearchTerm = inputValue;
             currentPage = 1;
-            currentSearchTerm = '';
             globalScrollTop = 0;
-            
-            if (tableName === TAB_DASHBOARD) {
-                $('#acu-data-area').html(renderDashboard(tables)).addClass('visible');
-                const h = getTableHeights()[TAB_DASHBOARD];
-                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
-                bindDataAreaEvents();
-            } else if (tableName === TAB_GLOBAL) {
-                $('#acu-data-area').html(renderGlobalPanel(tables)).addClass('visible');
-                const h = getTableHeights()[TAB_GLOBAL];
-                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
-                bindDataAreaEvents();
-            } else if (tableName === TAB_RECALL) {
-                $('#acu-data-area').html(renderRecallPanel(tables)).addClass('visible');
-                const h = getTableHeights()[TAB_RECALL];
-                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
-                bindDataAreaEvents();
-            } else if (tableName === TAB_CONSISTENCY) {
-                $('#acu-data-area').html(renderConsistencyPanel(tables)).addClass('visible');
-                const h = getTableHeights()[TAB_CONSISTENCY];
-                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
-                bindDataAreaEvents();
-            } else if (tables[tableName]) {
-                $('#acu-data-area').html(renderTableContent(tables[tableName], tableName)).addClass('visible');
-                const h = getTableHeights()[tableName];
-                $('#acu-data-area').css({height: h ? h + 'px' : '60vh', maxHeight: '95vh'});
-                bindDataAreaEvents();
+            const tableName = $('.acu-nav-btn.active').data('table');
+            if (tableName && tables[tableName]) {
+              const fullHtml = renderTableContent(tables[tableName], tableName);
+              const $temp = $('<div>').html(fullHtml);
+
+              $('.acu-panel-content').html($temp.find('.acu-panel-content').html());
+              $('.acu-panel-title').html($temp.find('.acu-panel-title').html());
+
+              bindDynamicContentEvents();
+              bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
             }
-            $('.acu-nav-btn').removeClass('active');
-            $(`.acu-nav-btn[data-table="${tableName}"]`).addClass('active');
-            saveActiveTabState(tableName);
-            bindDataAreaEvents();
+          }, 300);
+        });
+
+      let globalSearchDebounceTimer = null;
+      $('#acu-global-search-input')
+        .off('input')
+        .on('input', function (e) {
+          e.stopPropagation();
+          const inputValue = $(this).val();
+          clearTimeout(globalSearchDebounceTimer);
+          globalSearchDebounceTimer = setTimeout(() => {
+            globalSearchTerm = String(inputValue || '');
+            try {
+              localStorage.setItem(STORAGE_KEY_GLOBAL_QUERY, globalSearchTerm);
+            } catch (err) {}
+            renderGlobalArea({ focusSearch: true });
+          }, 250);
+        });
+
+      $('[data-global-action]')
+        .off('click')
+        .on('click', async function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const action = $(this).data('global-action');
+          const id = $(this).attr('data-global-id');
+          const item = id ? lastGlobalItemMap[id] : null;
+          if (action === 'clear-query') {
+            globalSearchTerm = '';
+            try {
+              localStorage.removeItem(STORAGE_KEY_GLOBAL_QUERY);
+            } catch (err) {}
+            renderGlobalArea({ focusSearch: true });
+            return;
+          }
+          if (action === 'open-table') {
+            const tableName = $(this).attr('data-table');
+            if (tableName && tables[tableName]) switchTab(tableName);
+            return;
+          }
+          if (!item) {
+            if (window.toastr) window.toastr.warning('记录已刷新，请重新选择');
+            return;
+          }
+          if (action === 'copy') {
+            const ok = await copyTextToClipboard(item.text);
+            if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制记录' : '复制失败');
+            return;
+          }
+          if (action === 'fill') {
+            fillChatInput(item.text, { autoSend: false });
+          }
+        });
+
+      $('[data-consistency-action]')
+        .off('click')
+        .on('click', async function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const action = $(this).data('consistency-action');
+          if (action === 'export-snapshot') {
+            downloadJsonFile(
+              buildMfrsStateSnapshot(tables),
+              `mfrs_state_snapshot_${new Date().toISOString().slice(0, 10)}.json`,
+            );
+            if (window.toastr) window.toastr.success('已导出当前状态快照');
+            return;
+          }
+          if (action === 'refresh-ui') {
+            renderInterface();
+            if (window.toastr) window.toastr.info('已刷新数据库前端');
+            return;
+          }
+          if (action === 'reload-snapshot') {
+            const current = getTableData();
+            if (current) {
+              saveSnapshot(current);
+              renderConsistencyArea({ keepScroll: true });
+              if (window.toastr) window.toastr.success('已重载前端快照');
+            } else if (window.toastr) {
+              window.toastr.error(lastTableDataError || '当前无可保存快照');
+            }
+            return;
+          }
+          if (action === 'rebuild-index') {
+            lastRecallItemMap = {};
+            lastGlobalItemMap = {};
+            renderConsistencyArea({ keepScroll: true });
+            if (window.toastr) window.toastr.success('已重建前端索引');
+            return;
+          }
+          if (action === 'reload-template') {
+            const bridge = getFrontendBridge();
+            if (!bridge || typeof bridge.importMysteryTemplate !== 'function') {
+              if (window.toastr) window.toastr.warning('当前运行态没有安全模板重载 API');
+              return;
+            }
+            const ok = await MFRSDialog.showConfirm('仅重载神秘复苏 14 表模板，不触发 AI、不调用手动更新。继续？', {
+              title: '重载模板',
+              confirmText: '重载',
+            });
+            if (!ok) return;
+            try {
+              await bridge.importMysteryTemplate();
+              renderInterface();
+            } catch (err) {
+              if (window.toastr) window.toastr.error('模板重载失败：' + (err.message || '未知错误'));
+            }
+          }
+        });
+
+      let recallSearchDebounceTimer = null;
+      $('#acu-recall-search-input')
+        .off('input')
+        .on('input', function (e) {
+          e.stopPropagation();
+          const inputValue = $(this).val();
+          clearTimeout(recallSearchDebounceTimer);
+          recallSearchDebounceTimer = setTimeout(() => {
+            recallSearchTerm = String(inputValue || '');
+            try {
+              localStorage.setItem(STORAGE_KEY_RECALL_QUERY, recallSearchTerm);
+            } catch (err) {}
+            renderRecallArea({ focusSearch: true });
+          }, 250);
+        });
+
+      $('[data-recall-action]')
+        .off('click')
+        .on('click', async function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const action = $(this).data('recall-action');
+          const id = $(this).attr('data-recall-id');
+          const item = id ? lastRecallItemMap[id] : null;
+
+          if (action === 'clear-query') {
+            recallSearchTerm = '';
+            try {
+              localStorage.removeItem(STORAGE_KEY_RECALL_QUERY);
+            } catch (err) {}
+            renderRecallArea({ focusSearch: true });
+            return;
+          }
+
+          if (action === 'clear-pinned') {
+            savePinnedRecallItems([]);
+            if (window.toastr) window.toastr.info('已清空固定召回');
+            renderRecallArea({ keepScroll: true });
+            return;
+          }
+
+          if (action === 'fill-pinned') {
+            const prompt = buildPinnedRecallPrompt(getPinnedRecallItems());
+            if (!prompt) {
+              if (window.toastr) window.toastr.warning('尚未固定召回内容');
+              return;
+            }
+            fillChatInput(prompt, { autoSend: false });
+            return;
+          }
+
+          if (action === 'toggle-auto-plot') {
+            const config = getAutoRecallConfig();
+            saveConfig({ autoPlotRecallEnabled: !config.plotEnabled });
+            if (window.toastr) window.toastr.info(`自动剧情召回已${config.plotEnabled ? '关闭' : '开启'}`);
+            renderRecallArea({ keepScroll: true });
+            return;
+          }
+
+          if (action === 'toggle-auto-memory') {
+            const config = getAutoRecallConfig();
+            saveConfig({ autoMemoryRecallEnabled: !config.memoryEnabled });
+            if (window.toastr) window.toastr.info(`自动记忆召回已${config.memoryEnabled ? '关闭' : '开启'}`);
+            renderRecallArea({ keepScroll: true });
+            return;
+          }
+
+          if (!item) {
+            if (window.toastr) window.toastr.warning('召回内容已刷新，请重新选择');
+            return;
+          }
+
+          if (action === 'copy') {
+            const ok = await copyTextToClipboard(buildRecallItemText(item));
+            if (window.toastr)
+              window.toastr[ok ? 'success' : 'error'](ok ? '已复制召回内容' : '复制失败，请手动选择文本');
+            return;
+          }
+
+          if (action === 'fill') {
+            fillChatInput(buildRecallItemText(item), { autoSend: false });
+            return;
+          }
+
+          if (action === 'pin') {
+            pinRecallItem(item);
+            if (window.toastr) window.toastr.info('已固定到本轮召回');
+            renderRecallArea({ keepScroll: true });
+            return;
+          }
+
+          if (action === 'unpin') {
+            unpinRecallItem(id);
+            if (window.toastr) window.toastr.info('已取消固定');
+            renderRecallArea({ keepScroll: true });
+          }
+        });
+
+      $('.acu-height-drag-handle')
+        .off('pointerdown')
+        .on('pointerdown', function (e) {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const handle = this;
+          handle.setPointerCapture(e.pointerId);
+          $(handle).addClass('active');
+          const $panel = $('#acu-data-area');
+          const startHeight = $panel.height();
+          const startY = e.clientY;
+          const tableName = $(handle).data('table');
+
+          const onMove = function (moveE) {
+            const dy = moveE.clientY - startY;
+            let newHeight = startHeight - dy;
+            if (newHeight < 200) newHeight = 200;
+            if (newHeight > 1500) newHeight = 1500;
+            $panel.css('height', newHeight + 'px');
           };
 
-        $('.acu-nav-btn').off('click').on('click', function(e) {
-            e.stopPropagation(); 
-            if (isEditingOrder) return;
-            const tableName = $(this).data('table');
-            if ($(this).hasClass('active')) { closePanel(); } else { switchTab(tableName); }
-        });
-        
-        const bindDynamicContentEvents = () => {
-            $('.acu-row-action-btn').off('click').on('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const action = $(this).data('row-action') || 'fill';
-                if (action === 'copy') {
-                    const text = decodeURIComponent($(this).attr('data-copy') || '');
-                    const ok = await copyTextToClipboard(text);
-                    if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制记录' : '复制失败');
-                    return;
-                }
-                const prompt = decodeURIComponent($(this).attr('data-prompt') || '');
-                fillChatInput(prompt, { autoSend: false });
-            });
-            $('.acu-cell').off('click').on('click', function(e) { e.stopPropagation(); showCellMenu(e, this); });
-             $('.acu-dash-interactive').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const tableName = $(this).data('tname');
-                const rowIdx = $(this).data('row'); const colIdx = $(this).data('col');
-                if (tableName && tables[tableName]) {
-                     const table = tables[tableName];
-                     const row = table.rows[rowIdx];
-                     if (row) showQuickView(row, table.headers, tableName, colIdx);
-                }
-            });
-            const activateArchiveTab = ($tab, focusTab = false) => {
-                 const $container = $tab.closest('.acu-dash-card');
-                 const targetId = String($tab.data('target') || '');
-                 const $tabs = $container.find('.acu-tab-header').first().find('.acu-tab-btn');
-                 const $panes = $container.find('.acu-tab-pane');
-
-                 $tabs.removeClass('active').attr({ 'aria-selected': 'false', tabindex: '-1' });
-                 $tab.addClass('active').attr({ 'aria-selected': 'true', tabindex: '0' });
-                 $panes.removeClass('active').attr('hidden', true);
-                 if (targetId) $container.find(`#${targetId}`).addClass('active').removeAttr('hidden');
-                 if (focusTab) $tab.trigger('focus');
-            };
-            $('.acu-tab-btn').off('click').on('click', function(e) {
-                 e.stopPropagation();
-                 activateArchiveTab($(this));
-            }).off('keydown').on('keydown', function(e) {
-                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-                 e.preventDefault();
-                 e.stopPropagation();
-                 const $tabs = $(this).closest('.acu-tab-header').find('.acu-tab-btn');
-                 const currentIndex = $tabs.index(this);
-                 const nextIndex = e.key === 'Home' ? 0 : e.key === 'End' ? $tabs.length - 1 : (currentIndex + (e.key === 'ArrowRight' ? 1 : -1) + $tabs.length) % $tabs.length;
-                 activateArchiveTab($tabs.eq(nextIndex), true);
-            });
-            $('.acu-page-btn').off('click').on('click', function(e) {
-                e.stopPropagation();
-                if ($(this).hasClass('disabled') || $(this).attr('disabled') || $(this).hasClass('active')) return;
-                const p = parseInt($(this).data('page'));
-                if (!p) return;
-                currentPage = p;
-                globalScrollTop = 0;
-                const tableName = $('.acu-nav-btn.active').data('table');
-                if (tableName && tables[tableName]) {
-                    $('#acu-data-area').html(renderTableContent(tables[tableName], tableName));
-                    bindDataAreaEvents();
-                }
-            });
-        };
-        
-        const bindDataAreaEvents = () => {
-            $('#acu-btn-close').off('click').on('click', function(e) { e.stopPropagation(); closePanel(); });
-            
-            $('#acu-btn-search-toggle').off('click').on('click', function(e) {
-                e.stopPropagation();
-                $(this).hide();
-                $('#acu-search-input').show().focus();
-            });
-            
-            $('#acu-search-input').off('blur').on('blur', function() {
-                 if (!$(this).val()) {
-                     $(this).hide();
-                     $('#acu-btn-search-toggle').show();
-                 }
-            });
-
-            let searchDebounceTimer = null;
-            $('.acu-search-input').off('input').on('input', function() {
-                const inputValue = $(this).val().toLowerCase();
-                clearTimeout(searchDebounceTimer);
-                searchDebounceTimer = setTimeout(() => {
-                    currentSearchTerm = inputValue;
-                    currentPage = 1;
-                    globalScrollTop = 0;
-                    const tableName = $('.acu-nav-btn.active').data('table');
-                    if (tableName && tables[tableName]) {
-                        const fullHtml = renderTableContent(tables[tableName], tableName);
-                        const $temp = $('<div>').html(fullHtml);
-
-                        $('.acu-panel-content').html($temp.find('.acu-panel-content').html());
-                        $('.acu-panel-title').html($temp.find('.acu-panel-title').html());
-
-                        bindDynamicContentEvents(); bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
-                    }
-                }, 300);
-            });
-
-            let globalSearchDebounceTimer = null;
-            $('#acu-global-search-input').off('input').on('input', function(e) {
-                e.stopPropagation();
-                const inputValue = $(this).val();
-                clearTimeout(globalSearchDebounceTimer);
-                globalSearchDebounceTimer = setTimeout(() => {
-                    globalSearchTerm = String(inputValue || '');
-                    try { localStorage.setItem(STORAGE_KEY_GLOBAL_QUERY, globalSearchTerm); } catch (err) {}
-                    renderGlobalArea({ focusSearch: true });
-                }, 250);
-            });
-
-            $('[data-global-action]').off('click').on('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const action = $(this).data('global-action');
-                const id = $(this).attr('data-global-id');
-                const item = id ? lastGlobalItemMap[id] : null;
-                if (action === 'clear-query') {
-                    globalSearchTerm = '';
-                    try { localStorage.removeItem(STORAGE_KEY_GLOBAL_QUERY); } catch (err) {}
-                    renderGlobalArea({ focusSearch: true });
-                    return;
-                }
-                if (action === 'open-table') {
-                    const tableName = $(this).attr('data-table');
-                    if (tableName && tables[tableName]) switchTab(tableName);
-                    return;
-                }
-                if (!item) {
-                    if (window.toastr) window.toastr.warning('记录已刷新，请重新选择');
-                    return;
-                }
-                if (action === 'copy') {
-                    const ok = await copyTextToClipboard(item.text);
-                    if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制记录' : '复制失败');
-                    return;
-                }
-                if (action === 'fill') {
-                    fillChatInput(item.text, { autoSend: false });
-                }
-            });
-
-            $('[data-consistency-action]').off('click').on('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const action = $(this).data('consistency-action');
-                if (action === 'export-snapshot') {
-                    downloadJsonFile(buildMfrsStateSnapshot(tables), `mfrs_state_snapshot_${new Date().toISOString().slice(0, 10)}.json`);
-                    if (window.toastr) window.toastr.success('已导出当前状态快照');
-                    return;
-                }
-                if (action === 'refresh-ui') {
-                    renderInterface();
-                    if (window.toastr) window.toastr.info('已刷新数据库前端');
-                    return;
-                }
-                if (action === 'reload-snapshot') {
-                    const current = getTableData();
-                    if (current) {
-                        saveSnapshot(current);
-                        renderConsistencyArea({ keepScroll: true });
-                        if (window.toastr) window.toastr.success('已重载前端快照');
-                    } else if (window.toastr) {
-                        window.toastr.error(lastTableDataError || '当前无可保存快照');
-                    }
-                    return;
-                }
-                if (action === 'rebuild-index') {
-                    lastRecallItemMap = {};
-                    lastGlobalItemMap = {};
-                    renderConsistencyArea({ keepScroll: true });
-                    if (window.toastr) window.toastr.success('已重建前端索引');
-                    return;
-                }
-                if (action === 'reload-template') {
-                    const bridge = getFrontendBridge();
-                    if (!bridge || typeof bridge.importMysteryTemplate !== 'function') {
-                        if (window.toastr) window.toastr.warning('当前运行态没有安全模板重载 API');
-                        return;
-                    }
-                    const ok = await MFRSDialog.showConfirm('仅重载神秘复苏 14 表模板，不触发 AI、不调用手动更新。继续？', {
-                        title: '重载模板',
-                        confirmText: '重载',
-                    });
-                    if (!ok) return;
-                    try {
-                        await bridge.importMysteryTemplate();
-                        renderInterface();
-                    } catch (err) {
-                        if (window.toastr) window.toastr.error('模板重载失败：' + (err.message || '未知错误'));
-                    }
-                }
-            });
-
-            let recallSearchDebounceTimer = null;
-            $('#acu-recall-search-input').off('input').on('input', function(e) {
-                e.stopPropagation();
-                const inputValue = $(this).val();
-                clearTimeout(recallSearchDebounceTimer);
-                recallSearchDebounceTimer = setTimeout(() => {
-                    recallSearchTerm = String(inputValue || '');
-                    try { localStorage.setItem(STORAGE_KEY_RECALL_QUERY, recallSearchTerm); } catch (err) {}
-                    renderRecallArea({ focusSearch: true });
-                }, 250);
-            });
-
-            $('[data-recall-action]').off('click').on('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const action = $(this).data('recall-action');
-                const id = $(this).attr('data-recall-id');
-                const item = id ? lastRecallItemMap[id] : null;
-
-                if (action === 'clear-query') {
-                    recallSearchTerm = '';
-                    try { localStorage.removeItem(STORAGE_KEY_RECALL_QUERY); } catch (err) {}
-                    renderRecallArea({ focusSearch: true });
-                    return;
-                }
-
-                if (action === 'clear-pinned') {
-                    savePinnedRecallItems([]);
-                    if (window.toastr) window.toastr.info('已清空固定召回');
-                    renderRecallArea({ keepScroll: true });
-                    return;
-                }
-
-                if (action === 'fill-pinned') {
-                    const prompt = buildPinnedRecallPrompt(getPinnedRecallItems());
-                    if (!prompt) {
-                        if (window.toastr) window.toastr.warning('尚未固定召回内容');
-                        return;
-                    }
-                    fillChatInput(prompt, { autoSend: false });
-                    return;
-                }
-
-                if (action === 'toggle-auto-plot') {
-                    const config = getAutoRecallConfig();
-                    saveConfig({ autoPlotRecallEnabled: !config.plotEnabled });
-                    if (window.toastr) window.toastr.info(`自动剧情召回已${config.plotEnabled ? '关闭' : '开启'}`);
-                    renderRecallArea({ keepScroll: true });
-                    return;
-                }
-
-                if (action === 'toggle-auto-memory') {
-                    const config = getAutoRecallConfig();
-                    saveConfig({ autoMemoryRecallEnabled: !config.memoryEnabled });
-                    if (window.toastr) window.toastr.info(`自动记忆召回已${config.memoryEnabled ? '关闭' : '开启'}`);
-                    renderRecallArea({ keepScroll: true });
-                    return;
-                }
-
-                if (!item) {
-                    if (window.toastr) window.toastr.warning('召回内容已刷新，请重新选择');
-                    return;
-                }
-
-                if (action === 'copy') {
-                    const ok = await copyTextToClipboard(buildRecallItemText(item));
-                    if (window.toastr) window.toastr[ok ? 'success' : 'error'](ok ? '已复制召回内容' : '复制失败，请手动选择文本');
-                    return;
-                }
-
-                if (action === 'fill') {
-                    fillChatInput(buildRecallItemText(item), { autoSend: false });
-                    return;
-                }
-
-                if (action === 'pin') {
-                    pinRecallItem(item);
-                    if (window.toastr) window.toastr.info('已固定到本轮召回');
-                    renderRecallArea({ keepScroll: true });
-                    return;
-                }
-
-                if (action === 'unpin') {
-                    unpinRecallItem(id);
-                    if (window.toastr) window.toastr.info('已取消固定');
-                    renderRecallArea({ keepScroll: true });
-                }
-            });
-
-            $('.acu-height-drag-handle').off('pointerdown').on('pointerdown', function(e) {
-                if (e.button !== 0) return;
-                e.preventDefault(); e.stopPropagation();
-                const handle = this;
-                handle.setPointerCapture(e.pointerId);
-                $(handle).addClass('active');
-                const $panel = $('#acu-data-area');
-                const startHeight = $panel.height();
-                const startY = e.clientY;
-                const tableName = $(handle).data('table');
-                
-                const onMove = function(moveE) {
-                    const dy = moveE.clientY - startY;
-                    let newHeight = startHeight - dy;
-                    if (newHeight < 200) newHeight = 200;
-                    if (newHeight > 1500) newHeight = 1500;
-                    $panel.css('height', newHeight + 'px');
-                };
-
-                const onEnd = function(upE) {
-                    $(handle).removeClass('active');
-                    try { handle.releasePointerCapture(upE.pointerId); } catch(err){}
-                    handle.removeEventListener('pointermove', onMove);
-                    handle.removeEventListener('pointerup', onEnd);
-                    handle.removeEventListener('pointercancel', onEnd);
-                    if (tableName) {
-                         const h = parseInt($panel.css('height'));
-                         const heights = getTableHeights();
-                         heights[tableName] = h;
-                         saveTableHeights(heights);
-                    }
-                };
-
-                handle.addEventListener('pointermove', onMove);
-                handle.addEventListener('pointerup', onEnd);
-                handle.addEventListener('pointercancel', onEnd);
-            });
-            
-            $('.acu-panel-header').off('dblclick').on('dblclick', function(e) {
-                if ($(e.target).closest('button, input, .acu-height-drag-handle, .acu-search-wrapper').length) return;
-                e.preventDefault(); e.stopPropagation();
-                
-                const activeBtn = $('.acu-nav-btn.active');
-                const tableName = activeBtn.data('table');
-                
-                if (tableName) {
-                     const heights = getTableHeights();
-                     delete heights[tableName];
-                     saveTableHeights(heights);
-                     if (window.toastr) window.toastr.info('已重置为默认高度');
-                     
-                     if (tableName === TAB_DASHBOARD) {
-                         $('#acu-data-area').css({height: '60vh', maxHeight: '95vh'});
-                     } else {
-                         $('#acu-data-area').css({height: '60vh', maxHeight: '95vh'});
-                     }
-                }
-            });
-            
-            $('#acu-btn-switch-style').off('click').on('click', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                const tableName = $(this).data('table');
-                const styles = getTableStyles();
-                const current = styles[tableName] || 'list';
-                styles[tableName] = current === 'grid' ? 'list' : 'grid';
-                saveTableStyles(styles);
-                
-                 if (tableName && tables[tableName]) {
-                     const fullHtml = renderTableContent(tables[tableName], tableName);
-                     const $temp = $('<div>').html(fullHtml);
-                     $('.acu-panel-content').html($temp.find('.acu-panel-content').html());
-                     $('.acu-panel-header').replaceWith($temp.find('.acu-panel-header'));
-                     bindDataAreaEvents(); 
-               }
-            });
-
-            $('#acu-btn-refresh, #acu-btn-refresh-emb').off('click').on('click', function(e) {
-                e.stopPropagation();
-                const $btn = $(this);
-                const originalHtml = $btn.html();
-                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
-                setTimeout(() => {
-                    renderInterface();
-                    $btn.html(originalHtml).prop('disabled', false);
-                    if (window.toastr) window.toastr.info('已刷新');
-                }, 100);
-            });
-
-            $('#acu-btn-dash-edit, #acu-btn-dash-edit-emb').off('click').on('click', (e) => { e.stopPropagation(); isDashEditing = !isDashEditing; renderInterface(); });
-            $('.acu-slot-setting-btn').off('click').on('click', function(e) { e.stopPropagation(); showDashSlotSettings($(this).data('slot')); });
-
-              
-              bindDynamicContentEvents(); bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
-        };
-
-        const toggleUI = () => { isCollapsed = !isCollapsed; localStorage.setItem(STORAGE_KEY_UI_COLLAPSE, isCollapsed); renderInterface(); };
-        $('#acu-btn-toggle').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); });
-        $('.acu-collapsed-trigger').off('click').on('click', (e) => { e.stopPropagation(); toggleUI(); });
-
-        $('#acu-btn-gacha').off('click').on('click', (e) => { e.stopPropagation(); showGachaPanel(); });
-        $('#acu-btn-settings').off('click').on('click', (e) => { e.stopPropagation(); if (isEditingOrder) { toggleOrderEditMode(); } else { showSettingsModal(); } });
-        $('#acu-btn-cancel-mode').off('click').on('click', (e) => { e.stopPropagation(); isEditingOrder = false; renderInterface(); });
-        $('#acu-btn-save-mode').off('click').on('click', (e) => { e.stopPropagation(); toggleOrderEditMode(); });
-        $('#acu-btn-save-global').off('click').on('click', async function(e) {
-            e.stopPropagation();
-            const rawData = getTableData();
-            if (!rawData) return;
-            if (pendingDeletes.size > 0 && await commitPendingDeletesWithCrud(rawData)) return;
-            await saveDataToDatabase(rawData, false, true);
-        });
-        $('#acu-btn-open-native').off('click').on('click', function(e) {
-            e.preventDefault(); e.stopPropagation();
-            const $btn = $(this);
-            const originalHtml = $btn.html();
-            const api = getCore().getDB();
-            if (api && api.openVisualizer) {
-                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
-                try {
-                    api.openVisualizer();
-                    setTimeout(() => {
-                        $btn.html(originalHtml).prop('disabled', false);
-                    }, 500);
-                } catch (err) {
-                    $btn.html(originalHtml).prop('disabled', false);
-                    if (window.toastr) window.toastr.error('打开原生编辑器失败：' + err.message);
-                }
-            } else {
-                if (window.toastr) window.toastr.error('无法调用原生编辑器 API，请检查数据库脚本是否正确加载');
+          const onEnd = function (upE) {
+            $(handle).removeClass('active');
+            try {
+              handle.releasePointerCapture(upE.pointerId);
+            } catch (err) {}
+            handle.removeEventListener('pointermove', onMove);
+            handle.removeEventListener('pointerup', onEnd);
+            handle.removeEventListener('pointercancel', onEnd);
+            if (tableName) {
+              const h = parseInt($panel.css('height'));
+              const heights = getTableHeights();
+              heights[tableName] = h;
+              saveTableHeights(heights);
             }
+          };
+
+          handle.addEventListener('pointermove', onMove);
+          handle.addEventListener('pointerup', onEnd);
+          handle.addEventListener('pointercancel', onEnd);
         });
-        $('#acu-btn-manual-update').off('click').on('click', async function(e) {
-            e.preventDefault(); e.stopPropagation();
-            const $btn = $(this);
-            const originalHtml = $btn.html();
-            const api = getCore().getDB();
-            if (api && api.manualUpdate) {
-                $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
-                try {
-                    await api.manualUpdate();
-                    $btn.html(originalHtml).prop('disabled', false);
-                    if (window.toastr) window.toastr.success('数据库更新成功');
-                } catch (err) {
-                    $btn.html(originalHtml).prop('disabled', false);
-                    if (window.toastr) window.toastr.error('数据库更新失败：' + (err.message || '未知错误'));
-                }
+
+      $('.acu-panel-header')
+        .off('dblclick')
+        .on('dblclick', function (e) {
+          if ($(e.target).closest('button, input, .acu-height-drag-handle, .acu-search-wrapper').length) return;
+          e.preventDefault();
+          e.stopPropagation();
+
+          const activeBtn = $('.acu-nav-btn.active');
+          const tableName = activeBtn.data('table');
+
+          if (tableName) {
+            const heights = getTableHeights();
+            delete heights[tableName];
+            saveTableHeights(heights);
+            if (window.toastr) window.toastr.info('已重置为默认高度');
+
+            if (tableName === TAB_DASHBOARD) {
+              $('#acu-data-area').css({ height: '60vh', maxHeight: '95vh' });
             } else {
-                if (window.toastr) window.toastr.error('无法调用数据库更新接口，请检查 API 是否可用');
+              $('#acu-data-area').css({ height: '60vh', maxHeight: '95vh' });
             }
+          }
         });
 
-        $('#send_but').off('click.acu_opt_hide').on('click.acu_opt_hide', function() {
-             hideOptionsUntilUpdate = true;
-             $('.acu-embedded-options-container').hide();
-        });
-        $('#send_textarea').off('keydown.acu_opt_hide').on('keydown.acu_opt_hide', function(e) {
-             if (e.key === 'Enter' && !e.shiftKey) {
-                 hideOptionsUntilUpdate = true;
-                 $('.acu-embedded-options-container').hide();
-             }
-        });
-        
-        $('.acu-opt-btn').on('click', function(e) {
-             e.preventDefault(); e.stopPropagation();
-             $(this).blur();
-             const val = decodeURIComponent($(this).attr('data-val') || $(this).data('val') || '');
-             const config = getConfig();
-             const inserted = fillChatInput(val, { autoSend: config.clickOptionToAutoSend, toast: !config.clickOptionToAutoSend });
-             if(inserted && config.clickOptionToAutoSend) {
-                 hideOptionsUntilUpdate = true;
-                 $('.acu-embedded-options-container').hide();
-             }
+      $('#acu-btn-switch-style')
+        .off('click')
+        .on('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const tableName = $(this).data('table');
+          const styles = getTableStyles();
+          const current = styles[tableName] || 'list';
+          styles[tableName] = current === 'grid' ? 'list' : 'grid';
+          saveTableStyles(styles);
+
+          if (tableName && tables[tableName]) {
+            const fullHtml = renderTableContent(tables[tableName], tableName);
+            const $temp = $('<div>').html(fullHtml);
+            $('.acu-panel-content').html($temp.find('.acu-panel-content').html());
+            $('.acu-panel-header').replaceWith($temp.find('.acu-panel-header'));
+            bindDataAreaEvents();
+          }
         });
 
-        bindDataAreaEvents();
+      $('#acu-btn-refresh, #acu-btn-refresh-emb')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          const $btn = $(this);
+          const originalHtml = $btn.html();
+          $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+          setTimeout(() => {
+            renderInterface();
+            $btn.html(originalHtml).prop('disabled', false);
+            if (window.toastr) window.toastr.info('已刷新');
+          }, 100);
+        });
+
+      $('#acu-btn-dash-edit, #acu-btn-dash-edit-emb')
+        .off('click')
+        .on('click', e => {
+          e.stopPropagation();
+          isDashEditing = !isDashEditing;
+          renderInterface();
+        });
+      $('.acu-slot-setting-btn')
+        .off('click')
+        .on('click', function (e) {
+          e.stopPropagation();
+          showDashSlotSettings($(this).data('slot'));
+        });
+
+      bindDynamicContentEvents();
+      bindScrollFade($('.acu-panel-content, .acu-dash-container, .acu-dash-npc-grid'));
     };
-    
-    const showQuickView = (row, headers, tableName, titleColIdx) => {
-        const { $ } = getCore();
-        const config = getConfig();
-        $('.acu-quick-view-overlay').remove();
-        const codeIdx = headers.findIndex(h => h && (String(h).includes('编码') || String(h).includes('索引')));
-        const savedStyles = getTableStyles();
-        const currentStyle = savedStyles[tableName] || 'list';
 
-        let gridHtml = ''; let fullHtml = '';
-        row.forEach((cell, cIdx) => {
-             if (cIdx > 0) {
-                const headerName = headers[cIdx] || `属性${cIdx}`;
-                const cellStr = String(cell);
-                const displayCell = cellStr.trim();
-                if (displayCell === 'auto_merged') return;
-                const badgeStyle = getBadgeStyle(displayCell);
-                const contentHtml = badgeStyle ? `<span class="acu-badge ${badgeStyle}">${displayCell}</span>` : displayCell;
-                
-                if (currentStyle === 'list' || codeIdx > 0) {
-                     fullHtml += `<div class="acu-cell acu-inline-item" style="cursor:default"><div class="acu-inline-label">${headerName}</div><div class="acu-inline-value">${contentHtml}</div></div>`;
-                } else {
-                     if (cellStr.length > 50) {
-                        fullHtml += `<div class="acu-cell acu-full-item" style="cursor:default"><div class="acu-full-label">${headerName}</div><div class="acu-full-value">${displayCell}</div></div>`;
-                     } else {
-                        gridHtml += `<div class="acu-cell acu-grid-item" style="cursor:default"><div class="acu-grid-label">${headerName}</div><div class="acu-grid-value">${contentHtml}</div></div>`;
-                     }
-                }
-             }
-        });
-        
-        const html = `
+    const toggleUI = () => {
+      isCollapsed = !isCollapsed;
+      localStorage.setItem(STORAGE_KEY_UI_COLLAPSE, isCollapsed);
+      renderInterface();
+    };
+    $('#acu-btn-toggle')
+      .off('click')
+      .on('click', e => {
+        e.stopPropagation();
+        toggleUI();
+      });
+    $('.acu-collapsed-trigger')
+      .off('click')
+      .on('click', e => {
+        e.stopPropagation();
+        toggleUI();
+      });
+
+    $('#acu-btn-gacha')
+      .off('click')
+      .on('click', e => {
+        e.stopPropagation();
+        showGachaPanel();
+      });
+    $('#acu-btn-settings')
+      .off('click')
+      .on('click', e => {
+        e.stopPropagation();
+        if (isEditingOrder) {
+          toggleOrderEditMode();
+        } else {
+          showSettingsModal();
+        }
+      });
+    $('#acu-btn-cancel-mode')
+      .off('click')
+      .on('click', e => {
+        e.stopPropagation();
+        isEditingOrder = false;
+        renderInterface();
+      });
+    $('#acu-btn-save-mode')
+      .off('click')
+      .on('click', e => {
+        e.stopPropagation();
+        toggleOrderEditMode();
+      });
+    $('#acu-btn-save-global')
+      .off('click')
+      .on('click', async function (e) {
+        e.stopPropagation();
+        const rawData = getTableData();
+        if (!rawData) return;
+        if (pendingDeletes.size > 0 && (await commitPendingDeletesWithCrud(rawData))) return;
+        await saveDataToDatabase(rawData, false, true);
+      });
+    $('#acu-btn-open-native')
+      .off('click')
+      .on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+        const api = getCore().getDB();
+        if (api && api.openVisualizer) {
+          $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+          try {
+            api.openVisualizer();
+            setTimeout(() => {
+              $btn.html(originalHtml).prop('disabled', false);
+            }, 500);
+          } catch (err) {
+            $btn.html(originalHtml).prop('disabled', false);
+            if (window.toastr) window.toastr.error('打开原生编辑器失败：' + err.message);
+          }
+        } else {
+          if (window.toastr) window.toastr.error('无法调用原生编辑器 API，请检查数据库脚本是否正确加载');
+        }
+      });
+    $('#acu-btn-manual-update')
+      .off('click')
+      .on('click', async function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+        const api = getCore().getDB();
+        if (api && api.manualUpdate) {
+          $btn.html('<i class="fa-solid fa-spinner fa-spin"></i>').prop('disabled', true);
+          try {
+            await api.manualUpdate();
+            $btn.html(originalHtml).prop('disabled', false);
+            if (window.toastr) window.toastr.success('数据库更新成功');
+          } catch (err) {
+            $btn.html(originalHtml).prop('disabled', false);
+            if (window.toastr) window.toastr.error('数据库更新失败：' + (err.message || '未知错误'));
+          }
+        } else {
+          if (window.toastr) window.toastr.error('无法调用数据库更新接口，请检查 API 是否可用');
+        }
+      });
+
+    $('#send_but')
+      .off('click.acu_opt_hide')
+      .on('click.acu_opt_hide', function () {
+        hideOptionsUntilUpdate = true;
+        $('.acu-embedded-options-container').hide();
+      });
+    $('#send_textarea')
+      .off('keydown.acu_opt_hide')
+      .on('keydown.acu_opt_hide', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          hideOptionsUntilUpdate = true;
+          $('.acu-embedded-options-container').hide();
+        }
+      });
+
+    $('.acu-opt-btn').on('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      $(this).blur();
+      const val = decodeURIComponent($(this).attr('data-val') || $(this).data('val') || '');
+      const config = getConfig();
+      const inserted = fillChatInput(val, {
+        autoSend: config.clickOptionToAutoSend,
+        toast: !config.clickOptionToAutoSend,
+      });
+      if (inserted && config.clickOptionToAutoSend) {
+        hideOptionsUntilUpdate = true;
+        $('.acu-embedded-options-container').hide();
+      }
+    });
+
+    bindDataAreaEvents();
+  };
+
+  const showQuickView = (row, headers, tableName, titleColIdx) => {
+    const { $ } = getCore();
+    const config = getConfig();
+    $('.acu-quick-view-overlay').remove();
+    const codeIdx = headers.findIndex(h => h && (String(h).includes('编码') || String(h).includes('索引')));
+    const savedStyles = getTableStyles();
+    const currentStyle = savedStyles[tableName] || 'list';
+
+    let gridHtml = '';
+    let fullHtml = '';
+    row.forEach((cell, cIdx) => {
+      if (cIdx > 0) {
+        const headerName = headers[cIdx] || `属性${cIdx}`;
+        const cellStr = String(cell);
+        const displayCell = cellStr.trim();
+        if (displayCell === 'auto_merged') return;
+        const badgeStyle = getBadgeStyle(displayCell);
+        const contentHtml = badgeStyle ? `<span class="acu-badge ${badgeStyle}">${displayCell}</span>` : displayCell;
+
+        if (currentStyle === 'list' || codeIdx > 0) {
+          fullHtml += `<div class="acu-cell acu-inline-item" style="cursor:default"><div class="acu-inline-label">${headerName}</div><div class="acu-inline-value">${contentHtml}</div></div>`;
+        } else {
+          if (cellStr.length > 50) {
+            fullHtml += `<div class="acu-cell acu-full-item" style="cursor:default"><div class="acu-full-label">${headerName}</div><div class="acu-full-value">${displayCell}</div></div>`;
+          } else {
+            gridHtml += `<div class="acu-cell acu-grid-item" style="cursor:default"><div class="acu-grid-label">${headerName}</div><div class="acu-grid-value">${contentHtml}</div></div>`;
+          }
+        }
+      }
+    });
+
+    const html = `
             <div class="acu-quick-view-overlay">
-                <div class="acu-quick-view-card acu-theme-${config.theme}" style="--acu-font-size: ${config.fontSize}px; font-size: ${config.fontSize}px;; --acu-text-max-height:${config.limitLongText!==false?'80px':'none'}; --acu-text-overflow:${config.limitLongText!==false?'auto':'visible'}">
+                <div class="acu-quick-view-card acu-theme-${config.theme}" style="--acu-font-size: ${config.fontSize}px; font-size: ${config.fontSize}px;; --acu-text-max-height:${config.limitLongText !== false ? '80px' : 'none'}; --acu-text-overflow:${config.limitLongText !== false ? 'auto' : 'visible'}">
                      <div class="acu-quick-view-header">
-                        <span><i class="fa-solid ${getIconForTableName(tableName)}"></i> ${row[(titleColIdx !== undefined && titleColIdx !== null) ? titleColIdx : 1] || '详情'}</span>
+                        <span><i class="fa-solid ${getIconForTableName(tableName)}"></i> ${row[titleColIdx !== undefined && titleColIdx !== null ? titleColIdx : 1] || '详情'}</span>
                         <button class="acu-header-btn" id="qv-close"><i class="fa-solid fa-times"></i></button>
                      </div>
                      <div class="acu-quick-view-body">
@@ -5479,245 +6364,260 @@
                 </div>
             </div>
         `;
-        $('body').append(html); bindScrollFade($('.acu-quick-view-body'));
-        
-        const close = () => $('.acu-quick-view-overlay').remove();
-        $('#qv-close').click(close);
-        $('.acu-quick-view-overlay').click((e) => {
-             if ($(e.target).hasClass('acu-quick-view-overlay')) close();
+    $('body').append(html);
+    bindScrollFade($('.acu-quick-view-body'));
+
+    const close = () => $('.acu-quick-view-overlay').remove();
+    $('#qv-close').click(close);
+    $('.acu-quick-view-overlay').click(e => {
+      if ($(e.target).hasClass('acu-quick-view-overlay')) close();
+    });
+  };
+
+  const toggleOrderEditMode = () => {
+    if (isEditingOrder) {
+      const { $ } = getCore();
+      const newOrder = [];
+      $('.acu-nav-tabs-area .acu-nav-btn').each(function () {
+        const t = $(this).data('table');
+        if (t && !isVirtualTab(t)) newOrder.push(t);
+      });
+      saveTableOrder(newOrder);
+      const newActionOrder = [];
+      $('.acu-nav-actions-area .acu-action-btn').each(function () {
+        if (this.id) newActionOrder.push(this.id);
+      });
+      saveActionOrder(newActionOrder);
+      isEditingOrder = false;
+    } else {
+      isEditingOrder = true;
+    }
+    renderInterface();
+  };
+
+  const initSortable = () => {
+    const { $ } = getCore();
+    let selectedEl = null;
+
+    const setup = (selector, options = {}) => {
+      let $items = $(selector);
+      if (options.skipVirtualTabs) {
+        $items = $items.filter(function () {
+          const tableName = $(this).data('table');
+          return !isVirtualTab(tableName);
         });
-    };
+      }
 
-    const toggleOrderEditMode = () => {
-        if (isEditingOrder) {
-            const { $ } = getCore();
-            const newOrder = []; 
-            $('.acu-nav-tabs-area .acu-nav-btn').each(function() { const t = $(this).data('table'); if(t && !isVirtualTab(t)) newOrder.push(t); });
-            saveTableOrder(newOrder);
-            const newActionOrder = [];
-            $('.acu-nav-actions-area .acu-action-btn').each(function() { if(this.id) newActionOrder.push(this.id); });
-            saveActionOrder(newActionOrder);
-            isEditingOrder = false;
-        } else {
-            isEditingOrder = true;
+      $items.attr('draggable', false);
+      $items.css('cursor', 'pointer');
+
+      $items.off('dragstart dragend dragover drop touchstart touchmove touchend click.swap');
+
+      $items.on('click.swap', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $this = $(this);
+
+        if (selectedEl === this) {
+          $this.css({ 'border-color': '', 'box-shadow': '', transform: '' });
+          selectedEl = null;
+          return;
         }
-        renderInterface();
+
+        if (!selectedEl) {
+          selectedEl = this;
+          $this.css({
+            'border-color': '#e74c3c',
+            'box-shadow': '0 0 8px rgba(231, 76, 60, 0.4)',
+            transform: 'scale(1.05)',
+          });
+        } else {
+          const $src = $(selectedEl);
+          const $dest = $this;
+
+          if ($src.parent()[0] === $dest.parent()[0]) {
+            const $siblings = $dest.parent().children();
+            const srcIdx = $siblings.index($src);
+            const targetIdx = $siblings.index($dest);
+
+            if (srcIdx < targetIdx) {
+              $dest.after($src);
+            } else {
+              $dest.before($src);
+            }
+          }
+
+          $src.css({ 'border-color': '', 'box-shadow': '', transform: '' });
+          selectedEl = null;
+        }
+      });
     };
 
-    const initSortable = () => {
-        const { $ } = getCore();
-        let selectedEl = null;
+    setup('.acu-nav-tabs-area .acu-nav-btn', { skipVirtualTabs: true });
+    setup('.acu-nav-actions-area .acu-action-btn');
+  };
 
-        const setup = (selector, options = {}) => {
-             let $items = $(selector);
-             if (options.skipVirtualTabs) {
-                $items = $items.filter(function() {
-                    const tableName = $(this).data('table');
-                    return !isVirtualTab(tableName);
-                });
-             }
+  const showCellMenu = (e, cell) => {
+    const { $ } = getCore();
+    $('.acu-cell-menu, .acu-menu-backdrop').remove();
+    const backdrop = $('<div class="acu-menu-backdrop"></div>');
+    $('body').append(backdrop);
+    const rowIdx = parseInt($(cell).data('row'));
+    const colIdx = parseInt($(cell).data('col'));
+    const tableKey = $(cell).data('key');
+    const tableName = $(cell).data('tname');
+    const content = decodeURIComponent($(cell).data('val'));
+    const config = getConfig();
 
-             $items.attr('draggable', false);
-             $items.css('cursor', 'pointer');
+    const deleteKey = `${tableName}-row-${rowIdx}`;
+    const isPending = pendingDeletes.has(deleteKey);
 
-             $items.off('dragstart dragend dragover drop touchstart touchmove touchend click.swap');
-
-             $items.on('click.swap', function(e) { 
-                 e.preventDefault();
-                 e.stopPropagation();
-
-                 const $this = $(this);
-
-                 if (selectedEl === this) {
-                     $this.css({ 'border-color': '', 'box-shadow': '', 'transform': '' }); 
-                     selectedEl = null;
-                     return;
-                 }
-
-                 if (!selectedEl) {
-
-                     selectedEl = this;
-                     $this.css({ 'border-color': '#e74c3c', 'box-shadow': '0 0 8px rgba(231, 76, 60, 0.4)', 'transform': 'scale(1.05)' });
-                 } else {
-
-                     const $src = $(selectedEl);
-                     const $dest = $this;
-
-                     if ($src.parent()[0] === $dest.parent()[0]) {
-                        const $siblings = $dest.parent().children();
-                        const srcIdx = $siblings.index($src);
-                        const targetIdx = $siblings.index($dest);
-
-                        if (srcIdx < targetIdx) {
-                            $dest.after($src);
-                        } else {
-                            $dest.before($src);
-                        }
-                     }
-
-                     $src.css({ 'border-color': '', 'box-shadow': '', 'transform': '' });
-                     selectedEl = null;
-                 }
-             });
-        };
-
-        setup('.acu-nav-tabs-area .acu-nav-btn', { skipVirtualTabs: true });
-        setup('.acu-nav-actions-area .acu-action-btn');
-    };
-
-    const showCellMenu = (e, cell) => {
-        const { $ } = getCore();
-        $('.acu-cell-menu, .acu-menu-backdrop').remove();
-        const backdrop = $('<div class="acu-menu-backdrop"></div>');
-        $('body').append(backdrop);
-        const rowIdx = parseInt($(cell).data('row'));
-        const colIdx = parseInt($(cell).data('col'));
-        const tableKey = $(cell).data('key');
-        const tableName = $(cell).data('tname');
-        const content = decodeURIComponent($(cell).data('val'));
-        const config = getConfig();
-        
-        const deleteKey = `${tableName}-row-${rowIdx}`;
-        const isPending = pendingDeletes.has(deleteKey);
-
-        const menu = $(`
+    const menu = $(`
             <div class="acu-cell-menu acu-theme-${config.theme}">
                 <div class="acu-cell-menu-item" id="act-edit"><i class="fa-solid fa-pen"></i> 编辑内容</div>
                 <div class="acu-cell-menu-item" id="act-edit-card"><i class="fa-solid fa-edit"></i> 整体编辑</div>
                 <div class="acu-cell-menu-item" id="act-insert" style="color:#2980b9"><i class="fa-solid fa-plus"></i> 插入新行</div>
                 
-                ${isPending 
-                    ? `<div class="acu-cell-menu-item" id="act-restore"><i class="fa-solid fa-undo"></i> 整行恢复</div>` 
+                ${
+                  isPending
+                    ? `<div class="acu-cell-menu-item" id="act-restore"><i class="fa-solid fa-undo"></i> 整行恢复</div>`
                     : `<div class="acu-cell-menu-item" id="act-delete"><i class="fa-solid fa-trash"></i> 删除整行</div>`
                 }
                 <div class="acu-cell-menu-item" id="act-close"><i class="fa-solid fa-times"></i> 关闭菜单</div>
             </div>
         `);
-        $('body').append(menu);
-        const mWidth = menu.outerWidth();
-        const mHeight = menu.outerHeight();
-        const winWidth = $(window).width();
-        const winHeight = $(window).height();
+    $('body').append(menu);
+    const mWidth = menu.outerWidth();
+    const mHeight = menu.outerHeight();
+    const winWidth = $(window).width();
+    const winHeight = $(window).height();
 
-        let left = e.clientX + 5;
-        let top = e.clientY + 5;
+    let left = e.clientX + 5;
+    let top = e.clientY + 5;
 
-        if (left + mWidth > winWidth) {
-            left = e.clientX - mWidth - 5;
-        }
+    if (left + mWidth > winWidth) {
+      left = e.clientX - mWidth - 5;
+    }
 
-        if (top + mHeight > winHeight) {
-            top = e.clientY - mHeight - 5;
-        }
-        
-        if (left < 0) left = 0;
-        if (top < 0) top = 0;
+    if (top + mHeight > winHeight) {
+      top = e.clientY - mHeight - 5;
+    }
 
-        menu.css({ top: top + 'px', left: left + 'px' });
-        const closeAll = () => { menu.remove(); backdrop.remove(); };
-        backdrop.on('click', function(e) { e.stopPropagation(); closeAll(); });
-        menu.find('#act-close').click(closeAll);
-        
-        
-        
-        menu.find('#act-delete').click(() => {
-            pendingDeletes.add(deleteKey);
-            const $card = $(cell).closest('.acu-data-card');
-            if ($card.length && $card.find('.acu-badge-pending').length === 0) {
-                $card.append('<div class="acu-badge-pending">待删除</div>');
-            }
-            updateSaveBtnState();
-            closeAll();
-        });
-        
-        menu.find('#act-restore').click(() => {
-            pendingDeletes.delete(deleteKey);
-            const $card = $(cell).closest('.acu-data-card');
-            $card.find('.acu-badge-pending').remove();
-            updateSaveBtnState();
-            closeAll();
-        });
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
 
-        menu.find('#act-edit').click(() => { 
-            closeAll();
-            showEditDialog(content, async (newVal) => { 
-                const $cell = $(cell);
-                $cell.attr('data-val', encodeURIComponent(newVal));
-                $cell.data('val', encodeURIComponent(newVal));
-
-                let $displayTarget = $cell;
-                if ($cell.hasClass('acu-grid-item')) $displayTarget = $cell.find('.acu-grid-value');
-                else if ($cell.hasClass('acu-full-item')) $displayTarget = $cell.find('.acu-full-value');
-                else if ($cell.hasClass('acu-inline-item')) $displayTarget = $cell.find('.acu-inline-value');
-                else if ($cell.hasClass('acu-editable-title')) $displayTarget = $cell;
-
-                const badgeStyle = getBadgeStyle(newVal);
-                if (badgeStyle && !$cell.hasClass('acu-editable-title')) {
-                     $displayTarget.html(`<span class="acu-badge ${badgeStyle}">${newVal}</span>`);
-                } else {
-                     $displayTarget.text(newVal);
-                }
-                $displayTarget.addClass('acu-highlight-changed');
-
-                const rawData = getTableData();
-                if (rawData && rawData[tableKey]?.content[rowIdx + 1]) {
-                    const columnName = rawData[tableKey].content[0]?.[colIdx];
-                    const savedByCrud = await applyCellEditWithCrud(tableName, rowIdx, columnName, newVal);
-                    if (!savedByCrud) {
-                        rawData[tableKey].content[rowIdx + 1][colIdx] = newVal;
-                        await saveDataToDatabase(rawData, true);
-                    }
-                }
-            });
-        });
-        menu.find('#act-insert').click(async () => {
-            closeAll();
-            const rawData = getTableData();
-            if (rawData && rawData[tableKey]?.content) {
-                const sheet = rawData[tableKey];
-                const colCount = sheet.content[0] ? sheet.content[0].length : 2;
-                const newRow = new Array(colCount).fill('');
-                if (colCount > 0) newRow[0] = String(sheet.content.length);
-                sheet.content.splice(rowIdx + 2, 0, newRow);
-                if (window.toastr) window.toastr.info('正在插入新行...');
-                await saveDataToDatabase(rawData, false, true);
-            }
-        });
-
-        menu.find('#act-edit-card').click(() => {
-            closeAll();
-            const rawData = getTableData();
-            if (rawData && rawData[tableKey]) {
-                const headers = rawData[tableKey].content[0];
-                const row = rawData[tableKey].content[rowIdx + 1];
-                if (row) {
-                    showCardEditModal(row, headers, tableName, rowIdx, tableKey);
-                }
-            }
-        });
+    menu.css({ top: top + 'px', left: left + 'px' });
+    const closeAll = () => {
+      menu.remove();
+      backdrop.remove();
     };
+    backdrop.on('click', function (e) {
+      e.stopPropagation();
+      closeAll();
+    });
+    menu.find('#act-close').click(closeAll);
 
-    const showCardEditModal = (row, headers, tableName, rowIndex, tableKey) => {
-        const { $ } = getCore();
-        const config = getConfig();
-        const rawData = getTableData();
-        let displayRow = row;
-        if (rawData && rawData[tableKey] && rawData[tableKey].content[rowIndex + 1]) {
-            displayRow = rawData[tableKey].content[rowIndex + 1];
+    menu.find('#act-delete').click(() => {
+      pendingDeletes.add(deleteKey);
+      const $card = $(cell).closest('.acu-data-card');
+      if ($card.length && $card.find('.acu-badge-pending').length === 0) {
+        $card.append('<div class="acu-badge-pending">待删除</div>');
+      }
+      updateSaveBtnState();
+      closeAll();
+    });
+
+    menu.find('#act-restore').click(() => {
+      pendingDeletes.delete(deleteKey);
+      const $card = $(cell).closest('.acu-data-card');
+      $card.find('.acu-badge-pending').remove();
+      updateSaveBtnState();
+      closeAll();
+    });
+
+    menu.find('#act-edit').click(() => {
+      closeAll();
+      showEditDialog(content, async newVal => {
+        const $cell = $(cell);
+        $cell.attr('data-val', encodeURIComponent(newVal));
+        $cell.data('val', encodeURIComponent(newVal));
+
+        let $displayTarget = $cell;
+        if ($cell.hasClass('acu-grid-item')) $displayTarget = $cell.find('.acu-grid-value');
+        else if ($cell.hasClass('acu-full-item')) $displayTarget = $cell.find('.acu-full-value');
+        else if ($cell.hasClass('acu-inline-item')) $displayTarget = $cell.find('.acu-inline-value');
+        else if ($cell.hasClass('acu-editable-title')) $displayTarget = $cell;
+
+        const badgeStyle = getBadgeStyle(newVal);
+        if (badgeStyle && !$cell.hasClass('acu-editable-title')) {
+          $displayTarget.html(`<span class="acu-badge ${badgeStyle}">${newVal}</span>`);
+        } else {
+          $displayTarget.text(newVal);
         }
+        $displayTarget.addClass('acu-highlight-changed');
 
-        const inputsHtml = displayRow.map((cell, idx) => {
-            if (idx === 0) return '';
-            const headerName = headers[idx] || `Column ${idx}`;
-            const val = cell || '';
-            return `
+        const rawData = getTableData();
+        if (rawData && rawData[tableKey]?.content[rowIdx + 1]) {
+          const columnName = rawData[tableKey].content[0]?.[colIdx];
+          const savedByCrud = await applyCellEditWithCrud(tableName, rowIdx, columnName, newVal);
+          if (!savedByCrud) {
+            rawData[tableKey].content[rowIdx + 1][colIdx] = newVal;
+            await saveDataToDatabase(rawData, true);
+          }
+        }
+      });
+    });
+    menu.find('#act-insert').click(async () => {
+      closeAll();
+      const rawData = getTableData();
+      if (rawData && rawData[tableKey]?.content) {
+        const sheet = rawData[tableKey];
+        const colCount = sheet.content[0] ? sheet.content[0].length : 2;
+        const newRow = new Array(colCount).fill('');
+        if (colCount > 0) newRow[0] = String(sheet.content.length);
+        sheet.content.splice(rowIdx + 2, 0, newRow);
+        if (window.toastr) window.toastr.info('正在插入新行...');
+        await saveDataToDatabase(rawData, false, true);
+      }
+    });
+
+    menu.find('#act-edit-card').click(() => {
+      closeAll();
+      const rawData = getTableData();
+      if (rawData && rawData[tableKey]) {
+        const headers = rawData[tableKey].content[0];
+        const row = rawData[tableKey].content[rowIdx + 1];
+        if (row) {
+          showCardEditModal(row, headers, tableName, rowIdx, tableKey);
+        }
+      }
+    });
+  };
+
+  const showCardEditModal = (row, headers, tableName, rowIndex, tableKey) => {
+    const { $ } = getCore();
+    const config = getConfig();
+    const rawData = getTableData();
+    let displayRow = row;
+    if (rawData && rawData[tableKey] && rawData[tableKey].content[rowIndex + 1]) {
+      displayRow = rawData[tableKey].content[rowIndex + 1];
+    }
+
+    const inputsHtml = displayRow
+      .map((cell, idx) => {
+        if (idx === 0) return '';
+        const headerName = headers[idx] || `Column ${idx}`;
+        const val = cell || '';
+        return `
                 <div class="acu-card-edit-field">
                     <label class="acu-card-edit-label">${headerName}</label>
                     <textarea class="acu-card-edit-input" data-col="${idx}" spellcheck="false">${val}</textarea>
                 </div>`;
-        }).join('');
+      })
+      .join('');
 
-        const dialog = $(`
+    const dialog = $(`
             <div class="acu-edit-overlay">
                 <div class="acu-edit-dialog acu-theme-${config.theme}">
                     <div class="acu-edit-title">整体编辑 (#${rowIndex + 1})</div>
@@ -5731,54 +6631,60 @@
                 </div>
             </div>
         `);
-        $('body').append(dialog); bindScrollFade(dialog.find('.acu-card-edit-input'));
+    $('body').append(dialog);
+    bindScrollFade(dialog.find('.acu-card-edit-input'));
 
+    dialog
+      .find('textarea')
+      .each(function () {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 2 + 'px';
+      })
+      .on('input', function () {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 2 + 'px';
+      });
+
+    const closeDialog = () => dialog.remove();
+    dialog.find('#dlg-card-cancel').click(closeDialog);
+
+    dialog.find('#dlg-card-save').click(async () => {
+      const currentData = getTableData();
+      if (currentData && currentData[tableKey]) {
+        const currentRow = currentData[tableKey].content[rowIndex + 1];
+        let hasChanges = false;
+        const changes = {};
         dialog.find('textarea').each(function () {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight + 2) + 'px';
-        }).on('input', function () {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight + 2) + 'px';
+          const colIdx = parseInt($(this).data('col'));
+          const newVal = $(this).val();
+          if (String(currentRow[colIdx]) !== String(newVal)) {
+            hasChanges = true;
+            const columnName = currentData[tableKey].content[0]?.[colIdx];
+            if (columnName) changes[columnName] = newVal ?? '';
+          }
         });
+        if (hasChanges) {
+          const savedByCrud = await applyRowEditWithCrud(tableName, rowIndex, changes);
+          if (!savedByCrud) {
+            dialog.find('textarea').each(function () {
+              const colIdx = parseInt($(this).data('col'));
+              currentRow[colIdx] = $(this).val();
+            });
+            await saveDataToDatabase(currentData, false);
+          }
+        }
+      }
+      closeDialog();
+    });
+    dialog.on('click', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) closeDialog();
+    });
+  };
 
-        const closeDialog = () => dialog.remove();
-        dialog.find('#dlg-card-cancel').click(closeDialog);
-
-        dialog.find('#dlg-card-save').click(async () => {
-            const currentData = getTableData(); 
-            if (currentData && currentData[tableKey]) {
-                const currentRow = currentData[tableKey].content[rowIndex + 1];
-                let hasChanges = false;
-                const changes = {};
-                dialog.find('textarea').each(function () {
-                    const colIdx = parseInt($(this).data('col'));
-                    const newVal = $(this).val();
-                    if (String(currentRow[colIdx]) !== String(newVal)) {
-                        hasChanges = true;
-                        const columnName = currentData[tableKey].content[0]?.[colIdx];
-                        if (columnName) changes[columnName] = newVal ?? '';
-                    }
-                });
-                if (hasChanges) {
-                    const savedByCrud = await applyRowEditWithCrud(tableName, rowIndex, changes);
-                    if (!savedByCrud) {
-                        dialog.find('textarea').each(function () {
-                            const colIdx = parseInt($(this).data('col'));
-                            currentRow[colIdx] = $(this).val();
-                        });
-                        await saveDataToDatabase(currentData, false);
-                    }
-                }
-            }
-            closeDialog();
-        });
-        dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDialog(); });
-    };
-
-    const showEditDialog = (content, onSave) => {
-        const { $ } = getCore();
-        const config = getConfig();
-        const dialog = $(`
+  const showEditDialog = (content, onSave) => {
+    const { $ } = getCore();
+    const config = getConfig();
+    const dialog = $(`
             <div class="acu-edit-overlay">
                 <div class="acu-edit-dialog acu-theme-${config.theme}">
                     <div class="acu-edit-title">编辑单元格内容</div>
@@ -5790,42 +6696,52 @@
                 </div>
             </div>
         `);
-        $('body').append(dialog); bindScrollFade(dialog.find('.acu-edit-textarea'));
-        const closeDialog = () => dialog.remove();
-        dialog.find('#dlg-cancel').click(closeDialog);
-        dialog.find('#dlg-save').click(() => { onSave(dialog.find('textarea').val()); closeDialog(); });
-        dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDialog(); });
+    $('body').append(dialog);
+    bindScrollFade(dialog.find('.acu-edit-textarea'));
+    const closeDialog = () => dialog.remove();
+    dialog.find('#dlg-cancel').click(closeDialog);
+    dialog.find('#dlg-save').click(() => {
+      onSave(dialog.find('textarea').val());
+      closeDialog();
+    });
+    dialog.on('click', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) closeDialog();
+    });
+  };
+
+  const showDashSlotSettings = slotId => {
+    const { $ } = getCore();
+    const config = getConfig();
+    const currentDashCfg = getDashConfig() || {};
+
+    const defaults = {
+      slot_1_1: { isEmpty: true },
+      slot_1_2: { isEmpty: true },
+      slot_2_1: { isEmpty: true },
+      slot_2_2: { isEmpty: true },
+      slot_3_1: { isEmpty: true },
+      slot_3_2: { isEmpty: true },
+      slot_4_1: { isEmpty: true },
+      slot_4_2: { isEmpty: true },
+      slot_5_1: { isEmpty: true },
+      slot_5_2: { isEmpty: true },
+      slot_6_1: { isEmpty: true },
+      slot_6_2: { isEmpty: true },
     };
+    const currentSlotCfg = { ...defaults[slotId], ...(currentDashCfg[slotId] || {}) };
 
-    
-    
-    const showDashSlotSettings = (slotId) => {
-        const { $ } = getCore();
-        const config = getConfig();
-        const currentDashCfg = getDashConfig() || {};
+    const rawData = getTableData();
+    const processedTables = rawData ? processJsonData(rawData) : {};
+    const tableNames = Object.keys(processedTables);
 
-        const defaults = {
-            'slot_1_1': {isEmpty:true}, 'slot_1_2': {isEmpty:true}, 
-            'slot_2_1': {isEmpty:true}, 'slot_2_2': {isEmpty:true}, 
-            'slot_3_1': {isEmpty:true}, 'slot_3_2': {isEmpty:true}, 
-            'slot_4_1': {isEmpty:true}, 'slot_4_2': {isEmpty:true}, 
-            'slot_5_1': {isEmpty:true}, 'slot_5_2': {isEmpty:true}, 
-            'slot_6_1': {isEmpty:true}, 'slot_6_2': {isEmpty:true}
-        };
-        const currentSlotCfg = { ...defaults[slotId], ...(currentDashCfg[slotId] || {}) };
+    let activeTableName = currentSlotCfg.text;
+    if (!tableNames.includes(activeTableName)) {
+      const fuzzyMatch = tableNames.find(k => k.includes(activeTableName));
+      if (fuzzyMatch) activeTableName = fuzzyMatch;
+      else activeTableName = '';
+    }
 
-        const rawData = getTableData();
-        const processedTables = rawData ? processJsonData(rawData) : {};
-        const tableNames = Object.keys(processedTables);
-
-        let activeTableName = currentSlotCfg.text;
-        if (!tableNames.includes(activeTableName)) {
-            const fuzzyMatch = tableNames.find(k => k.includes(activeTableName));
-            if (fuzzyMatch) activeTableName = fuzzyMatch;
-            else activeTableName = '';
-        }
-
-        const dialog = $(`
+    const dialog = $(`
             <div class="acu-edit-overlay">
                 <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 400px; height: auto; max-height: 90vh; overflow: hidden;">
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center; padding:15px;">
@@ -5845,7 +6761,7 @@
                         <div>
                             <label style="font-weight:bold; display:block; margin-bottom:5px;">绑定表格</label>
                             <select id="slot-table" class="acu-nice-select" style="width:100%">
-                                <option value="" ${!activeTableName ? "selected" : ""}>-- 请选择 --</option>
+                                <option value="" ${!activeTableName ? 'selected' : ''}>-- 请选择 --</option>
                                 ${tableNames.map(n => `<option value="${n}" ${n === activeTableName ? 'selected' : ''}>${n}</option>`).join('')}
                             </select>
                         </div>
@@ -5896,901 +6812,1299 @@
                 </div>
             </div>
         `);
-        $('body').append(dialog);
+    $('body').append(dialog);
 
-        const refreshOptions = () => {
-            const tableName = dialog.find('#slot-table').val();
-            const rule = dialog.find('#slot-rule').val();
+    const refreshOptions = () => {
+      const tableName = dialog.find('#slot-table').val();
+      const rule = dialog.find('#slot-rule').val();
 
-            if (!tableName) {
-                dialog.find('#slot-kv-card').empty();
-                dialog.find('#slot-kv-cols').empty();
-                dialog.find('#slot-cap-col').empty();
-                dialog.find('#set-kv-area').hide();
-                dialog.find('#set-cap-area').hide();
-                return;
-            }
+      if (!tableName) {
+        dialog.find('#slot-kv-card').empty();
+        dialog.find('#slot-kv-cols').empty();
+        dialog.find('#slot-cap-col').empty();
+        dialog.find('#set-kv-area').hide();
+        dialog.find('#set-cap-area').hide();
+        return;
+      }
 
-            
+      const table = processedTables[tableName];
+      if (!table) return;
 
-            const table = processedTables[tableName];
-            if (!table) return;
+      const $cardSel = dialog.find('#slot-kv-card');
+      const $colsDiv = dialog.find('#slot-kv-cols');
+      $cardSel.empty();
+      $colsDiv.empty();
 
-            const $cardSel = dialog.find('#slot-kv-card');
-            const $colsDiv = dialog.find('#slot-kv-cols');
-            $cardSel.empty();
-            $colsDiv.empty();
+      if (table.rows) {
+        table.rows.forEach(r => {
+          const txt = r[1] || '未命名';
+          const sel = currentSlotCfg.card === txt ? 'selected' : '';
+          $cardSel.append(`<option value="${txt}" ${sel}>${txt}</option>`);
+        });
+      }
 
-            
-            if (table.rows) {
-                table.rows.forEach(r => {
-                    const txt = r[1] || '未命名';
-                    const sel = (currentSlotCfg.card === txt) ? 'selected' : '';
-                    $cardSel.append(`<option value="${txt}" ${sel}>${txt}</option>`);
-                });
-            }
+      if (table.headers) {
+        table.headers.forEach((h, idx) => {
+          if (idx === 0) return;
 
-            if (table.headers) {
-                table.headers.forEach((h, idx) => {
-                    if (idx === 0) return;
-
-                    const finalChecked = (currentSlotCfg.showCols === undefined || (currentSlotCfg.showCols && currentSlotCfg.showCols.includes(idx))) ? 'checked' : '';
-                    $colsDiv.append(`
+          const finalChecked =
+            currentSlotCfg.showCols === undefined || (currentSlotCfg.showCols && currentSlotCfg.showCols.includes(idx))
+              ? 'checked'
+              : '';
+          $colsDiv.append(`
                         <label style="display:flex; align-items:center; gap:8px; font-size:12px;">
                             <input type="checkbox" class="acu-kv-col-check" value="${idx}" ${finalChecked}>
                             <span>${h}</span>
                         </label>
                     `);
-                });
-            }
-
-            const $capColSel = dialog.find('#slot-cap-col');
-            $capColSel.empty();
-            dialog.find('#slot-cap-cols-count').val(currentSlotCfg.capCols || 0);
-            if (table.headers) {
-                table.headers.forEach((h, idx) => {
-                    if (idx === 0) return;
-                    const isSel = (currentSlotCfg.capCol == idx) ? 'selected' : (idx === 1 && currentSlotCfg.capCol === undefined ? 'selected' : '');
-                    $capColSel.append(`<option value="${idx}" ${isSel}>${h}</option>`);
-                });
-            }
-
-            if (rule === 'kv') {
-                dialog.find('#set-kv-area').show();
-                dialog.find('#set-cap-area').hide();
-            } else {
-                dialog.find('#set-kv-area').hide();
-                dialog.find('#set-cap-area').show();
-            }
-        };
-
-        dialog.find('#slot-table').on('change', function() { 
-            refreshOptions();
-            const val = $(this).val();
-            if (val) {
-                let t = val;
-                if (t.endsWith('表')) t = t.slice(0, -1);
-                dialog.find('#slot-title').val(t);
-            }
         });
-        dialog.find('#slot-rule').on('change', refreshOptions);
-        refreshOptions();
+      }
 
-        const close = () => dialog.remove();
-        dialog.find('#dlg-slot-reset').click(async () => {
-            if(await MFRSDialog.showConfirm('确定要重置此卡槽吗？', { title: '重置卡槽', confirmText: '重置', danger: true })) {
-                currentDashCfg[slotId] = { isEmpty: true };
-                saveDashConfig(currentDashCfg);
-                renderInterface();
-                close();
-            }
-        }).hover(function(){$(this).css('background','var(--acu-btn-hover)')}, function(){$(this).css('background','transparent')});
-
-        dialog.find('#dlg-slot-cancel').click(close);
-
-        dialog.find('#dlg-slot-save').click(() => {
-            const newTitle = dialog.find('#slot-title').val();
-            const newText = dialog.find('#slot-table').val();
-            const newRule = dialog.find('#slot-rule').val();
-
-            if (!currentDashCfg[slotId]) currentDashCfg[slotId] = {};
-            currentDashCfg[slotId].isEmpty = false;
-            currentDashCfg[slotId].title = newTitle;
-            currentDashCfg[slotId].text = newText;
-            currentDashCfg[slotId].rule = newRule;
-
-            if (newRule === 'kv') {
-                currentDashCfg[slotId].card = dialog.find('#slot-kv-card').val();
-                const selectedCols = [];
-                dialog.find('.acu-kv-col-check:checked').each(function() {
-                    selectedCols.push(parseInt($(this).val()));
-                });
-                currentDashCfg[slotId].showCols = selectedCols;
-                delete currentDashCfg[slotId].capCol;
-            } else {
-                currentDashCfg[slotId].capCol = parseInt(dialog.find('#slot-cap-col').val());
-                currentDashCfg[slotId].capCols = parseInt(dialog.find('#slot-cap-cols-count').val());
-                 delete currentDashCfg[slotId].card;
-                 delete currentDashCfg[slotId].showCols;
-            }
-
-            saveDashConfig(currentDashCfg);
-
-            renderInterface();
-            close();
+      const $capColSel = dialog.find('#slot-cap-col');
+      $capColSel.empty();
+      dialog.find('#slot-cap-cols-count').val(currentSlotCfg.capCols || 0);
+      if (table.headers) {
+        table.headers.forEach((h, idx) => {
+          if (idx === 0) return;
+          const isSel =
+            currentSlotCfg.capCol == idx
+              ? 'selected'
+              : idx === 1 && currentSlotCfg.capCol === undefined
+                ? 'selected'
+                : '';
+          $capColSel.append(`<option value="${idx}" ${isSel}>${h}</option>`);
         });
-        dialog.on('click', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) close(); });
+      }
+
+      if (rule === 'kv') {
+        dialog.find('#set-kv-area').show();
+        dialog.find('#set-cap-area').hide();
+      } else {
+        dialog.find('#set-kv-area').hide();
+        dialog.find('#set-cap-area').show();
+      }
     };
 
-    const init = () => {
-        if (isInitialized) return;
-        addStyles();
-        applyConfigStyles(getConfig());
-        document.addEventListener('mfrs:open-status', () => {
-            renderInterface();
-            setTimeout(() => {
-                const card = document.getElementById('mfrs-current-status-card');
-                if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            }, 120);
-        });
-        const loop = () => {
-             const { $ } = getCore();
-             if (getCore().getDB()?.exportTableAsJson && $) {
-                  renderInterface();
-                 const host = getHost();
-                 const cleanupInterface = () => {
-                     const { $ } = getCore();
-                     try {
-                         if (observer) {
-                             observer.disconnect();
-                             observer = null;
-                         }
-                     } catch (e) {
-                         console.warn('[ACU] 清理监听器失败', e);
-                     }
-                     try {
-                         const api = getCore().getDB();
-                         if (api && api.unregisterTableUpdateCallback) {
-                             api.unregisterTableUpdateCallback(UpdateController.handleUpdate);
-                         }
-                     } catch (e) {
-                         console.warn('[ACU] 注销表格更新回调失败', e);
-                     }
-                     if ($) {
-                         $('.acu-wrapper, .acu-embedded-dashboard-container, .acu-embedded-options-container, .acu-edit-overlay, .acu-cell-menu, .acu-menu-backdrop, .acu-quick-view-overlay').remove();
-                     } else {
-                         document.querySelectorAll('.acu-wrapper, .acu-embedded-dashboard-container, .acu-embedded-options-container, .acu-edit-overlay, .acu-cell-menu, .acu-menu-backdrop, .acu-quick-view-overlay').forEach(el => el.remove());
-                     }
-                     document.getElementById(`${SCRIPT_ID}-styles`)?.remove();
-                     document.getElementById('acu-dynamic-font')?.remove();
-                 };
-                 host.MysteryAcuVisualizer = {
-                     ...(host.MysteryAcuVisualizer || {}),
-                     renderInterface,
-                     cleanup: cleanupInterface,
-                     getAutoRecallPreview: buildAutoRecallResultFromCurrentData,
-                     buildAutoRecallPrompt: () => buildAutoRecallResultFromCurrentData().prompt,
-                 };
-                 const api = getCore().getDB();
-                 if (api.registerTableUpdateCallback) {
-                     api.registerTableUpdateCallback(UpdateController.handleUpdate);
-                     if (api.registerTableFillStartCallback) { api.registerTableFillStartCallback(() => { const c = api.exportTableAsJson(); if (c) saveSnapshot(c); }); }
-                 }
-                 // 注册被动货币获取监听器
-                 registerCurrencyListeners();
-                 registerAutoRecallInjection();
-                 isInitialized = true;
-             } else setTimeout(loop, 1000);
-        };
-        loop();
-    };
-    // ==================== 抽卡系统 ====================
+    dialog.find('#slot-table').on('change', function () {
+      refreshOptions();
+      const val = $(this).val();
+      if (val) {
+        let t = val;
+        if (t.endsWith('表')) t = t.slice(0, -1);
+        dialog.find('#slot-title').val(t);
+      }
+    });
+    dialog.find('#slot-rule').on('change', refreshOptions);
+    refreshOptions();
 
-    // 稀有度枚举
-    const GACHA_RARITY = {
-        MYTHIC: { level: 6, name: '神话', stars: '★★★★★★', color: '#ff6b6b', probability: 0.005 },
-        LEGENDARY: { level: 5, name: '传说', stars: '★★★★★', color: '#ffd93d', probability: 0.02 },
-        EPIC: { level: 4, name: '史诗', stars: '★★★★', color: '#a855f7', probability: 0.05 },
-        RARE: { level: 3, name: '稀有', stars: '★★★', color: '#6bceff', probability: 0.15 },
-        COMMON: { level: 2, name: '普通', stars: '★★', color: '#95d5b2', probability: 0.30 },
-        BASIC: { level: 1, name: '常见', stars: '★', color: '#d4d4d4', probability: 0.475 }
-    };
-
-    // 物品类型
-    const GACHA_ITEM_TYPE = {
-        SUPERNATURAL: 'supernatural', // 灵异物品
-        CLUE: 'clue',                 // 线索（提升档案进度）
-        KNOWLEDGE: 'knowledge'        // 知识（提升规律进度）
-    };
-
-    // 注意：旧的 SUPERNATURAL_ITEMS / CLUE_ITEMS / KNOWLEDGE_ITEMS 已迁移到 BUILTIN_GACHA_ITEMS
-    // 通过 getAllGachaItemDefinitions() 获取合并后的完整物品列表
-
-    // 抽卡货币系统
-    const GACHA_CURRENCY = {
-        name: '调查点',
-        key: 'investigation_points',
-        icon: '🔍',
-        earn: {
-            message: 1,      // 每条消息
-            clue: 5,         // 发现线索
-            event: 10,       // 完成事件
-            ghost: 15        // 对抗厉鬼
-        },
-        cost: {
-            single: 10,      // 单抽
-            ten: 90          // 十连（9折优惠）
+    const close = () => dialog.remove();
+    dialog
+      .find('#dlg-slot-reset')
+      .click(async () => {
+        if (
+          await MFRSDialog.showConfirm('确定要重置此卡槽吗？', { title: '重置卡槽', confirmText: '重置', danger: true })
+        ) {
+          currentDashCfg[slotId] = { isEmpty: true };
+          saveDashConfig(currentDashCfg);
+          renderInterface();
+          close();
         }
-    };
+      })
+      .hover(
+        function () {
+          $(this).css('background', 'var(--acu-btn-hover)');
+        },
+        function () {
+          $(this).css('background', 'transparent');
+        },
+      );
 
-    // localStorage 键
-    const STORAGE_KEY_GACHA_CURRENCY = 'mfrs_gacha_currency';
-    const STORAGE_KEY_GACHA_PITY = 'mfrs_gacha_pity';
-    const STORAGE_KEY_GACHA_HISTORY = 'mfrs_gacha_history';
+    dialog.find('#dlg-slot-cancel').click(close);
 
-    const getSillyTavernContext = () => {
+    dialog.find('#dlg-slot-save').click(() => {
+      const newTitle = dialog.find('#slot-title').val();
+      const newText = dialog.find('#slot-table').val();
+      const newRule = dialog.find('#slot-rule').val();
+
+      if (!currentDashCfg[slotId]) currentDashCfg[slotId] = {};
+      currentDashCfg[slotId].isEmpty = false;
+      currentDashCfg[slotId].title = newTitle;
+      currentDashCfg[slotId].text = newText;
+      currentDashCfg[slotId].rule = newRule;
+
+      if (newRule === 'kv') {
+        currentDashCfg[slotId].card = dialog.find('#slot-kv-card').val();
+        const selectedCols = [];
+        dialog.find('.acu-kv-col-check:checked').each(function () {
+          selectedCols.push(parseInt($(this).val()));
+        });
+        currentDashCfg[slotId].showCols = selectedCols;
+        delete currentDashCfg[slotId].capCol;
+      } else {
+        currentDashCfg[slotId].capCol = parseInt(dialog.find('#slot-cap-col').val());
+        currentDashCfg[slotId].capCols = parseInt(dialog.find('#slot-cap-cols-count').val());
+        delete currentDashCfg[slotId].card;
+        delete currentDashCfg[slotId].showCols;
+      }
+
+      saveDashConfig(currentDashCfg);
+
+      renderInterface();
+      close();
+    });
+    dialog.on('click', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) close();
+    });
+  };
+
+  const init = () => {
+    if (isInitialized) return;
+    addStyles();
+    applyConfigStyles(getConfig());
+    document.addEventListener('mfrs:open-status', () => {
+      renderInterface();
+      setTimeout(() => {
+        const card = document.getElementById('mfrs-current-status-card');
+        if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 120);
+    });
+    const loop = () => {
+      const { $ } = getCore();
+      if (getCore().getDB()?.exportTableAsJson && $) {
+        renderInterface();
         const host = getHost();
-        for (const candidate of [host.SillyTavern, window.SillyTavern]) {
-            try {
-                const context = candidate?.getContext?.();
-                if (context) return context;
-            } catch (e) {
-                // Ignore unavailable cross-frame context.
+        const cleanupInterface = () => {
+          const { $ } = getCore();
+          try {
+            if (observer) {
+              observer.disconnect();
+              observer = null;
             }
+          } catch (e) {
+            console.warn('[ACU] 清理监听器失败', e);
+          }
+          try {
+            const api = getCore().getDB();
+            if (api && api.unregisterTableUpdateCallback) {
+              api.unregisterTableUpdateCallback(UpdateController.handleUpdate);
+            }
+          } catch (e) {
+            console.warn('[ACU] 注销表格更新回调失败', e);
+          }
+          if ($) {
+            $(
+              '.acu-wrapper, .acu-embedded-dashboard-container, .acu-embedded-options-container, .acu-edit-overlay, .acu-cell-menu, .acu-menu-backdrop, .acu-quick-view-overlay',
+            ).remove();
+          } else {
+            document
+              .querySelectorAll(
+                '.acu-wrapper, .acu-embedded-dashboard-container, .acu-embedded-options-container, .acu-edit-overlay, .acu-cell-menu, .acu-menu-backdrop, .acu-quick-view-overlay',
+              )
+              .forEach(el => el.remove());
+          }
+          document.getElementById(`${SCRIPT_ID}-styles`)?.remove();
+          document.getElementById('acu-dynamic-font')?.remove();
+        };
+        host.MysteryAcuVisualizer = {
+          ...(host.MysteryAcuVisualizer || {}),
+          renderInterface,
+          cleanup: cleanupInterface,
+          getAutoRecallPreview: buildAutoRecallResultFromCurrentData,
+          buildAutoRecallPrompt: () => buildAutoRecallResultFromCurrentData().prompt,
+        };
+        const api = getCore().getDB();
+        if (api.registerTableUpdateCallback) {
+          api.registerTableUpdateCallback(UpdateController.handleUpdate);
+          if (api.registerTableFillStartCallback) {
+            api.registerTableFillStartCallback(() => {
+              const c = api.exportTableAsJson();
+              if (c) saveSnapshot(c);
+            });
+          }
         }
-        return null;
+        // 注册被动货币获取监听器
+        registerCurrencyListeners();
+        registerAutoRecallInjection();
+        isInitialized = true;
+      } else setTimeout(loop, 1000);
+    };
+    loop();
+  };
+  // ==================== 抽卡系统 ====================
+
+  // 稀有度枚举
+  const GACHA_RARITY = {
+    MYTHIC: { level: 6, name: '神话', stars: '★★★★★★', color: '#ff6b6b', probability: 0.005 },
+    LEGENDARY: { level: 5, name: '传说', stars: '★★★★★', color: '#ffd93d', probability: 0.02 },
+    EPIC: { level: 4, name: '史诗', stars: '★★★★', color: '#a855f7', probability: 0.05 },
+    RARE: { level: 3, name: '稀有', stars: '★★★', color: '#6bceff', probability: 0.15 },
+    COMMON: { level: 2, name: '普通', stars: '★★', color: '#95d5b2', probability: 0.3 },
+    BASIC: { level: 1, name: '常见', stars: '★', color: '#d4d4d4', probability: 0.475 },
+  };
+
+  // 物品类型
+  const GACHA_ITEM_TYPE = {
+    SUPERNATURAL: 'supernatural', // 灵异物品
+    CLUE: 'clue', // 线索（提升档案进度）
+    KNOWLEDGE: 'knowledge', // 知识（提升规律进度）
+  };
+
+  // 注意：旧的 SUPERNATURAL_ITEMS / CLUE_ITEMS / KNOWLEDGE_ITEMS 已迁移到 BUILTIN_GACHA_ITEMS
+  // 通过 getAllGachaItemDefinitions() 获取合并后的完整物品列表
+
+  // 抽卡货币系统
+  const GACHA_CURRENCY = {
+    name: '调查点',
+    key: 'investigation_points',
+    icon: '🔍',
+    earn: {
+      message: 1, // 每条消息
+      clue: 5, // 发现线索
+      event: 10, // 完成事件
+      ghost: 15, // 对抗厉鬼
+    },
+    cost: {
+      single: 10, // 单抽
+      ten: 90, // 十连（9折优惠）
+    },
+  };
+
+  // localStorage 键
+  const STORAGE_KEY_GACHA_CURRENCY = 'mfrs_gacha_currency';
+  const STORAGE_KEY_GACHA_PITY = 'mfrs_gacha_pity';
+  const STORAGE_KEY_GACHA_HISTORY = 'mfrs_gacha_history';
+
+  const getSillyTavernContext = () => {
+    const host = getHost();
+    for (const candidate of [host.SillyTavern, window.SillyTavern]) {
+      try {
+        const context = candidate?.getContext?.();
+        if (context) return context;
+      } catch (e) {
+        // Ignore unavailable cross-frame context.
+      }
+    }
+    return null;
+  };
+
+  const hashGachaStorageScope = value => {
+    const text = String(value ?? '');
+    let hash = 5381;
+    for (let i = 0; i < text.length; i++) {
+      hash = ((hash << 5) + hash) ^ text.charCodeAt(i);
+    }
+    return (hash >>> 0).toString(36);
+  };
+
+  const gachaUnsavedChatScopes = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  let gachaUnsavedScopeSeq = 0;
+  let gachaNoChatRefScope = null;
+  const getUnsavedGachaChatScope = (context, characterId, groupId) => {
+    const chatRef = Array.isArray(context?.chat) ? context.chat : null;
+    const makeScope = () => {
+      gachaUnsavedScopeSeq += 1;
+      return `unsaved-${hashGachaStorageScope(
+        [characterId, groupId, Date.now(), gachaUnsavedScopeSeq, Math.random()].join('|'),
+      )}`;
     };
 
-    const hashGachaStorageScope = (value) => {
-        const text = String(value ?? '');
-        let hash = 5381;
-        for (let i = 0; i < text.length; i++) {
-            hash = ((hash << 5) + hash) ^ text.charCodeAt(i);
-        }
-        return (hash >>> 0).toString(36);
-    };
+    // 空的新聊天可能还没有 chatId/chatFile，不能退回到角色级共享调查点。
+    if (chatRef && gachaUnsavedChatScopes) {
+      let scope = gachaUnsavedChatScopes.get(chatRef);
+      if (!scope) {
+        scope = makeScope();
+        gachaUnsavedChatScopes.set(chatRef, scope);
+      }
+      return scope;
+    }
 
-    const gachaUnsavedChatScopes = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
-    let gachaUnsavedScopeSeq = 0;
-    let gachaNoChatRefScope = null;
-    const getUnsavedGachaChatScope = (context, characterId, groupId) => {
-        const chatRef = Array.isArray(context?.chat) ? context.chat : null;
-        const makeScope = () => {
-            gachaUnsavedScopeSeq += 1;
-            return `unsaved-${hashGachaStorageScope([
-                characterId,
-                groupId,
-                Date.now(),
-                gachaUnsavedScopeSeq,
-                Math.random(),
-            ].join('|'))}`;
+    if (!gachaNoChatRefScope) gachaNoChatRefScope = makeScope();
+    return gachaNoChatRefScope;
+  };
+
+  const getActiveGachaChatScope = () => {
+    const context = getSillyTavernContext();
+    if (!context || typeof context !== 'object') return 'global';
+
+    const firstMessage = Array.isArray(context.chat) ? context.chat[0] : null;
+    const characterId = context.characterId ?? context.this_chid ?? context.chid ?? 'unknown_character';
+    const groupId = context.groupId ?? context.group_id ?? '';
+    const chatMetadata = context.chatMetadata ?? context.chat_metadata ?? {};
+    let currentChatId = null;
+    try {
+      currentChatId = typeof context.getCurrentChatId === 'function' ? context.getCurrentChatId() : null;
+      if (currentChatId && typeof currentChatId.then === 'function') currentChatId = null;
+    } catch (e) {
+      currentChatId = null;
+    }
+    const candidates = [
+      currentChatId,
+      context.chatId,
+      context.chat_id,
+      context.chatFile,
+      context.chatfile,
+      context.currentChatId,
+      chatMetadata.chatId,
+      chatMetadata.chat_id,
+      firstMessage?.send_date,
+      firstMessage?.sendDate,
+      firstMessage?.extra?.send_date,
+      firstMessage?.extra?.gen_id,
+      context.chatName,
+      context.chat_name,
+      chatMetadata.file_name,
+      chatMetadata.filename,
+      chatMetadata.name,
+    ];
+    const chatIdentity = candidates.map(value => String(value ?? '').trim()).find(Boolean);
+    if (!chatIdentity) return getUnsavedGachaChatScope(context, characterId, groupId);
+
+    return hashGachaStorageScope([characterId, groupId, chatIdentity].join('|'));
+  };
+
+  const getGachaScopedStorageKey = baseKey => `${baseKey}::${getActiveGachaChatScope()}`;
+
+  // 获取货币余额
+  const getGachaCurrency = () => {
+    try {
+      const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_CURRENCY));
+      return stored ? parseInt(stored, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  // 设置货币余额
+  const setGachaCurrency = amount => {
+    try {
+      localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_CURRENCY), String(amount));
+    } catch (e) {
+      console.error('Failed to save currency:', e);
+    }
+  };
+
+  // 增加货币
+  const addGachaCurrency = amount => {
+    const current = getGachaCurrency();
+    setGachaCurrency(current + amount);
+    return current + amount;
+  };
+
+  // 扣除货币
+  const deductGachaCurrency = amount => {
+    const current = getGachaCurrency();
+    if (current < amount) return false;
+    setGachaCurrency(current - amount);
+    return true;
+  };
+
+  // ==================== 货币被动获取系统 ====================
+
+  const STORAGE_KEY_CURRENCY_LOG = 'mfrs_gacha_currency_log';
+
+  // 被动奖励配置
+  const PASSIVE_REWARD_CONFIG = {
+    // 基础：每条 AI 回复 +1
+    message: { amount: 1, label: '💬 消息奖励' },
+    // 内容检测奖励（从 AI 回复文本中匹配关键词）
+    clue: {
+      amount: 5,
+      label: '🔍 发现线索',
+      patterns: [
+        /发现.*线索/i,
+        /获得.*线索/i,
+        /线索.*记录/i,
+        /找到.*证据/i,
+        /注意到.*痕迹/i,
+        /搜集.*信息/i,
+        /掌握.*情报/i,
+        /发现.*异常/i,
+      ],
+    },
+    event: {
+      amount: 10,
+      label: '📅 完成事件',
+      patterns: [
+        /事件.*完成/i,
+        /任务.*完成/i,
+        /成功.*解决/i,
+        /危机.*化解/i,
+        /顺利.*脱险/i,
+        /逃脱.*成功/i,
+        /存活.*下来/i,
+        /挺过.*了/i,
+      ],
+    },
+    ghost: {
+      amount: 15,
+      label: '👻 对抗厉鬼',
+      patterns: [
+        /厉鬼/i,
+        /鬼影/i,
+        /灵异.*出现/i,
+        /诡异.*现象/i,
+        /恶灵/i,
+        /亡魂/i,
+        /邪祟/i,
+        /鬼.*袭击/i,
+        /灵异.*爆发/i,
+        /超自然.*力量/i,
+      ],
+    },
+    // 冷却时间（ms），同类奖励在冷却内不重复发放
+    cooldown: 30000, // 30秒
+    // 每条消息最多额外奖励类型数
+    maxBonusPerMessage: 2,
+  };
+
+  // 获取奖励日志（用于冷却判断和统计）
+  const getCurrencyLog = () => {
+    try {
+      const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_CURRENCY_LOG));
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  // 保存奖励日志（只保留最近 50 条）
+  const saveCurrencyLog = log => {
+    try {
+      if (log.length > 50) log.splice(50);
+      localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_CURRENCY_LOG), JSON.stringify(log));
+    } catch (e) {
+      console.error('[Gacha Currency] 保存日志失败:', e);
+    }
+  };
+
+  // 检查某类奖励是否在冷却中
+  const isRewardOnCooldown = type => {
+    const log = getCurrencyLog();
+    const now = Date.now();
+    const lastSameType = log.find(entry => entry.type === type);
+    return lastSameType && now - lastSameType.timestamp < PASSIVE_REWARD_CONFIG.cooldown;
+  };
+
+  // 分析消息内容，返回应发放的奖励列表
+  const analyzeMessageRewards = messageText => {
+    if (!messageText || typeof messageText !== 'string') return [];
+
+    const rewards = [];
+
+    // 基础消息奖励（始终发放，不受冷却影响）
+    rewards.push({
+      type: 'message',
+      amount: PASSIVE_REWARD_CONFIG.message.amount,
+      label: PASSIVE_REWARD_CONFIG.message.label,
+    });
+
+    // 内容检测奖励（受冷却限制）
+    let bonusCount = 0;
+    for (const [type, config] of Object.entries(PASSIVE_REWARD_CONFIG)) {
+      if (type === 'message' || type === 'cooldown' || type === 'maxBonusPerMessage') continue;
+      if (!config.patterns) continue;
+      if (bonusCount >= PASSIVE_REWARD_CONFIG.maxBonusPerMessage) break;
+      if (isRewardOnCooldown(type)) continue;
+
+      const matched = config.patterns.some(pattern => pattern.test(messageText));
+      if (matched) {
+        rewards.push({ type, amount: config.amount, label: config.label });
+        bonusCount++;
+      }
+    }
+
+    return rewards;
+  };
+
+  // 发放被动奖励并记录日志
+  const grantPassiveRewards = rewards => {
+    if (!rewards || rewards.length === 0) return 0;
+
+    let totalEarned = 0;
+    const log = getCurrencyLog();
+    const now = Date.now();
+
+    for (const reward of rewards) {
+      addGachaCurrency(reward.amount);
+      totalEarned += reward.amount;
+      log.unshift({ type: reward.type, amount: reward.amount, label: reward.label, timestamp: now });
+    }
+
+    saveCurrencyLog(log);
+    return totalEarned;
+  };
+
+  // 处理 AI 消息并发放奖励（供事件监听器调用）
+  const handleMessageForCurrency = messageText => {
+    const rewards = analyzeMessageRewards(messageText);
+    const totalEarned = grantPassiveRewards(rewards);
+
+    if (totalEarned > 0) {
+      const details = rewards.map(r => `${r.label} +${r.amount}`).join('、');
+      console.info(`[Gacha Currency] 被动奖励: +${totalEarned} 调查点 (${details})`);
+
+      // toast 提示（仅有额外奖励时才弹，避免每条消息都弹）
+      if (rewards.length > 1 && window.toastr) {
+        const bonusDetails = rewards
+          .filter(r => r.type !== 'message')
+          .map(r => `${r.label} +${r.amount}`)
+          .join('、');
+        window.toastr.info(`${bonusDetails}`, '🔍 获得调查点', { timeOut: 3000 });
+      }
+    }
+
+    return totalEarned;
+  };
+
+  // 注册 SillyTavern 事件监听器（被动货币获取）
+  const registerCurrencyListeners = () => {
+    const host = getHost();
+    let eventSource = null;
+    let eventTypes = null;
+
+    // 获取 eventSource（与 hotfix 脚本相同逻辑）
+    try {
+      const context = host.SillyTavern?.getContext?.();
+      if (context?.eventSource) {
+        eventSource = context.eventSource;
+        eventTypes = context.eventTypes;
+      } else if (host.eventSource) {
+        eventSource = host.eventSource;
+      }
+    } catch (e) {
+      console.warn('[Gacha Currency] 获取 eventSource 失败:', e);
+    }
+
+    if (!eventSource || typeof eventSource.on !== 'function') {
+      console.warn('[Gacha Currency] eventSource 不可用，被动货币获取未启用');
+      return false;
+    }
+
+    // ST 的事件常量 eventTypes.MESSAGE_RECEIVED 的值是小写 "message_received"，
+    // 而非大写字面量。emit 用的是常量值，因此 on() 必须用同一键，否则永不触发。
+    const messageReceivedEvent = (eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received';
+
+    // 监听 MESSAGE_RECEIVED — AI 每次回复时触发
+    // SillyTavern 回调签名为 (messageId, type)：
+    //  - 开场白（first_mes）在新建/加载聊天时作为第 0 条消息载入也会触发本事件，
+    //    其正文常含"厉鬼"等关键词，若按 AI 新回复处理会误发"获得调查点 +15"。故跳过 messageId 0。
+    //  - type==='quiet' 是后台静默生成（如抽卡「AI 生成物品」），非玩家推进剧情，跳过。
+    eventSource.on(messageReceivedEvent, (messageId, type) => {
+      try {
+        if (type === 'quiet') return;
+        const context = host.SillyTavern?.getContext?.();
+        if (!context?.chat?.length) return;
+
+        // 开场白永远是第 0 条消息，加载时不应发放奖励
+        const id = Number(messageId);
+        if (!Number.isNaN(id) && id <= 0) return;
+
+        // 用 messageId 精确定位该条消息；无效时回退到最后一条非用户消息
+        const msg =
+          !Number.isNaN(id) && context.chat[id] ? context.chat[id] : [...context.chat].reverse().find(m => !m.is_user);
+        if (!msg || msg.is_user || !msg.mes) return;
+
+        handleMessageForCurrency(msg.mes);
+      } catch (e) {
+        console.error('[Gacha Currency] MESSAGE_RECEIVED 处理异常:', e);
+      }
+    });
+
+    console.info('[Gacha Currency] 被动货币获取监听器已注册');
+    return true;
+  };
+
+  // 获取保底计数
+  const getGachaPity = () => {
+    try {
+      const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_PITY));
+      return stored ? JSON.parse(stored) : { total: 0, rare: 0, epic: 0 };
+    } catch (e) {
+      return { total: 0, rare: 0, epic: 0 };
+    }
+  };
+
+  // 设置保底计数
+  const setGachaPity = pity => {
+    try {
+      localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_PITY), JSON.stringify(pity));
+    } catch (e) {
+      console.error('Failed to save pity:', e);
+    }
+  };
+
+  // 增加保底计数
+  const incrementGachaPity = () => {
+    const pity = getGachaPity();
+    pity.total += 1;
+    pity.rare += 1;
+    pity.epic += 1;
+    setGachaPity(pity);
+    return pity;
+  };
+
+  // 重置保底计数（修复未定义 bug）
+  const resetGachaPity = type => {
+    const pity = getGachaPity();
+    if (type === 'rare') {
+      pity.rare = 0;
+    } else if (type === 'epic') {
+      pity.epic = 0;
+    } else if (type === 'mythic') {
+      pity.total = 0;
+      pity.epic = 0;
+      pity.rare = 0;
+    }
+    setGachaPity(pity);
+    return pity;
+  };
+
+  // ==================== 物品目录双层架构 ====================
+
+  // localStorage 键：自定义物品覆盖层
+  const STORAGE_KEY_CUSTOM_GACHA_ITEMS = 'mfrs_custom_gacha_items';
+
+  // 内置物品目录（只读，source-of-truth）
+  // 以 JS 对象字面量内嵌，因 visualizer 经 CDN script-link 加载无法加载外部 JSON
+  const BUILTIN_GACHA_ITEMS = {
+    rarity: GACHA_RARITY,
+    itemType: GACHA_ITEM_TYPE,
+    items: {
+      supernatural: [
+        // ★★★★★★ 神话（0.5%）
+        {
+          id: 'item_mythic_1',
+          name: '源头碎片',
+          rarity: 'MYTHIC',
+          type: 'supernatural',
+          icon: '🔮',
+          description: '神秘复苏源头的碎片，蕴含改写规则的力量',
+          effect: '可改写厉鬼杀人规律',
+          effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失',
+          usageLimit: 1,
+          duration: '永久',
+          cost: '每次使用消耗持有者寿命十年，改写失败会被厉鬼反噬',
+          narrativeHook: '源头碎片的来源指向更深层的复苏真相，持有它会引来各方势力觊觎',
+        },
+        // ★★★★★ 传说（2%）
+        {
+          id: 'item_legendary_1',
+          name: '鬼域',
+          rarity: 'LEGENDARY',
+          type: 'supernatural',
+          icon: '🌫️',
+          description: '厉鬼的杀人领域，可关押其他厉鬼',
+          effect: '可关押厉鬼',
+          effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人',
+          usageLimit: 'unlimited',
+          duration: '持续',
+          cost: '维持鬼域需持续消耗精神力，关押过多厉鬼可能导致鬼域失控',
+          narrativeHook: '鬼域中关押的厉鬼可能互相交流密谋，或透露出关键信息',
+        },
+        {
+          id: 'item_legendary_2',
+          name: '鬼差制服',
+          rarity: 'LEGENDARY',
+          type: 'supernatural',
+          icon: '🧥',
+          description: '沾染了鬼差灵异的制服，拥有强大防护能力',
+          effect: '可抵御厉鬼袭击',
+          effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击',
+          usageLimit: 'unlimited',
+          duration: '持续',
+          cost: '穿着制服会逐渐被鬼差灵异侵蚀，长期使用可能人格异化',
+          narrativeHook: '真正的鬼差可能会来追索制服，穿着者可能被误认为鬼差',
+        },
+        // ★★★★ 史诗（5%）
+        {
+          id: 'item_epic_1',
+          name: '黄金手掌',
+          rarity: 'EPIC',
+          type: 'supernatural',
+          icon: '✋',
+          description: '沾染了灵异能力的黄金手掌，可击退厉鬼',
+          effect: '可击退厉鬼',
+          effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发',
+          usageLimit: 3,
+          duration: '每次使用持续数分钟',
+          cost: '每次击退厉鬼后手掌温度骤降，连续使用会冻伤持有者',
+          narrativeHook: '黄金手掌原属于某位失踪的驭鬼者，其来历可能牵出一桩旧案',
+        },
+        {
+          id: 'item_epic_2',
+          name: '饿死鬼的香烟',
+          rarity: 'EPIC',
+          type: 'supernatural',
+          icon: '🚬',
+          description: '饿死鬼遗留的香烟，可暂时压制厉鬼',
+          effect: '可暂时压制厉鬼',
+          effectDetail: '点燃后可以暂时压制厉鬼的杀人规律',
+          usageLimit: 7,
+          duration: '每支持续一段时间',
+          cost: '每吸一口会感受到饿死鬼的饥饿感，连续使用可能精神失常',
+          narrativeHook: '香烟的烟雾中偶尔会显现饿死鬼生前的记忆画面',
+        },
+        {
+          id: 'item_epic_3',
+          name: '鬼邮件',
+          rarity: 'EPIC',
+          type: 'supernatural',
+          icon: '✉️',
+          description: '可以传递信息的灵异邮件',
+          effect: '可传递信息',
+          effectDetail: '可以向任何地点的人传递信息，不受距离限制',
+          usageLimit: 5,
+          duration: '即时',
+          cost: '每封邮件都会暴露发送者位置信息给途经的厉鬼',
+          narrativeHook: '鬼邮件偶尔会自行投递给非指定收件人，内容可能泄露关键秘密',
+        },
+        {
+          id: 'item_epic_4',
+          name: '鬼奴隶',
+          rarity: 'EPIC',
+          type: 'supernatural',
+          icon: '👤',
+          description: '被灵异力量控制的鬼奴隶，可执行简单任务',
+          effect: '可使役执行任务',
+          effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等',
+          usageLimit: 'unlimited',
+          duration: '持续',
+          cost: '鬼奴隶有自我意识残留，长期使役可能反噬主人',
+          narrativeHook: '鬼奴隶生前的身份可能与当前调查的案件有关联',
+        },
+        // ★★★ 稀有（15%）
+        {
+          id: 'item_rare_1',
+          name: '红色鬼烛',
+          rarity: 'RARE',
+          type: 'supernatural',
+          icon: '🕯️',
+          description: '红色的鬼烛，可以照亮鬼域',
+          effect: '照亮鬼域，驱散黑暗',
+          effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗',
+          usageLimit: 3,
+          duration: '每支持续数小时',
+          cost: '燃烧时会吸引远处的厉鬼靠近光源，有暴露风险',
+          narrativeHook: '鬼烛的火焰颜色变化可以预示附近厉鬼的强度等级',
+        },
+        {
+          id: 'item_rare_2',
+          name: '鬼钱',
+          rarity: 'RARE',
+          type: 'supernatural',
+          icon: '💴',
+          description: '沾染了灵异的钞票，可用于交易',
+          effect: '购买灵异物品或服务',
+          effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助',
+          usageLimit: 'stack',
+          duration: '永久',
+          cost: '鬼钱交易会在灵异网络中留下痕迹，可被追踪',
+          narrativeHook: '每张鬼钱都记录了前任持有者的信息，可作为追查线索',
+        },
+        {
+          id: 'item_rare_3',
+          name: '卫星定位手机',
+          rarity: 'RARE',
+          type: 'supernatural',
+          icon: '📱',
+          description: '可以定位厉鬼的特殊手机',
+          effect: '定位厉鬼或驭鬼者',
+          effectDetail: '可以定位特定厉鬼或驭鬼者的位置',
+          usageLimit: 10,
+          duration: '每次使用即时',
+          cost: '定位过程中会短暂连接灵异频段，可能被目标厉鬼察觉',
+          narrativeHook: '手机偶尔会收到来自已故驭鬼者的未读消息',
+        },
+        {
+          id: 'item_rare_4',
+          name: '压制类灵异物品',
+          rarity: 'RARE',
+          type: 'supernatural',
+          icon: '⛓️',
+          description: '可以压制特定厉鬼的物品',
+          effect: '压制特定厉鬼',
+          effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力',
+          usageLimit: 5,
+          duration: '每次使用持续一段时间',
+          cost: '压制效果解除时厉鬼会进入暴走状态，比正常更危险',
+          narrativeHook: '压制物品的针对性暗示了制作者曾深入研究过该厉鬼',
+        },
+        // ★★ 普通（30%）
+        {
+          id: 'item_common_1',
+          name: '灵异护符',
+          rarity: 'COMMON',
+          type: 'supernatural',
+          icon: '🎴',
+          description: '具有基础防护能力的护符',
+          effect: '基础防护',
+          effectDetail: '可以抵御低级灵异事件的侵袭',
+          usageLimit: 5,
+          duration: '每次使用持续短暂时间',
+          cost: '护符失效时会碎裂产生灵异波动，可能引来低级灵异',
+          narrativeHook: '护符上的符文出自某个驭鬼者流派，可追溯其传承',
+        },
+        {
+          id: 'item_common_2',
+          name: '追踪定位器',
+          rarity: 'COMMON',
+          type: 'supernatural',
+          icon: '📡',
+          description: '可以追踪灵异信号的定位器',
+          effect: '追踪灵异信号',
+          effectDetail: '可以追踪附近的灵异信号源',
+          usageLimit: 10,
+          duration: '每次持续数小时',
+          cost: '频繁使用会让使用者对灵异信号过敏，产生幻听',
+          narrativeHook: '定位器有时会追踪到异常强烈的信号源，指向未知灵异事件',
+        },
+        {
+          id: 'item_common_3',
+          name: '鬼照片',
+          rarity: 'COMMON',
+          type: 'supernatural',
+          icon: '📷',
+          description: '拍摄了灵异现象的照片',
+          effect: '记录灵异证据',
+          effectDetail: '可以作为灵异事件的证据记录',
+          usageLimit: 'stack',
+          duration: '永久',
+          cost: '保存过多鬼照片会让照片中的灵异逐渐渗出',
+          narrativeHook: '对比不同时间拍摄的照片，可能发现厉鬼行为规律的变化',
+        },
+        {
+          id: 'item_common_4',
+          name: '普通护身符',
+          rarity: 'COMMON',
+          type: 'supernatural',
+          icon: '🧿',
+          description: '普通的护身符，微弱灵异防护',
+          effect: '微弱防护',
+          effectDetail: '提供微弱的灵异防护能力',
+          usageLimit: 10,
+          duration: '每次持续短暂时间',
+          cost: '防护能力有限，面对高级灵异时可能给予虚假安全感',
+          narrativeHook: '护身符的微弱灵异波动可作为同行之间的身份识别信号',
+        },
+        // ★ 常见（47.5%）
+        {
+          id: 'item_basic_1',
+          name: '灵异记录本',
+          rarity: 'BASIC',
+          type: 'supernatural',
+          icon: '📒',
+          description: '记录灵异事件的本子',
+          effect: '记录灵异事件',
+          effectDetail: '可以记录和整理灵异事件信息',
+          usageLimit: 'unlimited',
+          duration: '永久',
+          cost: '记录内容过于详细可能被厉鬼感知并产生敌意',
+          narrativeHook: '记录本中的内容整合后可能拼凑出厉鬼的完整规律',
+        },
+        {
+          id: 'item_basic_2',
+          name: '少量鬼钱',
+          rarity: 'BASIC',
+          type: 'supernatural',
+          icon: '💵',
+          description: '少量的鬼钱',
+          effect: '小额交易',
+          effectDetail: '可以进行小额灵异物品交易',
+          usageLimit: 'stack',
+          duration: '永久',
+          cost: '金额太少可能在驭鬼者黑市引来轻视或欺诈',
+          narrativeHook: '即使少量鬼钱也能在关键时刻作为灵异交易的入场凭证',
+        },
+        {
+          id: 'item_basic_3',
+          name: '灵异感知增强剂',
+          rarity: 'BASIC',
+          type: 'supernatural',
+          icon: '💊',
+          description: '可以暂时增强灵异感知的药剂',
+          effect: '增强灵异感知',
+          effectDetail: '暂时提升对灵异现象的感知能力',
+          usageLimit: 6,
+          duration: '每次持续数小时',
+          cost: '感知增强期间会同时放大恐惧感，意志薄弱者可能崩溃',
+          narrativeHook: '增强感知后可能察觉到平时忽略的细微灵异痕迹',
+        },
+      ],
+      clue: [
+        {
+          id: 'clue_decisive',
+          name: '决定性线索',
+          rarity: 'EPIC',
+          type: 'clue',
+          icon: '🔍',
+          description: '关键的决定性线索，大幅提升档案完成度',
+          effect: '档案进度 +50%',
+          effectDetail: '获得后立即提升指定厉鬼档案完成度50%',
+          progress: 0.5,
+          cost: '获取决定性线索往往意味着已深入厉鬼核心区域',
+          narrativeHook: '决定性线索通常指向厉鬼的致命弱点或诞生真相',
+        },
+        {
+          id: 'clue_core',
+          name: '核心线索',
+          rarity: 'RARE',
+          type: 'clue',
+          icon: '🔎',
+          description: '核心线索，显著提升档案完成度',
+          effect: '档案进度 +25%',
+          effectDetail: '获得后立即提升指定厉鬼档案完成度25%',
+          progress: 0.25,
+          cost: '核心线索的获取可能惊动厉鬼，使其提高警惕',
+          narrativeHook: '核心线索往往关联多个灵异事件，是串联案件的关键节点',
+        },
+        {
+          id: 'clue_important',
+          name: '重要线索',
+          rarity: 'COMMON',
+          type: 'clue',
+          icon: '🔦',
+          description: '重要线索，提升档案完成度',
+          effect: '档案进度 +10%',
+          effectDetail: '获得后立即提升指定厉鬼档案完成度10%',
+          progress: 0.1,
+          cost: '验证线索真伪需要实地调查，存在遭遇危险的可能',
+          narrativeHook: '重要线索可能指向新的调查方向或需要回访的地点',
+        },
+        {
+          id: 'clue_common',
+          name: '普通线索',
+          rarity: 'BASIC',
+          type: 'clue',
+          icon: '🔬',
+          description: '普通线索，少量提升档案完成度',
+          effect: '档案进度 +5%',
+          effectDetail: '获得后立即提升指定厉鬼档案完成度5%',
+          progress: 0.05,
+          cost: '线索可能是表象，需投入时间精力筛选有效信息',
+          narrativeHook: '普通线索积累到一定数量时可能产生质变性的推断',
+        },
+      ],
+      knowledge: [
+        {
+          id: 'knowledge_forbidden',
+          name: '禁忌知识',
+          rarity: 'EPIC',
+          type: 'knowledge',
+          icon: '📕',
+          description: '禁忌的知识，大幅揭示厉鬼规律',
+          effect: '规律进度 +50%',
+          effectDetail: '获得后立即提升指定厉鬼规律完成度50%',
+          progress: 0.5,
+          cost: '知晓禁忌知识后精神污染风险大幅提升，可能产生噩梦',
+          narrativeHook: '禁忌知识往往涉及厉鬼诞生的核心秘密，知道得越多越危险',
+        },
+        {
+          id: 'knowledge_core',
+          name: '核心知识',
+          rarity: 'RARE',
+          type: 'knowledge',
+          icon: '📗',
+          description: '核心知识，显著揭示厉鬼规律',
+          effect: '规律进度 +25%',
+          effectDetail: '获得后立即提升指定厉鬼规律完成度25%',
+          progress: 0.25,
+          cost: '核心知识的传播可能引起厉鬼注意，知情者成为目标',
+          narrativeHook: '核心知识通常来源于前人的惨痛经验，背后有血泪故事',
+        },
+        {
+          id: 'knowledge_deep',
+          name: '深入知识',
+          rarity: 'COMMON',
+          type: 'knowledge',
+          icon: '📘',
+          description: '深入的知识，揭示部分规律',
+          effect: '规律进度 +10%',
+          effectDetail: '获得后立即提升指定厉鬼规律完成度10%',
+          progress: 0.1,
+          cost: '深入研究规律需要长时间接触灵异现象，有被污染风险',
+          narrativeHook: '深入知识可能揭示厉鬼规律中的漏洞或可利用的间隙',
+        },
+        {
+          id: 'knowledge_basic',
+          name: '基础知识',
+          rarity: 'BASIC',
+          type: 'knowledge',
+          icon: '📙',
+          description: '基础知识，少量揭示规律',
+          effect: '规律进度 +5%',
+          effectDetail: '获得后立即提升指定厉鬼规律完成度5%',
+          progress: 0.05,
+          cost: '基础知识可能包含过时或不完整的信息，盲信有风险',
+          narrativeHook: '基础知识是驭鬼者入门的基石，可引导向更深层的研究方向',
+        },
+      ],
+    },
+  };
+
+  // 获取自定义物品覆盖层（localStorage）
+  const getCustomGachaItems = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_GACHA_ITEMS);
+      return stored ? JSON.parse(stored) : { supernatural: [], clue: [], knowledge: [] };
+    } catch (e) {
+      console.error('Failed to load custom gacha items:', e);
+      return { supernatural: [], clue: [], knowledge: [] };
+    }
+  };
+
+  // 设置自定义物品覆盖层
+  const setCustomGachaItems = customItems => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CUSTOM_GACHA_ITEMS, JSON.stringify(customItems));
+    } catch (e) {
+      console.error('Failed to save custom gacha items:', e);
+    }
+  };
+
+  // 合并物品定义：builtin（只读）∪ custom（覆盖/新增）
+  // 返回完整的物品对象数组，每项包含 rarity 对象而非字符串
+  const getAllGachaItemDefinitions = () => {
+    const custom = getCustomGachaItems();
+    const result = { supernatural: [], clue: [], knowledge: [] };
+
+    for (const type of ['supernatural', 'clue', 'knowledge']) {
+      // builtin 只读层
+      const builtinItems = BUILTIN_GACHA_ITEMS.items[type] || [];
+      // custom 覆盖层
+      const customItems = custom[type] || [];
+
+      // 先加入所有 builtin 物品
+      for (const item of builtinItems) {
+        // 将 rarity 字符串转换为完整的 rarity 对象
+        const fullItem = {
+          ...item,
+          rarity: BUILTIN_GACHA_ITEMS.rarity[item.rarity] || GACHA_RARITY[item.rarity],
+          targetTable:
+            type === 'supernatural'
+              ? 'sheet_supernatural_items'
+              : type === 'clue'
+                ? 'sheet_clues'
+                : 'sheet_collected_rules',
         };
 
-        // 空的新聊天可能还没有 chatId/chatFile，不能退回到角色级共享调查点。
-        if (chatRef && gachaUnsavedChatScopes) {
-            let scope = gachaUnsavedChatScopes.get(chatRef);
-            if (!scope) {
-                scope = makeScope();
-                gachaUnsavedChatScopes.set(chatRef, scope);
-            }
-            return scope;
+        // 检查是否有 custom 覆盖
+        const customOverride = customItems.find(c => c.id === item.id);
+        if (customOverride) {
+          // custom 覆盖 builtin 字段（保留未覆盖的 builtin 字段）
+          Object.assign(fullItem, customOverride);
+          // 如果 custom 覆盖了 rarity 字符串，重新转换
+          if (typeof customOverride.rarity === 'string') {
+            fullItem.rarity = BUILTIN_GACHA_ITEMS.rarity[customOverride.rarity] || GACHA_RARITY[customOverride.rarity];
+          }
         }
 
-        if (!gachaNoChatRefScope) gachaNoChatRefScope = makeScope();
-        return gachaNoChatRefScope;
-    };
+        result[type].push(fullItem);
+      }
 
-    const getActiveGachaChatScope = () => {
-        const context = getSillyTavernContext();
-        if (!context || typeof context !== 'object') return 'global';
-
-        const firstMessage = Array.isArray(context.chat) ? context.chat[0] : null;
-        const characterId = context.characterId ?? context.this_chid ?? context.chid ?? 'unknown_character';
-        const groupId = context.groupId ?? context.group_id ?? '';
-        const chatMetadata = context.chatMetadata ?? context.chat_metadata ?? {};
-        let currentChatId = null;
-        try {
-            currentChatId = typeof context.getCurrentChatId === 'function' ? context.getCurrentChatId() : null;
-            if (currentChatId && typeof currentChatId.then === 'function') currentChatId = null;
-        } catch (e) {
-            currentChatId = null;
+      // 新增 custom 物品（不在 builtin 中的）
+      for (const customItem of customItems) {
+        if (!builtinItems.find(b => b.id === customItem.id)) {
+          const fullItem = {
+            ...customItem,
+            rarity:
+              typeof customItem.rarity === 'string'
+                ? BUILTIN_GACHA_ITEMS.rarity[customItem.rarity] || GACHA_RARITY[customItem.rarity]
+                : customItem.rarity,
+            targetTable:
+              type === 'supernatural'
+                ? 'sheet_supernatural_items'
+                : type === 'clue'
+                  ? 'sheet_clues'
+                  : 'sheet_collected_rules',
+          };
+          result[type].push(fullItem);
         }
-        const candidates = [
-            currentChatId,
-            context.chatId,
-            context.chat_id,
-            context.chatFile,
-            context.chatfile,
-            context.currentChatId,
-            chatMetadata.chatId,
-            chatMetadata.chat_id,
-            firstMessage?.send_date,
-            firstMessage?.sendDate,
-            firstMessage?.extra?.send_date,
-            firstMessage?.extra?.gen_id,
-            context.chatName,
-            context.chat_name,
-            chatMetadata.file_name,
-            chatMetadata.filename,
-            chatMetadata.name,
-        ];
-        const chatIdentity = candidates.map(value => String(value ?? '').trim()).find(Boolean);
-        if (!chatIdentity) return getUnsavedGachaChatScope(context, characterId, groupId);
+      }
+    }
 
-        return hashGachaStorageScope([characterId, groupId, chatIdentity].join('|'));
-    };
+    return result;
+  };
 
-    const getGachaScopedStorageKey = (baseKey) => `${baseKey}::${getActiveGachaChatScope()}`;
+  // 添加自定义物品
+  const addCustomGachaItem = (type, itemDef) => {
+    const custom = getCustomGachaItems();
+    if (!custom[type]) custom[type] = [];
+    // 检查是否已存在
+    const existingIdx = custom[type].findIndex(c => c.id === itemDef.id);
+    if (existingIdx >= 0) {
+      custom[type][existingIdx] = itemDef; // 覆盖
+    } else {
+      custom[type].push(itemDef); // 新增
+    }
+    setCustomGachaItems(custom);
+  };
 
-    // 获取货币余额
-    const getGachaCurrency = () => {
-        try {
-            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_CURRENCY));
-            return stored ? parseInt(stored, 10) : 0;
-        } catch (e) {
-            return 0;
-        }
-    };
+  // 删除自定义物品（仅删除 custom 层，不影响 builtin）
+  const removeCustomGachaItem = (type, itemId) => {
+    const custom = getCustomGachaItems();
+    if (custom[type]) {
+      custom[type] = custom[type].filter(c => c.id !== itemId);
+      setCustomGachaItems(custom);
+    }
+  };
 
-    // 设置货币余额
-    const setGachaCurrency = (amount) => {
-        try {
-            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_CURRENCY), String(amount));
-        } catch (e) {
-            console.error('Failed to save currency:', e);
-        }
-    };
+  // ═══════════════════ 碎片系统 ═══════════════════
 
-    // 增加货币
-    const addGachaCurrency = (amount) => {
-        const current = getGachaCurrency();
-        setGachaCurrency(current + amount);
-        return current + amount;
-    };
+  // 碎片（灵异残屑）配置
+  const GACHA_FRAGMENT = {
+    name: '灵异残屑',
+    icon: '💎',
+    // 重复物品 → 获得碎片数量（按稀有度）
+    earn: {
+      MYTHIC: 100,
+      LEGENDARY: 50,
+      EPIC: 20,
+      RARE: 8,
+      COMMON: 3,
+      BASIC: 1,
+    },
+    // 兑换商店价格（碎片 → 物品）
+    cost: {
+      MYTHIC: 500,
+      LEGENDARY: 200,
+      EPIC: 80,
+      RARE: 30,
+      COMMON: 10,
+      BASIC: 5,
+    },
+  };
 
-    // 扣除货币
-    const deductGachaCurrency = (amount) => {
-        const current = getGachaCurrency();
-        if (current < amount) return false;
-        setGachaCurrency(current - amount);
-        return true;
-    };
+  const STORAGE_KEY_GACHA_FRAGMENTS = 'mfrs_gacha_fragments';
+  const STORAGE_KEY_GACHA_OWNED = 'mfrs_gacha_owned_items';
 
-    // ==================== 货币被动获取系统 ====================
+  // 碎片余额
+  const getGachaFragments = () => {
+    try {
+      const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_FRAGMENTS));
+      return stored ? parseInt(stored, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  };
+  const setGachaFragments = amount => {
+    try {
+      localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_FRAGMENTS), String(amount));
+    } catch (e) {
+      console.error('Failed to save fragments:', e);
+    }
+  };
+  const addGachaFragments = amount => {
+    const next = getGachaFragments() + amount;
+    setGachaFragments(next);
+    return next;
+  };
+  const deductGachaFragments = amount => {
+    const current = getGachaFragments();
+    if (current < amount) return false;
+    setGachaFragments(current - amount);
+    return true;
+  };
 
-    const STORAGE_KEY_CURRENCY_LOG = 'mfrs_gacha_currency_log';
+  // 已拥有物品 id 集合（用于判定重复）
+  const getOwnedItems = () => {
+    try {
+      const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_OWNED));
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const setOwnedItems = ids => {
+    try {
+      localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_OWNED), JSON.stringify(ids));
+    } catch (e) {
+      console.error('Failed to save owned items:', e);
+    }
+  };
+  const addOwnedItem = itemId => {
+    const owned = getOwnedItems();
+    if (!owned.includes(itemId)) {
+      owned.push(itemId);
+      setOwnedItems(owned);
+    }
+  };
+  const isItemOwned = itemId => getOwnedItems().includes(itemId);
 
-    // 被动奖励配置
-    const PASSIVE_REWARD_CONFIG = {
-        // 基础：每条 AI 回复 +1
-        message: { amount: 1, label: '💬 消息奖励' },
-        // 内容检测奖励（从 AI 回复文本中匹配关键词）
-        clue: {
-            amount: 5, label: '🔍 发现线索',
-            patterns: [
-                /发现.*线索/i, /获得.*线索/i, /线索.*记录/i, /找到.*证据/i,
-                /注意到.*痕迹/i, /搜集.*信息/i, /掌握.*情报/i, /发现.*异常/i
-            ]
-        },
-        event: {
-            amount: 10, label: '📅 完成事件',
-            patterns: [
-                /事件.*完成/i, /任务.*完成/i, /成功.*解决/i, /危机.*化解/i,
-                /顺利.*脱险/i, /逃脱.*成功/i, /存活.*下来/i, /挺过.*了/i
-            ]
-        },
-        ghost: {
-            amount: 15, label: '👻 对抗厉鬼',
-            patterns: [
-                /厉鬼/i, /鬼影/i, /灵异.*出现/i, /诡异.*现象/i,
-                /恶灵/i, /亡魂/i, /邪祟/i, /鬼.*袭击/i,
-                /灵异.*爆发/i, /超自然.*力量/i
-            ]
-        },
-        // 冷却时间（ms），同类奖励在冷却内不重复发放
-        cooldown: 30000,  // 30秒
-        // 每条消息最多额外奖励类型数
-        maxBonusPerMessage: 2
-    };
+  /**
+   * 处理抽卡结果中的重复物品 → 转化为碎片。
+   * 对 items 数组做原地标记：重复项添加 .isDuplicate=true, .fragmentsEarned=N。
+   * 新物品则标记 .isDuplicate=false 并加入已拥有列表。
+   * @param {Array} items - 抽卡结果数组
+   * @returns {{ totalFragments: number, duplicateCount: number }}
+   */
+  const processFragments = items => {
+    let totalFragments = 0;
+    let duplicateCount = 0;
 
-    // 获取奖励日志（用于冷却判断和统计）
-    const getCurrencyLog = () => {
-        try {
-            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_CURRENCY_LOG));
-            return stored ? JSON.parse(stored) : [];
-        } catch (e) {
-            return [];
-        }
-    };
-
-    // 保存奖励日志（只保留最近 50 条）
-    const saveCurrencyLog = (log) => {
-        try {
-            if (log.length > 50) log.splice(50);
-            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_CURRENCY_LOG), JSON.stringify(log));
-        } catch (e) {
-            console.error('[Gacha Currency] 保存日志失败:', e);
-        }
-    };
-
-    // 检查某类奖励是否在冷却中
-    const isRewardOnCooldown = (type) => {
-        const log = getCurrencyLog();
-        const now = Date.now();
-        const lastSameType = log.find(entry => entry.type === type);
-        return lastSameType && (now - lastSameType.timestamp) < PASSIVE_REWARD_CONFIG.cooldown;
-    };
-
-    // 分析消息内容，返回应发放的奖励列表
-    const analyzeMessageRewards = (messageText) => {
-        if (!messageText || typeof messageText !== 'string') return [];
-
-        const rewards = [];
-
-        // 基础消息奖励（始终发放，不受冷却影响）
-        rewards.push({ type: 'message', amount: PASSIVE_REWARD_CONFIG.message.amount, label: PASSIVE_REWARD_CONFIG.message.label });
-
-        // 内容检测奖励（受冷却限制）
-        let bonusCount = 0;
-        for (const [type, config] of Object.entries(PASSIVE_REWARD_CONFIG)) {
-            if (type === 'message' || type === 'cooldown' || type === 'maxBonusPerMessage') continue;
-            if (!config.patterns) continue;
-            if (bonusCount >= PASSIVE_REWARD_CONFIG.maxBonusPerMessage) break;
-            if (isRewardOnCooldown(type)) continue;
-
-            const matched = config.patterns.some(pattern => pattern.test(messageText));
-            if (matched) {
-                rewards.push({ type, amount: config.amount, label: config.label });
-                bonusCount++;
-            }
-        }
-
-        return rewards;
-    };
-
-    // 发放被动奖励并记录日志
-    const grantPassiveRewards = (rewards) => {
-        if (!rewards || rewards.length === 0) return 0;
-
-        let totalEarned = 0;
-        const log = getCurrencyLog();
-        const now = Date.now();
-
-        for (const reward of rewards) {
-            addGachaCurrency(reward.amount);
-            totalEarned += reward.amount;
-            log.unshift({ type: reward.type, amount: reward.amount, label: reward.label, timestamp: now });
-        }
-
-        saveCurrencyLog(log);
-        return totalEarned;
-    };
-
-    // 处理 AI 消息并发放奖励（供事件监听器调用）
-    const handleMessageForCurrency = (messageText) => {
-        const rewards = analyzeMessageRewards(messageText);
-        const totalEarned = grantPassiveRewards(rewards);
-
-        if (totalEarned > 0) {
-            const details = rewards.map(r => `${r.label} +${r.amount}`).join('、');
-            console.info(`[Gacha Currency] 被动奖励: +${totalEarned} 调查点 (${details})`);
-
-            // toast 提示（仅有额外奖励时才弹，避免每条消息都弹）
-            if (rewards.length > 1 && window.toastr) {
-                const bonusDetails = rewards.filter(r => r.type !== 'message').map(r => `${r.label} +${r.amount}`).join('、');
-                window.toastr.info(`${bonusDetails}`, '🔍 获得调查点', { timeOut: 3000 });
-            }
-        }
-
-        return totalEarned;
-    };
-
-    // 注册 SillyTavern 事件监听器（被动货币获取）
-    const registerCurrencyListeners = () => {
-        const host = getHost();
-        let eventSource = null;
-        let eventTypes = null;
-
-        // 获取 eventSource（与 hotfix 脚本相同逻辑）
-        try {
-            const context = host.SillyTavern?.getContext?.();
-            if (context?.eventSource) {
-                eventSource = context.eventSource;
-                eventTypes = context.eventTypes;
-            } else if (host.eventSource) {
-                eventSource = host.eventSource;
-            }
-        } catch (e) {
-            console.warn('[Gacha Currency] 获取 eventSource 失败:', e);
-        }
-
-        if (!eventSource || typeof eventSource.on !== 'function') {
-            console.warn('[Gacha Currency] eventSource 不可用，被动货币获取未启用');
-            return false;
-        }
-
-        // ST 的事件常量 eventTypes.MESSAGE_RECEIVED 的值是小写 "message_received"，
-        // 而非大写字面量。emit 用的是常量值，因此 on() 必须用同一键，否则永不触发。
-        const messageReceivedEvent =
-            (eventTypes && eventTypes.MESSAGE_RECEIVED) || 'message_received';
-
-        // 监听 MESSAGE_RECEIVED — AI 每次回复时触发
-        // SillyTavern 回调签名为 (messageId, type)：
-        //  - 开场白（first_mes）在新建/加载聊天时作为第 0 条消息载入也会触发本事件，
-        //    其正文常含"厉鬼"等关键词，若按 AI 新回复处理会误发"获得调查点 +15"。故跳过 messageId 0。
-        //  - type==='quiet' 是后台静默生成（如抽卡「AI 生成物品」），非玩家推进剧情，跳过。
-        eventSource.on(messageReceivedEvent, (messageId, type) => {
-            try {
-                if (type === 'quiet') return;
-                const context = host.SillyTavern?.getContext?.();
-                if (!context?.chat?.length) return;
-
-                // 开场白永远是第 0 条消息，加载时不应发放奖励
-                const id = Number(messageId);
-                if (!Number.isNaN(id) && id <= 0) return;
-
-                // 用 messageId 精确定位该条消息；无效时回退到最后一条非用户消息
-                const msg = (!Number.isNaN(id) && context.chat[id])
-                    ? context.chat[id]
-                    : [...context.chat].reverse().find(m => !m.is_user);
-                if (!msg || msg.is_user || !msg.mes) return;
-
-                handleMessageForCurrency(msg.mes);
-            } catch (e) {
-                console.error('[Gacha Currency] MESSAGE_RECEIVED 处理异常:', e);
-            }
-        });
-
-        console.info('[Gacha Currency] 被动货币获取监听器已注册');
-        return true;
-    };
-
-    // 获取保底计数
-    const getGachaPity = () => {
-        try {
-            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_PITY));
-            return stored ? JSON.parse(stored) : { total: 0, rare: 0, epic: 0 };
-        } catch (e) {
-            return { total: 0, rare: 0, epic: 0 };
-        }
-    };
-
-    // 设置保底计数
-    const setGachaPity = (pity) => {
-        try {
-            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_PITY), JSON.stringify(pity));
-        } catch (e) {
-            console.error('Failed to save pity:', e);
-        }
-    };
-
-    // 增加保底计数
-    const incrementGachaPity = () => {
-        const pity = getGachaPity();
-        pity.total += 1;
-        pity.rare += 1;
-        pity.epic += 1;
-        setGachaPity(pity);
-        return pity;
-    };
-
-    // 重置保底计数（修复未定义 bug）
-    const resetGachaPity = (type) => {
-        const pity = getGachaPity();
-        if (type === 'rare') {
-            pity.rare = 0;
-        } else if (type === 'epic') {
-            pity.epic = 0;
-        } else if (type === 'mythic') {
-            pity.total = 0;
-            pity.epic = 0;
-            pity.rare = 0;
-        }
-        setGachaPity(pity);
-        return pity;
-    };
-
-    // ==================== 物品目录双层架构 ====================
-
-    // localStorage 键：自定义物品覆盖层
-    const STORAGE_KEY_CUSTOM_GACHA_ITEMS = 'mfrs_custom_gacha_items';
-
-    // 内置物品目录（只读，source-of-truth）
-    // 以 JS 对象字面量内嵌，因 visualizer 经 CDN script-link 加载无法加载外部 JSON
-    const BUILTIN_GACHA_ITEMS = {
-        rarity: GACHA_RARITY,
-        itemType: GACHA_ITEM_TYPE,
-        items: {
-            supernatural: [
-                // ★★★★★★ 神话（0.5%）
-                { id: 'item_mythic_1', name: '源头碎片', rarity: 'MYTHIC', type: 'supernatural', icon: '🔮', description: '神秘复苏源头的碎片，蕴含改写规则的力量', effect: '可改写厉鬼杀人规律', effectDetail: '能够修改厉鬼的杀人规律，但无法让厉鬼死机或消失', usageLimit: 1, duration: '永久', cost: '每次使用消耗持有者寿命十年，改写失败会被厉鬼反噬', narrativeHook: '源头碎片的来源指向更深层的复苏真相，持有它会引来各方势力觊觎' },
-                // ★★★★★ 传说（2%）
-                { id: 'item_legendary_1', name: '鬼域', rarity: 'LEGENDARY', type: 'supernatural', icon: '🌫️', description: '厉鬼的杀人领域，可关押其他厉鬼', effect: '可关押厉鬼', effectDetail: '在鬼域内可以关押其他厉鬼，阻止其复苏和杀人', usageLimit: 'unlimited', duration: '持续', cost: '维持鬼域需持续消耗精神力，关押过多厉鬼可能导致鬼域失控', narrativeHook: '鬼域中关押的厉鬼可能互相交流密谋，或透露出关键信息' },
-                { id: 'item_legendary_2', name: '鬼差制服', rarity: 'LEGENDARY', type: 'supernatural', icon: '🧥', description: '沾染了鬼差灵异的制服，拥有强大防护能力', effect: '可抵御厉鬼袭击', effectDetail: '穿着制服可以抵御大部分厉鬼的直接袭击', usageLimit: 'unlimited', duration: '持续', cost: '穿着制服会逐渐被鬼差灵异侵蚀，长期使用可能人格异化', narrativeHook: '真正的鬼差可能会来追索制服，穿着者可能被误认为鬼差' },
-                // ★★★★ 史诗（5%）
-                { id: 'item_epic_1', name: '黄金手掌', rarity: 'EPIC', type: 'supernatural', icon: '✋', description: '沾染了灵异能力的黄金手掌，可击退厉鬼', effect: '可击退厉鬼', effectDetail: '使用时可以暂时击退厉鬼，阻止其杀人规律触发', usageLimit: 3, duration: '每次使用持续数分钟', cost: '每次击退厉鬼后手掌温度骤降，连续使用会冻伤持有者', narrativeHook: '黄金手掌原属于某位失踪的驭鬼者，其来历可能牵出一桩旧案' },
-                { id: 'item_epic_2', name: '饿死鬼的香烟', rarity: 'EPIC', type: 'supernatural', icon: '🚬', description: '饿死鬼遗留的香烟，可暂时压制厉鬼', effect: '可暂时压制厉鬼', effectDetail: '点燃后可以暂时压制厉鬼的杀人规律', usageLimit: 7, duration: '每支持续一段时间', cost: '每吸一口会感受到饿死鬼的饥饿感，连续使用可能精神失常', narrativeHook: '香烟的烟雾中偶尔会显现饿死鬼生前的记忆画面' },
-                { id: 'item_epic_3', name: '鬼邮件', rarity: 'EPIC', type: 'supernatural', icon: '✉️', description: '可以传递信息的灵异邮件', effect: '可传递信息', effectDetail: '可以向任何地点的人传递信息，不受距离限制', usageLimit: 5, duration: '即时', cost: '每封邮件都会暴露发送者位置信息给途经的厉鬼', narrativeHook: '鬼邮件偶尔会自行投递给非指定收件人，内容可能泄露关键秘密' },
-                { id: 'item_epic_4', name: '鬼奴隶', rarity: 'EPIC', type: 'supernatural', icon: '👤', description: '被灵异力量控制的鬼奴隶，可执行简单任务', effect: '可使役执行任务', effectDetail: '可以命令鬼奴隶执行简单任务，如侦查、传信等', usageLimit: 'unlimited', duration: '持续', cost: '鬼奴隶有自我意识残留，长期使役可能反噬主人', narrativeHook: '鬼奴隶生前的身份可能与当前调查的案件有关联' },
-                // ★★★ 稀有（15%）
-                { id: 'item_rare_1', name: '红色鬼烛', rarity: 'RARE', type: 'supernatural', icon: '🕯️', description: '红色的鬼烛，可以照亮鬼域', effect: '照亮鬼域，驱散黑暗', effectDetail: '点燃后可以照亮鬼域范围，驱散厉鬼制造的黑暗', usageLimit: 3, duration: '每支持续数小时', cost: '燃烧时会吸引远处的厉鬼靠近光源，有暴露风险', narrativeHook: '鬼烛的火焰颜色变化可以预示附近厉鬼的强度等级' },
-                { id: 'item_rare_2', name: '鬼钱', rarity: 'RARE', type: 'supernatural', icon: '💴', description: '沾染了灵异的钞票，可用于交易', effect: '购买灵异物品或服务', effectDetail: '可以在驭鬼者圈子中购买灵异物品或雇佣帮助', usageLimit: 'stack', duration: '永久', cost: '鬼钱交易会在灵异网络中留下痕迹，可被追踪', narrativeHook: '每张鬼钱都记录了前任持有者的信息，可作为追查线索' },
-                { id: 'item_rare_3', name: '卫星定位手机', rarity: 'RARE', type: 'supernatural', icon: '📱', description: '可以定位厉鬼的特殊手机', effect: '定位厉鬼或驭鬼者', effectDetail: '可以定位特定厉鬼或驭鬼者的位置', usageLimit: 10, duration: '每次使用即时', cost: '定位过程中会短暂连接灵异频段，可能被目标厉鬼察觉', narrativeHook: '手机偶尔会收到来自已故驭鬼者的未读消息' },
-                { id: 'item_rare_4', name: '压制类灵异物品', rarity: 'RARE', type: 'supernatural', icon: '⛓️', description: '可以压制特定厉鬼的物品', effect: '压制特定厉鬼', effectDetail: '针对特定厉鬼的压制物品，可以暂时限制其能力', usageLimit: 5, duration: '每次使用持续一段时间', cost: '压制效果解除时厉鬼会进入暴走状态，比正常更危险', narrativeHook: '压制物品的针对性暗示了制作者曾深入研究过该厉鬼' },
-                // ★★ 普通（30%）
-                { id: 'item_common_1', name: '灵异护符', rarity: 'COMMON', type: 'supernatural', icon: '🎴', description: '具有基础防护能力的护符', effect: '基础防护', effectDetail: '可以抵御低级灵异事件的侵袭', usageLimit: 5, duration: '每次使用持续短暂时间', cost: '护符失效时会碎裂产生灵异波动，可能引来低级灵异', narrativeHook: '护符上的符文出自某个驭鬼者流派，可追溯其传承' },
-                { id: 'item_common_2', name: '追踪定位器', rarity: 'COMMON', type: 'supernatural', icon: '📡', description: '可以追踪灵异信号的定位器', effect: '追踪灵异信号', effectDetail: '可以追踪附近的灵异信号源', usageLimit: 10, duration: '每次持续数小时', cost: '频繁使用会让使用者对灵异信号过敏，产生幻听', narrativeHook: '定位器有时会追踪到异常强烈的信号源，指向未知灵异事件' },
-                { id: 'item_common_3', name: '鬼照片', rarity: 'COMMON', type: 'supernatural', icon: '📷', description: '拍摄了灵异现象的照片', effect: '记录灵异证据', effectDetail: '可以作为灵异事件的证据记录', usageLimit: 'stack', duration: '永久', cost: '保存过多鬼照片会让照片中的灵异逐渐渗出', narrativeHook: '对比不同时间拍摄的照片，可能发现厉鬼行为规律的变化' },
-                { id: 'item_common_4', name: '普通护身符', rarity: 'COMMON', type: 'supernatural', icon: '🧿', description: '普通的护身符，微弱灵异防护', effect: '微弱防护', effectDetail: '提供微弱的灵异防护能力', usageLimit: 10, duration: '每次持续短暂时间', cost: '防护能力有限，面对高级灵异时可能给予虚假安全感', narrativeHook: '护身符的微弱灵异波动可作为同行之间的身份识别信号' },
-                // ★ 常见（47.5%）
-                { id: 'item_basic_1', name: '灵异记录本', rarity: 'BASIC', type: 'supernatural', icon: '📒', description: '记录灵异事件的本子', effect: '记录灵异事件', effectDetail: '可以记录和整理灵异事件信息', usageLimit: 'unlimited', duration: '永久', cost: '记录内容过于详细可能被厉鬼感知并产生敌意', narrativeHook: '记录本中的内容整合后可能拼凑出厉鬼的完整规律' },
-                { id: 'item_basic_2', name: '少量鬼钱', rarity: 'BASIC', type: 'supernatural', icon: '💵', description: '少量的鬼钱', effect: '小额交易', effectDetail: '可以进行小额灵异物品交易', usageLimit: 'stack', duration: '永久', cost: '金额太少可能在驭鬼者黑市引来轻视或欺诈', narrativeHook: '即使少量鬼钱也能在关键时刻作为灵异交易的入场凭证' },
-                { id: 'item_basic_3', name: '灵异感知增强剂', rarity: 'BASIC', type: 'supernatural', icon: '💊', description: '可以暂时增强灵异感知的药剂', effect: '增强灵异感知', effectDetail: '暂时提升对灵异现象的感知能力', usageLimit: 6, duration: '每次持续数小时', cost: '感知增强期间会同时放大恐惧感，意志薄弱者可能崩溃', narrativeHook: '增强感知后可能察觉到平时忽略的细微灵异痕迹' }
-            ],
-            clue: [
-                { id: 'clue_decisive', name: '决定性线索', rarity: 'EPIC', type: 'clue', icon: '🔍', description: '关键的决定性线索，大幅提升档案完成度', effect: '档案进度 +50%', effectDetail: '获得后立即提升指定厉鬼档案完成度50%', progress: 0.5, cost: '获取决定性线索往往意味着已深入厉鬼核心区域', narrativeHook: '决定性线索通常指向厉鬼的致命弱点或诞生真相' },
-                { id: 'clue_core', name: '核心线索', rarity: 'RARE', type: 'clue', icon: '🔎', description: '核心线索，显著提升档案完成度', effect: '档案进度 +25%', effectDetail: '获得后立即提升指定厉鬼档案完成度25%', progress: 0.25, cost: '核心线索的获取可能惊动厉鬼，使其提高警惕', narrativeHook: '核心线索往往关联多个灵异事件，是串联案件的关键节点' },
-                { id: 'clue_important', name: '重要线索', rarity: 'COMMON', type: 'clue', icon: '🔦', description: '重要线索，提升档案完成度', effect: '档案进度 +10%', effectDetail: '获得后立即提升指定厉鬼档案完成度10%', progress: 0.1, cost: '验证线索真伪需要实地调查，存在遭遇危险的可能', narrativeHook: '重要线索可能指向新的调查方向或需要回访的地点' },
-                { id: 'clue_common', name: '普通线索', rarity: 'BASIC', type: 'clue', icon: '🔬', description: '普通线索，少量提升档案完成度', effect: '档案进度 +5%', effectDetail: '获得后立即提升指定厉鬼档案完成度5%', progress: 0.05, cost: '线索可能是表象，需投入时间精力筛选有效信息', narrativeHook: '普通线索积累到一定数量时可能产生质变性的推断' }
-            ],
-            knowledge: [
-                { id: 'knowledge_forbidden', name: '禁忌知识', rarity: 'EPIC', type: 'knowledge', icon: '📕', description: '禁忌的知识，大幅揭示厉鬼规律', effect: '规律进度 +50%', effectDetail: '获得后立即提升指定厉鬼规律完成度50%', progress: 0.5, cost: '知晓禁忌知识后精神污染风险大幅提升，可能产生噩梦', narrativeHook: '禁忌知识往往涉及厉鬼诞生的核心秘密，知道得越多越危险' },
-                { id: 'knowledge_core', name: '核心知识', rarity: 'RARE', type: 'knowledge', icon: '📗', description: '核心知识，显著揭示厉鬼规律', effect: '规律进度 +25%', effectDetail: '获得后立即提升指定厉鬼规律完成度25%', progress: 0.25, cost: '核心知识的传播可能引起厉鬼注意，知情者成为目标', narrativeHook: '核心知识通常来源于前人的惨痛经验，背后有血泪故事' },
-                { id: 'knowledge_deep', name: '深入知识', rarity: 'COMMON', type: 'knowledge', icon: '📘', description: '深入的知识，揭示部分规律', effect: '规律进度 +10%', effectDetail: '获得后立即提升指定厉鬼规律完成度10%', progress: 0.1, cost: '深入研究规律需要长时间接触灵异现象，有被污染风险', narrativeHook: '深入知识可能揭示厉鬼规律中的漏洞或可利用的间隙' },
-                { id: 'knowledge_basic', name: '基础知识', rarity: 'BASIC', type: 'knowledge', icon: '📙', description: '基础知识，少量揭示规律', effect: '规律进度 +5%', effectDetail: '获得后立即提升指定厉鬼规律完成度5%', progress: 0.05, cost: '基础知识可能包含过时或不完整的信息，盲信有风险', narrativeHook: '基础知识是驭鬼者入门的基石，可引导向更深层的研究方向' }
-            ]
-        }
-    };
-
-    // 获取自定义物品覆盖层（localStorage）
-    const getCustomGachaItems = () => {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY_CUSTOM_GACHA_ITEMS);
-            return stored ? JSON.parse(stored) : { supernatural: [], clue: [], knowledge: [] };
-        } catch (e) {
-            console.error('Failed to load custom gacha items:', e);
-            return { supernatural: [], clue: [], knowledge: [] };
-        }
-    };
-
-    // 设置自定义物品覆盖层
-    const setCustomGachaItems = (customItems) => {
-        try {
-            localStorage.setItem(STORAGE_KEY_CUSTOM_GACHA_ITEMS, JSON.stringify(customItems));
-        } catch (e) {
-            console.error('Failed to save custom gacha items:', e);
-        }
-    };
-
-    // 合并物品定义：builtin（只读）∪ custom（覆盖/新增）
-    // 返回完整的物品对象数组，每项包含 rarity 对象而非字符串
-    const getAllGachaItemDefinitions = () => {
-        const custom = getCustomGachaItems();
-        const result = { supernatural: [], clue: [], knowledge: [] };
-
-        for (const type of ['supernatural', 'clue', 'knowledge']) {
-            // builtin 只读层
-            const builtinItems = BUILTIN_GACHA_ITEMS.items[type] || [];
-            // custom 覆盖层
-            const customItems = custom[type] || [];
-
-            // 先加入所有 builtin 物品
-            for (const item of builtinItems) {
-                // 将 rarity 字符串转换为完整的 rarity 对象
-                const fullItem = {
-                    ...item,
-                    rarity: BUILTIN_GACHA_ITEMS.rarity[item.rarity] || GACHA_RARITY[item.rarity],
-                    targetTable: type === 'supernatural' ? 'sheet_supernatural_items' :
-                                 type === 'clue' ? 'sheet_clues' : 'sheet_collected_rules'
-                };
-
-                // 检查是否有 custom 覆盖
-                const customOverride = customItems.find(c => c.id === item.id);
-                if (customOverride) {
-                    // custom 覆盖 builtin 字段（保留未覆盖的 builtin 字段）
-                    Object.assign(fullItem, customOverride);
-                    // 如果 custom 覆盖了 rarity 字符串，重新转换
-                    if (typeof customOverride.rarity === 'string') {
-                        fullItem.rarity = BUILTIN_GACHA_ITEMS.rarity[customOverride.rarity] || GACHA_RARITY[customOverride.rarity];
-                    }
-                }
-
-                result[type].push(fullItem);
-            }
-
-            // 新增 custom 物品（不在 builtin 中的）
-            for (const customItem of customItems) {
-                if (!builtinItems.find(b => b.id === customItem.id)) {
-                    const fullItem = {
-                        ...customItem,
-                        rarity: typeof customItem.rarity === 'string' ?
-                               (BUILTIN_GACHA_ITEMS.rarity[customItem.rarity] || GACHA_RARITY[customItem.rarity]) :
-                               customItem.rarity,
-                        targetTable: type === 'supernatural' ? 'sheet_supernatural_items' :
-                                     type === 'clue' ? 'sheet_clues' : 'sheet_collected_rules'
-                    };
-                    result[type].push(fullItem);
-                }
-            }
-        }
-
-        return result;
-    };
-
-    // 添加自定义物品
-    const addCustomGachaItem = (type, itemDef) => {
-        const custom = getCustomGachaItems();
-        if (!custom[type]) custom[type] = [];
-        // 检查是否已存在
-        const existingIdx = custom[type].findIndex(c => c.id === itemDef.id);
-        if (existingIdx >= 0) {
-            custom[type][existingIdx] = itemDef; // 覆盖
-        } else {
-            custom[type].push(itemDef); // 新增
-        }
-        setCustomGachaItems(custom);
-    };
-
-    // 删除自定义物品（仅删除 custom 层，不影响 builtin）
-    const removeCustomGachaItem = (type, itemId) => {
-        const custom = getCustomGachaItems();
-        if (custom[type]) {
-            custom[type] = custom[type].filter(c => c.id !== itemId);
-            setCustomGachaItems(custom);
-        }
-    };
-
-    // ═══════════════════ 碎片系统 ═══════════════════
-
-    // 碎片（灵异残屑）配置
-    const GACHA_FRAGMENT = {
-        name: '灵异残屑',
-        icon: '💎',
-        // 重复物品 → 获得碎片数量（按稀有度）
-        earn: {
-            MYTHIC: 100,
-            LEGENDARY: 50,
-            EPIC: 20,
-            RARE: 8,
-            COMMON: 3,
-            BASIC: 1,
-        },
-        // 兑换商店价格（碎片 → 物品）
-        cost: {
-            MYTHIC: 500,
-            LEGENDARY: 200,
-            EPIC: 80,
-            RARE: 30,
-            COMMON: 10,
-            BASIC: 5,
-        },
-    };
-
-    const STORAGE_KEY_GACHA_FRAGMENTS = 'mfrs_gacha_fragments';
-    const STORAGE_KEY_GACHA_OWNED = 'mfrs_gacha_owned_items';
-
-    // 碎片余额
-    const getGachaFragments = () => {
-        try {
-            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_FRAGMENTS));
-            return stored ? parseInt(stored, 10) : 0;
-        } catch (e) { return 0; }
-    };
-    const setGachaFragments = (amount) => {
-        try { localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_FRAGMENTS), String(amount)); }
-        catch (e) { console.error('Failed to save fragments:', e); }
-    };
-    const addGachaFragments = (amount) => {
-        const next = getGachaFragments() + amount;
-        setGachaFragments(next);
-        return next;
-    };
-    const deductGachaFragments = (amount) => {
-        const current = getGachaFragments();
-        if (current < amount) return false;
-        setGachaFragments(current - amount);
-        return true;
-    };
-
-    // 已拥有物品 id 集合（用于判定重复）
-    const getOwnedItems = () => {
-        try {
-            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_OWNED));
-            return stored ? JSON.parse(stored) : [];
-        } catch (e) { return []; }
-    };
-    const setOwnedItems = (ids) => {
-        try { localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_OWNED), JSON.stringify(ids)); }
-        catch (e) { console.error('Failed to save owned items:', e); }
-    };
-    const addOwnedItem = (itemId) => {
-        const owned = getOwnedItems();
-        if (!owned.includes(itemId)) {
-            owned.push(itemId);
-            setOwnedItems(owned);
-        }
-    };
-    const isItemOwned = (itemId) => getOwnedItems().includes(itemId);
-
-    /**
-     * 处理抽卡结果中的重复物品 → 转化为碎片。
-     * 对 items 数组做原地标记：重复项添加 .isDuplicate=true, .fragmentsEarned=N。
-     * 新物品则标记 .isDuplicate=false 并加入已拥有列表。
-     * @param {Array} items - 抽卡结果数组
-     * @returns {{ totalFragments: number, duplicateCount: number }}
-     */
-    const processFragments = (items) => {
-        let totalFragments = 0;
-        let duplicateCount = 0;
-
-        for (const item of items) {
-            if (isItemOwned(item.id)) {
-                // 重复物品 → 转化为碎片
-                const rarityKey = Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
-                const earned = GACHA_FRAGMENT.earn[rarityKey] || 1;
-                item.isDuplicate = true;
-                item.fragmentsEarned = earned;
-                totalFragments += earned;
-                duplicateCount++;
-            } else {
-                // 新物品 → 加入已拥有列表
-                item.isDuplicate = false;
-                item.fragmentsEarned = 0;
-                addOwnedItem(item.id);
-            }
-        }
-
-        if (totalFragments > 0) {
-            addGachaFragments(totalFragments);
-        }
-
-        return { totalFragments, duplicateCount };
-    };
-
-    /**
-     * 碎片兑换：用碎片兑换指定物品（加入已拥有列表，不写数据库）
-     * @param {object} item - 物品定义（需有 id, rarity）
-     * @returns {{ success: boolean, error?: string }}
-     */
-    const exchangeWithFragments = (item) => {
+    for (const item of items) {
+      if (isItemOwned(item.id)) {
+        // 重复物品 → 转化为碎片
         const rarityKey = Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
-        const cost = GACHA_FRAGMENT.cost[rarityKey] || 999;
-        if (!deductGachaFragments(cost)) {
-            return { success: false, error: `灵异残屑不足（需要 ${cost}）` };
-        }
+        const earned = GACHA_FRAGMENT.earn[rarityKey] || 1;
+        item.isDuplicate = true;
+        item.fragmentsEarned = earned;
+        totalFragments += earned;
+        duplicateCount++;
+      } else {
+        // 新物品 → 加入已拥有列表
+        item.isDuplicate = false;
+        item.fragmentsEarned = 0;
         addOwnedItem(item.id);
-        return { success: true, cost, item };
-    };
+      }
+    }
 
-    /**
-     * 碎片商店 — 用灵异残屑兑换物品（加入已拥有列表）。
-     * 全屏 overlay 弹窗，列出所有物品及按稀有度定价，实时刷新余额。
-     */
-    const showFragmentShop = (onBalanceChange = null, ownerDocument = getHostDocument(), onDestroy = null) => {
-        const { $ } = getCore();
-        const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
+    if (totalFragments > 0) {
+      addGachaFragments(totalFragments);
+    }
 
-        const allItems = getAllGachaItemDefinitions();
-        const items = [
-            ...(allItems.supernatural || []),
-            ...(allItems.clue || []),
-            ...(allItems.knowledge || []),
-        ];
+    return { totalFragments, duplicateCount };
+  };
 
-        const rarityKeyOf = (item) =>
-            Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
-        const costOf = (item) => GACHA_FRAGMENT.cost[rarityKeyOf(item)] || 999;
+  /**
+   * 碎片兑换：用碎片兑换指定物品（加入已拥有列表，不写数据库）
+   * @param {object} item - 物品定义（需有 id, rarity）
+   * @returns {{ success: boolean, error?: string }}
+   */
+  const exchangeWithFragments = item => {
+    const rarityKey = Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
+    const cost = GACHA_FRAGMENT.cost[rarityKey] || 999;
+    if (!deductGachaFragments(cost)) {
+      return { success: false, error: `灵异残屑不足（需要 ${cost}）` };
+    }
+    addOwnedItem(item.id);
+    return { success: true, cost, item };
+  };
 
-        const renderRow = (item) => {
-            const cost = costOf(item);
-            const owned = isItemOwned(item.id);
-            const affordable = getGachaFragments() >= cost;
-            const btn = owned
-                ? '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:default; font-size:12px;">已拥有</button>'
-                : (affordable
-                    ? `<button class="frag-buy-btn" data-mfrs-action="frag-buy" data-id="${item.id}" style="background:linear-gradient(135deg,#a855f7,#7c3aed); color:white; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:bold;">兑换</button>`
-                    : '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:not-allowed; font-size:12px;">残屑不足</button>');
-            return `
+  /**
+   * 碎片商店 — 用灵异残屑兑换物品（加入已拥有列表）。
+   * 全屏 overlay 弹窗，列出所有物品及按稀有度定价，实时刷新余额。
+   */
+  const showFragmentShop = (onBalanceChange = null, ownerDocument = getHostDocument(), onDestroy = null) => {
+    const { $ } = getCore();
+    const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
+
+    const allItems = getAllGachaItemDefinitions();
+    const items = [...(allItems.supernatural || []), ...(allItems.clue || []), ...(allItems.knowledge || [])];
+
+    const rarityKeyOf = item =>
+      Object.keys(GACHA_RARITY).find(k => GACHA_RARITY[k].level === item.rarity.level) || 'BASIC';
+    const costOf = item => GACHA_FRAGMENT.cost[rarityKeyOf(item)] || 999;
+
+    const renderRow = item => {
+      const cost = costOf(item);
+      const owned = isItemOwned(item.id);
+      const affordable = getGachaFragments() >= cost;
+      const btn = owned
+        ? '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:default; font-size:12px;">已拥有</button>'
+        : affordable
+          ? `<button class="frag-buy-btn" data-mfrs-action="frag-buy" data-id="${item.id}" style="background:linear-gradient(135deg,#a855f7,#7c3aed); color:white; border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:12px; font-weight:bold;">兑换</button>`
+          : '<button class="frag-buy-btn" disabled style="background:var(--acu-border); color:var(--acu-text-sub); border:none; border-radius:6px; padding:6px 14px; cursor:not-allowed; font-size:12px;">残屑不足</button>';
+      return `
                 <div class="frag-row" data-id="${item.id}" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--acu-btn-bg); border-radius:8px; margin-bottom:8px; border:1px solid var(--acu-border);">
                     <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
                         <span style="font-size:24px; flex-shrink:0;">${item.icon}</span>
@@ -6805,19 +8119,20 @@
                     </div>
                 </div>
             `;
-        };
+    };
 
-        const refresh = () => {
-            const balance = getGachaFragments();
-            shopDialog.find('#frag-balance').text(balance);
-            const listHtml = items.length
-                ? items.map(renderRow).join('')
-                : '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无可兑换物品</div>';
-            shopDialog.find('#frag-list').html(listHtml);
-            // 兑换按钮由容器委托处理，无需逐个绑定
-        };
+    const refresh = () => {
+      const balance = getGachaFragments();
+      shopDialog.find('#frag-balance').text(balance);
+      const listHtml = items.length
+        ? items.map(renderRow).join('')
+        : '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无可兑换物品</div>';
+      shopDialog.find('#frag-list').html(listHtml);
+      // 兑换按钮由容器委托处理，无需逐个绑定
+    };
 
-        const shopDialog = $(`
+    const shopDialog = $(
+      `
             <div class="acu-edit-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100000; display:flex; align-items:center; justify-content:center; padding:20px;">
                 <div style="background:var(--acu-bg, #1a1a2e); border:1px solid var(--acu-border); border-radius:12px; width:100%; max-width:520px; max-height:85vh; display:flex; flex-direction:column;">
                     <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--acu-border);">
@@ -6837,531 +8152,569 @@
                     </div>
                 </div>
             </div>
-        `, doc);
+        `,
+      doc,
+    );
 
-        let handle = null;
-        handle = createGachaSecondaryHandle({
-            root: shopDialog[0],
-            cleanup: () => {
-                shopDialog.stop(true, true);
-                shopDialog.find('*').stop(true, true);
-                shopDialog.off('.mfrsGachaSecondary');
-                shopDialog.find('*').off('.mfrsGachaSecondary');
-                shopDialog.remove();
-            },
-            onDestroy,
-        });
-        const closeShop = () => handle.destroy();
-        $(doc.body).append(shopDialog);
-        shopDialog.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeShop(); });
-        // 事件委托：统一处理商店内 data-mfrs-action 点击
-        shopDialog.on('click.mfrsGachaSecondary', '[data-mfrs-action]', function() {
-            const action = $(this).data('mfrs-action');
-            if (action === 'shop-close') { closeShop(); return; }
-            if (action === 'frag-buy') {
-                const id = $(this).data('id');
-                const item = items.find(i => i.id === id);
-                if (!item) return;
-                const result = exchangeWithFragments(item);
-                if (result.success) {
-                    if (window.toastr) window.toastr.success(`兑换成功：${item.name}（消耗 ${result.cost} 灵异残屑）`);
-                    if (typeof onBalanceChange === 'function') onBalanceChange(getGachaFragments());
-                    else $('#gacha-fragment-display').text(getGachaFragments());
-                    refresh();
-                } else {
-                    if (window.toastr) window.toastr.error(result.error || '兑换失败');
-                }
-            }
-        });
-        refresh();
-        return handle;
-    };
-
-    // 四个物品池类型
-    const GACHA_POOL_TYPE = {
-        ALL: 'all',                    // 全物品池
-        ARCHIVE: 'archive',            // 厉鬼档案池（线索权重x2）
-        PATTERN: 'pattern',            // 厉鬼规律池（知识权重x2）
-        SUPERNATURAL: 'supernatural'   // 灵异物品池（仅灵异物品）
-    };
-
-    // 构建抽卡池
-    // 构建抽卡池（使用合并后的物品目录）
-    const buildGachaPool = (poolType) => {
-        const pool = [];
-        const allItems = getAllGachaItemDefinitions();
-
-        if (poolType === GACHA_POOL_TYPE.SUPERNATURAL) {
-            // 仅灵异物品
-            allItems.supernatural.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability });
-            });
-        } else if (poolType === GACHA_POOL_TYPE.ARCHIVE) {
-            // 线索权重x2
-            allItems.supernatural.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability * 0.5 });
-            });
-            allItems.clue.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability * 2 });
-            });
-            allItems.knowledge.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability * 0.5 });
-            });
-        } else if (poolType === GACHA_POOL_TYPE.PATTERN) {
-            // 知识权重x2
-            allItems.supernatural.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability * 0.5 });
-            });
-            allItems.clue.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability * 0.5 });
-            });
-            allItems.knowledge.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability * 2 });
-            });
-        } else {
-            // 全物品池（均匀分布）
-            allItems.supernatural.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability });
-            });
-            allItems.clue.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability });
-            });
-            allItems.knowledge.forEach(item => {
-                pool.push({ item, weight: item.rarity.probability });
-            });
-        }
-
-        // 归一化权重
-        const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
-        pool.forEach(p => p.normalizedWeight = p.weight / totalWeight);
-
-        return pool;
-    };
-
-    const cloneGachaItem = (item) => ({
-        ...item,
-        rarity: item.rarity && typeof item.rarity === 'object' ? { ...item.rarity } : item.rarity,
+    let handle = null;
+    handle = createGachaSecondaryHandle({
+      root: shopDialog[0],
+      cleanup: () => {
+        shopDialog.stop(true, true);
+        shopDialog.find('*').stop(true, true);
+        shopDialog.off('.mfrsGachaSecondary');
+        shopDialog.find('*').off('.mfrsGachaSecondary');
+        shopDialog.remove();
+      },
+      onDestroy,
     });
-
-    // 单次抽卡逻辑
-    const performSingleGacha = (poolType, forcedRarity = null) => {
-        const pool = buildGachaPool(poolType);
-
-        if (forcedRarity) {
-            // 保底机制：强制指定稀有度
-            const filtered = pool.filter(p => p.item.rarity.level >= forcedRarity);
-            if (filtered.length === 0) return cloneGachaItem(pool[0].item);
-
-            const totalWeight = filtered.reduce((sum, p) => sum + p.weight, 0);
-            const random = Math.random() * totalWeight;
-            let cumulative = 0;
-
-            for (const p of filtered) {
-                cumulative += p.weight;
-                if (random <= cumulative) return cloneGachaItem(p.item);
-            }
-            return cloneGachaItem(filtered[filtered.length - 1].item);
+    const closeShop = () => handle.destroy();
+    $(doc.body).append(shopDialog);
+    shopDialog.on('click.mfrsGachaSecondary', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) closeShop();
+    });
+    // 事件委托：统一处理商店内 data-mfrs-action 点击
+    shopDialog.on('click.mfrsGachaSecondary', '[data-mfrs-action]', function () {
+      const action = $(this).data('mfrs-action');
+      if (action === 'shop-close') {
+        closeShop();
+        return;
+      }
+      if (action === 'frag-buy') {
+        const id = $(this).data('id');
+        const item = items.find(i => i.id === id);
+        if (!item) return;
+        const result = exchangeWithFragments(item);
+        if (result.success) {
+          if (window.toastr) window.toastr.success(`兑换成功：${item.name}（消耗 ${result.cost} 灵异残屑）`);
+          if (typeof onBalanceChange === 'function') onBalanceChange(getGachaFragments());
+          else $('#gacha-fragment-display').text(getGachaFragments());
+          refresh();
+        } else {
+          if (window.toastr) window.toastr.error(result.error || '兑换失败');
         }
+      }
+    });
+    refresh();
+    return handle;
+  };
 
-        // 正常抽卡
-        const random = Math.random();
-        let cumulative = 0;
+  // 四个物品池类型
+  const GACHA_POOL_TYPE = {
+    ALL: 'all', // 全物品池
+    ARCHIVE: 'archive', // 厉鬼档案池（线索权重x2）
+    PATTERN: 'pattern', // 厉鬼规律池（知识权重x2）
+    SUPERNATURAL: 'supernatural', // 灵异物品池（仅灵异物品）
+  };
 
-        for (const p of pool) {
-            cumulative += p.normalizedWeight;
-            if (random <= cumulative) return cloneGachaItem(p.item);
-        }
+  // 构建抽卡池
+  // 构建抽卡池（使用合并后的物品目录）
+  const buildGachaPool = poolType => {
+    const pool = [];
+    const allItems = getAllGachaItemDefinitions();
 
-        return cloneGachaItem(pool[pool.length - 1].item);
-    };
+    if (poolType === GACHA_POOL_TYPE.SUPERNATURAL) {
+      // 仅灵异物品
+      allItems.supernatural.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability });
+      });
+    } else if (poolType === GACHA_POOL_TYPE.ARCHIVE) {
+      // 线索权重x2
+      allItems.supernatural.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability * 0.5 });
+      });
+      allItems.clue.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability * 2 });
+      });
+      allItems.knowledge.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability * 0.5 });
+      });
+    } else if (poolType === GACHA_POOL_TYPE.PATTERN) {
+      // 知识权重x2
+      allItems.supernatural.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability * 0.5 });
+      });
+      allItems.clue.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability * 0.5 });
+      });
+      allItems.knowledge.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability * 2 });
+      });
+    } else {
+      // 全物品池（均匀分布）
+      allItems.supernatural.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability });
+      });
+      allItems.clue.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability });
+      });
+      allItems.knowledge.forEach(item => {
+        pool.push({ item, weight: item.rarity.probability });
+      });
+    }
 
-    // 十连抽卡逻辑
-    const performTenGacha = (poolType) => {
-        const results = [];
-        const pity = getGachaPity();
+    // 归一化权重
+    const totalWeight = pool.reduce((sum, p) => sum + p.weight, 0);
+    pool.forEach(p => (p.normalizedWeight = p.weight / totalWeight));
 
-        for (let i = 0; i < 10; i++) {
-            let forcedRarity = null;
+    return pool;
+  };
 
-            // 第10抽保底★★★
-            if (i === 9) {
-                forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.RARE.level);
-            }
+  const cloneGachaItem = item => ({
+    ...item,
+    rarity: item.rarity && typeof item.rarity === 'object' ? { ...item.rarity } : item.rarity,
+  });
 
-            // 50抽保底★★★★
-            if (pity.epic >= 49) {
-                forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.EPIC.level);
-            }
+  // 单次抽卡逻辑
+  const performSingleGacha = (poolType, forcedRarity = null) => {
+    const pool = buildGachaPool(poolType);
 
-            // 100抽保底★★★★★★
-            if (pity.total >= 99) {
-                forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.MYTHIC.level);
-            }
+    if (forcedRarity) {
+      // 保底机制：强制指定稀有度
+      const filtered = pool.filter(p => p.item.rarity.level >= forcedRarity);
+      if (filtered.length === 0) return cloneGachaItem(pool[0].item);
 
-            const item = performSingleGacha(poolType, forcedRarity);
-            results.push(item);
+      const totalWeight = filtered.reduce((sum, p) => sum + p.weight, 0);
+      const random = Math.random() * totalWeight;
+      let cumulative = 0;
 
-            // 更新保底计数
-            incrementGachaPity();
+      for (const p of filtered) {
+        cumulative += p.weight;
+        if (random <= cumulative) return cloneGachaItem(p.item);
+      }
+      return cloneGachaItem(filtered[filtered.length - 1].item);
+    }
 
-            // 重置保底
-            if (item.rarity.level >= GACHA_RARITY.RARE.level) {
-                resetGachaPity('rare');
-            }
-            if (item.rarity.level >= GACHA_RARITY.EPIC.level) {
-                resetGachaPity('epic');
-            }
-            if (item.rarity.level >= GACHA_RARITY.MYTHIC.level) {
-                resetGachaPity('mythic');
-            }
-        }
+    // 正常抽卡
+    const random = Math.random();
+    let cumulative = 0;
 
-        return results;
-    };
+    for (const p of pool) {
+      cumulative += p.normalizedWeight;
+      if (random <= cumulative) return cloneGachaItem(p.item);
+    }
 
-    // 单抽
-    const gachaSingle = (poolType = GACHA_POOL_TYPE.ALL) => {
-        const cost = GACHA_CURRENCY.cost.single;
-        if (!deductGachaCurrency(cost)) {
-            return { success: false, error: '调查点不足' };
-        }
+    return cloneGachaItem(pool[pool.length - 1].item);
+  };
 
-        const pity = getGachaPity();
-        let forcedRarity = null;
+  // 十连抽卡逻辑
+  const performTenGacha = poolType => {
+    const results = [];
+    const pity = getGachaPity();
 
-        // 50抽保底★★★★
-        if (pity.epic >= 49) {
-            forcedRarity = GACHA_RARITY.EPIC.level;
-        }
+    for (let i = 0; i < 10; i++) {
+      let forcedRarity = null;
 
-        // 100抽保底★★★★★★
-        if (pity.total >= 99) {
-            forcedRarity = GACHA_RARITY.MYTHIC.level;
-        }
+      // 第10抽保底★★★
+      if (i === 9) {
+        forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.RARE.level);
+      }
 
-        const item = performSingleGacha(poolType, forcedRarity);
+      // 50抽保底★★★★
+      if (pity.epic >= 49) {
+        forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.EPIC.level);
+      }
 
-        // 更新保底计数
-        incrementGachaPity();
+      // 100抽保底★★★★★★
+      if (pity.total >= 99) {
+        forcedRarity = Math.max(forcedRarity || 0, GACHA_RARITY.MYTHIC.level);
+      }
 
-        // 重置保底
-        if (item.rarity.level >= GACHA_RARITY.RARE.level) {
-            resetGachaPity('rare');
-        }
-        if (item.rarity.level >= GACHA_RARITY.EPIC.level) {
-            resetGachaPity('epic');
-        }
-        if (item.rarity.level >= GACHA_RARITY.MYTHIC.level) {
-            resetGachaPity('mythic');
-        }
+      const item = performSingleGacha(poolType, forcedRarity);
+      results.push(item);
 
-        // 保存抽卡历史
-        saveGachaHistory([item]);
+      // 更新保底计数
+      incrementGachaPity();
 
-        // 碎片系统：检测重复物品并转化
-        const fragmentResult = processFragments([item]);
+      // 重置保底
+      if (item.rarity.level >= GACHA_RARITY.RARE.level) {
+        resetGachaPity('rare');
+      }
+      if (item.rarity.level >= GACHA_RARITY.EPIC.level) {
+        resetGachaPity('epic');
+      }
+      if (item.rarity.level >= GACHA_RARITY.MYTHIC.level) {
+        resetGachaPity('mythic');
+      }
+    }
 
-        return { success: true, items: [item], currency: getGachaCurrency(), fragments: fragmentResult };
-    };
+    return results;
+  };
 
-    // 十连
-    const gachaTen = (poolType = GACHA_POOL_TYPE.ALL) => {
-        const cost = GACHA_CURRENCY.cost.ten;
-        if (!deductGachaCurrency(cost)) {
-            return { success: false, error: '调查点不足' };
-        }
+  // 单抽
+  const gachaSingle = (poolType = GACHA_POOL_TYPE.ALL) => {
+    const cost = GACHA_CURRENCY.cost.single;
+    if (!deductGachaCurrency(cost)) {
+      return { success: false, error: '调查点不足' };
+    }
 
-        const items = performTenGacha(poolType);
+    const pity = getGachaPity();
+    let forcedRarity = null;
 
-        // 保存抽卡历史
-        saveGachaHistory(items);
+    // 50抽保底★★★★
+    if (pity.epic >= 49) {
+      forcedRarity = GACHA_RARITY.EPIC.level;
+    }
 
-        // 碎片系统：检测重复物品并转化
-        const fragmentResult = processFragments(items);
+    // 100抽保底★★★★★★
+    if (pity.total >= 99) {
+      forcedRarity = GACHA_RARITY.MYTHIC.level;
+    }
 
-        return { success: true, items, currency: getGachaCurrency(), fragments: fragmentResult };
-    };
+    const item = performSingleGacha(poolType, forcedRarity);
+
+    // 更新保底计数
+    incrementGachaPity();
+
+    // 重置保底
+    if (item.rarity.level >= GACHA_RARITY.RARE.level) {
+      resetGachaPity('rare');
+    }
+    if (item.rarity.level >= GACHA_RARITY.EPIC.level) {
+      resetGachaPity('epic');
+    }
+    if (item.rarity.level >= GACHA_RARITY.MYTHIC.level) {
+      resetGachaPity('mythic');
+    }
 
     // 保存抽卡历史
-    const saveGachaHistory = (items) => {
-        try {
-            const history = getGachaHistory();
-            const timestamp = Date.now();
-            items.forEach(item => {
-                history.unshift({ item, timestamp });
-            });
-            // 只保留最近100次
-            if (history.length > 100) {
-                history.splice(100);
-            }
-            localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_HISTORY), JSON.stringify(history));
-        } catch (e) {
-            console.error('Failed to save gacha history:', e);
-        }
-    };
+    saveGachaHistory([item]);
 
-    // 获取抽卡历史
-    const getGachaHistory = () => {
-        try {
-            const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_HISTORY));
-            return stored ? JSON.parse(stored) : [];
-        } catch (e) {
-            return [];
-        }
-    };
+    // 碎片系统：检测重复物品并转化
+    const fragmentResult = processFragments([item]);
 
-    const getGachaScopedSnapshot = () => ({
-        type: 'mfrs_gacha_chat_data',
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        scope: getActiveGachaChatScope(),
-        currency: getGachaCurrency(),
-        pity: getGachaPity(),
-        history: getGachaHistory(),
-        currencyLog: getCurrencyLog(),
-        fragments: getGachaFragments(),
-        ownedItems: getOwnedItems(),
+    return { success: true, items: [item], currency: getGachaCurrency(), fragments: fragmentResult };
+  };
+
+  // 十连
+  const gachaTen = (poolType = GACHA_POOL_TYPE.ALL) => {
+    const cost = GACHA_CURRENCY.cost.ten;
+    if (!deductGachaCurrency(cost)) {
+      return { success: false, error: '调查点不足' };
+    }
+
+    const items = performTenGacha(poolType);
+
+    // 保存抽卡历史
+    saveGachaHistory(items);
+
+    // 碎片系统：检测重复物品并转化
+    const fragmentResult = processFragments(items);
+
+    return { success: true, items, currency: getGachaCurrency(), fragments: fragmentResult };
+  };
+
+  // 保存抽卡历史
+  const saveGachaHistory = items => {
+    try {
+      const history = getGachaHistory();
+      const timestamp = Date.now();
+      items.forEach(item => {
+        history.unshift({ item, timestamp });
+      });
+      // 只保留最近100次
+      if (history.length > 100) {
+        history.splice(100);
+      }
+      localStorage.setItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_HISTORY), JSON.stringify(history));
+    } catch (e) {
+      console.error('Failed to save gacha history:', e);
+    }
+  };
+
+  // 获取抽卡历史
+  const getGachaHistory = () => {
+    try {
+      const stored = localStorage.getItem(getGachaScopedStorageKey(STORAGE_KEY_GACHA_HISTORY));
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const getGachaScopedSnapshot = () => ({
+    type: 'mfrs_gacha_chat_data',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    scope: getActiveGachaChatScope(),
+    currency: getGachaCurrency(),
+    pity: getGachaPity(),
+    history: getGachaHistory(),
+    currencyLog: getCurrencyLog(),
+    fragments: getGachaFragments(),
+    ownedItems: getOwnedItems(),
+  });
+
+  const importGachaScopedSnapshot = snapshot => {
+    if (!snapshot || typeof snapshot !== 'object') throw new Error('无效的抽卡数据');
+    if (snapshot.type !== 'mfrs_gacha_chat_data') throw new Error('不是神秘复苏抽卡聊天数据');
+    const scopeKey = baseKey => getGachaScopedStorageKey(baseKey);
+    localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_CURRENCY), String(Math.max(0, Number(snapshot.currency) || 0)));
+    localStorage.setItem(
+      scopeKey(STORAGE_KEY_GACHA_PITY),
+      JSON.stringify(
+        snapshot.pity && typeof snapshot.pity === 'object' ? snapshot.pity : { total: 0, rare: 0, epic: 0 },
+      ),
+    );
+    localStorage.setItem(
+      scopeKey(STORAGE_KEY_GACHA_HISTORY),
+      JSON.stringify(Array.isArray(snapshot.history) ? snapshot.history.slice(0, 100) : []),
+    );
+    localStorage.setItem(
+      scopeKey(STORAGE_KEY_CURRENCY_LOG),
+      JSON.stringify(Array.isArray(snapshot.currencyLog) ? snapshot.currencyLog.slice(0, 50) : []),
+    );
+    localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_FRAGMENTS), String(Math.max(0, Number(snapshot.fragments) || 0)));
+    localStorage.setItem(
+      scopeKey(STORAGE_KEY_GACHA_OWNED),
+      JSON.stringify(Array.isArray(snapshot.ownedItems) ? snapshot.ownedItems : []),
+    );
+  };
+
+  const resetGachaScopedData = () => {
+    [
+      STORAGE_KEY_GACHA_CURRENCY,
+      STORAGE_KEY_GACHA_PITY,
+      STORAGE_KEY_GACHA_HISTORY,
+      STORAGE_KEY_CURRENCY_LOG,
+      STORAGE_KEY_GACHA_FRAGMENTS,
+      STORAGE_KEY_GACHA_OWNED,
+    ].forEach(key => localStorage.removeItem(getGachaScopedStorageKey(key)));
+  };
+
+  const importGachaSnapshotFromFile = (onImported = null, options = {}) => {
+    const doc = options.ownerDocument || getHostDocument();
+    const externalIsAlive = typeof options.isAlive === 'function' ? options.isAlive : () => true;
+    const input = doc.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.style.display = 'none';
+    let reader = null;
+    const handle = createGachaSecondaryHandle({
+      root: input,
+      cleanup: () => {
+        if (reader && reader.readyState === 1 && typeof reader.abort === 'function') reader.abort();
+        input.remove();
+      },
+      onDestroy: options.onDestroy || null,
     });
-
-    const importGachaScopedSnapshot = (snapshot) => {
-        if (!snapshot || typeof snapshot !== 'object') throw new Error('无效的抽卡数据');
-        if (snapshot.type !== 'mfrs_gacha_chat_data') throw new Error('不是神秘复苏抽卡聊天数据');
-        const scopeKey = (baseKey) => getGachaScopedStorageKey(baseKey);
-        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_CURRENCY), String(Math.max(0, Number(snapshot.currency) || 0)));
-        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_PITY), JSON.stringify(snapshot.pity && typeof snapshot.pity === 'object' ? snapshot.pity : { total: 0, rare: 0, epic: 0 }));
-        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_HISTORY), JSON.stringify(Array.isArray(snapshot.history) ? snapshot.history.slice(0, 100) : []));
-        localStorage.setItem(scopeKey(STORAGE_KEY_CURRENCY_LOG), JSON.stringify(Array.isArray(snapshot.currencyLog) ? snapshot.currencyLog.slice(0, 50) : []));
-        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_FRAGMENTS), String(Math.max(0, Number(snapshot.fragments) || 0)));
-        localStorage.setItem(scopeKey(STORAGE_KEY_GACHA_OWNED), JSON.stringify(Array.isArray(snapshot.ownedItems) ? snapshot.ownedItems : []));
-    };
-
-    const resetGachaScopedData = () => {
-        [
-            STORAGE_KEY_GACHA_CURRENCY,
-            STORAGE_KEY_GACHA_PITY,
-            STORAGE_KEY_GACHA_HISTORY,
-            STORAGE_KEY_CURRENCY_LOG,
-            STORAGE_KEY_GACHA_FRAGMENTS,
-            STORAGE_KEY_GACHA_OWNED,
-        ].forEach(key => localStorage.removeItem(getGachaScopedStorageKey(key)));
-    };
-
-    const importGachaSnapshotFromFile = (onImported = null, options = {}) => {
-        const doc = options.ownerDocument || getHostDocument();
-        const externalIsAlive = typeof options.isAlive === 'function' ? options.isAlive : () => true;
-        const input = doc.createElement('input');
-        input.type = 'file';
-        input.accept = '.json,application/json';
-        input.style.display = 'none';
-        let reader = null;
-        const handle = createGachaSecondaryHandle({
-            root: input,
-            cleanup: () => {
-                if (reader && reader.readyState === 1 && typeof reader.abort === 'function') reader.abort();
-                input.remove();
-            },
-            onDestroy: options.onDestroy || null,
-        });
-        const isAlive = () => handle.isAlive() && externalIsAlive();
-        doc.body.appendChild(input);
-        input.addEventListener('change', () => {
-            const file = input.files && input.files[0];
-            if (!file || !isAlive()) {
-                handle.destroy();
-                return;
-            }
-            const FileReaderCtor = doc.defaultView?.FileReader || FileReader;
-            reader = new FileReaderCtor();
-            reader.onload = async (ev) => {
-                try {
-                    if (!isAlive()) return;
-                    const snapshot = JSON.parse(String(ev.target?.result || ''));
-                    if (!isAlive()) return;
-                    importGachaScopedSnapshot(snapshot);
-                    if (!isAlive()) return;
-                    if (window.toastr) window.toastr.success('当前聊天抽卡数据已导入');
-                    if (typeof onImported === 'function') onImported();
-                    else {
-                        const { $ } = getCore();
-                        if ($) $('.acu-edit-overlay').remove();
-                        showGachaPanel();
-                    }
-                } catch (err) {
-                    if (isAlive() && window.toastr) window.toastr.error('抽卡数据导入失败：' + (err.message || '未知错误'));
-                } finally {
-                    handle.destroy();
-                }
-            };
-            reader.readAsText(file, 'utf-8');
-        });
-        input.click();
-        return handle;
-    };
-
-    const validateGachaCatalog = () => {
-        const allItems = getAllGachaItemDefinitions();
-        const flat = [
-            ...(allItems.supernatural || []),
-            ...(allItems.clue || []),
-            ...(allItems.knowledge || []),
-        ];
-        const issues = [];
-        const names = new Map();
-        const rawData = getTableData();
-        const tables = rawData ? processJsonData(rawData) : {};
-        const targetExists = (item) => {
-            if (!item.targetTable) return false;
-            if (rawData && rawData[item.targetTable]) return true;
-            return Object.values(tables || {}).some(table => table?.key === item.targetTable || String(table?.name || '').includes(item.targetTable));
-        };
-        flat.forEach(item => {
-            if (!item.id) issues.push({ level: 'error', item: item.name || '未命名', message: '缺少 id' });
-            if (!item.name) issues.push({ level: 'error', item: item.id || '未知', message: '缺少名称' });
-            if (!item.type || !Object.values(GACHA_ITEM_TYPE).includes(item.type)) issues.push({ level: 'error', item: item.name || item.id, message: '类型无效' });
-            if (!item.rarity || typeof item.rarity.probability !== 'number' || item.rarity.probability <= 0) issues.push({ level: 'error', item: item.name || item.id, message: '稀有度概率无效' });
-            if (!item.effect && !item.description) issues.push({ level: 'warn', item: item.name || item.id, message: '缺少效果或描述' });
-            if (!targetExists(item)) issues.push({ level: 'warn', item: item.name || item.id, message: `目标表不可用：${item.targetTable || '未指定'}` });
-            const nameKey = normalizePromptText(item.name);
-            if (nameKey) {
-                const current = names.get(nameKey) || [];
-                current.push(item.id);
-                names.set(nameKey, current);
-            }
-        });
-        names.forEach((ids, name) => {
-            if (ids.length > 1) issues.push({ level: 'warn', item: name, message: `重复名称：${ids.join(' / ')}` });
-        });
-        return {
-            total: flat.length,
-            issues,
-            errors: issues.filter(item => item.level === 'error').length,
-            warnings: issues.filter(item => item.level !== 'error').length,
-        };
-    };
-
-    const buildGachaEconomySummary = () => {
-        const log = getCurrencyLog();
-        const history = getGachaHistory();
-        const owned = getOwnedItems();
-        const incomeByType = log.reduce((acc, entry) => {
-            const type = entry.type || 'unknown';
-            acc[type] = (acc[type] || 0) + (Number(entry.amount) || 0);
-            return acc;
-        }, {});
-        const rarityCounts = history.reduce((acc, entry) => {
-            const name = entry?.item?.rarity?.name || '未知';
-            acc[name] = (acc[name] || 0) + 1;
-            return acc;
-        }, {});
-        return {
-            scope: getActiveGachaChatScope(),
-            currency: getGachaCurrency(),
-            fragments: getGachaFragments(),
-            pity: getGachaPity(),
-            historyCount: history.length,
-            ownedCount: owned.length,
-            incomeTotal: Object.values(incomeByType).reduce((sum, value) => sum + value, 0),
-            incomeByType,
-            rarityCounts,
-            estimatedSpend: history.length * GACHA_CURRENCY.cost.single,
-        };
-    };
-
-    const gachaPanelMounts = new WeakMap();
-
-    // 只信任宿主文档的 DOM realm，并用原生 Node getter 拒绝伪造 Element 原型链的对象。
-    const isGachaPanelHostElement = (value, trustedDocument = getHostDocument()) => {
+    const isAlive = () => handle.isAlive() && externalIsAlive();
+    doc.body.appendChild(input);
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file || !isAlive()) {
+        handle.destroy();
+        return;
+      }
+      const FileReaderCtor = doc.defaultView?.FileReader || FileReader;
+      reader = new FileReaderCtor();
+      reader.onload = async ev => {
         try {
-            if (value?.ownerDocument !== trustedDocument) return false;
-            const ElementCtor = trustedDocument?.defaultView?.Element;
-            const NodeCtor = trustedDocument?.defaultView?.Node;
-            const nodeTypeGetter = Object.getOwnPropertyDescriptor(NodeCtor?.prototype, 'nodeType')?.get;
-            return typeof ElementCtor === 'function'
-                && typeof nodeTypeGetter === 'function'
-                && value instanceof ElementCtor
-                && nodeTypeGetter.call(value) === 1;
-        } catch (e) {
-            return false;
+          if (!isAlive()) return;
+          const snapshot = JSON.parse(String(ev.target?.result || ''));
+          if (!isAlive()) return;
+          importGachaScopedSnapshot(snapshot);
+          if (!isAlive()) return;
+          if (window.toastr) window.toastr.success('当前聊天抽卡数据已导入');
+          if (typeof onImported === 'function') onImported();
+          else {
+            const { $ } = getCore();
+            if ($) $('.acu-edit-overlay').remove();
+            showGachaPanel();
+          }
+        } catch (err) {
+          if (isAlive() && window.toastr) window.toastr.error('抽卡数据导入失败：' + (err.message || '未知错误'));
+        } finally {
+          handle.destroy();
         }
-    };
+      };
+      reader.readAsText(file, 'utf-8');
+    });
+    input.click();
+    return handle;
+  };
 
-    const createGachaPanelLifecycle = ({ container, isEmbedded, mounts, cleanup, onDestroy = null, onClose = null }) => {
-        let alive = true;
-        let handle = null;
-        const bindHandle = (nextHandle) => { handle = nextHandle; };
-        const isCurrentOwner = () => alive && (!isEmbedded || mounts.get(container) === handle);
-        const destroy = () => {
-            if (!alive) return false;
-            alive = false;
-            cleanup();
-            if (typeof onDestroy === 'function') onDestroy(handle);
-            return true;
-        };
-        const requestClose = () => {
-            if (!isCurrentOwner() || !destroy()) return false;
-            if (isEmbedded && typeof onClose === 'function') {
-                try { onClose(); }
-                catch (e) { console.error('[MFRS] embedded 抽卡面板 onClose 回调失败:', e); }
-            }
-            return true;
-        };
-        return { bindHandle, isCurrentOwner, destroy, requestClose };
+  const validateGachaCatalog = () => {
+    const allItems = getAllGachaItemDefinitions();
+    const flat = [...(allItems.supernatural || []), ...(allItems.clue || []), ...(allItems.knowledge || [])];
+    const issues = [];
+    const names = new Map();
+    const rawData = getTableData();
+    const tables = rawData ? processJsonData(rawData) : {};
+    const targetExists = item => {
+      if (!item.targetTable) return false;
+      if (rawData && rawData[item.targetTable]) return true;
+      return Object.values(tables || {}).some(
+        table => table?.key === item.targetTable || String(table?.name || '').includes(item.targetTable),
+      );
     };
+    flat.forEach(item => {
+      if (!item.id) issues.push({ level: 'error', item: item.name || '未命名', message: '缺少 id' });
+      if (!item.name) issues.push({ level: 'error', item: item.id || '未知', message: '缺少名称' });
+      if (!item.type || !Object.values(GACHA_ITEM_TYPE).includes(item.type))
+        issues.push({ level: 'error', item: item.name || item.id, message: '类型无效' });
+      if (!item.rarity || typeof item.rarity.probability !== 'number' || item.rarity.probability <= 0)
+        issues.push({ level: 'error', item: item.name || item.id, message: '稀有度概率无效' });
+      if (!item.effect && !item.description)
+        issues.push({ level: 'warn', item: item.name || item.id, message: '缺少效果或描述' });
+      if (!targetExists(item))
+        issues.push({
+          level: 'warn',
+          item: item.name || item.id,
+          message: `目标表不可用：${item.targetTable || '未指定'}`,
+        });
+      const nameKey = normalizePromptText(item.name);
+      if (nameKey) {
+        const current = names.get(nameKey) || [];
+        current.push(item.id);
+        names.set(nameKey, current);
+      }
+    });
+    names.forEach((ids, name) => {
+      if (ids.length > 1) issues.push({ level: 'warn', item: name, message: `重复名称：${ids.join(' / ')}` });
+    });
+    return {
+      total: flat.length,
+      issues,
+      errors: issues.filter(item => item.level === 'error').length,
+      warnings: issues.filter(item => item.level !== 'error').length,
+    };
+  };
 
-    const createGachaSecondaryHandle = ({ root, cleanup, onDestroy = null }) => {
-        let alive = true;
-        let handle = null;
-        const isAlive = () => alive;
-        const destroy = () => {
-            if (!alive) return false;
-            alive = false;
-            cleanup();
-            if (typeof onDestroy === 'function') onDestroy(handle);
-            return true;
-        };
-        handle = { root, destroy, isAlive };
+  const buildGachaEconomySummary = () => {
+    const log = getCurrencyLog();
+    const history = getGachaHistory();
+    const owned = getOwnedItems();
+    const incomeByType = log.reduce((acc, entry) => {
+      const type = entry.type || 'unknown';
+      acc[type] = (acc[type] || 0) + (Number(entry.amount) || 0);
+      return acc;
+    }, {});
+    const rarityCounts = history.reduce((acc, entry) => {
+      const name = entry?.item?.rarity?.name || '未知';
+      acc[name] = (acc[name] || 0) + 1;
+      return acc;
+    }, {});
+    return {
+      scope: getActiveGachaChatScope(),
+      currency: getGachaCurrency(),
+      fragments: getGachaFragments(),
+      pity: getGachaPity(),
+      historyCount: history.length,
+      ownedCount: owned.length,
+      incomeTotal: Object.values(incomeByType).reduce((sum, value) => sum + value, 0),
+      incomeByType,
+      rarityCounts,
+      estimatedSpend: history.length * GACHA_CURRENCY.cost.single,
+    };
+  };
+
+  const gachaPanelMounts = new WeakMap();
+
+  // 只信任宿主文档的 DOM realm，并用原生 Node getter 拒绝伪造 Element 原型链的对象。
+  const isGachaPanelHostElement = (value, trustedDocument = getHostDocument()) => {
+    try {
+      if (value?.ownerDocument !== trustedDocument) return false;
+      const ElementCtor = trustedDocument?.defaultView?.Element;
+      const NodeCtor = trustedDocument?.defaultView?.Node;
+      const nodeTypeGetter = Object.getOwnPropertyDescriptor(NodeCtor?.prototype, 'nodeType')?.get;
+      return (
+        typeof ElementCtor === 'function' &&
+        typeof nodeTypeGetter === 'function' &&
+        value instanceof ElementCtor &&
+        nodeTypeGetter.call(value) === 1
+      );
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const createGachaPanelLifecycle = ({ container, isEmbedded, mounts, cleanup, onDestroy = null, onClose = null }) => {
+    let alive = true;
+    let handle = null;
+    const bindHandle = nextHandle => {
+      handle = nextHandle;
+    };
+    const isCurrentOwner = () => alive && (!isEmbedded || mounts.get(container) === handle);
+    const destroy = () => {
+      if (!alive) return false;
+      alive = false;
+      cleanup();
+      if (typeof onDestroy === 'function') onDestroy(handle);
+      return true;
+    };
+    const requestClose = () => {
+      if (!isCurrentOwner() || !destroy()) return false;
+      if (isEmbedded && typeof onClose === 'function') {
+        try {
+          onClose();
+        } catch (e) {
+          console.error('[MFRS] embedded 抽卡面板 onClose 回调失败:', e);
+        }
+      }
+      return true;
+    };
+    return { bindHandle, isCurrentOwner, destroy, requestClose };
+  };
+
+  const createGachaSecondaryHandle = ({ root, cleanup, onDestroy = null }) => {
+    let alive = true;
+    let handle = null;
+    const isAlive = () => alive;
+    const destroy = () => {
+      if (!alive) return false;
+      alive = false;
+      cleanup();
+      if (typeof onDestroy === 'function') onDestroy(handle);
+      return true;
+    };
+    handle = { root, destroy, isAlive };
+    return handle;
+  };
+
+  const createGachaSecondaryRegistry = () => {
+    const handles = new Set();
+    return {
+      track: handle => {
+        if (handle && typeof handle.destroy === 'function' && handle.isAlive?.()) handles.add(handle);
         return handle;
+      },
+      release: handle => handles.delete(handle),
+      destroyAll: () => {
+        const owned = Array.from(handles);
+        handles.clear();
+        owned.forEach(handle => handle.destroy());
+      },
+      get size() {
+        return handles.size;
+      },
     };
+  };
 
-    const createGachaSecondaryRegistry = () => {
-        const handles = new Set();
-        return {
-            track: (handle) => {
-                if (handle && typeof handle.destroy === 'function' && handle.isAlive?.()) handles.add(handle);
-                return handle;
-            },
-            release: (handle) => handles.delete(handle),
-            destroyAll: () => {
-                const owned = Array.from(handles);
-                handles.clear();
-                owned.forEach(handle => handle.destroy());
-            },
-            get size() { return handles.size; },
-        };
+  // overlay 与 embedded 的完整 DOM、业务动作和监听器都由这一实例工厂拥有。
+  const createGachaPanelInstance = ({ container, presentation, onClose = null, onDestroy = null }) => {
+    const { $ } = getCore();
+    if (!$) throw new Error('[MFRS] 抽卡面板需要可用的 jQuery/DOM 环境');
+    const isEmbedded = presentation === 'embedded';
+    const config = getConfig();
+    const currency = getGachaCurrency();
+    const pity = getGachaPity();
+    const economy = buildGachaEconomySummary();
+    const catalogReport = validateGachaCatalog();
+    const scopeText = economy.scope || 'global';
+    const scopeShort = scopeText.length > 18 ? `${scopeText.slice(0, 8)}...${scopeText.slice(-6)}` : scopeText;
+    const buildEconomyDetailHtml = summary => {
+      const incomeText =
+        Object.entries(summary.incomeByType || {})
+          .map(([type, value]) => `${type}:${value}`)
+          .join(' / ') || '暂无收入日志';
+      const rarityText =
+        Object.entries(summary.rarityCounts || {})
+          .map(([name, value]) => `${name}:${value}`)
+          .join(' / ') || '暂无抽卡历史';
+      return `收入：${escapeHtml(incomeText)}<br>稀有度：${escapeHtml(rarityText)}`;
     };
-
-    // overlay 与 embedded 的完整 DOM、业务动作和监听器都由这一实例工厂拥有。
-    const createGachaPanelInstance = ({ container, presentation, onClose = null, onDestroy = null }) => {
-        const { $ } = getCore();
-        if (!$) throw new Error('[MFRS] 抽卡面板需要可用的 jQuery/DOM 环境');
-        const isEmbedded = presentation === 'embedded';
-        const config = getConfig();
-        const currency = getGachaCurrency();
-        const pity = getGachaPity();
-        const economy = buildGachaEconomySummary();
-        const catalogReport = validateGachaCatalog();
-        const scopeText = economy.scope || 'global';
-        const scopeShort = scopeText.length > 18 ? `${scopeText.slice(0, 8)}...${scopeText.slice(-6)}` : scopeText;
-        const buildEconomyDetailHtml = (summary) => {
-            const incomeText = Object.entries(summary.incomeByType || {})
-                .map(([type, value]) => `${type}:${value}`)
-                .join(' / ') || '暂无收入日志';
-            const rarityText = Object.entries(summary.rarityCounts || {})
-                .map(([name, value]) => `${name}:${value}`)
-                .join(' / ') || '暂无抽卡历史';
-            return `收入：${escapeHtml(incomeText)}<br>稀有度：${escapeHtml(rarityText)}`;
-        };
-        const buildPityHtml = (currentPity) => `
+    const buildPityHtml = currentPity => `
             <div>
                 <div style="color:var(--acu-text-sub); margin-bottom:5px;">十连保底 ★★★</div>
                 <div style="color:var(--acu-text-main); font-weight:bold;">下次十连必出</div>
@@ -7375,11 +8728,17 @@
                 <div style="color:var(--acu-text-main); font-weight:bold;">还需 ${Math.max(0, 100 - currentPity.total)} 抽</div>
             </div>
         `;
-        const catalogIssueHtml = catalogReport.issues.length
-            ? catalogReport.issues.slice(0, 5).map(issue => `<div style="color:${issue.level === 'error' ? '#ef4444' : 'var(--acu-text-sub)'}; font-size:11px; line-height:1.5;">${escapeHtml(issue.item)}：${escapeHtml(issue.message)}</div>`).join('')
-            : '<div style="color:var(--acu-text-sub); font-size:11px;">卡池校验正常</div>';
+    const catalogIssueHtml = catalogReport.issues.length
+      ? catalogReport.issues
+          .slice(0, 5)
+          .map(
+            issue =>
+              `<div style="color:${issue.level === 'error' ? '#ef4444' : 'var(--acu-text-sub)'}; font-size:11px; line-height:1.5;">${escapeHtml(issue.item)}：${escapeHtml(issue.message)}</div>`,
+          )
+          .join('')
+      : '<div style="color:var(--acu-text-sub); font-size:11px;">卡池校验正常</div>';
 
-        const dialog = $(`
+    const dialog = $(`
             <div class="acu-gacha-panel acu-gacha-panel--${presentation}${isEmbedded ? '' : ' acu-edit-overlay'}">
                 <div class="acu-edit-dialog acu-theme-${config.theme}">
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -7471,7 +8830,7 @@
                         <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:20px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                                 <div style="color:var(--acu-title-color); font-weight:bold; font-size:14px;">卡池校验</div>
-                                <div style="color:${catalogReport.errors ? '#ef4444' : (catalogReport.warnings ? '#f59e0b' : 'var(--acu-text-sub)')}; font-size:12px;">${catalogReport.total} 件 / ${catalogReport.errors} 错误 / ${catalogReport.warnings} 警告</div>
+                                <div style="color:${catalogReport.errors ? '#ef4444' : catalogReport.warnings ? '#f59e0b' : 'var(--acu-text-sub)'}; font-size:12px;">${catalogReport.total} 件 / ${catalogReport.errors} 错误 / ${catalogReport.warnings} 警告</div>
                             </div>
                             ${catalogIssueHtml}
                         </div>
@@ -7536,102 +8895,105 @@
             </div>
         `);
 
-        // 当前选中的抽卡池
-        let selectedPool = GACHA_POOL_TYPE.ALL;
-        const pendingTimers = new Set();
-        const secondaryRegistry = createGachaSecondaryRegistry();
-        let lifecycle = null;
-        let handle = null;
-        const isCurrentOwner = () => lifecycle?.isCurrentOwner() === true;
-        const schedule = (callback, delay) => {
-            const timer = setTimeout(() => {
-                pendingTimers.delete(timer);
-                if (isCurrentOwner()) callback();
-            }, delay);
-            pendingTimers.add(timer);
-            return timer;
-        };
+    // 当前选中的抽卡池
+    let selectedPool = GACHA_POOL_TYPE.ALL;
+    const pendingTimers = new Set();
+    const secondaryRegistry = createGachaSecondaryRegistry();
+    let lifecycle = null;
+    let handle = null;
+    const isCurrentOwner = () => lifecycle?.isCurrentOwner() === true;
+    const schedule = (callback, delay) => {
+      const timer = setTimeout(() => {
+        pendingTimers.delete(timer);
+        if (isCurrentOwner()) callback();
+      }, delay);
+      pendingTimers.add(timer);
+      return timer;
+    };
 
-        const cleanup = () => {
-            pendingTimers.forEach(timer => clearTimeout(timer));
-            pendingTimers.clear();
-            secondaryRegistry.destroyAll();
-            dialog.stop(true, true);
-            dialog.find('*').stop(true, true);
-            dialog.off('.mfrsGachaPanel');
-            dialog.find('*').off('.mfrsGachaPanel');
-            dialog.remove();
-        };
-        lifecycle = createGachaPanelLifecycle({
-            container,
-            isEmbedded,
-            mounts: gachaPanelMounts,
-            cleanup,
-            onDestroy,
-            onClose,
-        });
-        const destroy = lifecycle.destroy;
-        const requestClose = lifecycle.requestClose;
-        handle = { root: dialog[0], destroy };
-        lifecycle.bindHandle(handle);
-        container.appendChild(dialog[0]);
+    const cleanup = () => {
+      pendingTimers.forEach(timer => clearTimeout(timer));
+      pendingTimers.clear();
+      secondaryRegistry.destroyAll();
+      dialog.stop(true, true);
+      dialog.find('*').stop(true, true);
+      dialog.off('.mfrsGachaPanel');
+      dialog.find('*').off('.mfrsGachaPanel');
+      dialog.remove();
+    };
+    lifecycle = createGachaPanelLifecycle({
+      container,
+      isEmbedded,
+      mounts: gachaPanelMounts,
+      cleanup,
+      onDestroy,
+      onClose,
+    });
+    const destroy = lifecycle.destroy;
+    const requestClose = lifecycle.requestClose;
+    handle = { root: dialog[0], destroy };
+    lifecycle.bindHandle(handle);
+    container.appendChild(dialog[0]);
 
-        const trackSecondary = (factory) => {
-            if (!isCurrentOwner()) return null;
-            let secondaryHandle = null;
-            secondaryHandle = factory(() => secondaryRegistry.release(secondaryHandle));
-            if (!secondaryHandle || !secondaryHandle.isAlive?.()) return secondaryHandle;
-            if (!isCurrentOwner()) {
-                secondaryHandle.destroy();
-                return secondaryHandle;
-            }
-            return secondaryRegistry.track(secondaryHandle);
-        };
+    const trackSecondary = factory => {
+      if (!isCurrentOwner()) return null;
+      let secondaryHandle = null;
+      secondaryHandle = factory(() => secondaryRegistry.release(secondaryHandle));
+      if (!secondaryHandle || !secondaryHandle.isAlive?.()) return secondaryHandle;
+      if (!isCurrentOwner()) {
+        secondaryHandle.destroy();
+        return secondaryHandle;
+      }
+      return secondaryRegistry.track(secondaryHandle);
+    };
 
-        const refreshPanelData = ({ resetInteraction = false } = {}) => {
-            if (!isCurrentOwner()) return;
-            const nextEconomy = buildGachaEconomySummary();
-            dialog.find('#gacha-currency-display').text(getGachaCurrency());
-            dialog.find('#gacha-fragment-display').text(getGachaFragments());
-            dialog.find('#gacha-economy-income').text(nextEconomy.incomeTotal);
-            dialog.find('#gacha-economy-spend').text(nextEconomy.estimatedSpend);
-            dialog.find('#gacha-economy-owned').text(nextEconomy.ownedCount);
-            dialog.find('#gacha-economy-history').text(nextEconomy.historyCount);
-            dialog.find('#gacha-economy-detail').html(buildEconomyDetailHtml(nextEconomy));
-            dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
-            if (!resetInteraction) return;
-            selectedPool = GACHA_POOL_TYPE.ALL;
-            dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
-            dialog.find('.gacha-pool-btn[data-pool="all"]').addClass('active').css('border-color', 'var(--acu-highlight)');
-            dialog.find('#gacha-result-items').empty();
-            dialog.find('#gacha-result-container').hide();
-            dialog.find('#gacha-history-content').stop(true, true).hide().empty();
-            dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
-        };
+    const refreshPanelData = ({ resetInteraction = false } = {}) => {
+      if (!isCurrentOwner()) return;
+      const nextEconomy = buildGachaEconomySummary();
+      dialog.find('#gacha-currency-display').text(getGachaCurrency());
+      dialog.find('#gacha-fragment-display').text(getGachaFragments());
+      dialog.find('#gacha-economy-income').text(nextEconomy.incomeTotal);
+      dialog.find('#gacha-economy-spend').text(nextEconomy.estimatedSpend);
+      dialog.find('#gacha-economy-owned').text(nextEconomy.ownedCount);
+      dialog.find('#gacha-economy-history').text(nextEconomy.historyCount);
+      dialog.find('#gacha-economy-detail').html(buildEconomyDetailHtml(nextEconomy));
+      dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
+      if (!resetInteraction) return;
+      selectedPool = GACHA_POOL_TYPE.ALL;
+      dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
+      dialog.find('.gacha-pool-btn[data-pool="all"]').addClass('active').css('border-color', 'var(--acu-highlight)');
+      dialog.find('#gacha-result-items').empty();
+      dialog.find('#gacha-result-container').hide();
+      dialog.find('#gacha-history-content').stop(true, true).hide().empty();
+      dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
+    };
 
-        if (!isEmbedded) {
-            dialog.on('click.mfrsGachaPanel', function(e) {
-                if ($(e.target).hasClass('acu-edit-overlay')) requestClose();
-            });
-        }
+    if (!isEmbedded) {
+      dialog.on('click.mfrsGachaPanel', function (e) {
+        if ($(e.target).hasClass('acu-edit-overlay')) requestClose();
+      });
+    }
 
-        // 按钮悬停效果
-        dialog.find('#gacha-single-btn, #gacha-ten-btn').on('mouseenter.mfrsGachaPanel', function() {
-            $(this).css('transform', 'translateY(-3px) scale(1.02)');
-        }).on('mouseleave.mfrsGachaPanel', function() {
-            $(this).css('transform', 'translateY(0) scale(1)');
-        });
+    // 按钮悬停效果
+    dialog
+      .find('#gacha-single-btn, #gacha-ten-btn')
+      .on('mouseenter.mfrsGachaPanel', function () {
+        $(this).css('transform', 'translateY(-3px) scale(1.02)');
+      })
+      .on('mouseleave.mfrsGachaPanel', function () {
+        $(this).css('transform', 'translateY(0) scale(1)');
+      });
 
-        // 显示抽卡结果
-        const showGachaResult = (items) => {
-            if (!isCurrentOwner()) return;
-            const $resultContainer = dialog.find('#gacha-result-container');
-            const $resultItems = dialog.find('#gacha-result-items');
+    // 显示抽卡结果
+    const showGachaResult = items => {
+      if (!isCurrentOwner()) return;
+      const $resultContainer = dialog.find('#gacha-result-container');
+      const $resultItems = dialog.find('#gacha-result-items');
 
-            $resultItems.empty();
+      $resultItems.empty();
 
-            items.forEach(item => {
-                const $card = $(`
+      items.forEach(item => {
+        const $card = $(`
                     <div class="gacha-result-card" style="background:var(--acu-btn-bg); border:2px solid ${item.rarity.color}; border-radius:10px; padding:12px; text-align:center; position:relative; overflow:hidden; cursor:pointer; transition:transform 0.2s;">
                         <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg, ${item.rarity.color}22 0%, transparent 100%); pointer-events:none;"></div>
                         <div style="position:relative; z-index:1;">
@@ -7643,150 +9005,154 @@
                     </div>
                 `);
 
-                // 翻卡动画
-                $card.css({
-                    opacity: 0,
-                    transform: 'rotateY(90deg)'
-                });
+        // 翻卡动画
+        $card.css({
+          opacity: 0,
+          transform: 'rotateY(90deg)',
+        });
 
-                schedule(() => {
-                    $card.css({
-                        opacity: 1,
-                        transform: 'rotateY(0deg)',
-                        transition: 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-                    });
-                }, Math.random() * 200);
+        schedule(() => {
+          $card.css({
+            opacity: 1,
+            transform: 'rotateY(0deg)',
+            transition: 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+          });
+        }, Math.random() * 200);
 
-                // 悬停放大
-                $card.on('mouseenter.mfrsGachaPanel', function() {
-                    $(this).css('transform', 'scale(1.05)');
-                }).on('mouseleave.mfrsGachaPanel', function() {
-                    $(this).css('transform', 'scale(1)');
-                });
+        // 悬停放大
+        $card
+          .on('mouseenter.mfrsGachaPanel', function () {
+            $(this).css('transform', 'scale(1.05)');
+          })
+          .on('mouseleave.mfrsGachaPanel', function () {
+            $(this).css('transform', 'scale(1)');
+          });
 
-                // 点击显示详情
-                $card.on('click.mfrsGachaPanel', function() {
-                    trackSecondary(release => showGachaItemDetail(item, container.ownerDocument, release));
-                });
+        // 点击显示详情
+        $card.on('click.mfrsGachaPanel', function () {
+          trackSecondary(release => showGachaItemDetail(item, container.ownerDocument, release));
+        });
 
-                $resultItems.append($card);
+        $resultItems.append($card);
+      });
+
+      $resultContainer.show();
+
+      // 滚动到结果区域
+      schedule(() => {
+        $resultContainer[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 600);
+    };
+
+    // 单抽
+    const doSinglePull = async () => {
+      const result = gachaSingle(selectedPool);
+
+      if (!result.success) {
+        if (window.toastr) window.toastr.error(result.error);
+        return;
+      }
+
+      // 更新货币显示
+      dialog.find('#gacha-currency-display').text(result.currency);
+
+      // 更新保底显示
+      dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
+
+      // 显示结果
+      showGachaResult(result.items);
+
+      // 碎片转化提示
+      if (result.fragments && result.fragments.totalFragments > 0) {
+        dialog.find('#gacha-fragment-display').text(getGachaFragments());
+        if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
+      }
+
+      // 同步到数据库：重复项已转为灵异残屑，不再写入表格
+      await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
+      if (!isCurrentOwner()) return;
+      refreshPanelData();
+
+      if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
+    };
+
+    // 十连
+    const doTenPull = async () => {
+      const result = gachaTen(selectedPool);
+
+      if (!result.success) {
+        if (window.toastr) window.toastr.error(result.error);
+        return;
+      }
+
+      // 更新货币显示
+      dialog.find('#gacha-currency-display').text(result.currency);
+
+      // 更新保底显示
+      dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
+
+      // 显示结果
+      showGachaResult(result.items);
+
+      // 碎片转化提示
+      if (result.fragments && result.fragments.totalFragments > 0) {
+        dialog.find('#gacha-fragment-display').text(getGachaFragments());
+        if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
+      }
+
+      // 同步到数据库：重复项已转为灵异残屑，不再写入表格
+      await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
+      if (!isCurrentOwner()) return;
+      refreshPanelData();
+
+      // 统计稀有度
+      const rarityCount = {};
+      result.items.forEach(item => {
+        const level = item.rarity.level;
+        rarityCount[level] = (rarityCount[level] || 0) + 1;
+      });
+
+      const highlights = [];
+      if (rarityCount[6]) highlights.push(`${rarityCount[6]}个神话`);
+      if (rarityCount[5]) highlights.push(`${rarityCount[5]}个传说`);
+      if (rarityCount[4]) highlights.push(`${rarityCount[4]}个史诗`);
+
+      if (highlights.length > 0) {
+        if (window.toastr) window.toastr.success(`十连完成！获得 ${highlights.join('、')}！`);
+      } else {
+        if (window.toastr) window.toastr.success('十连完成！');
+      }
+    };
+
+    // 历史记录折叠/展开
+    const toggleHistory = () => {
+      const $content = dialog.find('#gacha-history-content');
+      const $icon = dialog.find('#gacha-history-toggle').find('i');
+
+      if ($content.is(':visible')) {
+        $content.slideUp(200);
+        $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
+      } else {
+        // 加载历史记录
+        const history = getGachaHistory().slice(0, 20);
+        $content.empty();
+
+        if (history.length === 0) {
+          $content.html(
+            '<div style="text-align:center; color:var(--acu-text-sub); padding:20px; font-size:12px;">暂无抽卡记录</div>',
+          );
+        } else {
+          history.forEach(record => {
+            const item = record.item;
+            const time = new Date(record.timestamp).toLocaleString('zh-CN', {
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
             });
 
-            $resultContainer.show();
-
-            // 滚动到结果区域
-            schedule(() => {
-                $resultContainer[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 600);
-        };
-
-        // 单抽
-        const doSinglePull = async () => {
-            const result = gachaSingle(selectedPool);
-
-            if (!result.success) {
-                if (window.toastr) window.toastr.error(result.error);
-                return;
-            }
-
-            // 更新货币显示
-            dialog.find('#gacha-currency-display').text(result.currency);
-
-            // 更新保底显示
-            dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
-
-            // 显示结果
-            showGachaResult(result.items);
-
-            // 碎片转化提示
-            if (result.fragments && result.fragments.totalFragments > 0) {
-                dialog.find('#gacha-fragment-display').text(getGachaFragments());
-                if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
-            }
-
-            // 同步到数据库：重复项已转为灵异残屑，不再写入表格
-            await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
-            if (!isCurrentOwner()) return;
-            refreshPanelData();
-
-            if (window.toastr) window.toastr.success(`获得 ${result.items[0].rarity.name} ${result.items[0].name}！`);
-        };
-
-        // 十连
-        const doTenPull = async () => {
-            const result = gachaTen(selectedPool);
-
-            if (!result.success) {
-                if (window.toastr) window.toastr.error(result.error);
-                return;
-            }
-
-            // 更新货币显示
-            dialog.find('#gacha-currency-display').text(result.currency);
-
-            // 更新保底显示
-            dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
-
-            // 显示结果
-            showGachaResult(result.items);
-
-            // 碎片转化提示
-            if (result.fragments && result.fragments.totalFragments > 0) {
-                dialog.find('#gacha-fragment-display').text(getGachaFragments());
-                if (window.toastr) window.toastr.info(`重复物品转化为 ${result.fragments.totalFragments} 灵异残屑`);
-            }
-
-            // 同步到数据库：重复项已转为灵异残屑，不再写入表格
-            await syncGachaResultToDatabase(result.items.filter(item => !item.isDuplicate));
-            if (!isCurrentOwner()) return;
-            refreshPanelData();
-
-            // 统计稀有度
-            const rarityCount = {};
-            result.items.forEach(item => {
-                const level = item.rarity.level;
-                rarityCount[level] = (rarityCount[level] || 0) + 1;
-            });
-
-            const highlights = [];
-            if (rarityCount[6]) highlights.push(`${rarityCount[6]}个神话`);
-            if (rarityCount[5]) highlights.push(`${rarityCount[5]}个传说`);
-            if (rarityCount[4]) highlights.push(`${rarityCount[4]}个史诗`);
-
-            if (highlights.length > 0) {
-                if (window.toastr) window.toastr.success(`十连完成！获得 ${highlights.join('、')}！`);
-            } else {
-                if (window.toastr) window.toastr.success('十连完成！');
-            }
-        };
-
-        // 历史记录折叠/展开
-        const toggleHistory = () => {
-            const $content = dialog.find('#gacha-history-content');
-            const $icon = dialog.find('#gacha-history-toggle').find('i');
-
-            if ($content.is(':visible')) {
-                $content.slideUp(200);
-                $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
-                dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
-            } else {
-                // 加载历史记录
-                const history = getGachaHistory().slice(0, 20);
-                $content.empty();
-
-                if (history.length === 0) {
-                    $content.html('<div style="text-align:center; color:var(--acu-text-sub); padding:20px; font-size:12px;">暂无抽卡记录</div>');
-                } else {
-                    history.forEach(record => {
-                        const item = record.item;
-                        const time = new Date(record.timestamp).toLocaleString('zh-CN', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-
-                        $content.append(`
+            $content.append(`
                             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--acu-btn-bg); border-radius:6px; margin-bottom:6px; font-size:12px;">
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <span style="font-size:20px;">${item.icon}</span>
@@ -7798,128 +9164,152 @@
                                 <div style="color:var(--acu-text-sub); font-size:11px;">${time}</div>
                             </div>
                         `);
-                    });
-                }
+          });
+        }
 
-                $content.slideDown(200);
-                $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
-                dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-up"></i> 收起');
-            }
-        };
-
-        // 事件委托：统一处理面板内所有 data-mfrs-action 点击
-        dialog.on('click.mfrsGachaPanel', '[data-mfrs-action]', async function(e) {
-            e.stopPropagation();
-            if (!isCurrentOwner()) return;
-            const action = $(this).data('mfrs-action');
-            switch (action) {
-                case 'gacha-close': requestClose(); break;
-                case 'gacha-custom-editor':
-                    // overlay 保持旧的“关闭主面板后打开编辑器”语义；embedded 保留宿主主面板。
-                    if (!isEmbedded) {
-                        destroy();
-                        showCustomItemEditor(container.ownerDocument);
-                    } else {
-                        trackSecondary(release => showCustomItemEditor(container.ownerDocument, release));
-                    }
-                    break;
-                case 'gacha-export':
-                    downloadJsonFile(getGachaScopedSnapshot(), `mfrs_gacha_${getActiveGachaChatScope()}_${new Date().toISOString().slice(0, 10)}.json`);
-                    if (window.toastr) window.toastr.success('已导出当前聊天抽卡数据');
-                    break;
-                case 'gacha-import':
-                    trackSecondary(release => importGachaSnapshotFromFile(() => {
-                            if (isEmbedded) refreshPanelData({ resetInteraction: true });
-                            else {
-                                destroy();
-                                showGachaPanel();
-                            }
-                        }, {
-                            ownerDocument: container.ownerDocument,
-                            isAlive: isCurrentOwner,
-                            onDestroy: release,
-                        }));
-                    break;
-                case 'gacha-reset-data': {
-                    const ok = await MFRSDialog.showConfirm('只重置当前聊天 scope 下的调查点、保底、历史、奖励日志、残屑和已拥有物品。自定义卡池不会被删除。继续？', {
-                        title: '重置当前聊天抽卡数据',
-                        confirmText: '重置',
-                        danger: true,
-                    });
-                    if (!isCurrentOwner()) break;
-                    if (!ok) break;
-                    resetGachaScopedData();
-                    if (window.toastr) window.toastr.success('已重置当前聊天抽卡数据');
-                    if (isEmbedded) refreshPanelData({ resetInteraction: true });
-                    else {
-                        destroy();
-                        showGachaPanel();
-                    }
-                    break;
-                }
-                case 'gacha-pool-select':
-                    dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
-                    $(this).addClass('active').css('border-color', 'var(--acu-highlight)');
-                    selectedPool = $(this).data('pool');
-                    break;
-                case 'gacha-single': await doSinglePull(); break;
-                case 'gacha-ten': await doTenPull(); break;
-                case 'gacha-shop':
-                    trackSecondary(release => showFragmentShop(
-                        () => { if (isCurrentOwner()) refreshPanelData(); },
-                        container.ownerDocument,
-                        release,
-                    ));
-                    break;
-                case 'gacha-history-toggle': toggleHistory(); break;
-            }
-        });
-
-        return handle;
+        $content.slideDown(200);
+        $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        dialog.find('#gacha-history-toggle').html('<i class="fa-solid fa-chevron-up"></i> 收起');
+      }
     };
 
-    // 兼容入口：无参调用仍在宿主 body 创建完整屏幕 overlay。
-    const showGachaPanel = () => {
-        const body = getHostDocument().body;
-        if (!isGachaPanelHostElement(body)) throw new Error('[MFRS] 无法找到抽卡 overlay 的宿主 body');
-        return createGachaPanelInstance({ container: body, presentation: 'overlay' });
-    };
-
-    // 公开 ownership 契约：同一宿主只保留一个实例，调用方负责持有并 destroy 返回句柄。
-    const mountGachaPanel = (container, options = {}) => {
-        if (!isGachaPanelHostElement(container)) {
-            throw new TypeError('[MFRS] mountPanel(container) 需要可用的 DOM 元素宿主');
-        }
-        if (options === null || typeof options !== 'object') {
-            throw new TypeError('[MFRS] mountPanel(container, options) 的 options 必须是对象');
-        }
-        const onClose = options.onClose;
-        if (onClose !== undefined && typeof onClose !== 'function') {
-            throw new TypeError('[MFRS] mountPanel 的 onClose 必须是函数');
-        }
-
-        const previous = gachaPanelMounts.get(container);
-        if (previous) previous.destroy();
-
-        const handle = createGachaPanelInstance({
-            container,
-            presentation: 'embedded',
-            onClose: onClose || null,
-            onDestroy: (destroyedHandle) => {
-                if (gachaPanelMounts.get(container) === destroyedHandle) gachaPanelMounts.delete(container);
+    // 事件委托：统一处理面板内所有 data-mfrs-action 点击
+    dialog.on('click.mfrsGachaPanel', '[data-mfrs-action]', async function (e) {
+      e.stopPropagation();
+      if (!isCurrentOwner()) return;
+      const action = $(this).data('mfrs-action');
+      switch (action) {
+        case 'gacha-close':
+          requestClose();
+          break;
+        case 'gacha-custom-editor':
+          // overlay 保持旧的“关闭主面板后打开编辑器”语义；embedded 保留宿主主面板。
+          if (!isEmbedded) {
+            destroy();
+            showCustomItemEditor(container.ownerDocument);
+          } else {
+            trackSecondary(release => showCustomItemEditor(container.ownerDocument, release));
+          }
+          break;
+        case 'gacha-export':
+          downloadJsonFile(
+            getGachaScopedSnapshot(),
+            `mfrs_gacha_${getActiveGachaChatScope()}_${new Date().toISOString().slice(0, 10)}.json`,
+          );
+          if (window.toastr) window.toastr.success('已导出当前聊天抽卡数据');
+          break;
+        case 'gacha-import':
+          trackSecondary(release =>
+            importGachaSnapshotFromFile(
+              () => {
+                if (isEmbedded) refreshPanelData({ resetInteraction: true });
+                else {
+                  destroy();
+                  showGachaPanel();
+                }
+              },
+              {
+                ownerDocument: container.ownerDocument,
+                isAlive: isCurrentOwner,
+                onDestroy: release,
+              },
+            ),
+          );
+          break;
+        case 'gacha-reset-data': {
+          const ok = await MFRSDialog.showConfirm(
+            '只重置当前聊天 scope 下的调查点、保底、历史、奖励日志、残屑和已拥有物品。自定义卡池不会被删除。继续？',
+            {
+              title: '重置当前聊天抽卡数据',
+              confirmText: '重置',
+              danger: true,
             },
-        });
-        gachaPanelMounts.set(container, handle);
-        return handle;
-    };
+          );
+          if (!isCurrentOwner()) break;
+          if (!ok) break;
+          resetGachaScopedData();
+          if (window.toastr) window.toastr.success('已重置当前聊天抽卡数据');
+          if (isEmbedded) refreshPanelData({ resetInteraction: true });
+          else {
+            destroy();
+            showGachaPanel();
+          }
+          break;
+        }
+        case 'gacha-pool-select':
+          dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
+          $(this).addClass('active').css('border-color', 'var(--acu-highlight)');
+          selectedPool = $(this).data('pool');
+          break;
+        case 'gacha-single':
+          await doSinglePull();
+          break;
+        case 'gacha-ten':
+          await doTenPull();
+          break;
+        case 'gacha-shop':
+          trackSecondary(release =>
+            showFragmentShop(
+              () => {
+                if (isCurrentOwner()) refreshPanelData();
+              },
+              container.ownerDocument,
+              release,
+            ),
+          );
+          break;
+        case 'gacha-history-toggle':
+          toggleHistory();
+          break;
+      }
+    });
 
-    // 显示物品详情
-    const showGachaItemDetail = (item, ownerDocument = getHostDocument(), onDestroy = null) => {
-        const { $ } = getCore();
-        const config = getConfig();
-        const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
+    return handle;
+  };
 
-        const detailDialog = $(`
+  // 兼容入口：无参调用仍在宿主 body 创建完整屏幕 overlay。
+  const showGachaPanel = () => {
+    const body = getHostDocument().body;
+    if (!isGachaPanelHostElement(body)) throw new Error('[MFRS] 无法找到抽卡 overlay 的宿主 body');
+    return createGachaPanelInstance({ container: body, presentation: 'overlay' });
+  };
+
+  // 公开 ownership 契约：同一宿主只保留一个实例，调用方负责持有并 destroy 返回句柄。
+  const mountGachaPanel = (container, options = {}) => {
+    if (!isGachaPanelHostElement(container)) {
+      throw new TypeError('[MFRS] mountPanel(container) 需要可用的 DOM 元素宿主');
+    }
+    if (options === null || typeof options !== 'object') {
+      throw new TypeError('[MFRS] mountPanel(container, options) 的 options 必须是对象');
+    }
+    const onClose = options.onClose;
+    if (onClose !== undefined && typeof onClose !== 'function') {
+      throw new TypeError('[MFRS] mountPanel 的 onClose 必须是函数');
+    }
+
+    const previous = gachaPanelMounts.get(container);
+    if (previous) previous.destroy();
+
+    const handle = createGachaPanelInstance({
+      container,
+      presentation: 'embedded',
+      onClose: onClose || null,
+      onDestroy: destroyedHandle => {
+        if (gachaPanelMounts.get(container) === destroyedHandle) gachaPanelMounts.delete(container);
+      },
+    });
+    gachaPanelMounts.set(container, handle);
+    return handle;
+  };
+
+  // 显示物品详情
+  const showGachaItemDetail = (item, ownerDocument = getHostDocument(), onDestroy = null) => {
+    const { $ } = getCore();
+    const config = getConfig();
+    const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
+
+    const detailDialog = $(
+      `
             <div class="acu-edit-overlay">
                 <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 500px; max-height: 80vh;">
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -7946,7 +9336,9 @@
                             <div style="color:var(--acu-text-sub); font-size:12px; line-height:1.8;">${item.effectDetail}</div>
                         </div>
 
-                        ${item.usageLimit ? `
+                        ${
+                          item.usageLimit
+                            ? `
                         <div style="background:var(--acu-table-head); border-radius:10px; padding:15px;">
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; font-size:12px;">
                                 <div>
@@ -7959,76 +9351,89 @@
                                 </div>
                             </div>
                         </div>
-                        ` : ''}
+                        `
+                            : ''
+                        }
                     </div>
                 </div>
             </div>
-        `, doc);
+        `,
+      doc,
+    );
 
-        let handle = null;
-        handle = createGachaSecondaryHandle({
-            root: detailDialog[0],
-            cleanup: () => {
-                detailDialog.stop(true, true);
-                detailDialog.find('*').stop(true, true);
-                detailDialog.off('.mfrsGachaSecondary');
-                detailDialog.find('*').off('.mfrsGachaSecondary');
-                detailDialog.remove();
-            },
-            onDestroy,
-        });
-        const closeDetail = () => handle.destroy();
-        $(doc.body).append(detailDialog);
+    let handle = null;
+    handle = createGachaSecondaryHandle({
+      root: detailDialog[0],
+      cleanup: () => {
+        detailDialog.stop(true, true);
+        detailDialog.find('*').stop(true, true);
+        detailDialog.off('.mfrsGachaSecondary');
+        detailDialog.find('*').off('.mfrsGachaSecondary');
+        detailDialog.remove();
+      },
+      onDestroy,
+    });
+    const closeDetail = () => handle.destroy();
+    $(doc.body).append(detailDialog);
 
-        detailDialog.find('.detail-close').on('click.mfrsGachaSecondary', closeDetail);
-        detailDialog.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeDetail(); });
-        return handle;
-    };
+    detailDialog.find('.detail-close').on('click.mfrsGachaSecondary', closeDetail);
+    detailDialog.on('click.mfrsGachaSecondary', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) closeDetail();
+    });
+    return handle;
+  };
 
-    // ═══════════════════ 自定义物品编辑器 ═══════════════════
+  // ═══════════════════ 自定义物品编辑器 ═══════════════════
 
-    /**
-     * 显示自定义物品编辑器 — 列表 + 新增/编辑表单
-     * 支持 3 种物品类型的 tab 切换，区分 builtin（只读）与 custom（可编辑/删除）
-     */
-    const showCustomItemEditor = (ownerDocument = getHostDocument(), onDestroy = null) => {
-        const { $ } = getCore();
-        const config = getConfig();
-        const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
+  /**
+   * 显示自定义物品编辑器 — 列表 + 新增/编辑表单
+   * 支持 3 种物品类型的 tab 切换，区分 builtin（只读）与 custom（可编辑/删除）
+   */
+  const showCustomItemEditor = (ownerDocument = getHostDocument(), onDestroy = null) => {
+    const { $ } = getCore();
+    const config = getConfig();
+    const doc = ownerDocument?.body ? ownerDocument : getHostDocument();
 
-        const RARITY_OPTIONS = Object.entries(GACHA_RARITY).map(([key, val]) =>
-            `<option value="${key}">${val.stars} ${val.name}</option>`
-        ).join('');
+    const RARITY_OPTIONS = Object.entries(GACHA_RARITY)
+      .map(([key, val]) => `<option value="${key}">${val.stars} ${val.name}</option>`)
+      .join('');
 
-        const TYPE_LABELS = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
-        const TYPE_ICONS = { supernatural: 'fa-ghost', clue: 'fa-magnifying-glass', knowledge: 'fa-book' };
+    const TYPE_LABELS = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
+    const TYPE_ICONS = { supernatural: 'fa-ghost', clue: 'fa-magnifying-glass', knowledge: 'fa-book' };
 
-        // 构建物品列表 HTML
-        const buildItemList = (type) => {
-            const allItems = getAllGachaItemDefinitions();
-            const customRaw = getCustomGachaItems();
-            const customIds = new Set((customRaw[type] || []).map(c => c.id));
-            const builtinIds = new Set((BUILTIN_GACHA_ITEMS.items[type] || []).map(b => b.id));
-            const items = allItems[type] || [];
+    // 构建物品列表 HTML
+    const buildItemList = type => {
+      const allItems = getAllGachaItemDefinitions();
+      const customRaw = getCustomGachaItems();
+      const customIds = new Set((customRaw[type] || []).map(c => c.id));
+      const builtinIds = new Set((BUILTIN_GACHA_ITEMS.items[type] || []).map(b => b.id));
+      const items = allItems[type] || [];
 
-            if (items.length === 0) {
-                return '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无物品</div>';
-            }
+      if (items.length === 0) {
+        return '<div style="text-align:center; color:var(--acu-text-sub); padding:30px; font-size:13px;">暂无物品</div>';
+      }
 
-            return items.map(item => {
-                const isBuiltin = builtinIds.has(item.id);
-                const isCustomOverride = isBuiltin && customIds.has(item.id);
-                const isPureCustom = !isBuiltin && customIds.has(item.id);
+      return items
+        .map(item => {
+          const isBuiltin = builtinIds.has(item.id);
+          const isCustomOverride = isBuiltin && customIds.has(item.id);
+          const isPureCustom = !isBuiltin && customIds.has(item.id);
 
-                let badge = '';
-                if (isPureCustom) badge = '<span style="background:#10b981; color:white; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">自定义</span>';
-                else if (isCustomOverride) badge = '<span style="background:#f59e0b; color:white; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">已覆盖</span>';
-                else badge = '<span style="background:var(--acu-border); color:var(--acu-text-sub); font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">内置</span>';
+          let badge = '';
+          if (isPureCustom)
+            badge =
+              '<span style="background:#10b981; color:white; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">自定义</span>';
+          else if (isCustomOverride)
+            badge =
+              '<span style="background:#f59e0b; color:white; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">已覆盖</span>';
+          else
+            badge =
+              '<span style="background:var(--acu-border); color:var(--acu-text-sub); font-size:10px; padding:1px 6px; border-radius:4px; margin-left:6px;">内置</span>';
 
-                const canEdit = isPureCustom || isCustomOverride || isBuiltin; // all can be edited (override)
-                const canDelete = isPureCustom || isCustomOverride; // only custom layer can be deleted
+          const canEdit = isPureCustom || isCustomOverride || isBuiltin; // all can be edited (override)
+          const canDelete = isPureCustom || isCustomOverride; // only custom layer can be deleted
 
-                return `
+          return `
                     <div class="custom-item-row" data-id="${item.id}" data-type="${type}" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--acu-btn-bg); border-radius:8px; margin-bottom:8px; border:1px solid var(--acu-border); transition:border-color 0.2s;">
                         <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
                             <span style="font-size:24px; flex-shrink:0;">${item.icon}</span>
@@ -8044,17 +9449,23 @@
                             <button class="edit-item-btn" data-mfrs-action="editor-edit-item" data-id="${item.id}" data-type="${type}" style="background:var(--acu-highlight); border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="编辑/覆盖">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
-                            ${canDelete ? `
+                            ${
+                              canDelete
+                                ? `
                             <button class="delete-item-btn" data-mfrs-action="editor-delete-item" data-id="${item.id}" data-type="${type}" style="background:#ef4444; border:none; border-radius:5px; padding:4px 10px; cursor:pointer; color:white; font-size:11px;" title="删除自定义覆盖">
                                 <i class="fa-solid fa-trash"></i>
-                            </button>` : ''}
+                            </button>`
+                                : ''
+                            }
                         </div>
                     </div>
                 `;
-            }).join('');
-        };
+        })
+        .join('');
+    };
 
-        const editor = $(`
+    const editor = $(
+      `
             <div class="acu-edit-overlay">
                 <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 700px; max-height: 85vh; display:flex; flex-direction:column;">
                     <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -8097,179 +9508,203 @@
                     </div>
                 </div>
             </div>
-        `, doc);
+        `,
+      doc,
+    );
 
-        let currentType = 'supernatural';
-        const childRegistry = createGachaSecondaryRegistry();
-        const pendingInputs = new Set();
-        let editorHandle = null;
-        editorHandle = createGachaSecondaryHandle({
-            root: editor[0],
-            cleanup: () => {
-                childRegistry.destroyAll();
-                pendingInputs.forEach(input => input.remove());
-                pendingInputs.clear();
-                editor.stop(true, true);
-                editor.find('*').stop(true, true);
-                editor.off('.mfrsGachaSecondary');
-                editor.find('*').off('.mfrsGachaSecondary');
-                editor.remove();
+    let currentType = 'supernatural';
+    const childRegistry = createGachaSecondaryRegistry();
+    const pendingInputs = new Set();
+    let editorHandle = null;
+    editorHandle = createGachaSecondaryHandle({
+      root: editor[0],
+      cleanup: () => {
+        childRegistry.destroyAll();
+        pendingInputs.forEach(input => input.remove());
+        pendingInputs.clear();
+        editor.stop(true, true);
+        editor.find('*').stop(true, true);
+        editor.off('.mfrsGachaSecondary');
+        editor.find('*').off('.mfrsGachaSecondary');
+        editor.remove();
+      },
+      onDestroy,
+    });
+
+    // 关闭编辑器
+    const closeEditor = () => editorHandle.destroy();
+    editor.on('click.mfrsGachaSecondary', function (e) {
+      if ($(e.target).hasClass('acu-edit-overlay')) closeEditor();
+    });
+
+    // Tab 切换由容器委托处理
+
+    // 新增物品由容器委托处理
+
+    // 导出物品目录 JSON（builtin∪custom 全集）
+    const doExport = async () => {
+      try {
+        const allItems = getAllGachaItemDefinitions();
+        // 导出时将 rarity 对象还原为 key 字符串，方便导入
+        const exportData = { supernatural: [], clue: [], knowledge: [] };
+        for (const type of ['supernatural', 'clue', 'knowledge']) {
+          exportData[type] = (allItems[type] || []).map(item => {
+            const cleaned = { ...item };
+            // rarity 对象 → key 字符串
+            if (cleaned.rarity && typeof cleaned.rarity === 'object' && cleaned.rarity.level) {
+              const found = Object.entries(GACHA_RARITY).find(([, v]) => v.level === cleaned.rarity.level);
+              cleaned.rarity = found ? found[0] : 'COMMON';
+            }
+            // 移除运行时字段
+            delete cleaned.targetTable;
+            return cleaned;
+          });
+        }
+        const json = JSON.stringify(exportData, null, 2);
+        const BlobCtor = doc.defaultView?.Blob || Blob;
+        const urlApi = doc.defaultView?.URL || URL;
+        const blob = new BlobCtor([json], { type: 'application/json' });
+        const url = urlApi.createObjectURL(blob);
+        const a = doc.createElement('a');
+        a.href = url;
+        a.download = `gacha_items_catalog_${new Date().toISOString().slice(0, 10)}.json`;
+        doc.body.appendChild(a);
+        a.click();
+        doc.body.removeChild(a);
+        urlApi.revokeObjectURL(url);
+      } catch (e) {
+        console.error('Export failed:', e);
+        await MFRSDialog.showAlert('导出失败: ' + e.message, { title: '导出错误' });
+      }
+    };
+
+    // 导入物品 JSON → 覆盖/新增到 custom 层
+    const doImport = () => {
+      const fileInput = doc.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json';
+      fileInput.style.display = 'none';
+      fileInput.addEventListener('change', e => {
+        pendingInputs.delete(fileInput);
+        const file = e.target.files[0];
+        if (!file || !editorHandle.isAlive()) {
+          fileInput.remove();
+          return;
+        }
+        const FileReaderCtor = doc.defaultView?.FileReader || FileReader;
+        const reader = new FileReaderCtor();
+        reader.onload = async ev => {
+          try {
+            if (!editorHandle.isAlive()) return;
+            const data = JSON.parse(ev.target.result);
+            if (!editorHandle.isAlive()) return;
+            // 验证格式
+            const validTypes = ['supernatural', 'clue', 'knowledge'];
+            const hasValidType = validTypes.some(t => Array.isArray(data[t]) && data[t].length > 0);
+            if (!hasValidType) {
+              await MFRSDialog.showAlert(
+                '无效的物品目录格式。\n需要包含 supernatural / clue / knowledge 数组的 JSON 对象。',
+                { title: '格式错误' },
+              );
+              return;
+            }
+            let importCount = 0;
+            for (const type of validTypes) {
+              if (!editorHandle.isAlive()) return;
+              const items = data[type];
+              if (!Array.isArray(items)) continue;
+              for (const item of items) {
+                if (!item.id || !item.name) continue; // 跳过无效项
+                // 确保 type 字段存在
+                const itemDef = { ...item, type };
+                addCustomGachaItem(type, itemDef);
+                importCount++;
+              }
+            }
+            if (!editorHandle.isAlive()) return;
+            // 刷新列表
+            editor.find('#custom-item-list').html(buildItemList(currentType));
+            MFRSDialog.showToast(`导入成功！共导入 ${importCount} 个物品到自定义层`, 'success');
+          } catch (parseErr) {
+            if (!editorHandle.isAlive()) return;
+            console.error('Import parse failed:', parseErr);
+            await MFRSDialog.showAlert('JSON 解析失败: ' + parseErr.message, { title: '解析错误' });
+          }
+        };
+        reader.readAsText(file);
+        fileInput.remove();
+      });
+      pendingInputs.add(fileInput);
+      doc.body.appendChild(fileInput);
+      fileInput.click();
+    };
+
+    // AI 生成物品（按神秘复苏原著风格）
+    const doAIGen = async () => {
+      const TYPE_CN = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
+      const typeCn = TYPE_CN[currentType] || '灵异物品';
+
+      // 显示生成中状态
+      const btn = editor.find('#custom-ai-gen-btn');
+      const origHtml = btn.html();
+      btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> 生成中...');
+
+      // 构建 JSON Schema（按当前 tab 类型）
+      const baseProps = {
+        id: { type: 'string', description: '唯一标识，格式为 custom_<type>_<timestamp>' },
+        name: { type: 'string', description: '物品名称，2-6个中文字' },
+        icon: { type: 'string', description: '一个 emoji 表情作为图标' },
+        rarity: {
+          type: 'string',
+          enum: ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'],
+          description: '稀有度',
+        },
+        description: { type: 'string', description: '物品背景描述，20-50字' },
+        effect: { type: 'string', description: '效果简述，5-15字' },
+        effectDetail: { type: 'string', description: '效果详细说明，20-60字' },
+      };
+      const baseRequired = [
+        'id',
+        'name',
+        'icon',
+        'rarity',
+        'description',
+        'effect',
+        'effectDetail',
+        'cost',
+        'narrativeHook',
+      ];
+
+      let itemSchema;
+      if (currentType === 'supernatural') {
+        itemSchema = {
+          type: 'object',
+          properties: {
+            ...baseProps,
+            cost: { type: 'string', description: '使用代价或风险，体现灵异物品的危险性（10-50字）' },
+            narrativeHook: { type: 'string', description: '剧情钩子，可供 AI/GM 展开的故事线索（15-60字）' },
+            usageLimit: {
+              oneOf: [{ type: 'number' }, { type: 'string', enum: ['unlimited', 'stack'] }],
+              description: '使用次数限制',
             },
-            onDestroy,
-        });
-
-        // 关闭编辑器
-        const closeEditor = () => editorHandle.destroy();
-        editor.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeEditor(); });
-
-        // Tab 切换由容器委托处理
-
-        // 新增物品由容器委托处理
-
-        // 导出物品目录 JSON（builtin∪custom 全集）
-        const doExport = async () => {
-            try {
-                const allItems = getAllGachaItemDefinitions();
-                // 导出时将 rarity 对象还原为 key 字符串，方便导入
-                const exportData = { supernatural: [], clue: [], knowledge: [] };
-                for (const type of ['supernatural', 'clue', 'knowledge']) {
-                    exportData[type] = (allItems[type] || []).map(item => {
-                        const cleaned = { ...item };
-                        // rarity 对象 → key 字符串
-                        if (cleaned.rarity && typeof cleaned.rarity === 'object' && cleaned.rarity.level) {
-                            const found = Object.entries(GACHA_RARITY).find(([, v]) => v.level === cleaned.rarity.level);
-                            cleaned.rarity = found ? found[0] : 'COMMON';
-                        }
-                        // 移除运行时字段
-                        delete cleaned.targetTable;
-                        return cleaned;
-                    });
-                }
-                const json = JSON.stringify(exportData, null, 2);
-                const BlobCtor = doc.defaultView?.Blob || Blob;
-                const urlApi = doc.defaultView?.URL || URL;
-                const blob = new BlobCtor([json], { type: 'application/json' });
-                const url = urlApi.createObjectURL(blob);
-                const a = doc.createElement('a');
-                a.href = url;
-                a.download = `gacha_items_catalog_${new Date().toISOString().slice(0,10)}.json`;
-                doc.body.appendChild(a);
-                a.click();
-                doc.body.removeChild(a);
-                urlApi.revokeObjectURL(url);
-            } catch (e) {
-                console.error('Export failed:', e);
-                await MFRSDialog.showAlert('导出失败: ' + e.message, { title: '导出错误' });
-            }
+            duration: { type: 'string', description: '持续时间描述' },
+          },
+          required: [...baseRequired, 'usageLimit', 'duration'],
         };
-
-        // 导入物品 JSON → 覆盖/新增到 custom 层
-        const doImport = () => {
-            const fileInput = doc.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = '.json';
-            fileInput.style.display = 'none';
-            fileInput.addEventListener('change', (e) => {
-                pendingInputs.delete(fileInput);
-                const file = e.target.files[0];
-                if (!file || !editorHandle.isAlive()) {
-                    fileInput.remove();
-                    return;
-                }
-                const FileReaderCtor = doc.defaultView?.FileReader || FileReader;
-                const reader = new FileReaderCtor();
-                reader.onload = async (ev) => {
-                    try {
-                        if (!editorHandle.isAlive()) return;
-                        const data = JSON.parse(ev.target.result);
-                        if (!editorHandle.isAlive()) return;
-                        // 验证格式
-                        const validTypes = ['supernatural', 'clue', 'knowledge'];
-                        const hasValidType = validTypes.some(t => Array.isArray(data[t]) && data[t].length > 0);
-                        if (!hasValidType) {
-                            await MFRSDialog.showAlert('无效的物品目录格式。\n需要包含 supernatural / clue / knowledge 数组的 JSON 对象。', { title: '格式错误' });
-                            return;
-                        }
-                        let importCount = 0;
-                        for (const type of validTypes) {
-                            if (!editorHandle.isAlive()) return;
-                            const items = data[type];
-                            if (!Array.isArray(items)) continue;
-                            for (const item of items) {
-                                if (!item.id || !item.name) continue; // 跳过无效项
-                                // 确保 type 字段存在
-                                const itemDef = { ...item, type };
-                                addCustomGachaItem(type, itemDef);
-                                importCount++;
-                            }
-                        }
-                        if (!editorHandle.isAlive()) return;
-                        // 刷新列表
-                        editor.find('#custom-item-list').html(buildItemList(currentType));
-                        MFRSDialog.showToast(`导入成功！共导入 ${importCount} 个物品到自定义层`, 'success');
-                    } catch (parseErr) {
-                        if (!editorHandle.isAlive()) return;
-                        console.error('Import parse failed:', parseErr);
-                        await MFRSDialog.showAlert('JSON 解析失败: ' + parseErr.message, { title: '解析错误' });
-                    }
-                };
-                reader.readAsText(file);
-                fileInput.remove();
-            });
-            pendingInputs.add(fileInput);
-            doc.body.appendChild(fileInput);
-            fileInput.click();
+      } else {
+        itemSchema = {
+          type: 'object',
+          properties: {
+            ...baseProps,
+            cost: { type: 'string', description: '获取或使用该信息的代价或风险（10-50字）' },
+            narrativeHook: { type: 'string', description: '剧情钩子，可供 AI/GM 展开的故事线索（15-60字）' },
+            progress: { type: 'number', minimum: 0.05, maximum: 0.5, description: '进度贡献值' },
+          },
+          required: [...baseRequired, 'progress'],
         };
+      }
 
-        // AI 生成物品（按神秘复苏原著风格）
-        const doAIGen = async () => {
-            const TYPE_CN = { supernatural: '灵异物品', clue: '线索', knowledge: '知识' };
-            const typeCn = TYPE_CN[currentType] || '灵异物品';
-
-            // 显示生成中状态
-            const btn = editor.find('#custom-ai-gen-btn');
-            const origHtml = btn.html();
-            btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> 生成中...');
-
-            // 构建 JSON Schema（按当前 tab 类型）
-            const baseProps = {
-                id: { type: 'string', description: '唯一标识，格式为 custom_<type>_<timestamp>' },
-                name: { type: 'string', description: '物品名称，2-6个中文字' },
-                icon: { type: 'string', description: '一个 emoji 表情作为图标' },
-                rarity: { type: 'string', enum: ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'], description: '稀有度' },
-                description: { type: 'string', description: '物品背景描述，20-50字' },
-                effect: { type: 'string', description: '效果简述，5-15字' },
-                effectDetail: { type: 'string', description: '效果详细说明，20-60字' }
-            };
-            const baseRequired = ['id', 'name', 'icon', 'rarity', 'description', 'effect', 'effectDetail', 'cost', 'narrativeHook'];
-
-            let itemSchema;
-            if (currentType === 'supernatural') {
-                itemSchema = {
-                    type: 'object',
-                    properties: {
-                        ...baseProps,
-                        cost: { type: 'string', description: '使用代价或风险，体现灵异物品的危险性（10-50字）' },
-                        narrativeHook: { type: 'string', description: '剧情钩子，可供 AI/GM 展开的故事线索（15-60字）' },
-                        usageLimit: { oneOf: [{ type: 'number' }, { type: 'string', enum: ['unlimited', 'stack'] }], description: '使用次数限制' },
-                        duration: { type: 'string', description: '持续时间描述' }
-                    },
-                    required: [...baseRequired, 'usageLimit', 'duration']
-                };
-            } else {
-                itemSchema = {
-                    type: 'object',
-                    properties: {
-                        ...baseProps,
-                        cost: { type: 'string', description: '获取或使用该信息的代价或风险（10-50字）' },
-                        narrativeHook: { type: 'string', description: '剧情钩子，可供 AI/GM 展开的故事线索（15-60字）' },
-                        progress: { type: 'number', minimum: 0.05, maximum: 0.5, description: '进度贡献值' }
-                    },
-                    required: [...baseRequired, 'progress']
-                };
-            }
-
-            const systemPrompt = `你是《神秘复苏》小说的灵异物品设计师。请根据小说世界观设计一个全新的${typeCn}。
+      const systemPrompt = `你是《神秘复苏》小说的灵异物品设计师。请根据小说世界观设计一个全新的${typeCn}。
 
 核心设定：
 - 世界正在"复苏"，厉鬼回归人间，驭鬼者利用灵异物品对抗或利用厉鬼
@@ -8291,241 +9726,301 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
 
 请设计一个独特且符合世界观的${typeCn}，id 格式为 custom_${currentType}_${Date.now()}。`;
 
+      try {
+        // generateRaw 是酒馆助手接口（@types/function/generate.d.ts），
+        // 必须经 window.TavernHelper 调用，不可裸调（裸调在 iframe 闭包里是未定义标识符）。
+        const th = (window.parent || window).TavernHelper;
+        if (!th || typeof th.generateRaw !== 'function') {
+          throw new Error('酒馆助手 generateRaw 接口不可用');
+        }
+
+        const result = await th.generateRaw({
+          should_silence: true,
+          // 当前常用的“假流式”自定义 OpenAI 源在非流式 quiet 请求下会返回空 content；
+          // 强制走流式路径，避免按钮长时间停在“生成中...”或最终 No message generated。
+          should_stream: true,
+          ordered_prompts: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `请设计一个稀有度适中（RARE 或 EPIC）的${typeCn}。直接输出 JSON。` },
+          ],
+          json_schema: {
+            name: 'gacha_item_generation',
+            description: '神秘复苏风格灵异物品生成',
+            value: itemSchema,
+          },
+        });
+        if (!editorHandle.isAlive()) return;
+
+        // 解析结果（json_schema 模式下返回 JSON 字符串）
+        let item;
+        if (typeof result === 'string') {
+          // 后端可能不支持 json_schema 结构化输出，会用 ```json 代码块包裹，
+          // 或在 JSON 前后附带说明文字。这里做容错：剥离 markdown 代码块，
+          // 提取首个 { ... } 平衡对象后再解析。
+          const parseLoose = raw => {
+            let s = String(raw).trim();
+            // 剥离 ```json ... ``` 或 ``` ... ``` 代码块围栏
+            const fence = s.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+            if (fence) s = fence[1].trim();
+            // 直接尝试
             try {
-                // generateRaw 是酒馆助手接口（@types/function/generate.d.ts），
-                // 必须经 window.TavernHelper 调用，不可裸调（裸调在 iframe 闭包里是未定义标识符）。
-                const th = (window.parent || window).TavernHelper;
-                if (!th || typeof th.generateRaw !== 'function') {
-                    throw new Error('酒馆助手 generateRaw 接口不可用');
-                }
-
-                const result = await th.generateRaw({
-                    should_silence: true,
-                    // 当前常用的“假流式”自定义 OpenAI 源在非流式 quiet 请求下会返回空 content；
-                    // 强制走流式路径，避免按钮长时间停在“生成中...”或最终 No message generated。
-                    should_stream: true,
-                    ordered_prompts: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `请设计一个稀有度适中（RARE 或 EPIC）的${typeCn}。直接输出 JSON。` }
-                    ],
-                    json_schema: {
-                        name: 'gacha_item_generation',
-                        description: '神秘复苏风格灵异物品生成',
-                        value: itemSchema
-                    }
-                });
-                if (!editorHandle.isAlive()) return;
-
-                // 解析结果（json_schema 模式下返回 JSON 字符串）
-                let item;
-                if (typeof result === 'string') {
-                    // 后端可能不支持 json_schema 结构化输出，会用 ```json 代码块包裹，
-                    // 或在 JSON 前后附带说明文字。这里做容错：剥离 markdown 代码块，
-                    // 提取首个 { ... } 平衡对象后再解析。
-                    const parseLoose = (raw) => {
-                        let s = String(raw).trim();
-                        // 剥离 ```json ... ``` 或 ``` ... ``` 代码块围栏
-                        const fence = s.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
-                        if (fence) s = fence[1].trim();
-                        // 直接尝试
-                        try { return JSON.parse(s); } catch (_) { /* 继续 */ }
-                        // 提取首个平衡的 {...} 对象
-                        const start = s.indexOf('{');
-                        if (start !== -1) {
-                            let depth = 0, inStr = false, esc = false, end = -1;
-                            for (let i = start; i < s.length; i++) {
-                                const ch = s[i];
-                                if (inStr) {
-                                    if (esc) { esc = false; }
-                                    else if (ch === '\\') { esc = true; }
-                                    else if (ch === '"') { inStr = false; }
-                                } else {
-                                    if (ch === '"') inStr = true;
-                                    else if (ch === '{') depth++;
-                                    else if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
-                                }
-                            }
-                            if (end !== -1) {
-                                try { return JSON.parse(s.slice(start, end + 1)); } catch (_) { /* 失败 */ }
-                            }
-                        }
-                        throw new Error('无法提取有效 JSON');
-                    };
-                    try {
-                        item = parseLoose(result);
-                    } catch (parseErr) {
-                        console.error('AI generation JSON parse failed:', parseErr, 'raw:', result);
-                        throw new Error('AI 返回的内容不是有效的 JSON（当前 AI 后端可能不支持结构化输出）');
-                    }
-                } else {
-                    // tool_calls 结果不应出现（json_schema 与 tools 互斥）
-                    throw new Error('AI 返回了非预期的格式');
-                }
-
-                // 确保 id 唯一
-                if (!item.id || !item.id.startsWith('custom_')) {
-                    item.id = `custom_${currentType}_${Date.now()}`;
-                }
-                item.type = currentType;
-
-                // 保存原始值用于检测自动修复
-                const _origIcon = item.icon;
-                const _origEffectDetail = item.effectDetail;
-
-                // 字段补全（第三层问题）：AI 返回的 JSON 可能缺漏必填字段，
-                // 直接传给 showItemForm 会出现空白/undefined。这里按 schema 填入合理默认值，
-                // 保证预填表单始终有可编辑内容，用户可在此基础上确认/修改。
-                const RARITY_ENUM = ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'];
-                if (typeof item.name !== 'string' || !item.name.trim()) item.name = '未命名物品';
-                if ((typeof item.icon !== 'string' || !item.icon.trim()) && typeof item.emoji === 'string' && item.emoji.trim()) {
-                    item.icon = item.emoji.trim();
-                }
-                if (typeof item.icon !== 'string' || !item.icon.trim()) item.icon = '❓';
-                // rarity：接受 enum 字符串或 {level} 对象；非法/缺失则默认 COMMON
-                if (typeof item.rarity === 'string' && RARITY_ENUM.includes(item.rarity.toUpperCase())) {
-                    item.rarity = item.rarity.toUpperCase();
-                } else if (item.rarity && typeof item.rarity === 'object' && item.rarity.level) {
-                    // 保留 {level} 形式，showItemForm 会从 GACHA_RARITY 反查 key
-                } else {
-                    item.rarity = 'COMMON';
-                }
-                if (typeof item.description !== 'string') item.description = '';
-                if (typeof item.effect !== 'string') item.effect = '';
-                if (typeof item.effectDetail !== 'string' || !item.effectDetail.trim()) item.effectDetail = item.effect;
-                if (typeof item.cost !== 'string') item.cost = '';
-                if (typeof item.narrativeHook !== 'string') item.narrativeHook = '';
-                if (currentType === 'supernatural') {
-                    if (item.usageLimit === undefined || item.usageLimit === null) item.usageLimit = 1;
-                    if (typeof item.duration !== 'string' || !item.duration.trim()) item.duration = '短暂';
-                } else {
-                    // progress 应为 0.05-0.5 的数字
-                    if (typeof item.progress !== 'number' || isNaN(item.progress)) item.progress = 0.1;
-                    else item.progress = Math.max(0.05, Math.min(0.5, item.progress));
-                }
-
-                // 检测自动修复的字段，用可操作 toast 提示用户
-                const _autoFixes = [];
-                if ((typeof _origIcon !== "string" || !_origIcon.trim()) && typeof item.emoji === "string" && item.emoji.trim()) {
-                    _autoFixes.push("图标");
-                }
-                if ((typeof _origEffectDetail !== "string" || !_origEffectDetail.trim()) && item.effectDetail === item.effect) {
-                    _autoFixes.push("效果详述");
-                }
-                if (_autoFixes.length > 0) {
-                    MFRSDialog.showToast("AI 返回的" + _autoFixes.join("、") + "字段缺失，已自动补全", "warning", {
-                        duration: 6000,
-                        actionLabel: "查看",
-                        onAction: function() {
-                            if (!editorHandle.isAlive()) return;
-                            _autoFixes.forEach(function(field) {
-                                var el = field === "图标" ? doc.getElementById("form-icon") : doc.getElementById("form-effectDetail");
-                                if (el) {
-                                    el.scrollIntoView({ behavior: "smooth", block: "center" });
-                                    el.style.transition = "box-shadow 0.3s";
-                                    el.style.boxShadow = "0 0 0 2px var(--acu-highlight, #7c3aed)";
-                                    setTimeout(function() { el.style.boxShadow = ""; }, 2500);
-                                }
-                            });
-                        }
-                    });
-                }
-
-                // 打开预填表单让用户确认/修改
-                showItemForm(currentType, item);
-
-            } catch (err) {
-                if (!editorHandle.isAlive()) return;
-                console.error('AI generation failed:', err);
-                MFRSDialog.showToast('AI 生成失败: ' + (err.message || '未知错误') + '\n\n请确认当前已连接 AI 代理且可用。', 'error', { duration: 6000 });
-            } finally {
-                if (editorHandle.isAlive()) btn.prop('disabled', false).html(origHtml);
+              return JSON.parse(s);
+            } catch (_) {
+              /* 继续 */
             }
-        };
-
-        // 列表行 hover 效果（委托绑定，无需逐行重新绑定）
-        editor.on('mouseenter.mfrsGachaSecondary', '.custom-item-row', function() {
-            $(this).css('border-color', 'var(--acu-highlight)');
-        }).on('mouseleave.mfrsGachaSecondary', '.custom-item-row', function() {
-            $(this).css('border-color', 'var(--acu-border)');
-        });
-
-        // 事件委托：统一处理编辑器内所有 data-mfrs-action 点击
-        editor.on('click.mfrsGachaSecondary', '[data-mfrs-action]', async function(e) {
-            e.stopPropagation();
-            if (!editorHandle.isAlive()) return;
-            const action = $(this).data('mfrs-action');
-            switch (action) {
-                case 'editor-close': closeEditor(); break;
-                case 'editor-tab-switch':
-                    editor.find('.custom-type-tab').removeClass('active')
-                        .css({ color: 'var(--acu-text-sub)', 'border-bottom-color': 'transparent', 'font-weight': 'normal' });
-                    $(this).addClass('active')
-                        .css({ color: 'var(--acu-highlight)', 'border-bottom-color': 'var(--acu-highlight)', 'font-weight': 'bold' });
-                    currentType = $(this).data('type');
-                    editor.find('#custom-item-list').html(buildItemList(currentType));
-                    break;
-                case 'editor-add-new': showItemForm(currentType, null); break;
-                case 'editor-export': await doExport(); break;
-                case 'editor-import': doImport(); break;
-                case 'editor-ai-gen': await doAIGen(); break;
-                case 'editor-edit-item': {
-                    const id = $(this).data('id');
-                    const type = $(this).data('type');
-                    const allItems = getAllGachaItemDefinitions();
-                    const item = (allItems[type] || []).find(i => i.id === id);
-                    if (item) showItemForm(type, item);
-                    break;
-                }
-                case 'editor-delete-item': {
-                    const id = $(this).data('id');
-                    const type = $(this).data('type');
-                    const confirmed = await MFRSDialog.showConfirm(`确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`, { title: '删除确认', confirmText: '删除', danger: true });
-                    if (!editorHandle.isAlive()) break;
-                    if (confirmed) {
-                        removeCustomGachaItem(type, id);
-                        editor.find('#custom-item-list').html(buildItemList(currentType));
+            // 提取首个平衡的 {...} 对象
+            const start = s.indexOf('{');
+            if (start !== -1) {
+              let depth = 0,
+                inStr = false,
+                esc = false,
+                end = -1;
+              for (let i = start; i < s.length; i++) {
+                const ch = s[i];
+                if (inStr) {
+                  if (esc) {
+                    esc = false;
+                  } else if (ch === '\\') {
+                    esc = true;
+                  } else if (ch === '"') {
+                    inStr = false;
+                  }
+                } else {
+                  if (ch === '"') inStr = true;
+                  else if (ch === '{') depth++;
+                  else if (ch === '}') {
+                    depth--;
+                    if (depth === 0) {
+                      end = i;
+                      break;
                     }
-                    break;
+                  }
                 }
-            }
-        });
-
-        // 显示物品编辑/新增表单
-        const showItemForm = (type, existingItem) => {
-            if (!editorHandle.isAlive()) return null;
-            const isEdit = !!existingItem;
-            const title = isEdit ? `编辑: ${existingItem.name}` : `新增${TYPE_LABELS[type]}`;
-
-            // 解析 rarity key（如果 existingItem.rarity 是对象，从 GACHA_RARITY 反查 key）
-            let rarityKey = 'COMMON';
-            if (existingItem) {
-                if (typeof existingItem.rarity === 'string') {
-                    rarityKey = existingItem.rarity;
-                } else if (existingItem.rarity && existingItem.rarity.level) {
-                    const found = Object.entries(GACHA_RARITY).find(([, v]) => v.level === existingItem.rarity.level);
-                    if (found) rarityKey = found[0];
+              }
+              if (end !== -1) {
+                try {
+                  return JSON.parse(s.slice(start, end + 1));
+                } catch (_) {
+                  /* 失败 */
                 }
+              }
             }
+            throw new Error('无法提取有效 JSON');
+          };
+          try {
+            item = parseLoose(result);
+          } catch (parseErr) {
+            console.error('AI generation JSON parse failed:', parseErr, 'raw:', result);
+            throw new Error('AI 返回的内容不是有效的 JSON（当前 AI 后端可能不支持结构化输出）');
+          }
+        } else {
+          // tool_calls 结果不应出现（json_schema 与 tools 互斥）
+          throw new Error('AI 返回了非预期的格式');
+        }
 
-            const supFields = type === 'supernatural' ? `
+        // 确保 id 唯一
+        if (!item.id || !item.id.startsWith('custom_')) {
+          item.id = `custom_${currentType}_${Date.now()}`;
+        }
+        item.type = currentType;
+
+        // 保存原始值用于检测自动修复
+        const _origIcon = item.icon;
+        const _origEffectDetail = item.effectDetail;
+
+        // 字段补全（第三层问题）：AI 返回的 JSON 可能缺漏必填字段，
+        // 直接传给 showItemForm 会出现空白/undefined。这里按 schema 填入合理默认值，
+        // 保证预填表单始终有可编辑内容，用户可在此基础上确认/修改。
+        const RARITY_ENUM = ['MYTHIC', 'LEGENDARY', 'EPIC', 'RARE', 'COMMON', 'BASIC'];
+        if (typeof item.name !== 'string' || !item.name.trim()) item.name = '未命名物品';
+        if (
+          (typeof item.icon !== 'string' || !item.icon.trim()) &&
+          typeof item.emoji === 'string' &&
+          item.emoji.trim()
+        ) {
+          item.icon = item.emoji.trim();
+        }
+        if (typeof item.icon !== 'string' || !item.icon.trim()) item.icon = '❓';
+        // rarity：接受 enum 字符串或 {level} 对象；非法/缺失则默认 COMMON
+        if (typeof item.rarity === 'string' && RARITY_ENUM.includes(item.rarity.toUpperCase())) {
+          item.rarity = item.rarity.toUpperCase();
+        } else if (item.rarity && typeof item.rarity === 'object' && item.rarity.level) {
+          // 保留 {level} 形式，showItemForm 会从 GACHA_RARITY 反查 key
+        } else {
+          item.rarity = 'COMMON';
+        }
+        if (typeof item.description !== 'string') item.description = '';
+        if (typeof item.effect !== 'string') item.effect = '';
+        if (typeof item.effectDetail !== 'string' || !item.effectDetail.trim()) item.effectDetail = item.effect;
+        if (typeof item.cost !== 'string') item.cost = '';
+        if (typeof item.narrativeHook !== 'string') item.narrativeHook = '';
+        if (currentType === 'supernatural') {
+          if (item.usageLimit === undefined || item.usageLimit === null) item.usageLimit = 1;
+          if (typeof item.duration !== 'string' || !item.duration.trim()) item.duration = '短暂';
+        } else {
+          // progress 应为 0.05-0.5 的数字
+          if (typeof item.progress !== 'number' || isNaN(item.progress)) item.progress = 0.1;
+          else item.progress = Math.max(0.05, Math.min(0.5, item.progress));
+        }
+
+        // 检测自动修复的字段，用可操作 toast 提示用户
+        const _autoFixes = [];
+        if (
+          (typeof _origIcon !== 'string' || !_origIcon.trim()) &&
+          typeof item.emoji === 'string' &&
+          item.emoji.trim()
+        ) {
+          _autoFixes.push('图标');
+        }
+        if ((typeof _origEffectDetail !== 'string' || !_origEffectDetail.trim()) && item.effectDetail === item.effect) {
+          _autoFixes.push('效果详述');
+        }
+        if (_autoFixes.length > 0) {
+          MFRSDialog.showToast('AI 返回的' + _autoFixes.join('、') + '字段缺失，已自动补全', 'warning', {
+            duration: 6000,
+            actionLabel: '查看',
+            onAction: function () {
+              if (!editorHandle.isAlive()) return;
+              _autoFixes.forEach(function (field) {
+                var el = field === '图标' ? doc.getElementById('form-icon') : doc.getElementById('form-effectDetail');
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  el.style.transition = 'box-shadow 0.3s';
+                  el.style.boxShadow = '0 0 0 2px var(--acu-highlight, #7c3aed)';
+                  setTimeout(function () {
+                    el.style.boxShadow = '';
+                  }, 2500);
+                }
+              });
+            },
+          });
+        }
+
+        // 打开预填表单让用户确认/修改
+        showItemForm(currentType, item);
+      } catch (err) {
+        if (!editorHandle.isAlive()) return;
+        console.error('AI generation failed:', err);
+        MFRSDialog.showToast(
+          'AI 生成失败: ' + (err.message || '未知错误') + '\n\n请确认当前已连接 AI 代理且可用。',
+          'error',
+          { duration: 6000 },
+        );
+      } finally {
+        if (editorHandle.isAlive()) btn.prop('disabled', false).html(origHtml);
+      }
+    };
+
+    // 列表行 hover 效果（委托绑定，无需逐行重新绑定）
+    editor
+      .on('mouseenter.mfrsGachaSecondary', '.custom-item-row', function () {
+        $(this).css('border-color', 'var(--acu-highlight)');
+      })
+      .on('mouseleave.mfrsGachaSecondary', '.custom-item-row', function () {
+        $(this).css('border-color', 'var(--acu-border)');
+      });
+
+    // 事件委托：统一处理编辑器内所有 data-mfrs-action 点击
+    editor.on('click.mfrsGachaSecondary', '[data-mfrs-action]', async function (e) {
+      e.stopPropagation();
+      if (!editorHandle.isAlive()) return;
+      const action = $(this).data('mfrs-action');
+      switch (action) {
+        case 'editor-close':
+          closeEditor();
+          break;
+        case 'editor-tab-switch':
+          editor
+            .find('.custom-type-tab')
+            .removeClass('active')
+            .css({ color: 'var(--acu-text-sub)', 'border-bottom-color': 'transparent', 'font-weight': 'normal' });
+          $(this)
+            .addClass('active')
+            .css({
+              color: 'var(--acu-highlight)',
+              'border-bottom-color': 'var(--acu-highlight)',
+              'font-weight': 'bold',
+            });
+          currentType = $(this).data('type');
+          editor.find('#custom-item-list').html(buildItemList(currentType));
+          break;
+        case 'editor-add-new':
+          showItemForm(currentType, null);
+          break;
+        case 'editor-export':
+          await doExport();
+          break;
+        case 'editor-import':
+          doImport();
+          break;
+        case 'editor-ai-gen':
+          await doAIGen();
+          break;
+        case 'editor-edit-item': {
+          const id = $(this).data('id');
+          const type = $(this).data('type');
+          const allItems = getAllGachaItemDefinitions();
+          const item = (allItems[type] || []).find(i => i.id === id);
+          if (item) showItemForm(type, item);
+          break;
+        }
+        case 'editor-delete-item': {
+          const id = $(this).data('id');
+          const type = $(this).data('type');
+          const confirmed = await MFRSDialog.showConfirm(
+            `确定要删除自定义覆盖「${id}」吗？如果是内置物品的覆盖，将恢复为内置默认值。`,
+            { title: '删除确认', confirmText: '删除', danger: true },
+          );
+          if (!editorHandle.isAlive()) break;
+          if (confirmed) {
+            removeCustomGachaItem(type, id);
+            editor.find('#custom-item-list').html(buildItemList(currentType));
+          }
+          break;
+        }
+      }
+    });
+
+    // 显示物品编辑/新增表单
+    const showItemForm = (type, existingItem) => {
+      if (!editorHandle.isAlive()) return null;
+      const isEdit = !!existingItem;
+      const title = isEdit ? `编辑: ${existingItem.name}` : `新增${TYPE_LABELS[type]}`;
+
+      // 解析 rarity key（如果 existingItem.rarity 是对象，从 GACHA_RARITY 反查 key）
+      let rarityKey = 'COMMON';
+      if (existingItem) {
+        if (typeof existingItem.rarity === 'string') {
+          rarityKey = existingItem.rarity;
+        } else if (existingItem.rarity && existingItem.rarity.level) {
+          const found = Object.entries(GACHA_RARITY).find(([, v]) => v.level === existingItem.rarity.level);
+          if (found) rarityKey = found[0];
+        }
+      }
+
+      const supFields =
+        type === 'supernatural'
+          ? `
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div>
                         <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">使用次数</label>
-                        <input id="form-usageLimit" type="text" value="${isEdit ? (existingItem.usageLimit || '') : ''}" placeholder="如: 3, unlimited, stack" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                        <input id="form-usageLimit" type="text" value="${isEdit ? existingItem.usageLimit || '' : ''}" placeholder="如: 3, unlimited, stack" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
                     </div>
                     <div>
                         <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">持续时间</label>
-                        <input id="form-duration" type="text" value="${isEdit ? (existingItem.duration || '') : ''}" placeholder="如: 永久, 3回合" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                        <input id="form-duration" type="text" value="${isEdit ? existingItem.duration || '' : ''}" placeholder="如: 永久, 3回合" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
                     </div>
                 </div>
-            ` : `
+            `
+          : `
                 <div>
                     <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">进度（0-1）</label>
-                    <input id="form-progress" type="number" min="0" max="1" step="0.1" value="${isEdit ? (existingItem.progress || 0) : 0}" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                    <input id="form-progress" type="number" min="0" max="1" step="0.1" value="${isEdit ? existingItem.progress || 0 : 0}" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
                 </div>
             `;
 
-            const formDialog = $(`
+      const formDialog = $(
+        `
                 <div class="acu-edit-overlay" style="z-index:100001;">
                     <div class="acu-edit-dialog acu-theme-${config.theme}" style="max-width: 550px; max-height: 85vh; display:flex; flex-direction:column;">
                         <div class="acu-edit-title" style="display:flex; justify-content:space-between; align-items:center;">
@@ -8564,17 +10059,17 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                             <!-- 描述 -->
                             <div>
                                 <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">物品描述</label>
-                                <textarea id="form-description" rows="3" placeholder="物品的背景描述..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.description || '') : ''}</textarea>
+                                <textarea id="form-description" rows="3" placeholder="物品的背景描述..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? existingItem.description || '' : ''}</textarea>
                             </div>
 
                             <!-- 效果 -->
                             <div>
                                 <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">效果（简短）</label>
-                                <input id="form-effect" type="text" value="${isEdit ? (existingItem.effect || '') : ''}" placeholder="如: 触碰灵异实体" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
+                                <input id="form-effect" type="text" value="${isEdit ? existingItem.effect || '' : ''}" placeholder="如: 触碰灵异实体" style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; box-sizing:border-box;">
                             </div>
                             <div>
                                 <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">效果详述</label>
-                                <textarea id="form-effectDetail" rows="2" placeholder="效果的详细说明..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.effectDetail || '') : ''}</textarea>
+                                <textarea id="form-effectDetail" rows="2" placeholder="效果的详细说明..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? existingItem.effectDetail || '' : ''}</textarea>
                             </div>
 
                             <!-- 类型特有字段 -->
@@ -8583,13 +10078,13 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                             <!-- 使用代价 -->
                             <div>
                                 <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">使用代价（cost）</label>
-                                <textarea id="form-cost" rows="2" placeholder="使用此物品的代价或风险..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.cost || '') : ''}</textarea>
+                                <textarea id="form-cost" rows="2" placeholder="使用此物品的代价或风险..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? existingItem.cost || '' : ''}</textarea>
                             </div>
 
                             <!-- 剧情钩子 -->
                             <div>
                                 <label style="display:block; color:var(--acu-text-sub); font-size:11px; margin-bottom:4px;">剧情钩子（narrativeHook）</label>
-                                <textarea id="form-narrativeHook" rows="2" placeholder="此物品可引出的剧情线索或故事展开..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? (existingItem.narrativeHook || '') : ''}</textarea>
+                                <textarea id="form-narrativeHook" rows="2" placeholder="此物品可引出的剧情线索或故事展开..." style="width:100%; padding:8px 10px; background:var(--acu-btn-bg); border:1px solid var(--acu-border); border-radius:6px; color:var(--acu-text-main); font-size:12px; resize:vertical; box-sizing:border-box;">${isEdit ? existingItem.narrativeHook || '' : ''}</textarea>
                             </div>
 
                             <!-- 保存按钮 -->
@@ -8604,452 +10099,472 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
                         </div>
                     </div>
                 </div>
-            `, doc);
+            `,
+        doc,
+      );
 
-            // 设置稀有度下拉默认值
-            formDialog.find('#form-rarity').val(rarityKey);
+      // 设置稀有度下拉默认值
+      formDialog.find('#form-rarity').val(rarityKey);
 
-            // 关闭表单
-            let formHandle = null;
-            formHandle = createGachaSecondaryHandle({
-                root: formDialog[0],
-                cleanup: () => {
-                    formDialog.stop(true, true);
-                    formDialog.find('*').stop(true, true);
-                    formDialog.off('.mfrsGachaSecondary');
-                    formDialog.find('*').off('.mfrsGachaSecondary');
-                    formDialog.remove();
-                },
-                onDestroy: () => childRegistry.release(formHandle),
-            });
-            childRegistry.track(formHandle);
-            const closeForm = () => formHandle.destroy();
-            formDialog.find('.form-close, .form-cancel-btn').on('click.mfrsGachaSecondary', closeForm);
-            formDialog.on('click.mfrsGachaSecondary', function(e) { if ($(e.target).hasClass('acu-edit-overlay')) closeForm(); });
+      // 关闭表单
+      let formHandle = null;
+      formHandle = createGachaSecondaryHandle({
+        root: formDialog[0],
+        cleanup: () => {
+          formDialog.stop(true, true);
+          formDialog.find('*').stop(true, true);
+          formDialog.off('.mfrsGachaSecondary');
+          formDialog.find('*').off('.mfrsGachaSecondary');
+          formDialog.remove();
+        },
+        onDestroy: () => childRegistry.release(formHandle),
+      });
+      childRegistry.track(formHandle);
+      const closeForm = () => formHandle.destroy();
+      formDialog.find('.form-close, .form-cancel-btn').on('click.mfrsGachaSecondary', closeForm);
+      formDialog.on('click.mfrsGachaSecondary', function (e) {
+        if ($(e.target).hasClass('acu-edit-overlay')) closeForm();
+      });
 
-            // 保存
-            formDialog.find('#form-save-btn').on('click.mfrsGachaSecondary', async () => {
-                if (!editorHandle.isAlive() || !formHandle.isAlive()) return;
-                const id = formDialog.find('#form-id').val().trim();
-                const name = formDialog.find('#form-name').val().trim();
-                const icon = formDialog.find('#form-icon').val().trim();
-                const rarity = formDialog.find('#form-rarity').val();
-                const description = formDialog.find('#form-description').val().trim();
-                const effect = formDialog.find('#form-effect').val().trim();
-                const effectDetail = formDialog.find('#form-effectDetail').val().trim();
+      // 保存
+      formDialog.find('#form-save-btn').on('click.mfrsGachaSecondary', async () => {
+        if (!editorHandle.isAlive() || !formHandle.isAlive()) return;
+        const id = formDialog.find('#form-id').val().trim();
+        const name = formDialog.find('#form-name').val().trim();
+        const icon = formDialog.find('#form-icon').val().trim();
+        const rarity = formDialog.find('#form-rarity').val();
+        const description = formDialog.find('#form-description').val().trim();
+        const effect = formDialog.find('#form-effect').val().trim();
+        const effectDetail = formDialog.find('#form-effectDetail').val().trim();
 
-                // 验证必填项
-                if (!id || !name || !icon) {
-                    await MFRSDialog.showAlert('请填写物品 ID、名称和图标', { title: '必填项缺失' });
-                    return;
-                }
-
-                const itemDef = { id, name, icon, rarity, type, description, effect, effectDetail };
-
-                // 使用代价和剧情钩子
-                const cost = formDialog.find('#form-cost').val().trim();
-                const narrativeHook = formDialog.find('#form-narrativeHook').val().trim();
-                if (cost) itemDef.cost = cost;
-                if (narrativeHook) itemDef.narrativeHook = narrativeHook;
-
-                if (type === 'supernatural') {
-                    const usageLimit = formDialog.find('#form-usageLimit').val().trim();
-                    const duration = formDialog.find('#form-duration').val().trim();
-                    if (usageLimit) itemDef.usageLimit = isNaN(usageLimit) ? usageLimit : Number(usageLimit);
-                    if (duration) itemDef.duration = duration;
-                } else {
-                    const progress = parseFloat(formDialog.find('#form-progress').val()) || 0;
-                    itemDef.progress = Math.max(0, Math.min(1, progress));
-                }
-
-                addCustomGachaItem(type, itemDef);
-                closeForm();
-
-                // 刷新列表
-                editor.find('#custom-item-list').html(buildItemList(currentType));
-            });
-
-            // hover 效果
-            formDialog.find('#form-save-btn').on('mouseenter.mfrsGachaSecondary', function() {
-                $(this).css('transform', 'scale(1.02)');
-            }).on('mouseleave.mfrsGachaSecondary', function() {
-                $(this).css('transform', 'scale(1)');
-            });
-
-            $(doc.body).append(formDialog);
-            return formHandle;
-        };
-
-        $(doc.body).append(editor);
-        return editorHandle;
-    };
-
-    // ═══════════════════ 抽卡写库预校验 ═══════════════════
-
-    /**
-     * 获取下一个可用的线索编号（GLOB 'C[0-9][0-9][0-9][0-9]' 格式）
-     */
-    const getNextClueCode = async () => {
-        try {
-            const frontend = getMysteryFrontendApi();
-            if (frontend && frontend.exportCurrentData) {
-                const data = await frontend.exportCurrentData();
-                const clueTable = data?.sheet_clues;
-                if (clueTable && clueTable.content && clueTable.content.length > 1) {
-                    const codeIdx = clueTable.content[0].indexOf('线索编号');
-                    if (codeIdx >= 0) {
-                        let maxNum = 0;
-                        for (let i = 1; i < clueTable.content.length; i++) {
-                            const code = clueTable.content[i][codeIdx];
-                            if (typeof code === 'string' && /^C\d{4}$/.test(code)) {
-                                maxNum = Math.max(maxNum, parseInt(code.slice(1), 10));
-                            }
-                        }
-                        return `C${String(maxNum + 1).padStart(4, '0')}`;
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('[Gacha] 查询下一线索编号失败:', e);
-        }
-        // Fallback: 基于时间戳生成（仍符合 C[0-9]{4} 格式）
-        return `C${String((Date.now() % 9000) + 1000).padStart(4, '0')}`;
-    };
-
-    const normalizeGachaDedupText = (value) => String(value ?? '').trim().replace(/\s+/g, ' ');
-
-    const getCurrentGachaDatabaseData = async () => {
-        const frontend = getMysteryFrontendApi();
-        if (frontend && typeof frontend.exportCurrentData === 'function') {
-            try {
-                return await frontend.exportCurrentData();
-            } catch (e) {
-                console.warn('[Gacha 去重] 读取 MysteryDatabaseFrontend 数据失败，尝试可视化器快照。', e);
-            }
+        // 验证必填项
+        if (!id || !name || !icon) {
+          await MFRSDialog.showAlert('请填写物品 ID、名称和图标', { title: '必填项缺失' });
+          return;
         }
 
-        try {
-            const data = getTableData();
-            return data && typeof data.then === 'function' ? await data : data;
-        } catch (e) {
-            console.warn('[Gacha 去重] 读取当前数据库快照失败。', e);
-            return null;
-        }
-    };
+        const itemDef = { id, name, icon, rarity, type, description, effect, effectDetail };
 
-    const getGachaSheetSnapshot = (databaseData, sheetKey, sheetName) => {
-        if (!databaseData || typeof databaseData !== 'object') return null;
-        const sheets = databaseData.sheets && typeof databaseData.sheets === 'object'
-            ? databaseData.sheets
-            : databaseData;
-        const sheet = sheets[sheetKey] || Object.values(sheets).find(candidate =>
-            candidate && typeof candidate === 'object'
-            && (candidate.uid === sheetKey || candidate.key === sheetKey || candidate.name === sheetName)
-        );
-        if (!sheet || typeof sheet !== 'object') return null;
-        if (Array.isArray(sheet.content)) {
-            return {
-                headers: Array.isArray(sheet.content[0]) ? sheet.content[0] : [],
-                rows: sheet.content.slice(1).filter(row => Array.isArray(row)),
-            };
-        }
-        if (Array.isArray(sheet.headers) && Array.isArray(sheet.rows)) {
-            return { headers: sheet.headers, rows: sheet.rows.filter(row => Array.isArray(row)) };
-        }
-        return null;
-    };
+        // 使用代价和剧情钩子
+        const cost = formDialog.find('#form-cost').val().trim();
+        const narrativeHook = formDialog.find('#form-narrativeHook').val().trim();
+        if (cost) itemDef.cost = cost;
+        if (narrativeHook) itemDef.narrativeHook = narrativeHook;
 
-    const getGachaSnapshotCell = (snapshot, row, names) => {
-        const idx = findHeaderIndex(snapshot?.headers || [], names);
-        if (idx < 0) return '';
-        return normalizeGachaDedupText(row[idx]);
-    };
-
-    const getGachaDatabaseDedupKey = (item) => {
-        const name = normalizeGachaDedupText(item?.name);
-        if (!name) return '';
-        return `${item.type || 'unknown'}:${name}`;
-    };
-
-    const isGachaItemAlreadyInDatabase = (item, databaseData) => {
-        const name = normalizeGachaDedupText(item?.name);
-        if (!name) return false;
-
-        if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
-            const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_supernatural_items', '灵异物品');
-            return Boolean(snapshot?.rows.some(row =>
-                getGachaSnapshotCell(snapshot, row, ['物品名', '物品名称']) === name
-            ));
-        }
-
-        if (item.type === GACHA_ITEM_TYPE.CLUE) {
-            const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_clues', '线索');
-            const prefix = `${name}：`;
-            return Boolean(snapshot?.rows.some(row => {
-                const source = getGachaSnapshotCell(snapshot, row, ['来源']);
-                const content = getGachaSnapshotCell(snapshot, row, ['内容', '线索描述']);
-                return source === '灵异抽卡' && (content === name || content.startsWith(prefix));
-            }));
-        }
-
-        if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
-            const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_collected_rules', '收录规律');
-            return Boolean(snapshot?.rows.some(row => {
-                const source = getGachaSnapshotCell(snapshot, row, ['获取方式']);
-                const ruleType = getGachaSnapshotCell(snapshot, row, ['规律类型', '规律名称']);
-                return source === '灵异抽卡' && ruleType === name;
-            }));
-        }
-
-        return false;
-    };
-
-    const recordGachaSyncSkip = (results, item, reason) => {
-        results.skipped++;
-        results.skippedItems.push({ item: item?.name || '未知物品', reason });
-        console.info(`[Gacha 写库跳过] ${item?.name || '未知物品'}：${reason}`);
-    };
-
-    /**
-     * 预校验并写入一行数据。优先使用 MysteryDatabaseFrontend.applyTableChangePlan
-     * 走完整校验链路（列名解析 → CHECK 约束 → 长度限制），校验失败则不写入。
-     * @param {string} tableName - 目标表名
-     * @param {Record<string, string>} rowData - 列名→值映射（使用表头中文名）
-     * @returns {Promise<{ok: boolean, errors?: Array}>}
-     */
-    const validateAndInsertGachaRow = async (tableName, rowData) => {
-        const frontend = getMysteryFrontendApi();
-        if (frontend && frontend.applyTableChangePlan) {
-            const plan = { action: 'insertRow', table: tableName, data: rowData };
-
-            // Step 1: 预校验（dry-run，不写入）
-            if (frontend.previewTableChangePlan) {
-                try {
-                    const preview = await frontend.previewTableChangePlan(plan);
-                    if (!preview.ok) {
-                        console.error(`[Gacha 预校验失败] ${tableName}:`, preview.errors);
-                        return preview;
-                    }
-                } catch (e) {
-                    console.warn(`[Gacha] previewTableChangePlan 异常，跳过预校验:`, e);
-                }
-            }
-
-            // Step 2: 写入（含内置校验）
-            try {
-                const result = await frontend.applyTableChangePlan(plan);
-                if (!result.ok) {
-                    console.error(`[Gacha 写入失败] ${tableName}:`, result.errors);
-                } else {
-                    console.info(`[Gacha] 成功写入 ${tableName}`);
-                }
-                return result;
-            } catch (e) {
-                console.error(`[Gacha] applyTableChangePlan 异常:`, e);
-                return { ok: false, errors: [{ code: 'APPLY_EXCEPTION', message: String(e) }] };
-            }
-        }
-
-        // Fallback: 直接通过 MfrsDatabase 写入（无预校验）
-        const crud = window.MfrsDatabase;
-        if (crud && crud.insertRow) {
-            try {
-                await crud.insertRow(tableName, rowData);
-                console.info(`[Gacha] fallback 写入 ${tableName}（未经预校验）`);
-                return { ok: true, errors: [] };
-            } catch (e) {
-                console.error(`[Gacha] fallback 写入失败:`, e);
-                return { ok: false, errors: [{ code: 'FALLBACK_FAILED', message: String(e) }] };
-            }
-        }
-
-        console.warn('[Gacha] 无可用数据库 API，跳过写入');
-        return { ok: false, errors: [{ code: 'API_UNAVAILABLE', message: '无可用数据库 API' }] };
-    };
-
-    // ═══════════════════ 抽卡结果写库（带预校验） ═══════════════════
-
-    /**
-     * 将抽卡结果写入数据库，使用正确的 DDL 列名并经过完整预校验。
-     * 列名映射基于 神秘复苏表格SQL_v1.json 的 content[0] 表头定义。
-     */
-    const syncGachaResultToDatabase = async (items) => {
-        const results = { success: 0, failed: 0, skipped: 0, errors: [], skippedItems: [] };
-        const databaseData = await getCurrentGachaDatabaseData();
-        const batchDedupKeys = new Set();
-
-        for (const item of items) {
-            try {
-                if (item.isDuplicate) {
-                    recordGachaSyncSkip(results, item, '已由抽卡层判定为重复并转化为灵异残屑');
-                    continue;
-                }
-
-                const dedupKey = getGachaDatabaseDedupKey(item);
-                if (dedupKey && batchDedupKeys.has(dedupKey)) {
-                    recordGachaSyncSkip(results, item, '本次抽卡批次内已写入同名结果');
-                    continue;
-                }
-
-                if (isGachaItemAlreadyInDatabase(item, databaseData)) {
-                    recordGachaSyncSkip(results, item, '数据库中已存在同名抽卡结果');
-                    continue;
-                }
-
-                if (dedupKey) batchDedupKeys.add(dedupKey);
-
-                let result;
-                if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
-                    // 灵异物品表：物品名, 类型, 持有人, 所在地点, 数量或状态, 效果(≤160), 副作用(≤120), 使用限制(≤120)
-                    const rowData = {
-                        物品名: item.name,
-                        类型: '灵异物品',
-                        持有人: '{{user}}',
-                        所在地点: '随身',
-                        数量或状态: item.usageLimit === 'unlimited' ? '无限使用'
-                            : item.usageLimit === 'stack' ? '可叠加'
-                            : `${item.usageLimit}次`,
-                        效果: (item.effect || '').slice(0, 160),
-                        副作用: '无',
-                        使用限制: (item.duration || '无').slice(0, 120),
-                    };
-                    result = await validateAndInsertGachaRow('sheet_supernatural_items', rowData);
-
-                } else if (item.type === GACHA_ITEM_TYPE.CLUE) {
-                    // 线索表：线索编号(GLOB C[0-9]{4}), 关联事件, 来源, 内容(≤120), 可信度(IN 低/中/高/误导), 推断(≤160), 验证状态, 可见性
-                    const clueCode = await getNextClueCode();
-                    const rowData = {
-                        线索编号: clueCode,
-                        关联事件: '调查中',
-                        来源: '灵异抽卡',
-                        内容: `${item.name}：${item.description}`.slice(0, 120),
-                        可信度: '中',
-                        推断: (item.effectDetail || item.effect || '').slice(0, 160),
-                        验证状态: '未验证',
-                        可见性: '玩家可见',
-                    };
-                    result = await validateAndInsertGachaRow('sheet_clues', rowData);
-
-                } else if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
-                    // 收录规律表：来源厉鬼, 获取方式, 规律类型, 规律内容(≤180), 规律进阶, 规律分解, 完整度, 风险备注(≤160), 可见摘要(≤180)
-                    const rowData = {
-                        来源厉鬼: '待分配',
-                        获取方式: '灵异抽卡',
-                        规律类型: item.name,
-                        规律内容: (item.description || '').slice(0, 180),
-                        规律进阶: '待研究',
-                        规律分解: '待研究',
-                        完整度: `+${Math.round(item.progress * 100)}%`,
-                        风险备注: (item.effectDetail || '无').slice(0, 160),
-                        可见摘要: (item.effect || '').slice(0, 180),
-                    };
-                    result = await validateAndInsertGachaRow('sheet_collected_rules', rowData);
-                }
-
-                if (result) {
-                    if (result.ok) results.success++;
-                    else {
-                        results.failed++;
-                        results.errors.push({ item: item.name, errors: result.errors });
-                    }
-                }
-            } catch (e) {
-                results.failed++;
-                results.errors.push({ item: item.name, errors: [{ code: 'EXCEPTION', message: String(e) }] });
-                console.error('[Gacha] 写库异常:', item.name, e);
-            }
-        }
-
-        if (results.errors.length > 0) {
-            console.warn(`[Gacha 写库汇总] 成功 ${results.success}, 跳过 ${results.skipped}, 失败 ${results.failed}`, results.errors);
+        if (type === 'supernatural') {
+          const usageLimit = formDialog.find('#form-usageLimit').val().trim();
+          const duration = formDialog.find('#form-duration').val().trim();
+          if (usageLimit) itemDef.usageLimit = isNaN(usageLimit) ? usageLimit : Number(usageLimit);
+          if (duration) itemDef.duration = duration;
         } else {
-            console.info(`[Gacha 写库汇总] 成功 ${results.success} 条，跳过 ${results.skipped} 条`);
+          const progress = parseFloat(formDialog.find('#form-progress').val()) || 0;
+          itemDef.progress = Math.max(0, Math.min(1, progress));
         }
-        if (results.skipped > 0) console.info('[Gacha 写库去重明细]', results.skippedItems);
 
-        // 刷新界面
-        renderInterface();
-        return results;
+        addCustomGachaItem(type, itemDef);
+        closeForm();
+
+        // 刷新列表
+        editor.find('#custom-item-list').html(buildItemList(currentType));
+      });
+
+      // hover 效果
+      formDialog
+        .find('#form-save-btn')
+        .on('mouseenter.mfrsGachaSecondary', function () {
+          $(this).css('transform', 'scale(1.02)');
+        })
+        .on('mouseleave.mfrsGachaSecondary', function () {
+          $(this).css('transform', 'scale(1)');
+        });
+
+      $(doc.body).append(formDialog);
+      return formHandle;
     };
 
-    // ==================== window.MFRS 公开 API ====================
-    // 把抽卡/碎片/自定义物品核心函数挂到 window.MFRS，供外部脚本或控制台调用。
-    // 所有函数均为闭包内定义的原始引用，调用等价于内部直接调用。
-    // UI 类函数依赖 jQuery/DOM，需在页面加载后调用；mountPanel 返回调用方拥有的清理句柄。
-    // 注意：挂载对象的 key 和 value 不能同名，否则 webpack minifier 会优化为简写
-    // {showGachaResult}，但函数变量已被重命名为短名，导致 ReferenceError。
+    $(doc.body).append(editor);
+    return editorHandle;
+  };
+
+  // ═══════════════════ 抽卡写库预校验 ═══════════════════
+
+  /**
+   * 获取下一个可用的线索编号（GLOB 'C[0-9][0-9][0-9][0-9]' 格式）
+   */
+  const getNextClueCode = async () => {
     try {
-        const host = getHost();
-        host.MFRS = Object.assign(host.MFRS || {}, {
-            // --- 常量 ---
-            RARITY: GACHA_RARITY,
-            POOL_TYPE: GACHA_POOL_TYPE,
-            ITEM_TYPE: GACHA_ITEM_TYPE,
-            CURRENCY: GACHA_CURRENCY,
-            FRAGMENT: GACHA_FRAGMENT,
-            getStorageScope: getActiveGachaChatScope,
-            // --- 货币（调查点）---
-            getCurrency: getGachaCurrency,
-            setCurrency: setGachaCurrency,
-            addCurrency: addGachaCurrency,
-            deductCurrency: deductGachaCurrency,
-            // --- 保底 ---
-            getPity: getGachaPity,
-            setPity: setGachaPity,
-            resetPity: resetGachaPity,
-            // --- 碎片（灵异残屑）---
-            getFragments: getGachaFragments,
-            setFragments: setGachaFragments,
-            addFragments: addGachaFragments,
-            deductFragments: deductGachaFragments,
-            processFragments: processFragments,
-            exchange: exchangeWithFragments,
-            // --- 已拥有物品 ---
-            getOwnedItems: getOwnedItems,
-            setOwnedItems: setOwnedItems,
-            isItemOwned: isItemOwned,
-            // --- 物品目录 ---
-            getAllItems: getAllGachaItemDefinitions,
-            getCustomItems: getCustomGachaItems,
-            setCustomItems: setCustomGachaItems,
-            addCustomItem: addCustomGachaItem,
-            removeCustomItem: removeCustomGachaItem,
-            // --- 抽卡操作 ---
-            buildPool: buildGachaPool,
-            single: gachaSingle,
-            ten: gachaTen,
-            getHistory: getGachaHistory,
-            exportChatData: getGachaScopedSnapshot,
-            importChatData: importGachaScopedSnapshot,
-            resetChatData: resetGachaScopedData,
-            validateCatalog: validateGachaCatalog,
-            getEconomySummary: buildGachaEconomySummary,
-            // --- UI 入口（需 jQuery/DOM）---
-            // 纯确认能力：业务 API 自己生成权威文案；不暴露任何数据库删除 capability。
-            confirmDanger: ({ title = '确认操作', message = '', confirmText = '确定', cancelText = '取消' } = {}) => MFRSDialog.showConfirm(message, {
-                title,
-                confirmText,
-                cancelText,
-                danger: true,
-            }),
-            showPanel: showGachaPanel,
-            mountPanel: mountGachaPanel,
-            showFragmentShop: showFragmentShop,
-            showCustomEditor: showCustomItemEditor,
-            // showGachaResult 是 showGachaPanel 内部局部变量，IIFE 顶层无法引用，已从公开 API 移除
-            showItemDetail: showGachaItemDetail,
-            // --- 写库 ---
-            syncToDatabase: syncGachaResultToDatabase,
-            validateAndInsert: validateAndInsertGachaRow,
-            // --- 版本 ---
-            version: '1.0',
-        });
-        if (host !== window) window.MFRS = host.MFRS;
-        console.info('[MFRS] window.MFRS API 已挂载，可用方法：getCurrency/single/ten/getAllItems/showPanel/mountPanel 等');
+      const frontend = getMysteryFrontendApi();
+      if (frontend && frontend.exportCurrentData) {
+        const data = await frontend.exportCurrentData();
+        const clueTable = data?.sheet_clues;
+        if (clueTable && clueTable.content && clueTable.content.length > 1) {
+          const codeIdx = clueTable.content[0].indexOf('线索编号');
+          if (codeIdx >= 0) {
+            let maxNum = 0;
+            for (let i = 1; i < clueTable.content.length; i++) {
+              const code = clueTable.content[i][codeIdx];
+              if (typeof code === 'string' && /^C\d{4}$/.test(code)) {
+                maxNum = Math.max(maxNum, parseInt(code.slice(1), 10));
+              }
+            }
+            return `C${String(maxNum + 1).padStart(4, '0')}`;
+          }
+        }
+      }
     } catch (e) {
-        console.error('[MFRS] window.MFRS 挂载失败:', e);
+      console.warn('[Gacha] 查询下一线索编号失败:', e);
+    }
+    // Fallback: 基于时间戳生成（仍符合 C[0-9]{4} 格式）
+    return `C${String((Date.now() % 9000) + 1000).padStart(4, '0')}`;
+  };
+
+  const normalizeGachaDedupText = value =>
+    String(value ?? '')
+      .trim()
+      .replace(/\s+/g, ' ');
+
+  const getCurrentGachaDatabaseData = async () => {
+    const frontend = getMysteryFrontendApi();
+    if (frontend && typeof frontend.exportCurrentData === 'function') {
+      try {
+        return await frontend.exportCurrentData();
+      } catch (e) {
+        console.warn('[Gacha 去重] 读取 MysteryDatabaseFrontend 数据失败，尝试可视化器快照。', e);
+      }
     }
 
-    const { $ } = getCore();
-    if ($) $(document).ready(init); else window.addEventListener('load', init);
+    try {
+      const data = getTableData();
+      return data && typeof data.then === 'function' ? await data : data;
+    } catch (e) {
+      console.warn('[Gacha 去重] 读取当前数据库快照失败。', e);
+      return null;
+    }
+  };
+
+  const getGachaSheetSnapshot = (databaseData, sheetKey, sheetName) => {
+    if (!databaseData || typeof databaseData !== 'object') return null;
+    const sheets = databaseData.sheets && typeof databaseData.sheets === 'object' ? databaseData.sheets : databaseData;
+    const sheet =
+      sheets[sheetKey] ||
+      Object.values(sheets).find(
+        candidate =>
+          candidate &&
+          typeof candidate === 'object' &&
+          (candidate.uid === sheetKey || candidate.key === sheetKey || candidate.name === sheetName),
+      );
+    if (!sheet || typeof sheet !== 'object') return null;
+    if (Array.isArray(sheet.content)) {
+      return {
+        headers: Array.isArray(sheet.content[0]) ? sheet.content[0] : [],
+        rows: sheet.content.slice(1).filter(row => Array.isArray(row)),
+      };
+    }
+    if (Array.isArray(sheet.headers) && Array.isArray(sheet.rows)) {
+      return { headers: sheet.headers, rows: sheet.rows.filter(row => Array.isArray(row)) };
+    }
+    return null;
+  };
+
+  const getGachaSnapshotCell = (snapshot, row, names) => {
+    const idx = findHeaderIndex(snapshot?.headers || [], names);
+    if (idx < 0) return '';
+    return normalizeGachaDedupText(row[idx]);
+  };
+
+  const getGachaDatabaseDedupKey = item => {
+    const name = normalizeGachaDedupText(item?.name);
+    if (!name) return '';
+    return `${item.type || 'unknown'}:${name}`;
+  };
+
+  const isGachaItemAlreadyInDatabase = (item, databaseData) => {
+    const name = normalizeGachaDedupText(item?.name);
+    if (!name) return false;
+
+    if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
+      const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_supernatural_items', '灵异物品');
+      return Boolean(snapshot?.rows.some(row => getGachaSnapshotCell(snapshot, row, ['物品名', '物品名称']) === name));
+    }
+
+    if (item.type === GACHA_ITEM_TYPE.CLUE) {
+      const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_clues', '线索');
+      const prefix = `${name}：`;
+      return Boolean(
+        snapshot?.rows.some(row => {
+          const source = getGachaSnapshotCell(snapshot, row, ['来源']);
+          const content = getGachaSnapshotCell(snapshot, row, ['内容', '线索描述']);
+          return source === '灵异抽卡' && (content === name || content.startsWith(prefix));
+        }),
+      );
+    }
+
+    if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
+      const snapshot = getGachaSheetSnapshot(databaseData, 'sheet_collected_rules', '收录规律');
+      return Boolean(
+        snapshot?.rows.some(row => {
+          const source = getGachaSnapshotCell(snapshot, row, ['获取方式']);
+          const ruleType = getGachaSnapshotCell(snapshot, row, ['规律类型', '规律名称']);
+          return source === '灵异抽卡' && ruleType === name;
+        }),
+      );
+    }
+
+    return false;
+  };
+
+  const recordGachaSyncSkip = (results, item, reason) => {
+    results.skipped++;
+    results.skippedItems.push({ item: item?.name || '未知物品', reason });
+    console.info(`[Gacha 写库跳过] ${item?.name || '未知物品'}：${reason}`);
+  };
+
+  /**
+   * 预校验并写入一行数据。优先使用 MysteryDatabaseFrontend.applyTableChangePlan
+   * 走完整校验链路（列名解析 → CHECK 约束 → 长度限制），校验失败则不写入。
+   * @param {string} tableName - 目标表名
+   * @param {Record<string, string>} rowData - 列名→值映射（使用表头中文名）
+   * @returns {Promise<{ok: boolean, errors?: Array}>}
+   */
+  const validateAndInsertGachaRow = async (tableName, rowData) => {
+    const frontend = getMysteryFrontendApi();
+    if (frontend && frontend.applyTableChangePlan) {
+      const plan = { action: 'insertRow', table: tableName, data: rowData };
+
+      // Step 1: 预校验（dry-run，不写入）
+      if (frontend.previewTableChangePlan) {
+        try {
+          const preview = await frontend.previewTableChangePlan(plan);
+          if (!preview.ok) {
+            console.error(`[Gacha 预校验失败] ${tableName}:`, preview.errors);
+            return preview;
+          }
+        } catch (e) {
+          console.warn(`[Gacha] previewTableChangePlan 异常，跳过预校验:`, e);
+        }
+      }
+
+      // Step 2: 写入（含内置校验）
+      try {
+        const result = await frontend.applyTableChangePlan(plan);
+        if (!result.ok) {
+          console.error(`[Gacha 写入失败] ${tableName}:`, result.errors);
+        } else {
+          console.info(`[Gacha] 成功写入 ${tableName}`);
+        }
+        return result;
+      } catch (e) {
+        console.error(`[Gacha] applyTableChangePlan 异常:`, e);
+        return { ok: false, errors: [{ code: 'APPLY_EXCEPTION', message: String(e) }] };
+      }
+    }
+
+    // Fallback: 直接通过 MfrsDatabase 写入（无预校验）
+    const crud = window.MfrsDatabase;
+    if (crud && crud.insertRow) {
+      try {
+        await crud.insertRow(tableName, rowData);
+        console.info(`[Gacha] fallback 写入 ${tableName}（未经预校验）`);
+        return { ok: true, errors: [] };
+      } catch (e) {
+        console.error(`[Gacha] fallback 写入失败:`, e);
+        return { ok: false, errors: [{ code: 'FALLBACK_FAILED', message: String(e) }] };
+      }
+    }
+
+    console.warn('[Gacha] 无可用数据库 API，跳过写入');
+    return { ok: false, errors: [{ code: 'API_UNAVAILABLE', message: '无可用数据库 API' }] };
+  };
+
+  // ═══════════════════ 抽卡结果写库（带预校验） ═══════════════════
+
+  /**
+   * 将抽卡结果写入数据库，使用正确的 DDL 列名并经过完整预校验。
+   * 列名映射基于 神秘复苏表格SQL_v1.json 的 content[0] 表头定义。
+   */
+  const syncGachaResultToDatabase = async items => {
+    const results = { success: 0, failed: 0, skipped: 0, errors: [], skippedItems: [] };
+    const databaseData = await getCurrentGachaDatabaseData();
+    const batchDedupKeys = new Set();
+
+    for (const item of items) {
+      try {
+        if (item.isDuplicate) {
+          recordGachaSyncSkip(results, item, '已由抽卡层判定为重复并转化为灵异残屑');
+          continue;
+        }
+
+        const dedupKey = getGachaDatabaseDedupKey(item);
+        if (dedupKey && batchDedupKeys.has(dedupKey)) {
+          recordGachaSyncSkip(results, item, '本次抽卡批次内已写入同名结果');
+          continue;
+        }
+
+        if (isGachaItemAlreadyInDatabase(item, databaseData)) {
+          recordGachaSyncSkip(results, item, '数据库中已存在同名抽卡结果');
+          continue;
+        }
+
+        if (dedupKey) batchDedupKeys.add(dedupKey);
+
+        let result;
+        if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
+          // 灵异物品表：物品名, 类型, 持有人, 所在地点, 数量或状态, 效果(≤160), 副作用(≤120), 使用限制(≤120)
+          const rowData = {
+            物品名: item.name,
+            类型: '灵异物品',
+            持有人: '{{user}}',
+            所在地点: '随身',
+            数量或状态:
+              item.usageLimit === 'unlimited'
+                ? '无限使用'
+                : item.usageLimit === 'stack'
+                  ? '可叠加'
+                  : `${item.usageLimit}次`,
+            效果: (item.effect || '').slice(0, 160),
+            副作用: '无',
+            使用限制: (item.duration || '无').slice(0, 120),
+          };
+          result = await validateAndInsertGachaRow('sheet_supernatural_items', rowData);
+        } else if (item.type === GACHA_ITEM_TYPE.CLUE) {
+          // 线索表：线索编号(GLOB C[0-9]{4}), 关联事件, 来源, 内容(≤120), 可信度(IN 低/中/高/误导), 推断(≤160), 验证状态, 可见性
+          const clueCode = await getNextClueCode();
+          const rowData = {
+            线索编号: clueCode,
+            关联事件: '调查中',
+            来源: '灵异抽卡',
+            内容: `${item.name}：${item.description}`.slice(0, 120),
+            可信度: '中',
+            推断: (item.effectDetail || item.effect || '').slice(0, 160),
+            验证状态: '未验证',
+            可见性: '玩家可见',
+          };
+          result = await validateAndInsertGachaRow('sheet_clues', rowData);
+        } else if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
+          // 收录规律表：来源厉鬼, 获取方式, 规律类型, 规律内容(≤180), 规律进阶, 规律分解, 完整度, 风险备注(≤160), 可见摘要(≤180)
+          const rowData = {
+            来源厉鬼: '待分配',
+            获取方式: '灵异抽卡',
+            规律类型: item.name,
+            规律内容: (item.description || '').slice(0, 180),
+            规律进阶: '待研究',
+            规律分解: '待研究',
+            完整度: `+${Math.round(item.progress * 100)}%`,
+            风险备注: (item.effectDetail || '无').slice(0, 160),
+            可见摘要: (item.effect || '').slice(0, 180),
+          };
+          result = await validateAndInsertGachaRow('sheet_collected_rules', rowData);
+        }
+
+        if (result) {
+          if (result.ok) results.success++;
+          else {
+            results.failed++;
+            results.errors.push({ item: item.name, errors: result.errors });
+          }
+        }
+      } catch (e) {
+        results.failed++;
+        results.errors.push({ item: item.name, errors: [{ code: 'EXCEPTION', message: String(e) }] });
+        console.error('[Gacha] 写库异常:', item.name, e);
+      }
+    }
+
+    if (results.errors.length > 0) {
+      console.warn(
+        `[Gacha 写库汇总] 成功 ${results.success}, 跳过 ${results.skipped}, 失败 ${results.failed}`,
+        results.errors,
+      );
+    } else {
+      console.info(`[Gacha 写库汇总] 成功 ${results.success} 条，跳过 ${results.skipped} 条`);
+    }
+    if (results.skipped > 0) console.info('[Gacha 写库去重明细]', results.skippedItems);
+
+    // 刷新界面
+    renderInterface();
+    return results;
+  };
+
+  // ==================== window.MFRS 公开 API ====================
+  // 把抽卡/碎片/自定义物品核心函数挂到 window.MFRS，供外部脚本或控制台调用。
+  // 所有函数均为闭包内定义的原始引用，调用等价于内部直接调用。
+  // UI 类函数依赖 jQuery/DOM，需在页面加载后调用；mountPanel 返回调用方拥有的清理句柄。
+  // 注意：挂载对象的 key 和 value 不能同名，否则 webpack minifier 会优化为简写
+  // {showGachaResult}，但函数变量已被重命名为短名，导致 ReferenceError。
+  try {
+    const host = getHost();
+    host.MFRS = Object.assign(host.MFRS || {}, {
+      // --- 常量 ---
+      RARITY: GACHA_RARITY,
+      POOL_TYPE: GACHA_POOL_TYPE,
+      ITEM_TYPE: GACHA_ITEM_TYPE,
+      CURRENCY: GACHA_CURRENCY,
+      FRAGMENT: GACHA_FRAGMENT,
+      getStorageScope: getActiveGachaChatScope,
+      // --- 货币（调查点）---
+      getCurrency: getGachaCurrency,
+      setCurrency: setGachaCurrency,
+      addCurrency: addGachaCurrency,
+      deductCurrency: deductGachaCurrency,
+      // --- 保底 ---
+      getPity: getGachaPity,
+      setPity: setGachaPity,
+      resetPity: resetGachaPity,
+      // --- 碎片（灵异残屑）---
+      getFragments: getGachaFragments,
+      setFragments: setGachaFragments,
+      addFragments: addGachaFragments,
+      deductFragments: deductGachaFragments,
+      processFragments: processFragments,
+      exchange: exchangeWithFragments,
+      // --- 已拥有物品 ---
+      getOwnedItems: getOwnedItems,
+      setOwnedItems: setOwnedItems,
+      isItemOwned: isItemOwned,
+      // --- 物品目录 ---
+      getAllItems: getAllGachaItemDefinitions,
+      getCustomItems: getCustomGachaItems,
+      setCustomItems: setCustomGachaItems,
+      addCustomItem: addCustomGachaItem,
+      removeCustomItem: removeCustomGachaItem,
+      // --- 抽卡操作 ---
+      buildPool: buildGachaPool,
+      single: gachaSingle,
+      ten: gachaTen,
+      getHistory: getGachaHistory,
+      exportChatData: getGachaScopedSnapshot,
+      importChatData: importGachaScopedSnapshot,
+      resetChatData: resetGachaScopedData,
+      validateCatalog: validateGachaCatalog,
+      getEconomySummary: buildGachaEconomySummary,
+      // --- UI 入口（需 jQuery/DOM）---
+      // 纯确认能力：业务 API 自己生成权威文案；不暴露任何数据库删除 capability。
+      confirmDanger: ({ title = '确认操作', message = '', confirmText = '确定', cancelText = '取消' } = {}) =>
+        MFRSDialog.showConfirm(message, {
+          title,
+          confirmText,
+          cancelText,
+          danger: true,
+        }),
+      showPanel: showGachaPanel,
+      mountPanel: mountGachaPanel,
+      showFragmentShop: showFragmentShop,
+      showCustomEditor: showCustomItemEditor,
+      // showGachaResult 是 showGachaPanel 内部局部变量，IIFE 顶层无法引用，已从公开 API 移除
+      showItemDetail: showGachaItemDetail,
+      // --- 写库 ---
+      syncToDatabase: syncGachaResultToDatabase,
+      validateAndInsert: validateAndInsertGachaRow,
+      // --- 版本 ---
+      version: '1.0',
+    });
+    if (host !== window) window.MFRS = host.MFRS;
+    console.info('[MFRS] window.MFRS API 已挂载，可用方法：getCurrency/single/ten/getAllItems/showPanel/mountPanel 等');
+  } catch (e) {
+    console.error('[MFRS] window.MFRS 挂载失败:', e);
+  }
+
+  const { $ } = getCore();
+  if ($) $(document).ready(init);
+  else window.addEventListener('load', init);
 })();

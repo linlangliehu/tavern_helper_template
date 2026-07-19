@@ -19,7 +19,10 @@ registerMfrsRuntimeBuild('数据库前端');
 type AutoCardUpdaterAPI = {
   __mfrsDatabaseScriptMarker__?: string;
   openVisualizer?: () => unknown | Promise<unknown>;
-  importTemplateFromData?: (data: unknown, options?: { scope?: 'global' | 'chat'; presetName?: string }) => unknown | Promise<unknown>;
+  importTemplateFromData?: (
+    data: unknown,
+    options?: { scope?: 'global' | 'chat'; presetName?: string },
+  ) => unknown | Promise<unknown>;
   refreshDataAndWorldbook?: () => unknown | Promise<unknown>;
   exportTableAsJson?: () => unknown | Promise<unknown>;
   getTableTemplate?: () => unknown | Promise<unknown>;
@@ -58,7 +61,10 @@ type HostWindow = Window & {
       saveChat?: unknown;
       // SillyTavern 原生事件系统：eventSource 兼容 EventEmitter（.on/.off/.emit），
       // event_types 是事件名常量表（如 CHAT_CHANGED）。酒馆助手注入环境不可用时的回退监听通道。
-      eventSource?: { on?: (event: unknown, listener: (...args: unknown[]) => void) => void; off?: (event: unknown, listener: (...args: unknown[]) => void) => void };
+      eventSource?: {
+        on?: (event: unknown, listener: (...args: unknown[]) => void) => void;
+        off?: (event: unknown, listener: (...args: unknown[]) => void) => void;
+      };
       event_types?: Record<string, unknown> & { CHAT_CHANGED?: unknown };
     };
   };
@@ -78,7 +84,10 @@ type HostWindow = Window & {
     applyTableChangePlan: (plan: TableChangePlan) => Promise<TableChangeResult>;
     previewMemoryChange: (plan: TableChangePlan) => Promise<TableChangeResult>;
     applyMemoryChange: (plan: TableChangePlan) => Promise<TableChangeResult>;
-    requestConfirmedMemoryDelete: (request: { table: string; row_id: string | number }) => Promise<TableChangeResult & { confirmed?: boolean }>;
+    requestConfirmedMemoryDelete: (request: {
+      table: string;
+      row_id: string | number;
+    }) => Promise<TableChangeResult & { confirmed?: boolean }>;
     getPanelState: () => Promise<FrontendState>;
     refreshPanel: () => Promise<void>;
   };
@@ -89,7 +98,16 @@ type HostWindow = Window & {
   MysteryMessagePanel?: {
     getHudActiveView?: () => unknown;
   };
-  MFRS?: { confirmDanger?: (options: { title: string; message: string; confirmText?: string; cancelText?: string }) => Promise<boolean> } | unknown;
+  MFRS?:
+    | {
+        confirmDanger?: (options: {
+          title: string;
+          message: string;
+          confirmText?: string;
+          cancelText?: string;
+        }) => Promise<boolean>;
+      }
+    | unknown;
   __mfrsFixedStatusCleanup__?: () => void;
   __mfrsDatabaseFrontendCleanup__?: (options?: DatabaseCleanupOptions) => void;
   toastr?: {
@@ -157,11 +175,7 @@ const CURRENT_FRONTEND_CLEANUP_SELECTORS = [
   '[id^="mfrs-dashboard"]',
   '[id^="mfrs-database-frontend"]',
 ] as const;
-const MFRS_RESOURCE_URL_KEYS = [
-  '固定状态栏',
-  'spv3.9.5·数据库',
-  databaseFrontendScriptName,
-] as const;
+const MFRS_RESOURCE_URL_KEYS = ['固定状态栏', 'spv3.9.5·数据库', databaseFrontendScriptName] as const;
 
 const templateTableNames = Object.values(templateData as Record<string, unknown>)
   .filter((value): value is { name: string } => Boolean(value && typeof value === 'object' && 'name' in value))
@@ -173,8 +187,9 @@ type TemplateSheetLike = {
   content?: unknown;
 };
 
-const templateSheets = Object.values(templateData as Record<string, unknown>)
-  .filter((value): value is TemplateSheetLike => Boolean(value && typeof value === 'object' && 'name' in value));
+const templateSheets = Object.values(templateData as Record<string, unknown>).filter(
+  (value): value is TemplateSheetLike => Boolean(value && typeof value === 'object' && 'name' in value),
+);
 
 let templateAutofixPromise: Promise<void> | null = null;
 let databaseScriptReloadPromise: Promise<boolean> | null = null;
@@ -184,18 +199,22 @@ const memoryMutationExecutor = createMemoryMutationExecutor();
 // 闭包令牌：仅在人工确认删除时传入 executor，避免裸调即可删除记忆行。
 const memoryDeleteCapability = memoryMutationExecutor.confirmedMemoryDeleteCapability;
 const MEMORY_TABLE_ALIASES = new Set([
-  'chronicle', 'sheet_chronicle', '事件纪要',
-  'collected_archives', 'sheet_collected_archives', '收录档案',
-  'collected_rules', 'sheet_collected_rules', '收录规律',
+  'chronicle',
+  'sheet_chronicle',
+  '事件纪要',
+  'collected_archives',
+  'sheet_collected_archives',
+  '收录档案',
+  'collected_rules',
+  'sheet_collected_rules',
+  '收录规律',
 ]);
 let acuFrontendRuntimePromise: Promise<void> | null = null;
-let nativeChatChangedSubscription:
-  | {
-    eventSource: NonNullable<ReturnType<typeof getSillyTavernContext>>['eventSource'];
-    eventType: unknown;
-    listener: () => void;
-  }
-  | null = null;
+let nativeChatChangedSubscription: {
+  eventSource: NonNullable<ReturnType<typeof getSillyTavernContext>>['eventSource'];
+  eventType: unknown;
+  listener: () => void;
+} | null = null;
 
 function loadAcuFrontendRuntime() {
   acuFrontendRuntimePromise ??= Promise.all([
@@ -208,7 +227,13 @@ function loadAcuFrontendRuntime() {
 async function waitForMfrsConfirmDanger(hostWindow: HostWindow, attempts = 20, interval = 100) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const confirmDanger = (hostWindow.MFRS as { confirmDanger?: unknown } | undefined)?.confirmDanger;
-    if (typeof confirmDanger === 'function') return confirmDanger as (options: { title: string; message: string; confirmText?: string; cancelText?: string }) => Promise<boolean>;
+    if (typeof confirmDanger === 'function')
+      return confirmDanger as (options: {
+        title: string;
+        message: string;
+        confirmText?: string;
+        cancelText?: string;
+      }) => Promise<boolean>;
     await wait(interval);
   }
   return null;
@@ -262,10 +287,12 @@ function getCandidateScriptUrlsFromDocument(doc: Document | undefined | null) {
 
 function getCandidateScriptUrlsFromPerformance(targetWindow: Window | undefined | null) {
   try {
-    return targetWindow?.performance
-      ?.getEntriesByType?.('resource')
-      ?.map(entry => entry.name)
-      ?.reverse() ?? [];
+    return (
+      targetWindow?.performance
+        ?.getEntriesByType?.('resource')
+        ?.map(entry => entry.name)
+        ?.reverse() ?? []
+    );
   } catch {
     return [];
   }
@@ -332,9 +359,7 @@ function getCurrentCharacter(hostWindow: HostWindow) {
   if (characterId === undefined || characterId === null) return null;
 
   const characters = context?.characters;
-  const character = Array.isArray(characters)
-    ? characters[Number(characterId)]
-    : characters?.[String(characterId)];
+  const character = Array.isArray(characters) ? characters[Number(characterId)] : characters?.[String(characterId)];
 
   return character ? { id: String(characterId), ...character } : { id: String(characterId) };
 }
@@ -364,9 +389,9 @@ function isExpectedDatabaseApi(api: AutoCardUpdaterAPI | null | undefined) {
 
 function isUsableDatabaseApi(api: AutoCardUpdaterAPI | null | undefined) {
   return Boolean(
-    api
-      && typeof api === 'object'
-      && (typeof api.getTableTemplate === 'function' || typeof api.exportTableAsJson === 'function'),
+    api &&
+    typeof api === 'object' &&
+    (typeof api.getTableTemplate === 'function' || typeof api.exportTableAsJson === 'function'),
   );
 }
 
@@ -420,9 +445,11 @@ function getHostDocument(hostWindow: HostWindow) {
 function normalizeTemplateSheets(template: unknown) {
   if (!template || typeof template !== 'object') return [];
   const record = template as Record<string, unknown>;
-  const sheets = record.sheets && typeof record.sheets === 'object' ? (record.sheets as Record<string, unknown>) : record;
-  return Object.values(sheets)
-    .filter((value): value is TemplateSheetLike => Boolean(value && typeof value === 'object' && 'name' in value));
+  const sheets =
+    record.sheets && typeof record.sheets === 'object' ? (record.sheets as Record<string, unknown>) : record;
+  return Object.values(sheets).filter((value): value is TemplateSheetLike =>
+    Boolean(value && typeof value === 'object' && 'name' in value),
+  );
 }
 
 function normalizeTemplateNames(template: unknown) {
@@ -441,9 +468,8 @@ function findTemplateMismatchNames(template: unknown) {
   const activeSheets = normalizeTemplateSheets(template);
   const mismatchNames: string[] = [];
   for (const expected of templateSheets) {
-    const actual = activeSheets.find(sheet =>
-      (expected.uid && sheet.uid === expected.uid)
-      || (expected.name && sheet.name === expected.name)
+    const actual = activeSheets.find(
+      sheet => (expected.uid && sheet.uid === expected.uid) || (expected.name && sheet.name === expected.name),
     );
     if (!actual) continue;
     if (JSON.stringify(getSheetHeader(actual)) !== JSON.stringify(getSheetHeader(expected))) {
@@ -475,7 +501,10 @@ function enqueueTableChange<T>(task: () => Promise<T>) {
 }
 
 function normalizeMemoryTableAlias(value: unknown) {
-  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, '');
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '');
 }
 
 function isMemoryTableName(value: unknown) {
@@ -508,8 +537,11 @@ function getMemoryRowTitle(table: string, data: unknown, rowId: string | number)
   if (!record || typeof record !== 'object') return null;
   const sheets = Object.values(record) as Array<any>;
   const target = sheets.find(sheet => {
-    const aliases = [sheet?.uid, sheet?.name, sheet?.sourceData?.ddl?.match(/CREATE\s+TABLE\s+[`"]?([A-Za-z_][\w]*)/i)?.[1]]
-      .map(normalizeMemoryTableAlias);
+    const aliases = [
+      sheet?.uid,
+      sheet?.name,
+      sheet?.sourceData?.ddl?.match(/CREATE\s+TABLE\s+[`"]?([A-Za-z_][\w]*)/i)?.[1],
+    ].map(normalizeMemoryTableAlias);
     return aliases.includes(normalizeMemoryTableAlias(table));
   });
   const content = target?.content;
@@ -517,14 +549,17 @@ function getMemoryRowTitle(table: string, data: unknown, rowId: string | number)
   const headers = content[0].map((value: unknown) => String(value ?? ''));
   const rowIdIndex = headers.findIndex(header => normalizeMemoryTableAlias(header) === 'row_id');
   if (rowIdIndex < 0) return null;
-  const rowIndex = content.findIndex((row: unknown, index: number) => index > 0 && Array.isArray(row) && String(row[rowIdIndex]) === String(rowId));
+  const rowIndex = content.findIndex(
+    (row: unknown, index: number) => index > 0 && Array.isArray(row) && String(row[rowIdIndex]) === String(rowId),
+  );
   if (rowIndex < 1) return null;
   const row = content[rowIndex] as unknown[];
-  const titleHeaders = target?.uid === 'sheet_chronicle' || target?.name === '事件纪要'
-    ? ['纪要编号', '概览']
-    : target?.uid === 'sheet_collected_archives' || target?.name === '收录档案'
-      ? ['档案厉鬼名称', '收录状态']
-      : ['来源厉鬼', '规律类型'];
+  const titleHeaders =
+    target?.uid === 'sheet_chronicle' || target?.name === '事件纪要'
+      ? ['纪要编号', '概览']
+      : target?.uid === 'sheet_collected_archives' || target?.name === '收录档案'
+        ? ['档案厉鬼名称', '收录状态']
+        : ['来源厉鬼', '规律类型'];
   const title = titleHeaders
     .map(header => {
       const index = headers.findIndex(value => value === header || value.includes(header));
@@ -532,7 +567,12 @@ function getMemoryRowTitle(table: string, data: unknown, rowId: string | number)
     })
     .filter(Boolean)
     .join(' · ');
-  return { tableName: String(target?.name || table), rowIndex, title: title || `row_id=${rowId}`, rowSnapshot: JSON.stringify(row) };
+  return {
+    tableName: String(target?.name || table),
+    rowIndex,
+    title: title || `row_id=${rowId}`,
+    rowSnapshot: JSON.stringify(row),
+  };
 }
 
 async function readTemplateStatus(api: AutoCardUpdaterAPI): Promise<TemplateStatus> {
@@ -675,9 +715,13 @@ function installDatabaseFrontendCleanup(hostDocument: Document, hostWindow: Host
     delete hostWindow.__mfrsDatabaseFrontendCleanup__;
   };
 
-  window.addEventListener('pagehide', () => {
-    hostWindow.__mfrsDatabaseFrontendCleanup__?.();
-  }, { once: true });
+  window.addEventListener(
+    'pagehide',
+    () => {
+      hostWindow.__mfrsDatabaseFrontendCleanup__?.();
+    },
+    { once: true },
+  );
 }
 
 function keepAcuConfigEmbedded(hostWindow: HostWindow) {
@@ -954,14 +998,22 @@ async function installCompatibilityApi() {
     },
     async previewMemoryChange(plan) {
       if (!isMemoryTableName(plan?.table) || (plan?.action !== 'insertRow' && plan?.action !== 'updateCell')) {
-        return makeMemoryDeleteResult('INVALID_PLAN', '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。', plan?.table);
+        return makeMemoryDeleteResult(
+          'INVALID_PLAN',
+          '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。',
+          plan?.table,
+        );
       }
       const api = requireApi(hostWindow);
       return memoryMutationExecutor.previewMemoryChange(plan, await exportCurrentDatabaseData(api), templateData);
     },
     async applyMemoryChange(plan) {
       if (!isMemoryTableName(plan?.table) || (plan?.action !== 'insertRow' && plan?.action !== 'updateCell')) {
-        return makeMemoryDeleteResult('INVALID_PLAN', '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。', plan?.table);
+        return makeMemoryDeleteResult(
+          'INVALID_PLAN',
+          '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。',
+          plan?.table,
+        );
       }
       return enqueueTableChange(async () => {
         const api = requireApi(hostWindow);
@@ -975,7 +1027,11 @@ async function installCompatibilityApi() {
       const table = String(request?.table ?? '');
       const rowId = request?.row_id;
       if (!isMemoryTableName(table) || (typeof rowId !== 'string' && typeof rowId !== 'number')) {
-        return makeMemoryDeleteResult('INVALID_PLAN', '只能从记忆工作台删除事件纪要、收录档案或收录规律的指定记录。', table);
+        return makeMemoryDeleteResult(
+          'INVALID_PLAN',
+          '只能从记忆工作台删除事件纪要、收录档案或收录规律的指定记录。',
+          table,
+        );
       }
       // 该检查是防误用的纵深保护；真正的写入授权仍是 adapter 内部不可序列化的 closure capability。
       if (!getActiveMemoryWorkbenchState(hostWindow)) {
@@ -1002,13 +1058,24 @@ async function installCompatibilityApi() {
         const latestData = await exportCurrentDatabaseData(api);
         const latestTarget = getMemoryRowTitle(table, latestData, rowId);
         if (!latestTarget || latestTarget.rowSnapshot !== target.rowSnapshot) {
-          return makeMemoryDeleteResult('ROW_NOT_FOUND', '删除确认期间记录已变更；为避免误删，本次操作已取消。', target.tableName, true);
+          return makeMemoryDeleteResult(
+            'ROW_NOT_FOUND',
+            '删除确认期间记录已变更；为避免误删，本次操作已取消。',
+            target.tableName,
+            true,
+          );
         }
-        const result = await memoryMutationExecutor.applyConfirmedMemoryDelete(api, {
-          action: 'deleteRow',
-          table,
-          match: { row_id: rowId },
-        }, latestData, templateData, memoryDeleteCapability);
+        const result = await memoryMutationExecutor.applyConfirmedMemoryDelete(
+          api,
+          {
+            action: 'deleteRow',
+            table,
+            match: { row_id: rowId },
+          },
+          latestData,
+          templateData,
+          memoryDeleteCapability,
+        );
         if (result.ok) rerenderAcu(hostWindow);
         return { ...result, confirmed: true };
       });

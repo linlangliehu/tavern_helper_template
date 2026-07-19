@@ -36,9 +36,9 @@
   --shadow-panel: 0 0 50px rgba(0, 0, 0, 0.98), inset 0 0 60px rgba(10, 0, 0, 0.8);
   --shadow-inset: inset 0 1px 4px rgba(0, 0, 0, 0.7);
   --shadow-text-red: 0 0 10px rgba(120, 20, 20, 0.4);
-  --font-serif: "Noto Serif SC", "SimSun", serif;
-  --font-sans: "Noto Sans SC", "Microsoft YaHei", sans-serif;
-  --font-mono: "Share Tech Mono", "Courier New", monospace;
+  --font-serif: 'Noto Serif SC', 'SimSun', serif;
+  --font-sans: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
   --radius-sm: 2px;
   --radius-md: 3px;
   --transition-fast: 0.15s ease;
@@ -73,22 +73,25 @@ body::before {
   left: 0;
   right: 0;
   bottom: -4px;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 1px,
-      rgba(80, 0, 0, var(--scanline-opacity)) 1px,
-      rgba(80, 0, 0, var(--scanline-opacity)) 2px
-    );
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(80, 0, 0, var(--scanline-opacity)) 1px,
+    rgba(80, 0, 0, var(--scanline-opacity)) 2px
+  );
   pointer-events: none;
   z-index: 9999;
   animation: scanline-drift 16s linear infinite;
 }
 
 @keyframes scanline-drift {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(1px); }
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(1px);
+  }
 }
 
 body::after {
@@ -107,9 +110,17 @@ body::after {
 }
 
 @keyframes flicker {
-  0%, 94%, 100% { opacity: 1; }
-  96% { opacity: 0.94; }
-  98% { opacity: 0.98; }
+  0%,
+  94%,
+  100% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.94;
+  }
+  98% {
+    opacity: 0.98;
+  }
 }
 
 #app {
@@ -161,7 +172,10 @@ select {
   border-radius: var(--radius-sm);
   padding: 6px 10px;
   outline: none;
-  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast);
   width: 100%;
 }
 
@@ -170,7 +184,9 @@ textarea:focus,
 select:focus {
   border-color: var(--border-input-focus);
   background: var(--bg-input-focus);
-  box-shadow: 0 0 8px rgba(60, 10, 10, 0.2), var(--shadow-inset);
+  box-shadow:
+    0 0 8px rgba(60, 10, 10, 0.2),
+    var(--shadow-inset);
 }
 
 input::placeholder,

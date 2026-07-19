@@ -312,7 +312,11 @@ function seedMissingStatPaths(data: MvuData): MvuData {
     seeded = seedIfMissing(progress, '锁定主题', []) || seeded;
     seeded = seedIfMissing(progress, '已完成节点', []) || seeded;
     seeded = seedIfMissing(progress, '可触发节点', []) || seeded;
-    if (!hasOwn(progress, '正史锚点') || typeof progress['正史锚点'] !== 'object' || Array.isArray(progress['正史锚点'])) {
+    if (
+      !hasOwn(progress, '正史锚点') ||
+      typeof progress['正史锚点'] !== 'object' ||
+      Array.isArray(progress['正史锚点'])
+    ) {
       progress['正史锚点'] = { 当前锚点: '自定义开局', 默认走向: '', 玩家偏移: [] };
       seeded = true;
     } else {
@@ -321,7 +325,11 @@ function seedMissingStatPaths(data: MvuData): MvuData {
     }
   }
 
-  if (hasOwn(stat, '当前灵异事件') && typeof stat['当前灵异事件'] === 'object' && !Array.isArray(stat['当前灵异事件'])) {
+  if (
+    hasOwn(stat, '当前灵异事件') &&
+    typeof stat['当前灵异事件'] === 'object' &&
+    !Array.isArray(stat['当前灵异事件'])
+  ) {
     const event = stat['当前灵异事件'] as Record<string, unknown>;
     seeded = seedIfMissing(event, '已知杀人规律', []) || seeded;
     seeded = seedIfMissing(event, '猜测杀人规律', []) || seeded;
@@ -835,7 +843,12 @@ async function handleGenerationEnded(eventMessageId?: unknown) {
   }
 
   // 清洗后若正文+raw 皆空，再恢复一次发送态
-  recoverSendUiAfterEmptyGeneration(hostWindow, chat[lastMessageIndex], lastMessageIndex, 'generation_ended_after_clean');
+  recoverSendUiAfterEmptyGeneration(
+    hostWindow,
+    chat[lastMessageIndex],
+    lastMessageIndex,
+    'generation_ended_after_clean',
+  );
 
   // 每轮轻量解锁；仅发送卡住时强制点 stop / 露出发送钮
   forceRecoverSendUi(hostWindow, 'generation_ended_always', { hideStop: true, force: isSendUiStuck(hostWindow) });
@@ -916,8 +929,10 @@ function registerEventListeners() {
   const generationEndedEvent = getTavernEventName(hostWindow, 'GENERATION_ENDED', 'generation_ended');
   const generationStoppedEvent = getTavernEventName(hostWindow, 'GENERATION_STOPPED', 'generation_stopped');
   const events = eventSource.events || {};
-  const existingGenerationEndedListeners = events[generationEndedEvent] || events.GENERATION_ENDED || events.generation_ended || [];
-  const existingMessageReceivedListeners = events[messageReceivedEvent] || events.MESSAGE_RECEIVED || events.message_received || [];
+  const existingGenerationEndedListeners =
+    events[generationEndedEvent] || events.GENERATION_ENDED || events.generation_ended || [];
+  const existingMessageReceivedListeners =
+    events[messageReceivedEvent] || events.MESSAGE_RECEIVED || events.message_received || [];
 
   console.info('[Hotfix] 当前监听器数量', {
     messageReceivedEvent,
