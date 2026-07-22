@@ -3,7 +3,11 @@ import HtmlInlineScriptWebpackPlugin from 'html-inline-script-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import _ from 'lodash';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+<<<<<<< HEAD
 import { ChildProcess, exec, execSync, spawn } from 'node:child_process';
+=======
+import { ChildProcess, exec, spawn } from 'node:child_process';
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
 import fs from 'node:fs';
 import http from 'node:http';
 import { createRequire } from 'node:module';
@@ -104,17 +108,25 @@ function buildMfrsMeta(mode: string) {
 
 let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
+<<<<<<< HEAD
   if (process.env.MFRS_SKIP_HMR_SERVER === '1') {
     return;
   }
+=======
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
   if (compiler.options.watch) {
     const port = config.port ?? 6621;
+<<<<<<< HEAD
 
     if (!io) {
       const hmrServer = http.createServer();
       io = new Server(hmrServer, { cors: { origin: '*' } });
       hmrServer.listen(port);
       console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动 HMR 服务 (端口 ${port})`);
+=======
+      io = new Server(port, { cors: { origin: '*' } });
+      console.info(`\x1b[36m[tavern_helper]\x1b[0m 已启动酒馆监听服务`);
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
       io.on('connect', socket => {
         console.info(`\x1b[36m[tavern_helper]\x1b[0m 成功连接到酒馆网页 '${socket.id}', 初始化推送...`);
         io.emit('iframe_updated');
@@ -131,10 +143,36 @@ function watch_tavern_helper(compiler: webpack.Compiler) {
       } else {
         io.emit('script_iframe_updated');
       }
+<<<<<<< HEAD
+=======
     });
   }
 }
 
+let watcher: FSWatcher;
+const dump = () => {
+  exec('pnpm dump', { cwd: import.meta.dirname });
+  console.info('\x1b[36m[schema_dump]\x1b[0m 已将所有 schema.ts 转换为 schema.json');
+};
+const dump_debounced = _.debounce(dump, 500, { leading: true, trailing: false });
+function schema_dump(compiler: webpack.Compiler) {
+  if (!compiler.options.watch) {
+    dump_debounced();
+    return;
+  }
+  if (!watcher) {
+    watcher = watch('src', {
+      awaitWriteFinish: true,
+    }).on('all', (_event, path) => {
+      if (path.endsWith('schema.ts')) {
+        dump_debounced();
+      }
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
+    });
+  }
+}
+
+<<<<<<< HEAD
 let watcher: FSWatcher;
 const dump = () => {
   exec('pnpm dump', { cwd: import.meta.dirname });
@@ -160,6 +198,8 @@ function schema_dump(compiler: webpack.Compiler) {
   }
 }
 
+=======
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
 let child_process: ChildProcess;
 const bundle = () => {
   exec('pnpm sync bundle all', { cwd: import.meta.dirname });
@@ -167,9 +207,12 @@ const bundle = () => {
 };
 const bundle_debounced = _.debounce(bundle, 500, { leading: true, trailing: false });
 function tavern_sync(compiler: webpack.Compiler) {
+<<<<<<< HEAD
   if (process.env.MFRS_SKIP_TAVERN_SYNC === '1') {
     return;
   }
+=======
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
   if (!compiler.options.watch) {
     bundle_debounced();
     return;
@@ -592,6 +635,10 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
         vue: 'Vue',
         'vue-router': 'VueRouter',
         yaml: 'YAML',
+<<<<<<< HEAD
+=======
+        zod: 'z',
+>>>>>>> f24091c9a91d583dafdb4867d858268ebc487545
       };
       if (request in global) {
         return callback(null, 'var ' + global[request as keyof typeof global]);
@@ -599,9 +646,17 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
+      const package_json = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'package.json'), 'utf-8')) as {
+        dependencies?: Record<string, string>;
+        devDependencies?: Record<string, string>;
+      };
+      const package_versions = { ...package_json.devDependencies, ...package_json.dependencies };
+      const version = package_versions[request]?.replace(/^[~^]/, '');
+      const versioned_request = /^[.\d]+$/.test(version) ? `${request}@${version}` : request;
       return callback(
         null,
-        'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${request}/+esm`),
+        'module-import ' +
+          (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${versioned_request}/+esm`),
       );
     },
   });
