@@ -44,8 +44,12 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[yaml]": {
+<<<<<<< HEAD
     "editor.defaultFormatter": "redhat.vscode-yaml",
     "editor.formatOnSave": false
+=======
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+>>>>>>> ff2bba6705f6e8d4882c9919916e7111f4f71dea
   },
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
