@@ -43,7 +43,7 @@ pnpm install
    - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。
    - 也可用命令面板"运行任务"手动跑：切换到开发模式 → pnpm watch → 静态服务器。
 2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 只监听源码并编译到 `dist/**` → 固定端口 5510 静态服务。
-3. 首次生成并导入开发卡：
+3. 首次使用，或修改世界书、提示词、首条消息、对话示例、正则、脚本清单等卡内容后，重新生成并导入开发卡：
    ```bash
    node tavern_sync.mjs bundle 神秘复苏模拟器
    # 导入 src/神秘复苏模拟器/神秘复苏模拟器.png（脚本 URL 指向 127.0.0.1:5510）
@@ -56,7 +56,7 @@ pnpm install
 
 ##### 结束开发
 
-- 运行任务 **切换回生产模式**（`toggle-dev-mode --disable`）还原 YAML 的 CDN URL，再进入发布流程。
+- 运行任务 **结束开发环境**（`pnpm stop-dev`），停止当前仓库 watch/5510 并还原 YAML 的 CDN URL，再进入发布流程。
 - 正式 `src/神秘复苏模拟器/index.yaml` 应保持未污染（切回生产模式即可）。
 
 #### 创建自己的仓库
@@ -188,9 +188,9 @@ vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 #### 2. 实时验证（与 PROJECT_FLOW 统一）
 
 1. 编辑器中按 **F5 / Fn+F5** 启动开发环境（切换到开发模式 + pnpm watch + 静态服务 5510）
-2. 首次生成并导入开发卡：`node tavern_sync.mjs bundle 神秘复苏模拟器`
+2. 首次使用或卡内容发生变化后，重新生成并导入开发卡：`node tavern_sync.mjs bundle 神秘复苏模拟器`
 3. 浏览器打开 `http://127.0.0.1:8000/`；改源码 → watch 自动编译 → 刷新页面查看效果
-4. 结束：运行任务 **切换回生产模式** 还原 YAML
+4. 结束：运行任务 **结束开发环境**，停止 watch/5510 并还原 YAML
 
 #### 4. 提交推送
 ```bash
@@ -329,7 +329,7 @@ import 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@18
    - 替换所有 localhost/127.0.0.1 为 CDN
    - 替换旧 jsdelivr hash/cache 为当前 CDN
    - 添加 `?v=<cache-version>` 到资源 URL
-5. 确认 release-png 门禁通过，提交发布常量、发布版 YAML 和 PNG
+5. 运行 `pnpm verify:mfrs-gates`，确认 release-png 门禁通过；提交发布常量、发布版镜像内容、YAML 和 PNG
 6. 打正式版本 tag 并推送 main 与 tag
 
 ## 贡献指南

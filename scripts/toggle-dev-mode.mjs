@@ -72,7 +72,7 @@ function enableDevMode() {
   console.log('💡 提示：');
   console.log('   1. 现在可以修改源码，pnpm watch 会自动编译');
   console.log('   2. 修改后刷新酒馆页面即可看到效果');
-  console.log('   3. 开发完成后运行「切换回生产模式」任务还原 YAML\n');
+  console.log('   3. 开发完成后运行「结束开发环境」任务停止 watch/5510 并还原 YAML\n');
 }
 
 function disableDevMode() {
@@ -110,9 +110,9 @@ function disableDevMode() {
   console.log('\n✅ 已切换回生产模式');
   console.log(`   已还原为 CDN: ${cdnBase}\n`);
   console.log('💡 提示：');
-  console.log('   1. 现在可以运行 pnpm build 打包生产版本');
-  console.log('   2. 运行 pnpm verify:mfrs-gates 验证门禁');
-  console.log('   3. git commit + push 发布到 GitHub\n');
+  console.log('   1. 日常结束请运行「结束开发环境」任务停止 watch 和 5510');
+  console.log('   2. 发布阶段 1 运行 pnpm verify:mfrs-source-gates');
+  console.log('   3. 推送源码后等待 CI bot bundle，再更新 CDN_REF 并运行 publish-card\n');
 }
 
 function showStatus() {

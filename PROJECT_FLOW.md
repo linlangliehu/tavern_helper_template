@@ -59,7 +59,7 @@ SillyTavern 运行在 127.0.0.1:8000
 
 ### 生成开发卡并导入
 
-首次需要生成带 localhost URL 的开发卡并导入酒馆：
+首次使用，或修改世界书、系统提示词、第一条消息、对话示例、正则、脚本列表/顺序/启用状态、角色卡元数据等会写入 PNG 的内容后，需要重新生成开发卡并导入酒馆：
 
 ```bash
 node tavern_sync.mjs bundle 神秘复苏模拟器
@@ -78,7 +78,7 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 
 ### 结束
 
-开发完成后运行任务**切换回生产模式**（`toggle-dev-mode.mjs --disable`）还原 YAML 的 CDN URL，再进入发布流程。
+开发完成后运行任务**结束开发环境**（`pnpm stop-dev`）。它会停止当前仓库的 `pnpm watch` 与 5510 静态服务器，并把 YAML 还原为生产 CDN。随后运行 `toggle-dev-mode.mjs --status` 确认生产模式，再进入发布流程。
 
 ## 发布流程
 
@@ -87,10 +87,10 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 ### 阶段 1：本地准备与提交
 
 1. 确认 YAML 已切回生产模式（`toggle-dev-mode.mjs --status` 显示"生产模式"）
-2. 升级版本号：`src/神秘复苏模拟器/index.yaml` + `src/神秘复苏模拟器发布版/index.yaml` 的 `版本:`
+2. 升级开发版 `src/神秘复苏模拟器/index.yaml` 的版本号；不要手工修改发布版，阶段 2 由 `publish-card` 镜像生成
 3. 更新 `scripts/mfrs-release-constants.mjs` 的 `RELEASE_VERSION` 和 `CDN_CACHE_VERSION`（CDN_REF 暂留旧值，阶段 2 更新）
 4. 更新 `CHANGELOG.md`
-5. 跑门禁：`pnpm verify:mfrs-gates`（全绿才继续）
+5. 跑源码门禁：`pnpm verify:mfrs-source-gates`（不检查尚未生成的新发布 PNG）
 6. 精确提交源码（**不要** `git add .`，不提交本地 `dist/**`）
 
 ### 阶段 2：等 bot bundle 并发布
@@ -101,8 +101,8 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 4. 同步 bot bundle 到本地（本地 dist 有 watch 噪音时先 `git checkout HEAD -- dist/`）：没有新增本地提交时执行 `git merge --ff-only origin/main`；已有新增本地提交时执行 `git rebase origin/main`
 5. 更新 `scripts/mfrs-release-constants.mjs` 的 `CDN_REF` = bot bundle 完整 SHA
 6. `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build` 生成发布版 PNG
-7. release-png 门禁自动校验（version/refs/cache/regex/scripts）
-8. 提交发布物（constants + 发布版 index.yaml + 发布版 PNG）
+7. 跑完整门禁：`pnpm verify:mfrs-gates`（包含 release-png 的 version/refs/cache/regex/scripts 校验）
+8. 提交发布物（constants + 发布版镜像内容 + 发布版 index.yaml + 发布版 PNG）
 9. 打发布 tag `git tag v<版本号>` → `git push origin main` + `git push origin v<版本号>`
 
 > `--dist-no-build`：dist 已由 CI bot 权威构建并推送（CDN_REF 指向该 commit），G1 门禁只校验 `dist == CDN_REF` 一致性，跳过本地 `pnpm build`。这规避了本地 `pnpm install` 依赖漂移导致 dist 重建带 webpack module-id 噪音的已知问题。

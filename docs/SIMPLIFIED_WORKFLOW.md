@@ -79,7 +79,7 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 
 ### 4. 结束开发
 
-运行任务 **切换回生产模式**（`toggle-dev-mode.mjs --disable`）——还原 YAML 的 CDN URL、移除 `DEV_MODE_ORIGINAL_CDN_REF` 注释。
+运行任务 **结束开发环境**（`pnpm stop-dev`）——停止当前仓库的 `pnpm watch` 与 5510 静态服务器，还原 YAML 的 CDN URL并移除 `DEV_MODE_ORIGINAL_CDN_REF` 注释。
 
 随后可进入发布流程（见下）。
 
@@ -94,6 +94,7 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 | `启动开发环境` | 一键任务链：切开发模式 → watch → 静态服务器 |
 | `切换到开发模式` | 仅把 YAML 改为 `http://127.0.0.1:5510/` |
 | `切换回生产模式` | 还原 YAML 为 CDN 地址 |
+| `结束开发环境` | 停止当前仓库 watch/5510 并还原 YAML 为生产模式 |
 | `查看当前模式` | 显示当前是开发模式还是生产模式（含当前 ref） |
 | `pnpm watch` | 仅启动源码监听编译 |
 | `静态服务器` | 仅启动固定端口 5510 静态服务 |
@@ -106,6 +107,7 @@ node scripts/toggle-dev-mode.mjs --disable   # 切生产
 node scripts/toggle-dev-mode.mjs --status    # 查看模式
 node scripts/mfrs-dev-server-simple.mjs      # 启动静态服务器（固定 5510）
 pnpm watch                                   # 源码监听编译
+pnpm stop-dev                                # 停止 watch/5510 并恢复生产模式
 ```
 
 ---
@@ -115,17 +117,18 @@ pnpm watch                                   # 源码监听编译
 完整步骤、CDN ref 规则、发布验证最低线见 **`PROJECT_FLOW.md`**。要点：
 
 1. 确认 YAML 已切回生产模式（`--status` 显示"生产模式"）
-2. 升级 `src/神秘复苏模拟器/index.yaml` + 发布版 `index.yaml` 的 `版本:`
+2. 只升级开发版 `src/神秘复苏模拟器/index.yaml` 的版本；发布版由阶段 2 的 `publish-card` 镜像生成
 3. 更新 `scripts/mfrs-release-constants.mjs` 的 `RELEASE_VERSION` / `CDN_CACHE_VERSION`
 4. 更新 `CHANGELOG.md`
-5. `pnpm verify:mfrs-gates`（全绿）
+5. `pnpm verify:mfrs-source-gates`（源码门禁全绿，不检查尚未生成的新发布 PNG）
 6. **精确提交源码**（`git add <具体文件>`，**不要** `git add .`，不提交本地 `dist/**`）
 7. `git push origin main` → GitHub Actions（`bundle.yaml`）自动 `rm -rf dist && pnpm install && pnpm build`，提交 `[bot] bundle` 并打自动 tag
 8. 用 **GitHub MCP** 查 Actions 状态 + bot bundle 的 commit SHA
 9. 先 `git fetch origin`（本地 dist 有 watch 噪音时先 `git checkout HEAD -- dist/`）：没有新增本地提交时执行 `git merge --ff-only origin/main`；已有新增本地提交时执行 `git rebase origin/main`
 10. 更新 `mfrs-release-constants.mjs` 的 `CDN_REF` = bot bundle 完整 SHA
-11. `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build` 生成发布版 PNG（自动跑 release-png 门禁）
-12. 提交发布物 → 打 tag `v<版本>` → `git push origin main` + `git push origin v<版本>`
+11. `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build` 生成发布版镜像和 PNG
+12. `pnpm verify:mfrs-gates` 跑完整门禁（含 release-png）
+13. 提交发布物 → 打 tag `v<版本>` → `git push origin main` + `git push origin v<版本>`
 
 > `--dist-no-build`：dist 已由 CI bot 权威构建（CDN_REF 指向该 commit），跳过本地 build，只校验 `dist == CDN_REF` 一致性，规避本地依赖漂移的 webpack module-id 噪音。
 

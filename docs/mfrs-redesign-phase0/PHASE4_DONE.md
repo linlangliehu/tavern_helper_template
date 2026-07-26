@@ -1,3 +1,5 @@
+> **历史阶段完成记录，不可作为当前运行或发布步骤执行**：其中 build、Live Server 5500 和旧 publish-card 动作仅供追溯。现行流程只看根目录 `PROJECT_FLOW.md`。
+
 # Phase 4 完成记录
 
 **时间**：2026-07-12  

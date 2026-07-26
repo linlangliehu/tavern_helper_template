@@ -1,5 +1,26 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
+## 双卡缺陷修复任务清单（2026-07-26）
+- [x] Phase 0：文档/API/门禁发现
+- [x] 将审计发现拆分为 T0–T7 可执行任务
+- [x] 写入 `docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md`
+- [x] 产品决策：独立“厉鬼复苏”终态；发布目录仅一个可导入 PNG
+- [ ] 实施修复（需后续执行请求；本轮仅制作清单）
+
+## 双卡对照审查（2026-07-26）
+- [x] 开发版入口、文件引用与运行 bundle 审查
+- [x] 发布版 YAML、PNG 内嵌数据与 CDN bundle 审查
+- [x] 开发版↔发布版契约与内容差分
+- [x] 运行无安装、无 watch 的现有门禁
+- [x] 按影响卡片汇总缺陷
+
+## 当前只读复审（2026-07-26）
+- [x] 确认当前工作树、角色卡入口与实际构建链
+- [x] 审查前端/脚本运行逻辑与生命周期
+- [x] 审查世界书、变量、提示词和数据契约一致性
+- [x] 运行不安装依赖、不启动 watch 的有限门禁
+- [x] 汇总可复现缺陷、影响与证据（不修改业务代码）
+
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链；8.14.0 进一步交付抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换（tag `v8.14.0`；CDN_REF `5af93cec47cc…`；cache `v81400_20260719_01`；bot bundle `5af93ce`）。
 
@@ -31,11 +52,11 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.14.0 已发布并推送；MFRS 复杂机制已彻底废弃，改极简流程；改造 commit `3841c30` 在 `origin/main` |
-| 我要去哪里？ | 收尾已全部完成（8.14.0 发布 + MFRS 废弃 + 文档升级 + 注释清理均已推送）；等待下一个功能/修复任务 |
-| 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `toggle-dev --disable` 回生产 → `publish-card` 发布 |
+| 我在哪里？ | 8.14.0 已发布并推送；MFRS 复杂机制已彻底废弃，改极简流程；当前运行/结束任务与两阶段发布时序已统一 |
+| 我要去哪里？ | 双卡审计缺陷修复清单（T0–T7）已编制完成，等待用户授权后按批次实施 T0/T1 |
+| 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
 | 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist |
-| 我做了什么？ | 发布 8.14.0；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；验证 F5；提交推送；更新 planning |
+| 我做了什么？ | 发布 8.14.0；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；验证 F5；提交推送；更新 planning；新增 stop-dev 与两阶段门禁 |
 
 ## 硬约束（勿破）
 
@@ -52,10 +73,11 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 | 项 | 值 |
 |----|-----|
 | 发布内容版本 | **8.14.0**（tag `v8.14.0`；CDN_REF `5af93cec47cc02ed20fd60a36d3aa1f68770cb27`；cache `v81400_20260719_01`；bot bundle `5af93ce`） |
-| 仓库运行时基线 | **`23e3927`**（tag `v8.14.1`，8.14.0 后 CI bot bundle）；本地/远端 `main` = `3841c30`（废弃 MFRS 改造） |
-| 开发流程 | 极简单人：`toggle-dev --enable`（YAML→localhost:5510）+ `pnpm watch` + `mfrs-dev-server-simple.mjs`（固定 5510）+ 内置浏览器验证 |
-| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync（可选） |
-| 下一阶段 | 收尾已全部完成；等待下一个功能/修复任务 |
+| 仓库运行时基线 | 本地/远端 `main` 与 `origin/main` 同步；发布 dist 以 CI bot bundle 为权威 |
+| 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → 8000 真页验收；结束用 `pnpm stop-dev` |
+| 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
+| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）；6620/6621 默认关闭，仅显式启用 |
+| 下一阶段 | 双卡审计缺陷修复 T0/T1（按批次实施） |
 
 ## 各阶段
 
@@ -230,7 +252,9 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 - [x] 可执行任务清单：`docs/mfrs-redesign-phase0/TASKLIST_HUD_UX_NEXT.md`（T0–T7，共 44 项）。
 - **状态：** complete（本轮只规划，业务源码未改）
 
-### 阶段 HUD-UX-NEXT：三项交互调整实施 — **active（T0–T5 complete；T6 可执行 / MFRS；T7 blocked until 授权）**
+### 阶段 HUD-UX-NEXT：三项交互调整实施 — **历史归档（功能已在 8.14.0 完成发布）**
+
+> 下列 T6/T7、Chrome DevTools、production build 与 publish-card 待办是 2026-07-17 的历史状态，不再执行；现行验证与发布流程见 `PROJECT_FLOW.md`。
 
 - [x] Phase 1：数据库前端完整抽卡面板增加单源 embedded mount API，并保留 overlay 兼容入口。
 - [x] Phase 2：右侧抽卡键直接挂载完整面板，移除简版状态、事件与 CSS。
@@ -244,15 +268,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 - **T3 审查：** `buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”；默认最新 AI 三栏的 7 键导航保持独立，其下新增展开图标 + “沉浸模式”，复用唯一 `hudImmersivePreferred`、`toggleHudImmersive()` 与快捷键。沉浸顶栏旧 shell 可幂等迁移为收起图标 + “默认模式”；进入/退出双向聚焦、mode 刷新恢复、非 latest 历史楼隐藏、60px 桌面/≤900px 右轨和 ≤640px 整行布局均完成。`git diff --check` 与双路代码质量复核通过，无 High/Medium。
 - **T4 审查：** archive-ui 旧 H7–H11 已替换为完整面板 host/mount/destroy、重试、刷新保留、清理和旧 marker 缺席契约；新增 I1–I5 覆盖 `buildHudDossierHtml()` 范围内的左栏精简，以及默认/沉浸双向按钮、单一 preference、快捷键、焦点和响应式布局。门禁使用 TypeScript AST 精确定位函数/分支/调用/赋值，从 AST 提取 CSS template 并按最终声明验证，同时屏蔽 HTML comments、限定静态字符串拼接。frontend 21 项动态检查、archive-ui 237 checks、聚合门禁、`node --check` 与 `git diff --check` 全部通过；独立反模式与质量复核均 APPROVE，仅既有 CDN_REF warning。
 - **T5 审查：** overlay/embedded 单源、抽卡句柄所有权和唯一 `hudImmersivePreferred` 状态真源均通过审查；`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend 21 项、archive-ui 237 checks、聚合门禁全部 PASS，archive-ui ESLint errors 为 0。v10 全文件 `better-tailwindcss` 会误扫 JavaScript template 内的非 Tailwind HTML/CSS；排除该已知插件误报后，非 Tailwind 规则与 `origin/main` 基线一致。`75f4a9a..5dacd2e` 提交链白名单精确，不含 dist/PNG/版本/package/lockfile，功能提交已推送且无需重复提交；独立 verification、反模式与质量复核均 APPROVE。
-- **状态：** paused（T0–T5 complete；T6 blocked/pending；28/44 complete，16 pending；按用户要求暂停）
+- **状态：** archived（后续功能已在 8.14.0 完成并发布；旧 pending 项不再作为当前待办）
 
-### 阶段 PROJECT-FLOW-FIX：修复项目流程 — **planning complete（待用户确认实施）**
+### 阶段 PROJECT-FLOW-FIX：修复项目流程 — **历史归档（旧 MFRS 方案已废弃）**
+
+> 下列 P0–P9 是旧 MFRS/worktree/动态端口方案的历史规划，不再实施；现行单人极简流程已落地并以 `PROJECT_FLOW.md` 为准。
 
 - [x] 梳理当前开发入口、worktree、watch、临时开发构建、真页注入、production 与发布链路中的流程缺陷。
 - [x] 明确要修复的流程范围、不可触碰边界、单一推荐路径和失败恢复策略。
 - [x] 制定可执行任务清单与验收标准；详细清单见 `docs/mfrs-redesign-phase0/TASKLIST_PROJECT_FLOW_FIX.md`。
-- [ ] 用户确认后按 P0 → P9 实施。
-- **状态：** planning complete（已产出 44 项任务清单；待用户确认实施范围和优先级）
+- [x] 旧方案停止实施并归档，改用现行单人极简流程。
+- **状态：** archived（旧 44 项清单仅保留历史证据）
 
 ### PROJECT-FLOW-FIX 任务清单摘要（详见 TASKLIST_PROJECT_FLOW_FIX.md）
 
@@ -298,11 +324,11 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 ## 当前任务状态
 
-1. **8.13.36 已发布**：沉浸 HUD 中栏工作区已进入角色卡（release `0726289`，CDN_REF `9c5a467a3481`，tag `v8.13.36`）。
-2. **HUD-UX-NEXT 已完成 T0–T5，当前暂停**：T6 已按 MFRS 流程重写清单（含 T6.0 环境门禁）；在 feature worktree + DEV 卡上可执行；T7 待 T6 通过且用户授权。进度见 TASKLIST_HUD_UX_NEXT.md（28/48）。
-3. **新增 PROJECT-FLOW-FIX**：下一任务为修复项目流程；先做流程缺陷梳理、边界确认和任务规划，暂不执行配置修改、构建、注入或页面交互。
-4. 后续如恢复 HUD 实施，仍使用 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle` / `worktree-feat-hud-gacha-mode-toggle`，基线为 `origin/main@75f4a9a`；不使用旧 `feat-immersive-center-workspaces`。
-5. 用户原有 watch 由用户维护，不得启动、停止或接管；主工作树的 dev dist 不纳入任务提交。
+1. **8.14.0 已发布**：抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换均已进入发布卡。
+2. **旧 HUD-UX-NEXT / PROJECT-FLOW-FIX 已归档**：对应 MFRS、feature worktree、动态端口、DEV 卡和 runtime identity 流程均已废弃，不得继续执行旧清单。
+3. **当前运行流程**：F5 → 切换开发模式 → `pnpm watch` 仅编译 → 固定 5510 静态服务 → SillyTavern 8000 真页验收；结束使用 `pnpm stop-dev`。
+4. **当前发布流程**：阶段 1 运行 `verify:mfrs-source-gates` 并推送源码；等待 bot bundle；阶段 2 更新 `CDN_REF`，运行 `publish-card --dist-no-build` 与完整 `verify:mfrs-gates`，再提交发布物和正式 tag。
+5. 当前具体任务以本文件顶部最新条目和 `docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md` 为准；历史任务清单仅作证据，不作为操作入口。
 
 ## 遇到的错误
 
@@ -347,10 +373,10 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 ```
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
-当前已发布内容为 8.13.36（release 0726289，CDN_REF 9c5a467a3481，tag v8.13.36）。
-HUD-UX-NEXT 的 T0–T5 已完成，下一项为 T6.1 Chrome DevTools 桌面完整面板真页验收；T6 尚未开始。再读 docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md 与 TASKLIST_HUD_UX_NEXT.md。
-Worktree：D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle
-分支：worktree-feat-hud-gacha-mode-toggle（基线 origin/main@75f4a9a）
+当前发布内容为 8.14.0；旧 MFRS、feature worktree、动态端口、派生 DEV 卡和 runtime identity 流程均已归档，不得恢复执行。
+当前开发流程：F5 → 切换开发模式 → pnpm watch 仅编译 → 固定 5510 静态服务 → SillyTavern 8000 真页验收；结束运行 pnpm stop-dev。
+当前发布流程：阶段 1 跑 verify:mfrs-source-gates 并推送源码 → 等 bot bundle → 阶段 2 更新 CDN_REF → publish-card --dist-no-build → verify:mfrs-gates → 提交发布物和正式 tag。
+当前具体任务优先读取本文件顶部最新条目和 docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md。
 ```
 
 ## 备注

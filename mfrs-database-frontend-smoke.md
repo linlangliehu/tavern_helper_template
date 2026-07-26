@@ -1,5 +1,7 @@
 # MFRS Database Frontend Non-AI Smoke Checklist
 
+> **历史专题清单，不可作为当前启动/发布流程执行**：本文的业务检查项仍可参考，但 `pnpm build`、9222 CDP、Live Server、旧 F5 环境等前置步骤已过时。当前环境准备、开发卡、结束任务和发布步骤只以 `PROJECT_FLOW.md` 与 `docs/SIMPLIFIED_WORKFLOW.md` 为准。
+
 ## Scope
 
 This checklist verifies the database frontend after P1/P2/P3 changes. It is intentionally non-AI: do not send chat messages, do not click "立即手动更新", and do not call `manualUpdate()` or `triggerUpdate()`.
