@@ -104,7 +104,7 @@ function buildMfrsMeta(mode: string) {
 
 let io: Server;
 function watch_tavern_helper(compiler: webpack.Compiler) {
-  if (process.env.MFRS_SKIP_HMR_SERVER === '1') {
+  if (process.env.TAVERN_HELPER_ENABLE_HMR_SERVER !== '1') {
     return;
   }
   if (compiler.options.watch) {
@@ -167,7 +167,7 @@ const bundle = () => {
 };
 const bundle_debounced = _.debounce(bundle, 500, { leading: true, trailing: false });
 function tavern_sync(compiler: webpack.Compiler) {
-  if (process.env.MFRS_SKIP_TAVERN_SYNC === '1') {
+  if (compiler.options.watch && process.env.TAVERN_HELPER_ENABLE_TAVERN_SYNC !== '1') {
     return;
   }
   if (!compiler.options.watch) {

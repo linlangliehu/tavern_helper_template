@@ -34,8 +34,8 @@
 |------|------|
 | `8000` | SillyTavern 酒馆真页（业务页面） |
 | `5510` | 本地静态服务器，暴露 `dist/**`（**固定端口** + CORS） |
-| `6620` | `pnpm watch` 默认派生的 `tavern_sync watch`；设 `MFRS_SKIP_TAVERN_SYNC=1` 可跳过 |
-| `6621` | webpack Socket.IO HMR；设 `MFRS_SKIP_HMR_SERVER=1` 可跳过 |
+
+可选能力默认不启动：设置 `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1` 可启用 tavern_sync watch（通常使用 `6620`）；设置 `TAVERN_HELPER_ENABLE_HMR_SERVER=1` 可启用 webpack HMR（默认 `6621`）。
 
 ---
 
@@ -48,12 +48,11 @@
 它按顺序触发任务链：
 
 1. **切换到开发模式** — `toggle-dev-mode.mjs --enable`：把 `src/神秘复苏模拟器/index.yaml` 的 CDN URL 改为 `http://127.0.0.1:5510/`，并在 YAML 顶部备份原始 CDN_REF 到 `# DEV_MODE_ORIGINAL_CDN_REF:` 注释
-2. **pnpm watch** — webpack 监听源码，持续编译到 `dist/**`；默认同时启动 `6621` HMR，并派生 `tavern_sync watch all -f`（通常使用 `6620`）
+2. **pnpm watch** — webpack 只监听源码，持续编译到 `dist/**`
 3. **静态服务器** — 固定端口 `5510` 暴露 `dist/**`
 
 > 也可用命令面板（`Ctrl+Shift+P`）→ **运行任务** 手动单独跑上述任一任务。
 > 本流程**不启动、不管理调试 Chrome**；验收用内置浏览器即可。
-> 若只需要本地编译与 5510 静态资源，可在启动 watch 前设置 `MFRS_SKIP_HMR_SERVER=1` 和/或 `MFRS_SKIP_TAVERN_SYNC=1`。默认 F5 流程不设置它们，因此 `6620`、`6621` 被占用时可能启动失败。
 
 ### 2. 导入开发卡（首次 / 卡内容变动时）
 

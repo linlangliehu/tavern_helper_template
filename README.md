@@ -42,13 +42,15 @@ pnpm install
 1. 在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动"启动开发环境"任务链。
    - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。
    - 也可用命令面板"运行任务"手动跑：切换到开发模式 → pnpm watch → 静态服务器。
-2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 编译到 `dist/**`，并默认启动 `6621` HMR 与 `tavern_sync watch all -f`（通常使用 `6620`）→ 固定端口 5510 静态服务。若只需要编译和静态服务，可设置 `MFRS_SKIP_HMR_SERVER=1`、`MFRS_SKIP_TAVERN_SYNC=1` 跳过对应副作用。
+2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 只监听源码并编译到 `dist/**` → 固定端口 5510 静态服务。
 3. 首次生成并导入开发卡：
    ```bash
    node tavern_sync.mjs bundle 神秘复苏模拟器
    # 导入 src/神秘复苏模拟器/神秘复苏模拟器.png（脚本 URL 指向 127.0.0.1:5510）
    ```
 4. 用浏览器打开 `http://127.0.0.1:8000/` 查看效果；改源码 → watch 自动编译 → 刷新页面即可，无需重新导卡。
+
+> 默认流程不启动 6620 tavern_sync watch 或 6621 HMR。确有需要时可分别设置 `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1`、`TAVERN_HELPER_ENABLE_HMR_SERVER=1` 显式启用。
 
 > 开发卡（`src/神秘复苏模拟器/神秘复苏模拟器.png`，localhost）与发布卡（`src/神秘复苏模拟器发布版/…png`，CDN）不同，别导错。
 

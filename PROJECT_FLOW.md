@@ -23,8 +23,11 @@
 | --- | --- | --- |
 | `8000` | SillyTavern | 酒馆真页（业务页面） |
 | `5510` | `scripts/mfrs-dev-server-simple.mjs` | 本地静态服务，暴露 `dist/**`（固定端口 + CORS） |
-| `6620` | `tavern_sync watch` | `pnpm watch` 默认派生的角色卡/世界书实时同步；设 `MFRS_SKIP_TAVERN_SYNC=1` 可跳过 |
-| `6621` | webpack Socket.IO HMR | `pnpm watch` 默认启动，编译完成后通知酒馆重载脚本/iframe；设 `MFRS_SKIP_HMR_SERVER=1` 可跳过 |
+
+可选能力（默认不启动）：
+
+- `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1`：让 watch 派生 `tavern_sync watch all -f`（通常使用 `6620`）
+- `TAVERN_HELPER_ENABLE_HMR_SERVER=1`：让 watch 启动 webpack Socket.IO HMR（默认端口 `6621`）
 
 ## 开发流程（日常）
 
@@ -33,12 +36,26 @@
 **按键盘 F5**（笔记本常为 Fn+F5）= 启动开发环境。它触发任务链：
 
 1. **切换到开发模式** → `toggle-dev-mode.mjs --enable`：把 `src/神秘复苏模拟器/index.yaml` 的 CDN URL 改为 `http://127.0.0.1:5510/`，并备份原始 CDN_REF 到注释
-2. **pnpm watch** → 源码编译到 `dist/**`；默认同时启动 `6621` HMR 服务，并派生 `tavern_sync watch all -f`（通常占用 `6620`）
+2. **pnpm watch** → 只监听源码并编译到 `dist/**`
 3. **静态服务器** → 固定端口 5510 暴露 `dist/**`
 
 也可用命令面板"运行任务"手动跑上述任务。
 
-> 若只需要本地编译与 5510 静态资源，可在启动 watch 前设置 `MFRS_SKIP_HMR_SERVER=1` 和/或 `MFRS_SKIP_TAVERN_SYNC=1`。默认 F5 流程不设置这两个变量，因此 `6620`、`6621` 被占用时可能启动失败。
+实际运行链路：
+
+```text
+修改开发版源码
+    ↓
+pnpm watch 自动编译到 dist/**
+    ↓
+静态服务器通过 127.0.0.1:5510 提供 dist
+    ↓
+开发卡的 index.yaml 从 5510 加载本地资源
+    ↓
+SillyTavern 运行在 127.0.0.1:8000
+    ↓
+使用 VS Code 内置浏览器刷新、交互和验收
+```
 
 ### 生成开发卡并导入
 

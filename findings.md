@@ -17,7 +17,7 @@
 
 - **决策**：MFRS 复杂机制（worktree 隔离、会话锁、运行时身份验证、DEV 卡派生、四链路契约、`5510–5514` 端口段、`.mcp.json`）对单人开发过度工程化，已彻底删除。
 - **新流程**：极简单人闭环 = `toggle-dev --enable`（`index.yaml` CDN→`http://127.0.0.1:5510`）→ `pnpm watch` 编译 dist → `mfrs-dev-server-simple.mjs`（**固定** 5510，非端口段）静态服务 → 内置浏览器验证 → `toggle-dev --disable` 回生产 → `publish-card` 发布。
-- **端口职责**：8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6621 webpack HMR（`pnpm watch` 默认启动）· 6620 tavern_sync watch（`pnpm watch` 默认派生）。已删除的是 MFRS 动态 5510–5514、会话锁和身份机制；可分别用 `MFRS_SKIP_HMR_SERVER=1`、`MFRS_SKIP_TAVERN_SYNC=1` 跳过模板原生副作用。
+- **端口职责**：现行默认链路只使用 8000 SillyTavern 真页与固定 5510 静态服务器；`pnpm watch` 只编译 `dist/**`。6620 tavern_sync watch 与 6621 webpack HMR 均默认关闭，仅在分别设置 `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1`、`TAVERN_HELPER_ENABLE_HMR_SERVER=1` 时启用。
 - **验证工具**：内置浏览器（VS Code 集成）替代调试 Chrome；`scripts/cdp-evaluate.mjs` 作为回退。删除 `start-chrome-debug.cmd`。
 - **提交纪律教训**：`toggle-dev --enable` 会把 `index.yaml` 全部 loadModule URL 改成 localhost 并加 `DEV_MODE_ORIGINAL_CDN_REF` 注释——提交前必须 `toggle-dev --disable` + `git checkout index.yaml`。本地 `pnpm watch`/`build` 产生的 `dist` 与 CI bot bundle 有依赖漂移噪声，也不应提交（`publish-card --dist-no-build` 已处理发布场景）。
 - **bot 同步教训**：发布后 CI 会追加 `[bot] bundle` 提交（仅改 `dist/`）。先 `git fetch origin`；没有新增本地提交时用 `git merge --ff-only origin/main`，已有新增本地提交时用 `git rebase origin/main`。同步前先恢复本地 watch/build 产生的 dist 噪音。
