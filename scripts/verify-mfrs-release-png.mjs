@@ -1,6 +1,6 @@
 /* eslint-disable import-x/no-nodejs-modules */
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +29,7 @@ const DEFAULT_RELEASE_PNG = join(
   '神秘复苏模拟器发布版',
   '神秘复苏模拟器发布版.png',
 );
+const DEFAULT_RELEASE_DIR = dirname(DEFAULT_RELEASE_PNG);
 
 function parseArgs(argv) {
   const options = {
@@ -82,10 +83,37 @@ function extractTextChunks(buffer, label) {
           text: data.subarray(separator + 1).toString('latin1'),
         });
       }
+    } else if (type === 'zTXt') {
+      // Compressed text chunk: keyword NUL compressionMethod(1 byte) compressedText
+      const data = buffer.subarray(dataStart, dataEnd);
+      const separator = data.indexOf(0);
+      if (separator >= 0 && dataEnd - dataStart >= separator + 2) {
+        try {
+          const { inflateSync } = require('node:zlib');
+          const decompressed = inflateSync(data.subarray(separator + 2));
+          chunks.push({
+            keyword: data.subarray(0, separator).toString('latin1').toLowerCase(),
+            text: decompressed.toString('latin1'),
+          });
+        } catch {
+          // ignore malformed zTXt chunks
+        }
+      }
     }
     offset = dataEnd + 4;
   }
   return chunks;
+}
+
+function verifyUniqueReleaseCard() {
+  const importable = readdirSync(DEFAULT_RELEASE_DIR)
+    .filter(file => file.toLowerCase().endsWith('.png'))
+    .filter(file => {
+      const chunks = extractTextChunks(readFileSync(join(DEFAULT_RELEASE_DIR, file)), file);
+      const keywords = new Set(chunks.map(chunk => chunk.keyword));
+      return keywords.has('chara') || keywords.has('ccv3');
+    });
+  assert.deepEqual(importable, ['神秘复苏模拟器发布版.png'], 'release directory must contain exactly one importable card PNG');
 }
 
 function decodeCharacterChunk(chunk, label) {
@@ -326,6 +354,7 @@ function main() {
     if (!existsSync(file)) throw new Error(`File not found: ${file}`);
     return verifyPngBuffer(readFileSync(file), file, options);
   });
+  verifyUniqueReleaseCard();
   if (options.printJson) console.log(JSON.stringify(results, null, 2));
   else {
     for (const result of results) {

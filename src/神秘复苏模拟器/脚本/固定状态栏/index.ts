@@ -39,7 +39,7 @@ type HostWindow = Window & {
   };
 };
 
-declare const eventOn: undefined | ((event: unknown, listener: (...args: unknown[]) => void) => void);
+declare const eventOn: undefined | ((event: unknown, listener: (...args: unknown[]) => void) => unknown);
 declare const tavern_events: undefined | { CHAT_CHANGED?: unknown };
 
 // 酒馆助手「脚本」运行在 JS-Slash-Runner 的 TH-script iframe 中，该 iframe 的 document
@@ -57,6 +57,35 @@ let nativeChatChangedSubscription: {
   eventType: unknown;
   listener: () => void;
 } | null = null;
+let chatChangedDisposer: (() => void) | null = null;
+const ownedTimers = new Set<number>();
+const scheduleTimeout = window.setTimeout.bind(window);
+let lifecycleEpoch = 0;
+let pagehideCleanupRef: (() => void) | null = null;
+
+function normalizeEventDisposer(subscription: unknown): (() => void) | null {
+  if (typeof subscription === 'function') return subscription as () => void;
+  if (!subscription || typeof subscription !== 'object') return null;
+
+  const candidate = subscription as { stop?: () => void; unsubscribe?: () => void };
+  if (typeof candidate.stop === 'function') return () => candidate.stop?.();
+  if (typeof candidate.unsubscribe === 'function') return () => candidate.unsubscribe?.();
+  return null;
+}
+
+function ownedSetTimeout(callback: () => void, delay: number) {
+  const timer = scheduleTimeout(() => {
+    ownedTimers.delete(timer);
+    callback();
+  }, delay);
+  ownedTimers.add(timer);
+  return timer;
+}
+
+function clearOwnedTimers() {
+  ownedTimers.forEach(timer => window.clearTimeout(timer));
+  ownedTimers.clear();
+}
 
 function getSillyTavernContext() {
   for (const st of [hostWindow.SillyTavern, (window as HostWindow).SillyTavern]) {
@@ -220,13 +249,22 @@ function cleanupFixedStatusBar() {
 }
 
 function retryMount(attempt = 1) {
+  const epoch = lifecycleEpoch;
   if (ensureFixedStatusBar()) return;
-  if (attempt < 20) setTimeout(() => retryMount(attempt + 1), 1000);
+  if (attempt < 20) {
+    ownedSetTimeout(() => {
+      if (epoch === lifecycleEpoch) retryMount(attempt + 1);
+    }, 1000);
+  }
 }
 
 function handleChatChanged() {
+  clearOwnedTimers();
+  lifecycleEpoch += 1;
+  const epoch = lifecycleEpoch;
   for (const delay of [0, 250, 1000]) {
-    window.setTimeout(() => {
+    ownedSetTimeout(() => {
+      if (epoch !== lifecycleEpoch) return;
       if (isMysteryRevivalCardActive()) {
         void ensureFixedStatusBar();
       } else {
@@ -237,9 +275,23 @@ function handleChatChanged() {
 }
 
 function installCleanup() {
+  // Remove the previous pagehide listener before registering a new one.
+  // Without this, each hot-reload accumulates a dangling listener that holds a stale
+  // cleanup closure; on pagehide the last stale `delete hostWindow.__mfrsFixedStatusCleanup__`
+  // would wipe the current instance's reference.
+  if (pagehideCleanupRef) {
+    window.removeEventListener('pagehide', pagehideCleanupRef);
+    pagehideCleanupRef = null;
+  }
+
   hostWindow.__mfrsFixedStatusCleanup__?.();
-  hostWindow.__mfrsFixedStatusCleanup__ = () => {
+  lifecycleEpoch += 1;
+  const cleanup = () => {
+    lifecycleEpoch += 1;
+    clearOwnedTimers();
     cleanupFixedStatusBar();
+    chatChangedDisposer?.();
+    chatChangedDisposer = null;
     if (nativeChatChangedSubscription) {
       nativeChatChangedSubscription.eventSource?.off?.(
         nativeChatChangedSubscription.eventType,
@@ -247,13 +299,19 @@ function installCleanup() {
       );
       nativeChatChangedSubscription = null;
     }
+    if (pagehideCleanupRef === cleanup) {
+      window.removeEventListener('pagehide', cleanup);
+      pagehideCleanupRef = null;
+    }
     delete hostWindow.__mfrsFixedStatusCleanup__;
   };
+  hostWindow.__mfrsFixedStatusCleanup__ = cleanup;
+  pagehideCleanupRef = cleanup;
 
-  window.addEventListener('pagehide', hostWindow.__mfrsFixedStatusCleanup__, { once: true });
+  window.addEventListener('pagehide', cleanup, { once: true });
 
   if (typeof eventOn !== 'undefined' && typeof tavern_events !== 'undefined' && tavern_events.CHAT_CHANGED) {
-    eventOn(tavern_events.CHAT_CHANGED, handleChatChanged);
+    chatChangedDisposer = normalizeEventDisposer(eventOn(tavern_events.CHAT_CHANGED, handleChatChanged));
     return;
   }
 

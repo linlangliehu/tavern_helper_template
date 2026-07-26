@@ -119,6 +119,30 @@ function copyFile(src, dst) {
   return statSync(dst).size;
 }
 
+function stripCharacterCardChunks(file) {
+  if (DRY_RUN) return;
+  const png = readFileSync(file);
+  if (png.toString('latin1', 0, 8) !== '\x89PNG\r\n\x1a\n') die(`不是有效 PNG: ${file}`);
+
+  const kept = [png.subarray(0, 8)];
+  let offset = 8;
+  while (offset + 12 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString('ascii', offset + 4, offset + 8);
+    const end = offset + 12 + length;
+    if (end > png.length) die(`PNG chunk 截断: ${file}`);
+
+    const data = png.subarray(offset + 8, offset + 8 + length);
+    const separator = type === 'tEXt' || type === 'zTXt' || type === 'iTXt' ? data.indexOf(0) : -1;
+    const keyword = separator >= 0 ? data.subarray(0, separator).toString('latin1').toLowerCase() : '';
+    if (keyword !== 'chara' && keyword !== 'ccv3') kept.push(png.subarray(offset, end));
+
+    offset = end;
+    if (type === 'IEND') break;
+  }
+  writeFileSync(file, Buffer.concat(kept));
+}
+
 function replaceAndCount(content, pattern, replacer) {
   let count = 0;
   const next = content.replace(pattern, (...args) => {
@@ -234,8 +258,10 @@ if (pickedCards.length === 0) {
 
 if (DRY_RUN) {
   log('** DRY RUN（不会改文件；跳过需 fetch/build 的 G1 门禁） **');
-} else {
+} else if (!NO_BUNDLE) {
   for (const card of pickedCards) verifyDistFreshness(card);
+} else {
+  log('** 仅镜像模式（--no-bundle；跳过仅用于分发打包的 G1 门禁） **');
 }
 
 for (const card of pickedCards) {
@@ -257,6 +283,7 @@ for (const card of pickedCards) {
     const src = join(devDir, f);
     if (!existsSync(src)) { log(`  - 跳过不存在的文件 ${f}`); continue; }
     const size = copyFile(src, join(pubDir, f));
+    stripCharacterCardChunks(join(pubDir, f));
     log(`  ✓ 同步文件 ${f} (${humanSize(size)})`);
   }
 

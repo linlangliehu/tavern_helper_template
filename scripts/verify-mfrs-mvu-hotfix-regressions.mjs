@@ -31,6 +31,7 @@ function readText(path) {
 
 const hotfixSource = readText(hotfixPath);
 const initvarSource = readText(join(mfrsRoot, '\u4e16\u754c\u4e66', '\u53d8\u91cf', 'initvar.yaml'));
+const cardSource = readText(join(mfrsRoot, 'index.yaml'));
 
 assert.ok(
   hotfixSource.includes('function seedMissingStatPaths'),
@@ -76,6 +77,10 @@ assert.ok(
 assert.ok(
   /最近行动判定:[\s\S]*?类型:\s*未判定/.test(initvarSource),
   'initvar must seed 最近行动判定 defaults',
+);
+assert.ok(
+  cardSource.includes('/驭鬼者状态/已驾驭厉鬼') && cardSource.includes('厉鬼名称映射为代号'),
+  'welcome start must initialize the runtime ghost roster and map 厉鬼名称 to 代号',
 );
 assert.ok(
   hotfixSource.includes('function recoverSendUiAfterEmptyGeneration'),
@@ -315,6 +320,15 @@ for (const root of [mfrsRoot, releaseRoot]) {
     /\u5df2\u9a7e\u9a6d\u5389\u9b3c[\s\S]{0,200}?op:"replace"/s.test(variableRules),
     `${root} variable update rules must declare replace-only for \u5df2\u9a7e\u9a6d\u5389\u9b3c`,
   );
+  for (const required of [
+    '「状态」为「厉鬼复苏」',
+    '「is_dead」为 true',
+    '「主线进度.阶段状态」为「模拟结束」',
+    '「行动建议」为 []',
+    '禁止输出 <choices>',
+  ]) {
+    assert.ok(variableRules.includes(required), `${root} revival terminal contract missing: ${required}`);
+  }
 }
 
 // BUG-002: render-layer dedup fallback

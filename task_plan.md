@@ -1,11 +1,85 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
+## 第二轮审查缺陷修复任务清单（2026-07-26）
+
+> 对本次生命周期修复本身的回归审查发现 3 个新问题，均来自上一轮修复引入。
+
+### R1（中）：`installCleanup` 每次热重载累积悬空 pagehide 监听器
+
+**根因**
+```typescript
+window.addEventListener('pagehide', hostWindow.__mfrsFixedStatusCleanup__, { once: true });
+```
+每次脚本热重载都追加一个新 `pagehide` 监听器，旧的没有被移除。`{ once: true }` 只保证触发一次，不保证无效时被清除。多个旧监听器在 pagehide 时竞争执行旧 cleanup 闭包，最后一个 `delete hostWindow.__mfrsFixedStatusCleanup__` 会抹掉当前有效实例。
+
+**影响**：高频热重载（或 watch 下反复保存）后，pagehide 时旧 cleanup 与新 cleanup 互相干扰，最终状态不确定。
+
+**修复方案**
+1. 在模块顶层持有一个 `let pagehideCleanupRef: (() => void) | null = null`。
+2. `installCleanup` 开始时先 `window.removeEventListener('pagehide', pagehideCleanupRef!)` 移除旧监听，再注册新监听并更新 `pagehideCleanupRef`。
+3. `hostWindow.__mfrsFixedStatusCleanup__` 执行时同步把 `pagehideCleanupRef` 置 null 并移除自身 pagehide 监听。
+
+**验收**
+- 门禁新增：`sources.fixed.includes('window.removeEventListener(')` 和 `sources.fixed.includes('pagehideCleanupRef')` 均断言为 true。
+- 连续调用 `installCleanup()` 3 次后，`window` 上只有 1 个 pagehide 监听器（可用 `getEventListeners(window).pagehide.length === 1` 在运行时验证，门禁用字符串静态检查）。
+
+---
+
+### R2（中）：发布版头像 PNG 被移出 git 后未重新加入 git 跟踪
+
+**根因**
+上一轮用 `git mv` 将 `src/神秘复苏模拟器发布版/神秘复苏模拟器.png` 移到 `archive/`，之后 `publish-card --no-bundle` 重新生成了该文件，但它在 git 里显示为 `D`（已删除）加 `??`（未跟踪新文件）。干净 checkout 或 CI 环境不存在这个文件，`tavern_sync bundle 神秘复苏模拟器发布版` 会因找不到头像 PNG 而失败。
+
+**影响**：阻断正式发布流程；任何刚 clone 仓库或 CI 运行 `publish-card` 时都会报错。
+
+**修复方案**
+1. 把当前生成的 `src/神秘复苏模拟器发布版/神秘复苏模拟器.png` 纳入 git 跟踪（`git add`）。
+2. 在 `publish-card` 配置注释中明确该头像来自 `发布版目录` 而非开发卡目录，方便后续审查。
+3. 验证 `git status --short -- "src/神秘复苏模拟器发布版/神秘复苏模拟器.png"` 输出 ` M` 或空（表示已跟踪），不再出现 `??` 或 `D`。
+
+**验收**
+- `git ls-files src/神秘复苏模拟器发布版/神秘复苏模拟器.png` 返回该路径（非空）。
+- `node tavern_sync.mjs bundle 神秘复苏模拟器发布版` 在干净工作区中成功执行。
+
+---
+
+### R3（低）：`verifyUniqueReleaseCard` 只解析 `tEXt`，不解析 `zTXt`
+
+**根因**
+`extractTextChunks` 只读取 `tEXt` 类型的 PNG 文本块；`zTXt`（压缩文本块）被忽略。SillyTavern 目前写的是 `tEXt`，所以现在不影响功能，但将来若 `chara/ccv3` 改用 `zTXt` 编码，门禁会静默漏过一个实际可导入的 PNG。
+
+**影响**：验证盲区；当前场景不触发，为低风险防御性修复。
+
+**修复方案**
+在 `extractTextChunks` 里补充解析 `zTXt` 块（先跳过 1 字节压缩方法，再 `zlib.inflateSync`），将关键字和解压文本追加到 `chunks` 数组。与现有 `stripCharacterCardChunks` 的 `zTXt` 处理保持对称。
+
+**验收**
+- `verifyUniqueReleaseCard` 的 `extractTextChunks` 调用与 `stripCharacterCardChunks` 覆盖的文本块类型完全一致（静态检查：两处函数体中出现 `'zTXt'` 的次数相等）。
+
+---
+
+### 修复顺序
+
+| 优先级 | 任务 | 原因 |
+|--------|------|------|
+| 1 | R2 纳入头像 git 跟踪 | 阻断发布流程，立即修 |
+| 2 | R1 修复 pagehide 累积 | 运行时态不确定，影响上线后热重载 |
+| 3 | R3 补全 zTXt 解析 | 低风险，不阻塞发布 |
+
+- [x] R2：把发布版头像 PNG `git add` 并验证跟踪状态
+- [x] R1：修复 `installCleanup` pagehide 监听器累积，补充专项门禁断言
+- [x] R3：`extractTextChunks` 补充 `zTXt` 解析，与 `stripCharacterCardChunks` 保持对称
+
+---
+
 ## 双卡缺陷修复任务清单（2026-07-26）
 - [x] Phase 0：文档/API/门禁发现
 - [x] 将审计发现拆分为 T0–T7 可执行任务
 - [x] 写入 `docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md`
 - [x] 产品决策：独立“厉鬼复苏”终态；发布目录仅一个可导入 PNG
-- [ ] 实施修复（需后续执行请求；本轮仅制作清单）
+- [x] 实施源码修复：状态栏生命周期、开局厉鬼双根、复苏终局、发布目录唯一成品
+- [x] 重建开发卡并同步发布版源目录
+- [ ] 正式发布 PNG 重建（等待源码提交触发 CI bot production dist，再更新 CDN_REF）
 
 ## 双卡对照审查（2026-07-26）
 - [x] 开发版入口、文件引用与运行 bundle 审查

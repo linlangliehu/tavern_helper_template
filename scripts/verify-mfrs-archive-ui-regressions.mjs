@@ -573,6 +573,36 @@ addCheck('phase1', 'message cleanup unwraps narrative content instead of deletin
   );
   assert.ok(cleanupBlock.includes("querySelectorAll('.mfrs-msg-narrative-wrapper').forEach(unwrapNarrativeWrapper)"));
 });
+addCheck('phase1', 'fixed status owns chat subscription and retry timers', () => {
+  assert.ok(sources.fixed.includes('let chatChangedDisposer: (() => void) | null = null;'));
+  assert.ok(sources.fixed.includes('const ownedTimers = new Set<number>();'));
+  assert.ok(sources.fixed.includes('chatChangedDisposer = normalizeEventDisposer('));
+  assert.ok(sources.fixed.includes('chatChangedDisposer?.();'));
+  assert.ok(sources.fixed.includes('clearOwnedTimers();'));
+  assert.equal(
+    sources.fixed.includes('eventOn(tavern_events.CHAT_CHANGED, handleChatChanged);\n    return;'),
+    false,
+    'eventOn disposer must not be discarded',
+  );
+  assert.equal(
+    /(?<!ownedSetTimeout\()\b(?:window\.)?setTimeout\(/.test(sources.fixed),
+    false,
+    'fixed status timers must use the owned timeout wrapper',
+  );
+  // R1: pagehide listener must be tracked and replaced on each installCleanup call
+  assert.ok(
+    sources.fixed.includes('let pagehideCleanupRef: (() => void) | null = null;'),
+    'pagehide cleanup ref must be declared at module scope',
+  );
+  assert.ok(
+    sources.fixed.includes('window.removeEventListener(\'pagehide\', pagehideCleanupRef)'),
+    'installCleanup must remove the previous pagehide listener before registering a new one',
+  );
+  assert.ok(
+    sources.fixed.includes('pagehideCleanupRef = cleanup;'),
+    'installCleanup must update pagehideCleanupRef to the new cleanup function',
+  );
+});
 addCheck('phase1', 'message narrative wrapper cannot absorb an entity brand during chat reload', () => {
   const wrapperBlock = between(sources.message, 'function wrapNarrativeText', 'function unwrapNarrativeWrapper');
   assert.ok(wrapperBlock.includes('nestedBrands'), 'nested brands must be normalized back to direct message children');
