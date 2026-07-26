@@ -15,7 +15,7 @@
 
 ### 玩家使用
 
-1. 下载最新已发布角色卡：[神秘复苏模拟器发布版.png](src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png)（8.13.22）
+1. 下载最新已发布角色卡：[神秘复苏模拟器发布版.png](src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png)（8.14.0）
 2. 在 SillyTavern 中导入角色卡
 3. 选择支持的 AI 模型（推荐 Claude Opus/Sonnet）
 4. 开始游玩
@@ -42,7 +42,7 @@ pnpm install
 1. 在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动"启动开发环境"任务链。
    - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。
    - 也可用命令面板"运行任务"手动跑：切换到开发模式 → pnpm watch → 静态服务器。
-2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 编译到 `dist/**` → 固定端口 5510 静态服务。
+2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 编译到 `dist/**`，并默认启动 `6621` HMR 与 `tavern_sync watch all -f`（通常使用 `6620`）→ 固定端口 5510 静态服务。若只需要编译和静态服务，可设置 `MFRS_SKIP_HMR_SERVER=1`、`MFRS_SKIP_TAVERN_SYNC=1` 跳过对应副作用。
 3. 首次生成并导入开发卡：
    ```bash
    node tavern_sync.mjs bundle 神秘复苏模拟器
@@ -68,11 +68,10 @@ pnpm install
 
 ## 版本历史
 
-### v8.13.22（2026-07-15）- 当前发布内容
-- **范围**：BF6 正则/清洗残余、RH5 范围收窄、P0–P3 发布链加固
-- **资源**：CDN ref `@158dcc29107f`，cache `v81322_20260714_01`，release `e568cce`
-- **状态**：发布版 YAML/PNG、门禁、提交、推送和标签 `v8.13.22` 均已完成
-- **后续仓库基线**：`b8213f7`（tag `v8.13.26`），包含档案资源区 `[object Object]` 修复及自动 bundle
+### v8.14.0（2026-07-19）- 当前发布内容
+- **范围**：抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换
+- **资源**：CDN ref `@5af93cec47cc02ed20fd60a36d3aa1f68770cb27`，cache `v81400_20260719_01`
+- **状态**：发布版 YAML/PNG、门禁、提交、推送和标签 `v8.14.0` 均已完成
 
 ### v8.13.21（2026-07-13）- 历史发布
 - **范围**：BF5 门禁 G2–G5、DM8、WM1/WM2/L8
@@ -191,36 +190,14 @@ vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 3. 浏览器打开 `http://127.0.0.1:8000/`；改源码 → watch 自动编译 → 刷新页面查看效果
 4. 结束：运行任务 **切换回生产模式** 还原 YAML
 
-#### 3. 构建发布
-```bash
-# 停止 watch 后，本地可按需 production 验证（默认不提交 dist）
-pnpm build
-
-# 正式发布：source 进 main → 等 bot bundle/tag → 更新 CDN_REF → 同步发布版
-node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build
-```
-
 #### 4. 提交推送
 ```bash
-# 从 origin/main 切 worktree（推荐）
-git worktree add -b fix-something .codex-fix origin/main
-cd .codex-fix
-# ... 改动 ...
-git add <具体文件>
+# 单人日常直接在当前 main 工作树中修改，并精确暂存
 git commit -m "fix: 描述"
-git push -u origin fix-something
-
-# 快速合并（小改动）
-git checkout main
-git merge fix-something --no-ff
 git push origin main
-git branch -d fix-something
-git push origin --delete fix-something
-
-# PR 流程（大改动）
-# 在 GitHub 创建 PR: compare/main...fix-something
-# 合并后自动触发 bot bundle
 ```
+
+> worktree 仅用于确有并行隔离需求的特殊任务，不是日常开发入口。若 bot bundle 在本地提交之后产生，先 `git fetch origin`：没有新增本地提交时 `git merge --ff-only origin/main`；已有新增本地提交时 `git rebase origin/main`，再推送。
 
 #### 5. bot 自动构建
 - push 到 main 后，GitHub Actions 自动运行 `bundle.yaml`
@@ -345,12 +322,13 @@ import 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@18
 1. 提交 source 改动到 main
 2. 等待 bot 自动构建（commit `[bot] bundle`）
 3. 更新 `scripts/mfrs-release-constants.mjs` 的 `CDN_REF` 为最终 production dist commit
-4. 运行 `pnpm run publish-card`，会自动：
+4. 运行 `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build`，会自动：
    - 镜像开发版到发布版
    - 替换所有 localhost/127.0.0.1 为 CDN
    - 替换旧 jsdelivr hash/cache 为当前 CDN
    - 添加 `?v=<cache-version>` 到资源 URL
-5. 提交发布版 YAML 和 PNG
+5. 确认 release-png 门禁通过，提交发布常量、发布版 YAML 和 PNG
+6. 打正式版本 tag 并推送 main 与 tag
 
 ## 贡献指南
 

@@ -17,13 +17,15 @@
 
 - **决策**：MFRS 复杂机制（worktree 隔离、会话锁、运行时身份验证、DEV 卡派生、四链路契约、`5510–5514` 端口段、`.mcp.json`）对单人开发过度工程化，已彻底删除。
 - **新流程**：极简单人闭环 = `toggle-dev --enable`（`index.yaml` CDN→`http://127.0.0.1:5510`）→ `pnpm watch` 编译 dist → `mfrs-dev-server-simple.mjs`（**固定** 5510，非端口段）静态服务 → 内置浏览器验证 → `toggle-dev --disable` 回生产 → `publish-card` 发布。
-- **端口职责**：8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync（可选）。不再有 5510–5514 段、6621 HMR、会话锁端口。
+- **端口职责**：8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6621 webpack HMR（`pnpm watch` 默认启动）· 6620 tavern_sync watch（`pnpm watch` 默认派生）。已删除的是 MFRS 动态 5510–5514、会话锁和身份机制；可分别用 `MFRS_SKIP_HMR_SERVER=1`、`MFRS_SKIP_TAVERN_SYNC=1` 跳过模板原生副作用。
 - **验证工具**：内置浏览器（VS Code 集成）替代调试 Chrome；`scripts/cdp-evaluate.mjs` 作为回退。删除 `start-chrome-debug.cmd`。
 - **提交纪律教训**：`toggle-dev --enable` 会把 `index.yaml` 全部 loadModule URL 改成 localhost 并加 `DEV_MODE_ORIGINAL_CDN_REF` 注释——提交前必须 `toggle-dev --disable` + `git checkout index.yaml`。本地 `pnpm watch`/`build` 产生的 `dist` 与 CI bot bundle 有依赖漂移噪声，也不应提交（`publish-card --dist-no-build` 已处理发布场景）。
-- **rebase 教训**：发布后 CI 会追加 `[bot] bundle` 提交（仅改 `dist/`），本地改造推送前需 `git rebase origin/main`（与 bot 提交零文件重叠，安全线性化）。
+- **bot 同步教训**：发布后 CI 会追加 `[bot] bundle` 提交（仅改 `dist/`）。先 `git fetch origin`；没有新增本地提交时用 `git merge --ff-only origin/main`，已有新增本地提交时用 `git rebase origin/main`。同步前先恢复本地 watch/build 产生的 dist 噪音。
 - **保留**：8 脚本/33 正则/7 CDN_REF 门禁不变；`verify:mfrs-gates` 及各子门禁全部保留并通过。
 
-## 运行流程统一口径（2026-07-18）
+> **历史归档，不可执行**：以下 2026-07-18 的 MFRS/worktree/动态端口/DEV 卡流程已被 2026-07-19 单人极简 F5 流程取代。仅保留根因分析价值，不得据此启动开发环境、创建日常 worktree 或执行发布。
+
+## 运行流程统一口径（2026-07-18，历史）
 
 - 文档真源：`PROJECT_FLOW.md` 顶部「统一运行口径」+ 四条链路；README 快速开始与「开发流程」必须与之同构。
 - 默认入口：`MFRS: 实时开发当前工作树` + `pnpm mfrs:dev-card` + DEV 卡 + `5510–5514`；`Fn+F5`/`5500` 为遗留。
@@ -404,11 +406,11 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 - **8.13.31 已发布**（release `4c94a4e`；CDN_REF `8ee8c58` / cache `v81331_20260716_01`；tag `v8.13.31`）。
 - publish-card 门禁通过：G1 dist 新鲜度 ✓；release-png version=8.13.31 refs=7 cache=8 regex=33 scripts=8 ✓。
 
-## 当前状态快照（2026-07-17）
+## 历史状态快照（2026-07-17，不代表当前版本）
 
 - **审计与历史发布**：BF0–BF6、Phase 5、8.13.29、8.13.31 与沉浸 HUD 中栏改造均已完成。
-- **当前发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
-- **当前任务状态**：HUD-UX-NEXT 的 T0–T5 已完成（28/44），T6 Chrome DevTools 真页验收 pending；archive-ui 新 H7–H11/I1–I5、frontend 21 项动态检查、archive-ui 237 checks、聚合门禁和源码提交链检查均已通过，下一项为 T6.1。
+- **当时发布版本**：**8.13.36**（release `0726289`，CDN_REF `9c5a467a3481…`，cache `v81336_20260716_01`，tag `v8.13.36` → bot bundle `296c14cd`）。
+- **当时任务状态**：HUD-UX-NEXT 的 T0–T5 已完成（28/44），T6 Chrome DevTools 真页验收 pending；archive-ui 新 H7–H11/I1–I5、frontend 21 项动态检查、archive-ui 237 checks、聚合门禁和源码提交链检查均已通过，下一项为 T6.1。
 - **工作区保护**：主工作树既有 dirty/untracked 用户文件不纳入本任务。
 
 ## 8.13.22 发布结论（历史）

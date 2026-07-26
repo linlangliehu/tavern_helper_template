@@ -20,10 +20,11 @@
 ## 端口职责
 
 | 端口 | 进程 | 职责 |
-|------|------|------|
+| --- | --- | --- |
 | `8000` | SillyTavern | 酒馆真页（业务页面） |
 | `5510` | `scripts/mfrs-dev-server-simple.mjs` | 本地静态服务，暴露 `dist/**`（固定端口 + CORS） |
-| `6620` | `tavern_sync`（可选） | 角色卡/世界书 push/pull/bundle |
+| `6620` | `tavern_sync watch` | `pnpm watch` 默认派生的角色卡/世界书实时同步；设 `MFRS_SKIP_TAVERN_SYNC=1` 可跳过 |
+| `6621` | webpack Socket.IO HMR | `pnpm watch` 默认启动，编译完成后通知酒馆重载脚本/iframe；设 `MFRS_SKIP_HMR_SERVER=1` 可跳过 |
 
 ## 开发流程（日常）
 
@@ -32,10 +33,12 @@
 **按键盘 F5**（笔记本常为 Fn+F5）= 启动开发环境。它触发任务链：
 
 1. **切换到开发模式** → `toggle-dev-mode.mjs --enable`：把 `src/神秘复苏模拟器/index.yaml` 的 CDN URL 改为 `http://127.0.0.1:5510/`，并备份原始 CDN_REF 到注释
-2. **pnpm watch** → 源码编译到 `dist/**`
+2. **pnpm watch** → 源码编译到 `dist/**`；默认同时启动 `6621` HMR 服务，并派生 `tavern_sync watch all -f`（通常占用 `6620`）
 3. **静态服务器** → 固定端口 5510 暴露 `dist/**`
 
 也可用命令面板"运行任务"手动跑上述任务。
+
+> 若只需要本地编译与 5510 静态资源，可在启动 watch 前设置 `MFRS_SKIP_HMR_SERVER=1` 和/或 `MFRS_SKIP_TAVERN_SYNC=1`。默认 F5 流程不设置这两个变量，因此 `6620`、`6621` 被占用时可能启动失败。
 
 ### 生成开发卡并导入
 
@@ -75,15 +78,15 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 
 ### 阶段 2：等 bot bundle 并发布
 
-7. `git push origin main`（若落后远程先 `git merge origin/main`）
-8. push 触发 `.github/workflows/bundle.yaml`：bot 在 CI 一致环境 `pnpm install && pnpm build` 重建 dist，提交 `[bot] bundle` 并打自动 tag
-9. **用 GitHub MCP 查 Actions workflow 状态和 bot bundle 的 commit SHA**（替代手动 `git fetch` 轮询）
-10. `git merge origin/main --ff-only` 同步 bot bundle 到本地（本地 dist 有 watch 噪音时先 `git checkout HEAD -- dist/`）
-11. 更新 `scripts/mfrs-release-constants.mjs` 的 `CDN_REF` = bot bundle 完整 SHA
-12. `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build` 生成发布版 PNG
-13. release-png 门禁自动校验（version/refs/cache/regex/scripts）
-14. 提交发布物（constants + 发布版 index.yaml + 发布版 PNG）
-15. 打发布 tag `git tag v<版本号>` → `git push origin main` + `git push origin v<版本号>`
+1. 先 `git fetch origin`。若当前分支没有尚未推送的本地提交，执行 `git merge --ff-only origin/main`；若已有本地提交，执行 `git rebase origin/main`。随后 `git push origin main`
+2. push 触发 `.github/workflows/bundle.yaml`：bot 在 CI 一致环境 `pnpm install && pnpm build` 重建 dist，提交 `[bot] bundle` 并打自动 tag
+3. **用 GitHub MCP 查 Actions workflow 状态和 bot bundle 的 commit SHA**（替代手动 `git fetch` 轮询）
+4. 同步 bot bundle 到本地（本地 dist 有 watch 噪音时先 `git checkout HEAD -- dist/`）：没有新增本地提交时执行 `git merge --ff-only origin/main`；已有新增本地提交时执行 `git rebase origin/main`
+5. 更新 `scripts/mfrs-release-constants.mjs` 的 `CDN_REF` = bot bundle 完整 SHA
+6. `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build` 生成发布版 PNG
+7. release-png 门禁自动校验（version/refs/cache/regex/scripts）
+8. 提交发布物（constants + 发布版 index.yaml + 发布版 PNG）
+9. 打发布 tag `git tag v<版本号>` → `git push origin main` + `git push origin v<版本号>`
 
 > `--dist-no-build`：dist 已由 CI bot 权威构建并推送（CDN_REF 指向该 commit），G1 门禁只校验 `dist == CDN_REF` 一致性，跳过本地 `pnpm build`。这规避了本地 `pnpm install` 依赖漂移导致 dist 重建带 webpack module-id 噪音的已知问题。
 

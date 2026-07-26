@@ -34,7 +34,8 @@
 |------|------|
 | `8000` | SillyTavern 酒馆真页（业务页面） |
 | `5510` | 本地静态服务器，暴露 `dist/**`（**固定端口** + CORS） |
-| `6620` | `tavern_sync`（可选，角色卡/世界书 push/pull/bundle） |
+| `6620` | `pnpm watch` 默认派生的 `tavern_sync watch`；设 `MFRS_SKIP_TAVERN_SYNC=1` 可跳过 |
+| `6621` | webpack Socket.IO HMR；设 `MFRS_SKIP_HMR_SERVER=1` 可跳过 |
 
 ---
 
@@ -47,11 +48,12 @@
 它按顺序触发任务链：
 
 1. **切换到开发模式** — `toggle-dev-mode.mjs --enable`：把 `src/神秘复苏模拟器/index.yaml` 的 CDN URL 改为 `http://127.0.0.1:5510/`，并在 YAML 顶部备份原始 CDN_REF 到 `# DEV_MODE_ORIGINAL_CDN_REF:` 注释
-2. **pnpm watch** — webpack 监听源码，持续编译到 `dist/**`
+2. **pnpm watch** — webpack 监听源码，持续编译到 `dist/**`；默认同时启动 `6621` HMR，并派生 `tavern_sync watch all -f`（通常使用 `6620`）
 3. **静态服务器** — 固定端口 `5510` 暴露 `dist/**`
 
 > 也可用命令面板（`Ctrl+Shift+P`）→ **运行任务** 手动单独跑上述任一任务。
 > 本流程**不启动、不管理调试 Chrome**；验收用内置浏览器即可。
+> 若只需要本地编译与 5510 静态资源，可在启动 watch 前设置 `MFRS_SKIP_HMR_SERVER=1` 和/或 `MFRS_SKIP_TAVERN_SYNC=1`。默认 F5 流程不设置它们，因此 `6620`、`6621` 被占用时可能启动失败。
 
 ### 2. 导入开发卡（首次 / 卡内容变动时）
 
@@ -121,7 +123,7 @@ pnpm watch                                   # 源码监听编译
 6. **精确提交源码**（`git add <具体文件>`，**不要** `git add .`，不提交本地 `dist/**`）
 7. `git push origin main` → GitHub Actions（`bundle.yaml`）自动 `rm -rf dist && pnpm install && pnpm build`，提交 `[bot] bundle` 并打自动 tag
 8. 用 **GitHub MCP** 查 Actions 状态 + bot bundle 的 commit SHA
-9. `git rebase origin/main`（本地 dist 有 watch 噪音时先 `git checkout HEAD -- dist/`）
+9. 先 `git fetch origin`（本地 dist 有 watch 噪音时先 `git checkout HEAD -- dist/`）：没有新增本地提交时执行 `git merge --ff-only origin/main`；已有新增本地提交时执行 `git rebase origin/main`
 10. 更新 `mfrs-release-constants.mjs` 的 `CDN_REF` = bot bundle 完整 SHA
 11. `node scripts/publish-card.mjs 神秘复苏模拟器发布版 --dist-no-build` 生成发布版 PNG（自动跑 release-png 门禁）
 12. 提交发布物 → 打 tag `v<版本>` → `git push origin main` + `git push origin v<版本>`
@@ -190,7 +192,7 @@ git add src/神秘复苏模拟器/index.yaml && git commit --amend --no-edit
 3. 硬刷新酒馆页面；vendor 报旧 CDN 404 时开一个全新聊天
 
 **Q：推送被拒（rejected）？**
-发布后 CI 会追加 `[bot] bundle` 提交。先 `git fetch origin` → `git rebase origin/main`（bot 只改 `dist/`，与源码改动零重叠，安全）→ 再 `git push`。
+发布后 CI 会追加 `[bot] bundle` 提交。先 `git fetch origin`；没有新增本地提交时执行 `git merge --ff-only origin/main`，已有新增本地提交时执行 `git rebase origin/main`，再 `git push`。bot 只改 `dist/`，同步前仍应确认并恢复本地 watch/build 噪音。
 
 ---
 
