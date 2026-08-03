@@ -79,7 +79,7 @@ window.addEventListener('pagehide', hostWindow.__mfrsFixedStatusCleanup__, { onc
 - [x] 产品决策：独立“厉鬼复苏”终态；发布目录仅一个可导入 PNG
 - [x] 实施源码修复：状态栏生命周期、开局厉鬼双根、复苏终局、发布目录唯一成品
 - [x] 重建开发卡并同步发布版源目录
-- [ ] 正式发布 PNG 重建（等待源码提交触发 CI bot production dist，再更新 CDN_REF）
+- [x] 正式发布 PNG 重建（8.14.15，CDN_REF `85cb68233d793b634ed0a57662a5235442d31ac2`，tag `v8.14.15`）
 
 ## 双卡对照审查（2026-07-26）
 - [x] 开发版入口、文件引用与运行 bundle 审查
