@@ -1,6 +1,6 @@
 # 开发流程使用指南（唯一主流程）
 
-本项目为**单人开发**，采用极简流程：**固定端口静态服务 + 直接切换 YAML 开发/生产模式 + 内置浏览器验收 + GitHub Actions 自动 bundle**。
+本项目为**单人开发**，采用极简流程：**固定端口静态服务 + 直接切换 YAML 开发/生产模式 + VS Code 调试 Chrome（CDP 9225）验收 + GitHub Actions 自动 bundle**。
 
 > 历史上的 MFRS 多 worktree / 动态端口 / 身份验证 / DEV 卡派生 / 会话锁机制已于 2026-07-19 **彻底废弃**，本文档描述的就是当前**唯一**的开发流程。
 
@@ -12,16 +12,12 @@
 
 ## 一图看懂
 
-```
-改源码 ──▶ pnpm watch 自动编译 ──▶ dist/**
-                                     │
-                        静态服务器(5510) 暴露 dist
-                                     │
-  index.yaml(dev模式) 的脚本 URL 指向 http://127.0.0.1:5510/
-                                     │
-              SillyTavern(8000) 加载本地 bundle
-                                     │
-                  内置浏览器打开 8000 看效果 / 验收
+```text
+改源码 ──▶ pnpm watch 自动编译 ──┬─▶ dist/** ──▶ 静态服务器(5510) ──▶ 开发卡 YAML 加载 local bundle ──▶ SillyTavern(8000)
+                                 ├─▶ tavern_sync watch(6620) ──▶ 同步角色卡/世界书/预设
+                                 └─▶ HMR(6621) ──▶ 推送酒馆助手热重载 ──────────────────────────────▶ SillyTavern(8000)
+
+VS Code 调试 Chrome(CDP 9225) 打开酒馆页面 ──▶ AI 用 chrome-devtools 连 9225 验收
 ```
 
 开发结束 → 切回生产模式 → 发布走 `publish-card` + GitHub Actions。
@@ -31,11 +27,14 @@
 ## 端口
 
 | 端口 | 用途 |
-|------|------|
+| ------ | ------ |
 | `8000` | SillyTavern 酒馆真页（业务页面） |
 | `5510` | 本地静态服务器，暴露 `dist/**`（**固定端口** + CORS） |
+| `6620` | `tavern_sync watch`（**默认开启**）：同步 `tavern_sync.yaml` 中配置的角色卡/世界书/预设 |
+| `6621` | webpack HMR（**默认开启**）：编译完成后推送更新事件，让酒馆页面热重载 |
+| `9225` | 独立调试 Chrome CDP（由 VS Code 启动）；`chrome-devtools` MCP 与 `scripts/cdp-evaluate.mjs` 连此端口验收；`--user-data-dir=.vscode/chrome-debug-profile` 独立 profile |
 
-可选能力默认不启动：设置 `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1` 可启用 tavern_sync watch（通常使用 `6620`）；设置 `TAVERN_HELPER_ENABLE_HMR_SERVER=1` 可启用 webpack HMR（默认 `6621`）。
+如需关闭其中一个默认监听，显式设置 `TAVERN_HELPER_DISABLE_TAVERN_SYNC=1` 或 `TAVERN_HELPER_DISABLE_HMR_SERVER=1` 后再启动 watch。
 
 ---
 
@@ -43,16 +42,17 @@
 
 ### 1. 启动开发环境
 
-**按 `F5`**（笔记本常为 `Fn+F5`）→ 运行 `启动开发环境`。
+**按 `F5`**（笔记本常为 `Fn+F5`）→ 启动调试。
 
-它按顺序触发任务链：
+`preLaunchTask` 按顺序跑任务链，三者就绪后 VS Code 以调试模式启动独立 Chrome：
 
 1. **切换到开发模式** — `toggle-dev-mode.mjs --enable`：把 `src/神秘复苏模拟器/index.yaml` 的 CDN URL 改为 `http://127.0.0.1:5510/`，并在 YAML 顶部备份原始 CDN_REF 到 `# DEV_MODE_ORIGINAL_CDN_REF:` 注释
-2. **pnpm watch** — webpack 只监听源码，持续编译到 `dist/**`
-3. **静态服务器** — 固定端口 `5510` 暴露 `dist/**`
+2. **pnpm watch** — webpack 只监听源码，持续编译到 `dist/**`（等 `webpack … compiled`）
+3. **静态服务器** — 固定端口 `5510` 暴露 `dist/**`（等 `Static server running`）
+4. **VS Code 启动调试 Chrome** — `--remote-debugging-port=9225 --user-data-dir=.vscode/chrome-debug-profile`，打开 `http://127.0.0.1:8000/`
 
-> 也可用命令面板（`Ctrl+Shift+P`）→ **运行任务** 手动单独跑上述任一任务。
-> 本流程**不启动、不管理调试 Chrome**；验收用内置浏览器即可。
+> 也可用命令面板（`Ctrl+Shift+P`）→ **运行任务** 手动单独跑 1–3（任务名 `启动开发服务`），不含浏览器。
+> AI 真页验收通过 `chrome-devtools` MCP 连 `http://127.0.0.1:9225`；人可在 VS Code 对 TS/Vue 源码设断点。
 
 ### 2. 导入开发卡（首次 / 卡内容变动时）
 
@@ -71,9 +71,9 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 
 1. **改源码** → 保存
 2. **pnpm watch 自动编译** → 终端出现 `webpack … compiled`
-3. **刷新酒馆页面** → 看到最新效果（**无需重新导卡**）
+3. **6621 HMR 推送热重载** → 看到最新效果（**无需重新导卡**；如酒馆实时监听开关关闭，则手动刷新调试 Chrome）
 
-用**内置浏览器**打开 `http://127.0.0.1:8000/` 查看画面、手动交互，或让 AI 自动化验证（点击、读快照、evaluate）。
+VS Code 调试 Chrome（CDP `127.0.0.1:9225`）已打开 `http://127.0.0.1:8000/`，可看画面、手动交互，或让 AI 用 `chrome-devtools` 连 9225 做自动化验证（点击、读快照、evaluate）。
 
 > 若开新聊天后 vendor 脚本仍报旧 CDN 404，是旧聊天缓存了 base URL；**开一个全新聊天**即可让 localhost base 生效。
 
@@ -90,8 +90,8 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 命令面板（`Ctrl+Shift+P`）→ 输入 **运行任务**：
 
 | 任务 | 功能 |
-|------|------|
-| `启动开发环境` | 一键任务链：切开发模式 → watch → 静态服务器 |
+| ------ | ------ |
+| `启动开发服务` | 一键任务链：切开发模式 → watch → 静态服务器（不含浏览器；浏览器由 F5 调试配置启动） |
 | `切换到开发模式` | 仅把 YAML 改为 `http://127.0.0.1:5510/` |
 | `切换回生产模式` | 还原 YAML 为 CDN 地址 |
 | `结束开发环境` | 停止当前仓库 watch/5510 并还原 YAML 为生产模式 |
@@ -191,7 +191,7 @@ git add src/神秘复苏模拟器/index.yaml && git commit --amend --no-edit
 **Q：改了源码但酒馆没变化？**
 1. 看 `pnpm watch` 终端是否出现 `webpack … compiled`
 2. 确认 `--status` 是开发模式（否则酒馆加载的是 CDN 而非本地）
-3. 硬刷新酒馆页面；vendor 报旧 CDN 404 时开一个全新聊天
+3. 调试 Chrome 里重载酒馆页面（AI 可用 `chrome-devtools` 的 `navigate_page` reload）；vendor 报旧 CDN 404 时开一个全新聊天
 
 **Q：推送被拒（rejected）？**
 发布后 CI 会追加 `[bot] bundle` 提交。先 `git fetch origin`；没有新增本地提交时执行 `git merge --ff-only origin/main`，已有新增本地提交时执行 `git rebase origin/main`，再 `git push`。bot 只改 `dist/`，同步前仍应确认并恢复本地 watch/build 噪音。

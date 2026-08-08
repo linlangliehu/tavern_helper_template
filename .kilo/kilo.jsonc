@@ -3,7 +3,7 @@
   "mcp": {
     "chrome-devtools": {
       "type": "local",
-      "command": ["pnpx", "chrome-devtools-mcp@latest", "--port=58813"],
+      "command": ["pnpx", "chrome-devtools-mcp@1.6.0", "--browser-url=http://127.0.0.1:9225"],
       "enabled": true
     }
   }

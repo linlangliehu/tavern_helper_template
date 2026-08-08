@@ -2,7 +2,7 @@
 
 本文件是项目常驻流程文件，回答"项目怎么开发、怎么验证、怎么发布、哪些边界不能踩"，不回答"当前做到哪一步"。当前进度以 `task_plan.md` 顶部为准；会话流水写入 `progress.md`；可复用结论写入 `findings.md`；发布后体验回归清单见 `4.0功能基线回归清单.md`。
 
-> **本项目为单人开发，采用极简流程**：固定端口静态服务 + 直接切换 YAML 开发/生产模式 + 内置浏览器验收 + GitHub Actions 自动 bundle。历史上的 MFRS 多 worktree / 动态端口 / 身份验证 / DEV 卡派生机制已废弃。
+> **本项目为单人开发，采用极简流程**：固定端口静态服务 + 直接切换 YAML 开发/生产模式 + VS Code 调试 Chrome（CDP 9225）验收 + GitHub Actions 自动 bundle。历史上的 MFRS 多 worktree / 动态端口 / 身份验证 / DEV 卡派生机制已废弃。
 
 ## 项目定位
 
@@ -23,23 +23,24 @@
 | --- | --- | --- |
 | `8000` | SillyTavern | 酒馆真页（业务页面） |
 | `5510` | `scripts/mfrs-dev-server-simple.mjs` | 本地静态服务，暴露 `dist/**`（固定端口 + CORS） |
+| `6621` | webpack Socket.IO HMR | **默认开启**：watch 编译完成后推送 `iframe_updated`，酒馆页面热重载（改代码免手工刷新） |
+| `6620` | `tavern_sync watch all -f` | **默认开启**：watch 派生 tavern_sync，角色卡/世界书实时同步 |
+| `9225` | 独立调试 Chrome（由 VS Code 启动） | CDP 远程调试端口：`chrome-devtools` MCP 与 `scripts/cdp-evaluate.mjs` 连此端口做 DOM/快照/截图/交互验收；`--user-data-dir=.vscode/chrome-debug-profile` 独立 profile，不碰日常 Chrome |
 
-可选能力（默认不启动）：
-
-- `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1`：让 watch 派生 `tavern_sync watch all -f`（通常使用 `6620`）
-- `TAVERN_HELPER_ENABLE_HMR_SERVER=1`：让 watch 启动 webpack Socket.IO HMR（默认端口 `6621`）
+> 如需关闭默认监听，显式设置环境变量 `TAVERN_HELPER_DISABLE_HMR_SERVER=1`（HMR）或 `TAVERN_HELPER_DISABLE_TAVERN_SYNC=1`（tavern_sync）后再启动 watch。
 
 ## 开发流程（日常）
 
 ### 启动
 
-**按键盘 F5**（笔记本常为 Fn+F5）= 启动开发环境。它触发任务链：
+**按键盘 F5**（笔记本常为 Fn+F5）= 启动开发环境。`preLaunchTask` 跑任务链，三者就绪后 VS Code 以调试模式启动独立 Chrome：
 
 1. **切换到开发模式** → `toggle-dev-mode.mjs --enable`：把 `src/神秘复苏模拟器/index.yaml` 的 CDN URL 改为 `http://127.0.0.1:5510/`，并备份原始 CDN_REF 到注释
-2. **pnpm watch** → 只监听源码并编译到 `dist/**`
-3. **静态服务器** → 固定端口 5510 暴露 `dist/**`
+2. **pnpm watch** → 只监听源码并编译到 `dist/**`（等 `webpack … compiled` 就绪）
+3. **静态服务器** → 固定端口 5510 暴露 `dist/**`（等 `Static server running` 就绪）
+4. **VS Code 启动调试 Chrome** → `--remote-debugging-port=9225 --user-data-dir=.vscode/chrome-debug-profile`，打开 `http://127.0.0.1:8000/`
 
-也可用命令面板"运行任务"手动跑上述任务。
+也可用命令面板"运行任务"手动跑 1–3（不含浏览器）。
 
 实际运行链路：
 
@@ -54,7 +55,7 @@ pnpm watch 自动编译到 dist/**
     ↓
 SillyTavern 运行在 127.0.0.1:8000
     ↓
-使用 VS Code 内置浏览器刷新、交互和验收
+VS Code 调试 Chrome（CDP 9225）打开酒馆页面，AI 通过 chrome-devtools 连 9225 验收，人可设断点调试
 ```
 
 ### 生成开发卡并导入
@@ -72,8 +73,9 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 
 ### 看效果
 
-用**内置浏览器**或你自己的浏览器打开 `http://127.0.0.1:8000/`。改源码 → watch 自动编译 → 刷新酒馆页面即可看到效果，无需重新导卡。
+在 VS Code 调试 Chrome 中打开 `http://127.0.0.1:8000/`（CDP `127.0.0.1:9225`）。改源码 → watch 自动编译 → **HMR（6621）自动推送热重载，酒馆页面无需手动刷新**即可看到新效果。
 
+> 前提：酒馆「酒馆助手 → 实时监听 → 允许监听」开关需开启（HMR 服务 6621 默认已启动）。
 > 若开新聊天后 vendor 脚本仍报旧 CDN 404，是旧聊天缓存了 base URL；开一个全新聊天即可让 localhost base 生效。
 
 ### 结束
@@ -137,7 +139,9 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 
 ## 真页调试工具
 
-- 酒馆页面 `http://127.0.0.1:8000/`；用内置浏览器打开可看画面、手动交互、AI 自动化验证（点击、读快照、evaluate）
+- 酒馆页面 `http://127.0.0.1:8000/`，由 VS Code 调试 Chrome（CDP `127.0.0.1:9225`）打开；AI 用 `chrome-devtools` MCP 连 9225 看画面、做 DOM/快照/点击/evaluate 等自动化验收，人可设断点调试
+- TS/Vue 源码断点依赖 `sourceMapPathOverrides`：`src://tavern_helper_template/*` 必须映射到 `${workspaceFolder}/*`，这是 webpack `devtoolModuleFilenameTemplate` 实际生成的 source 前缀
+- 如 `chrome-devtools` 不可用，裸 CDP 工具 `node scripts/cdp-evaluate.mjs`（默认连 9225，可用 `--port` 覆盖）作为备用
 - SQL/数据库问题以 `SP·数据库 III -> 高级工具 -> 运行日志` 为权威入口
 - 不要主动调用 `triggerUpdate()` / 点"立即手动更新"，除非目标就是真实 AI 写库观察
 

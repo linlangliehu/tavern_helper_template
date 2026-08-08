@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "启动开发环境",
+      "label": "启动开发服务",
       "dependsOn": ["切换到开发模式", "pnpm watch", "静态服务器"],
       "dependsOrder": "sequence",
       "problemMatcher": []

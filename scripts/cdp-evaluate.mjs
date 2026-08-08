@@ -7,11 +7,12 @@
  *   node scripts/cdp-evaluate.mjs "<js-expression>"
  *   node scripts/cdp-evaluate.mjs --file <path-to-js-file>
  *   node scripts/cdp-evaluate.mjs --target-url substring "<js>"
+ *   node scripts/cdp-evaluate.mjs --port 9225 "<js>"
  *
- * 自动从 http://127.0.0.1:9222/json 找 type=page 且 url 匹配的 target，
+ * 自动从 http://127.0.0.1:9225/json 找 type=page 且 url 匹配的 target,
  * 连其 webSocketDebuggerUrl，发 Runtime.evaluate，打印 JSON.stringify(result)。
  */
-const targetPort = 9222;
+let targetPort = 9225;
 
 async function findTarget(urlFilter) {
   const res = await fetch(`http://127.0.0.1:${targetPort}/json`);
@@ -69,11 +70,18 @@ async function main() {
   let expression = null;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--target-url') { urlFilter = args[++i]; }
+    else if (args[i] === '--port') {
+      targetPort = Number(args[++i]);
+      if (!Number.isInteger(targetPort) || targetPort < 1 || targetPort > 65535) {
+        console.error(`cdp-evaluate: invalid --port value "${args[i]}"`);
+        process.exit(1);
+      }
+    }
     else if (args[i] === '--file') { expression = await import('node:fs').then(fs => fs.readFileSync(args[++i], 'utf8')); }
     else { expression = args[i]; }
   }
   if (!expression) {
-    console.error('Usage: node scripts/cdp-evaluate.mjs [--target-url substring] [--file path] "<js-expression>"');
+    console.error('Usage: node scripts/cdp-evaluate.mjs [--port 9225] [--target-url substring] [--file path] "<js-expression>"');
     process.exit(1);
   }
   const target = await findTarget(urlFilter);

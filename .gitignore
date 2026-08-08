@@ -27,6 +27,9 @@ et --hard
 # 本地 Claude 私有设置（按约定不应 tracked）
 .claude/settings.local.json
 
+# Claude Code worktree 工作目录（会话产生，曾误入版本控制）
+.claude/worktrees/
+
 # AI 工具本地依赖
 .kilo/node_modules/
 .kilocode/node_modules/

@@ -35,28 +35,32 @@ cd tavern_helper_template
 pnpm install
 ```
 
-> **统一口径**：本项目为单人开发，采用极简流程。日常开发以 `PROJECT_FLOW.md` 为准：固定端口 5510 静态服务 + 直接切换 YAML 开发/生产模式 + 内置浏览器验收。
+> **统一口径**：本项目为单人开发，采用极简流程。日常开发以 `PROJECT_FLOW.md` 为准：固定端口 5510 静态服务 + 直接切换 YAML 开发/生产模式 + VS Code 调试 Chrome（CDP 9225）验收。
 
 ##### 启动开发环境（推荐）
 
-1. 在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动"启动开发环境"任务链。
+1. 在编辑器里按键盘 **F5**（笔记本多为 **Fn+F5**）启动调试。
    - 这是快捷键，**不要**在终端输入文字 `Fn+F5`。
-   - 也可用命令面板"运行任务"手动跑：切换到开发模式 → pnpm watch → 静态服务器。
-2. 流程会自动：`toggle-dev-mode --enable`（YAML 的 CDN URL → `http://127.0.0.1:5510/`）→ `pnpm watch` 只监听源码并编译到 `dist/**` → 固定端口 5510 静态服务。
-3. 首次使用，或修改世界书、提示词、首条消息、对话示例、正则、脚本清单等卡内容后，重新生成并导入开发卡：
+   - `preLaunchTask` 自动跑任务链：切换到开发模式 → pnpm watch → 静态服务器（5510）。
+2. 三者就绪后 VS Code 以调试模式启动独立 Chrome：
+   - `--remote-debugging-port=9225`：供 `chrome-devtools` MCP、`scripts/cdp-evaluate.mjs` 连接（AI 真页验收入口）
+   - `--user-data-dir=.vscode/chrome-debug-profile`：独立 profile，不碰日常 Chrome（Chrome 136+ 必须非默认目录才能开远程调试）
+   - 自动打开 `http://127.0.0.1:8000/`（SillyTavern）
+3. AI 通过 `chrome-devtools` 连 `http://127.0.0.1:9225` 做 DOM/快照/截图/交互验收；人在 VS Code 里可对 TS/Vue 源码设断点调试。
+4. 首次使用，或修改世界书、提示词、首条消息、对话示例、正则、脚本清单等卡内容后，重新生成并导入开发卡：
    ```bash
    node tavern_sync.mjs bundle 神秘复苏模拟器
    # 导入 src/神秘复苏模拟器/神秘复苏模拟器.png（脚本 URL 指向 127.0.0.1:5510）
    ```
-4. 用浏览器打开 `http://127.0.0.1:8000/` 查看效果；改源码 → watch 自动编译 → 刷新页面即可，无需重新导卡。
+5. 改源码 → watch 自动编译 → **6621 HMR 自动推送热重载**（需在酒馆「酒馆助手 → 实时监听 → 允许监听」开关开启），无需重新导卡。
 
-> 默认流程不启动 6620 tavern_sync watch 或 6621 HMR。确有需要时可分别设置 `TAVERN_HELPER_ENABLE_TAVERN_SYNC=1`、`TAVERN_HELPER_ENABLE_HMR_SERVER=1` 显式启用。
+默认流程下，watch 会自动启动 6620（tavern_sync watch）、6621（HMR）。如需关闭，设置 `TAVERN_HELPER_DISABLE_TAVERN_SYNC=1` 或 `TAVERN_HELPER_DISABLE_HMR_SERVER=1` 后再启动任务。
 
 > 开发卡（`src/神秘复苏模拟器/神秘复苏模拟器.png`，localhost）与发布卡（`src/神秘复苏模拟器发布版/…png`，CDN）不同，别导错。
 
 ##### 结束开发
 
-- 运行任务 **结束开发环境**（`pnpm stop-dev`），停止当前仓库 watch/5510 并还原 YAML 的 CDN URL，再进入发布流程。
+- 运行任务 **结束开发环境**（`pnpm stop-dev`），或直接 Shift+F5 停止调试（触发 `postDebugTask`）：停止当前仓库 watch/5510、关闭调试 Chrome 并还原 YAML 的 CDN URL，再进入发布流程。
 - 正式 `src/神秘复苏模拟器/index.yaml` 应保持未污染（切回生产模式即可）。
 
 #### 创建自己的仓库
@@ -187,10 +191,10 @@ vim src/神秘复苏模拟器/世界书/规则/某个规则.txt
 
 #### 2. 实时验证（与 PROJECT_FLOW 统一）
 
-1. 编辑器中按 **F5 / Fn+F5** 启动开发环境（切换到开发模式 + pnpm watch + 静态服务 5510）
+1. 编辑器中按 **F5 / Fn+F5** 启动开发环境（切换到开发模式 + pnpm watch + 静态服务 5510 + 调试 Chrome 9225）
 2. 首次使用或卡内容发生变化后，重新生成并导入开发卡：`node tavern_sync.mjs bundle 神秘复苏模拟器`
-3. 浏览器打开 `http://127.0.0.1:8000/`；改源码 → watch 自动编译 → 刷新页面查看效果
-4. 结束：运行任务 **结束开发环境**，停止 watch/5510 并还原 YAML
+3. 6621 HMR 自动推送热重载；若酒馆实时监听开关关闭，再手动刷新调试 Chrome 页面
+4. 结束：按 Shift+F5 停止调试（自动触发结束开发环境任务）
 
 #### 4. 提交推送
 ```bash
@@ -230,9 +234,11 @@ node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "src/神�
 
 ### 真页验证
 
-用**内置浏览器**或你自己的浏览器打开 `http://127.0.0.1:8000/` 查看效果、手动交互。AI（如 Copilot）可用内置浏览器做自动化验证（点击、读取快照、evaluate）。
+VS Code 按 F5 启动的调试 Chrome 监听 `http://127.0.0.1:9225`，自动打开 `http://127.0.0.1:8000/`。AI 用 `chrome-devtools` MCP 连 9225 做 DOM/快照/截图/点击等自动化验收；人可在 VS Code 里设断点调试 TS/Vue 源码。
 
-如需脚本化 evaluate，可用裸 CDP 工具（需自行启动带 `--remote-debugging-port` 的浏览器）：
+TS/Vue 断点通过 `sourceMapPathOverrides` 映射回本地源码；其中 `src://tavern_helper_template/*` 是本项目 webpack `devtoolModuleFilenameTemplate` 实际使用的 source 前缀，必须保留，否则调试断点会一直处于未绑定状态。
+
+如需脚本化 evaluate，可用裸 CDP 工具（默认连 9225，与调试 Chrome 同端口；可用 `--port` 覆盖）：
 
 ```bash
 node scripts/cdp-evaluate.mjs "document.title"

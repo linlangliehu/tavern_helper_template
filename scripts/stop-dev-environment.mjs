@@ -24,20 +24,13 @@ foreach ($target in $watchTargets) {
   [void]$targetIds.Add([int]$target.ProcessId)
 }
 
-# 停止 5510 上的项目静态服务：必须是 node 进程，且其 cwd 属于当前仓库
+# 停止 5510 上的项目静态服务：CommandLine 含本仓库特有脚本名即可（5510 同一时刻只能被一个进程监听）
 $staticServer = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 5510 -State Listen -ErrorAction SilentlyContinue |
   Select-Object -First 1
 if ($staticServer -and $staticServer.OwningProcess -ne $currentPid) {
   $sp = Get-CimInstance Win32_Process -Filter "ProcessId=$($staticServer.OwningProcess)" -ErrorAction SilentlyContinue
   if ($sp -and $sp.CommandLine -like '*mfrs-dev-server-simple.mjs*') {
-    try {
-      $cwd = (Get-Process -Id $sp.ProcessId -ErrorAction Stop).Path | Split-Path
-    } catch {
-      $cwd = $null
-    }
-    if ($cwd -and ($cwd -like "*$root*" -or $cwd -eq $root)) {
-      [void]$targetIds.Add([int]$staticServer.OwningProcess)
-    }
+    [void]$targetIds.Add([int]$staticServer.OwningProcess)
   }
 }
 
