@@ -18,6 +18,19 @@ components.d.ts
 sillytavern_*.png
 snapshot_after_sync.txt
 
+# CDP 验证用 Chrome user-data 目录（曾误入版本控制，818 文件）
+.tmp-chrome-*/
+
+# 误输入命令 / 误入版本控制的废弃产物
+--.json
+
+# 根目录一次性调试截图（theme/SP 输入截图，曾误入版本控制）
+/mfrs_sp_input_*.png
+/mfrs_theme_*.png
+
+# 大体积原文备忘（《神秘复苏》小说原文，非项目资产，曾误入版本控制）
+/神秘复苏.txt
+
 # Claude Code 临时下载（会话产生）
 .claude_tmp_*
 
