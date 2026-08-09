@@ -98,6 +98,13 @@ window.addEventListener('pagehide', hostWindow.__mfrsFixedStatusCleanup__, { onc
 ## 目标
 BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完成。沉浸 HUD 中栏工作区已交付档案预览、记忆 CRUD、抽卡嵌入与记忆删除安全链；8.14.0 进一步交付抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换（tag `v8.14.0`；CDN_REF `5af93cec47cc…`；cache `v81400_20260719_01`；bot bundle `5af93ce`）。
 
+**8.14.15 发布**（2026-07-26，双卡审计缺陷修复收尾）：状态栏生命周期（`eventOn` disposer + timer 统一持有 + epoch 推进）、复苏终局固定为独立 `厉鬼复苏`、开局双 replace + `厉鬼名称`→`代号` 映射、`publish-card --no-bundle` 真仅镜像 + 发布目录自动剥离 `chara/ccv3`；第二轮审查 R1/R2/R3 已完成（tag `v8.14.15`；CDN_REF `85cb68233d793b634ed0a57662a5235442d31ac2`；cache `v81415_20260726_01`；release `ddd39a1`；bot bundle `85cb682`）。**8.14.16/8.14.17 为 CI bot 自动 bundle 标签，非手动发布，发布内容仍为 8.14.15。**
+
+**维护期三次提交**（2026-08-03 ~ 08-08，未发新版本）：
+- `3cc947a`：同步开发版 CDN 引用至 v8.14.15，归档 `tavern_sync` 脚本。
+- `bb3923b`：修复浏览器调试链路（CDP 9225 + source map `src://tavern_helper_template/*`→`${workspaceFolder}/*`），统一 MCP 配置（`.cursor/mcp.json` / `.kilo/kilo.jsonc`），新增 `scripts/force-stop-dev.ps1`，精简 `stop-dev-environment.mjs`。
+- `d63a5bd`：移除误入版本控制的 `.claude/worktrees/agent-*` 拋留目录。
+
 **MFRS 复杂机制已彻底废弃**（2026-07-19）：删除 worktree/会话锁/运行时身份验证/DEV 卡派生/四链路契约，改用极简单人流程 = 固定端口 5510 静态服务器 + `toggle-dev-mode` YAML 切换 + 内置浏览器验证。改造 commit `3841c30` 已推送 `origin/main`。
 
 ## 当前阶段
@@ -126,11 +133,11 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.14.0 已发布并推送；MFRS 复杂机制已彻底废弃，改极简流程；当前运行/结束任务与两阶段发布时序已统一 |
-| 我要去哪里？ | 双卡审计缺陷修复清单（T0–T7）已编制完成，等待用户授权后按批次实施 T0/T1 |
+| 我在哪里？ | 8.14.15 已发布并推送（2026-07-26）；维护期做了 CDN 引用同步、调试链路修复（CDP 9225 + source map）、worktree 拋留清理；MFRS 已彻底废弃，改极简流程；当前待命，无新发版 |
+| 我要去哪里？ | 双卡审计缺陷修复 T0–T7 余项（已编制计划，待授权实施）；或仓库卫生清理（`.tmp-chrome-*` 818 文件 / `--.json` / 大体积 PNG·txt 仍被 git 跟踪） |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
-| 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist |
-| 我做了什么？ | 发布 8.14.0；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；验证 F5；提交推送；更新 planning；新增 stop-dev 与两阶段门禁 |
+| 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist；CDN_REF 用 SHA 不用 @main |
+| 我做了什么？ | 发布 8.14.15（生命周期/复苏终局/开局分叉/发布目录净化 + R1/R2/R3）；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；维护期修复 CDP 9225 调试链路并统一 MCP 配置 |
 
 ## 硬约束（勿破）
 
@@ -146,12 +153,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.14.0**（tag `v8.14.0`；CDN_REF `5af93cec47cc02ed20fd60a36d3aa1f68770cb27`；cache `v81400_20260719_01`；bot bundle `5af93ce`） |
-| 仓库运行时基线 | 本地/远端 `main` 与 `origin/main` 同步；发布 dist 以 CI bot bundle 为权威 |
-| 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → 8000 真页验收；结束用 `pnpm stop-dev` |
+| 发布内容版本 | **8.14.15**（tag `v8.14.15`；CDN_REF `85cb68233d793b634ed0a57662a5235442d31ac2`；cache `v81415_20260726_01`；release `ddd39a1`；bot bundle `85cb682`）。`v8.14.16`/`v8.14.17` 为 CI bot 自动 bundle 标签，非手动发布 |
+| 仓库运行时基线 | 本地/远端 `main` 与 `origin/main` 同步（HEAD `d63a5bd`）；发布 dist 以 CI bot bundle 为权威 |
+| 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
-| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）；6620/6621 默认关闭，仅显式启用 |
-| 下一阶段 | 双卡审计缺陷修复 T0/T1（按批次实施） |
+| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 9225 调试 Chrome（CDP）；6620/6621 默认关闭，仅显式启用 |
+| 下一阶段 | 双卡审计缺陷修复 T0–T7 余项（待授权）；或仓库卫生清理（误跟踪的临时/大文件） |
 
 ## 各阶段
 
