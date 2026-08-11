@@ -332,6 +332,92 @@ function buildCorePlans(stat: StatData, currentData: unknown, messageId: number)
         },
   );
 
+  plans.push(...buildCharacterPlans(stat, currentData, location));
+  plans.push(...buildLocationPlans(stat, currentData, eventCode));
+
+  return plans;
+}
+
+// 人物/地点只补新行：镜像只能从 stat_data 推出姓名、身份、所在地点这类骨架字段，
+// 阵营/生死/能力/关系/情报都得填「未知」占位。ACU 填表拿到的是完整 AI 情报，
+// 因此已存在的行一律不碰，避免占位值把 ACU 写好的内容冲掉。
+function buildCharacterPlans(stat: StatData, currentData: unknown, location: string): TableChangePlan[] {
+  const roster = Array.isArray(stat.在场人物) ? stat.在场人物 : [];
+  if (roster.length === 0) return [];
+  const sheet = findSheetByTableName(currentData, ['characters', '人物']);
+  const plans: TableChangePlan[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of roster) {
+    // 「周正-讲台上的刑警」→ 姓名 + 身份；没有分隔符时整串当姓名。
+    const raw = String(entry ?? '').trim();
+    if (!raw) continue;
+    const separator = raw.search(/[-–—]/);
+    const name = (separator >= 0 ? raw.slice(0, separator) : raw).trim();
+    const identity = separator >= 0 ? raw.slice(separator + 1).trim() : '';
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    if (sheetHasRowMatching(sheet, 'name', ['姓名'], name)) continue;
+
+    plans.push({
+      action: 'insertRow',
+      table: '人物',
+      data: {
+        name,
+        identity_text: textOrFallback(identity, '未知'),
+        faction_text: '未知',
+        location_name: location,
+        presence_status: '在场',
+        life_status: '未知',
+        supernatural_ability: '未知',
+        relations_text: '未知',
+        known_info: truncateDbText(raw, 400, '未知'),
+      },
+      reason: '数据库前端 MVU 核心表镜像',
+      confidence: 1,
+      skipChatSave: true,
+      silent: true,
+    });
+  }
+
+  return plans;
+}
+
+function buildLocationPlans(stat: StatData, currentData: unknown, eventCode: string): TableChangePlan[] {
+  const event = asRecord(stat.当前灵异事件);
+  const sheet = findSheetByTableName(currentData, ['locations', '地点']);
+  const city = textOrFallback(asRecord(stat.势力关系).所属城市, '未知');
+  const domainStatus = String(event.鬼域状态 ?? '').trim();
+  const plans: TableChangePlan[] = [];
+  const seen = new Set<string>();
+
+  // 事件发生地在前：它带得动灵异状态，当前位置通常是它内部的一个房间。
+  for (const candidate of [event.发生地点, stat.所在位置, stat.开局地点]) {
+    const name = String(candidate ?? '').trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    if (sheetHasRowMatching(sheet, 'location_name', ['地点名'], name)) continue;
+
+    plans.push({
+      action: 'insertRow',
+      table: '地点',
+      data: {
+        location_name: name,
+        city_name: city,
+        location_type: '未知',
+        supernatural_status: domainStatus === '已确认' ? '鬼域影响' : '疑似灵异',
+        lockdown_status: '未封锁',
+        related_event: eventCode,
+        description: truncateDbText(`${name}（${city}）`, 120, '未知'),
+        interaction_options: '未知',
+      },
+      reason: '数据库前端 MVU 核心表镜像',
+      confidence: 1,
+      skipChatSave: true,
+      silent: true,
+    });
+  }
+
   return plans;
 }
 
@@ -464,3 +550,6 @@ export function installMvuCoreMirror(hostWindow: HostWindow) {
     delete (hostWindow as HostWindow & Record<string, unknown>)[marker];
   };
 }
+
+// 仅供门禁/单元测试导出的纯函数（生产打包无副作用，不暴露到全局）。
+export { buildCharacterPlans, buildLocationPlans };
