@@ -12,7 +12,11 @@
       "preLaunchTask": "启动开发服务",
       "postDebugTask": "结束开发环境",
       "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
-      "runtimeArgs": ["--remote-debugging-port=9225"],
+      // 用 port 字段固定 CDP 端口，不要写进 runtimeArgs：
+      // pwa-chrome 会自行注入 --remote-debugging-port，手工再加一个会让命令行出现两个同名参数，
+      // Chrome 只认其中一个 → VSCode 连不上自己预期的端口 → "Could not find any debuggable target"
+      // （现象是 Chrome 窗口起来了、9225 也在监听，但停在 about:blank 从未导航到 url）。
+      "port": 9225,
       "sourceMaps": true,
       "sourceMapPathOverrides": {
         "src://tavern_helper_template/*": "${workspaceFolder}/*",
