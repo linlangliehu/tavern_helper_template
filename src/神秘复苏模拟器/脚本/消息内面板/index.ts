@@ -1,5 +1,6 @@
 // 消息内状态面板脚本 - 在每条 AI 消息内嵌入完整状态面板（两个 tab）+ 叙事文本包装
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+import { applyUpdateProtocolToStatData } from './raw-status-data';
 
 registerMfrsRuntimeBuild('消息内面板');
 
@@ -25,6 +26,13 @@ type MessagePanelHostWindow = Window & {
     getContext?: () => {
       characterId?: string | number;
       characters?: Array<{ name?: string; avatar?: string }> | Record<string, { name?: string; avatar?: string }>;
+      chat?: Array<{
+        is_user?: boolean;
+        mes?: string;
+        message?: string;
+        extra?: Record<string, unknown>;
+        swipe_id?: number;
+      }>;
     };
   };
 };
@@ -186,25 +194,48 @@ function readMessageProtocolText(msg: any): string {
   return '';
 }
 
-/** 最新 AI 楼协议正文：优先 extra._mfrs_raw_protocol_message，再 mes，再 DOM */
-function getLatestAiMessageRawText(): string {
-  const mes = getLatestAiMessageElement();
-  if (!mes) return '';
+function getMessageProtocolTextForElement(mesElement: Element): string {
+  const mesid = mesElement.getAttribute('mesid');
+  const messageId = mesid == null ? NaN : parseInt(mesid, 10);
   try {
-    const mesid = mes.getAttribute('mesid');
-    if (mesid != null) {
-      const messageId = parseInt(mesid, 10);
-      if (!Number.isNaN(messageId)) {
-        const msgs = getChatMessages(messageId);
-        const hit = Array.isArray(msgs) ? msgs[0] : null;
-        const raw = readMessageProtocolText(hit);
-        if (raw) return raw;
-      }
+    const chat = getSillyTavernContext()?.chat;
+    if (Array.isArray(chat)) {
+      const hit = chat.find(message => Number(message?.message_id) === messageId) ?? chat[messageId];
+      const raw = readMessageProtocolText(hit);
+      if (raw) return raw;
     }
   } catch {
     // fall through to DOM
   }
-  return String(mes.querySelector('.mes_text')?.textContent ?? '').trim();
+  return String(mesElement.querySelector('.mes_text')?.textContent ?? '').trim();
+}
+
+/** 最新 AI 楼协议正文：优先 SillyTavern 原始 chat，再用助手消息 API，最后回退 DOM */
+function getLatestAiMessageRawText(): string {
+  const mes = getLatestAiMessageElement();
+  const mesid = mes?.getAttribute('mesid');
+  const messageId = mesid != null ? parseInt(mesid, 10) : NaN;
+  try {
+    const chat = getSillyTavernContext()?.chat;
+    if (Array.isArray(chat) && chat.length > 0) {
+      const hit = !Number.isNaN(messageId) ? chat[messageId] : [...chat].reverse().find(message => !message?.is_user);
+      const raw = readMessageProtocolText(hit);
+      if (raw) return raw;
+    }
+  } catch {
+    // fall through to helper API
+  }
+  try {
+    if (!Number.isNaN(messageId)) {
+      const msgs = getChatMessages(messageId);
+      const hit = Array.isArray(msgs) ? msgs[0] : null;
+      const raw = readMessageProtocolText(hit);
+      if (raw) return raw;
+    }
+  } catch {
+    // fall through to DOM
+  }
+  return String(mes?.querySelector('.mes_text')?.textContent ?? '').trim();
 }
 
 function stripThinkingBlocksForChoices(message: string): string {
@@ -354,9 +385,17 @@ function parseActionSuggestionsFromMessageText(message: string): ActionSuggestio
   return ['A', 'B', 'C', 'D'].map(k => byKey.get(k)).filter((x): x is ActionSuggestion => Boolean(x));
 }
 
-/** 仅收集真实行动建议：MVU → 表 → raw `<choices>` → UpdateVariable/JSONPatch；无数据返回空 */
-function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
-  const fromStat = Array.isArray(data.行动建议) ? data.行动建议 : [];
+/**
+ * 收集行动建议。
+ * - 历史楼沿用原顺序，避免最新消息 raw 污染历史状态面板。
+ * - 最新轮 HUD 以当前消息 raw 协议为真源，数据库只作可信兜底。
+ */
+function collectRealActionSuggestions(
+  data: StatusData,
+  options: { latestTurn?: boolean; allowDatabaseFallback?: boolean } = {},
+): ActionSuggestion[] {
+  const latestTurn = options.latestTurn === true;
+  const allowDatabaseFallback = options.allowDatabaseFallback ?? true;
   const list: ActionSuggestion[] = [];
   const pushItem = (s: any, i: number) => {
     const key = valueText(s.选项 ?? s.option ?? s.key ?? String.fromCharCode(65 + i), String.fromCharCode(65 + i));
@@ -370,28 +409,42 @@ function collectRealActionSuggestions(data: StatusData): ActionSuggestion[] {
     ].filter(Boolean);
     list.push({ key, text, meta: metaParts.join('｜'), fill: text });
   };
-  fromStat.forEach((s, i) => pushItem(s, i));
-  if (!list.length) {
-    const table = findHudTable(readHudDatabaseTables(), '行动建议');
-    if (table) {
-      table.rows.slice(0, 4).forEach((row, i) => {
-        const key = hudRowField(table.headers, row, '选项', 'option', 'key') || String.fromCharCode(65 + i);
-        const text = hudRowField(table.headers, row, '思路', '行动', 'text', 'label');
-        if (!text) return;
-        const metaParts = [
-          hudRowField(table.headers, row, '主要风险') && `风险：${hudRowField(table.headers, row, '主要风险')}`,
-          hudRowField(table.headers, row, '预期收益') && `收益：${hudRowField(table.headers, row, '预期收益')}`,
-          hudRowField(table.headers, row, '死亡风险') && `死亡：${hudRowField(table.headers, row, '死亡风险')}`,
-          hudRowField(table.headers, row, '复苏风险') && `复苏：${hudRowField(table.headers, row, '复苏风险')}`,
-        ].filter(Boolean);
-        list.push({ key, text, meta: metaParts.join('｜'), fill: text });
-      });
-    }
-  }
-  if (!list.length) {
+  const collectFromMvu = () => {
+    const fromStat = Array.isArray(data.行动建议) ? data.行动建议 : [];
+    fromStat.forEach((s, i) => pushItem(s, i));
+  };
+  const collectFromRaw = () => {
     const rawText = getLatestAiMessageRawText();
+    if (!rawText) return;
     list.push(...parseStructuredChoices(rawText));
     if (!list.length) list.push(...parseActionSuggestionsFromMessageText(rawText));
+  };
+  const collectFromDatabase = () => {
+    if (!allowDatabaseFallback) return;
+    const table = findHudTable(readHudDatabaseTables(), '行动建议');
+    if (!table) return;
+    table.rows.slice(0, 4).forEach((row, i) => {
+      const key = hudRowField(table.headers, row, '选项', 'option', 'key') || String.fromCharCode(65 + i);
+      const text = hudRowField(table.headers, row, '思路', '行动', 'text', 'label');
+      if (!text) return;
+      const metaParts = [
+        hudRowField(table.headers, row, '主要风险') && `风险：${hudRowField(table.headers, row, '主要风险')}`,
+        hudRowField(table.headers, row, '预期收益') && `收益：${hudRowField(table.headers, row, '预期收益')}`,
+        hudRowField(table.headers, row, '死亡风险') && `死亡：${hudRowField(table.headers, row, '死亡风险')}`,
+        hudRowField(table.headers, row, '复苏风险') && `复苏：${hudRowField(table.headers, row, '复苏风险')}`,
+      ].filter(Boolean);
+      list.push({ key, text, meta: metaParts.join('｜'), fill: text });
+    });
+  };
+
+  if (latestTurn) {
+    collectFromRaw();
+    if (!list.length) collectFromMvu();
+    if (!list.length) collectFromDatabase();
+  } else {
+    collectFromMvu();
+    if (!list.length) collectFromDatabase();
+    if (!list.length) collectFromRaw();
   }
   return list;
 }
@@ -401,8 +454,11 @@ function hasRealActionSuggestions(data: StatusData): boolean {
 }
 
 /** 固定 A/B/C/D 槽位；仅真实落库项，无数据返回空 */
-function resolveActionSuggestions(data: StatusData): ActionSuggestion[] {
-  const list = collectRealActionSuggestions(data);
+function resolveActionSuggestions(
+  data: StatusData,
+  options: { latestTurn?: boolean; allowDatabaseFallback?: boolean } = {},
+): ActionSuggestion[] {
+  const list = collectRealActionSuggestions(data, options);
   if (!list.length) return [];
   const byKey = new Map(list.map(item => [item.key.toUpperCase(), item]));
   return ['A', 'B', 'C', 'D']
@@ -420,8 +476,12 @@ function resolveActionSuggestions(data: StatusData): ActionSuggestion[] {
     .filter((item): item is ActionSuggestion => item != null);
 }
 
-function buildActionButtonsHtml(data: StatusData, opts?: { compact?: boolean }): string {
-  const items = resolveActionSuggestions(data);
+function buildActionButtonsHtml(
+  data: StatusData,
+  opts?: { compact?: boolean },
+  resolvedItems?: ActionSuggestion[],
+): string {
+  const items = resolvedItems ?? resolveActionSuggestions(data);
   if (!items.length) return '';
   const buttons = items
     .map(item => {
@@ -433,8 +493,8 @@ function buildActionButtonsHtml(data: StatusData, opts?: { compact?: boolean }):
   return `<div class="mfrs-msg-actions${opts?.compact ? ' is-compact' : ''}">${buttons}</div>`;
 }
 
-function buildActionsHtml(data: StatusData): string {
-  const buttons = buildActionButtonsHtml(data);
+function buildActionsHtml(data: StatusData, resolvedItems?: ActionSuggestion[]): string {
+  const buttons = buildActionButtonsHtml(data, undefined, resolvedItems);
   if (!buttons) return '';
   return `${buttons}${buildCheckSuggestionsFoldHtml(data)}`;
 }
@@ -957,10 +1017,15 @@ function getPanelId(mesid: string) {
   return `mfrs-panel-${mesid.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 }
 
-function getPanelRenderKey(data: StatusData) {
+function getPanelRenderKey(data: StatusData, actionSuggestions?: ActionSuggestion[]) {
   let source = '';
   try {
-    source = JSON.stringify(data);
+    const raw = getLatestAiMessageRawText();
+    source = JSON.stringify({
+      data,
+      actionSuggestions: actionSuggestions ?? null,
+      rawProtocol: raw ? applyUpdateProtocolToStatData(data, raw) : null,
+    });
   } catch {
     source = String(data);
   }
@@ -1021,7 +1086,9 @@ function injectBrandForMessage(mesElement: Element) {
   if (!mesText) return;
 
   const data = readStatusForMessage(mesElement);
-  const renderKey = getPanelRenderKey(getBrandViewModel(data, mesid));
+  const raw = getMessageProtocolTextForElement(mesElement);
+  const resolvedData = raw ? applyUpdateProtocolToStatData(data, raw) : data;
+  const renderKey = getPanelRenderKey(resolvedData, undefined);
   const host = mesText.querySelector('.mfrs-msg-center-host');
   const brands = Array.from(mesText.querySelectorAll<HTMLElement>('.mfrs-msg-brand')).filter(
     brand => brand.parentElement === mesText || brand.parentElement === host,
@@ -1031,7 +1098,7 @@ function injectBrandForMessage(mesElement: Element) {
   if (existingBrand?.dataset.mfrsRenderKey === renderKey) return;
 
   const container = doc.createElement('div');
-  container.innerHTML = buildBrandHtml(data, mesid);
+  container.innerHTML = buildBrandHtml(resolvedData, mesid);
   const nextBrand = container.firstElementChild as HTMLElement | null;
   if (!nextBrand) return;
   nextBrand.dataset.mfrsRenderKey = renderKey;
@@ -1764,6 +1831,8 @@ const HUD_NAV_VIEWS: HudView[] = ['story', 'dossier', 'relation', 'memory', 'gac
 let hudActiveView: HudView = 'story';
 let hudArchiveSelection: HudArchiveSelection | null = null;
 let hudDatabaseRevision = 0;
+/** CHAT_CHANGED 后数据库可能仍指向旧聊天；仅在收到表更新回调后恢复行动建议表兜底。 */
+let hudActionDatabaseFallbackTrusted = true;
 let hudDatabaseUpdateCallback: ((data: unknown) => void) | null = null;
 let hudDatabaseCallbackRegistered = false;
 /** 全库关闭后回到的视图（系统/档案摘要入口） */
@@ -4339,7 +4408,13 @@ function focusImmersiveModeControl(): boolean {
 function readLatestHudStatusData(): StatusData {
   const mes = getLatestAiMessageElement();
   if (!mes) return {};
-  return readStatusForMessage(mes);
+  const data = readStatusForMessage(mes);
+  try {
+    const raw = getLatestAiMessageRawText();
+    return raw ? applyUpdateProtocolToStatData(data, raw) : data;
+  } catch {
+    return data;
+  }
 }
 
 function formatResourceField(value: unknown): string {
@@ -5101,7 +5176,11 @@ function refreshHudPanels(force = false) {
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
   const data = readLatestHudStatusData();
-  const renderKey = getPanelRenderKey(data);
+  const actionSuggestions = resolveActionSuggestions(data, {
+    latestTurn: true,
+    allowDatabaseFallback: hudActionDatabaseFallbackTrusted,
+  });
+  const renderKey = getPanelRenderKey(data, actionSuggestions);
   const centerView: HudView = hudActiveView === 'cabinet' || hudActiveView === 'settings' ? 'story' : hudActiveView;
   if (!force && renderKey === hudPanelsRenderKey) {
     applyHudCenterView(shell, centerView);
@@ -5118,10 +5197,10 @@ function refreshHudPanels(force = false) {
   const actionsHost = shell.querySelector('[data-mfrs-hud="actions"]') as HTMLElement | null;
   const actionsSlot = shell.querySelector('[data-mfrs-hud="actions-slot"]');
   if (actionsHost && actionsSlot) {
-    if (hasRealActionSuggestions(data)) {
+    if (actionSuggestions.length > 0) {
       actionsHost.hidden = false;
       actionsHost.setAttribute('open', '');
-      actionsSlot.innerHTML = buildActionsHtml(data);
+      actionsSlot.innerHTML = buildActionsHtml(data, actionSuggestions);
     } else {
       actionsHost.hidden = true;
       actionsHost.removeAttribute('open');
@@ -5151,6 +5230,7 @@ function refreshHudPanels(force = false) {
 function getHudDatabaseUpdateCallback() {
   if (!hudDatabaseUpdateCallback) {
     hudDatabaseUpdateCallback = () => {
+      hudActionDatabaseFallbackTrusted = true;
       hudDatabaseRevision += 1;
       refreshHudPanels(true);
     };
@@ -6833,6 +6913,15 @@ $(() => {
 
   function handleChatChanged() {
     clearChatChangedTimers();
+    hudActionDatabaseFallbackTrusted = false;
+    hudPanelsRenderKey = '';
+    const actionsHost = doc.querySelector(`#${HUD_SHELL_ID} [data-mfrs-hud="actions"]`) as HTMLElement | null;
+    const actionsSlot = doc.querySelector(`#${HUD_SHELL_ID} [data-mfrs-hud="actions-slot"]`);
+    if (actionsHost) {
+      actionsHost.hidden = true;
+      actionsHost.removeAttribute('open');
+    }
+    if (actionsSlot) actionsSlot.innerHTML = '';
     [0, 250, 1000].forEach(delay => {
       const timer = hostWindow.setTimeout(() => {
         chatChangedTimers.delete(timer);

@@ -1024,9 +1024,9 @@ addCheck('phase5', 'C1-C4 hud information density', () => {
     'must read raw AI mes for UpdateVariable fallback',
   );
   assert.ok(
-    sources.message.includes('actionsSlot.innerHTML = buildActionsHtml(data)') ||
-      sources.message.includes('actionsSlot.innerHTML=buildActionsHtml(data)'),
-    'HUD actions slot filled with buildActionsHtml',
+    sources.message.includes('actionsSlot.innerHTML = buildActionsHtml(data, actionSuggestions)') ||
+      sources.message.includes('actionsSlot.innerHTML=buildActionsHtml(data,actionSuggestions)'),
+    'HUD actions slot must use the resolved action snapshot',
   );
   assert.ok(
     sources.message.includes('actionsHost.hidden = true') ||
@@ -1507,8 +1507,19 @@ addCheck('phase5', 'G8 database table-update callback drives HUD revision and re
   assert.ok(sources.message.includes('unregisterHudDatabaseUpdateCallback'), 'unregister helper required');
   assert.ok(sources.message.includes('registerTableUpdateCallback'), 'must register through AutoCardUpdaterAPI');
   assert.ok(sources.message.includes('unregisterTableUpdateCallback'), 'must unregister through AutoCardUpdaterAPI');
+  const callback = between(
+    sources.message,
+    'function getHudDatabaseUpdateCallback',
+    'function registerHudDatabaseUpdateCallback',
+  );
+  assert.ok(
+    callback.indexOf('hudActionDatabaseFallbackTrusted = true') < callback.indexOf('hudDatabaseRevision += 1'),
+    'database callback must trust the current action table before bumping revision',
+  );
+  assert.ok(callback.includes('refreshHudPanels(true)'), 'database callback must force-refresh HUD');
   const renderKey = between(sources.message, 'function getPanelRenderKey', 'function getBrandId');
   assert.ok(renderKey.includes('hudDatabaseRevision'), 'render key must include the database revision');
+  assert.ok(renderKey.includes('actionSuggestions'), 'render key must include resolved action suggestions');
   const activate = between(sources.message, 'function activateMessagePanelRuntime', 'function clearChatChangedTimers');
   assert.ok(activate.includes('registerHudDatabaseUpdateCallback'), 'activate must register the callback');
   const deactivate = between(
@@ -1523,6 +1534,54 @@ addCheck('phase5', 'G8 database table-update callback drives HUD revision and re
     'hostWindow.__mfrsMessagePanelCleanup__ = cleanup',
   );
   assert.ok(cleanupBlock.includes('unregisterHudDatabaseUpdateCallback'), 'cleanup must unregister the callback');
+});
+addCheck('phase5', 'G8a latest-turn raw actions outrank MVU and trusted database fallback', () => {
+  const collect = between(
+    sources.message,
+    'function collectRealActionSuggestions',
+    'function hasRealActionSuggestions',
+  );
+  const latestBranch = between(collect, 'if (latestTurn) {', '} else {');
+  assert.ok(latestBranch.includes('collectFromRaw()'), 'latest-turn branch must parse current raw protocol');
+  assert.ok(latestBranch.includes('collectFromMvu()'), 'latest-turn branch must retain MVU fallback');
+  assert.ok(latestBranch.includes('collectFromDatabase()'), 'latest-turn branch must retain database fallback');
+  assert.ok(
+    latestBranch.indexOf('collectFromRaw()') < latestBranch.indexOf('collectFromMvu()') &&
+      latestBranch.indexOf('collectFromMvu()') < latestBranch.indexOf('collectFromDatabase()'),
+    'latest-turn priority must be raw → MVU → database',
+  );
+  const databaseCollector = between(collect, 'const collectFromDatabase = () => {', '\n  };');
+  assert.ok(databaseCollector.includes('if (!allowDatabaseFallback) return'), 'database action fallback must be gated');
+  const checks = between(sources.message, 'function buildCheckSuggestionsFoldHtml', 'type HudTableBundle');
+  assert.equal(
+    checks.includes('hudActionDatabaseFallbackTrusted'),
+    false,
+    'SQL-only check suggestions must not depend on action-table trust',
+  );
+});
+addCheck('phase5', 'G8b CHAT_CHANGED clears stale actions and invalidates database fallback', () => {
+  const chatChanged = between(sources.message, 'function handleChatChanged', '// 事件委托：tab 切换');
+  assert.ok(chatChanged.includes('hudActionDatabaseFallbackTrusted = false'), 'chat change must distrust old action rows');
+  assert.ok(chatChanged.includes("hudPanelsRenderKey = ''"), 'chat change must invalidate the HUD render key');
+  assert.ok(chatChanged.includes("actionsSlot.innerHTML = ''"), 'chat change must clear the visible action slot immediately');
+  for (const delay of ['0', '250', '1000']) {
+    assert.ok(chatChanged.includes(delay), `chat change must retain ${delay}ms activation schedule`);
+  }
+});
+addCheck('phase5', 'G8c HUD renders one raw-sensitive action snapshot', () => {
+  const refresh = between(sources.message, 'function refreshHudPanels', 'function getHudDatabaseUpdateCallback');
+  assert.ok(refresh.includes('const actionSuggestions = resolveActionSuggestions'), 'HUD must resolve actions once per refresh');
+  assert.ok(
+    refresh.indexOf('const actionSuggestions = resolveActionSuggestions') < refresh.indexOf('const renderKey = getPanelRenderKey'),
+    'HUD must resolve actions before calculating its render key',
+  );
+  assert.ok(
+    refresh.includes('getPanelRenderKey(data, actionSuggestions)'),
+    'HUD render key must receive the resolved action snapshot',
+  );
+  assert.ok(refresh.includes('if (actionSuggestions.length > 0)'), 'visibility must use the resolved snapshot');
+  assert.ok(refresh.includes('buildActionsHtml(data, actionSuggestions)'), 'HTML must use the same resolved snapshot');
+  assert.equal(refresh.includes('hasRealActionSuggestions(data)'), false, 'HUD must not independently recollect actions');
 });
 addCheck('phase5', 'G9 archive selection resets on unmount/destroy/unregister', () => {
   const unmount = between(sources.message, 'function unmountHudImmersive', 'function exitHudImmersive');

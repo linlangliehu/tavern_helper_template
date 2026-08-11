@@ -89,11 +89,32 @@ function normalizeHandlingStatus(value: unknown) {
   return '未处理';
 }
 
-function sheetHasEffectiveRows(sheet: unknown) {
+/**
+ * 判断快照里是否已存在某个业务键的行。
+ *
+ * 用于灵异事件 / 线索的 upsert 决策：列名在导出快照里可能是物理列名（event_code）
+ * 也可能是中文表头（事件代号），两种都要认。
+ *
+ * 注意：这只是"能否用 update 命中"的乐观判断。快照本身可能滞后于物理表
+ * （sqlite provider 未就绪时导出会回退到内存视图），此时会误判为不存在而走 insert，
+ * 由适配器层的 UNIQUE 校验兜底拒绝，下一轮快照就绪后自然转为 update。
+ */
+function sheetHasRowMatching(sheet: unknown, physicalColumn: string, headerAliases: string[], value: string) {
   if (!sheet || typeof sheet !== 'object') return false;
   const content = (sheet as { content?: unknown }).content;
-  if (!Array.isArray(content)) return false;
-  return content.some(row => Array.isArray(row) && row.some(cell => String(cell ?? '').trim()));
+  if (!Array.isArray(content) || content.length < 2) return false;
+  const header = content[0];
+  if (!Array.isArray(header)) return false;
+
+  const wanted = new Set([physicalColumn, ...headerAliases].map(name => name.toLowerCase()));
+  const columnIndex = header.findIndex(cell => wanted.has(String(cell ?? '').trim().toLowerCase()));
+  if (columnIndex < 0) return false;
+
+  const expected = String(value ?? '').trim();
+  if (!expected) return false;
+  return content
+    .slice(1)
+    .some(row => Array.isArray(row) && String(row[columnIndex] ?? '').trim() === expected);
 }
 
 function findSheetByTableName(dataSource: unknown, names: string[]) {
@@ -178,108 +199,138 @@ function buildCorePlans(stat: StatData, currentData: unknown, messageId: number)
   );
   const plans: TableChangePlan[] = [];
 
-  if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['global_state', '全局状态']))) {
-    plans.push({
-      action: 'updateCell',
-      table: '全局状态',
-      match: { row_id: 1 },
-      set: {
-        row_id: 1,
-        game_time: '2004-07-01 08:00',
-        current_location: location,
-        current_city: textOrFallback(faction.所属城市, '大昌市'),
-        canon_stage: textOrFallback(stat.原著阶段, '开局接入'),
-        canon_anchor: textOrFallback(stat.剧情锚点, '玩家开局'),
-        main_phase: textOrFallback(mainline.当前阶段, '开局接入'),
-        world_pressure: clampPercent(worldPressure.灵异复苏强度, 10),
-        hq_attention: clampPercent(worldPressure.总部关注度, 0),
-        public_exposure: clampPercent(worldPressure.社会公开度, 0),
-      },
-      reason: '数据库前端 MVU 核心表镜像',
-      confidence: 1,
-      skipChatSave: true,
-      silent: true,
-    });
-  }
+  // 全局状态/玩家状态是固定单行表（row_id CHECK = 1），模板已预置该行。
+  // 这里每轮无条件 updateCell：镜像的价值在于让数据库跟上剧情，
+  // 早期只在"表为空"时补种会让数据库永远停在开局快照。
+  // 不走 insertRow —— 固定行表的 update→insert 提升已在 table-change-adapter
+  // 里被禁止（快照可能陈旧而物理表已有该行，INSERT 会撞 UNIQUE）。
+  plans.push({
+    action: 'updateCell',
+    table: '全局状态',
+    match: { row_id: 1 },
+    set: {
+      row_id: 1,
+      game_time: textOrFallback(stat.当前时间 ?? stat.游戏时间, '2004-07-01 08:00'),
+      current_location: location,
+      current_city: textOrFallback(faction.所属城市, '大昌市'),
+      canon_stage: textOrFallback(stat.原著阶段, '开局接入'),
+      canon_anchor: textOrFallback(stat.剧情锚点, '玩家开局'),
+      main_phase: textOrFallback(mainline.当前阶段, '开局接入'),
+      world_pressure: clampPercent(worldPressure.灵异复苏强度, 10),
+      hq_attention: clampPercent(worldPressure.总部关注度, 0),
+      public_exposure: clampPercent(worldPressure.社会公开度, 0),
+    },
+    reason: '数据库前端 MVU 核心表镜像',
+    confidence: 1,
+    skipChatSave: true,
+    silent: true,
+  });
 
-  if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['player_state', '玩家状态']))) {
-    const ghostNames = controlled
-      .map(item => textOrFallback(asRecord(item).代号 ?? asRecord(item).厉鬼名称, ''))
-      .filter(Boolean);
-    const itemNames = Array.isArray(resources.灵异物品)
-      ? resources.灵异物品.map(item => textOrFallback(asRecord(item).名称, '')).filter(Boolean)
-      : [];
-    plans.push({
-      action: 'updateCell',
-      table: '玩家状态',
-      match: { row_id: 1 },
-      set: {
-        row_id: 1,
-        name: textOrFallback(stat.姓名, '{{user}}'),
-        identity_text: textOrFallback(stat.身份, '普通人'),
-        location_name: location,
-        status_text: textOrFallback(stat.状态, '健康'),
-        death_risk: clampPercent(stat.风险值, 0),
-        revival_risk: clampPercent(rider.总复苏风险, 0),
-        controlled_ghosts: ghostNames.length ? ghostNames.join('；') : '无',
-        ghost_pieces: textOrFallback(stat.持有拼图, '无'),
-        resources_text: `拼图：${textOrFallback(stat.持有拼图, '无')}；物品：${itemNames.length ? itemNames.join('、') : '无'}；黄金：${textOrFallback(resources.黄金储备, '未准备')}`,
-        last_action: textOrFallback(judgement.行动, '开局接入'),
-      },
-      reason: '数据库前端 MVU 核心表镜像',
-      confidence: 1,
-      skipChatSave: true,
-      silent: true,
-    });
-  }
+  const ghostNames = controlled
+    .map(item => textOrFallback(asRecord(item).代号 ?? asRecord(item).厉鬼名称, ''))
+    .filter(Boolean);
+  const itemNames = Array.isArray(resources.灵异物品)
+    ? resources.灵异物品.map(item => textOrFallback(asRecord(item).名称, '')).filter(Boolean)
+    : [];
+  plans.push({
+    action: 'updateCell',
+    table: '玩家状态',
+    match: { row_id: 1 },
+    set: {
+      row_id: 1,
+      name: textOrFallback(stat.姓名, '{{user}}'),
+      identity_text: textOrFallback(stat.身份, '普通人'),
+      location_name: location,
+      status_text: textOrFallback(stat.状态, '健康'),
+      death_risk: clampPercent(stat.风险值, 0),
+      revival_risk: clampPercent(rider.总复苏风险, 0),
+      controlled_ghosts: ghostNames.length ? ghostNames.join('；') : '无',
+      ghost_pieces: textOrFallback(stat.持有拼图, '无'),
+      resources_text: `拼图：${textOrFallback(stat.持有拼图, '无')}；物品：${itemNames.length ? itemNames.join('、') : '无'}；黄金：${textOrFallback(resources.黄金储备, '未准备')}`,
+      last_action: textOrFallback(judgement.行动, '开局接入'),
+    },
+    reason: '数据库前端 MVU 核心表镜像',
+    confidence: 1,
+    skipChatSave: true,
+    silent: true,
+  });
 
-  if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['supernatural_events', '灵异事件']))) {
-    plans.push({
-      action: 'insertRow',
-      table: '灵异事件',
-      data: {
-        event_code: eventCode,
-        danger_level: textOrFallback(event.危害等级, '未知'),
-        location_name: location,
-        ghost_domain_status: textOrFallback(event.鬼域状态, '未确认'),
-        known_laws: knownLaws,
-        suspected_laws: suspectedLaws,
-        wrong_inferences: listText(event.错误推断),
-        death_count: clampPercent(event.已死亡人数, 0),
-        spread_trend: textOrFallback(event.扩散趋势, '局部'),
-        handling_status: normalizeHandlingStatus(event.处理状态),
-        public_summary: visibleSummary,
-      },
-      reason: '数据库前端 MVU 核心表镜像',
-      confidence: 1,
-      skipChatSave: true,
-      silent: true,
-    });
-  }
+  // 灵异事件按 event_code 业务键 upsert：同一事件每轮刷新（死亡人数、处理状态、已知规律都会变），
+  // 换事件代号才追加新行。event_code 在 DDL 里是 UNIQUE，所以只能靠 match 命中既有行来更新，
+  // 不能无脑 insert。找不到该代号时才 insert 新行。
+  const eventsSheet = findSheetByTableName(currentData, ['supernatural_events', '灵异事件']);
+  const eventFields = {
+    event_code: eventCode,
+    danger_level: textOrFallback(event.危害等级, '未知'),
+    location_name: location,
+    ghost_domain_status: textOrFallback(event.鬼域状态, '未确认'),
+    known_laws: knownLaws,
+    suspected_laws: suspectedLaws,
+    wrong_inferences: listText(event.错误推断),
+    death_count: clampPercent(event.已死亡人数, 0),
+    spread_trend: textOrFallback(event.扩散趋势, '局部'),
+    handling_status: normalizeHandlingStatus(event.处理状态),
+    public_summary: visibleSummary,
+  };
+  plans.push(
+    sheetHasRowMatching(eventsSheet, 'event_code', ['事件代号'], eventCode)
+      ? {
+          action: 'updateCell',
+          table: '灵异事件',
+          match: { event_code: eventCode },
+          set: eventFields,
+          reason: '数据库前端 MVU 核心表镜像',
+          confidence: 1,
+          skipChatSave: true,
+          silent: true,
+        }
+      : {
+          action: 'insertRow',
+          table: '灵异事件',
+          data: eventFields,
+          reason: '数据库前端 MVU 核心表镜像',
+          confidence: 1,
+          skipChatSave: true,
+          silent: true,
+        },
+  );
 
-  if (!sheetHasEffectiveRows(findSheetByTableName(currentData, ['clues', '线索']))) {
-    plans.push({
-      action: 'insertRow',
-      table: '线索',
-      data: {
-        clue_code: `C${messageId % 10000}`,
-        event_code: eventCode,
-        source_text: '当前剧情/MVU',
-        clue_text: truncateDbText(visibleSummary, 120),
-        reliability: '中',
-        inference_text: truncateDbText(
-          suspectedLaws === '无' ? '需要继续验证异常与事件规律的关系。' : suspectedLaws,
-          160,
-        ),
-        verification_status: '未验证',
-        visibility: '玩家可见',
-      },
-      reason: '数据库前端 MVU 核心表镜像',
-      confidence: 1,
-      skipChatSave: true,
-      silent: true,
-    });
-  }
+  // 线索按 clue_code upsert。clue_code 由 messageId 派生，同一楼层重复镜像（重roll/重渲染）
+  // 必须落到同一行而不是每次追加，否则线索表会被同一条线索刷屏。
+  const clueCode = `C${messageId % 10000}`;
+  const cluesSheet = findSheetByTableName(currentData, ['clues', '线索']);
+  const clueFields = {
+    clue_code: clueCode,
+    event_code: eventCode,
+    source_text: '当前剧情/MVU',
+    clue_text: truncateDbText(visibleSummary, 120),
+    reliability: '中',
+    inference_text: truncateDbText(suspectedLaws === '无' ? '需要继续验证异常与事件规律的关系。' : suspectedLaws, 160),
+    verification_status: '未验证',
+    visibility: '玩家可见',
+  };
+  plans.push(
+    sheetHasRowMatching(cluesSheet, 'clue_code', ['线索代号', '线索编号'], clueCode)
+      ? {
+          action: 'updateCell',
+          table: '线索',
+          match: { clue_code: clueCode },
+          set: clueFields,
+          reason: '数据库前端 MVU 核心表镜像',
+          confidence: 1,
+          skipChatSave: true,
+          silent: true,
+        }
+      : {
+          action: 'insertRow',
+          table: '线索',
+          data: clueFields,
+          reason: '数据库前端 MVU 核心表镜像',
+          confidence: 1,
+          skipChatSave: true,
+          silent: true,
+        },
+  );
 
   return plans;
 }

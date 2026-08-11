@@ -638,6 +638,10 @@ assert.equal(
   1,
 );
 
+// \u56fa\u5b9a\u884c\u8868\uff08\u884c\u52a8\u5efa\u8bae/\u68c0\u5b9a\u5efa\u8bae/\u5168\u5c40\u72b6\u6001/\u73a9\u5bb6\u72b6\u6001\uff09\u5728\u5feb\u7167\u7f3a\u884c\u65f6\u4e0d\u5f97\u81ea\u52a8\u63d0\u5347\u4e3a insertRow\uff1a
+// sqlite provider \u672a\u5c31\u7eea\u65f6\u5bfc\u51fa\u7684\u5feb\u7167\u53ef\u80fd\u662f\u7a7a\u7684\uff0c\u800c insertRow \u4f1a\u5f3a\u5236\u521d\u59cb\u5316\u771f\u5b9e\u5e93\uff0c
+// \u4e8e\u662f INSERT \u649e\u4e0a\u7269\u7406\u8868\u5df2\u5b58\u5728\u7684 row_id\uff08UNIQUE constraint failed\uff09\u3002
+// \u6b63\u786e\u884c\u4e3a\u662f\u8ba9 ROW_NOT_FOUND \u5982\u5b9e\u5931\u8d25\uff0c\u7b49\u4e0b\u4e00\u8f6e\u5feb\u7167\u5c31\u7eea\u540e updateCell \u81ea\u7136\u547d\u4e2d\u3002
 const promotedUpdateCalls = [];
 const promotedUpdateApi = {
   async insertRow(options) {
@@ -658,20 +662,10 @@ const promotedFixedRowUpdate = await applyTableChangePlan(promotedUpdateApi, {
     revival_risk_level: RISK_NONE,
   },
 }, emptyCurrentData);
-assert.equal(promotedFixedRowUpdate.ok, true);
-assert.equal(promotedFixedRowUpdate.action, 'insertRow');
-assert.equal(promotedFixedRowUpdate.insertedRowIndex, 1);
-assert.equal(promotedUpdateCalls.length, 1);
-assert.equal(promotedUpdateCalls[0][1].tableName, TABLE_ACTION);
-assert.deepEqual({ ...promotedUpdateCalls[0][1].data }, {
-  row_id: 2,
-  [COL_OPTION]: 'B',
-  [COL_IDEA]: '\u64a4\u79bb\u73b0\u573a',
-  [COL_MAIN_RISK]: '\u53ef\u80fd\u9519\u8fc7\u7ebf\u7d22',
-  [COL_GAIN]: '\u964d\u4f4e\u6b7b\u4ea1\u98ce\u9669',
-  [COL_DEATH]: RISK_LOW,
-  [COL_REVIVAL]: RISK_NONE,
-});
+assert.equal(promotedFixedRowUpdate.ok, false);
+assert.notEqual(promotedFixedRowUpdate.action, 'insertRow');
+assert.ok(promotedFixedRowUpdate.errors.some(error => error.code === 'ROW_NOT_FOUND'));
+assert.equal(promotedUpdateCalls.length, 0);
 
 const promotedIncompleteFixedRow = previewTableChangePlan({
   action: 'updateCell',
@@ -680,7 +674,7 @@ const promotedIncompleteFixedRow = previewTableChangePlan({
   set: { option_key: 'C' },
 }, emptyCurrentData);
 assert.equal(promotedIncompleteFixedRow.ok, false);
-assert.ok(promotedIncompleteFixedRow.errors.some(error => error.code === 'NOT_NULL_VIOLATION'));
+assert.notEqual(promotedIncompleteFixedRow.action, 'insertRow');
 
 const singletonCurrentData = {
   mate: { type: 'chatSheets', version: 1 },
@@ -714,13 +708,10 @@ const promotedSingletonUpdate = await applyTableChangePlan(singletonApi, {
     public_exposure: 0,
   },
 }, singletonCurrentData);
-assert.equal(promotedSingletonUpdate.ok, true);
-assert.equal(promotedSingletonUpdate.action, 'insertRow');
-assert.equal(promotedSingletonUpdate.insertedRowIndex, 1);
-assert.equal(singletonInsertCalls.length, 1);
-assert.equal(singletonInsertCalls[0][1].tableName, TABLE_GLOBAL);
-assert.equal(singletonInsertCalls[0][1].data.row_id, 1);
-assert.equal(singletonInsertCalls[0][1].data[COL_CURRENT_CITY], '\u5927\u660c\u5e02');
+// \u5355\u884c\u8868 global_state \u540c\u6837\u7981\u6b62 update\u2192insert \u63d0\u5347\uff08\u89c1\u4e0a\u65b9\u56fa\u5b9a\u884c\u8868\u6ce8\u91ca\uff09\u3002
+assert.equal(promotedSingletonUpdate.ok, false);
+assert.notEqual(promotedSingletonUpdate.action, 'insertRow');
+assert.equal(singletonInsertCalls.length, 0);
 
 const templateFallbackData = {
   mate: { type: 'chatSheets', version: 1 },
@@ -753,7 +744,9 @@ const aliasApi = {
     return 1;
   },
 };
-const currentTimeAliasUpdate = await applyTableChangePlan(aliasApi, {
+// global_state \u662f\u5355\u884c\u8868\uff0c\u7f3a\u884c\u65f6 updateCell \u4e0d\u518d\u63d0\u5347\u4e3a insertRow\uff08\u89c1\u56fa\u5b9a\u884c\u8868\u7ea2\u7ebf\uff09\u3002
+// \u8fd9\u91cc\u53ea\u9a8c\u8bc1\u522b\u540d\u89e3\u6790\u672c\u8eab\uff1acurrent_time \u2192 \u5f53\u524d\u65f6\u95f4\uff08game_time\uff09\u5fc5\u987b\u80fd\u88ab set \u6b63\u786e\u8bc6\u522b\u3002
+const currentTimeAliasPreview = previewTableChangePlan({
   action: 'updateCell',
   table: 'global_state',
   match: { current_city: '\u5927\u660c\u5e02' },
@@ -769,11 +762,10 @@ const currentTimeAliasUpdate = await applyTableChangePlan(aliasApi, {
     public_exposure: 0,
   },
 }, runtimeBareData, templateFallbackData);
-assert.equal(currentTimeAliasUpdate.ok, true);
-assert.equal(currentTimeAliasUpdate.action, 'insertRow');
-assert.equal(aliasInsertCalls[0][1].tableName, TABLE_GLOBAL);
-assert.equal(aliasInsertCalls[0][1].data[COL_GAME_TIME], '2024-04-12 22:15');
+assert.ok(!currentTimeAliasPreview.errors.some(error => error.code === 'COLUMN_NOT_FOUND'));
+assert.ok(currentTimeAliasPreview.affectedColumns.includes(COL_GAME_TIME));
 
+// player_state \u540c\u4e3a\u5355\u884c\u8868\uff1aupdateCell \u7f3a\u884c\u5fc5\u987b ROW_NOT_FOUND \u5931\u8d25\uff0c\u4e14\u4e0d\u5f97\u8f6c\u5411 insert\u3002
 const playerPhysicalPreview = previewTableChangePlan({
   action: 'updateCell',
   table: 'player_state',
@@ -791,8 +783,9 @@ const playerPhysicalPreview = previewTableChangePlan({
     last_action: '\u89c2\u5bdf\u5899\u4e0a\u6e7f\u811a\u5370',
   },
 }, runtimeBareData, templateFallbackData);
-assert.equal(playerPhysicalPreview.ok, true);
-assert.equal(playerPhysicalPreview.action, 'insertRow');
+assert.equal(playerPhysicalPreview.ok, false);
+assert.notEqual(playerPhysicalPreview.action, 'insertRow');
+assert.ok(playerPhysicalPreview.errors.some(error => error.code === 'ROW_NOT_FOUND'));
 assert.ok(!playerPhysicalPreview.errors.some(error => error.code === 'COLUMN_NOT_FOUND'));
 
 const eventPhysicalPreview = previewTableChangePlan({
@@ -812,7 +805,9 @@ const p5CrudAliasCases = [
   {
     key: 'sheet_player_state',
     sqlName: 'player_state',
-    expectedAction: 'insertRow',
+    // player_state 是单行表：稀疏快照里没有 row_id=1 时 updateCell 必须 ROW_NOT_FOUND 失败，
+    // 不再提升为 insertRow（提升会撞物理表 UNIQUE）。本用例只验证列别名恢复。
+    allowRowNotFound: true,
     physicalPlan: {
       action: 'updateCell',
       table: 'player_state',
@@ -998,8 +993,11 @@ function headerAliasData(sqlName, physicalData) {
   return output;
 }
 
-function assertNoColumnNotFound(result, label) {
-  assert.equal(result.ok, true, `${label} should pass: ${JSON.stringify(result.errors)}`);
+function assertNoColumnNotFound(result, label, allowRowNotFound = false) {
+  const blocking = allowRowNotFound
+    ? result.errors.filter(error => error.code !== 'ROW_NOT_FOUND')
+    : result.errors;
+  assert.equal(blocking.length, 0, `${label} should pass: ${JSON.stringify(result.errors)}`);
   assert.ok(!result.errors.some(error => error.code === 'COLUMN_NOT_FOUND'), `${label} should not emit COLUMN_NOT_FOUND`);
 }
 
@@ -1015,8 +1013,15 @@ for (const testCase of p5CrudAliasCases) {
   }
 
   const physicalPreview = previewTableChangePlan(testCase.physicalPlan, p5SparseRuntimeData, mysteryTemplateData);
-  assertNoColumnNotFound(physicalPreview, `${testCase.sqlName} physical aliases`);
+  assertNoColumnNotFound(physicalPreview, `${testCase.sqlName} physical aliases`, testCase.allowRowNotFound);
   if (testCase.expectedAction) assert.equal(physicalPreview.action, testCase.expectedAction);
+  if (testCase.allowRowNotFound) {
+    assert.notEqual(
+      physicalPreview.action,
+      'insertRow',
+      `${testCase.sqlName}: fixed-row updateCell must not be promoted to insertRow`,
+    );
+  }
 
   const sheetName = mysteryTemplateData[testCase.key].name;
   const commentAliasPlan = testCase.physicalPlan.action === 'insertRow'
@@ -1031,7 +1036,7 @@ for (const testCase of p5CrudAliasCases) {
         set: headerAliasData(testCase.sqlName, testCase.physicalPlan.set),
       };
   const commentAliasPreview = previewTableChangePlan(commentAliasPlan, p5SparseRuntimeData, mysteryTemplateData);
-  assertNoColumnNotFound(commentAliasPreview, `${testCase.sqlName} comment aliases`);
+  assertNoColumnNotFound(commentAliasPreview, `${testCase.sqlName} comment aliases`, testCase.allowRowNotFound);
 
   const emptyInsertPreview = previewTableChangePlan({
     action: 'insertRow',

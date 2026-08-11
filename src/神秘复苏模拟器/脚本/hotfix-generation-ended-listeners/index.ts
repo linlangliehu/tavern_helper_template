@@ -1,4 +1,5 @@
 import * as protocolNormalizer from './protocol-normalizer.js';
+import { applyRawProtocolToMvuData } from './raw-status-writer';
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 
 registerMfrsRuntimeBuild('hotfix-generation-ended-listeners');
@@ -114,6 +115,7 @@ type HostWindow = Window & {
   MysteryMessagePanel?: {
     refreshMessage?: (messageId: number | string) => void;
   };
+  parent?: Window;
 };
 
 function getHostWindow(): HostWindow {
@@ -124,15 +126,32 @@ function getHostWindow(): HostWindow {
   }
 }
 
+/**
+ * 安全读取跨窗口属性。
+ *
+ * 酒馆助手给脚本 iframe 注入的 `SillyTavern` / `Mvu` 是 throwing getter：
+ * getter 内部会立即解引用 `window.parent.SillyTavern` 并调用 `getContext()`，
+ * 因此宿主未就绪时**读属性本身**就抛 TypeError，`?.` 与后置 try 都拦不住。
+ * 所有跨窗口读取都必须经由本函数。
+ */
+function safeRead<T>(read: () => T): T | undefined {
+  try {
+    return read();
+  } catch {
+    return undefined;
+  }
+}
+
 function getSillyTavernContext(hostWindow: HostWindow) {
   const localWindow = window as HostWindow;
-  for (const st of [hostWindow.SillyTavern, localWindow.SillyTavern]) {
-    try {
-      const context = st?.getContext?.();
-      if (context) return context;
-    } catch {
-      // Ignore
-    }
+  const candidates = [
+    safeRead(() => hostWindow.SillyTavern),
+    safeRead(() => localWindow.SillyTavern),
+    safeRead(() => (hostWindow.parent as HostWindow | undefined)?.SillyTavern),
+  ];
+  for (const st of candidates) {
+    const context = safeRead(() => st?.getContext?.());
+    if (context) return context;
   }
   return null;
 }
@@ -147,24 +166,33 @@ function getEventSource(hostWindow: HostWindow) {
 
 function getMvuApi(hostWindow: HostWindow) {
   const localWindow = window as HostWindow;
-  return hostWindow.Mvu ?? localWindow.Mvu;
+  return safeRead(() => hostWindow.Mvu) ?? safeRead(() => localWindow.Mvu);
 }
 
 function getRuntimeFunction<K extends 'getVariables' | 'updateVariablesWith'>(hostWindow: HostWindow, key: K) {
   const localWindow = window as HostWindow;
-  return hostWindow[key] ?? hostWindow.TavernHelper?.[key] ?? localWindow[key] ?? localWindow.TavernHelper?.[key];
+  return (
+    safeRead(() => hostWindow[key]) ??
+    safeRead(() => hostWindow.TavernHelper?.[key]) ??
+    safeRead(() => localWindow[key]) ??
+    safeRead(() => localWindow.TavernHelper?.[key])
+  );
 }
 
-function getTavernEventName(hostWindow: HostWindow, key: 'MESSAGE_RECEIVED' | 'GENERATION_ENDED', fallback: string) {
+function getTavernEventName(
+  hostWindow: HostWindow,
+  key: 'MESSAGE_RECEIVED' | 'GENERATION_ENDED' | 'GENERATION_STOPPED',
+  fallback: string,
+) {
   const context = getSillyTavernContext(hostWindow);
   const fromContext = context?.event_types?.[key];
   if (typeof fromContext === 'string' && fromContext) return fromContext;
 
-  const fromHost = hostWindow.tavern_events?.[key];
+  const fromHost = safeRead(() => hostWindow.tavern_events?.[key]);
   if (typeof fromHost === 'string' && fromHost) return fromHost;
 
   const localWindow = window as HostWindow;
-  const fromLocal = localWindow.tavern_events?.[key];
+  const fromLocal = safeRead(() => localWindow.tavern_events?.[key]);
   if (typeof fromLocal === 'string' && fromLocal) return fromLocal;
 
   return fallback;
@@ -501,11 +529,6 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
   if (!chat || messageIndex < 0 || messageIndex >= chat.length) return;
 
   const mvu = getMvuApi(hostWindow);
-  if (typeof mvu?.parseMessage !== 'function') {
-    console.warn('[Hotfix] window.Mvu.parseMessage 不可用，跳过 MVU 解析');
-    return;
-  }
-
   const message = chat[messageIndex];
   const rawMessage = readMessageTextForMvu(message);
   if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) {
@@ -519,6 +542,30 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
   };
   const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
   const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
+
+  if (typeof mvu?.parseMessage !== 'function') {
+    const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
+    if (fallback.applied === 0) {
+      console.warn('[Hotfix] MVU 不可用且 raw 协议没有可写回 patch', {
+        messageIndex,
+        messageId: messageOption.message_id,
+        skipped: fallback.skipped,
+      });
+      return;
+    }
+    const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
+    refreshMessagePanel(hostWindow, messageOption.message_id);
+    console.info('[Hotfix] MVU 不可用，已通过 raw JSONPatch 写回消息变量', {
+      messageIndex,
+      messageId: messageOption.message_id,
+      applied: fallback.applied,
+      skipped: fallback.skipped,
+      writer: writeResult.writer,
+      verified: writeResult.verified,
+      persisted: writeResult.persisted,
+    });
+    return;
+  }
   const newData = await mvu.parseMessage(normalized.message, oldData);
   if (!newData || typeof newData !== 'object') {
     console.info('[Hotfix] MVU parseMessage 未产生变量变化', {
@@ -565,6 +612,26 @@ function scheduleMvuWriteBackRetries(messageIndex: number, eventMessageId?: unkn
       });
     }, delay);
   }
+}
+
+/** 上下文不可用时重跑整条 GENERATION_ENDED 流水线（写回 + 清洗），避免本轮协议永久丢失。 */
+function scheduleGenerationEndedRetry(eventMessageId?: unknown, attempt = 0) {
+  const delays = [200, 800, 2000];
+  if (attempt >= delays.length) {
+    console.warn('[Hotfix] GENERATION_ENDED 重试次数耗尽，本轮放弃', { eventMessageId });
+    return;
+  }
+  window.setTimeout(() => {
+    const context = getSillyTavernContext(getHostWindow());
+    if (!context?.chat || context.chat.length === 0) {
+      scheduleGenerationEndedRetry(eventMessageId, attempt + 1);
+      return;
+    }
+    console.info('[Hotfix] GENERATION_ENDED 上下文已就绪，重跑流水线', { attempt, eventMessageId });
+    runGenerationEndedPipeline(eventMessageId).catch(error => {
+      console.warn('[Hotfix] GENERATION_ENDED 重试失败', { attempt, error });
+    });
+  }, delays[attempt]);
 }
 
 async function recoverRecentRawProtocolMessages() {
@@ -795,12 +862,22 @@ function recoverSendUiAfterEmptyGeneration(
 }
 
 async function handleGenerationEnded(eventMessageId?: unknown) {
+  await runGenerationEndedPipeline(eventMessageId);
+}
+
+async function runGenerationEndedPipeline(eventMessageId?: unknown) {
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
 
   if (!chat || chat.length === 0) {
-    console.debug('[Hotfix] GENERATION_ENDED: 聊天记录为空，跳过处理');
+    // 上下文可能只是"尚未就绪"而非真的空聊天（宿主切卡/重建期间读不到 SillyTavern）。
+    // 此时直接 return 会让本轮协议永久丢失，故安排一次延迟重试。
+    console.debug('[Hotfix] GENERATION_ENDED: 上下文或聊天记录不可用，安排重试', {
+      hasContext: !!context,
+      eventMessageId,
+    });
+    scheduleGenerationEndedRetry(eventMessageId);
     forceRecoverSendUi(hostWindow, 'generation_ended_empty_chat');
     return;
   }
@@ -888,12 +965,44 @@ function unbindHotfixListeners() {
   hotfixListenerBindings.length = 0;
 }
 
+/**
+ * 事件回调护栏：把 handler 的同步抛出与 rejected promise 都收敛为一条日志。
+ *
+ * handler 由 ST 的 EventEmitter 直接 emit —— 抛出会中断本轮处理，且因为
+ * emit 侧多为 `await` 串行调用，还可能连带打断其它监听器。真页曾因跨窗口
+ * throwing getter（见 safeRead 注释）在 handler 入口处静默死亡，表现为
+ * 「变量不更新、协议块不清洗、控制台无任何 [Hotfix] 日志」，极难定位。
+ */
+function guardHotfixHandler(eventName: string, handler: (...args: unknown[]) => unknown) {
+  return (...args: unknown[]) => {
+    const report = (error: unknown) => {
+      console.error('[Hotfix] 事件处理异常', { eventName, error });
+      try {
+        forceRecoverSendUi(getHostWindow(), `${eventName}_exception`, { hideStop: true, force: true });
+      } catch {
+        // 连恢复发送态都失败时不再升级，避免次生异常淹没原始错误
+      }
+    };
+    try {
+      const result = handler(...args);
+      if (result && typeof (result as Promise<unknown>).catch === 'function') {
+        (result as Promise<unknown>).catch(report);
+      }
+      return result;
+    } catch (error) {
+      report(error);
+      return undefined;
+    }
+  };
+}
+
 function bindHotfixListener(
   hostWindow: HostWindow,
   eventSource: NonNullable<ReturnType<typeof getEventSource>>,
   eventName: string,
-  handler: (...args: unknown[]) => void,
+  rawHandler: (...args: unknown[]) => void,
 ) {
+  const handler = guardHotfixHandler(eventName, rawHandler);
   if (typeof eventSource.on === 'function') {
     eventSource.on(eventName, handler);
     hotfixListenerBindings.push({

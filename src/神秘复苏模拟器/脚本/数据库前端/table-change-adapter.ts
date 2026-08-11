@@ -911,6 +911,19 @@ function tryPromoteMissingFixedRowUpdateToInsert(
   if (plan.action !== 'updateCell' || rowIndex !== undefined) return null;
   if (!errors.some(error => error.code === 'ROW_NOT_FOUND')) return null;
 
+  // 固定/单行表（全局状态/玩家状态/行动建议/检定建议）绝不做 update→insert 自动提升。
+  //
+  // 这里的判定依据 table.rows，而 table.rows 来自 exportCurrentData() 导出的 JSON 快照。
+  // 在 sqlite 存储模式下该快照并不可信：provider 未初始化时导出会回退到陈旧的内存视图
+  // （甚至只有表头的模板兜底），而随后的 insertRow 走的是 _ensureProviderInitializedForWrite，
+  // 会强制把真实 SQLite 载入——于是"快照说没有这行"和"物理表其实有这行"同时成立，
+  // 提升出来的 INSERT INTO ... (row_id) VALUES (1) 直接撞
+  // `UNIQUE constraint failed: global_state.row_id`（CRUD 写路径没有 ON CONFLICT 改写层）。
+  //
+  // 这些表的行由模板预置且行数固定，本就不该由镜像补种：快照为空时正确的行为是让
+  // ROW_NOT_FOUND 如实失败，等下一轮 provider 就绪后 updateCell 自然命中。
+  if (isTableNamed(table, FORBIDDEN_INSERT_TABLES)) return null;
+
   const primaryKeyColumn = getRowIdPrimaryKeyColumn(table);
   if (!primaryKeyColumn || primaryKeyColumn.minValue === undefined || primaryKeyColumn.maxValue === undefined)
     return null;

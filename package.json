@@ -21,8 +21,9 @@
     "verify:mfrs-output-cleaning": "node scripts/verify-output-cleaning-regressions.mjs",
     "verify:mfrs-table-adapter": "node scripts/verify-table-change-adapter.mjs",
     "verify:mfrs-archive-ui": "node scripts/verify-mfrs-archive-ui-regressions.mjs --stage phase5",
-    "verify:mfrs-source-gates": "node scripts/verify-mfrs-initvar-schema.mjs && node scripts/verify-mfrs-regex-ids.mjs && node scripts/verify-mfrs-mvu-hotfix-regressions.mjs && node scripts/verify-output-cleaning-regressions.mjs && node scripts/verify-table-change-adapter.mjs && node scripts/verify-mfrs-archive-ui-regressions.mjs --stage phase5",
-    "verify:mfrs-gates": "node scripts/verify-mfrs-initvar-schema.mjs && node scripts/verify-mfrs-regex-ids.mjs && node scripts/verify-mfrs-mvu-hotfix-regressions.mjs && node scripts/verify-output-cleaning-regressions.mjs && node scripts/verify-table-change-adapter.mjs && node scripts/verify-mfrs-archive-ui-regressions.mjs --stage phase5 && node scripts/verify-mfrs-release-png.mjs --from-publish-card"
+    "verify:mfrs-raw-status-fallback": "node scripts/verify-mfrs-raw-status-fallback.mjs",
+    "verify:mfrs-source-gates": "node scripts/verify-mfrs-initvar-schema.mjs && node scripts/verify-mfrs-regex-ids.mjs && node scripts/verify-mfrs-mvu-hotfix-regressions.mjs && node scripts/verify-output-cleaning-regressions.mjs && node scripts/verify-table-change-adapter.mjs && node scripts/verify-mfrs-archive-ui-regressions.mjs --stage phase5 && node scripts/verify-mfrs-raw-status-fallback.mjs",
+    "verify:mfrs-gates": "node scripts/verify-mfrs-initvar-schema.mjs && node scripts/verify-mfrs-regex-ids.mjs && node scripts/verify-mfrs-mvu-hotfix-regressions.mjs && node scripts/verify-output-cleaning-regressions.mjs && node scripts/verify-table-change-adapter.mjs && node scripts/verify-mfrs-archive-ui-regressions.mjs --stage phase5 && node scripts/verify-mfrs-raw-status-fallback.mjs && node scripts/verify-mfrs-release-png.mjs --from-publish-card"
   },
   "browserslist": [
     "defaults and partially supports es6-module"
