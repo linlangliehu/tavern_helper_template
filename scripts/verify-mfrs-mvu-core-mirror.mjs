@@ -45,7 +45,8 @@ function loadMirror() {
   return module.exports;
 }
 
-const { buildCharacterPlans, buildLocationPlans } = loadMirror();
+const { buildActionSuggestionPlans, buildCharacterPlans, buildLocationPlans } = loadMirror();
+assert.equal(typeof buildActionSuggestionPlans, 'function', 'buildActionSuggestionPlans must be exported');
 assert.equal(typeof buildCharacterPlans, 'function', 'buildCharacterPlans must be exported');
 assert.equal(typeof buildLocationPlans, 'function', 'buildLocationPlans must be exported');
 
@@ -198,6 +199,53 @@ const makeCurrentData = (characters, locations) => ({
     'E1',
   );
   assert.equal(plans.length, 0);
+}
+
+// ─────────────────────── 行动建议终态镜像 ───────────────────────
+const actionSheet = {
+  uid: 'sheet_action_suggestions',
+  name: '行动建议',
+  content: [
+    ['row_id', '选项', '思路', '主要风险', '预期收益', '死亡风险', '复苏风险'],
+    [1, 'A', '点燃红色鬼烛', '消耗资源', '抵抗袭击', '高', '无'],
+    [2, 'B', '翻窗逃走', '可能被标记', '拉开距离', '高', '无'],
+    [3, 'C', '继续收录厉鬼', '厉鬼复苏', '补全档案', '致命', '致命'],
+    [4, 'D', '自定义行动', '未知', '未知', '未知', '未知'],
+  ],
+};
+
+// 终态 stat.行动建议=[] 且表中有上一轮 4 行 → 生成 4 个清空 plan，写入明确终态哨兵。
+{
+  const stat = { 状态: '厉鬼复苏', is_dead: true, 行动建议: [], 主线进度: { 阶段状态: '模拟结束' } };
+  const plans = buildActionSuggestionPlans(stat, { sheet_action_suggestions: actionSheet });
+  assert.equal(plans.length, 4, `终态应刷新 4 行行动建议，实际 ${plans.length}`);
+  assert.ok(plans.every(p => p.action === 'updateCell' && p.table === '行动建议'));
+  assert.ok(plans.every(p => p.set.idea_text === '模拟已结束'), '终态四行思路均应为模拟已结束');
+  assert.ok(plans.every(p => p.set.main_risk === '无' && p.set.expected_gain === '无'));
+  assert.equal(JSON.stringify(plans.map(p => p.match.row_id)), JSON.stringify([1, 2, 3, 4]));
+}
+
+// 开局首轮 stat.行动建议=[] 且表里无数据行 → 不生成占位 plan，保持空表。
+{
+  const emptyActionSheet = { ...actionSheet, content: [actionSheet.content[0]] };
+  const plans = buildActionSuggestionPlans({ 行动建议: [] }, { sheet_action_suggestions: emptyActionSheet });
+  assert.equal(plans.length, 0, '首轮空表不得写入终态哨兵');
+}
+
+// 正常 A/B/C/D 建议仍按原逻辑更新 4 行。
+{
+  const suggestions = ['A', 'B', 'C', 'D'].map(key => ({
+    选项: key,
+    思路: key === 'D' ? '自定义行动' : `正常行动${key}`,
+    主要风险: '未知',
+    预期收益: '推进调查',
+    死亡风险: '中',
+    复苏风险: '无',
+  }));
+  const plans = buildActionSuggestionPlans({ 行动建议: suggestions }, { sheet_action_suggestions: actionSheet });
+  assert.equal(plans.length, 4);
+  assert.equal(plans[0].set.idea_text, '正常行动A');
+  assert.equal(plans[3].set.idea_text, '自定义行动');
 }
 
 console.log('verify-mfrs-mvu-core-mirror: passed');

@@ -385,8 +385,16 @@ function parseActionSuggestionsFromMessageText(message: string): ActionSuggestio
   return ['A', 'B', 'C', 'D'].map(k => byKey.get(k)).filter((x): x is ActionSuggestion => Boolean(x));
 }
 
+function isSimulationTerminal(data: StatusData): boolean {
+  if (data?.is_dead === true) return true;
+  const status = valueText(data?.状态, '');
+  if (status === '死亡' || status === '厉鬼复苏') return true;
+  return valueText(_.get(data, '主线进度.阶段状态'), '') === '模拟结束';
+}
+
 /**
  * 收集行动建议。
+ * - 终态（死亡 / 厉鬼复苏 / 模拟结束）硬返回空：禁止 raw/MVU/数据库旧行回退成存活选项。
  * - 历史楼沿用原顺序，避免最新消息 raw 污染历史状态面板。
  * - 最新轮 HUD 以当前消息 raw 协议为真源，数据库只作可信兜底。
  */
@@ -394,6 +402,7 @@ function collectRealActionSuggestions(
   data: StatusData,
   options: { latestTurn?: boolean; allowDatabaseFallback?: boolean } = {},
 ): ActionSuggestion[] {
+  if (isSimulationTerminal(data)) return [];
   const latestTurn = options.latestTurn === true;
   const allowDatabaseFallback = options.allowDatabaseFallback ?? true;
   const list: ActionSuggestion[] = [];

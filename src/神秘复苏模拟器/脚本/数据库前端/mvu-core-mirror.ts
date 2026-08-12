@@ -424,9 +424,41 @@ function buildLocationPlans(stat: StatData, currentData: unknown, eventCode: str
   return plans;
 }
 
-function buildActionSuggestionPlans(stat: StatData): TableChangePlan[] {
+function buildActionSuggestionPlans(stat: StatData, currentData: unknown): TableChangePlan[] {
   const suggestions = Array.isArray(stat.行动建议) ? stat.行动建议 : [];
-  if (suggestions.length === 0) return [];
+  if (suggestions.length === 0) {
+    // stat.行动建议为空有两种语义：
+    //  a) 开局首轮 / 尚未生成建议（表里本来就没行动建议行）→ 不该产生 plan，保持空表。
+    //  b) 终态（状态=厉鬼复苏/死亡，主线进度.阶段状态=模拟结束）清空了行动建议，
+    //     但表里还残留上一轮的 A/B/C/D 4 行 → 必须生成清空 plan 把表跟到终态，
+    //     否则数据库与 stat_data 不一致：HUD 行动建议栏虽按 actionSuggestions.length 隐藏，
+    //     但数据库/世界书注入仍会读到陈旧行动，污染后续召回。
+    // 判据：表里已有行才清（用 currentData 探测），避免首轮空表被写成占位行。
+    const sheet = findSheetByTableName(currentData, ['action_suggestions', '行动建议']);
+    const existingRows = sheetHasActionSuggestionRows(sheet);
+    if (!existingRows) return [];
+    return ACTION_KEYS.map((key, index) => ({
+      action: 'updateCell' as const,
+      table: '行动建议',
+      match: { row_id: index + 1 },
+      set: {
+        row_id: index + 1,
+        option_key: key,
+        // 固定 4 行表不允许 delete，idea_text 又是 NOT NULL 不能写空串，
+        // 因此写入明确终态哨兵；HUD 由 isSimulationTerminal 硬返回空行动建议，
+        // 不把这些哨兵渲染成可点击按钮。
+        idea_text: '模拟已结束',
+        main_risk: '无',
+        expected_gain: '无',
+        death_risk_level: '无',
+        revival_risk_level: '无',
+      },
+      reason: '数据库前端 MVU 行动建议镜像（终态清空）',
+      confidence: 1,
+      skipChatSave: true,
+      silent: true,
+    }));
+  }
   const byKey = new Map<string, StatData>();
   for (const item of suggestions) {
     const row = asRecord(item);
@@ -464,6 +496,13 @@ function buildActionSuggestionPlans(stat: StatData): TableChangePlan[] {
   });
 }
 
+/** 探测行动建议表里是否已有数据行（content.length > 1 视为有行）。 */
+function sheetHasActionSuggestionRows(sheet: unknown) {
+  if (!sheet || typeof sheet !== 'object') return false;
+  const content = (sheet as { content?: unknown }).content;
+  return Array.isArray(content) && content.length > 1;
+}
+
 async function runMirrorOnce(hostWindow: HostWindow) {
   const api = hostWindow.MysteryDatabaseFrontend;
   if (!api?.applyTableChangePlan || !api.exportCurrentData) return;
@@ -476,7 +515,7 @@ async function runMirrorOnce(hostWindow: HostWindow) {
 
   const currentData = await api.exportCurrentData();
   const messageId = getLatestMessageId(hostWindow);
-  const plans = [...buildCorePlans(stat, currentData, messageId), ...buildActionSuggestionPlans(stat)];
+  const plans = [...buildCorePlans(stat, currentData, messageId), ...buildActionSuggestionPlans(stat, currentData)];
   if (!plans.length) return;
 
   const writtenTables = new Set<string>();
@@ -571,4 +610,4 @@ export function installMvuCoreMirror(hostWindow: HostWindow) {
 }
 
 // 仅供门禁/单元测试导出的纯函数（生产打包无副作用，不暴露到全局）。
-export { buildCharacterPlans, buildLocationPlans };
+export { buildActionSuggestionPlans, buildCharacterPlans, buildLocationPlans };
