@@ -1,5 +1,13 @@
 # 进度日志
 
+## 2026-08-12 人物/地点 stat_data 镜像发布 8.15.0
+- 真页验收（开发版）：镜像链路完整（GENERATION_ENDED → mvu-core-mirror → 写库），全局状态/玩家状态/行动建议随本轮 stat_data 更新；本轮 stat_data 人物 [林修,杨间,赵磊] 全已存在 → 镜像按"只补不覆盖"跳过，ACU 富数据未被占位覆盖；无 UNIQUE 冲突。
+- HUD 左栏实际完整显示线索/厉鬼档案/人物/地点（之前"显示暂无"是 `<details>` 折叠导致 innerText 假象，非 bug）。
+- 新增 `scripts/verify-mfrs-mvu-core-mirror.mjs`（并导出 mvu-core-mirror 镜像纯函数），覆盖姓名-身份解析、去重、已存在跳过、占位字段、鬼域映射；加入 source-gates/gates。
+- 发布 8.15.0：源码 0c72915 → bot bundle 4a850a3 → release 39aacf7 + tag v8.15.0。
+- **坑**：bundle workflow 的 autotag-action 每次 bundle 自动递增 lightweight tag（已到 v8.14.20），RELEASE_VERSION 不能用 8.14.17（与已存在 tag 冲突），改用 8.15.0。
+- 开发版 index.yaml 版本号还原时保持 git HEAD（85cb68/8.14.15），发布时随 RELEASE_VERSION 走。
+
 ## 2026-07-26 双卡审计缺陷修复
 - 固定状态栏统一持有 `eventOn` disposer、fallback 订阅与全部 retry/chat-change timer；cleanup 会推进 epoch、取消 timer、注销监听，旧 continuation 不再复活 DOM。
 - 开局欢迎页的界面美化生成器和卡内内联路径均要求同时 replace `/驾驭厉鬼` 与 `/驭鬼者状态/已驾驭厉鬼`，并明确 `厉鬼名称`→`代号` 及完整默认字段映射。
