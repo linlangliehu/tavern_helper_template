@@ -1,3 +1,10 @@
+## 人物/地点 stat_data 镜像（2026-08-12，8.15.0）
+
+- **背景**：8.14.x 之前人物/地点依赖 ACU 填表式独立 API 入库，链路重、易漏。
+- **新机制**：每轮从本轮 `<UpdateVariable>` 的 `stat_data` 直接镜像。人物来源 `stat_data.在场人物`（按「姓名-身份」解析，`姓名` 业务键**只补新行**，已存在行一律跳过不覆盖）；地点优先级 `发生地点 > 所在位置 > 开局地点`（`地点名` 去重，`鬼域状态=已确认`→`灵异状态=鬼域影响`）；新行用保守占位值，不对剧情人物作错误断言。
+- **门禁**：新增 `scripts/verify-mfrs-mvu-core-mirror.mjs`，覆盖姓名解析、去重、已存在跳过、占位字段合法性、鬼域映射；纳入 `source-gates`/`gates`。
+- **坑**：之前"HUD 左栏显示暂无人物/地点"是 `<details>` 折叠导致 `innerText` 假象，非真 bug——验收时不能只看 innerText，要看 DOM 实际子节点。
+
 ## 双卡审计缺陷修复结论（2026-07-26）
 
 - 状态栏泄漏根因是 `eventOn` 返回值被丢弃、retry/chat-change timer 无 owner；已统一 disposer、timer Set 和 lifecycle epoch。

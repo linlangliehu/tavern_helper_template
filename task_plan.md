@@ -128,16 +128,18 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 HUD-UX-NEXT：三项交互调整实施 — complete（8.14.0 已发布）**
 **阶段 PROJECT-FLOW-FIX：修复项目流程 — 已废弃（MFRS 机制 2026-07-19 彻底移除，改极简流程）**
 **阶段 WORKFLOW-SIMPLIFY：废弃 MFRS + 极简单人流程 — complete（2026-07-19，commit `3841c30` 已推送）**
+**阶段 DUAL-CARD-AUDIT-FIX：双卡审计缺陷修复 — complete（8.14.15 已发布，R1/R2/R3 已修复；仅 T0.1/T6.3/T7.3/T7.4 归档/真页回归余项，见 TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md）**
+**阶段 MFRS-MVU-CORE-MIRROR：人物/地点 stat_data 镜像 — complete（8.15.0 已发布 2026-08-12）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.14.15 已发布并推送（2026-07-26）；维护期做了 CDN 引用同步、调试链路修复（CDP 9225 + source map）、worktree 拋留清理；MFRS 已彻底废弃，改极简流程；当前待命，无新发版 |
-| 我要去哪里？ | 双卡审计缺陷修复 T0–T7 余项（已编制计划，待授权实施）；或仓库卫生清理（`.tmp-chrome-*` 818 文件 / `--.json` / 大体积 PNG·txt 仍被 git 跟踪） |
+| 我在哪里？ | 8.15.0 已发布并推送（2026-08-12）：人物/地点每轮从 stat_data 镜像入库（只补不覆盖），新增 `verify-mfrs-mvu-core-mirror.mjs` 门禁；开发版卡已同步 8.15.0 CDN（commit `4b9fb58` 已 push，无需 rebase——交接文档描述的 rebase 场景不成立，fast-forward 推送完成）。源码 `0c72915` → bot bundle `4a850a3` → release `39aacf7` + tag `v8.15.0` |
+| 我要去哪里？ | 双卡审计余项：T7.3 桌面真页回归 / T7.4 移动端真页回归 / T6.3 干净角色列表重新导入验收（T0.1 基线证据仅剩归档意义，可降级）；或仓库卫生清理（`.tmp-chrome-*` / 调试日志等被 git 跟踪杂物） |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
-| 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist；CDN_REF 用 SHA 不用 @main |
-| 我做了什么？ | 发布 8.14.15（生命周期/复苏终局/开局分叉/发布目录净化 + R1/R2/R3）；删 8 脚本 + 3 配置；重写 tasks/launch/package/PROJECT_FLOW/README；维护期修复 CDP 9225 调试链路并统一 MCP 配置 |
+| 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist；CDN_REF 用 SHA 不用 @main；bundle workflow autotag 每次递增 lightweight tag，RELEASE_VERSION 发布前先查远程 tag 避开已打号 |
+| 我做了什么？ | 发布 8.15.0（人物/地点 stat_data 镜像 + mvu-core-mirror 门禁，真页验收通过）；8.14.15 双卡审计修复（生命周期/复苏终局/开局分叉/发布目录净化 + R1/R2/R3）；维护期修复 CDP 9225 调试链路并统一 MCP 配置 |
 
 ## 硬约束（勿破）
 
