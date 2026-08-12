@@ -34,6 +34,7 @@ export type TableChangeErrorCode =
   | 'CHECK_RANGE_VIOLATION'
   | 'CHECK_PATTERN_VIOLATION'
   | 'LENGTH_VIOLATION'
+  | 'PLACEHOLDER_TEXT'
   | 'UNIQUE_VIOLATION'
   | 'CHRONICLE_APPEND_ONLY'
   | 'CHRONICLE_CODE_IMMUTABLE'
@@ -1302,14 +1303,30 @@ function validateColumnValues(
 
     if (!hasValue || value === null || value === undefined) continue;
     const text = String(value);
-    if (isChronicleTable(table) && isChronicleTextColumn(column) && /^SP\d{4}$/i.test(text.trim())) {
-      errors.push({
-        code: 'LENGTH_VIOLATION',
-        message: `列「${column.header}」不能只填写纪要编号，必须是 20-600 字（推荐 200-400 字）客观纪要。`,
-        table: table.name,
-        column: column.header,
-        value,
-      });
+    if (isChronicleTable(table) && isChronicleTextColumn(column)) {
+      // Case 1：AI 把纪要编号 SP0001 填进了正文列 → 长度/编号校验拒绝。
+      if (/^SP\d{4}$/i.test(text.trim())) {
+        errors.push({
+          code: 'LENGTH_VIOLATION',
+          message: `列「${column.header}」不能只填写纪要编号，必须是 20-600 字（推荐 200-400 字）客观纪要。`,
+          table: table.name,
+          column: column.header,
+          value,
+        });
+        continue;
+      }
+      // Case 2：AI 照抄世界书 SQL 示例里的占位符串（如「<请写20到600字...>」），
+      // 长度可能恰好 ≥20 绕过 CHECK，但内容是"写给 AI 的指令"而非叙事 → 占位符检测拒绝。
+      if (isChroniclePlaceholderText(text)) {
+        errors.push({
+          code: 'PLACEHOLDER_TEXT',
+          message: `列「${column.header}」检测到照抄的占位符指令（含"请写…字""禁止输出SQL"等），必须替换为 20-600 字客观纪要正文，不能直接抄写示例文本。`,
+          table: table.name,
+          column: column.header,
+          value,
+        });
+        continue;
+      }
     }
 
     if (column.checkIn && column.checkIn.length > 0 && !column.checkIn.includes(text)) {
@@ -1654,6 +1671,33 @@ function isChronicleTextColumn(column: ColumnMeta) {
   return [column.header, column.physicalName, column.commentAlias].some(
     alias => normalizeAlias(alias) === 'chronicle_text' || normalizeAlias(alias) === normalizeAlias('纪要'),
   );
+}
+
+/**
+ * 事件纪要 chronicle_text 占位符照抄检测。
+ *
+ * 现象：世界书 initNode/约束文档给 AI 的 SQL 示例里 chronicle_text 值是占位符串
+ * （如「<请写20到600字、推荐200到400字的客观纪要；不足20字禁止输出SQL；不能填SP编号>」），
+ * 要求 AI 替换成真实纪要。但模型常原样照抄整串——这串约 40 字，恰好绕过 LENGTH CHECK(≥20)，
+ * 被当作合法正文写入库，于是 chronicle 行里存的是"写给 AI 的指令"而非叙事。
+ *
+ * 这里在长度/编号校验之外加一道纵深：命中已知占位符特征一律 PLACEHOLDER_TEXT 拒绝。
+ * 与既有 LENGTH_VIOLATION（挡 SP0001 编号照抄，Case 1）互补，覆盖 Case 2。
+ */
+const CHRONICLE_PLACEHOLDER_PATTERNS = [
+  /请写\s*\d+\s*到\s*\d+\s*字/,
+  /推荐\s*\d+\s*[-—]\s*\d+\s*字/,
+  /禁止输出\s*SQL/i,
+  /不能填\s*SP/i,
+  /不足\s*\d+\s*字/,
+  /^<.*请写.*>$/,
+  /^<.*客观纪要.*>$/,
+];
+
+function isChroniclePlaceholderText(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  return CHRONICLE_PLACEHOLDER_PATTERNS.some(pattern => pattern.test(trimmed));
 }
 
 function hasColumnValue(table: TableMeta, values: Record<string, Primitive>, column: ColumnMeta) {

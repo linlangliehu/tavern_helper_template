@@ -1141,6 +1141,49 @@ const codeAsChronicleTextUpdatePreview = previewTableChangePlan({
 }, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
 assertError(codeAsChronicleTextUpdatePreview, 'LENGTH_VIOLATION');
 
+// 事件纪要 chronicle_text 占位符照抄防御（Case 2）：
+// AI 把世界书 SQL 示例里的占位符串原样塞进 chronicle_text，长度恰好 ≥20 绕过 CHECK，
+// 但内容是"写给 AI 的指令"而非叙事。命中占位符特征一律 PLACEHOLDER_TEXT 拒绝。
+const placeholderChronicleTextInsertPreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 09:00 ~ 09:30',
+    related_event: '七中敲门事件',
+    summary: '占位符照抄',
+    chronicle_text: '<请写20到600字、推荐200到400字的客观纪要；不足20字禁止输出SQL；不能填SP编号>',
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(placeholderChronicleTextInsertPreview, 'PLACEHOLDER_TEXT');
+
+// 局部占位符特征也应被拒绝（不要求整串匹配）。
+const partialPlaceholderChroniclePreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 09:00 ~ 09:30',
+    related_event: '七中敲门事件',
+    summary: '占位符照抄',
+    chronicle_text: '本轮玩家在教室内观察赵磊播放音频，请写20到600字的客观纪要，禁止输出SQL。',
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assertError(partialPlaceholderChroniclePreview, 'PLACEHOLDER_TEXT');
+
+// 正常叙事纪要不应误判为占位符（含"字"但不匹配占位符特征）。
+// 用 .repeat(6) 确保长度 ≥200，过测试夹具的严 DDL（CHECK LENGTH>=200），把"占位符不误伤"独立验证出来。
+const validChronicleText = '本轮玩家在七中教室目睹赵磊播放怪谈音频，随后主动催动体内鬼档案，确认音频为杀人媒介，自身被诅咒标记。'.repeat(6);
+const validChroniclePreview = previewTableChangePlan({
+  action: 'insertRow',
+  table: 'chronicle',
+  data: {
+    time_span: '2004-07-01 09:00 ~ 09:30',
+    related_event: '七中敲门事件',
+    summary: '确认音频为媒介',
+    chronicle_text: validChronicleText,
+  },
+}, { mate: { type: 'chatSheets', version: 1 }, sheet_chronicle: chronicleTable });
+assert.equal(validChroniclePreview.ok, true, `合法 chronicle_text 不应被占位符检测误伤，实际: ${JSON.stringify(validChroniclePreview.errors)}`);
+
 // 事件纪要追加式守卫：禁止删除已有纪要行（避免开局 SP0001 纪要被后续轮次删掉）。
 const chronicleDeletePreview = previewTableChangePlan({
   action: 'deleteRow',
