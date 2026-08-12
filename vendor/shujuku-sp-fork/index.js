@@ -3692,31 +3692,16 @@ $CONTENT
     }
     function buildMfrsChoicesProtocolPatch_ACU(content) {
         const source = stripMfrsThinkingBlocks_ACU(content);
-        const hasSpStatus = /<sp_status\b/i.test(source);
-        const hasSpClueDeduce = /<sp_clue_deduce\b/i.test(source);
         const hasChoices = /<choices\b/i.test(source);
         const hasSpChoices = /<sp_choices\b/i.test(source);
-        if (hasSpStatus && hasSpClueDeduce && hasChoices && hasSpChoices)
+        // 5a：不再主动补造 <sp_status> / <sp_clue_deduce>。
+        // 系统提示词与世界书（必须输出推演选项.txt / 短标签字段协议.txt / 0.txt）已明确禁止 AI 输出这俩旧面板，
+        // 若在此兜底补造并写回 message.mes，下一轮 AI 读到会固化坏习惯，与"禁止旧面板"协议直接冲突。
+        // <choices> / <sp_choices> 是行动建议数据源（有消费方），仍保留补造。
+        if (hasChoices && hasSpChoices)
             return '';
         const options = extractMfrsActionSuggestionsFromUpdateVariable_ACU(source);
         const blocks = [];
-        if (!hasSpStatus) {
-            blocks.push([
-                '<sp_status>',
-                'Name: 未知',
-                'Location: 未知',
-                'Status: 剧情推进中',
-                '</sp_status>',
-            ].join('\n'));
-        }
-        if (!hasSpClueDeduce) {
-            blocks.push([
-                '<sp_clue_deduce>',
-                '当前线索：本轮回复未提供独立线索推演，已由协议兜底补全。',
-                '下一步：参考推演选项继续行动。',
-                '</sp_clue_deduce>',
-            ].join('\n'));
-        }
         if (options.length > 0 && !hasChoices) {
             blocks.push([
                 '<choices>',
@@ -9842,6 +9827,22 @@ $CONTENT
             return null;
         return String(value).trim().slice(1, -1).replace(/''/g, "'");
     }
+    // B2：chronicle_text 占位符照抄检测，与 table-change-adapter.ts 的
+    // isChroniclePlaceholderText 同特征（7 条正则照抄），用于 direct SQL 路径纵深。
+    function isChroniclePlaceholderText_ACU(text) {
+        const trimmed = String(text || '').trim();
+        if (!trimmed)
+            return false;
+        return [
+            /请写\s*\d+\s*到\s*\d+\s*字/,
+            /推荐\s*\d+\s*[-—]\s*\d+\s*字/,
+            /禁止输出\s*SQL/i,
+            /不能填\s*SP/i,
+            /不足\s*\d+\s*字/,
+            /^<.*请写.*>$/,
+            /^<.*客观纪要.*>$/,
+        ].some(pattern => pattern.test(trimmed));
+    }
     function validateChronicleTextInMutationStatements_ACU(statements) {
         for (const statement of statements) {
             const match = String(statement || '').match(/^((?:INSERT\s+(?:OR\s+\w+\s+)?INTO|REPLACE\s+INTO)\s+chronicle\s*)\(([^)]+)\)(\s*VALUES\s*)([\s\S]+)$/i);
@@ -9862,15 +9863,28 @@ $CONTENT
                 const text = unquoteSqlStringLiteral_ACU(rawText);
                 if (text === null)
                     continue;
-                const length = text.trim().length;
-                if (length >= 200 && length <= 600)
+                const trimmed = text.trim();
+                const length = trimmed.length;
+                // B1：长度下限对齐业务 DDL（chronicle_text CHECK(LENGTH >= 20 AND <= 600)）。
+                // 历史硬下限 200 会把 adapter 预检已放行的 20-199 字纪要在 vendor 层拒绝，
+                // 造成跨层契约漂移。200 降为质量建议，不拦截。
+                if (length >= 20 && length <= 600) {
+                    // B2：长度合法但仍可能是照抄占位符指令（如「<请写20到600字...>」，
+                    // 约 40 字恰好绕过 LENGTH ≥ 20）。与 table-change-adapter 的
+                    // isChroniclePlaceholderText 同特征，形成 direct SQL 纵深。
+                    if (isChroniclePlaceholderText_ACU(trimmed)) {
+                        const rawCode = codeIndex >= 0 ? values[codeIndex]?.trim() : '';
+                        const codeValue = rawCode ? (unquoteSqlStringLiteral_ACU(rawCode) || rawCode) : '未知';
+                        throw new Error(`[SqlTableService] chronicle_text 检测到照抄占位符指令（code_index=${codeValue}）。必须替换为 20-600 字（推荐 200-400 字）客观纪要正文，不能直接抄写示例文本。`);
+                    }
                     continue;
+                }
                 const rawCode = codeIndex >= 0 ? values[codeIndex]?.trim() : '';
                 const codeValue = rawCode ? (unquoteSqlStringLiteral_ACU(rawCode) || rawCode) : '未知';
-                const looksLikeCode = /^SP\d{4}$/i.test(text.trim());
+                const looksLikeCode = /^SP\d{4}$/i.test(trimmed);
                 const hint = looksLikeCode
-                    ? '疑似把纪要编号写进了 chronicle_text，请将第 6 列改为 200-600 字客观纪要。'
-                    : 'chronicle_text 必须为 200-600 字客观纪要；不足 200 字时不要输出该 SQL。';
+                    ? '疑似把纪要编号写进了 chronicle_text，请将第 6 列改为 20-600 字（推荐 200-400 字）客观纪要。'
+                    : 'chronicle_text 必须为 20-600 字（推荐 200-400 字）客观纪要；不足 20 字时不要输出该 SQL。';
                 throw new Error(`[SqlTableService] chronicle_text 长度无效（当前 ${length} 字，code_index=${codeValue}）。${hint}`);
             }
         }
@@ -11878,17 +11892,32 @@ $CONTENT
         _appendMissingSheetsFromFallback(result, fallbackData, exportedKeys) {
             if (!fallbackData || typeof fallbackData !== 'object')
                 return;
+            // B3：SQLite 导出过的表若只是空壳（content 只有表头无数据行），
+            // 而 fallback 里有同表的实质快照（有数据行），用 fallback 顶替——
+            // 否则空壳会占住 result[key] 挡住 fallback 既有合法行，落盘后永久丢失数据。
+            // 正常情况（SQLite 有数据行）不触发覆盖，行为不变。
+            // 注意：不能用 isSubstantiveSheetSnapshot_MFRS，它把"多列表头但 0 数据行"
+            // 也当实质（header.length > 1 即 true），判不出空壳；这里要的是"有数据行"
+            //（content.length > 1，即 1 表头 + ≥1 数据行）。
+            const hasDataRows = (sheet) => Array.isArray(sheet?.content) && sheet.content.length > 1;
             for (const key of Object.keys(fallbackData).filter(k => k.startsWith('sheet_'))) {
-                if (exportedKeys.has(key) || result[key])
+                const fallbackSheet = fallbackData[key];
+                if (!fallbackSheet || typeof fallbackSheet !== 'object')
                     continue;
-                const sheet = fallbackData[key];
-                if (!sheet || typeof sheet !== 'object')
+                const current = result[key];
+                // SQLite 导出过该表：只有"SQLite 有数据行"才跳过；空壳让位给 fallback 实质快照。
+                if (exportedKeys.has(key) && hasDataRows(current))
                     continue;
+                // SQLite 未导出但 result 已有（极少见）：同样按空壳让位规则处理。
+                if (current && hasDataRows(current))
+                    continue;
+                if (!hasDataRows(fallbackSheet))
+                    continue; // fallback 也没数据行，不覆盖（避免空壳盖空壳，无意义）
                 try {
-                    result[key] = JSON.parse(JSON.stringify(sheet));
+                    result[key] = JSON.parse(JSON.stringify(fallbackSheet));
                 }
                 catch (_) {
-                    result[key] = sheet;
+                    result[key] = fallbackSheet;
                 }
             }
         }
