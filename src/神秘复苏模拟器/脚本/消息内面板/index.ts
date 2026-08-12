@@ -5173,6 +5173,9 @@ async function executeHudMemoryDelete(tableKey: string, rowId: string) {
 
 function refreshHudPanels(force = false) {
   if (!isHudMounted()) return;
+  // 数据库脚本可能晚于本面板就绪，activate 时的注册会静默跳过；
+  // 每轮刷新自愈补注册（已注册时守卫一行即退），否则收不到表格变更通知。
+  registerHudDatabaseUpdateCallback();
   const shell = doc.getElementById(HUD_SHELL_ID);
   if (!shell) return;
   const data = readLatestHudStatusData();

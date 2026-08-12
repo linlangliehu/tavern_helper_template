@@ -32,6 +32,8 @@ type AutoCardUpdaterAPI = {
   updateRow?: AutoCardUpdaterCrudApi['updateRow'];
   registerTableUpdateCallback?: (callback: (data: unknown) => void) => void;
   unregisterTableUpdateCallback?: (callback: (data: unknown) => void) => void;
+  /** vendor 内部通知通道：把表格变更广播给所有 registerTableUpdateCallback 订阅者。 */
+  _notifyTableUpdate?: () => void;
 };
 
 type TemplateStatus = {
@@ -665,6 +667,10 @@ function cleanupMfrsDatabaseFrontend(
   const unregisterNativeListener = options.unregisterNativeListener ?? true;
 
   templateAutofixPromise = null;
+  if (tableUpdateNotifyTimer != null) {
+    window.clearTimeout(tableUpdateNotifyTimer);
+    tableUpdateNotifyTimer = null;
+  }
 
   try {
     hostWindow.MysteryAcuVisualizer?.cleanup?.();
@@ -788,9 +794,29 @@ async function waitForHostSaveChat(hostWindow: HostWindow, attempts = 20, interv
   return false;
 }
 
+// 写库成功后补发 vendor 官方订阅通知（_notifyTableUpdate → notifyTableUpdateCallbacksSafely_ACU）。
+// 底层 CRUD 直写不会自动触发该通知（vendor 只在自家 AI 填表路径调用），不补发的话
+// registerTableUpdateCallback 的订阅者（消息内面板 HUD 等）感知不到变更：HUD 的
+// hudDatabaseRevision 永不自增，渲染缓存永远命中旧表，档案区一直显示"暂无可见记录"。
+// debounce 合并：核心镜像一轮连发约 8 个 plan，只广播一次，避免订阅者连刷。
+let tableUpdateNotifyTimer: number | null = null;
+function notifyTableUpdateSubscribers(hostWindow: HostWindow) {
+  if (tableUpdateNotifyTimer != null) window.clearTimeout(tableUpdateNotifyTimer);
+  tableUpdateNotifyTimer = window.setTimeout(() => {
+    tableUpdateNotifyTimer = null;
+    try {
+      hostWindow.AutoCardUpdaterAPI?._notifyTableUpdate?.();
+    } catch (error) {
+      console.warn('[神秘复苏数据库前端] 表格更新订阅通知失败。', error);
+    }
+  }, 150);
+}
+
 function rerenderAcu(hostWindow: HostWindow) {
   hostWindow.MysteryAcuVisualizer?.renderInterface?.();
   window.setTimeout(() => hostWindow.MysteryAcuVisualizer?.renderInterface?.(), 500);
+  // rerenderAcu 的调用点全部是"库内容可能已变更"的时刻，顺带广播给表格订阅者。
+  notifyTableUpdateSubscribers(hostWindow);
 }
 
 async function runMysteryTemplateAutofix(hostWindow: HostWindow, force = false) {

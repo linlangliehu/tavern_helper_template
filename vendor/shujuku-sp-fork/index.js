@@ -12499,6 +12499,26 @@ $CONTENT
         });
         return data;
     }
+    // [MFRS fork] 判断 sheet 快照是否"实质"：有多列表头，或有数据行。
+    // merge 走 first-write-wins（从最新楼层倒扫，见下方循环），若最新楼层存的是
+    // 退化空壳（表头只剩 row_id、0 数据行），会把更早楼层里结构完好的同名表挡掉，
+    // 于是表结构一旦退化就永久传播、无法自愈。空壳只作占位，遇到更早的实质快照必须让位。
+    function isSubstantiveSheetSnapshot_MFRS(sheet) {
+        const content = sheet?.content;
+        if (!Array.isArray(content) || content.length === 0)
+            return false;
+        const header = Array.isArray(content[0]) ? content[0] : null;
+        if (header && header.length > 1)
+            return true;
+        return content.length > 1;
+    }
+    /** [MFRS fork] first-write-wins 的放宽版：未占位时接受；已占位但占位的是空壳、来者是实质快照时允许顶替。 */
+    function shouldAcceptSheetSnapshot_MFRS(foundSheets, mergedData, sheetKey, incoming) {
+        if (!foundSheets[sheetKey])
+            return true;
+        return (isSubstantiveSheetSnapshot_MFRS(incoming) &&
+            !isSubstantiveSheetSnapshot_MFRS(mergedData[sheetKey]));
+    }
     async function mergeAllIndependentTables_ACU() {
         const chat = getChatArray_ACU();
         if (!chat || chat.length === 0) {
@@ -12554,7 +12574,7 @@ $CONTENT
                         logDebug_ACU(`[Merge] Skipping sheet [${storedSheetKey}] - not in current template/guide`);
                         return;
                     }
-                    if (!foundSheets[storedSheetKey]) {
+                    if (shouldAcceptSheetSnapshot_MFRS(foundSheets, mergedData, storedSheetKey, independentData[storedSheetKey])) {
                         mergedData[storedSheetKey] = JSON.parse(JSON.stringify(independentData[storedSheetKey]));
                         foundSheets[storedSheetKey] = true;
                         // [修复] 如果数据来自基底状态消息（seedGreeting 写入的模板初始数据），
@@ -12601,7 +12621,7 @@ $CONTENT
                             logDebug_ACU(`[Merge] Skipping sheet [${storedSheetKey}] (legacy) - not in current template/guide`);
                             return;
                         }
-                        if (!foundSheets[storedSheetKey]) {
+                        if (shouldAcceptSheetSnapshot_MFRS(foundSheets, mergedData, storedSheetKey, independentData[storedSheetKey])) {
                             mergedData[storedSheetKey] = JSON.parse(JSON.stringify(independentData[storedSheetKey]));
                             foundSheets[storedSheetKey] = true;
                             let wasUpdated = false;
@@ -12632,7 +12652,7 @@ $CONTENT
                         if (!templateSheetKeySet.has(k)) {
                             return;
                         }
-                        if (k.startsWith('sheet_') && !foundSheets[k] && standardData[k].name && !isSummaryOrOutlineTable_ACU(standardData[k].name)) {
+                        if (k.startsWith('sheet_') && standardData[k].name && !isSummaryOrOutlineTable_ACU(standardData[k].name) && shouldAcceptSheetSnapshot_MFRS(foundSheets, mergedData, k, standardData[k])) {
                             mergedData[k] = JSON.parse(JSON.stringify(standardData[k]));
                             foundSheets[k] = true;
                             if (!independentTableStates_ACU[k])
@@ -12650,7 +12670,7 @@ $CONTENT
                         if (!templateSheetKeySet.has(k)) {
                             return;
                         }
-                        if (k.startsWith('sheet_') && !foundSheets[k] && summaryData[k].name && isSummaryOrOutlineTable_ACU(summaryData[k].name)) {
+                        if (k.startsWith('sheet_') && summaryData[k].name && isSummaryOrOutlineTable_ACU(summaryData[k].name) && shouldAcceptSheetSnapshot_MFRS(foundSheets, mergedData, k, summaryData[k])) {
                             mergedData[k] = JSON.parse(JSON.stringify(summaryData[k]));
                             foundSheets[k] = true;
                             if (!independentTableStates_ACU[k])
@@ -13705,11 +13725,26 @@ $CONTENT
         _buildExportFallbackData() {
             const templateData = this._resolveCurrentChatTemplate();
             if (templateData && currentJsonTableData_ACU) {
-                return {
+                const merged = {
                     ...templateData,
                     ...currentJsonTableData_ACU,
                     mate: currentJsonTableData_ACU.mate || templateData.mate,
                 };
+                // [MFRS fork] 逐 sheet 兜底：内存视图里表头退化（≤1 列，通常只剩 row_id 的壳）
+                // 的 sheet 用模板结构顶上。否则浅覆盖会让退化壳盖掉模板的完整表头，
+                // 随导出/落盘扩散进聊天快照后永久无法自愈（空表结构反复丢失的根源）。
+                // 退化壳本身没有数据行，用模板顶替不会丢数据。
+                for (const [key, tplSheet] of Object.entries(templateData)) {
+                    if (!key.startsWith('sheet_'))
+                        continue;
+                    const cur = merged[key];
+                    const curHeader = Array.isArray(cur?.content?.[0]) ? cur.content[0] : null;
+                    const tplHeader = Array.isArray(tplSheet?.content?.[0]) ? tplSheet.content[0] : null;
+                    if (tplHeader && tplHeader.length > 1 && (!curHeader || curHeader.length <= 1)) {
+                        merged[key] = tplSheet;
+                    }
+                }
+                return merged;
             }
             return currentJsonTableData_ACU || templateData;
         }
@@ -55548,6 +55583,43 @@ $CONTENT
                 }
                 catch (e) {
                     logError_ACU('refreshDataAndWorldbook failed:', e);
+                    return false;
+                }
+            },
+            // [MFRS fork] 批量写入后的显式落盘：把当前运行时表数据保存进聊天楼层。
+            // skipChatSave 批量编辑（如 MVU 核心镜像）只写内存/SQLite 运行态，
+            // 不落盘的话任何 merge/reload（生成周期、换聊、Provider 重建）都会把这些行蒸发；
+            // 收尾调用一次本方法即可整体持久化，代替逐 plan 保存的开销。
+            //
+            // tableNames 必传业务表名（中文名或英文表名）：只落盘调用方真正写过的表。
+            // 不能全量保存——SQLite 里未建表或被 CHECK 约束跳过的表（如正文长度不合格的事件纪要）
+            // 会被导出成空壳，全量落盘会用这些空壳覆盖楼层里其它来源写好的完整数据。
+            persistTablesToChat: async function (tableNames) {
+                try {
+                    let targetSheetKeys = null;
+                    if (Array.isArray(tableNames) && tableNames.length > 0) {
+                        const keys = [];
+                        for (const name of tableNames) {
+                            const target = findTargetSheet(String(name ?? '').trim());
+                            if (target?.sheetKey && !keys.includes(target.sheetKey))
+                                keys.push(target.sheetKey);
+                        }
+                        if (keys.length === 0) {
+                            logWarn_ACU('persistTablesToChat: 未能解析任何目标表，已跳过落盘以免全量覆盖。');
+                            return false;
+                        }
+                        targetSheetKeys = keys;
+                    }
+                    const provider = getStorageProvider();
+                    if (provider && typeof provider.saveToChat === 'function') {
+                        const result = await provider.saveToChat(targetSheetKeys, null);
+                        return result?.saved !== false;
+                    }
+                    await saveIndependentTableToChatHistory_ACU(-1, targetSheetKeys, null);
+                    return true;
+                }
+                catch (e) {
+                    logError_ACU('persistTablesToChat failed:', e);
                     return false;
                 }
             },

@@ -141,7 +141,10 @@ function unwrapStatData(raw: unknown): StatData {
 }
 
 function readMvuStat(hostWindow: HostWindow): StatData {
-  const option = { type: 'message', message_id: 'latest' as const };
+  // MVU 0.171.0 的 getMvuData/getVariables 要求 message_id 是数字（匹配某条消息的 message_id 字段），
+  // 传字符串 'latest' 不匹配任何消息层，会回退到全局态 chatMetadata.variables（initvar 默认空值），
+  // 导致镜像拿到空 stat_data。这里先用 getLatestMessageId 算出真实数字 id 再传。
+  const option = { type: 'message', message_id: getLatestMessageId(hostWindow) };
   try {
     const fromMvu = hostWindow.Mvu?.getMvuData?.(option);
     if (fromMvu) return unwrapStatData(fromMvu);
@@ -476,14 +479,30 @@ async function runMirrorOnce(hostWindow: HostWindow) {
   const plans = [...buildCorePlans(stat, currentData, messageId), ...buildActionSuggestionPlans(stat)];
   if (!plans.length) return;
 
+  const writtenTables = new Set<string>();
   for (const plan of plans) {
     try {
       const result = await api.applyTableChangePlan(plan);
-      if (!result?.ok) {
+      if (result?.ok) {
+        writtenTables.add(plan.table);
+      } else {
         console.warn('[MFRS CoreMirror] 计划失败', { plan, result });
       }
     } catch (error) {
       console.warn('[MFRS CoreMirror] 计划异常', { plan, error });
+    }
+  }
+
+  // 镜像 plans 全部 skipChatSave（避免逐 plan 保存的开销），收尾统一落盘一次。
+  // 不落盘的话数据只活在运行态，任何 merge/reload（生成周期、换聊、Provider 重建）
+  // 都会把镜像写入的行整批蒸发——AI 填表路径自带落盘所以存活，镜像必须自己补这一步。
+  // 必须按表名限定范围：全量落盘会把 SQLite 里未建表或被 CHECK 跳过的表导出成空壳，
+  // 反过来覆盖掉 ACU 填表写好的厉鬼档案/收录档案等表。
+  if (writtenTables.size > 0) {
+    try {
+      await (hostWindow as any).AutoCardUpdaterAPI?.persistTablesToChat?.([...writtenTables]);
+    } catch (error) {
+      console.warn('[MFRS CoreMirror] 收尾落盘失败', error);
     }
   }
 }
