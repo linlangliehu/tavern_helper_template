@@ -997,7 +997,7 @@ function buildTables(currentData: unknown, templateData?: unknown): TableMeta[] 
   const currentSheets = normalizeSheets(currentData);
   const templateAliases = buildSheetAliasMap(templateSheets);
 
-  return currentSheets.map((sheet, index) => {
+  const tables = currentSheets.map((sheet, index) => {
     const fallback = findTemplateSheetFallback(templateAliases, sheet);
     const content = mergeContentWithTemplateHeader(sheet, fallback);
     const mergedSheet: SheetLike = {
@@ -1013,6 +1013,44 @@ function buildTables(currentData: unknown, templateData?: unknown): TableMeta[] 
     };
     return buildTableMeta(mergedSheet, `sheet_${index}`);
   });
+
+  // 快照残缺兜底：当前快照缺失的模板表以「仅表头空壳」补入。
+  // SQLite 冷启动/换聊天竞态窗口里，运行时快照可能只包含部分表（如首轮只持久化了 4/14 张），
+  // 若预检只认快照表，其余模板表会被 TABLE_NOT_FOUND 硬拦，形成"表建不出来→写不进去"死锁。
+  // 补壳只影响预检解析；真正写入走 vendor insertRow/updateCell，
+  // 其 _ensureProviderInitializedForWrite + _ensureTablesFromTemplate 会按模板幂等补建物理表。
+  const currentAliases = new Set<string>();
+  for (const sheet of currentSheets) {
+    for (const alias of [sheet.__recordKey, sheet.uid, sheet.name, parseDdl(sheet.sourceData?.ddl).tableName]) {
+      const normalized = normalizeAlias(alias);
+      if (normalized) currentAliases.add(normalized);
+    }
+  }
+  templateSheets.forEach((templateSheet, index) => {
+    const aliases = [
+      templateSheet.__recordKey,
+      templateSheet.uid,
+      templateSheet.name,
+      parseDdl(templateSheet.sourceData?.ddl).tableName,
+    ]
+      .map(alias => normalizeAlias(alias))
+      .filter((alias): alias is string => Boolean(alias));
+    if (aliases.some(alias => currentAliases.has(alias))) return;
+    const headerRow = Array.isArray(templateSheet.content?.[0]) ? [templateSheet.content[0]] : [];
+    tables.push(
+      buildTableMeta(
+        {
+          ...templateSheet,
+          uid: templateSheet.uid ?? templateSheet.__recordKey,
+          name: templateSheet.name ?? templateSheet.__recordKey,
+          content: headerRow,
+        },
+        `sheet_template_${index}`,
+      ),
+    );
+  });
+
+  return tables;
 }
 
 function normalizeSheets(data: unknown): SheetLike[] {

@@ -1911,4 +1911,58 @@ assert.equal(unauthorizedMemoryDelete.ok, false, 'bare executor delete without c
 assertError(unauthorizedMemoryDelete, 'UNAUTHORIZED');
 assert.deepEqual(unauthorizedDeleteCalls, [], 'unauthorized delete must never reach vendor');
 
+// 快照残缺兜底：运行时快照只含部分表（SQLite 冷启动/换聊天竞态窗口）时，
+// 模板中存在但快照缺失的表必须以表头空壳参与解析，预检不得 TABLE_NOT_FOUND 硬拦；
+// 写入经 vendor insertRow 幂等补建物理表，因此放行预检即可打破建表死锁。
+{
+  const partialSnapshot = {
+    mate: { type: 'chatSheets' },
+    sheet_clues: JSON.parse(JSON.stringify(mysteryTemplateData.sheet_clues)),
+  };
+  const shellRowData = {
+    row_id: 1,
+    name: '李怡',
+    identity_text: '同班同学',
+    faction_text: '无',
+    location_name: '七中教室',
+    presence_status: '未知',
+    life_status: '未知',
+    supernatural_ability: '无',
+    relations_text: '无',
+    known_info: '无',
+  };
+  const missingTablePreview = previewTableChangePlan({
+    action: 'insertRow',
+    table: 'characters',
+    data: shellRowData,
+  }, partialSnapshot, mysteryTemplateData);
+  assert.equal(
+    missingTablePreview.ok,
+    true,
+    `template table missing from snapshot must resolve via template shell: ${JSON.stringify(missingTablePreview.errors)}`,
+  );
+  assert.notEqual(
+    missingTablePreview.errors.some(err => err.code === 'TABLE_NOT_FOUND'),
+    true,
+    'missing template table must not be blocked by TABLE_NOT_FOUND',
+  );
+  const insertCalls = [];
+  const shellInsert = await applyTableChangePlan({
+    async insertRow(options) { insertCalls.push(options); return 0; },
+  }, {
+    action: 'insertRow',
+    table: 'characters',
+    data: shellRowData,
+  }, partialSnapshot, mysteryTemplateData);
+  assert.equal(shellInsert.ok, true, `insert into template-shell table should pass: ${JSON.stringify(shellInsert.errors)}`);
+  assert.equal(insertCalls.length, 1, 'template-shell insert must reach vendor insertRow (vendor side ensures physical table)');
+  // 完全非法的表名仍必须拒绝，补壳不得放开任意表。
+  const bogusPreview = previewTableChangePlan({
+    action: 'insertRow',
+    table: 'not_a_real_table',
+    values: { row_id: 1 },
+  }, partialSnapshot, mysteryTemplateData);
+  assertError(bogusPreview, 'TABLE_NOT_FOUND');
+}
+
 console.log('verify-table-change-adapter: passed');
