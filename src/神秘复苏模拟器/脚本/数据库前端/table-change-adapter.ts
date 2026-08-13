@@ -1275,16 +1275,25 @@ function parseDdlColumn(line: string): ColumnMeta | null {
 }
 
 function findTable(tables: TableMeta[], tableRef: string | undefined) {
-  const normalized = normalizeAlias(tableRef);
-  if (!normalized) return null;
-  return (
+  const matchAlias = (normalized: string) =>
     tables.find(
       table =>
         normalizeAlias(table.name) === normalized ||
         normalizeAlias(table.uid) === normalized ||
         normalizeAlias(table.sqlName) === normalized,
-    ) ?? null
-  );
+    ) ?? null;
+
+  const normalized = normalizeAlias(tableRef);
+  if (!normalized) return null;
+  const exact = matchAlias(normalized);
+  if (exact) return exact;
+
+  // vendor 把表格以「序号:表名」形式注入提示词（如 `9:事件纪要`），AI 常把这个前缀
+  // 一起写进 plan.table。真页实测一轮 10/10 计划因此 TABLE_NOT_FOUND 全废，
+  // 故剥掉前导「数字:」「数字：」后重试一次。
+  const stripped = normalized.replace(/^\d+[:：]/, '');
+  if (stripped && stripped !== normalized) return matchAlias(stripped);
+  return null;
 }
 
 function resolveColumns(table: TableMeta, values: Record<string, Primitive>, errors: TableChangeError[]) {

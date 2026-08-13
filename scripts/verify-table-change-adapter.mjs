@@ -2035,4 +2035,35 @@ assert.deepEqual(unauthorizedDeleteCalls, [], 'unauthorized delete must never re
   assert.equal(legal.ok, true, `empty-ddl fallback must still allow legal values: ${JSON.stringify(legal.errors)}`);
 }
 
+// vendor 以「序号:表名」注入提示词，AI 常把序号前缀一起写进 plan.table。
+// 真页 8/14 实测一轮 10/10 计划因此 TABLE_NOT_FOUND 全废，必须能剥前缀命中。
+{
+  const snapshot = {
+    mate: { type: 'chatSheets', version: 2 },
+    sheet_chronicle: JSON.parse(JSON.stringify(mysteryTemplateData.sheet_chronicle)),
+  };
+  snapshot.sheet_chronicle.content = [
+    [...mysteryTemplateData.sheet_chronicle.content[0]],
+    [1, 'SP0001', '开局', '七中敲门事件', '开局纪要', '七'.repeat(30)],
+  ];
+
+  for (const ref of ['9:事件纪要', '9：事件纪要', '10:chronicle']) {
+    const preview = previewTableChangePlan(
+      { action: 'updateCell', table: ref, match: { row_id: 1 }, set: { 概览: '已剥前缀' } },
+      snapshot,
+      mysteryTemplateData,
+    );
+    assert.equal(preview.ok, true, `带序号前缀的表名「${ref}」应能命中: ${JSON.stringify(preview.errors)}`);
+    assert.equal(preview.table, '事件纪要', `「${ref}」应解析到事件纪要`);
+  }
+
+  // 剥前缀不得放开任意表名：前缀之后仍必须是真实表。
+  const bogus = previewTableChangePlan(
+    { action: 'updateCell', table: '9:不存在的表', match: { row_id: 1 }, set: { 概览: 'x' } },
+    snapshot,
+    mysteryTemplateData,
+  );
+  assertError(bogus, 'TABLE_NOT_FOUND');
+}
+
 console.log('verify-table-change-adapter: passed');
