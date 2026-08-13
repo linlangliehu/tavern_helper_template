@@ -12548,6 +12548,7 @@ $CONTENT
         return (isSubstantiveSheetSnapshot_MFRS(incoming) &&
             !isSubstantiveSheetSnapshot_MFRS(mergedData[sheetKey]));
     }
+    const SQLITE_GUIDE_SHELL_MARKER_ACU = Symbol('acu.sqliteGuideShell');
     async function mergeAllIndependentTables_ACU() {
         const chat = getChatArray_ACU();
         if (!chat || chat.length === 0) {
@@ -12750,7 +12751,11 @@ $CONTENT
                 // 直接物化：仅表头（seedRows 保留在字段中，但不作为"当前对话真实数据行"展示）
                 const base = materializeDataFromSheetGuide_ACU(sheetGuideData, { includeSeedRows: false });
                 const orderedKeys = getSortedSheetKeys_ACU(base);
-                return migrateContentNullToRowId(reorderDataBySheetKeys_ACU(base, orderedKeys));
+                const shell = migrateContentNullToRowId(reorderDataBySheetKeys_ACU(base, orderedKeys));
+                // 非枚举运行态标记：这是"从未持久化过表格快照"的指导表空壳，SQLite 冷启动可注入模板 seedRows。
+                // 已持久化后用户主动清空所有数据行的 checkpoint 不带该标记，重载时不得重新播种。
+                Object.defineProperty(shell, SQLITE_GUIDE_SHELL_MARKER_ACU, { value: true, configurable: true });
+                return shell;
             }
             return null;
         }
@@ -13417,21 +13422,34 @@ $CONTENT
                     return true;
                 });
                 if (!mergedData || !hasRealDataRows) {
-                    // 新开卡场景（mergedData=null）或空壳结构（只有表头）：
-                    // 只初始化引擎，不建表——建表延迟到第一次写操作（applyEdits/executeMutation）时
-                    // 这样用户在新开卡后还能修改表结构（DDL），直到真正填数据时才锁定表结构
-                    // 注意：executeQuery（只读）不触发建表，避免前端查询意外提前锁定表结构
-                    if (mergedData) {
-                        // 空壳结构：仍然更新 JSON 视图（前端需要显示表头），但不建 SQLite 表
-                        _set_currentJsonTableData_ACU(mergedData);
-                        this._buildNameMapper(mergedData);
-                        logDebug_ACU('[SqlTableService] 检测到空壳结构（仅表头无数据行），引擎已就绪，等待第一次填表时建表');
-                    }
-                    else {
-                        logDebug_ACU('[SqlTableService] 没有找到表格数据，引擎已就绪，等待第一次填表时从模板建表');
-                    }
+                    // 新开卡或空壳场景必须先建立当前模板的 SQLite 表结构。
+                    //
+                    // 旧逻辑把建表延迟到第一次 applyEdits/executeMutation，但前端 CRUD Plan / CoreMirror
+                    // 会先基于 exportCurrentData() 解析目标表；此时 JSON 视图和物理库都没有表，计划会在
+                    // TABLE_NOT_FOUND 预检阶段终止，永远到不了 _ensureTablesFromTemplate()，形成冷启动死锁。
+                    //
+                    // 这里复用写路径原有的按模板建表逻辑（包含模板约定的 seedRows 初版快照），随后
+                    // 立即从 SQLite 回导 JSON 视图。这样不论首个写入来自 SQL、CRUD Plan 还是 MVU 镜像，
+                    // 前端都能先解析到完整表结构，且后续 _ensureTablesFromTemplate() 仍保持幂等。
+                    //
+                    // 建表以"当前模板 + 本次合并快照"为唯一输入，绝不回读可能过期的旧内存视图
+                    // (currentJsonTableData_ACU)：reloadStorageProvider 不清空全局视图，若空壳时隐式
+                    // 回读旧数据，会把上一聊天的行或已删除的行重新建表灌入，造成跨聊污染或数据复活。
+                    _set_currentJsonTableData_ACU(mergedData || null);
+                    this._buildNameMapper(mergedData || this._resolveCurrentChatTemplate());
+                    this._ensureTablesFromTemplate();
+                    this._syncToJson();
                     this._initialized = true;
-                    return { loaded: false, source: 'empty' };
+                    const tableCount = this.engine.getTableNames().length;
+                    // 校验模板声明的表是否全部落库；部分缺失说明某张 DDL/seed 失败，传播错误让上层 fallback 到原生模式。
+                    const templateSheetKeys = Object.keys(this._resolveCurrentChatTemplate() || {}).filter(k => k.startsWith('sheet_'));
+                    if (tableCount === 0 || tableCount < templateSheetKeys.length) {
+                        const errMsg = `SQLite 冷启动建表不完整（已建 ${tableCount}/${templateSheetKeys.length} 张表）；可能存在 DDL 或 seedRows 写入失败。`;
+                        logError_ACU(`[SqlTableService] ${errMsg}`);
+                        return { loaded: false, source: 'empty', error: errMsg };
+                    }
+                    logDebug_ACU(`[SqlTableService] 冷启动已从当前模板建立 ${tableCount} 张表，SQLite 与 JSON 视图已就绪`);
+                    return { loaded: true, source: 'template' };
                 }
                 // 将 JSON 数据加载到 SQLite
                 this.syncBridge.loadFromTableData(mergedData);
@@ -13439,8 +13457,22 @@ $CONTENT
                 _set_currentJsonTableData_ACU(mergedData);
                 // 从所有表的 DDL 构建中英文名称映射器
                 this._buildNameMapper(mergedData);
+                // [修复] 热路径补建模板缺失表：chat 快照只包含被写过/保存过的表（无指导表时
+                // mergeAllIndependentTables_ACU 不做模板回填），首轮只写 4 张表时物理库就只有
+                // 4 张，其余模板表在后续 CRUD Plan 预检仍然 TABLE_NOT_FOUND。这里幂等补建
+                // 模板中缺失的物理表（含 seedRows 初版快照），再回导 JSON 视图，保证物理库
+                // 始终覆盖当前模板全部表。
+                this._ensureTablesFromTemplate();
+                this._syncToJson();
                 this._initialized = true;
-                logDebug_ACU('[SqlTableService] SQLite 数据库加载完成');
+                const mergedTableCount = this.engine.getTableNames().length;
+                const mergedTemplateSheetKeys = Object.keys(this._resolveCurrentChatTemplate() || {}).filter(k => k.startsWith('sheet_'));
+                if (mergedTableCount === 0 || mergedTableCount < mergedTemplateSheetKeys.length) {
+                    const errMsg = `SQLite 热启动建表不完整（已建 ${mergedTableCount}/${mergedTemplateSheetKeys.length} 张表）；可能存在 DDL 或数据写入失败。`;
+                    logError_ACU(`[SqlTableService] ${errMsg}`);
+                    return { loaded: false, source: 'empty', error: errMsg };
+                }
+                logDebug_ACU(`[SqlTableService] SQLite 数据库加载完成（${mergedTableCount} 张表，含模板补建）`);
                 return { loaded: true, source: 'merged' };
             }
             catch (e) {
@@ -13867,11 +13899,11 @@ $CONTENT
             }
         }
         /**
-         * 按需建表：在写操作（applyEdits/executeMutation）前，检查当前聊天模板中的表是否都已存在于 SQLite。
+         * 按模板确保 SQLite 表存在：冷启动加载和后续写操作均可调用。
          *
-         * 仅在写操作时调用，不在只读查询（executeQuery）时调用。
-         * 这样新开卡场景下，用户可以在首次填表前自由修改表结构（DDL），
-         * 直到 AI 真正往表里写数据时才锁定表结构并建表。
+         * 冷启动在 loadFromChat() 的空壳分支主动调用，先建立可被前端解析的表结构，
+         * 避免 CRUD Plan / CoreMirror 在抵达 executeMutation 前被 TABLE_NOT_FOUND 挡住。
+         * 写操作前继续调用以支持模板中途加表；方法按物理表名检查，因此可安全幂等。
          *
          * 三种场景：
          * 1. 新卡第一次填表：SQLite 中无任何用户表 → 全量建表
