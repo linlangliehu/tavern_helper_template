@@ -732,10 +732,14 @@ function findChronicleTextInArgs(args: unknown[]): string | null {
   return null;
 }
 
-function installChronicleWriteAudit(hostWindow: HostWindow) {
+async function installChronicleWriteAudit(hostWindow: HostWindow) {
   uninstallChronicleWriteAudit();
-  const api = hostWindow.AutoCardUpdaterAPI;
+  // 探针不依赖模板 autofix 的成败：autofix 失败（模板导入超时、vendor 热重载异常）时
+  // 更需要审计在场。自己等 API 就绪，等不到就静默放弃。
+  const api = hostWindow.AutoCardUpdaterAPI ?? (await waitForApi(hostWindow));
   if (!api) return;
+  // 安装标记用于诊断：标记在而包装丢失 = 装过但 API 被换掉；标记不在 = 从未装上。
+  (hostWindow as HostWindow & Record<string, unknown>).__mfrsChronicleAuditAt__ = new Date().toISOString();
 
   for (const method of AUDITED_CRUD_METHODS) {
     const original = api[method] as ((...args: unknown[]) => unknown) | undefined;
@@ -1251,7 +1255,10 @@ async function installCompatibilityApi() {
 
   console.info('[神秘复苏数据库前端] 已切换为 v10.2 原始可视化前端，并保留 MysteryDatabaseFrontend 兼容 API。');
   // autofix 内部会 waitForApi/可能热重载 vendor，因此审计探针挂在其后，包住最终生效的 API 实例。
-  void ensureMysteryTemplate(hostWindow).then(() => installChronicleWriteAudit(hostWindow));
+  // catch 不可省：autofix reject 时 then 不会执行，探针会静默缺席（8/14 真页实测踩中）。
+  void ensureMysteryTemplate(hostWindow)
+    .catch(() => undefined)
+    .then(() => installChronicleWriteAudit(hostWindow));
   const uninstallCoreMirror = installMvuCoreMirror(hostWindow);
   const previousCleanup = hostWindow.__mfrsDatabaseFrontendCleanup__;
   hostWindow.__mfrsDatabaseFrontendCleanup__ = options => {
@@ -1276,7 +1283,9 @@ async function installCompatibilityApi() {
         }
         keepAcuConfigEmbedded(hostWindow);
         // 切换聊天可能触发 vendor 热重载，API 实例会被替换，探针需重挂到新实例上。
-        void ensureMysteryTemplate(hostWindow, true).then(() => installChronicleWriteAudit(hostWindow));
+        void ensureMysteryTemplate(hostWindow, true)
+          .catch(() => undefined)
+          .then(() => installChronicleWriteAudit(hostWindow));
       }, delay);
     }
   };
