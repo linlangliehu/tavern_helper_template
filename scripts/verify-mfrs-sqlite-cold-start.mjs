@@ -337,4 +337,28 @@ async function runLoad(input) {
   assert.ok(loaded.data.sheet_characters, '补建后的表应回导到 JSON 视图');
 }
 
+// 7. 模板应用（含 chat_override 导入）后必须重建 SQLite 物理库：
+//    applyTemplateSnapshotToScope_ACU 内需在 SQLite 模式下调用 reloadStorageProvider，
+//    否则新开卡"先按全局模板建库→再导入 MFRS 模板"后物理库缺新模板表，
+//    vendor insertRow 报 Table not found（真页 8/13 复现）。
+{
+  const applyScopeStart = vendorSource.indexOf('async function applyTemplateSnapshotToScope_ACU');
+  assert.notEqual(applyScopeStart, -1, 'missing applyTemplateSnapshotToScope_ACU');
+  // 函数签名以解构默认参数 `} = {})` 结束，正文大括号在其后。
+  const applyScopeParamsEnd = vendorSource.indexOf('} = {})', applyScopeStart);
+  assert.notEqual(applyScopeParamsEnd, -1, 'unexpected applyTemplateSnapshotToScope_ACU signature');
+  const applyScopeEnd = findMatchingBrace(vendorSource, vendorSource.indexOf('{', applyScopeParamsEnd + 7));
+  const applyScopeBody = vendorSource.slice(applyScopeStart, applyScopeEnd + 1);
+  assert.match(
+    applyScopeBody,
+    /isSqliteMode\(\)/,
+    'applyTemplateSnapshotToScope_ACU 应在 SQLite 模式下判定重建',
+  );
+  assert.match(
+    applyScopeBody,
+    /await reloadStorageProvider\(\)/,
+    'applyTemplateSnapshotToScope_ACU 应在模板应用后重建 SQLite 物理库',
+  );
+}
+
 console.log('verify-mfrs-sqlite-cold-start: passed');

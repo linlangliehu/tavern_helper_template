@@ -12351,6 +12351,19 @@ $CONTENT
             registerChatPresetEntry: effectiveRegisterChatPresetEntry,
         });
         applyTemplateScopeForCurrentChat_ACU();
+        // [修复] SQLite 模式下，模板应用到任一作用域后必须重建物理库。
+        // 否则 provider 仍持有"导入前模板"的表结构（例如新开卡先按全局模板建库，
+        // 前端随后把 MFRS 14 表模板导入为 chat_override）：JSON 视图/预检按新模板解析，
+        // 物理库却缺新模板的表，写入在 vendor 层报 Table not found，形成持续性表缺失。
+        if (isSqliteMode()) {
+            try {
+                await reloadStorageProvider();
+                logDebug_ACU(`[TemplateScope] 模板应用后已重建 SQLite 物理库 (scope=${normalizedScope})`);
+            }
+            catch (e) {
+                logError_ACU(`[TemplateScope] 模板应用后重建 SQLite 物理库失败: ${e?.message || e}`);
+            }
+        }
         try {
             await refreshMergedDataAndNotify_ACU();
         }
