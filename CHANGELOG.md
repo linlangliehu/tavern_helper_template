@@ -2,6 +2,12 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.6] - 2026-08-13
+
+### 修复
+- **SQLite 新开卡首轮丢写五层修复链**：热路径 loadFromChat 补建模板缺失表；CRUD 预检为快照缺失的模板表补表头壳；chat_override 模板应用后强制重建 SQLite 物理库；CoreMirror 固定表 ROW_NOT_FOUND 降级 insertRow 补种；vendor 四个 CRUD 写路径表解析自愈（运行时视图收窄时按模板补建重试）。新开卡首轮 14 张表全部可写，控制台不再出现 TABLE_NOT_FOUND/ROW_NOT_FOUND。
+- **线索编号补零**：CoreMirror 生成的 clue_code 补零到 C0000 格式，满足线索表 CHECK 约束。
+
 ## [v8.15.0] - 2026-08-12
 
 ### 新增
