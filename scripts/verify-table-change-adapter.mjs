@@ -1956,6 +1956,34 @@ assert.deepEqual(unauthorizedDeleteCalls, [], 'unauthorized delete must never re
   }, partialSnapshot, mysteryTemplateData);
   assert.equal(shellInsert.ok, true, `insert into template-shell table should pass: ${JSON.stringify(shellInsert.errors)}`);
   assert.equal(insertCalls.length, 1, 'template-shell insert must reach vendor insertRow (vendor side ensures physical table)');
+  // 固定表（如全局状态）空表补种：目标 row_id 缺失时 insertRow 必须放行——
+  // 这是 CoreMirror ROW_NOT_FOUND 降级补种的前提（竞态窗口建表无 seedRows 的自愈）。
+  const seedCalls = [];
+  const fixedSeedInsert = await applyTableChangePlan({
+    async insertRow(options) { seedCalls.push(options); return 0; },
+  }, {
+    action: 'insertRow',
+    table: 'global_state',
+    data: {
+      row_id: 1,
+      game_time: '2004-07-01 20:00',
+      current_location: '七中教室',
+      current_city: '大昌市',
+      canon_stage: '阶段0｜开局与七中前后',
+      canon_anchor: '七中当日',
+      main_phase: '开局接入',
+      world_pressure: 0,
+      hq_attention: 0,
+      public_exposure: 0,
+    },
+  }, partialSnapshot, mysteryTemplateData);
+  assert.equal(
+    fixedSeedInsert.ok,
+    true,
+    `fixed table reseed insert (row missing) must pass: ${JSON.stringify(fixedSeedInsert.errors)}`,
+  );
+  assert.equal(seedCalls.length, 1, 'fixed table reseed must reach vendor insertRow');
+
   // 完全非法的表名仍必须拒绝，补壳不得放开任意表。
   const bogusPreview = previewTableChangePlan({
     action: 'insertRow',

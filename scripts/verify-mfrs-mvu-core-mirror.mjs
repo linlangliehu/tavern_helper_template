@@ -248,4 +248,20 @@ const actionSheet = {
   assert.equal(plans[3].set.idea_text, '自定义行动');
 }
 
+// 固定表种子行缺失自愈：runMirrorOnce 必须在 updateCell 命中 ROW_NOT_FOUND 且
+// set 携带 row_id 时降级 insertRow 补种（SQLite 竞态窗口建表无 seedRows 的自愈路径）。
+{
+  const mirrorSource = readFileSync(mirrorPath, 'utf8');
+  assert.match(
+    mirrorSource,
+    /ROW_NOT_FOUND/,
+    'runMirrorOnce 应检测 ROW_NOT_FOUND 并降级补种',
+  );
+  assert.match(
+    mirrorSource,
+    /action:\s*'insertRow'\s*as\s*const,\s*data:\s*plan\.set/,
+    'ROW_NOT_FOUND 降级应以 plan.set 整行数据执行 insertRow',
+  );
+}
+
 console.log('verify-mfrs-mvu-core-mirror: passed');

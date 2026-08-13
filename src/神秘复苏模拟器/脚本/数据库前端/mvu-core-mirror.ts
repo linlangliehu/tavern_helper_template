@@ -521,7 +521,24 @@ async function runMirrorOnce(hostWindow: HostWindow) {
   const writtenTables = new Set<string>();
   for (const plan of plans) {
     try {
-      const result = await api.applyTableChangePlan(plan);
+      let result = await api.applyTableChangePlan(plan);
+      // 固定表种子行缺失自愈：SQLite 竞态窗口建出的表可能没有 seedRows（例如
+      // 模板导入前建库、或 CHECK 跳过种子行），updateCell 会永远 ROW_NOT_FOUND。
+      // 镜像 plan 的 set 携带整行数据（含 row_id），降级为 insertRow 直接补种。
+      if (
+        !result?.ok &&
+        plan.action === 'updateCell' &&
+        plan.set &&
+        typeof (plan.set as Record<string, unknown>).row_id !== 'undefined' &&
+        Array.isArray(result?.errors) &&
+        result.errors.some(err => err?.code === 'ROW_NOT_FOUND')
+      ) {
+        const insertPlan = { ...plan, action: 'insertRow' as const, data: plan.set, match: undefined };
+        result = await api.applyTableChangePlan(insertPlan);
+        if (result?.ok) {
+          console.info('[MFRS CoreMirror] updateCell 未命中行，已降级 insertRow 补种', { table: plan.table });
+        }
+      }
       if (result?.ok) {
         writtenTables.add(plan.table);
       } else {
