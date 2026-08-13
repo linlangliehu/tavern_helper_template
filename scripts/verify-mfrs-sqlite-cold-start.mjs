@@ -361,4 +361,27 @@ async function runLoad(input) {
   );
 }
 
+// 8. CRUD 写路径必须使用自愈版表解析：运行时视图被收窄成"只剩有数据行的表"时
+//    （部分快照 merge/按表落盘/竞态期 provider 重建），updateCell/updateRow/
+//    insertRow/deleteRow 不得直接 not found 丢写，而应按当前模板补建后重试。
+{
+  assert.match(
+    vendorSource,
+    /async function findTargetSheetWithTemplateHeal\(/,
+    'missing findTargetSheetWithTemplateHeal',
+  );
+  const healCallCount = (vendorSource.match(/await findTargetSheetWithTemplateHeal\(tableName\)/g) || []).length;
+  assert.equal(
+    healCallCount,
+    4,
+    `updateCell/updateRow/insertRow/deleteRow 四个写路径都应使用自愈解析，实际 ${healCallCount}`,
+  );
+  const healBody = vendorSource.slice(
+    vendorSource.indexOf('async function findTargetSheetWithTemplateHeal'),
+    vendorSource.indexOf('function resolveColumnForSheet'),
+  );
+  assert.match(healBody, /_ensureTablesFromTemplate\(\)/, '自愈应调用模板补建');
+  assert.match(healBody, /_syncToJson/, '自愈应回导 JSON 视图');
+}
+
 console.log('verify-mfrs-sqlite-cold-start: passed');

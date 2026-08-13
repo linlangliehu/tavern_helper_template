@@ -53862,6 +53862,38 @@ $CONTENT
         return null;
     }
     /**
+     * findTargetSheet 的自愈版本：查不到表且处于 SQLite 模式时，
+     * 按当前聊天模板幂等补建缺失物理表并回导 JSON 视图后重试一次。
+     *
+     * 背景：运行中多条路径（部分快照 merge、按表落盘、竞态期 provider 重建）
+     * 会把 currentJsonTableData_ACU 收窄成"只剩有数据行的表"，空表整批从视图消失；
+     * 此时 CRUD 写入按中文表名解析直接 not found，形成"表越写越少"的持续性丢写。
+     * 写路径是最后一道闸，必须在这里对模板内的表自愈，而不是指望上游视图永远完整。
+     */
+    async function findTargetSheetWithTemplateHeal(tableName) {
+        const direct = findTargetSheet(tableName);
+        if (direct)
+            return direct;
+        if (!isSqliteMode())
+            return null;
+        try {
+            const provider = getStorageProvider();
+            if (provider?.mode === 'sqlite' && typeof provider._ensureTablesFromTemplate === 'function') {
+                provider._ensureTablesFromTemplate();
+                provider._syncToJson?.();
+                const healed = findTargetSheet(tableName);
+                if (healed) {
+                    logWarn_ACU(`[CRUD自愈] 表 "${tableName}" 曾从运行时视图缺失，已按当前模板补建后命中。`);
+                    return healed;
+                }
+            }
+        }
+        catch (e) {
+            logWarn_ACU(`[CRUD自愈] 按模板补建表 "${tableName}" 失败: ${e?.message || e}`);
+        }
+        return null;
+    }
+    /**
      * 将用户传入的列名（可能是中文、英文、或数字索引得来的中文）
      * 翻译成英文列名（供 SQL 拼接）和中文列名（供原生模式 headers 匹配）
      *
@@ -54188,7 +54220,7 @@ $CONTENT
                     if (!args)
                         return false;
                     const { tableName, rowIndex: normalizedRowIndex, colIdentifier: normalizedColIdentifier, value: normalizedValue, skipChatSave, skipNotify, } = args;
-                    const target = findTargetSheet(tableName);
+                    const target = await findTargetSheetWithTemplateHeal(tableName);
                     if (!target) {
                         logError_ACU(`updateCell: Table "${tableName}" not found.`);
                         return false;
@@ -54297,7 +54329,7 @@ $CONTENT
                         logError_ACU('updateRow: Cannot modify header row (index 0).');
                         return false;
                     }
-                    const target = findTargetSheet(tableName);
+                    const target = await findTargetSheetWithTemplateHeal(tableName);
                     if (!target) {
                         logError_ACU(`updateRow: Table "${tableName}" not found.`);
                         return false;
@@ -54387,7 +54419,7 @@ $CONTENT
                     if (!args)
                         return -1;
                     const { tableName, data: normalizedData, skipChatSave, skipNotify, } = args;
-                    const target = findTargetSheet(tableName);
+                    const target = await findTargetSheetWithTemplateHeal(tableName);
                     if (!target) {
                         logError_ACU(`insertRow: Table "${tableName}" not found.`);
                         return -1;
@@ -54487,7 +54519,7 @@ $CONTENT
                         logError_ACU('deleteRow: Cannot delete header row (index 0).');
                         return false;
                     }
-                    const target = findTargetSheet(tableName);
+                    const target = await findTargetSheetWithTemplateHeal(tableName);
                     if (!target) {
                         logError_ACU(`deleteRow: Table "${tableName}" not found.`);
                         return false;
