@@ -1993,4 +1993,46 @@ assert.deepEqual(unauthorizedDeleteCalls, [], 'unauthorized delete must never re
   assertError(bogusPreview, 'TABLE_NOT_FOUND');
 }
 
+// 快照 sheet 带空 ddl 时不得覆盖模板 DDL：否则该表 LENGTH/CHECK IN/NOT NULL/UNIQUE
+// 约束会整体静默失效，AI 的坏值（如把纪要编号写进正文列）就能一路写穿到落盘。
+{
+  const chronicleTemplate = mysteryTemplateData.sheet_chronicle;
+  const emptyDdlSnapshot = {
+    mate: { type: 'chatSheets', version: 2 },
+    sheet_chronicle: {
+      uid: 'sheet_chronicle',
+      name: '事件纪要',
+      // 关键：ddl 是空串（而非 undefined），旧实现会用它覆盖模板 DDL
+      sourceData: { ddl: '' },
+      content: [
+        [...chronicleTemplate.content[0]],
+        [1, 'SP0001', '开局', '七中敲门事件', '开局纪要', '七'.repeat(30)],
+      ],
+    },
+  };
+
+  const badText = previewTableChangePlan(
+    { action: 'updateCell', table: '事件纪要', match: { row_id: 1 }, set: { 纪要: 'SP0001' } },
+    emptyDdlSnapshot,
+    mysteryTemplateData,
+  );
+  assertError(badText, 'LENGTH_VIOLATION');
+
+  // 同一张表的其他 DDL 约束也应随模板回落而恢复（概览 CHECK(LENGTH<=40)）。
+  const tooLongSummary = previewTableChangePlan(
+    { action: 'updateCell', table: '事件纪要', match: { row_id: 1 }, set: { 概览: '概'.repeat(41) } },
+    emptyDdlSnapshot,
+    mysteryTemplateData,
+  );
+  assertError(tooLongSummary, 'LENGTH_VIOLATION');
+
+  // 合法值仍应放行，回落不得变成一刀切拒绝。
+  const legal = previewTableChangePlan(
+    { action: 'updateCell', table: '事件纪要', match: { row_id: 1 }, set: { 纪要: '七'.repeat(50) } },
+    emptyDdlSnapshot,
+    mysteryTemplateData,
+  );
+  assert.equal(legal.ok, true, `empty-ddl fallback must still allow legal values: ${JSON.stringify(legal.errors)}`);
+}
+
 console.log('verify-table-change-adapter: passed');

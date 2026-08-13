@@ -7888,6 +7888,8 @@ $CONTENT
                         if (table && table.content && typeof data === 'object') {
                             const newRow = [String(table.content.length)]; // 行号 = 当前 content 长度（表头占 [0]）
                             const headers = table.content[0].slice(1);
+                            if (rejectNativeChronicleWrite_ACU('insertRow', table, headers, colIndex => data[colIndex] ?? data[String(colIndex)] ?? ''))
+                                break;
                             const specialIndexCol = (isSummaryTable && sheetKey && isSpecialIndexLockEnabled_ACU(sheetKey))
                                 ? getSummaryIndexColumnIndex_ACU(table)
                                 : -1;
@@ -7987,6 +7989,8 @@ $CONTENT
                                 logDebug_ACU(`[锁定] 行锁定阻止 updateRow (tableIndex: ${tableIndex}, rowIndex: ${rowIndex})`);
                                 break;
                             }
+                            if (rejectNativeChronicleWrite_ACU('updateRow', table, table.content[0].slice(1), colIndex => data[colIndex] ?? data[String(colIndex)] ?? ''))
+                                break;
                             Object.keys(data).forEach(colIndexStr => {
                                 const colIndex = parseInt(colIndexStr, 10);
                                 if (isNaN(colIndex))
@@ -9842,6 +9846,58 @@ $CONTENT
             /^<.*请写.*>$/,
             /^<.*客观纪要.*>$/,
         ].some(pattern => pattern.test(trimmed));
+    }
+    // B4：native <tableEdit> 写路径的事件纪要纵深校验。
+    // SQLite 侧由 validateChronicleTextInMutationStatements_ACU 拦截，前端 CRUD Plan 侧由
+    // table-change-adapter 的 LENGTH_VIOLATION/PLACEHOLDER_TEXT 拦截；native 的
+    // parseAndApplyTableEdits_ACU 此前直接 content.push/赋值，完全无校验——AI 把纪要编号
+    // 或示例占位符写进正文列会静默落盘，而事件纪要是唯一注入提示词的表，等于污染长期记忆。
+    function isChronicleTableName_ACU(name) {
+        const normalized = String(name || '').trim().toLowerCase();
+        return normalized === '事件纪要' || normalized === 'chronicle';
+    }
+    function findChronicleTextColumnIndex_ACU(headers) {
+        if (!Array.isArray(headers))
+            return -1;
+        return headers.findIndex(header => {
+            const normalized = String(header || '').trim().toLowerCase();
+            return normalized === '纪要' || normalized === 'chronicle_text';
+        });
+    }
+    /**
+     * 返回 null 表示放行；返回字符串表示拒绝原因（判定与 SQLite/前端三方同源）。
+     * 空值不在本守卫职责内（交由既有 NOT NULL/落盘逻辑），本守卫只管内容形态。
+     */
+    function validateNativeChronicleText_ACU(tableName, text) {
+        if (!isChronicleTableName_ACU(tableName))
+            return null;
+        const value = String(text ?? '').trim();
+        if (!value)
+            return null;
+        if (/^SP\d{4}$/i.test(value))
+            return `疑似把纪要编号写进了正文列（值="${value}"）`;
+        if (isChroniclePlaceholderText_ACU(value))
+            return `检测到照抄的占位符指令（值="${value.slice(0, 40)}…"）`;
+        if (value.length < 20)
+            return `正文长度不足（当前 ${value.length} 字，要求 20-600 字）`;
+        if (value.length > 600)
+            return `正文超长（当前 ${value.length} 字，要求 20-600 字）`;
+        return null;
+    }
+    /**
+     * native 指令级守卫：命中则 logWarn（含调用栈，用于定位真实写入者）并返回 true 表示应跳过该条指令。
+     */
+    function rejectNativeChronicleWrite_ACU(action, table, headers, readValueByColumnIndex) {
+        if (!table || !isChronicleTableName_ACU(table.name))
+            return false;
+        const columnIndex = findChronicleTextColumnIndex_ACU(headers);
+        if (columnIndex < 0)
+            return false;
+        const reason = validateNativeChronicleText_ACU(table.name, readValueByColumnIndex(columnIndex));
+        if (!reason)
+            return false;
+        logWarn_ACU(`[事件纪要守卫] 已拒绝 native ${action}：${reason}。表="${table.name}" 列="${headers[columnIndex]}"。调用栈：\n${new Error('chronicle-guard').stack}`);
+        return true;
     }
     function validateChronicleTextInMutationStatements_ACU(statements) {
         for (const statement of statements) {

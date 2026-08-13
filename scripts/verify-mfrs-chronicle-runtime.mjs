@@ -372,4 +372,75 @@ function expectPass(statements, label) {
   );
 }
 
+// ─────────────────────── B4: native <tableEdit> 写路径的纪要守卫 ───────────────────────
+// SQLite 侧由 validateChronicleTextInMutationStatements_ACU 拦截、前端由 adapter 拦截，
+// native 的 parseAndApplyTableEdits_ACU 此前直接 content.push/赋值，AI 把纪要编号写进
+// 正文列会静默落盘并污染唯一注入提示词的长期记忆表。
+{
+  const nativeGuardCode = [
+    extractFunction('isChroniclePlaceholderText_ACU'),
+    extractFunction('isChronicleTableName_ACU'),
+    extractFunction('findChronicleTextColumnIndex_ACU'),
+    extractFunction('validateNativeChronicleText_ACU'),
+    extractFunction('rejectNativeChronicleWrite_ACU'),
+    `globalThis.__nativeGuard = { validateNativeChronicleText_ACU, rejectNativeChronicleWrite_ACU, findChronicleTextColumnIndex_ACU };`,
+  ].join('\n\n');
+  vm.runInContext(nativeGuardCode, ctx, { filename: 'chronicle-native-guard.vm.js' });
+  const guard = ctx.__nativeGuard;
+
+  const headers = ['纪要编号', '时间跨度', '关联事件', '概览', '纪要'];
+  assert.equal(guard.findChronicleTextColumnIndex_ACU(headers), 4, 'B4: 应定位到「纪要」列');
+  assert.equal(
+    guard.findChronicleTextColumnIndex_ACU(['row_id', 'chronicle_text']),
+    1,
+    'B4: 英文列名 chronicle_text 同样应被识别',
+  );
+
+  const legalText = '七'.repeat(30);
+  const rejected = [
+    ['SP0001', /纪要编号/, 'B4: 纪要编号照抄应拒绝'],
+    ['sp9999', /纪要编号/, 'B4: 小写编号同样应拒绝'],
+    ['<请写20到600字客观纪要>', /占位符/, 'B4: 占位符照抄应拒绝'],
+    ['太短了', /长度不足/, 'B4: 短于 20 字应拒绝'],
+    ['七'.repeat(601), /超长/, 'B4: 超过 600 字应拒绝'],
+  ];
+  for (const [text, pattern, label] of rejected) {
+    const reason = guard.validateNativeChronicleText_ACU('事件纪要', text);
+    assert.ok(reason && pattern.test(reason), `${label}（实际：${reason}）`);
+  }
+  assert.equal(guard.validateNativeChronicleText_ACU('事件纪要', legalText), null, 'B4: 合法长文应放行');
+  assert.equal(guard.validateNativeChronicleText_ACU('事件纪要', ''), null, 'B4: 空值不属本守卫职责');
+  assert.equal(guard.validateNativeChronicleText_ACU('线索', 'SP0001'), null, 'B4: 非纪要表不得误伤');
+  assert.equal(guard.validateNativeChronicleText_ACU('chronicle', 'SP0001') !== null, true, 'B4: 英文表名同样生效');
+
+  // 指令级封装：命中拒绝返回 true（调用方据此 break 跳过该条），并留下含调用栈的 warn。
+  warningMessages.length = 0;
+  const table = { name: '事件纪要', content: [['row_id', ...headers]] };
+  const badData = { 4: 'SP0001' };
+  assert.equal(
+    guard.rejectNativeChronicleWrite_ACU('insertRow', table, headers, i => badData[i] ?? ''),
+    true,
+    'B4: 坏值应返回 true 表示跳过该条指令',
+  );
+  assert.match(warningMessages.join('\n'), /事件纪要守卫/, 'B4: 拒绝时应打 [事件纪要守卫] 日志');
+  assert.match(warningMessages.join('\n'), /调用栈/, 'B4: 日志应带调用栈用于定位写入者');
+  const goodData = { 4: legalText };
+  assert.equal(
+    guard.rejectNativeChronicleWrite_ACU('insertRow', table, headers, i => goodData[i] ?? ''),
+    false,
+    'B4: 合法值应放行',
+  );
+  assert.equal(
+    guard.rejectNativeChronicleWrite_ACU('insertRow', { name: '线索', content: [['row_id', '内容']] }, ['内容'], () => 'SP0001'),
+    false,
+    'B4: 非纪要表不得拦截',
+  );
+}
+
+// B4 接线：native insertRow/updateRow 两个分支都必须调用守卫，否则守卫形同虚设。
+{
+  const callCount = (vendorSource.match(/rejectNativeChronicleWrite_ACU\('(?:insertRow|updateRow)'/g) || []).length;
+  assert.equal(callCount, 2, `B4: native insertRow/updateRow 两处都应接入守卫，实际 ${callCount}`);
+}
+
 console.log('verify-mfrs-chronicle-runtime: passed');

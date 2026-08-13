@@ -1009,6 +1009,9 @@ function buildTables(currentData: unknown, templateData?: unknown): TableMeta[] 
       sourceData: {
         ...fallback?.sourceData,
         ...sheet.sourceData,
+        // 快照 sheet 若带空 ddl（''/null，而非 undefined）会覆盖掉模板的完整 DDL，
+        // 导致该表 LENGTH/CHECK IN/NOT NULL/UNIQUE 约束全部静默失效。空值时回落模板。
+        ddl: sheet.sourceData?.ddl || fallback?.sourceData?.ddl,
       },
     };
     return buildTableMeta(mergedSheet, `sheet_${index}`);

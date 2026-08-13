@@ -99,6 +99,7 @@ type HostWindow = Window & {
   };
   MysteryMessagePanel?: {
     getHudActiveView?: () => unknown;
+    refreshAll?: () => void;
   };
   MFRS?:
     | {
@@ -657,6 +658,123 @@ function removeMfrsResourceUrlMarkers(target: HostWindow) {
   }
 }
 
+/**
+ * 事件纪要写入审计探针。
+ *
+ * 事件纪要是 14 表里唯一 `exportConfig.enabled=true` 的表，会注入提示词充当 AI 长期记忆；
+ * 一旦「纪要」列被写成纪要编号或示例占位符，记忆就等于失效。前端 CRUD Plan 路径由
+ * table-change-adapter 拦截、vendor 的 SQL/native 路径各有守卫，但仍存在"绕过前端直接调
+ * AutoCardUpdaterAPI"的可能。本探针只观测不拦截：检出可疑值时打印参数与调用栈，用于定位
+ * 真实写入者；正常轮次完全静默。
+ */
+const CHRONICLE_PLACEHOLDER_PATTERNS = [
+  /请写\s*\d+\s*到\s*\d+\s*字/,
+  /推荐\s*\d+\s*[-—]\s*\d+\s*字/,
+  /禁止输出\s*SQL/i,
+  /不能填\s*SP/i,
+  /不足\s*\d+\s*字/,
+  /^<.*请写.*>$/,
+  /^<.*客观纪要.*>$/,
+];
+
+const AUDITED_CRUD_METHODS = ['insertRow', 'updateRow', 'updateCell'] as const;
+
+let chronicleAuditRestores: Array<() => void> = [];
+
+function isChronicleTableArg(value: unknown): boolean {
+  const name = String(value ?? '').trim().toLowerCase();
+  return name === '事件纪要' || name === 'chronicle';
+}
+
+/** 返回可疑原因；null 表示正常。 */
+function describeSuspiciousChronicleText(value: unknown): string | null {
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  if (/^SP\d{4}$/i.test(text)) return `纪要列疑似被写成纪要编号（"${text}"）`;
+  if (CHRONICLE_PLACEHOLDER_PATTERNS.some(pattern => pattern.test(text)))
+    return `纪要列疑似照抄示例占位符（"${text.slice(0, 40)}…"）`;
+  if (text.length < 20) return `纪要列正文过短（${text.length} 字，要求 20-600）`;
+  return null;
+}
+
+/** 从任意一层参数里翻出纪要列的值：兼容 {tableName, data} 选项包与散参两种调用形态。 */
+function findChronicleTextInArgs(args: unknown[]): string | null {
+  let mentionsChronicle = false;
+  const candidates: unknown[] = [];
+
+  const visit = (value: unknown, depth: number) => {
+    if (depth > 2 || value == null) return;
+    if (typeof value === 'string' || typeof value === 'number') {
+      if (isChronicleTableArg(value)) mentionsChronicle = true;
+      return;
+    }
+    if (typeof value !== 'object') return;
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      const normalizedKey = key.trim().toLowerCase();
+      if (normalizedKey === 'tablename' || normalizedKey === 'table') {
+        if (isChronicleTableArg(entry)) mentionsChronicle = true;
+        continue;
+      }
+      if (normalizedKey === '纪要' || normalizedKey === 'chronicle_text') {
+        candidates.push(entry);
+        continue;
+      }
+      visit(entry, depth + 1);
+    }
+  };
+
+  args.forEach(arg => visit(arg, 0));
+  if (!mentionsChronicle) return null;
+  for (const candidate of candidates) {
+    const reason = describeSuspiciousChronicleText(candidate);
+    if (reason) return reason;
+  }
+  return null;
+}
+
+function installChronicleWriteAudit(hostWindow: HostWindow) {
+  uninstallChronicleWriteAudit();
+  const api = hostWindow.AutoCardUpdaterAPI;
+  if (!api) return;
+
+  for (const method of AUDITED_CRUD_METHODS) {
+    const original = api[method] as ((...args: unknown[]) => unknown) | undefined;
+    if (typeof original !== 'function') continue;
+    const wrapped = (...args: unknown[]) => {
+      try {
+        const reason = findChronicleTextInArgs(args);
+        if (reason) {
+          console.warn(
+            `[神秘复苏数据库前端][事件纪要审计] ${method}: ${reason}。该写入未被本探针拦截，请核对写入者。\n参数:`,
+            args,
+            `\n调用栈:\n${new Error('chronicle-audit').stack}`,
+          );
+        }
+      } catch {
+        // 审计失败绝不影响真实写入
+      }
+      return original.apply(api, args);
+    };
+    (api as unknown as Record<string, unknown>)[method] = wrapped;
+    chronicleAuditRestores.push(() => {
+      if ((api as unknown as Record<string, unknown>)[method] === wrapped) {
+        (api as unknown as Record<string, unknown>)[method] = original;
+      }
+    });
+  }
+}
+
+function uninstallChronicleWriteAudit() {
+  for (const restore of chronicleAuditRestores) {
+    try {
+      restore();
+    } catch {
+      // 还原失败不阻塞后续清理
+    }
+  }
+  chronicleAuditRestores = [];
+}
+
 function cleanupMfrsDatabaseFrontend(
   hostDocument: Document,
   hostWindow: HostWindow,
@@ -667,6 +785,7 @@ function cleanupMfrsDatabaseFrontend(
   const unregisterNativeListener = options.unregisterNativeListener ?? true;
 
   templateAutofixPromise = null;
+  uninstallChronicleWriteAudit();
   if (tableUpdateNotifyTimer != null) {
     window.clearTimeout(tableUpdateNotifyTimer);
     tableUpdateNotifyTimer = null;
@@ -817,6 +936,13 @@ function rerenderAcu(hostWindow: HostWindow) {
   window.setTimeout(() => hostWindow.MysteryAcuVisualizer?.renderInterface?.(), 500);
   // rerenderAcu 的调用点全部是"库内容可能已变更"的时刻，顺带广播给表格订阅者。
   notifyTableUpdateSubscribers(hostWindow);
+  // 数据库 loader 热重载会替换 AutoCardUpdaterAPI，旧实例上的订阅回调随之丢失；
+  // 直接唤醒消息面板可立即重绑当前 API 并刷新 HUD，避免左侧档案继续显示旧缓存。
+  try {
+    hostWindow.MysteryMessagePanel?.refreshAll?.();
+  } catch (error) {
+    console.warn('[神秘复苏数据库前端] 消息内面板刷新失败。', error);
+  }
 }
 
 async function runMysteryTemplateAutofix(hostWindow: HostWindow, force = false) {
@@ -1124,7 +1250,8 @@ async function installCompatibilityApi() {
   hostWindow.MysteryDatabaseFrontend = frontendApi;
 
   console.info('[神秘复苏数据库前端] 已切换为 v10.2 原始可视化前端，并保留 MysteryDatabaseFrontend 兼容 API。');
-  void ensureMysteryTemplate(hostWindow);
+  // autofix 内部会 waitForApi/可能热重载 vendor，因此审计探针挂在其后，包住最终生效的 API 实例。
+  void ensureMysteryTemplate(hostWindow).then(() => installChronicleWriteAudit(hostWindow));
   const uninstallCoreMirror = installMvuCoreMirror(hostWindow);
   const previousCleanup = hostWindow.__mfrsDatabaseFrontendCleanup__;
   hostWindow.__mfrsDatabaseFrontendCleanup__ = options => {
@@ -1148,7 +1275,8 @@ async function installCompatibilityApi() {
           return;
         }
         keepAcuConfigEmbedded(hostWindow);
-        void ensureMysteryTemplate(hostWindow, true);
+        // 切换聊天可能触发 vendor 热重载，API 实例会被替换，探针需重挂到新实例上。
+        void ensureMysteryTemplate(hostWindow, true).then(() => installChronicleWriteAudit(hostWindow));
       }, delay);
     }
   };
