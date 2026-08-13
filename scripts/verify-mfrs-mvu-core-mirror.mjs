@@ -264,4 +264,14 @@ const actionSheet = {
   );
 }
 
+// 线索编号必须补零到 4 位（C4 会违反表 CHECK C[0-9][0-9][0-9][0-9]，真页 8/13 复现）。
+{
+  const mirrorSource = readFileSync(mirrorPath, 'utf8');
+  assert.match(
+    mirrorSource,
+    /C\$\{String\(messageId % 10000\)\.padStart\(4, '0'\)\}/,
+    'clue_code 必须 padStart(4) 满足 C\\d{4} CHECK 约束',
+  );
+}
+
 console.log('verify-mfrs-mvu-core-mirror: passed');

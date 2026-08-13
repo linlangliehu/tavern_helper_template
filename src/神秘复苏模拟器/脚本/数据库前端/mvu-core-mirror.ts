@@ -300,7 +300,7 @@ function buildCorePlans(stat: StatData, currentData: unknown, messageId: number)
 
   // 线索按 clue_code upsert。clue_code 由 messageId 派生，同一楼层重复镜像（重roll/重渲染）
   // 必须落到同一行而不是每次追加，否则线索表会被同一条线索刷屏。
-  const clueCode = `C${messageId % 10000}`;
+  const clueCode = `C${String(messageId % 10000).padStart(4, '0')}`;
   const cluesSheet = findSheetByTableName(currentData, ['clues', '线索']);
   const clueFields = {
     clue_code: clueCode,
