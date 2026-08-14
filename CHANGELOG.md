@@ -2,6 +2,16 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.12] - 2026-08-14
+
+### 修复
+- **native 冷启动物化固定表 seedRows**：修复 native 模式新聊天首轮固定表（全局状态/玩家状态/行动建议/检定建议）未物化模板预置行导致 `ROW_NOT_FOUND` 的问题。根因是 `NativeTableServiceAdapter.loadFromChat` 只委托 `loadOrCreateJsonTableFromChatHistory_ACU`，而模板预置行被 `parseTableTemplateJson_ACU({stripSeedRows:true})` 剥成 header-only + `table.seedRows` 字段挂载，content 不含预置行。在 vendor native provider 加载层补种：全新聊天物化全部固定表；部分历史只补缺表；已有行不覆盖、重复加载不重复插入、用户清空的 header-only checkpoint 不复活。
+
+### 验证
+- ✅ 新增 `verify-mfrs-native-seed-rows.mjs` 行为门禁（6 用例：initialized/partial/idempotent/cleared/existing/provider-isolation）
+- ✅ Mutation proof：破坏物化条件和 marker 接线两种 mutation 均导致门禁失败，恢复后 PASS
+- ✅ 真页验收（开发版）：四表行数 1/1/4/5 正确物化，row_id 序列 1..N，无 ROW_NOT_FOUND
+
 ## [v8.15.10] - 2026-08-14
 
 ### 修复
