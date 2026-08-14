@@ -437,7 +437,7 @@ contains('message', "style.id = 'mfrs-msg-panel-style';", 'message panel keeps a
 
 // Baseline: public APIs and existing cleanup ownership.
 for (const marker of [
-  'refreshAll: processAllMessages',
+  'refreshAll: () => {',
   'refreshMessage: processOneMessage',
   'hostWindow.MysteryMessagePanel = messagePanelApi',
 ]) {
@@ -1502,7 +1502,9 @@ addCheck('phase5', 'G7 Esc returns from archive center panel to story body', () 
 });
 addCheck('phase5', 'G8 database table-update callback drives HUD revision and refresh', () => {
   assert.ok(sources.message.includes('hudDatabaseRevision += 1'), 'callback must bump the database revision');
-  assert.ok(sources.message.includes('hudDatabaseCallbackRegistered'), 'callback registration must be idempotent via a flag');
+  assert.ok(sources.message.includes('hudDatabaseCallbackRegistered'), 'callback registration must track the bound API instance');
+  assert.ok(sources.message.includes('hudDatabaseCallbackRegistered === api'), 'callback registration must be idempotent per API instance');
+  assert.ok(sources.message.includes('hudDatabaseCallbackRegistered = api'), 'callback registration must remember the actual API instance');
   assert.ok(sources.message.includes('registerHudDatabaseUpdateCallback'), 'register helper required');
   assert.ok(sources.message.includes('unregisterHudDatabaseUpdateCallback'), 'unregister helper required');
   assert.ok(sources.message.includes('registerTableUpdateCallback'), 'must register through AutoCardUpdaterAPI');
@@ -1534,6 +1536,24 @@ addCheck('phase5', 'G8 database table-update callback drives HUD revision and re
     'hostWindow.__mfrsMessagePanelCleanup__ = cleanup',
   );
   assert.ok(cleanupBlock.includes('unregisterHudDatabaseUpdateCallback'), 'cleanup must unregister the callback');
+});
+addCheck('phase5', 'G8aa database API replacement rebinds HUD callback and refreshAll rebuilds dossier', () => {
+  const register = between(
+    sources.message,
+    'function registerHudDatabaseUpdateCallback',
+    'function unregisterHudDatabaseUpdateCallback',
+  );
+  assert.ok(register.includes('hudDatabaseCallbackRegistered === api'), 'same API instance must be idempotent');
+  assert.ok(
+    register.includes('hudDatabaseCallbackRegistered.unregisterTableUpdateCallback'),
+    'replacement must detach the callback from the stale API instance',
+  );
+  assert.ok(register.includes('hudDatabaseCallbackRegistered = api'), 'replacement must bind and remember the new API instance');
+  const panelApi = between(sources.message, 'const messagePanelApi: MessagePanelApi = {', 'const refreshEvents = [');
+  assert.ok(panelApi.includes('registerHudDatabaseUpdateCallback()'), 'refreshAll must self-heal callback registration');
+  assert.ok(panelApi.includes('getHudDatabaseUpdateCallback()(undefined)'), 'refreshAll must force a HUD database refresh');
+  const rerender = between(sources.frontend, 'function rerenderAcu', 'async function runMysteryTemplateAutofix');
+  assert.ok(rerender.includes('MysteryMessagePanel?.refreshAll?.()'), 'database frontend rerender must wake the HUD after API reload');
 });
 addCheck('phase5', 'G8a latest-turn raw actions outrank MVU and trusted database fallback', () => {
   const collect = between(

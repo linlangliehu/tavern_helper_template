@@ -1843,7 +1843,8 @@ let hudDatabaseRevision = 0;
 /** CHAT_CHANGED 后数据库可能仍指向旧聊天；仅在收到表更新回调后恢复行动建议表兜底。 */
 let hudActionDatabaseFallbackTrusted = true;
 let hudDatabaseUpdateCallback: ((data: unknown) => void) | null = null;
-let hudDatabaseCallbackRegistered = false;
+/** 当前回调实际绑定的数据库 API 实例；loader 热重载会替换 AutoCardUpdaterAPI，必须按实例自愈重绑。 */
+let hudDatabaseCallbackRegistered: any = null;
 /** 全库关闭后回到的视图（系统/档案摘要入口） */
 let hudCabinetReturnView: HudView = 'system';
 let hudPanelsRenderKey = '';
@@ -5251,14 +5252,23 @@ function getHudDatabaseUpdateCallback() {
 }
 
 function registerHudDatabaseUpdateCallback() {
-  if (hudDatabaseCallbackRegistered) return;
   const api = (hostWindow as any).AutoCardUpdaterAPI;
   if (!api || typeof api.registerTableUpdateCallback !== 'function') return;
+  if (hudDatabaseCallbackRegistered === api) return;
+  // 数据库 loader 会清理旧实例再挂新 API；布尔标记会误以为仍已注册，导致 HUD 永远收不到新实例通知。
+  // 若实例发生替换，先尽力从旧实例解绑，再绑定当前实例。
+  if (hudDatabaseCallbackRegistered && typeof hudDatabaseCallbackRegistered.unregisterTableUpdateCallback === 'function') {
+    try {
+      hudDatabaseCallbackRegistered.unregisterTableUpdateCallback(getHudDatabaseUpdateCallback());
+    } catch {
+      // 旧实例可能已被 loader 销毁，忽略解绑失败
+    }
+  }
   try {
     api.registerTableUpdateCallback(getHudDatabaseUpdateCallback());
-    hudDatabaseCallbackRegistered = true;
+    hudDatabaseCallbackRegistered = api;
   } catch {
-    // 数据库前端可能尚未就绪，静默跳过，等下次 activate 重试
+    // 数据库前端可能尚未就绪，静默跳过，等下次 refresh 自愈重试
   }
 }
 
@@ -5266,8 +5276,7 @@ function unregisterHudDatabaseUpdateCallback() {
   // 注销回调时同步清空只读选中态，避免残留指向已被销毁的表行
   hudArchiveSelection = null;
   hudMemoryEditState = null;
-  if (!hudDatabaseCallbackRegistered) return;
-  const api = (hostWindow as any).AutoCardUpdaterAPI;
+  const api = hudDatabaseCallbackRegistered;
   if (api && typeof api.unregisterTableUpdateCallback === 'function') {
     try {
       api.unregisterTableUpdateCallback(getHudDatabaseUpdateCallback());
@@ -5275,7 +5284,7 @@ function unregisterHudDatabaseUpdateCallback() {
       // ignore
     }
   }
-  hudDatabaseCallbackRegistered = false;
+  hudDatabaseCallbackRegistered = null;
 }
 
 function restoreFixedHostFromHudCabinet() {
@@ -6830,7 +6839,11 @@ $(() => {
 `;
 
   const messagePanelApi: MessagePanelApi = {
-    refreshAll: processAllMessages,
+    refreshAll: () => {
+      processAllMessages();
+      registerHudDatabaseUpdateCallback();
+      getHudDatabaseUpdateCallback()(undefined);
+    },
     refreshMessage: processOneMessage,
     getHudActiveView: () => hudActiveView,
   };
