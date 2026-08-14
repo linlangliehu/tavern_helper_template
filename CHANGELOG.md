@@ -2,6 +2,15 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.14] - 2026-08-14
+
+### 修复
+- **HUD 数据库回调按 API 实例自愈重绑**：修复数据库 loader 热重载替换 `AutoCardUpdaterAPI` 后，消息内面板 HUD 永远收不到新实例表更新通知的问题。`registerHudDatabaseUpdateCallback` 从布尔标记改为按 API 实例绑定，实例替换时自动从旧实例解绑再绑新实例。`refreshAll` 同步自愈回调注册并强制刷新 HUD。
+
+### 验证
+- ✅ 门禁全绿（含 archive-ui phase5 242 checks，新增 G8aa 检查项验证 API 实例替换自愈重绑）
+- ✅ 源码门禁 20 项全绿
+
 ## [v8.15.12] - 2026-08-14
 
 ### 修复
