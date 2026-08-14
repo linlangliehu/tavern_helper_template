@@ -8493,6 +8493,14 @@ $CONTENT
         async loadFromChat() {
             logDebug_ACU('[原生适配器] loadFromChat: 开始加载表格数据');
             const result = await loadOrCreateJsonTableFromChatHistory_ACU();
+            const unpersistedGuideSheets = currentJsonTableData_ACU?.[NATIVE_UNPERSISTED_GUIDE_SHEETS_MARKER_ACU];
+            const materializedRows = materializeNativeSeedRowsOnLoad_ACU({
+                allSheets: result.source === 'initialized',
+                sheetKeys: Array.isArray(unpersistedGuideSheets) ? unpersistedGuideSheets : [],
+            });
+            if (materializedRows > 0) {
+                logDebug_ACU(`[原生适配器] loadFromChat: 已物化 ${materializedRows} 行冷启动 seedRows`);
+            }
             logDebug_ACU(`[原生适配器] loadFromChat: 结果=${result.source}, loaded=${result.loaded}`);
             return result;
         }
@@ -12618,6 +12626,20 @@ $CONTENT
             !isSubstantiveSheetSnapshot_MFRS(mergedData[sheetKey]));
     }
     const SQLITE_GUIDE_SHELL_MARKER_ACU = Symbol('acu.sqliteGuideShell');
+    const NATIVE_UNPERSISTED_GUIDE_SHEETS_MARKER_ACU = Symbol('acu.nativeUnpersistedGuideSheets');
+    function markNativeUnpersistedGuideSheets_ACU(data, guideSheetKeys, foundSheets) {
+        if (!data || typeof data !== 'object')
+            return data;
+        const missingSheetKeys = (Array.isArray(guideSheetKeys) ? guideSheetKeys : [])
+            .filter(k => typeof k === 'string' && k.startsWith('sheet_') && !foundSheets?.[k]);
+        if (missingSheetKeys.length > 0) {
+            Object.defineProperty(data, NATIVE_UNPERSISTED_GUIDE_SHEETS_MARKER_ACU, {
+                value: missingSheetKeys,
+                configurable: true,
+            });
+        }
+        return data;
+    }
     async function mergeAllIndependentTables_ACU() {
         const chat = getChatArray_ACU();
         if (!chat || chat.length === 0) {
@@ -12824,7 +12846,7 @@ $CONTENT
                 // 非枚举运行态标记：这是"从未持久化过表格快照"的指导表空壳，SQLite 冷启动可注入模板 seedRows。
                 // 已持久化后用户主动清空所有数据行的 checkpoint 不带该标记，重载时不得重新播种。
                 Object.defineProperty(shell, SQLITE_GUIDE_SHELL_MARKER_ACU, { value: true, configurable: true });
-                return shell;
+                return markNativeUnpersistedGuideSheets_ACU(shell, templateSheetKeys, foundSheets);
             }
             return null;
         }
@@ -12921,7 +12943,10 @@ $CONTENT
         // [修复] 合并结果按"用户手动顺序/模板顺序"重排，避免合并过程导致的随机乱序
         const orderedKeys = getSortedSheetKeys_ACU(mergedData);
         mergedData = reorderDataBySheetKeys_ACU(mergedData, orderedKeys);
-        return migrateContentNullToRowId(mergedData);
+        const migratedData = migrateContentNullToRowId(mergedData);
+        return hasSheetGuide
+            ? markNativeUnpersistedGuideSheets_ACU(migratedData, templateSheetKeys, foundSheets)
+            : migratedData;
     }
     // [重构] 刷新合并数据并通知前端和更新世界书
     function formatJsonToReadable_ACU(jsonData) {
@@ -26543,6 +26568,31 @@ $CONTENT
         }
         catch (e) {
             return [];
+        }
+    }
+    function materializeNativeSeedRowsOnLoad_ACU({ allSheets = false, sheetKeys = [] } = {}) {
+        try {
+            if (!currentJsonTableData_ACU || typeof currentJsonTableData_ACU !== 'object')
+                return 0;
+            const allowedSheetKeys = new Set(Array.isArray(sheetKeys) ? sheetKeys : []);
+            let materializedRows = 0;
+            Object.keys(currentJsonTableData_ACU).forEach(sheetKey => {
+                if (!sheetKey.startsWith('sheet_') || (!allSheets && !allowedSheetKeys.has(sheetKey)))
+                    return;
+                const table = currentJsonTableData_ACU[sheetKey];
+                if (!table || !Array.isArray(table.content) || table.content.length !== 1)
+                    return;
+                const seedRows = getEffectiveSeedRowsForSheet_ACU(sheetKey, { allowTemplateFallback: true });
+                if (!Array.isArray(seedRows) || seedRows.length === 0)
+                    return;
+                table.content = [table.content[0], ...JSON.parse(JSON.stringify(seedRows))];
+                materializedRows += seedRows.length;
+            });
+            return materializedRows;
+        }
+        catch (e) {
+            logWarn_ACU('[原生适配器] 冷启动 seedRows 物化失败:', e);
+            return 0;
         }
     }
     function attachSeedRowsToCurrentDataFromGuide_ACU(guideData) {
