@@ -2,6 +2,18 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.10] - 2026-08-14
+
+### 修复
+- **事件纪要正文污染防御**：阻止事件纪要正文被特殊编号值覆写，并移除自动编号识别失败时猜测最后一列的危险回退。
+- **AI 写表约束补强**：补充 14 张表的中文列名、枚举白名单及事件纪要正文写入规则，降低列名和约束错误。
+- **表名前缀兼容**：兼容提示词中的「序号:表名」格式，仍要求剥离后匹配真实表名。
+- **写入审计与 DDL 防御**：增加 native 写入守卫、AutoCardUpdaterAPI 写入审计探针，并修复空 DDL 覆盖模板 DDL 的问题。
+
+### 验证
+- ✅ 源码门禁全绿：initvar-schema / regex-ids / MVU / output-cleaning / table-change / archive-ui / raw-status-fallback / chronicle-runtime / db-rules-prompt / storage-provider-mode-guard / sqlite-cold-start
+- ✅ 发布卡门禁通过：release-png（CCV3、版本号、CDN 引用、缓存版本、正则 ID）
+
 ## [v8.15.6] - 2026-08-13
 
 ### 修复
