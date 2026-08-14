@@ -19186,13 +19186,16 @@ $CONTENT
             const headers = table.content[0].slice(1);
             if (!headers.length)
                 return -1;
+            // 「编号」必须一起认：MFRS 事件纪要的索引列叫「纪要编号」，旧正则只认「编码/索引」而漏掉它。
             let idx = headers.findIndex(h => {
                 if (typeof h !== 'string')
                     return false;
-                return /编码|索引/.test(h);
+                return /编码|索引|编号/.test(h);
             });
-            if (idx === -1)
-                idx = headers.length - 1;
+            // 找不到索引列时绝不能回退到"最后一列"：事件纪要的最后一列是 20-600 字正文，
+            // 会被 applySummaryIndexSequenceToTable_ACU 覆写成 SP0001，正文永久丢失
+            // （真页 8/13-8/14 复现：纪要列被写成纪要编号，长期记忆注入失效）。
+            // 宁可不自动编号，也不能猜错列破坏数据。
             return idx;
         }
         catch (e) {

@@ -443,4 +443,63 @@ function expectPass(statements, label) {
   assert.equal(callCount, 2, `B4: native insertRow/updateRow 两处都应接入守卫，实际 ${callCount}`);
 }
 
+// ─────────────────────── B5: 总结表自动编号不得改错列 ───────────────────────
+// isSummaryOrOutlineTable_ACU 把「事件纪要」认作总结表，且自动编号默认开启。
+// 旧实现的列识别正则只认「编码/索引」，MFRS 的索引列叫「纪要编号」→ 匹配失败 →
+// 回退到"最后一列"，正好是 20-600 字正文列 → 被覆写成 SP0001，长期记忆永久失效。
+// 真页 8/13-8/14 连续复现（写入长文 → 150ms 内变成 SP0001），此门禁钉死两条契约：
+//   1. 「纪要编号」必须被识别为索引列；
+//   2. 识别不到时必须返回 -1（放弃自动编号），绝不猜最后一列。
+{
+  const summaryIndexCode = [
+    extractFunction('getSummaryIndexColumnIndex_ACU'),
+    extractFunction('formatSummaryIndexCode_ACU'),
+    extractFunction('applySummaryIndexSequenceToTable_ACU'),
+    extractFunction('isSummaryOrOutlineTable_ACU'),
+    `globalThis.__summaryIndex = {
+       getSummaryIndexColumnIndex_ACU,
+       applySummaryIndexSequenceToTable_ACU,
+       isSummaryOrOutlineTable_ACU,
+     };`,
+  ].join('\n\n');
+  vm.runInContext(summaryIndexCode, ctx, { filename: 'summary-index.vm.js' });
+  const si = ctx.__summaryIndex;
+
+  assert.equal(si.isSummaryOrOutlineTable_ACU('事件纪要'), true, 'B5: 事件纪要确实被当作总结表（前提成立）');
+
+  const chronicleHeader = ['row_id', '纪要编号', '时间跨度', '关联事件', '概览', '纪要'];
+  const chronicleTable = { name: '事件纪要', content: [[...chronicleHeader]] };
+  assert.equal(
+    si.getSummaryIndexColumnIndex_ACU(chronicleTable),
+    0,
+    'B5: 「纪要编号」应被识别为索引列（headers.slice(1) 中的 0，即整行的第 1 列）',
+  );
+
+  // 端到端：自动编号只能落在纪要编号列，正文必须原样保留。
+  const longText = '七'.repeat(300);
+  const table = {
+    name: '事件纪要',
+    content: [[...chronicleHeader], [1, 'SPxxxx', '开局', '七中敲门事件', '开局纪要', longText]],
+  };
+  si.applySummaryIndexSequenceToTable_ACU(table, si.getSummaryIndexColumnIndex_ACU(table));
+  assert.equal(table.content[1][1], 'SP0001', 'B5: 编号应写入「纪要编号」列');
+  assert.equal(table.content[1][5], longText, 'B5: 「纪要」正文列必须原样保留，绝不能被编号覆写');
+
+  // 无可识别索引列时放弃编号，不得猜最后一列。
+  const noIndexTable = { name: '总结表', content: [['row_id', '甲', '乙', '正文'], [1, 'a', 'b', longText]] };
+  assert.equal(si.getSummaryIndexColumnIndex_ACU(noIndexTable), -1, 'B5: 识别不到索引列必须返回 -1');
+  si.applySummaryIndexSequenceToTable_ACU(noIndexTable, si.getSummaryIndexColumnIndex_ACU(noIndexTable));
+  assert.equal(noIndexTable.content[1][3], longText, 'B5: 返回 -1 时不得改动任何列');
+
+  // 旧 ACU 自带的「编码索引」列名仍须继续工作，修复不能只顾 MFRS。
+  const legacyTable = { name: '总结表', content: [['row_id', '编码索引', '内容'], [1, 'x', 'y']] };
+  assert.equal(si.getSummaryIndexColumnIndex_ACU(legacyTable), 0, 'B5: 旧「编码索引」列名必须仍被识别');
+
+  assert.doesNotMatch(
+    extractFunction('getSummaryIndexColumnIndex_ACU'),
+    /idx\s*=\s*headers\.length\s*-\s*1/,
+    'B5: 危险回退（猜最后一列）必须已被移除',
+  );
+}
+
 console.log('verify-mfrs-chronicle-runtime: passed');
