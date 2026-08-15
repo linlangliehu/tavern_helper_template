@@ -2,6 +2,19 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.20] - 2026-08-15
+
+### 修复
+- **JSONPatch 写回改为本地 applier 唯一权威**：v8.15.18 的 fallback 只在 `parseMessage` 完全无变化时才触发，覆盖不到「部分成功」的情况。真实对话证明：当 `stat_data.规律推理记录` 含 `是否触发规律` 字段时，`Mvu.parseMessage` 会让 replace/insert 生效而静默丢弃 delta，`hasSameStatData=false` 导致 fallback 不触发，复苏风险与死亡风险因此永远无法累积。修复方式：`<UpdateVariable><JSONPatch>` 一律经本地 `applyRawProtocolToMvuData` 写回，不再调用 `mvu.parseMessage`。
+- **尾随空 AI 楼层导致协议漏处理**：`GENERATION_ENDED` 偶发指向真实回复之后追加的空 AI 楼，使前一楼的协议既未快照到 `extra` 也未从 `mes` 清洗，正文还会被空楼遮蔽。新增 `resolveProtocolMessageIndex` 回溯相邻协议楼层，并由 `removeTrailingEmptyAiPlaceholder` 在严格 guard 下删除该占位楼。
+- **协议应用幂等**：按 `swipe:FNV1a(协议文本)` 指纹标记，同一协议只应用一次；marker 仅在写回验证通过后落盘，保存失败只重试保存、不重复应用 delta。
+
+### 验证
+- ✅ 门禁全绿（新增真实 36 根 `initvar` fixture 与混合 patch 回归、权威路径/幂等静态断言、四类 mutation proof）
+- ✅ 真页真实对话验收：混合协议 `25+60=85` / `25+65=90`；终局 `99+11=100`，`状态=厉鬼复苏`、`is_dead=true`、`阶段状态=模拟结束`、`行动建议=[]`
+- ✅ 生命周期验收：注入空占位楼后自动删除（9→10→9），终局变量与协议指纹不变
+- ✅ 幂等验收：重复 `GENERATION_ENDED` + 250/1000/2500ms 重试 + `saveChat` + reload 后终态不变
+
 ## [v8.15.18] - 2026-08-15
 
 ### 修复
