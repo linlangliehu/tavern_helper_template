@@ -2,13 +2,31 @@
 
 ## 进度同步（2026-08-15）
 
-- **当前正式版本：v8.15.14**（release `5cadd8a7`；CDN bundle `1850150e`；`CDN_REF=1850150eb303729510f779be50d85f6e0befb11b`；cache `v81514_20260814_01`）。
-- **已完成：** v8.15.12 native 冷启动固定表 seedRows 物化；v8.15.14 HUD 数据库回调按 API 实例自愈重绑；T7.3 桌面端与 T7.4 390px 移动端真页回归。
-- **当前工作焦点：** 调查 idx4 起 `<UpdateVariable>` JSONPatch 未正确写入目标楼层 MVU 变量的问题。
-- **已确认事实：** 原始协议已保存、消息清洗正常、目标楼层变量仍停留旧值；问题位于协议解析/楼层定位/变量写回链路。
-- **待证假设：** `Mvu.parseMessage` 的调用签名、返回值语义可能与当前类型声明和调用方式不一致。该假设尚未完成源码核验，不得视为根因结论。
-- **实现状态：** 尚未修改 MVU 业务源码，尚无待提交修复；下一步先核对 MagVarUpdate 0.171.0 运行时契约与实际调用分支，再做最小修复和门禁。
-- **Git 快照：** 本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`，本地落后 1 个仅含 dist 的 `[bot] bundle`；当前 tracked 改动为开发模式 YAML 和 watch dist，不是业务源码修复。
+### P7 v2 修复与终局验收（A-D 完成；P8/P9 延期）
+
+- [x] A1：恢复并锁定最新真实 AI 楼层证据
+- [x] A2：确认 `风险值 25+60=85`、`总复苏风险 25+65=90`
+- [x] B1–B5：补真实复杂 fixture、权威路径/幂等门禁、mutation proof 与完整门禁
+- [x] C1–C7：隔离测试点、预置 99、真实 99→100 终局、正文/UI/持久化验收
+- [x] D1–D2：修正 P6 结论并同步三份规划文件
+- **明确延期：** P8 提交准备、P9 新版本发布本轮不执行。
+
+### P7 完成定义证据
+
+- 真实复杂协议：完整 36 根 oldData，`是否触发规律`、两个 delta、replace、insert 同轮正确写回。
+- 真实终局：99 + 11 = 100；`状态=厉鬼复苏`、`is_dead=true`、`主线进度.阶段状态=模拟结束`、`行动建议=[]`、厉鬼进度 100。
+- 正文：包含 `【模拟结局】`，无 `<choices>`，无继续正常行动表述。
+- UI：HUD 显示风险 100%/100%、厉鬼复苏；消息动作按钮 0。
+- 持久化：重复事件、250/1000/2500ms 重试、saveChat、reload 后终态不变。
+- 生命周期：尾随空 AI 楼层回溯到相邻协议楼层；协议按 swipe+hash 只应用一次并转存 raw extra。
+
+- **当前正式版本：v8.15.18**（release `890cb29e`；CDN bundle/tag `6f7f87b1`；`CDN_REF=6f7f87b1818c5de371b0d71d374b4a79ad1affef`；cache `v81518_20260815_01`）。
+- **已完成：** v8.15.18 第一轮 JSONPatch fallback；P7 又发现其无法覆盖 `Mvu.parseMessage` 部分成功/部分丢 delta 的场景。本地 v2 已改为 raw applier 唯一权威，并完成 A-D 全部验收。
+- **当前工作焦点：** P7 A-D 已关单；等待后续明确指令执行 P8 提交准备与 P9 新版本发布。
+- **已确认事实：** 完整 36 根混合协议、真实 25→90、真实 99→100 终局、尾随空 AI 楼层、协议清洗、指纹幂等、HUD 和 reload 持久化均已验证。
+- **根因结论：** `Mvu.parseMessage` 不能作为 `<UpdateVariable><JSONPatch>` 权威解析器；在真实 `规律推理记录.是否触发规律` 数据下可出现 replace/insert 生效而 delta 丢失。
+- **实现状态：** 本地业务源码与门禁已修改且全绿，尚未提交；开发模式 YAML 与 watch dist 仍存在，P8 前必须按提交白名单清理。
+- **Git 快照：** 本地 `main@890cb29e`；tracked 改动包含 v2 hotfix、两份门禁、三份规划文件，以及开发模式 YAML/watch dist；未跟踪本地 MCP、诊断和 handoff 文件不得进入提交。
 
 ## 第二轮审查缺陷修复任务清单（2026-07-26）
 
@@ -140,17 +158,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 WORKFLOW-SIMPLIFY：废弃 MFRS + 极简单人流程 — complete（2026-07-19，commit `3841c30` 已推送）**
 **阶段 DUAL-CARD-AUDIT-FIX：双卡审计缺陷修复 — complete（8.14.15 已发布，R1/R2/R3 已修复；T7.3/T7.4 已于 2026-08-14 完成，仅 T0.1/T6.3 余项，见 TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md）**
 **阶段 MFRS-MVU-CORE-MIRROR：人物/地点 stat_data 镜像 — complete（8.15.0 已发布 2026-08-12）**
-**阶段 MFRS-MVU-WRITEBACK：UpdateVariable 楼层变量写回根因调查 — in progress（2026-08-15；尚未实施源码修复）**
+**阶段 MFRS-MVU-WRITEBACK：UpdateVariable 权威写回与真实终局验收 — A-D complete（2026-08-15；P8/P9 延期）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | v8.15.14 已正式发布；v8.15.12 native seedRows 冷启动修复、v8.15.14 HUD API 实例重绑和 T7.3/T7.4 真页回归均已完成。当前调查 idx4 起 `<UpdateVariable>` 未正确写入目标楼层变量的问题，尚未修改源码。 |
-| 我要去哪里？ | 先证明 MagVarUpdate 0.171.0 的 `parseMessage/getMvuData/replaceMvuData` 真实契约和目标楼层定位，再实施最小修复、补幂等/连续 delta 门禁并做零 LLM 成本真页复放；之后才做 T6.3 正式 PNG 干净导入与复苏终局人工验收。 |
+| 我在哪里？ | 正式版仍为 v8.15.18；本地 v2 权威写回、复杂门禁、真实 99→100 终局、空楼层定位与协议指纹幂等均完成且未提交。 |
+| 我要去哪里？ | 下一步仅在用户明确继续后执行 P8：退出开发模式、清 dist/YAML 噪声、审查白名单；再执行 P9 两阶段发布与正式 PNG 干净导入。 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
-| 我学到了什么？ | MVU 当前故障不是协议保存或清洗失败；`ctx.chat[idx].variables['0']` 与 `Mvu.getMvuData()` 的观测不一致，运行时 API 契约与消息索引/ID 映射必须先证实。开发提交前仍须清 dev YAML 与 watch dist；正式版本号须避开 bot 自动 tag。 |
-| 我做了什么？ | 发布 v8.15.12 native 冷启动 seedRows 修复与 v8.15.14 HUD API 实例重绑；完成桌面/390px 真页回归；收集 MVU 写回失败的楼层变量、原始协议和运行时 `parseMessage` 初步证据，但尚未实施修复。 |
+| 我学到了什么？ | 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta。协议必须由本地 applier 权威应用，并按 swipe+协议指纹保证恢复扫描与重试幂等。 |
+| 我做了什么？ | 完成真实复杂 fixture、四类 mutation proof、真实 25→90 与 99→100、五项终局写集、正文/UI/协议清洗、空楼层恢复及 save/reload 幂等验证。 |
 
 ## 硬约束（勿破）
 
@@ -166,12 +184,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.15.14**（release `5cadd8a7`；CDN_REF `1850150eb303729510f779be50d85f6e0befb11b`；cache `v81514_20260814_01`）。后续 `v8.15.15`/`v8.15.16` 为 CI bot 自动 bundle 标签，不代表新的正式内容版本。 |
-| 仓库运行时基线 | 本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`；本地落后 1 个仅含 7 个 dist 文件的 bot bundle。当前开发模式 YAML 与 watch dist 有本地改动，业务源码干净。发布 dist 仍以 CI bot bundle 为权威。 |
+| 发布内容版本 | **8.15.18**（release `890cb29e`；CDN_REF/tag `6f7f87b1818c5de371b0d71d374b4a79ad1affef`；cache `v81518_20260815_01`）。本地 v2 修复尚未发布。 |
+| 仓库运行时基线 | 本地 `main@890cb29e`；当前处于开发模式，本地 v2 业务源码/门禁/规划文件已修改，另有 dev YAML 与 watch dist 噪声。P8/P9 未执行。 |
 | 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
 | 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync · 6621 webpack HMR · 9225 调试 Chrome（CDP/MCP） |
-| 下一阶段 | MFRS-MVU-WRITEBACK：证明 API 契约与楼层定位 → 最小根因修复 → 连续 delta/幂等门禁 → 零 LLM 成本真页复放。 |
+| 下一阶段 | P8 提交准备（待用户后续指令）→ P9 两阶段发布与正式 PNG 干净导入（待明确发布授权）。 |
 
 ## 各阶段
 

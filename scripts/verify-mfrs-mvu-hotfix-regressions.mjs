@@ -257,9 +257,19 @@ assert.equal(legacyAdd.stats.addToInsert, 2, 'legacy add sample should convert t
 assert.equal(legacyAdd.stats.addToReplace, 4, 'legacy add sample should convert scalar/object set add operations to replace');
 
 assert.ok(hotfixSource.includes('normalizeMfrsUpdateVariableProtocol(rawMessage)'), 'hotfix should normalize before parseMessage');
-assert.ok(hotfixSource.includes('mvu.parseMessage(normalized.message, oldData)'), 'hotfix should call parseMessage with message text and old data');
+// 根因 v2：Mvu.parseMessage 对 JSONPatch 的 delta 解析不可靠（「是否触发规律」字段触发 delta 丢失），
+// 写回一律以本地 applyRawProtocolToMvuData 为权威，不再调用 mvu.parseMessage。
 assert.ok(
-  hotfixSource.includes('writeMvuDataWithVerification(hostWindow, chat, messageIndex, newData, messageOption)'),
+  hotfixSource.includes('applyRawProtocolToMvuData(oldData, normalized.message)'),
+  'hotfix should always write back through local applyRawProtocolToMvuData (JSONPatch authoritative)',
+);
+assert.equal(
+  hotfixSource.includes('mvu.parseMessage(normalized.message, oldData)'),
+  false,
+  'hotfix must NOT call mvu.parseMessage for JSONPatch (delta loss bug)',
+);
+assert.ok(
+  hotfixSource.includes('writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption)'),
   'hotfix should write parsed MVU data back through verified writeback',
 );
 assert.equal(hotfixSource.includes('parseMessage(lastMessageIndex'), false, 'hotfix must not pass message index to parseMessage');
@@ -470,39 +480,40 @@ for (const path of [distDbLoaderPath, distDbFrontendPath, distHotfixPath]) {
   assert.equal(source.includes('@main/'), false, `${path} should not fall back to @main vendor`);
 }
 
-// ── P3: JSONPatch fallback 行为与幂等门禁 (2026-08-15) ──
-// 根因背景：Mvu.parseMessage 只能解析原生宏指令格式，无法解析 <UpdateVariable><JSONPatch>，
-// 导致每次返回 clone(oldData)，hasSameStatData=true，历史实现静默跳过。
-// 修复：hasSameStatData=true 时 fallback 到 applyRawProtocolToMvuData。
+// ── P3: JSONPatch 权威写回与幂等门禁 (2026-08-15) ──
+// 根因 v2：Mvu.parseMessage 对 JSONPatch 的 delta 解析不可靠（「是否触发规律」字段触发 delta 丢失），
+// 且 replace/insert 部分生效导致 hasSameStatData=false，P2 的 fallback 不触发。
+// 修复：JSONPatch 写回一律以本地 applyRawProtocolToMvuData 为权威，不再调用 mvu.parseMessage。
 
-// P3-S1: hotfix 必须在 parseMessage 后 fallback 到 applyRawProtocolToMvuData
+// P3-S1: hotfix 必须始终用 applyRawProtocolToMvuData 作为权威写回
 assert.ok(
   hotfixSource.includes('applyRawProtocolToMvuData(oldData, normalized.message)'),
-  'P3-S1: hotfix must fallback to applyRawProtocolToMvuData when parseMessage produces no change',
+  'P3-S1: hotfix must always write back through applyRawProtocolToMvuData (JSONPatch authoritative)',
 );
 
-// P3-S2: fallback 分支必须通过 writeMvuDataWithVerification 写回（不旁路验证）
+// P3-S2: 权威写回必须通过 writeMvuDataWithVerification（不旁路验证）
 assert.ok(
   /applyRawProtocolToMvuData\(oldData,[\s\S]{0,600}?writeMvuDataWithVerification\(hostWindow, chat, messageIndex, fallback\.data, messageOption\)/.test(hotfixSource),
-  'P3-S2: hotfix JSONPatch fallback must write back through writeMvuDataWithVerification',
+  'P3-S2: hotfix JSONPatch writeback must go through writeMvuDataWithVerification',
 );
 
-// P3-S3: hasSameStatData(oldData, newData) 为 true 时必须触发 fallback，不静默跳过
-assert.ok(
-  /hasSameStatData\(oldData, newData\)[\s\S]{0,300}?applyRawProtocolToMvuData/.test(hotfixSource),
-  'P3-S3: hotfix must route hasSameStatData=true to applyRawProtocolToMvuData fallback, not silent skip',
+// P3-S3: 不得再调用 mvu.parseMessage 处理 JSONPatch（delta 丢失 bug 的根因）
+assert.equal(
+  hotfixSource.includes('mvu.parseMessage(normalized.message, oldData)'),
+  false,
+  'P3-S3: hotfix must NOT call mvu.parseMessage for JSONPatch (delta loss bug)',
 );
 
-// P3-I1: fallback 写回后必须 return（不再无条件调用 scheduleMvuWriteBackRetries），
+// P3-I1: 写回后必须 return（不再无条件调用 scheduleMvuWriteBackRetries），
 //         且调用方必须按返回值决定是否重试（防重复累积）
 {
   const fallbackBranchMatch = hotfixSource.match(
     /applyRawProtocolToMvuData\(oldData, normalized\.message\)[\s\S]{0,1400}?return\b[^;]*;/,
   );
-  assert.ok(fallbackBranchMatch, 'P3-I1: hotfix fallback branch must exist with a return statement');
+  assert.ok(fallbackBranchMatch, 'P3-I1: hotfix writeback branch must exist with a return statement');
   assert.ok(
     !fallbackBranchMatch[0].includes('scheduleMvuWriteBackRetries'),
-    'P3-I1: hotfix JSONPatch fallback must not trigger scheduleMvuWriteBackRetries (prevents delta double-apply on retry)',
+    'P3-I1: hotfix JSONPatch writeback must not trigger scheduleMvuWriteBackRetries (prevents delta double-apply on retry)',
   );
 }
 

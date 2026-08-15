@@ -1,5 +1,79 @@
 # 进度日志
 
+## 2026-08-15 P7 A1/A2 真页恢复（完成）
+
+- 恢复开发卡真实对话，定位最新 AI 楼层 idx6 / swipe0。
+- raw 协议包含 `风险值 +60` 与 `总复苏风险 +65`；由上一轮 25/25 准确写回为 85/90。
+- 同轮 `状态=重伤/濒临复苏`、厉鬼复苏进度=90、行动建议 4 条，证明完整混合协议的 delta/replace/insert 已共同落盘。
+- 下一步：把该真实结构固化为自动化 fixture，完成权威路径、幂等与 mutation proof 门禁后再进行 99→100 终局真实对话。
+- B4 首次 mutation proof 运行：破坏源码已被合同函数正确拒绝，但外层 `assert.throws` 只接受“禁止 parseMessage”文案，实际先命中“缺少本地权威 applier”；已放宽为两类合法失败原因，业务实现未改。
+- B1–B4 完成：新增基于 `initvar.yaml` 36 根的真实复杂 fixture，覆盖 `是否触发规律`、两个 delta、replace、insert、schema 与 initialized_lorebooks；同时验证生产 applier/HUD applier一致、输入不可变、权威路径和条件重试。
+- Mutation proof 完成：恢复 `Mvu.parseMessage`、禁用 delta、无条件重试、删除真实触发字段四类内存 mutation 均被门禁拒绝；工作区业务源码未临时破坏。
+- B5 完成：两个 MVU 专项、`verify:mfrs-source-gates`、`verify:mfrs-gates` 全绿；仅旧 v8.15.18 PNG 报 CDN_REF 落后 HEAD 1 个非 bundle 提交的预期 warning。
+- C1/C2 完成：当前开发卡聊天保存并重命名为专用 P7 终局验收聊天；最新有效楼层预置并持久化为总复苏风险/厉鬼进度 99，保持非终态。
+- C3 已完成唯一一次真实发送并生成；首次读回终局变量为 100/100、厉鬼复苏、死亡、模拟结束、行动建议空。末条 AI 楼层正文/raw 为空，下一步定位相邻楼层的实际协议与正文。
+- C4/C5 完成：idx8 终局协议五项写集完整，实际楼层变量与厉鬼复苏进度全部为终态；没有有效豁免。
+- C6 规则/UI 部分通过：正文含【模拟结局】且无 choices，HUD 显示 100%/100%/厉鬼复苏，动作按钮 0；发现 idx9 尾随空 AI 楼层遮蔽 idx8 正文并导致协议未清洗。
+- 生命周期修复已实施并真页重放：空楼层事件回溯到相邻协议楼层，swipe+协议哈希阻止重复 delta；idx8 保持 100/100，raw extra 长度 2572，mes 已清除协议。
+- C6/C7 完成：隔离聊天删除唯一尾随空 AI 占位后，终局正文可见、【模拟结局】可见、无 choices、动作按钮 0；HUD 显示死亡/复苏风险 100% 与厉鬼复苏。重复 GENERATION_ENDED、250/1000/2500ms 重试、saveChat 与 reload 后风险 100/100、规则数 2、终态字段和协议指纹均不变。
+
+## 2026-08-15 P7 A-D 收尾状态（P8/P9 延期）
+
+- **A1/A2 ✅**：最新真实楼层 25/25 + 60/65 = 85/90。
+- **B1-B5 ✅**：真实 36 根混合 fixture、权威 applier、幂等、四类 mutation proof、完整门禁全绿。
+- **C1-C7 ✅**：隔离聊天、99 预置、一次真实 99→100、协议/变量/正文/UI/持久化/幂等全通过。
+- **D1 ✅**：P6 结论已更正：原 P6 仅覆盖简化单 delta smoke，不代表完整真实混合协议；复杂协议问题由 P7 v2 真实复现并修复。
+- **D2 ✅**：`task_plan.md`、`findings.md`、`progress.md` 已同步当前事实。
+- **明确延期**：P8 提交准备、P9 新版本发布暂不执行；当前开发模式与未提交源码改动保留，等待后续明确继续发布指令。
+
+## 2026-08-15 P7 收尾补强与最终门禁（P8/P9 仍延期）
+
+- `task_plan.md` 旧基线已纠正：当前正式版本 v8.15.18、`CDN_REF 6f7f87b1`、阶段状态 A-D complete；移除“v8.15.14 / 尚未修改源码”等过期表述。
+- 新增 hotfix `removeTrailingEmptyAiPlaceholder`：严格只删“最后一楼为空 AI 且前一楼为本轮协议 AI”的占位楼，删除后不再走空回复恢复提示；`verify-mfrs-raw-status-fallback` 增加对应静态门禁。
+- 真页复验：reload + 重选开发卡后注入空 AI 楼并触发 `generation_ended`，占位楼自动删除（9→10→9），终局变量、协议指纹与正文可见性保持终态。
+- 最终门禁：`verify-mfrs-mvu-hotfix-regressions`、`verify-mfrs-raw-status-fallback`、`pnpm verify:mfrs-source-gates`、`pnpm verify:mfrs-gates` 全绿；仅 release PNG 的 `CDN_REF 落后 HEAD 1 个非 bundle 提交` 预期 warning。
+- 工作区状态（未提交、未清理）：hotfix 源码、两份门禁脚本、三份规划文件、开发模式 `index.yaml`、watch `dist`；未跟踪 `.agent-artifacts/`、`.vscode/mcp.json`、两份 handoff 文档。
+
+## 2026-08-15 P6 零 LLM 模拟验收（范围修正：简化 smoke 完成）
+
+### 验收环境
+- 角色卡：神秘复苏模拟器发布版（CDN `@6f7f87b1`，v8.15.18，cache `v81518_20260815_01`）
+- hotfix 构建：`commit a7a8db0` production，含 P2 fallback + P3 幂等修复
+
+### 验收结果（简化 smoke 通过，复杂协议覆盖不足）
+- ✅ **delta 写回正确**：注入 `op:delta path:/驭鬼者状态/总复苏风险 value:10`，写回后 `totalRisk=10`
+- ✅ **幂等性**：首次写回后等待 3 次重试窗口（250/1000/2500ms），`风险` 保持 10，不重复累积（P3 修复生效）
+- ✅ **数据库表镜像**：人物 2 / 地点 4 / 线索 9 / 灵异事件 3 / 厉鬼档案 2，全部有数据
+- ✅ **HUD 状态栏**：正常渲染「死亡风险 警戒 65%」「复苏风险 可控 0%」「状态 健康」
+- ✅ **真实 AI 协议格式确认**：历史消息 raw 含 `{op:delta,path:/风险值,value:5}` + `{op:delta,path:/驭鬼者状态/总复苏风险,value:0}`，字段路径与修复逻辑对齐
+- ⚠️ **范围限制**：当时 fixture 只有简化 `stat_data` 与单 delta，未覆盖完整 36 根状态及 delta/replace/insert 混合；该覆盖缺口由 P7-B1 补齐。
+
+### 修正后的关键结论
+- MVU 变量是**每条消息独立**的（`message.variables[swipe_id].stat_data`），delta 是**增量**，跨轮累积由 AI 基于上一轮正文【本轮摘要】维护，非 MVU 自动累积
+- 简化 smoke 只证明单条 delta 与重试幂等；完整真实协议必须以本地 raw applier 为权威，P7 已完成真实混合协议和 99→100 终局验收。
+
+### 调查中发现的问题（已解决，非修复缺陷）
+- 生产模式 CDN 下 hotfix handler 曾因误调 `cleanup()` 被移除监听器，reload 后恢复
+- 主页面 emit `generation_ended` 不带参数时，`resolveMessageIndex` 正确回退到末条 AI 消息
+
+## 2026-08-15 P5 源码提交与发布（完成）
+
+### 发布版本
+- **v8.15.18** — MVU JSONPatch 写回修复 + 幂等重试门禁
+
+### 提交链
+1. `a7a8db09` — `fix(mfrs): MVU JSONPatch writeback restore + idempotent retry guards (v8.15.18)` — 核心修复（CHANGELOG + release-constants 版本号 + dev index.yaml 版本号）
+2. `6f7f87b1` — `[bot] bundle` (tag `v8.15.18`) — GitHub Actions 自动构建 dist
+3. `890cb29e` — `release(mfrs): v8.15.18 MVU JSONPatch writeback fix` — 发布版 PNG
+
+### 发布门禁
+- ✅ `pnpm verify:mfrs-gates` 全绿
+- ✅ `verify-mfrs-release-png`: version=8.15.18, refs=7, cache=8, regex=33, scripts=8
+- ✅ dist 新鲜度门禁（CDN_REF=`6f7f87b1`）
+
+### 分发文件
+- `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` — 可直接导入酒馆的发布版角色卡
+
 ## 2026-08-15 P4 酒馆真页验收 + P3 幂等门禁补强
 
 ### 验收结果（全部通过）

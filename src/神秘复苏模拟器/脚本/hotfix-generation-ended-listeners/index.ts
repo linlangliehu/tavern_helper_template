@@ -54,6 +54,8 @@ const { normalizeMfrsUpdateVariableProtocol } = protocolNormalizer as {
 };
 
 const RAW_PROTOCOL_EXTRA_KEY = '_mfrs_raw_protocol_message';
+const RAW_PROTOCOL_APPLIED_HASH_KEY = '_mfrs_raw_protocol_applied_hash';
+const RAW_PROTOCOL_APPLIED_AT_KEY = '_mfrs_raw_protocol_applied_at';
 
 type HostWindow = Window & {
   SillyTavern?: {
@@ -67,6 +69,7 @@ type HostWindow = Window & {
       };
       chat?: ChatMessage[];
       saveChat?: () => unknown | Promise<unknown>;
+      deleteLastMessage?: () => unknown | Promise<unknown>;
       characterId?: string | number;
       event_types?: Record<string, string>;
       activateSendButtons?: () => void;
@@ -227,6 +230,47 @@ function resolveMessageIndex(
 
 function hasInternalProtocol(message: string) {
   return /<UpdateVariable\b|<choices\b/i.test(message);
+}
+
+/**
+ * GENERATION_ENDED 偶发在真实回复后追加一个空 AI 楼层。事件若指向该空楼，
+ * 通用 resolveMessageIndex 会错过前一楼的协议，导致变量虽被其它链路写入，
+ * 但 raw 快照和 mes 清洗永久遗漏。仅当当前候选是空 AI 且紧邻前一楼含协议时回退，
+ * 避免在普通无协议回复中误扫更早的历史协议。
+ */
+function resolveProtocolMessageIndex(
+  chat: NonNullable<ReturnType<typeof getSillyTavernContext>>['chat'],
+  eventMessageId?: unknown,
+) {
+  const candidateIndex = resolveMessageIndex(chat, eventMessageId);
+  if (!chat || candidateIndex < 0) return -1;
+
+  const candidate = chat[candidateIndex];
+  if (hasInternalProtocol(readMessageTextForMvu(candidate))) return candidateIndex;
+
+  if (candidate && !candidate.is_user && !messageHasDisplayableContent(candidate)) {
+    const previousIndex = candidateIndex - 1;
+    const previous = chat[previousIndex];
+    if (previous && !previous.is_user && hasInternalProtocol(readMessageTextForMvu(previous))) {
+      return previousIndex;
+    }
+  }
+
+  return candidateIndex;
+}
+
+/** 稳定、轻量的 FNV-1a 指纹；同一 swipe 的同一协议只能应用一次。 */
+function fingerprintProtocol(message: string) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < message.length; index += 1) {
+    hash ^= message.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function getProtocolApplicationKey(message: ChatMessage, normalizedMessage: string) {
+  return `${getMessageSwipeId(message)}:${fingerprintProtocol(normalizedMessage)}`;
 }
 
 function cloneMvuData(data: MvuData): MvuData {
@@ -533,7 +577,6 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
   const chat = context?.chat;
   if (!chat || messageIndex < 0 || messageIndex >= chat.length) return false;
 
-  const mvu = getMvuApi(hostWindow);
   const message = chat[messageIndex];
   const rawMessage = readMessageTextForMvu(message);
   if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) {
@@ -546,88 +589,62 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
     message_id: getMessageVariableId(message, messageIndex),
   };
   const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
+  const applicationKey = getProtocolApplicationKey(message, normalized.message);
+  if (message.extra?.[RAW_PROTOCOL_APPLIED_HASH_KEY] === applicationKey) {
+    const markerPersisted = await persistDirectMessageVariables(hostWindow, messageIndex);
+    console.debug('[Hotfix] 当前 swipe 协议已写回，跳过重复应用', {
+      messageIndex,
+      messageId: messageOption.message_id,
+      applicationKey,
+      markerPersisted,
+    });
+    return !markerPersisted;
+  }
   const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
 
-  if (typeof mvu?.parseMessage !== 'function') {
-    const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
-    if (fallback.applied === 0) {
-      console.warn('[Hotfix] MVU 不可用且 raw 协议没有可写回 patch', {
-        messageIndex,
-        messageId: messageOption.message_id,
-        skipped: fallback.skipped,
-      });
-      return false;
-    }
-    const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
-    refreshMessagePanel(hostWindow, messageOption.message_id);
-    console.info('[Hotfix] MVU 不可用，已通过 raw JSONPatch 写回消息变量', {
+  // 根因 v2（P7 真实对话复现）：Mvu.parseMessage 对 <UpdateVariable><JSONPatch> 的解析不可靠——
+  // 当 stat_data 的「规律推理记录」含字段「是否触发规律」时，delta 操作被静默丢弃，
+  // 仅 replace/insert 生效，导致复苏风险/死亡风险永远无法累积。
+  // 因此 JSONPatch 的写回一律以本地 applyRawProtocolToMvuData 为权威，
+  // 不再依赖 Mvu.parseMessage（它只能解析原生宏指令格式，无法正确消费 JSONPatch）。
+  const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
+  if (fallback.applied === 0) {
+    console.info('[Hotfix] JSONPatch 无可写 patch，跳过', {
       messageIndex,
       messageId: messageOption.message_id,
-      applied: fallback.applied,
-      skipped: fallback.skipped,
-      writer: writeResult.writer,
-      verified: writeResult.verified,
-      persisted: writeResult.persisted,
-    });
-    return !writeResult.verified;
-  }
-  const newData = await mvu.parseMessage(normalized.message, oldData);
-
-  // MagVarUpdate parseMessage 只能解析原生宏指令格式（/set /delta 等），
-  // 无法解析本项目使用的 <UpdateVariable><JSONPatch> 格式。
-  // 当 parseMessage 未产生有效变化时（返回 undefined 或与 oldData 完全相同），
-  // fallback 到本地 applyRawProtocolToMvuData 直接应用 JSONPatch。
-  if (!newData || typeof newData !== 'object' || hasSameStatData(oldData, newData)) {
-    const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
-    if (fallback.applied === 0) {
-      console.info('[Hotfix] MVU parseMessage 未产生变化且 JSONPatch 无可写 patch，跳过', {
-        messageIndex,
-        messageId: messageOption.message_id,
-        normalized: normalized.stats,
-        skipped: fallback.skipped,
-      });
-      return false;
-    }
-    const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
-    refreshMessagePanel(hostWindow, messageOption.message_id);
-    console.info('[Hotfix] parseMessage 无变化，已通过本地 JSONPatch fallback 写回消息变量', {
-      messageIndex,
-      messageId: messageOption.message_id,
-      applied: fallback.applied,
-      skipped: fallback.skipped,
-      writer: writeResult.writer,
-      verified: writeResult.verified,
-      persisted: writeResult.persisted,
       normalized: normalized.stats,
+      skipped: fallback.skipped,
     });
-    if (!writeResult.verified) {
-      console.warn('[Hotfix] JSONPatch fallback 写回后读回仍不一致，保留延迟重试', {
-        messageIndex,
-        messageId: messageOption.message_id,
-      });
-    }
-    return !writeResult.verified;
+    return false;
   }
-
-  // TypeScript 已收窄：newData 为非空对象且与 oldData 有差异，直接写回
-  const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, newData, messageOption);
+  const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
+  let markerPersisted = false;
+  if (writeResult.verified) {
+    message.extra = message.extra || {};
+    message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY] = applicationKey;
+    message.extra[RAW_PROTOCOL_APPLIED_AT_KEY] = Date.now();
+    markerPersisted = await persistDirectMessageVariables(hostWindow, messageIndex);
+  }
   refreshMessagePanel(hostWindow, messageOption.message_id);
-  console.info('[Hotfix] MVU parseMessage 已解析并写回消息变量', {
+  console.info('[Hotfix] 已通过本地 JSONPatch 写回消息变量', {
     messageIndex,
     messageId: messageOption.message_id,
+    applied: fallback.applied,
+    skipped: fallback.skipped,
     writer: writeResult.writer,
     verified: writeResult.verified,
     persisted: writeResult.persisted,
+    markerPersisted,
+    applicationKey,
     normalized: normalized.stats,
   });
-
   if (!writeResult.verified) {
-    console.warn('[Hotfix] MVU 写回后读回仍不一致，保留延迟重试', {
+    console.warn('[Hotfix] JSONPatch 写回后读回仍不一致，保留延迟重试', {
       messageIndex,
       messageId: messageOption.message_id,
     });
   }
-  return !writeResult.verified;
+  return !writeResult.verified || !markerPersisted;
 }
 
 function scheduleMvuWriteBackRetries(messageIndex: number, eventMessageId?: unknown) {
@@ -747,6 +764,36 @@ async function cleanProtocolBlocks(messageIndex: number) {
   }
 }
 
+/**
+ * 清理宿主偶发追加的尾随空 AI 占位楼。
+ * 仅允许删除：最后一楼为空 AI、紧邻前一楼正是本轮协议 AI；其它空回复仍走原恢复提示，
+ * 防止误删真实历史消息或用户内容。
+ */
+async function removeTrailingEmptyAiPlaceholder(
+  hostWindow: HostWindow,
+  chat: ChatMessage[],
+  placeholderIndex: number,
+  protocolMessageIndex: number,
+) {
+  if (placeholderIndex !== chat.length - 1 || protocolMessageIndex !== placeholderIndex - 1) return false;
+
+  const placeholder = chat[placeholderIndex];
+  const protocolMessage = chat[protocolMessageIndex];
+  if (!placeholder || placeholder.is_user || messageHasDisplayableContent(placeholder)) return false;
+  if (!protocolMessage || protocolMessage.is_user || !hasInternalProtocol(readMessageTextForMvu(protocolMessage))) return false;
+
+  const context = getSillyTavernContext(hostWindow);
+  if (typeof context?.deleteLastMessage !== 'function') return false;
+
+  await context.deleteLastMessage();
+  if (typeof context.saveChat === 'function') await context.saveChat();
+  console.info('[Hotfix] 已删除协议回复后的尾随空 AI 占位楼', {
+    placeholderIndex,
+    protocolMessageIndex,
+  });
+  return true;
+}
+
 async function handleMessageReceived(eventMessageId?: unknown) {
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
@@ -757,7 +804,7 @@ async function handleMessageReceived(eventMessageId?: unknown) {
     return;
   }
 
-  const lastMessageIndex = resolveMessageIndex(chat, eventMessageId);
+  const lastMessageIndex = resolveProtocolMessageIndex(chat, eventMessageId);
   if (lastMessageIndex < 0) return;
   const lastMessage = chat[lastMessageIndex];
 
@@ -908,34 +955,41 @@ async function runGenerationEndedPipeline(eventMessageId?: unknown) {
     return;
   }
 
-  const lastMessageIndex = resolveMessageIndex(chat, eventMessageId);
-  if (lastMessageIndex < 0) {
+  const eventMessageIndex = resolveMessageIndex(chat, eventMessageId);
+  if (eventMessageIndex < 0) {
     forceRecoverSendUi(hostWindow, 'generation_ended_no_message');
     return;
   }
-  const lastMessage = chat[lastMessageIndex];
+  const eventMessage = chat[eventMessageIndex];
+  const protocolMessageIndex = resolveProtocolMessageIndex(chat, eventMessageId);
+  const protocolMessage = protocolMessageIndex >= 0 ? chat[protocolMessageIndex] : undefined;
 
   console.info('[Hotfix] GENERATION_ENDED 触发', {
-    messageIndex: lastMessageIndex,
-    messageId: getMessageVariableId(lastMessage, lastMessageIndex),
-    hasUpdateVariable: lastMessage.mes?.includes('<UpdateVariable>'),
-    hasChoices: lastMessage.mes?.includes('<choices>'),
+    eventMessageIndex,
+    protocolMessageIndex,
+    messageId: getMessageVariableId(protocolMessage ?? eventMessage, protocolMessageIndex >= 0 ? protocolMessageIndex : eventMessageIndex),
+    hasUpdateVariable: protocolMessage?.mes?.includes('<UpdateVariable>'),
+    hasChoices: protocolMessage?.mes?.includes('<choices>'),
   });
 
-  // 假流式/上游空 content：先恢复发送态
-  recoverSendUiAfterEmptyGeneration(hostWindow, lastMessage, lastMessageIndex, 'generation_ended');
+  // 若空楼只是协议回复后的尾随占位，不弹“空回复”误报；稍后在协议处理完成后删除。
+  if (protocolMessageIndex === eventMessageIndex) {
+    recoverSendUiAfterEmptyGeneration(hostWindow, eventMessage, eventMessageIndex, 'generation_ended');
+  }
 
   // 1. 触发 MVU 解析；仅在写回未通过验证时才安排延迟重试，
   //    避免 delta patch 因重试幂等性缺失而在每次重试时重复累积。
-  try {
-    const needsRetry = await parseAndWriteMvuMessage(lastMessageIndex, eventMessageId);
-    if (needsRetry) scheduleMvuWriteBackRetries(lastMessageIndex, eventMessageId);
-  } catch (error) {
-    console.error('[Hotfix] MVU parseMessage 执行失败', error);
-  }
+  if (protocolMessageIndex >= 0) {
+    try {
+      const needsRetry = await parseAndWriteMvuMessage(protocolMessageIndex, eventMessageId);
+      if (needsRetry) scheduleMvuWriteBackRetries(protocolMessageIndex, eventMessageId);
+    } catch (error) {
+      console.error('[Hotfix] MVU parseMessage 执行失败', error);
+    }
 
-  // 2. 再次清洗协议块（防御性清洗，以防 MESSAGE_RECEIVED 未触发或 MVU 解析后内容变化）
-  await cleanProtocolBlocks(lastMessageIndex);
+    // 2. 再次清洗协议块（防御性清洗，以防 MESSAGE_RECEIVED 未触发或 MVU 解析后内容变化）
+    await cleanProtocolBlocks(protocolMessageIndex);
+  }
 
   // 3. 触发数据库刷新（如果需要）
   // 注意：自动填表逻辑应该由数据库前端自己的监听器处理
@@ -946,13 +1000,22 @@ async function runGenerationEndedPipeline(eventMessageId?: unknown) {
     console.warn('[Hotfix] AutoCardUpdaterAPI 不可用，数据库自动更新可能失败');
   }
 
-  // 清洗后若正文+raw 皆空，再恢复一次发送态
-  recoverSendUiAfterEmptyGeneration(
+  const removedTrailingPlaceholder = await removeTrailingEmptyAiPlaceholder(
     hostWindow,
-    chat[lastMessageIndex],
-    lastMessageIndex,
-    'generation_ended_after_clean',
+    chat,
+    eventMessageIndex,
+    protocolMessageIndex,
   );
+
+  // 清洗后若正文+raw 皆空，再恢复一次发送态；已删除的尾随占位不再误报。
+  if (!removedTrailingPlaceholder) {
+    recoverSendUiAfterEmptyGeneration(
+      hostWindow,
+      chat[eventMessageIndex],
+      eventMessageIndex,
+      'generation_ended_after_clean',
+    );
+  }
 
   // 每轮轻量解锁；仅发送卡住时强制点 stop / 露出发送钮
   forceRecoverSendUi(hostWindow, 'generation_ended_always', { hideStop: true, force: isSendUiStuck(hostWindow) });

@@ -1,3 +1,81 @@
+## MVU UpdateVariable 楼层写回根因 v2（2026-08-15，P7 真实对话复现）
+
+### A1/A2 真页恢复证据（2026-08-15）
+
+- 当前开发卡：`神秘复苏模拟器`，聊天 `神秘复苏模拟器 - 2026-08-15@12h47m16s062ms`。
+- 最新 AI 楼层：数组索引 `6`、swipe `0`；`mes` 尚含协议、`extra._mfrs_raw_protocol_message` 尚未生成，变量已完成写回。
+- 上一轮基线：`风险值=25`、`驭鬼者状态.总复苏风险=25`。
+- 本轮 raw patch：`delta /风险值 +60`、`delta /驭鬼者状态/总复苏风险 +65`。
+- 本轮实际变量：`风险值=85`、`总复苏风险=90`、`状态=重伤/濒临复苏`、`is_dead=false`、`主线进度.阶段状态=进行中`、`行动建议=4`。
+- 对应厉鬼：`代号=未命名厉鬼`、`复苏进度=90`、`是否死机=false`。
+- 结论：本地 v2 权威 applier 在完整真实协议中同时正确应用 delta、replace 与 insert；`25+60=85`、`25+65=90` 均精确成立。
+
+### C3 首次终局读回（2026-08-15）
+
+- 在隔离聊天 `P7终局验收-v2-20260815-90-1786790203145` 将最新有效楼层预置为：总复苏风险 99、对应厉鬼复苏进度 99、`is_dead=false`、阶段进行中。
+- 只发送一次真实行动：继续强行透支灵异力量，且明确不使用替死、死机、鬼与鬼平衡或压制资源。
+- 生成完成后，最新非用户楼层读回：总复苏风险 100、风险值 100、`状态=厉鬼复苏`、`is_dead=true`、`阶段状态=模拟结束`、行动建议空、厉鬼复苏进度 100。
+- 该最新楼层的 `mes` 与 raw extra 均为空，说明正文/协议可能位于相邻楼层，或发生了宿主流式占位楼层分离；C4–C6 必须继续核对 idx8/idx9，不能仅凭末楼层变量宣告终局完整通过。
+
+### C4–C6 终局协议、变量与 UI（2026-08-15）
+
+- 真实正文/协议位于 idx8；idx9 是尾随空 AI 楼层，继承终局变量但没有正文/raw。
+- idx8 JSONPatch 共 10 条：`风险值 +15`、`总复苏风险 +11`，以及 `状态=厉鬼复苏`、`is_dead=true`、`行动建议=[]`、`主线进度.阶段状态=模拟结束`、厉鬼复苏进度 100 等终局写集。
+- idx8 实际变量：风险值 100、总复苏风险 100、状态厉鬼复苏、死亡 true、阶段模拟结束、行动建议 0、厉鬼复苏进度 100，全部通过。
+- 正文包含 `【模拟结局】` 与“模拟结束”，没有 `<choices>`，也没有声称仍可正常行动；规则层通过。
+- HUD 显示死亡风险 100%、复苏风险 100%、状态厉鬼复苏，且不再显示健康；消息内行动按钮为 0。
+- 生命周期缺口：idx9 空楼层使 `GENERATION_ENDED` 默认定位到空楼，导致 idx8 协议未快照/清洗、正文 DOM 也被空楼层遮蔽。已增加相邻协议楼层定位与 swipe+协议指纹幂等标记；真页重放后 idx8 风险保持 100/100，协议成功转存 extra 并从 mes 清除。
+
+### D1/D2 收尾结论（2026-08-15）
+
+- 原 P6 结论降级为“简化 smoke 通过”：它没有覆盖完整 `stat_data` 与混合 patch，不能作为生产复杂协议的充分证据。
+- P7 v2 已补齐并通过：本地 raw applier 作为 JSONPatch 唯一权威；真实 36 根 fixture 与 HUD applier 一致；四类 mutation proof 全部被门禁杀死；真实 99→100 终局和持久化幂等通过。
+- 本轮新增源码尚未提交，P8/P9 明确延期；不得将当前开发 dist、开发 YAML 或本地诊断产物当作发布内容。
+
+### 尾随空 AI 占位楼自动清理（2026-08-15 收尾补强）
+
+- 此前 C6 的 UI 可见性是**手工**删除空占位楼后才通过的，属于一次性人工干预，不能保证后续真实生成自动恢复。
+- 已把同样的严格 guard 写入 hotfix `removeTrailingEmptyAiPlaceholder`：仅当空楼是聊天最后一楼、且紧邻前一楼正是本轮协议 AI 时才调用 `deleteLastMessage`；该分支不再触发“空回复”误报。
+- 真页验证方式：整页 `reload`（ignoreCache）→ 重新选中开发卡 characterId 4 → 在终局楼后注入一条空 AI 楼并发出 `generation_ended(9)`。
+- 结果：`chatLength` 9→10→9，占位楼被自动删除，终局楼回到最后一楼；风险 100/100、`状态=厉鬼复苏`、`is_dead=true`、`阶段状态=模拟结束`、协议指纹 `0:d02679e4` 全部未变，未重复应用 delta。
+- reload 后核对：终局楼 DOM 可见文本 901 字符、含 `【模拟结局】` 与“模拟结束”，`mes` 无 `<UpdateVariable>`/`<choices>`，行动按钮 0，raw extra 2572 字符仍在。
+- HUD/仪表盘选择器更正：当前版本没有 `#mfrs-hud-shell`，实际节点是 `.mfrs-msg-dossier`（死亡/复苏风险 高危 100%、状态厉鬼复苏、无“健康”）与 `#mfrs-current-status-card`（死亡风险 100/100、复苏风险 100%、当前状态厉鬼复苏、行动建议暂无）。先前 `hudTerminal=false` 是选择器过期，不是 UI 回归。
+
+### 重要更正：P2 修复存在漏洞
+
+P2 修复（`hasSameStatData=true` 时 fallback 到 `applyRawProtocolToMvuData`）**不完整**。
+
+真实对话（P7）复现：AI 输出的 `<UpdateVariable><JSONPatch>` 含 8 个 patch（2 个 delta + 6 个 replace/insert），
+`mvu.parseMessage` 会**部分解析成功**：
+- `replace`/`insert` 操作**正确生效**（如 `已驾驭厉鬼` 被写入、`行动建议` 被替换）
+- `delta` 操作**被静默丢弃**（`总复苏风险` delta +20 → 写回 0；`风险值` delta -5 → 写回 60 不变）
+
+由于 `replace` 生效导致 `newData !== oldData`，`hasSameStatData=false`，P2 的 fallback **不触发**，
+直接采用 `parseMessage` 的（delta 丢失的）结果写回 → 复苏风险/死亡风险永远无法累积。
+
+### 精确定位：delta 失效的触发条件
+
+`mvu.parseMessage` 处理 `<JSONPatch>` 时，若 `stat_data` 中 `规律推理记录` 数组的某条记录
+含有字段名 **`是否触发规律`**（无论值为何），则**所有 delta 操作被丢弃**，仅 replace/insert 生效。
+
+二分定位证据（真页 Runtime.evaluate）：
+- `规律推理记录` 含字段 `是否触发规律` → delta 失效（totalRisk=0）
+- 字段名改为 `触发规律`/`是否触发`/`规律`/`触发`/任意 → delta 正常（totalRisk=20）
+- 空数组或 1 条无该字段 → delta 正常
+
+推断：MagVarUpdate `substitudeMacros`/`ne` 把 JSONPatch 文本当作宏指令解析时，
+`是否触发规律` 这一字段名（或其组合）触发了错误的宏/模板匹配，中断了 delta 命令的解析。
+
+### 正确修复方向
+
+**不应依赖 `mvu.parseMessage` 处理 JSONPatch**。`applyRawProtocolToMvuData`（本地 raw-status-writer）
+能正确解析 JSONPatch 的全部 op（delta/replace/insert/remove/move），应作为**唯一权威写回路径**。
+
+建议：`parseAndWriteMvuMessage` 中，**始终**用 `applyRawProtocolToMvuData` 计算写回结果，
+不再调用 `mvu.parseMessage`（或仅作为兼容兜底，但结果以本地 JSONPatch 解析为准）。
+
+---
+
 ## MVU UpdateVariable 楼层写回根因（2026-08-15，已确认）
 
 ### 根因结论

@@ -16,6 +16,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { ModuleKind, ScriptTarget, transpileModule } from 'typescript';
+import YAML from 'yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, '..');
@@ -29,6 +30,7 @@ const panelPath = join(panelDir, 'index.ts');
 const rawStatusDataPath = join(panelDir, 'raw-status-data.ts');
 const adapterPath = join(scriptRoot, '数据库前端', 'table-change-adapter.ts');
 const templatePath = join(mfrsRoot, '数据库', '神秘复苏表格SQL_v1.json');
+const initvarPath = join(mfrsRoot, '世界书', '变量', 'initvar.yaml');
 
 function readText(path) {
   return readFileSync(path, 'utf8');
@@ -66,6 +68,25 @@ function loadTsModule(path) {
   );
   wrapper(module, module.exports, localRequire);
   tsModuleCache.set(resolved, module.exports);
+  return module.exports;
+}
+
+/** 加载不落盘的 mutation 源码；raw-status-writer 无外部 import，适合行为 mutation proof。 */
+function loadStandaloneTsSource(source, filename) {
+  const transpiled = transpileModule(source, {
+    compilerOptions: { module: ModuleKind.CommonJS, target: ScriptTarget.ES2022 },
+    fileName: filename,
+  }).outputText;
+  const mutationSandbox = vm.createContext({ console });
+  const module = { exports: {} };
+  const wrapper = vm.runInContext(
+    `(function (module, exports, require) {\n${transpiled}\n})`,
+    mutationSandbox,
+    { filename },
+  );
+  wrapper(module, module.exports, specifier => {
+    throw new Error(`mutation loader does not resolve imports: ${specifier}`);
+  });
   return module.exports;
 }
 
@@ -306,6 +327,132 @@ for (const testCase of consistencyCases) {
   );
 }
 
+// P7-B1：真实复杂 oldData + 混合 patch 回归。
+// 直接以 initvar.yaml 的 36 根为真源，并保留曾触发 MagVarUpdate 部分解析的
+// 「规律推理记录.是否触发规律」字段。若未来又把 Mvu.parseMessage 当权威路径，
+// 两个 delta 会被静默丢弃，而 replace/insert 仍会造成“看似成功”的假象。
+const fullInitvarStatData = YAML.parse(readText(initvarPath));
+assert.equal(Object.keys(fullInitvarStatData).length, 36, 'P7 fixture must start from all 36 initvar root keys');
+
+const realisticOldData = {
+  initialized_lorebooks: { '变量更新规则': true },
+  schema: '没有用别管这个',
+  stat_data: {
+    ...clone(fullInitvarStatData),
+    [RISK]: 25,
+    [RULES]: [
+      {
+        '时间点': '敲门声停在门外时',
+        '行为': '透支鬼档案试图完整拓印',
+        '观察结果': '档案污染，敲门声在脑内响起',
+        '推断': '敲门鬼会沿灵异探测反向侵蚀',
+        '确认等级': '已验证',
+        '是否触发规律': true,
+        '风险等级': '致命',
+      },
+    ],
+    [RIDER]: {
+      '总复苏风险': 25,
+      [GHOSTS]: [
+        {
+          '代号': '未命名厉鬼',
+          '复苏进度': 25,
+          '是否死机': false,
+        },
+      ],
+    },
+  },
+};
+const realisticOldSnapshot = clone(realisticOldData);
+const realisticActions = ['A', 'B', 'C', 'D'].map(option => ({
+  [OPTION]: option,
+  [IDEA]: `真实行动建议 ${option}`,
+  '主要风险': option === 'C' ? '复苏越界' : '高风险',
+  '预期收益': '验证复杂混合 patch',
+  '死亡风险': '高',
+  '复苏风险': '极高',
+}));
+const realisticPatches = [
+  { op: 'delta', path: `/${RISK}`, value: 60 },
+  { op: 'delta', path: `/${RIDER}/总复苏风险`, value: 65 },
+  { op: 'replace', path: '/状态', value: '重伤/濒临复苏' },
+  {
+    op: 'replace',
+    path: '/最近行动判定',
+    value: {
+      '类型': 'use-ghost',
+      '行动': '彻底透支实力强行阻击极高危厉鬼',
+      '依据': ['未点燃鬼烛', '恐怖程度存在绝对鸿沟'],
+      '触发项': ['主动承受高阶灵异反噬'],
+      '结果': '完全失败',
+      '代价': '重伤吐血，复苏临界',
+      '死亡风险变化': '+60',
+      '复苏风险变化': '+65',
+      '资源代价': '无',
+      '后续建议': '立刻中断能力',
+      '可见结论': '灵异对抗不能无脑硬拼',
+    },
+  },
+  { op: 'replace', path: `/${ACTIONS}`, value: realisticActions },
+  {
+    op: 'insert',
+    path: `/${RULES}/-`,
+    value: {
+      '时间点': '本轮验收',
+      '行为': '继续透支',
+      '观察结果': '复苏风险继续上涨',
+      '推断': '必须立即中断能力',
+      '确认等级': '已验证',
+      '是否触发规律': true,
+      '风险等级': '致命',
+    },
+  },
+  {
+    op: 'replace',
+    path: `/${RIDER}/${GHOSTS}`,
+    value: [
+      {
+        '代号': '未命名厉鬼',
+        '复苏进度': 90,
+        '是否死机': false,
+        '压制关系': '被敲门鬼完全碾压，濒临厉鬼复苏',
+      },
+    ],
+  },
+];
+const realisticRaw = wrapProtocol(realisticPatches);
+function assertRealisticFixtureShape(data, label = 'P7 fixture') {
+  assert.ok(
+    data.stat_data[RULES].some(record => Object.prototype.hasOwnProperty.call(record, '是否触发规律')),
+    `${label} must retain 规律推理记录.是否触发规律 regression trigger`,
+  );
+}
+
+function assertRealisticApplier(apply, label = 'P7 fixture') {
+  const result = apply(realisticOldData, realisticRaw);
+  const data = clone(result.data);
+  assert.equal(result.applied, realisticPatches.length, `${label} must apply every mixed JSONPatch operation`);
+  assert.equal(result.skipped, 0, `${label} must not silently skip any mixed JSONPatch operation`);
+  assert.equal(data.stat_data[RISK], 85, `${label} must apply death-risk delta 25 + 60 = 85`);
+  assert.equal(data.stat_data[RIDER]['总复苏风险'], 90, `${label} must apply revival-risk delta 25 + 65 = 90`);
+  assert.equal(data.stat_data['状态'], '重伤/濒临复苏', `${label} must apply scalar replace`);
+  assert.equal(data.stat_data[ACTIONS].length, 4, `${label} must replace all four action suggestions`);
+  assert.equal(data.stat_data[RULES].length, 2, `${label} must append the rule record exactly once`);
+  assert.equal(data.stat_data[RIDER][GHOSTS][0]['复苏进度'], 90, `${label} must replace ghost progress`);
+  return data;
+}
+
+assertRealisticFixtureShape(realisticOldData);
+const realisticData = assertRealisticApplier(applyRawProtocolToMvuData);
+assert.deepEqual(realisticOldData, realisticOldSnapshot, 'P7 authoritative applier must not mutate complete oldData');
+
+const realisticHudResult = clone(applyUpdateProtocolToStatData(clone(realisticOldData.stat_data), realisticRaw));
+assert.deepEqual(
+  realisticHudResult,
+  realisticData.stat_data,
+  'P7 complete mixed fixture must stay identical between hotfix and HUD appliers',
+);
+
 // applied/skipped 计数必须真实反映生效 patch 数，hotfix 用它决定是否写回。
 const countingRaw = wrapProtocol([
   { op: 'replace', path: `/${NAME}`, value: '计数' },
@@ -366,17 +513,38 @@ for (const broken of [{}, { stat_data: null }, { stat_data: [] }, { stat_data: '
 const hotfixSource = readText(hotfixPath);
 const panelSource = readText(panelPath);
 
+function assertAuthoritativeHotfixContract(source, label = 'hotfix') {
+  assert.ok(
+    source.includes('applyRawProtocolToMvuData(oldData, normalized.message)'),
+    `${label} must use the local authoritative JSONPatch applier`,
+  );
+  assert.equal(
+    /mvu\??\.parseMessage\s*\(|mvu\.parseMessage\s*\(/.test(source),
+    false,
+    `${label} must not call Mvu.parseMessage for JSONPatch`,
+  );
+  assert.match(
+    source,
+    /const needsRetry = await parseAndWriteMvuMessage\([^;]+;\s*if \(needsRetry\) scheduleMvuWriteBackRetries/,
+    `${label} must only schedule retries after verified=false`,
+  );
+}
+
+assertAuthoritativeHotfixContract(hotfixSource);
+
 assert.ok(
   /import\s*\{[^}]*applyRawProtocolToMvuData[^}]*\}\s*from\s*'\.\/raw-status-writer'/.test(hotfixSource),
   'hotfix must import applyRawProtocolToMvuData from ./raw-status-writer (#8)',
 );
 assert.ok(
   hotfixSource.includes('applyRawProtocolToMvuData(oldData, normalized.message)'),
-  'hotfix MVU-unavailable branch must apply the raw protocol to oldData (#8)',
+  'hotfix must always apply the raw protocol to oldData (#8)',
 );
+// 根因 v2：JSONPatch 写回一律以本地 applyRawProtocolToMvuData 为权威，
+// 不再依赖 mvu.parseMessage（其 delta 解析在「是否触发规律」字段下会丢失）。
 assert.ok(
-  /typeof mvu\?\.parseMessage !== 'function'[\s\S]{0,900}?applyRawProtocolToMvuData/.test(hotfixSource),
-  'raw fallback must live inside the parseMessage-unavailable branch (#8)',
+  hotfixSource.includes('applyRawProtocolToMvuData(oldData, normalized.message)'),
+  'hotfix must apply raw protocol to oldData as authoritative JSONPatch writeback (#8)',
 );
 assert.ok(
   /applyRawProtocolToMvuData[\s\S]{0,900}?writeMvuDataWithVerification\(hostWindow, chat, messageIndex, fallback\.data, messageOption\)/.test(
@@ -389,6 +557,88 @@ assert.ok(
     hotfixSource,
   ),
   'raw fallback must refresh the message panel after writeback (#8)',
+);
+assert.ok(
+  hotfixSource.includes('function resolveProtocolMessageIndex(') &&
+    hotfixSource.includes('!candidate.is_user && !messageHasDisplayableContent(candidate)') &&
+    hotfixSource.includes('hasInternalProtocol(readMessageTextForMvu(previous))'),
+  'P7 lifecycle gate: trailing empty AI message must resolve to its adjacent protocol-bearing AI message',
+);
+assert.ok(
+  hotfixSource.includes('async function removeTrailingEmptyAiPlaceholder(') &&
+    hotfixSource.includes('placeholderIndex !== chat.length - 1') &&
+    hotfixSource.includes('protocolMessageIndex !== placeholderIndex - 1') &&
+    hotfixSource.includes('typeof context?.deleteLastMessage') &&
+    hotfixSource.includes('await context.deleteLastMessage()'),
+  'P7 lifecycle gate: only the final empty AI directly following the current protocol reply may be deleted',
+);
+assert.match(
+  hotfixSource,
+  /const removedTrailingPlaceholder = await removeTrailingEmptyAiPlaceholder\([\s\S]{0,400}?if \(!removedTrailingPlaceholder\) \{[\s\S]{0,300}?recoverSendUiAfterEmptyGeneration/,
+  'P7 lifecycle gate: a deleted placeholder must not trigger the empty-generation warning path',
+);
+assert.ok(
+  hotfixSource.includes('RAW_PROTOCOL_APPLIED_HASH_KEY') &&
+    hotfixSource.includes('getProtocolApplicationKey(message, normalized.message)') &&
+    hotfixSource.includes('message.extra?.[RAW_PROTOCOL_APPLIED_HASH_KEY] === applicationKey'),
+  'P7 idempotency gate: protocol application must be guarded by swipe + protocol fingerprint',
+);
+assert.match(
+  hotfixSource,
+  /if \(writeResult\.verified\) \{[\s\S]{0,300}?RAW_PROTOCOL_APPLIED_HASH_KEY[\s\S]{0,300}?persistDirectMessageVariables/,
+  'P7 idempotency gate: application fingerprint may only be persisted after verified writeback',
+);
+assert.ok(
+  hotfixSource.includes('return !writeResult.verified || !markerPersisted;'),
+  'P7 idempotency gate: marker persistence failure must remain retryable without reapplying delta',
+);
+
+// ── P7-B4 mutation proof（全部在内存执行，不改工作区源码） ──
+
+const parseMessageMutation = hotfixSource.replace(
+  'const fallback = applyRawProtocolToMvuData(oldData, normalized.message);',
+  [
+    'const mvu = getMvuApi(hostWindow);',
+    'const parsed = await mvu.parseMessage(normalized.message, oldData);',
+    'const fallback = { data: parsed, applied: 1, skipped: 0 };',
+  ].join('\n'),
+);
+assert.notEqual(parseMessageMutation, hotfixSource, 'mutation setup must inject Mvu.parseMessage authoritative path');
+assert.throws(
+  () => assertAuthoritativeHotfixContract(parseMessageMutation, 'parseMessage mutation'),
+  /must use the local authoritative JSONPatch applier|must not call Mvu\.parseMessage/,
+  'gate must reject restoring Mvu.parseMessage as JSONPatch authority',
+);
+
+const unconditionalRetryMutation = hotfixSource.replace(
+  /if \(needsRetry\) scheduleMvuWriteBackRetries\(([^;]+)\);/,
+  'scheduleMvuWriteBackRetries($1);',
+);
+assert.notEqual(unconditionalRetryMutation, hotfixSource, 'mutation setup must remove the retry condition');
+assert.throws(
+  () => assertAuthoritativeHotfixContract(unconditionalRetryMutation, 'unconditional retry mutation'),
+  /must only schedule retries/,
+  'gate must reject unconditional retries that double-apply delta',
+);
+
+const deltaMutationSource = readText(rawWriterPath).replace(
+  "if (op === 'delta') {",
+  "if (op === '__mutation_delta_disabled__') {",
+);
+assert.notEqual(deltaMutationSource, readText(rawWriterPath), 'mutation setup must disable the production delta branch');
+const deltaMutationModule = loadStandaloneTsSource(deltaMutationSource, `${rawWriterPath}.delta-mutation.ts`);
+assert.throws(
+  () => assertRealisticApplier(deltaMutationModule.applyRawProtocolToMvuData, 'delta mutation'),
+  /death-risk delta|revival-risk delta|every mixed JSONPatch operation/,
+  'realistic fixture must kill a mutation that disables delta',
+);
+
+const triggerFieldMutation = clone(realisticOldData);
+for (const record of triggerFieldMutation.stat_data[RULES]) delete record['是否触发规律'];
+assert.throws(
+  () => assertRealisticFixtureShape(triggerFieldMutation, 'trigger-field mutation'),
+  /must retain 规律推理记录\.是否触发规律/,
+  'fixture-shape gate must reject deleting the real MagVarUpdate trigger field',
 );
 
 // #9：清洗前必须先幂等快照 raw，否则协议块被删后 HUD 失去兜底数据源。
