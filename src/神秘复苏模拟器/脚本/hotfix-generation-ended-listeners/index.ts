@@ -522,18 +522,23 @@ function refreshMessagePanel(hostWindow: HostWindow, messageId: number | string)
   }
 }
 
-async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: unknown) {
+/**
+ * 解析目标楼层的 <UpdateVariable> 协议并写回 MVU 变量。
+ * 返回 true 表示写回未通过验证、需要延迟重试；返回 false 表示已写回或无需写回（不应重试）。
+ * 重要：只有在 verified=false 时才应安排重试，否则 delta patch 会在每次重试时重复累积。
+ */
+async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: unknown): Promise<boolean> {
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
-  if (!chat || messageIndex < 0 || messageIndex >= chat.length) return;
+  if (!chat || messageIndex < 0 || messageIndex >= chat.length) return false;
 
   const mvu = getMvuApi(hostWindow);
   const message = chat[messageIndex];
   const rawMessage = readMessageTextForMvu(message);
   if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) {
     console.debug('[Hotfix] 最新 AI 消息无可解析协议块，跳过 MVU 解析', { messageIndex, eventMessageId });
-    return;
+    return false;
   }
 
   const messageOption: MessageVariableOption = {
@@ -551,7 +556,7 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
         messageId: messageOption.message_id,
         skipped: fallback.skipped,
       });
-      return;
+      return false;
     }
     const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
     refreshMessagePanel(hostWindow, messageOption.message_id);
@@ -564,27 +569,47 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
       verified: writeResult.verified,
       persisted: writeResult.persisted,
     });
-    return;
+    return !writeResult.verified;
   }
   const newData = await mvu.parseMessage(normalized.message, oldData);
-  if (!newData || typeof newData !== 'object') {
-    console.info('[Hotfix] MVU parseMessage 未产生变量变化', {
+
+  // MagVarUpdate parseMessage 只能解析原生宏指令格式（/set /delta 等），
+  // 无法解析本项目使用的 <UpdateVariable><JSONPatch> 格式。
+  // 当 parseMessage 未产生有效变化时（返回 undefined 或与 oldData 完全相同），
+  // fallback 到本地 applyRawProtocolToMvuData 直接应用 JSONPatch。
+  if (!newData || typeof newData !== 'object' || hasSameStatData(oldData, newData)) {
+    const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
+    if (fallback.applied === 0) {
+      console.info('[Hotfix] MVU parseMessage 未产生变化且 JSONPatch 无可写 patch，跳过', {
+        messageIndex,
+        messageId: messageOption.message_id,
+        normalized: normalized.stats,
+        skipped: fallback.skipped,
+      });
+      return false;
+    }
+    const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
+    refreshMessagePanel(hostWindow, messageOption.message_id);
+    console.info('[Hotfix] parseMessage 无变化，已通过本地 JSONPatch fallback 写回消息变量', {
       messageIndex,
       messageId: messageOption.message_id,
+      applied: fallback.applied,
+      skipped: fallback.skipped,
+      writer: writeResult.writer,
+      verified: writeResult.verified,
+      persisted: writeResult.persisted,
       normalized: normalized.stats,
     });
-    return;
+    if (!writeResult.verified) {
+      console.warn('[Hotfix] JSONPatch fallback 写回后读回仍不一致，保留延迟重试', {
+        messageIndex,
+        messageId: messageOption.message_id,
+      });
+    }
+    return !writeResult.verified;
   }
 
-  if (hasSameStatData(oldData, newData)) {
-    console.debug('[Hotfix] MVU 变量已是解析结果，跳过重复写回', {
-      messageIndex,
-      messageId: messageOption.message_id,
-      normalized: normalized.stats,
-    });
-    return;
-  }
-
+  // TypeScript 已收窄：newData 为非空对象且与 oldData 有差异，直接写回
   const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, newData, messageOption);
   refreshMessagePanel(hostWindow, messageOption.message_id);
   console.info('[Hotfix] MVU parseMessage 已解析并写回消息变量', {
@@ -602,6 +627,7 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
       messageId: messageOption.message_id,
     });
   }
+  return !writeResult.verified;
 }
 
 function scheduleMvuWriteBackRetries(messageIndex: number, eventMessageId?: unknown) {
@@ -899,10 +925,11 @@ async function runGenerationEndedPipeline(eventMessageId?: unknown) {
   // 假流式/上游空 content：先恢复发送态
   recoverSendUiAfterEmptyGeneration(hostWindow, lastMessage, lastMessageIndex, 'generation_ended');
 
-  // 1. 触发 MVU 解析
+  // 1. 触发 MVU 解析；仅在写回未通过验证时才安排延迟重试，
+  //    避免 delta patch 因重试幂等性缺失而在每次重试时重复累积。
   try {
-    await parseAndWriteMvuMessage(lastMessageIndex, eventMessageId);
-    scheduleMvuWriteBackRetries(lastMessageIndex, eventMessageId);
+    const needsRetry = await parseAndWriteMvuMessage(lastMessageIndex, eventMessageId);
+    if (needsRetry) scheduleMvuWriteBackRetries(lastMessageIndex, eventMessageId);
   } catch (error) {
     console.error('[Hotfix] MVU parseMessage 执行失败', error);
   }

@@ -1,5 +1,49 @@
 # 进度日志
 
+## 2026-08-15 P4 酒馆真页验收 + P3 幂等门禁补强
+
+### 验收结果（全部通过）
+- `directRisk: 10` ✅ delta +10 从 0 正确写回
+- `mvuRisk: 10` ✅ `Mvu.getMvuData` 读回一致
+- `directRiskAfterRetries: 10` ✅ 3 次重试后不重复累积（幂等）
+- `mvuRiskAfterRetries: 10` ✅
+
+### 追加修复（发现问题 → P3 改写）
+验收中发现重试路径 bug：`runGenerationEndedPipeline` 原先**无条件**调用 `scheduleMvuWriteBackRetries`，每次重试都重新 apply delta → 4 次累积变成 40。
+- 修复：`parseAndWriteMvuMessage` 改为返回 `Promise<boolean>`，仅 `verified=false` 时返回 `true`
+- 调用处改为 `if (needsRetry) scheduleMvuWriteBackRetries(...)`
+- 门禁新增 P3-I2 断言，守卫此行为
+
+### 门禁状态
+`pnpm verify:mfrs-source-gates` ✅ 全部通过
+
+## 2026-08-15 MVU 写回根因修复（P1+P2 完成）
+
+### 已完成
+- **P1（根因定位）**：从真页反编译 `Mvu.parseMessage`，从 jsdelivr 获取 MagVarUpdate @0.171.0 bundle，确认 `le` 函数只解析原生宏指令格式（`/set`、`/delta`），无法解析 `<UpdateVariable><JSONPatch>` 格式 → `hasSameStatData=true` → 静默跳过
+- **P2（最小修复）**：在 `parseAndWriteMvuMessage` 中，当 `parseMessage` 未产生有效变化时 fallback 到本地 `applyRawProtocolToMvuData` 直接应用 JSONPatch
+- **验证**：`pnpm verify:mfrs-source-gates` 全部通过，`pnpm verify:mfrs-gates` 全部通过
+
+### 修改文件
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：`parseAndWriteMvuMessage` fallback 分支
+- `findings.md`：根因结论写入
+
+### 待做
+- P3：增加幂等/连续 delta 门禁（mutation proof）
+- P4：酒馆真页验收（新建聊天跑几轮，观察 `总复苏风险` 是否正确累积）
+- P5：源码提交与发布（需用户授权）
+
+## 2026-08-15 进度基线同步与 MVU 写回调查
+
+- 当前正式发布版确认为 **v8.15.14**：release `5cadd8a7`，CDN bundle/ref `1850150eb303729510f779be50d85f6e0befb11b`，cache `v81514_20260814_01`。
+- v8.15.12 已完成 native 模式新聊天固定表 seedRows 物化；行为门禁和 mutation proof 通过，真页四表行数 `1/1/4/5` 且无首轮 `ROW_NOT_FOUND`。
+- v8.15.14 已完成 HUD 数据库回调按 API 实例自愈重绑；archive-ui phase5 242 checks 与源码门禁通过。
+- T7.3 桌面端真页回归与 T7.4 390px 移动端真页回归已完成；T6.3 干净角色列表正式 PNG 重新导入仍 pending，复苏 99→100 终局仍需用户手动触发真实 `GENERATION_ENDED`。
+- 当前核心任务转为 MVU 写回故障调查：idx4 起原始 `<UpdateVariable>` 已保存且消息清洗正常，但目标楼层 `variables['0']` 未持续应用后续 JSONPatch，风险停在 30，行动建议停留旧值。
+- 已取得初步运行时证据：`Mvu.getMvuData()` 与目标楼层变量观测不一致；`Mvu.parseMessage` 的真实参数和返回值可能不符合当前 `(message, oldData) -> MvuData` 类型声明。该项仍是待证假设，尚未认定根因。
+- 当前未修改 MVU 业务源码，也没有待提交的业务修复。后续顺序：核对 MagVarUpdate 0.171.0 契约与实际调用分支 → 解释 idx4=30 → 最小修复 → 连续 delta/重试幂等门禁 → 零 LLM 成本真页复放。
+- Git 快照：本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`，落后 1 个仅含 dist 的 `[bot] bundle`；tracked 工作区改动为开发模式 `index.yaml` 和 watch dist，业务源码干净。
+
 ## 2026-08-12 人物/地点 stat_data 镜像发布 8.15.0
 - 真页验收（开发版）：镜像链路完整（GENERATION_ENDED → mvu-core-mirror → 写库），全局状态/玩家状态/行动建议随本轮 stat_data 更新；本轮 stat_data 人物 [林修,杨间,赵磊] 全已存在 → 镜像按"只补不覆盖"跳过，ACU 富数据未被占位覆盖；无 UNIQUE 冲突。
 - HUD 左栏实际完整显示线索/厉鬼档案/人物/地点（之前"显示暂无"是 `<details>` 折叠导致 innerText 假象，非 bug）。

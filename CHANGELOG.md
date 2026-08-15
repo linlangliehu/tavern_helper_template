@@ -2,6 +2,17 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.17] - 2026-08-15
+
+### 修复
+- **MVU JSONPatch 写回修复**：修复 idx4 起 `<UpdateVariable><JSONPatch>` 未正确写入楼层 MVU 变量的问题。根因：`Mvu.parseMessage`（MagVarUpdate @0.171.0）内部 `le()` 只能解析原生宏指令格式（`/set /delta` 等），无法识别本项目使用的 `<UpdateVariable><JSONPatch>` 格式，导致每次返回 `clone(oldData)`，`hasSameStatData=true`，历史实现静默跳过所有写回。修复：`parseMessage` 未产生有效变化时 fallback 到本地 `applyRawProtocolToMvuData` 直接应用 JSONPatch。
+- **delta 重试幂等修复**：修复 `scheduleMvuWriteBackRetries` 无条件触发导致 delta patch 在每次重试时重复累积（如风险值变为 4×10=40）的问题。`parseAndWriteMvuMessage` 改为返回 `Promise<boolean>`，仅在 `verified=false` 时安排重试。
+
+### 验证
+- ✅ P3 幂等门禁 8 条（S1/S2/S3/I1/I2/B1/B2/B3）全绿
+- ✅ P4 真页验收：delta +10 写回正确（risk=10），3 次重试后不重复累积（risk 保持 10）
+- ✅ 源码门禁全绿（`pnpm verify:mfrs-source-gates` 全部通过）
+
 ## [v8.15.14] - 2026-08-14
 
 ### 修复

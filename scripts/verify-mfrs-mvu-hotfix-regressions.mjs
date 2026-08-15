@@ -470,4 +470,138 @@ for (const path of [distDbLoaderPath, distDbFrontendPath, distHotfixPath]) {
   assert.equal(source.includes('@main/'), false, `${path} should not fall back to @main vendor`);
 }
 
+// ── P3: JSONPatch fallback 行为与幂等门禁 (2026-08-15) ──
+// 根因背景：Mvu.parseMessage 只能解析原生宏指令格式，无法解析 <UpdateVariable><JSONPatch>，
+// 导致每次返回 clone(oldData)，hasSameStatData=true，历史实现静默跳过。
+// 修复：hasSameStatData=true 时 fallback 到 applyRawProtocolToMvuData。
+
+// P3-S1: hotfix 必须在 parseMessage 后 fallback 到 applyRawProtocolToMvuData
+assert.ok(
+  hotfixSource.includes('applyRawProtocolToMvuData(oldData, normalized.message)'),
+  'P3-S1: hotfix must fallback to applyRawProtocolToMvuData when parseMessage produces no change',
+);
+
+// P3-S2: fallback 分支必须通过 writeMvuDataWithVerification 写回（不旁路验证）
+assert.ok(
+  /applyRawProtocolToMvuData\(oldData,[\s\S]{0,600}?writeMvuDataWithVerification\(hostWindow, chat, messageIndex, fallback\.data, messageOption\)/.test(hotfixSource),
+  'P3-S2: hotfix JSONPatch fallback must write back through writeMvuDataWithVerification',
+);
+
+// P3-S3: hasSameStatData(oldData, newData) 为 true 时必须触发 fallback，不静默跳过
+assert.ok(
+  /hasSameStatData\(oldData, newData\)[\s\S]{0,300}?applyRawProtocolToMvuData/.test(hotfixSource),
+  'P3-S3: hotfix must route hasSameStatData=true to applyRawProtocolToMvuData fallback, not silent skip',
+);
+
+// P3-I1: fallback 写回后必须 return（不再无条件调用 scheduleMvuWriteBackRetries），
+//         且调用方必须按返回值决定是否重试（防重复累积）
+{
+  const fallbackBranchMatch = hotfixSource.match(
+    /applyRawProtocolToMvuData\(oldData, normalized\.message\)[\s\S]{0,1400}?return\b[^;]*;/,
+  );
+  assert.ok(fallbackBranchMatch, 'P3-I1: hotfix fallback branch must exist with a return statement');
+  assert.ok(
+    !fallbackBranchMatch[0].includes('scheduleMvuWriteBackRetries'),
+    'P3-I1: hotfix JSONPatch fallback must not trigger scheduleMvuWriteBackRetries (prevents delta double-apply on retry)',
+  );
+}
+
+// P3-I2: runGenerationEndedPipeline 必须按 parseAndWriteMvuMessage 返回值决定是否重试
+assert.ok(
+  /await parseAndWriteMvuMessage\([\s\S]{0,80}?\)[\s\S]{0,60}?needsRetry[\s\S]{0,100}?scheduleMvuWriteBackRetries/.test(hotfixSource),
+  'P3-I2: runGenerationEndedPipeline must only schedule retries when parseAndWriteMvuMessage returns needsRetry=true',
+);
+
+// P3-B1: delta 连续累积正确性 — 0→10→15→25→50→55
+(function verifyDeltaCumulation() {
+  const turns = [
+    { delta: 10, expected: 10, label: 'turn-1 +10' },
+    { delta: 5,  expected: 15, label: 'turn-2 +5'  },
+    { delta: 10, expected: 25, label: 'turn-3 +10' },
+    { delta: 25, expected: 50, label: 'turn-4 +25' },
+    { delta: 5,  expected: 55, label: 'turn-5 +5'  },
+  ];
+
+  let data = {
+    initialized_lorebooks: {},
+    stat_data: { '\u603b\u590d\u82cf\u98ce\u9669': 0, '\u884c\u52a8\u5efa\u8bae': [], '\u89c4\u5f8b\u63a8\u7406\u8bb0\u5f55': [] },
+  };
+
+  for (const { delta, expected, label } of turns) {
+    const msg = [
+      '<UpdateVariable>',
+      '<JSONPatch>',
+      `[{"op":"delta","path":"/\u603b\u590d\u82cf\u98ce\u9669","value":${delta}}]`,
+      '</JSONPatch>',
+      '</UpdateVariable>',
+    ].join('\n');
+
+    const normalized = normalizeMfrsUpdateVariableProtocol(msg);
+    const patchText = extractPatchArrayText(normalized.message);
+    data = applyPatches(data, patchText);
+    assert.equal(
+      data.stat_data['\u603b\u590d\u82cf\u98ce\u9669'],
+      expected,
+      `P3-B1 delta cumulation ${label}: expected ${expected}`,
+    );
+  }
+})();
+
+// P3-B2: replace 与 delta 混合 patch 语义正确
+(function verifyMixedPatchSemantics() {
+  const msg = [
+    '<UpdateVariable>',
+    '<JSONPatch>',
+    '[',
+    '  {"op":"delta","path":"/\u603b\u590d\u82cf\u98ce\u9669","value":10},',
+    '  {"op":"replace","path":"/\u59d3\u540d","value":"\u738b\u5927\u660e"},',
+    '  {"op":"replace","path":"/\u6240\u5728\u4f4d\u7f6e","value":"\u5e9f\u5f03\u4ed3\u5e93"}',
+    ']',
+    '</JSONPatch>',
+    '</UpdateVariable>',
+  ].join('\n');
+
+  const base = {
+    initialized_lorebooks: {},
+    stat_data: {
+      '\u603b\u590d\u82cf\u98ce\u9669': 20,
+      '\u59d3\u540d': '\u65e7\u540d',
+      '\u6240\u5728\u4f4d\u7f6e': '\u65e7\u5730',
+      '\u884c\u52a8\u5efa\u8bae': [],
+      '\u89c4\u5f8b\u63a8\u7406\u8bb0\u5f55': [],
+    },
+  };
+
+  const normalized = normalizeMfrsUpdateVariableProtocol(msg);
+  const patchText = extractPatchArrayText(normalized.message);
+  const result = applyPatches(base, patchText);
+  assert.equal(result.stat_data['\u603b\u590d\u82cf\u98ce\u9669'], 30, 'P3-B2: delta accumulates on existing value');
+  assert.equal(result.stat_data['\u59d3\u540d'], '\u738b\u5927\u660e', 'P3-B2: replace overrides previous name');
+  assert.equal(result.stat_data['\u6240\u5728\u4f4d\u7f6e'], '\u5e9f\u5f03\u4ed3\u5e93', 'P3-B2: replace overrides previous location');
+  // 确保 base 原始数据未被 mutate（applyPatches 应深克隆）
+  assert.equal(base.stat_data['\u603b\u590d\u82cf\u98ce\u9669'], 20, 'P3-B2: applyPatches must not mutate original data');
+})();
+
+// P3-B3: delta 从零开始（stat_data 字段不存在时默认 0）
+(function verifyDeltaFromMissingKey() {
+  const msg = [
+    '<UpdateVariable>',
+    '<JSONPatch>',
+    '[{"op":"delta","path":"/\u603b\u590d\u82cf\u98ce\u9669","value":15}]',
+    '</JSONPatch>',
+    '</UpdateVariable>',
+  ].join('\n');
+
+  const base = {
+    initialized_lorebooks: {},
+    stat_data: { '\u884c\u52a8\u5efa\u8bae': [] },
+    // 注意：stat_data 中没有 总复苏风险
+  };
+
+  const normalized = normalizeMfrsUpdateVariableProtocol(msg);
+  const patchText = extractPatchArrayText(normalized.message);
+  const result = applyPatches(base, patchText);
+  assert.equal(result.stat_data['\u603b\u590d\u82cf\u98ce\u9669'], 15, 'P3-B3: delta from missing key must default to 0');
+})();
+
 console.log('verify-mfrs-mvu-hotfix-regressions: passed');

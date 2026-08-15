@@ -1,3 +1,57 @@
+## MVU UpdateVariable 楼层写回根因（2026-08-15，已确认）
+
+### 根因结论
+
+`Mvu.parseMessage` 的真实实现（MagVarUpdate @0.171.0 bundle，57137 偏移处）：
+
+```javascript
+async function(t, n) {
+  const a = e(n);           // clone(oldData)
+  return await le(t, a), a; // le 变换 a，返回 a
+}
+```
+
+`le` 内部核心：`const s = ne(substitudeMacros(t))` — `ne` 解析的是 MagVarUpdate **原生宏指令格式**
+（如 `/set 总复苏风险 30`），**不是** `<UpdateVariable><JSONPatch>` JSON Patch 格式。
+
+hotfix 传入的 `normalized.message` 含 `<UpdateVariable><JSONPatch>[{"op":"delta",...}]</JSONPatch></UpdateVariable>`：
+- `ne` 无法识别，返回空命令列表 `s = []`
+- `le` 不执行任何操作，`a = clone(oldData)`
+- `mvu.parseMessage` 返回与 oldData 完全相同的 clone
+- `hasSameStatData(oldData, newData)` = `true` → `console.debug('跳过重复写回')` **静默放弃**
+- 所有楼层变量永不更新
+
+### 数据佐证
+
+- `Mvu.getMvuData` 真实实现：`function(e){return getVariables(e)}` — 读的是 SillyTavern message variables
+- `Mvu.replaceMvuData` 真实实现：`function(e,t){return replaceVariables(e,t)}` — 写的是同一个位置
+- `applyRawProtocolToMvuData`（raw-status-writer 本地路径）可正确解析 JSONPatch，但只在 `mvu.parseMessage` 不存在时才调用
+
+### 修复方案
+
+在 `parseAndWriteMvuMessage` 中，当 `mvu.parseMessage` 未产生有效变化时（返回 undefined 或 `hasSameStatData=true`），
+**不静默跳过，而是 fallback 到 `applyRawProtocolToMvuData`**。
+
+最小改动：合并两处 `return` 为统一 fallback 分支。
+
+### idx4=30 之谜（推测）
+
+参见 HANDOFF_20260815_MVU.md 中的记录。可能是历史测试时 `mvu.parseMessage` 未安装，
+走了 fallback 路径写入了部分 patch（idx2+idx4 合并 delta = 20+10=30），
+后续安装 hotfix 后反而因上述根因触发了静默跳过。
+
+---
+
+## MVU UpdateVariable 楼层写回调查（2026-08-15，已升级为上方已完成条目）
+
+- **已确认边界**：AI 原始 `<UpdateVariable>` 保存在 `extra._mfrs_raw_protocol_message`，`mes` 清洗正常；故障不在协议保存或界面清洗，而在协议解析、目标楼层定位或变量写回。
+- **实际症状**：idx4 起后续 JSONPatch 未持续反映到目标楼层 `ctx.chat[idx].variables['0'].stat_data`；`总复苏风险` 停在 30，行动建议停留旧值。按已记录 delta，预期累计应到 55。
+- **数据源分歧**：真页中直接读取目标楼层变量能看到旧 stat_data，而 `Mvu.getMvuData()` 返回 risk=0/action=[]；两者可能读取不同楼层或不同变量容器，不能把 `getMvuData()` 的结果直接当作目标楼层事实。
+- **待证假设**：当前 hotfix 声明 `parseMessage(message, oldData) -> MvuData` 并据此写回；运行时初步反编译和手动调用显示其参数可能是消息索引/ID与消息对象，返回值也可能是 `{ mes, schema }` 包装或依赖内部副作用。必须读取 MagVarUpdate 0.171.0 实现并观察真实调用分支后才能定根因。
+- **禁止提前下结论**：idx4 风险从 0 变成 30 的来源尚未解释，可能包含 fallback、重复事件或既有测试污染；在复现和调用追踪前，不得只替换 API 调用或强制走 raw fallback。
+- **修复约束**：同一 delta 必须恰好应用一次；延迟重试不得重复累计；message index、message ID 与 `variables['0']` 必须指向同一楼层；不得破坏协议清洗、数据库镜像、HUD 刷新和 `GENERATION_ENDED` 生命周期。
+- **验证顺序**：核对 normalizer 输出 → 核对 `parseMessage/getMvuData/replaceMvuData` 契约 → 记录实际分支/目标楼层 → 解释 idx4=30 → 最小修复 → 连续 delta 与重试幂等 mutation proof → 零 LLM 成本真页复放。
+
 ## 人物/地点 stat_data 镜像（2026-08-12，8.15.0）
 
 - **背景**：8.14.x 之前人物/地点依赖 ACU 填表式独立 API 入库，链路重、易漏。

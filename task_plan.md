@@ -1,5 +1,15 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
+## 进度同步（2026-08-15）
+
+- **当前正式版本：v8.15.14**（release `5cadd8a7`；CDN bundle `1850150e`；`CDN_REF=1850150eb303729510f779be50d85f6e0befb11b`；cache `v81514_20260814_01`）。
+- **已完成：** v8.15.12 native 冷启动固定表 seedRows 物化；v8.15.14 HUD 数据库回调按 API 实例自愈重绑；T7.3 桌面端与 T7.4 390px 移动端真页回归。
+- **当前工作焦点：** 调查 idx4 起 `<UpdateVariable>` JSONPatch 未正确写入目标楼层 MVU 变量的问题。
+- **已确认事实：** 原始协议已保存、消息清洗正常、目标楼层变量仍停留旧值；问题位于协议解析/楼层定位/变量写回链路。
+- **待证假设：** `Mvu.parseMessage` 的调用签名、返回值语义可能与当前类型声明和调用方式不一致。该假设尚未完成源码核验，不得视为根因结论。
+- **实现状态：** 尚未修改 MVU 业务源码，尚无待提交修复；下一步先核对 MagVarUpdate 0.171.0 运行时契约与实际调用分支，再做最小修复和门禁。
+- **Git 快照：** 本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`，本地落后 1 个仅含 dist 的 `[bot] bundle`；当前 tracked 改动为开发模式 YAML 和 watch dist，不是业务源码修复。
+
 ## 第二轮审查缺陷修复任务清单（2026-07-26）
 
 > 对本次生命周期修复本身的回归审查发现 3 个新问题，均来自上一轮修复引入。
@@ -128,18 +138,19 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 HUD-UX-NEXT：三项交互调整实施 — complete（8.14.0 已发布）**
 **阶段 PROJECT-FLOW-FIX：修复项目流程 — 已废弃（MFRS 机制 2026-07-19 彻底移除，改极简流程）**
 **阶段 WORKFLOW-SIMPLIFY：废弃 MFRS + 极简单人流程 — complete（2026-07-19，commit `3841c30` 已推送）**
-**阶段 DUAL-CARD-AUDIT-FIX：双卡审计缺陷修复 — complete（8.14.15 已发布，R1/R2/R3 已修复；仅 T0.1/T6.3/T7.3/T7.4 归档/真页回归余项，见 TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md）**
+**阶段 DUAL-CARD-AUDIT-FIX：双卡审计缺陷修复 — complete（8.14.15 已发布，R1/R2/R3 已修复；T7.3/T7.4 已于 2026-08-14 完成，仅 T0.1/T6.3 余项，见 TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md）**
 **阶段 MFRS-MVU-CORE-MIRROR：人物/地点 stat_data 镜像 — complete（8.15.0 已发布 2026-08-12）**
+**阶段 MFRS-MVU-WRITEBACK：UpdateVariable 楼层变量写回根因调查 — in progress（2026-08-15；尚未实施源码修复）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 8.15.0 已发布并推送（2026-08-12）：人物/地点每轮从 stat_data 镜像入库（只补不覆盖），新增 `verify-mfrs-mvu-core-mirror.mjs` 门禁；开发版卡已同步 8.15.0 CDN（commit `4b9fb58` 已 push，无需 rebase——交接文档描述的 rebase 场景不成立，fast-forward 推送完成）。源码 `0c72915` → bot bundle `4a850a3` → release `39aacf7` + tag `v8.15.0` |
-| 我要去哪里？ | 双卡审计余项：T7.3 桌面真页回归 / T7.4 移动端真页回归 / T6.3 干净角色列表重新导入验收（T0.1 基线证据仅剩归档意义，可降级）；或仓库卫生清理（`.tmp-chrome-*` / 调试日志等被 git 跟踪杂物） |
+| 我在哪里？ | v8.15.14 已正式发布；v8.15.12 native seedRows 冷启动修复、v8.15.14 HUD API 实例重绑和 T7.3/T7.4 真页回归均已完成。当前调查 idx4 起 `<UpdateVariable>` 未正确写入目标楼层变量的问题，尚未修改源码。 |
+| 我要去哪里？ | 先证明 MagVarUpdate 0.171.0 的 `parseMessage/getMvuData/replaceMvuData` 真实契约和目标楼层定位，再实施最小修复、补幂等/连续 delta 门禁并做零 LLM 成本真页复放；之后才做 T6.3 正式 PNG 干净导入与复苏终局人工验收。 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
-| 我学到了什么？ | 极简流程无需 worktree/会话锁/身份验证；F5 任务链 + 固定 5510 + YAML 切换即可；提交前必须清 dev 污染 YAML 与 webpack 噪声 dist；CDN_REF 用 SHA 不用 @main；bundle workflow autotag 每次递增 lightweight tag，RELEASE_VERSION 发布前先查远程 tag 避开已打号 |
-| 我做了什么？ | 发布 8.15.0（人物/地点 stat_data 镜像 + mvu-core-mirror 门禁，真页验收通过）；8.14.15 双卡审计修复（生命周期/复苏终局/开局分叉/发布目录净化 + R1/R2/R3）；维护期修复 CDP 9225 调试链路并统一 MCP 配置 |
+| 我学到了什么？ | MVU 当前故障不是协议保存或清洗失败；`ctx.chat[idx].variables['0']` 与 `Mvu.getMvuData()` 的观测不一致，运行时 API 契约与消息索引/ID 映射必须先证实。开发提交前仍须清 dev YAML 与 watch dist；正式版本号须避开 bot 自动 tag。 |
+| 我做了什么？ | 发布 v8.15.12 native 冷启动 seedRows 修复与 v8.15.14 HUD API 实例重绑；完成桌面/390px 真页回归；收集 MVU 写回失败的楼层变量、原始协议和运行时 `parseMessage` 初步证据，但尚未实施修复。 |
 
 ## 硬约束（勿破）
 
@@ -155,12 +166,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.14.15**（tag `v8.14.15`；CDN_REF `85cb68233d793b634ed0a57662a5235442d31ac2`；cache `v81415_20260726_01`；release `ddd39a1`；bot bundle `85cb682`）。`v8.14.16`/`v8.14.17` 为 CI bot 自动 bundle 标签，非手动发布 |
-| 仓库运行时基线 | 本地/远端 `main` 与 `origin/main` 同步（HEAD `d63a5bd`）；发布 dist 以 CI bot bundle 为权威 |
+| 发布内容版本 | **8.15.14**（release `5cadd8a7`；CDN_REF `1850150eb303729510f779be50d85f6e0befb11b`；cache `v81514_20260814_01`）。后续 `v8.15.15`/`v8.15.16` 为 CI bot 自动 bundle 标签，不代表新的正式内容版本。 |
+| 仓库运行时基线 | 本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`；本地落后 1 个仅含 7 个 dist 文件的 bot bundle。当前开发模式 YAML 与 watch dist 有本地改动，业务源码干净。发布 dist 仍以 CI bot bundle 为权威。 |
 | 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
-| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 9225 调试 Chrome（CDP）；6620/6621 默认关闭，仅显式启用 |
-| 下一阶段 | 双卡审计缺陷修复 T0–T7 余项（待授权）；或仓库卫生清理（误跟踪的临时/大文件） |
+| 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync · 6621 webpack HMR · 9225 调试 Chrome（CDP/MCP） |
+| 下一阶段 | MFRS-MVU-WRITEBACK：证明 API 契约与楼层定位 → 最小根因修复 → 连续 delta/幂等门禁 → 零 LLM 成本真页复放。 |
 
 ## 各阶段
 
