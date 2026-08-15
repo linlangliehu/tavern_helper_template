@@ -2,14 +2,15 @@
 
 ## 进度同步（2026-08-15）
 
-### P7 v2 修复与终局验收（A-D 完成；P8/P9 延期）
+### P7 v2 修复与终局验收（A-D 完成）+ P8/P9 已发布 v8.15.20
 
 - [x] A1：恢复并锁定最新真实 AI 楼层证据
 - [x] A2：确认 `风险值 25+60=85`、`总复苏风险 25+65=90`
 - [x] B1–B5：补真实复杂 fixture、权威路径/幂等门禁、mutation proof 与完整门禁
 - [x] C1–C7：隔离测试点、预置 99、真实 99→100 终局、正文/UI/持久化验收
 - [x] D1–D2：修正 P6 结论并同步三份规划文件
-- **明确延期：** P8 提交准备、P9 新版本发布本轮不执行。
+- [x] P8：退出开发模式、还原 watch dist、按白名单精确提交
+- [x] P9：两阶段发布 v8.15.20（含 CDN smoke 200×7）
 
 ### P7 完成定义证据
 
@@ -18,15 +19,21 @@
 - 正文：包含 `【模拟结局】`，无 `<choices>`，无继续正常行动表述。
 - UI：HUD 显示风险 100%/100%、厉鬼复苏；消息动作按钮 0。
 - 持久化：重复事件、250/1000/2500ms 重试、saveChat、reload 后终态不变。
-- 生命周期：尾随空 AI 楼层回溯到相邻协议楼层；协议按 swipe+hash 只应用一次并转存 raw extra。
+- 生命周期：尾随空 AI 楼层回溯到相邻协议楼层并自动删除；协议按 swipe+hash 只应用一次并转存 raw extra。
 
-- **当前正式版本：v8.15.18**（release `890cb29e`；CDN bundle/tag `6f7f87b1`；`CDN_REF=6f7f87b1818c5de371b0d71d374b4a79ad1affef`；cache `v81518_20260815_01`）。
-- **已完成：** v8.15.18 第一轮 JSONPatch fallback；P7 又发现其无法覆盖 `Mvu.parseMessage` 部分成功/部分丢 delta 的场景。本地 v2 已改为 raw applier 唯一权威，并完成 A-D 全部验收。
-- **当前工作焦点：** P7 A-D 已关单；等待后续明确指令执行 P8 提交准备与 P9 新版本发布。
-- **已确认事实：** 完整 36 根混合协议、真实 25→90、真实 99→100 终局、尾随空 AI 楼层、协议清洗、指纹幂等、HUD 和 reload 持久化均已验证。
+- **当前正式版本：v8.15.20**（release `b89565c7`；CDN bundle/tag `9199ff39`；`CDN_REF=9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；cache `v81520_20260815_01`）。跳过 8.15.19（已被 bot autotag 占用）。
+- **已完成：** v8.15.18 第一轮 JSONPatch fallback 被 P7 证明不完整；v8.15.20 改为 raw applier 唯一权威，A-D 验收与两阶段发布均已完成。
+- **当前工作焦点：** 无在途发布任务。剩余可选收尾见「发布后可选收尾」。
+- **已确认事实：** 完整 36 根混合协议、真实 25→90、真实 99→100 终局、尾随空 AI 楼层、协议清洗、指纹幂等、HUD 和 reload 持久化均已验证；CDN 7 个脚本 200，产物含权威写回与占位楼清理日志。
 - **根因结论：** `Mvu.parseMessage` 不能作为 `<UpdateVariable><JSONPatch>` 权威解析器；在真实 `规律推理记录.是否触发规律` 数据下可出现 replace/insert 生效而 delta 丢失。
-- **实现状态：** 本地业务源码与门禁已修改且全绿，尚未提交；开发模式 YAML 与 watch dist 仍存在，P8 前必须按提交白名单清理。
-- **Git 快照：** 本地 `main@890cb29e`；tracked 改动包含 v2 hotfix、两份门禁、三份规划文件，以及开发模式 YAML/watch dist；未跟踪本地 MCP、诊断和 handoff 文件不得进入提交。
+- **Git 快照：** 本地与远端同为 `main@b89565c7`；工作区干净。`.agent-artifacts/` 已加入 `.gitignore`。
+
+### 发布后可选收尾
+
+- [ ] 干净导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 到 SillyTavern，用真实对话确认 delta 累积与终局表现
+- [ ] R1：把「`Mvu.parseMessage` 不可作为 JSONPatch 权威解析器」写入 `.cursor/rules/mvu变量框架.mdc`
+- [ ] R2：为 `verify-mfrs-raw-status-fallback.mjs` 补一条真实「多轮连续 delta」fixture
+- [ ] R3：决定隔离验收聊天 `P7终局验收-v2-20260815-90-1786790203145` 是保留为证据还是清理
 
 ## 第二轮审查缺陷修复任务清单（2026-07-26）
 
@@ -158,14 +165,14 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 WORKFLOW-SIMPLIFY：废弃 MFRS + 极简单人流程 — complete（2026-07-19，commit `3841c30` 已推送）**
 **阶段 DUAL-CARD-AUDIT-FIX：双卡审计缺陷修复 — complete（8.14.15 已发布，R1/R2/R3 已修复；T7.3/T7.4 已于 2026-08-14 完成，仅 T0.1/T6.3 余项，见 TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md）**
 **阶段 MFRS-MVU-CORE-MIRROR：人物/地点 stat_data 镜像 — complete（8.15.0 已发布 2026-08-12）**
-**阶段 MFRS-MVU-WRITEBACK：UpdateVariable 权威写回与真实终局验收 — A-D complete（2026-08-15；P8/P9 延期）**
+**阶段 MFRS-MVU-WRITEBACK：UpdateVariable 权威写回与真实终局验收 — complete（2026-08-15；已发布 v8.15.20）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 正式版仍为 v8.15.18；本地 v2 权威写回、复杂门禁、真实 99→100 终局、空楼层定位与协议指纹幂等均完成且未提交。 |
-| 我要去哪里？ | 下一步仅在用户明确继续后执行 P8：退出开发模式、清 dist/YAML 噪声、审查白名单；再执行 P9 两阶段发布与正式 PNG 干净导入。 |
+| 我在哪里？ | v8.15.20 已发布：raw applier 成为 JSONPatch 唯一权威，空占位楼生命周期修复已进入正式卡；CDN 7 个脚本 200。 |
+| 我要去哪里？ | 无在途发布任务。可选收尾：正式 PNG 干净导入验收、把 parseMessage 结论写入 `.cursor/rules`、补多轮连续 delta fixture。 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
 | 我学到了什么？ | 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta。协议必须由本地 applier 权威应用，并按 swipe+协议指纹保证恢复扫描与重试幂等。 |
 | 我做了什么？ | 完成真实复杂 fixture、四类 mutation proof、真实 25→90 与 99→100、五项终局写集、正文/UI/协议清洗、空楼层恢复及 save/reload 幂等验证。 |
@@ -184,12 +191,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.15.18**（release `890cb29e`；CDN_REF/tag `6f7f87b1818c5de371b0d71d374b4a79ad1affef`；cache `v81518_20260815_01`）。本地 v2 修复尚未发布。 |
-| 仓库运行时基线 | 本地 `main@890cb29e`；当前处于开发模式，本地 v2 业务源码/门禁/规划文件已修改，另有 dev YAML 与 watch dist 噪声。P8/P9 未执行。 |
+| 发布内容版本 | **8.15.20**（release `b89565c7`；CDN_REF/tag `9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；cache `v81520_20260815_01`）。跳过 8.15.19（bot autotag 占用）。 |
+| 仓库运行时基线 | 本地与远端同为 `main@b89565c7`，生产模式，工作区干净。`.agent-artifacts/` 已 ignore。 |
 | 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
 | 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync · 6621 webpack HMR · 9225 调试 Chrome（CDP/MCP） |
-| 下一阶段 | P8 提交准备（待用户后续指令）→ P9 两阶段发布与正式 PNG 干净导入（待明确发布授权）。 |
+| 下一阶段 | 无在途发布任务；可选收尾见「发布后可选收尾」。 |
 
 ## 各阶段
 

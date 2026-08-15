@@ -34,6 +34,26 @@
 - 最终门禁：`verify-mfrs-mvu-hotfix-regressions`、`verify-mfrs-raw-status-fallback`、`pnpm verify:mfrs-source-gates`、`pnpm verify:mfrs-gates` 全绿；仅 release PNG 的 `CDN_REF 落后 HEAD 1 个非 bundle 提交` 预期 warning。
 - 工作区状态（未提交、未清理）：hotfix 源码、两份门禁脚本、三份规划文件、开发模式 `index.yaml`、watch `dist`；未跟踪 `.agent-artifacts/`、`.vscode/mcp.json`、两份 handoff 文档。
 
+## 2026-08-15 P8 提交准备（完成）
+
+- `pnpm stop-dev`：停 2 个 watch/静态服务进程，`index.yaml` 从 localhost:5510 还原为 `CDN@4a850a30`。
+- 还原 watch 产出的 `dist/.../hotfix-generation-ended-listeners/index.js`（该文件近三次提交均为 `[bot] bundle`，由 CI 维护）。
+- 生产模式下重跑 `verify:mfrs-source-gates` 13 项全绿。
+- 逐文件复核 diff：hotfix 无调试日志/临时 guard 残留；门禁脚本新增均为收紧断言；规划文档无凭据类内容。
+- 分文件精确提交（未用 `git add .`）：hotfix 源码 + 两份门禁 + 三份规划文件，共 6 文件 +614/−120。
+
+## 2026-08-15 P9 两阶段发布 v8.15.20（完成）
+
+- **版本号决策**：远端最新 tag 已到 `v8.15.19`（`ef37f9f4 [bot] bundle`），8.15.19 不可用。查证 autotag 行为：每次 `[bot] bundle` 严格 +1，人工提交从不带 tag，v8.15.14/15/16/17/18/19 全部落在 bundle commit 上。故沿用 v8.15.18 模式，取 `RELEASE_VERSION = 8.15.20`，由阶段 1 push 触发的 bot tag 充当正式 tag，**不手动 `git tag`**。
+- **前置**：发现 behind 1（bot 期间推了 `ef37f9f4`），已 rebase，P8 提交由 `863d7dc9` 重放为 `c14580e7`。发布版头像仍被跟踪（R2 无回归），开发版 YAML 无开发模式污染。
+- **未跟踪项处置**：`.vscode/mcp.json` 与两份 HANDOFF 补跟踪（HANDOFF 顶部加「历史快照，已归档」标注，指明基线以 task_plan/progress 为准）；`.agent-artifacts/` 加入 `.gitignore:63`。
+- **阶段 1**：`RELEASE_VERSION 8.15.18→8.15.20`、`CDN_CACHE_VERSION v81520_20260815_01`、开发版 `index.yaml` 版本行、`CHANGELOG.md` 新条目；`CDN_REF` 保持旧值。门禁全绿后提交 `2170200f`，push `ef37f9f4..2170200f`。
+- **阶段 2**：CI 产出 `9199ff39 [bot] bundle` 并打 tag `v8.15.20`。ff-only 同步后 `CDN_REF → 9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；`publish-card --dry-run --no-bundle` 干跑确认 15 处链接替换；`publish-card --dist-no-build` 正式生成（G1 校验 dist == CDN_REF 通过）。
+- **门禁**：`pnpm verify:mfrs-gates` 14 项全绿，release PNG `version=8.15.20, refs=7, cache=8, regex=33, scripts=8`，**CDN_REF warning 已消失**。
+- **残留排查**：发布版 `index.yaml` 中 `localhost`/`127.0.0.1`/`@main`/旧 SHA `6f7f87b1`/旧 cache `v81518`/更旧 `4a850a30`+`v81500` 全部 0 命中；新 SHA 7 次、新 cache 8 次、`版本: '8.15.20'`。
+- **发布**：提交 `b89565c7`（constants + 发布版 index.yaml + 发布版 PNG），push `9199ff39..b89565c7`。tag `v8.15.20` 已由 bot 创建，未手动打 tag。
+- **CDN smoke**：7 个脚本 URL 全部 200。拉取 hotfix 产物核对（生产构建已混淆函数名，改用字符串字面量判定）：`已通过本地 JSONPatch 写回消息变量`、`跳过重复应用`、`已删除协议回复后的尾随空 AI 占位楼`、`_mfrs_raw_protocol_applied_hash/at` 均存在。产物中 `parseMessage` 仅剩 1 处，位于 catch 的日志文案 `[Hotfix] MVU parseMessage 执行失败`，不在写回路径上。
+
 ## 2026-08-15 P6 零 LLM 模拟验收（范围修正：简化 smoke 完成）
 
 ### 验收环境
