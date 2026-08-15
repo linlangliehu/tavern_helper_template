@@ -2,16 +2,15 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
-## [v8.15.17] - 2026-08-15
+## [v8.15.18] - 2026-08-15
 
 ### 修复
-- **MVU JSONPatch 写回修复**：修复 idx4 起 `<UpdateVariable><JSONPatch>` 未正确写入楼层 MVU 变量的问题。根因：`Mvu.parseMessage`（MagVarUpdate @0.171.0）内部 `le()` 只能解析原生宏指令格式（`/set /delta` 等），无法识别本项目使用的 `<UpdateVariable><JSONPatch>` 格式，导致每次返回 `clone(oldData)`，`hasSameStatData=true`，历史实现静默跳过所有写回。修复：`parseMessage` 未产生有效变化时 fallback 到本地 `applyRawProtocolToMvuData` 直接应用 JSONPatch。
-- **delta 重试幂等修复**：修复 `scheduleMvuWriteBackRetries` 无条件触发导致 delta patch 在每次重试时重复累积（如风险值变为 4×10=40）的问题。`parseAndWriteMvuMessage` 改为返回 `Promise<boolean>`，仅在 `verified=false` 时安排重试。
+- **MVU `<UpdateVariable>` 楼层写回根因修复**：`Mvu.parseMessage` 只能解析 MagVarUpdate 原生宏指令格式（`/set`、`/delta`），无法识别本项目使用的 `<UpdateVariable><JSONPatch>` 格式，导致每次返回 `clone(oldData)`，`hasSameStatData=true` 后静默跳过，所有楼层变量永不更新。修复方式：当 `parseMessage` 未产生有效变化时 fallback 到本地 `applyRawProtocolToMvuData` 直接应用 JSONPatch。
+- **MVU 写回重试幂等门禁**：验收中发现 `runGenerationEndedPipeline` 原先无条件调用 `scheduleMvuWriteBackRetries`，每次重试都重新 apply delta → 重复累积。修复：`parseAndWriteMvuMessage` 改为返回 `Promise<boolean>`，仅 `verified=false` 时返回 `true`，调用方按返回值决定是否调度重试。
 
 ### 验证
-- ✅ P3 幂等门禁 8 条（S1/S2/S3/I1/I2/B1/B2/B3）全绿
-- ✅ P4 真页验收：delta +10 写回正确（risk=10），3 次重试后不重复累积（risk 保持 10）
-- ✅ 源码门禁全绿（`pnpm verify:mfrs-source-gates` 全部通过）
+- ✅ 门禁全绿（新增 P3-S1/S2/S3/I1/I2/B1/B2/B3 共 8 条断言）
+- ✅ 真页零 LLM 成本验收（注入测试协议块，delta +10 写回正确，3 次重试后不重复累积＝10，幂等通过）
 
 ## [v8.15.14] - 2026-08-14
 
