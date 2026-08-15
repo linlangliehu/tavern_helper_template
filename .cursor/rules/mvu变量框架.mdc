@@ -74,6 +74,18 @@ $(() => {
 
 为此, MVU 提供了 `parseMessage` 接口用于自行解析包含 MVU 命令的消息字符串. 它读取旧变量情况和一个消息字符串, 得到更新后的变量结果.
 
+:::warning
+**`Mvu.parseMessage` 不可作为 `<UpdateVariable><JSONPatch>` 的权威解析器.**
+
+在真实生产数据下, 当 `stat_data` 中存在 `规律推理记录.是否触发规律` 等复杂嵌套字段时, `Mvu.parseMessage` 可能出现 **replace / insert 操作生效但 delta 操作被静默丢弃** 的问题. 这会导致变量部分更新, 产生"看似成功"的假象——数值型字段未累加, 但结构型字段已替换, 最终变量状态不正确.
+
+**根因**: `Mvu.parseMessage` 的 JSONPatch 解析在特定字段结构下不能保证 delta 操作的完整执行; 它适用于简单的变量更新命令解析, 但不适用于包含混合 op (delta + replace + insert) 的复杂 JSONPatch 协议.
+
+**正确做法**: 如果需要权威地解析和应用 `<UpdateVariable><JSONPatch>` 协议, 必须使用自行实现的本地 raw applier (参考 `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/raw-status-writer.ts` 中的 `applyRawProtocolToMvuData`), 并通过协议指纹 (swipe id + 协议哈希) 保证幂等性.
+
+**经验来源**: 神秘复苏模拟器 v8.15.18 → v8.15.20 修复周期 (P5–P7), 在真实 99→100 终局验收中发现 delta 丢失导致风险值无法正确累积.
+:::
+
 ```ts
 await waitGlobalInitialized('Mvu');
 

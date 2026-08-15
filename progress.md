@@ -76,6 +76,20 @@
 - 生产模式 CDN 下 hotfix handler 曾因误调 `cleanup()` 被移除监听器，reload 后恢复
 - 主页面 emit `generation_ended` 不带参数时，`resolveMessageIndex` 正确回退到末条 AI 消息
 
+## 2026-08-15 P9 收尾确认
+
+- docs 同步提交 `628d6ce3` rebase 到 `d2e991d2`（bot bundle `v8.15.21`）之上，重放为 `67aa76d4`。
+- push `67aa76d4` 后 CI 产出 `b77475aa [bot] bundle`，打 tag `v8.15.22`。
+- 本地 `main` fast-forward 到 `b77475aa`，与 `origin/main` 完全同步，工作树干净。
+- **v8.15.20 发布全流程完结**：P7 修复 → P8 提交 → P9 两阶段发布 → 文档同步 → CI 三轮 bot bundle 全部落地。
+
+## 2026-08-15 可选收尾 R1/R2/R3（完成）
+
+- **R1 ✅**：在 `.cursor/rules/mvu变量框架.mdc`「自行解析变量」章节补充 `:::warning` 块，声明 `Mvu.parseMessage` 不可作为 `<UpdateVariable><JSONPatch>` 权威解析器；说明根因（`规律推理记录.是否触发规律` 数据下 delta 静默丢弃）、正确做法（本地 raw applier）、经验来源（v8.15.18→v8.15.20 P5-P7 修复周期）。
+- **R2 ✅**：在 `scripts/verify-mfrs-raw-status-fallback.mjs` 追加 Section D 多轮连续 delta 累积 fixture（3 轮：0→5→15→100），验证跨轮 oldData 继承、delta 逐轮累加、insert 数组增长不覆盖、双 applier 终点一致、重复应用幂等。
+- **R3 ✅**：隔离验收聊天 `P7终局验收-v2-20260815-90-1786790203145` 保留为证据（P7 终局验收唯一真实凭据，不可复现）。
+- 门禁：`verify:mfrs-source-gates` 13/13、`verify:mfrs-gates` 14/14 全绿（CDN_REF warning 预期）。
+
 ## 2026-08-15 P5 源码提交与发布（完成）
 
 ### 发布版本

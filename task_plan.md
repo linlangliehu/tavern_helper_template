@@ -30,10 +30,10 @@
 
 ### 发布后可选收尾
 
-- [ ] 干净导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 到 SillyTavern，用真实对话确认 delta 累积与终局表现
-- [ ] R1：把「`Mvu.parseMessage` 不可作为 JSONPatch 权威解析器」写入 `.cursor/rules/mvu变量框架.mdc`
-- [ ] R2：为 `verify-mfrs-raw-status-fallback.mjs` 补一条真实「多轮连续 delta」fixture
-- [ ] R3：决定隔离验收聊天 `P7终局验收-v2-20260815-90-1786790203145` 是保留为证据还是清理
+- [ ] 干净导入 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` 到 SillyTavern，用真实对话确认 delta 累积与终局表现（推迟到下次发版）
+- [x] R1：把「`Mvu.parseMessage` 不可作为 JSONPatch 权威解析器」写入 `.cursor/rules/mvu变量框架.mdc`
+- [x] R2：为 `verify-mfrs-raw-status-fallback.mjs` 补一条真实「多轮连续 delta」fixture
+- [x] R3：隔离验收聊天 `P7终局验收-v2-20260815-90-1786790203145` 保留为证据（不可复现的终局验收凭据）
 
 ## 第二轮审查缺陷修复任务清单（2026-07-26）
 
