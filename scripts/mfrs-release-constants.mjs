@@ -4,7 +4,7 @@
  */
 export const REPO = 'linlangliehu/tavern_helper_template';
 // v8.15.18: MVU JSONPatch 写回修复——parseMessage fallback 到本地 JSONPatch + 幂等重试门禁
-export const CDN_REF = '1850150eb303729510f779be50d85f6e0befb11b';
+export const CDN_REF = '6f7f87b1818c5de371b0d71d374b4a79ad1affef';
 export const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 export const CDN_CACHE_VERSION = 'v81518_20260815_01';
 export const RELEASE_VERSION = '8.15.18';
