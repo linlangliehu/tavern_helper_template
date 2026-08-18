@@ -15,15 +15,6 @@
 资源：半截红色鬼烛仍可用
 下一步：先验证媒介，避免直接暴露身体
 
-<choices>
-[
-  {"key":"A","text":"点燃红色鬼烛，沿楼层边缘寻找退路。","risk":{"death":6,"revive":0,"source":"资源消耗换取隔绝"}},
-  {"key":"B","text":"闭眼贴墙静听，记录敲门声和老人移动的间隔。","risk":{"death":4,"revive":0,"source":"低暴露观察"}},
-  {"key":"C","text":"主动与老人对视，测试盲鬼的眼睛能否压制它。","risk":{"death":20,"revive":15,"source":"主动用鬼直面源头"}},
-  {"key":"D","text":"自定义行动","risk":{"death":0,"revive":0,"source":"自定义行动"}}
-]
-</choices>
-
 <UpdateVariable>
 <JSONPatch>
 [

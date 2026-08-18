@@ -10,16 +10,16 @@
     <style>
 /* 神秘复苏模拟器·自定义开局 v2.0 - 参考蛊真人布局 + 暗红恐怖主题 */
 #mfrs-welcome-root {
-  --bg-primary: #0a0404;
-  --bg-secondary: #150808;
-  --bg-tertiary: #200c0c;
-  --border-main: rgba(160, 40, 40, 0.5);
-  --border-light: rgba(160, 40, 40, 0.25);
-  --text-main: #e0d0d0;
-  --text-sub: #b89090;
-  --text-muted: #8a6565;
-  --accent: #c83838;
-  --accent-dim: #902828;
+  --bg-primary: var(--SmartThemeBodyColor, #0a0404);
+  --bg-secondary: color-mix(in srgb, var(--SmartThemeBodyColor, #0a0404) 85%, #000);
+  --bg-tertiary: color-mix(in srgb, var(--SmartThemeBodyColor, #0a0404) 70%, #000);
+  --border-main: color-mix(in srgb, var(--SmartThemeTextColor, #e0d0d0) 30%, transparent);
+  --border-light: color-mix(in srgb, var(--SmartThemeTextColor, #e0d0d0) 15%, transparent);
+  --text-main: var(--SmartThemeTextColor, #e0d0d0);
+  --text-sub: color-mix(in srgb, var(--SmartThemeTextColor, #e0d0d0) 75%, transparent);
+  --text-muted: color-mix(in srgb, var(--SmartThemeTextColor, #e0d0d0) 50%, transparent);
+  --accent: var(--SmartThemeQuoteColor, #c83838);
+  --accent-dim: color-mix(in srgb, var(--SmartThemeQuoteColor, #c83838) 60%, transparent);
   --shadow: rgba(0, 0, 0, 0.7);
   --shadow-light: rgba(0, 0, 0, 0.4);
   --radius: 12px;
@@ -46,7 +46,7 @@
   background: var(--bg-secondary);
   border: 2px solid var(--border-main);
   border-radius: var(--radius);
-  box-shadow: 0 24px 64px var(--shadow), 0 0 48px rgba(160, 40, 40, 0.08);
+  box-shadow: 0 24px 64px var(--shadow), 0 0 48px color-mix(in srgb, var(--accent) 8%, transparent);
   position: relative;
 }
 
@@ -54,7 +54,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(800px 500px at 20% 10%, rgba(160, 40, 40, 0.06), transparent 60%);
+  background: radial-gradient(800px 500px at 20% 10%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%);
   border-radius: var(--radius);
   pointer-events: none;
 }
@@ -76,7 +76,7 @@
   font-weight: 900;
   letter-spacing: 0.18em;
   color: var(--accent);
-  text-shadow: 0 0 24px rgba(200, 56, 56, 0.4), 0 2px 6px var(--shadow);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 40%, transparent), 0 2px 6px var(--shadow);
 }
 
 .mfrs-subtitle {
@@ -130,7 +130,7 @@
 
 .mfrs-badge:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(160, 40, 40, 0.2);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 /* 折叠面板 */
@@ -249,7 +249,7 @@
 .mfrs-input:focus, .mfrs-select:focus, .mfrs-textarea:focus {
   border-color: var(--accent);
   background: rgba(42, 28, 28, 0.9);
-  box-shadow: 0 0 0 3px rgba(200, 56, 56, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 .mfrs-input::placeholder, .mfrs-textarea::placeholder {
@@ -471,7 +471,7 @@
 }
 
 .mfrs-dropdown-item:hover {
-  background: rgba(160, 40, 40, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .mfrs-dropdown-item-name {
@@ -492,7 +492,7 @@
   width: 100%;
   padding: 16px 24px;
   margin-top: 32px;
-  background: linear-gradient(135deg, rgba(160, 40, 40, 0.8), rgba(120, 30, 30, 0.8));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 80%, transparent), color-mix(in srgb, var(--accent-dim) 80%, transparent));
   border: 1px solid var(--border-main);
   border-radius: 10px;
   color: var(--text-main);
@@ -500,13 +500,13 @@
   font-weight: 900;
   letter-spacing: 0.24em;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(160, 40, 40, 0.3);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 30%, transparent);
   transition: transform 0.2s var(--easing), box-shadow 0.2s var(--easing);
 }
 
 .mfrs-submit:hover {
   transform: translateY(-3px);
-  box-shadow: 0 14px 36px rgba(160, 40, 40, 0.4);
+  box-shadow: 0 14px 36px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .mfrs-submit:active {
@@ -519,7 +519,7 @@
 }
 
 .mfrs-dropdown-menu::-webkit-scrollbar-thumb {
-  background: rgba(160, 40, 40, 0.4);
+  background: color-mix(in srgb, var(--accent) 40%, transparent);
   border-radius: 5px;
 }
 

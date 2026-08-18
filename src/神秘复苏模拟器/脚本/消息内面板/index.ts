@@ -2968,6 +2968,7 @@ body.${HUD_ST_UI_CLASS} #floatingPrompt,
 body.${HUD_ST_UI_CLASS} #cfgConfig,
 body.${HUD_ST_UI_CLASS} #logprobsViewer,
 body.${HUD_ST_UI_CLASS} #completion_prompt_manager_popup,
+body.${HUD_ST_UI_CLASS} #completion_prompt_manager_popup_edit,
 body.${HUD_ST_UI_CLASS} .popup,
 body.${HUD_ST_UI_CLASS} .dialogue_popup,
 body.${HUD_ST_UI_CLASS} .acu-v2-app__shell,
@@ -3724,7 +3725,8 @@ function isHudCoverableExternalOverlay(el: HTMLElement): boolean {
   if (el.id === 'extensionsMenu' || el.classList?.contains('options-content')) return false;
   const cs = hostWindow.getComputedStyle?.(el);
   if (!cs) return false;
-  if (cs.position !== 'fixed' && cs.position !== 'absolute') return false;
+  // #completion_prompt_manager_popup_edit 默认 position:static，需跳过 position 门槛才能被检测到
+  if (cs.position !== 'fixed' && cs.position !== 'absolute' && el.id !== 'completion_prompt_manager_popup_edit') return false;
   if (cs.pointerEvents === 'none') return false;
   const z = parseCssZIndex(cs.zIndex);
   // 无 z 或低于壳(10000) 才可能被盖；>=10080 视为已抬/已安全（不再重复 yield）
@@ -3736,7 +3738,7 @@ function isHudCoverableExternalOverlay(el: HTMLElement): boolean {
   if (el.matches?.(ST_OPEN_DRAWER_SELECTOR)) return true;
   if (el.classList?.contains('popup') || el.classList?.contains('dialogue_popup')) return true;
   if (el.id === 'floatingPrompt' || el.id === 'cfgConfig' || el.id === 'logprobsViewer') return true;
-  if (el.id === 'completion_prompt_manager_popup') return true;
+  if (el.id === 'completion_prompt_manager_popup' || el.id === 'completion_prompt_manager_popup_edit') return true;
   if (el.getAttribute?.('role') === 'dialog' || el.getAttribute?.('aria-modal') === 'true') {
     // 排除 ST 核心树内的伪 dialog
     if (isHudStCoreLayoutElement(el)) return false;
@@ -3775,6 +3777,7 @@ function collectHudCoverableOverlays(): HTMLElement[] {
         '#cfgConfig',
         '#logprobsViewer',
         '#completion_prompt_manager_popup',
+        '#completion_prompt_manager_popup_edit',
         '[role="dialog"]',
         '[aria-modal="true"]',
       ].join(', '),

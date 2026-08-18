@@ -1169,5 +1169,85 @@
       }
     },
     "orderNo": 13
+  },
+  "sheet_rubbing_collection": {
+    "uid": "sheet_rubbing_collection",
+    "name": "拓本图录",
+    "sourceData": {
+      "note": "适配开局厉鬼“鬼拓本”，记录鬼拓本接触厉鬼规律、受害痕迹、灵异媒介或鬼域残留后拓印的规律及其融合/分解状态。\n\n【列定义】\n列1=row_id\n列2=来源厉鬼 source_ghost\n列3=拓印载体 rubbing_carrier\n列4=规律类型 law_type\n列5=拓印内容 rubbing_content\n列6=融合状态 fusion_status\n列7=分解状态 decompose_status\n列8=拓本页码 page_code\n列9=完整度 completeness\n列10=复写污染 copy_pollution\n列11=可见摘要 public_summary\n\n【规则】\n本表只写玩家可见、已拓印已确认的规律片段。同类规律融合时更新融合状态和拓印内容（合并后的进阶规律）；异类规律分解时更新分解状态，分解后的灵异墨迹可用于提高鬼拓本恐怖程度。不能把隐藏完整杀人规律、源头位置或最终关押方案提前写出。",
+      "initNode": "开局通常保持空表；若玩家设定已拓印一段可见规律，可插入。",
+      "deleteNode": "AI 默认不得删除拓本图录；仅当用户在沉浸“记忆”界面二次确认后，由数据库前端专用业务 API 物理删除，普通 table-change plan 与其他脚本仍禁删。删除前应在事件纪要或复写污染留下原因。",
+      "updateNode": "按来源厉鬼和规律类型更新拓印内容、融合状态、分解状态、完整度和复写污染。",
+      "insertNode": "鬼拓本接触厉鬼规律、受害痕迹、灵异媒介或鬼域残留拓印时新增。\nSQL示例: INSERT INTO rubbing_collection (row_id, source_ghost, rubbing_carrier, law_type, rubbing_content, fusion_status, decompose_status, page_code, completeness, copy_pollution, public_summary) VALUES ((SELECT COALESCE(MAX(row_id), 0) + 1 FROM rubbing_collection), '敲门鬼', '纸面', '声音类', '听到敲门声后会被标记', '未融合', '未分解', 'R0001', '片段', '无', '拓印获得的敲门规律片段。');",
+      "ddl": "CREATE TABLE rubbing_collection ( -- 拓本图录\n  row_id INTEGER PRIMARY KEY, -- 行号\n  source_ghost TEXT NOT NULL, -- 来源厉鬼\n  rubbing_carrier TEXT NOT NULL, -- 拓印载体\n  law_type TEXT NOT NULL, -- 规律类型\n  rubbing_content TEXT NOT NULL CHECK(LENGTH(rubbing_content) <= 180), -- 拓印内容\n  fusion_status TEXT NOT NULL, -- 融合状态\n  decompose_status TEXT NOT NULL, -- 分解状态\n  page_code TEXT NOT NULL, -- 拓本页码\n  completeness TEXT NOT NULL, -- 完整度\n  copy_pollution TEXT NOT NULL CHECK(LENGTH(copy_pollution) <= 160), -- 复写污染\n  public_summary TEXT NOT NULL CHECK(LENGTH(public_summary) <= 180) -- 可见摘要\n);"
+    },
+    "content": [
+      [
+        "row_id",
+        "来源厉鬼",
+        "拓印载体",
+        "规律类型",
+        "拓印内容",
+        "融合状态",
+        "分解状态",
+        "拓本页码",
+        "完整度",
+        "复写污染",
+        "可见摘要"
+      ]
+    ],
+    "updateConfig": {
+      "uiSentinel": -1,
+      "contextDepth": -1,
+      "updateFrequency": -1,
+      "batchSize": -1,
+      "skipFloors": -1,
+      "groupId": 2
+    },
+    "exportConfig": {
+      "enabled": true,
+      "splitByRow": true,
+      "entryName": "拓本图录",
+      "entryType": "keyword",
+      "keywords": "来源厉鬼,规律类型,拓印载体",
+      "preventRecursion": true,
+      "injectionTemplate": "<拓本图录>\n$1\n</拓本图录>",
+      "extraIndexEnabled": true,
+      "extraIndexEntryName": "拓本图录索引",
+      "extraIndexColumns": [
+        "来源厉鬼",
+        "规律类型",
+        "融合状态",
+        "完整度"
+      ],
+      "extraIndexColumnModes": {
+        "来源厉鬼": "both",
+        "规律类型": "both",
+        "融合状态": "index_only",
+        "完整度": "index_only"
+      },
+      "extraIndexInjectionTemplate": "<拓本图录索引>\n$1\n</拓本图录索引>",
+      "entryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 999,
+        "order": 99949
+      },
+      "extraIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 1000,
+        "order": 99939
+      },
+      "fixedEntryPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 9999,
+        "order": 99949
+      },
+      "fixedIndexPlacement": {
+        "position": "at_depth_as_system",
+        "depth": 9999,
+        "order": 99939
+      }
+    },
+    "orderNo": 14
   }
 }

@@ -1,13 +1,14 @@
 {
-  "servers": {
-    "chrome-devtools": {
-      "type": "stdio",
-      "command": "pnpx",
-      "args": [
-        "chrome-devtools-mcp@1.6.0",
-        "--browser-url=http://127.0.0.1:9225",
-        "--no-usage-statistics"
-      ]
-    }
-  }
+	"inputs": [],
+	"servers": {
+		"chrome-devtools": {
+			"type": "stdio",
+			"command": "pnpx",
+			"args": [
+				"chrome-devtools-mcp@1.6.0",
+				"--browser-url=http://127.0.0.1:9225",
+				"--no-usage-statistics"
+			]
+		}
+	}
 }
