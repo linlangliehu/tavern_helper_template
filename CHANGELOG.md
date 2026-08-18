@@ -2,6 +2,11 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.26] - 2026-08-19
+
+### 修复
+- **HUD沉浸模式提示词编辑弹窗关闭按钮被遮挡**：`#completion_prompt_manager_popup_edit` 在 HUD 沉浸模式下被 `#mfrs-hud-shell`（z-index: 10000）遮挡，导致编辑弹窗底部的关闭/保存/重置按钮无法点击。修复方式：将 `#completion_prompt_manager_popup_edit` 加入 HUD yield 抬升选择器列表（z-index: 10080）、`isHudCoverableExternalOverlay` 白名单（放宽 position: static 门槛）和 `collectHudCoverableOverlays` 扫描列表，确保编辑弹窗打开时自动触发 yield 并被抬升到 HUD 之上。
+
 ## [v8.15.24] - 2026-08-18
 
 ### 新增
