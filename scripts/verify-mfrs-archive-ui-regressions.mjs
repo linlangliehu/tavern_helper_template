@@ -1024,14 +1024,9 @@ addCheck('phase5', 'C1-C4 hud information density', () => {
     'must read raw AI mes for UpdateVariable fallback',
   );
   assert.ok(
-    sources.message.includes('actionsSlot.innerHTML = buildActionsHtml(data, actionSuggestions)') ||
-      sources.message.includes('actionsSlot.innerHTML=buildActionsHtml(data,actionSuggestions)'),
-    'HUD actions slot must use the resolved action snapshot',
-  );
-  assert.ok(
     sources.message.includes('actionsHost.hidden = true') ||
       sources.message.includes('actionsHost.hidden=true'),
-    'HUD actions hidden when no real 行动建议',
+    'HUD actions hidden — options now handled by preset/frontend',
   );
   assert.equal(
     sources.message.includes('先观察走廊敲门声与教室反应') ||
@@ -1599,8 +1594,8 @@ addCheck('phase5', 'G8c HUD renders one raw-sensitive action snapshot', () => {
     refresh.includes('getPanelRenderKey(data, actionSuggestions)'),
     'HUD render key must receive the resolved action snapshot',
   );
-  assert.ok(refresh.includes('if (actionSuggestions.length > 0)'), 'visibility must use the resolved snapshot');
-  assert.ok(refresh.includes('buildActionsHtml(data, actionSuggestions)'), 'HTML must use the same resolved snapshot');
+  assert.ok(refresh.includes("actionsSlot.innerHTML = ''"), 'HUD actions slot cleared — options handled by preset/frontend');
+  assert.ok(refresh.includes('actionsHost.hidden = true'), 'HUD actions host hidden — options handled by preset/frontend');
   assert.equal(refresh.includes('hasRealActionSuggestions(data)'), false, 'HUD must not independently recollect actions');
 });
 addCheck('phase5', 'G9 archive selection resets on unmount/destroy/unregister', () => {

@@ -89,6 +89,18 @@ const CollectedRuleSchema = z.object({
   风险备注: z.string().default('无'),
 });
 
+const RubbingEntrySchema = z.object({
+  来源厉鬼: z.string().default('未确认'),
+  拓印载体: z.string().default('未确认'),
+  规律类型: z.string().default('未分类'),
+  拓印内容: z.string().default('未确认'),
+  融合状态: z.string().default('未融合'),
+  分解状态: z.string().default('未分解'),
+  拓本页码: z.string().default('未编目'),
+  完整度: z.string().default('未知'),
+  复写污染: z.string().default('无'),
+});
+
 const SupernaturalItemSchema = z.object({
   名称: z.string().default(''),
   类型: z.string().default('其他'),
@@ -223,6 +235,7 @@ export const Schema = z.object({
     }),
   收录档案: z.array(ArchivedGhostSchema).default([]),
   收录规律: z.array(CollectedRuleSchema).default([]),
+  拓本图录: z.array(RubbingEntrySchema).default([]),
   灵异资源: z
     .object({
       鬼拼图: z.array(z.string()).default([]),

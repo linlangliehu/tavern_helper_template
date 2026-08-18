@@ -74,7 +74,7 @@ assert.ok(
 
 const frontendConfig = loadFrontendConfig();
 assert.equal(frontendConfig.dashboardSlots.length, 7, 'dashboard slot config should stay externalized');
-assert.equal(frontendConfig.recallTableRules.length, 10, 'recall table rules should cover 10 key tables');
+assert.equal(frontendConfig.recallTableRules.length, 11, 'recall table rules should cover 11 key tables');
 assert.equal(frontendConfig.consistencyRules.length, 6, 'consistency rules should cover 6 core domains');
 for (const key of ['legacyDashboardKeywords', 'dashboardSlots', 'recallTableRules', 'consistencyRules']) {
   assert.ok(Array.isArray(frontendConfig[key]), `${key} should be an array in frontend-config`);

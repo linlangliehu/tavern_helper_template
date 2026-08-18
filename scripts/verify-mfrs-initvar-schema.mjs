@@ -134,7 +134,7 @@ function verifyInitvar(path, schema) {
 
 function main() {
   const schema = loadSchemaKeys();
-  assert.equal(Object.keys(schema.properties).length, 36, 'schema 根键数应为 36');
+  assert.equal(Object.keys(schema.properties).length, 37, 'schema 根键数应为 37');
   let checked = 0;
   for (const path of initvarPaths) {
     if (!existsSync(path)) {

@@ -144,7 +144,21 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 - 如 `chrome-devtools` 不可用，裸 CDP 工具 `node scripts/cdp-evaluate.mjs`（默认连 9225，可用 `--port` 覆盖）作为备用
 - SQL/数据库问题以 `SP·数据库 III -> 高级工具 -> 运行日志` 为权威入口
 - 不要主动调用 `triggerUpdate()` / 点"立即手动更新"，除非目标就是真实 AI 写库观察
+### AI 工具选择规则（强制）
 
+> **AI 必须通过 `chrome-devtools` MCP 连接 9225 端口的调试 Chrome 来操作酒馆页面。**
+> **禁止使用 VS Code 内置浏览器工具（`open_browser_page` 等）打开新浏览器访问 8000 端口。**
+
+原因：
+1. F5 启动的调试 Chrome（9225）有独立 user profile（`.vscode/chrome-debug-profile`），可能已登录酒馆、已导入角色卡、已加载开发脚本
+2. 内置浏览器是新开的空白实例，没有登录态、没有角色卡数据、没有开发环境上下文
+3. 两种浏览器指向同一 URL（`127.0.0.1:8000`）但运行状态完全不同，连接错误浏览器会导致误判
+
+正确操作流程：
+1. F5 启动开发环境（ Chrome 打开酒馆并登录）
+2. AI 调用 `mcp_chrome_devtoo_list_pages` 确认 9225 Chrome 中的酒馆页面
+3. 用 `mcp_chrome_devtoo_take_snapshot` / `mcp_chrome_devtoo_evaluate_script` / `mcp_chrome_devtoo_click` 等工具操作该页面
+4. 若 `mcp_chrome_devtoo_*` 工具不可用，用裸 CDP：`node scripts/cdp-evaluate.mjs`（默认连 9225）
 ## 协作顺序
 
 1. 先只改开发版 `src/神秘复苏模拟器/`

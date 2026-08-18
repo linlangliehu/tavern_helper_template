@@ -571,3 +571,32 @@ G1 dist 新鲜度（C7 根因）；G2 initvar↔schema 结构校验（字符串 
 
 ---
 *新会话：先读 task_plan.md → 本文件 → progress.md → AUDIT_BUGFIX_BACKLOG.md*
+## 2026-08-17 · SP数据库 III 空表修复复验
+
+- 上轮已定位真正阻断点：`神秘复苏表格SQL_v1.json` 中 3 处未转义 ASCII 双引号令 JSON 导入失败，进而使 `MysteryDatabaseFrontend.applyTableChangePlan` 未注册。
+- 源文件已将三处改为中文弯引号；严格 `JSON.parse`、webpack bundle 语法与 5510 HTTP 产物静态检查均曾通过。
+- 彻底修复仍需当前角色卡运行时闭环：API 注册成功、`triggerUpdate()` 成功、表格产生数据行且左右面板不再显示“暂无记录”。
+- 开发角色卡源 `src/神秘复苏模拟器/index.yaml` 中 SP数据库 III 与数据库前端脚本均启用，且分别从 5510 的 `数据库/index.js` 与 `数据库前端/index.js` 动态加载；前端 iframe ID 与任务给定值一致。
+- 当前可用工具集中没有任何 `mcp_chrome_devtools_*`；仅有通用 MCP 资源枚举接口。按用户约束不能用 `agent-browser` 或原始 CDP 替代，因此当前浏览器闭环仍取决于指定工具恢复。
+- 工作区存在大量既有未提交业务改动；本轮只读复验必须保留，尤其不得回滚模板中新加的 `sheet_rubbing_collection`。
+- 模板严格 `JSON.parse` 成功。对象共有 16 个顶层项，其中 15 个为有效 sheet、另 1 个是非 sheet 元数据；模板自带 11 条种子数据（全局 1、玩家 1、行动建议 4、检定建议 5），目标档案表默认空表。
+- 5510 当前数据库前端 bundle 返回 HTTP 200（1,986,681 bytes），同时包含 `MysteryDatabaseFrontend`、`applyTableChangePlan`、两处修复后的中文引号，不含对应旧 ASCII 引号；marker 为 `phase164-4-0-final-baseline-6-28-p5-4-hotfix13-mvu-v859`。
+- 当前开发卡 PNG 的 `chara` 与 `ccv3` 均为版本 8.15.20；两份元数据都启用了目标脚本 ID，并通过 `127.0.0.1:5510` 动态加载数据库及数据库前端，因此无需重打卡即可在 iframe 重载后获取新 bundle。
+- 通用 MCP 资源列表为空，不能借资源接口读取浏览器状态。
+- `verify-mfrs-database-frontend-p3.mjs` 当前失败：召回表实际 11、断言仍期待 10。原因是用户新增拓本图录后门禁常量未同步；失败发生在静态表数量断言，不能据此判定 JSON 修复失效。
+- 项目 `.cursor/mcp.json` 正确配置 `chrome-devtools-mcp@1.6.0 --browser-url=http://127.0.0.1:9225`，项目规则也明确只能用该链路检查真页；问题是本会话运行器未暴露对应工具，不是仓库配置缺失。
+- `verify-table-change-adapter.mjs` 通过，数据库前端 dist 的 `node --check` 通过；通用 MCP 资源模板同样为空。
+- 端口实况正常：8000=`node server.js`，5510=`scripts/mfrs-dev-server-simple.mjs`，9225=指定 debug profile 的 Chrome，均处于监听状态。
+- 尝试用 SillyTavern 自身只读 `/api/characters/all` 获取 index 4：虽成功拿到 CSRF token，但角色接口返回 `Forbidden`，表明需要浏览器现有登录会话。为避免触碰 Chrome 凭据存储或绕过认证，停止该替代路径。
+- 工作区截图显示的是 SillyTavern 最近聊天/欢迎页，并未打开目标角色聊天或数据库面板；因此它不能作为修复后 UI 验收证据。
+- 截图时间为 2026-08-16 12:16，早于模板修复（2026-08-17 10:10:11）和 watch 产物（10:10:12），明确属于修复前证据；开发卡 PNG 也早于修复，但因其使用动态 5510 URL，不影响新 bundle 的加载。
+- SillyTavern 进程父链定位到 `E:\SillyTavern\Start.bat`；此前常见路径候选均未命中，现可只在该已确认实例的数据目录内查找实际导入卡。
+- 实际导入卡 `E:\SillyTavern\data\banyan\characters\神秘复苏模拟器.png` 写入时间 10:33（晚于 10:10 修复）。其 chara/ccv3 均为 8.15.20、8 个脚本；SP数据库 III 与数据库前端目标 ID 均启用并指向当前 5510 URL。
+- 该卡只有一个聊天文件，创建于 10:33、最后写入 10:39、约 395 KB，发生在修复后；可从该 JSONL 继续只读检查数据库持久化状态。
+- 修复后聊天包含 6 条 JSONL 记录。首条 AI checkpoint 已初始化全局/玩家/事件/线索/地点；第一轮真实 AI 回复后的 checkpoint 已持久化：事件2、线索2、地点1、事件纪要1、厉鬼档案2、人物1、灵异物品3、驾驭厉鬼1、收录档案1、行动建议4、检定建议5。
+- 第二轮真实 AI 回复后又写入 `delta`，目标为 `sheet_clues`、1 条 rowDelta。说明 ACU 自动填表不但成功启动，而且连续两轮都在持久化；最初的 `applyTableChangePlan` 未加载阻断已实际解除。
+- `chat_metadata.variables.display_data` 仍是空对象，但它不是当前 ACU 权威存储；实际权威数据位于每条 AI 消息的 `TavernDB_ACU_IsolatedData` checkpoint/delta。仅看 `display_data={}` 会产生假阴性。
+- 最新 clue delta 是 9 单元格 `upsert`，row_id 在上一 checkpoint 不存在，因此最新线索表从 2 行增至 3 行。
+- 六个直接对应问题面板的表均结构完整且非空：线索2（最新3）、厉鬼档案2、人物1、地点1、事件纪要1、收录档案1；每行列宽与表头一致，0 个全空行。
+- UI 源码的“暂无记录”仅在 `exportTableAsJson()` 无目标表或 `table.rows.length===0` 时返回；规则键与上述持久化 sheet 精确对应。因此数据条件已经满足，理论渲染不应再显示“暂无记录”。仍缺当前 DOM 的目视/截图证据。
+- 线索 checkpoint 中 2/2 行的 `可见性` 均为“玩家可见”；其余五个目标表没有额外可见性过滤。因此不存在“表有数据但全被 UI 过滤”的假修复。

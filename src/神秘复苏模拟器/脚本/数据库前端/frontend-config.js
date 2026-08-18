@@ -26,7 +26,7 @@
       '主角任务栏',
       '任务',
     ],
-    // recallTableRules 覆盖 10 个内容表，有意排除行动建议和检定建议（固定行数交互表，不参与 keyword 召回）。
+    // recallTableRules 覆盖 11 个内容表，有意排除行动建议和检定建议（固定行数交互表，不参与 keyword 召回）。
     recallTableRules: [
       {
         key: 'sheet_chronicle',
@@ -197,6 +197,34 @@
           hiddenHeaders: ['row_id'],
           textareaHeaders: ['规律内容', '风险备注', '可见摘要'],
           maxLengthHeaders: { 规律内容: 180, 风险备注: 160, 可见摘要: 180 },
+        },
+        injected: true,
+      },
+      {
+        key: 'sheet_rubbing_collection',
+        names: ['拓本图录'],
+        kind: '档案',
+        icon: 'fa-copy',
+        titleHeaders: ['来源厉鬼', '规律类型'],
+        summaryHeaders: ['拓印内容', '融合状态', '可见摘要'],
+        tagHeaders: ['拓印载体', '融合状态', '分解状态', '完整度'],
+        memoryEditor: {
+          tabLabel: '拓本图录',
+          fieldHeaders: [
+            '来源厉鬼',
+            '拓印载体',
+            '规律类型',
+            '拓印内容',
+            '融合状态',
+            '分解状态',
+            '拓本页码',
+            '完整度',
+            '复写污染',
+            '可见摘要',
+          ],
+          hiddenHeaders: ['row_id'],
+          textareaHeaders: ['拓印内容', '复写污染', '可见摘要'],
+          maxLengthHeaders: { 拓印内容: 180, 复写污染: 160, 可见摘要: 180 },
         },
         injected: true,
       },

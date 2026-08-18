@@ -332,7 +332,7 @@ for (const testCase of consistencyCases) {
 // 「规律推理记录.是否触发规律」字段。若未来又把 Mvu.parseMessage 当权威路径，
 // 两个 delta 会被静默丢弃，而 replace/insert 仍会造成“看似成功”的假象。
 const fullInitvarStatData = YAML.parse(readText(initvarPath));
-assert.equal(Object.keys(fullInitvarStatData).length, 36, 'P7 fixture must start from all 36 initvar root keys');
+assert.equal(Object.keys(fullInitvarStatData).length, 37, 'P7 fixture must start from all 37 initvar root keys');
 
 const realisticOldData = {
   initialized_lorebooks: { '变量更新规则': true },

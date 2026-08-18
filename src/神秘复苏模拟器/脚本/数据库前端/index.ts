@@ -211,6 +211,9 @@ const MEMORY_TABLE_ALIASES = new Set([
   'collected_rules',
   'sheet_collected_rules',
   '收录规律',
+  'rubbing_collection',
+  'sheet_rubbing_collection',
+  '拓本图录',
 ]);
 let acuFrontendRuntimePromise: Promise<void> | null = null;
 let nativeChatChangedSubscription: {
@@ -1156,7 +1159,7 @@ async function installCompatibilityApi() {
       if (!isMemoryTableName(plan?.table) || (plan?.action !== 'insertRow' && plan?.action !== 'updateCell')) {
         return makeMemoryDeleteResult(
           'INVALID_PLAN',
-          '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。',
+          '记忆工作台仅允许对事件纪要、收录档案、收录规律、拓本图录执行新增或修改。',
           plan?.table,
         );
       }
@@ -1167,7 +1170,7 @@ async function installCompatibilityApi() {
       if (!isMemoryTableName(plan?.table) || (plan?.action !== 'insertRow' && plan?.action !== 'updateCell')) {
         return makeMemoryDeleteResult(
           'INVALID_PLAN',
-          '记忆工作台仅允许对事件纪要、收录档案、收录规律执行新增或修改。',
+          '记忆工作台仅允许对事件纪要、收录档案、收录规律、拓本图录执行新增或修改。',
           plan?.table,
         );
       }
@@ -1185,7 +1188,7 @@ async function installCompatibilityApi() {
       if (!isMemoryTableName(table) || (typeof rowId !== 'string' && typeof rowId !== 'number')) {
         return makeMemoryDeleteResult(
           'INVALID_PLAN',
-          '只能从记忆工作台删除事件纪要、收录档案或收录规律的指定记录。',
+          '只能从记忆工作台删除事件纪要、收录档案、收录规律或拓本图录的指定记录。',
           table,
         );
       }

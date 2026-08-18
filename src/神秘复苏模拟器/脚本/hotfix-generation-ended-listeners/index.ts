@@ -1,4 +1,5 @@
 import * as protocolNormalizer from './protocol-normalizer.js';
+const { reconstructUpdateVariableFromSummary } = protocolNormalizer;
 import { applyRawProtocolToMvuData } from './raw-status-writer';
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 
@@ -980,6 +981,37 @@ async function runGenerationEndedPipeline(eventMessageId?: unknown) {
   // 1. 触发 MVU 解析；仅在写回未通过验证时才安排延迟重试，
   //    避免 delta patch 因重试幂等性缺失而在每次重试时重复累积。
   if (protocolMessageIndex >= 0) {
+    // 协议重建：如果消息中没有 <UpdateVariable>，尝试从【本轮摘要】重建
+    if (protocolMessage && protocolMessage.mes && !hasInternalProtocol(protocolMessage.mes)) {
+      try {
+        const messageOption: MessageVariableOption = {
+          type: 'message',
+          message_id: getMessageVariableId(protocolMessage, protocolMessageIndex),
+        };
+        const oldData = readOldMvuData(hostWindow, messageOption);
+        const reconstructed = reconstructUpdateVariableFromSummary(protocolMessage.mes, oldData);
+        if (reconstructed) {
+          // 快照原文（保留预设标签和原始内容）
+          snapshotRawProtocolMessage(protocolMessage as { mes?: string; extra?: Record<string, unknown> });
+          // 追加重建的协议块到消息末尾（不删除任何已有内容）
+          protocolMessage.mes = protocolMessage.mes + '\n' + reconstructed;
+          protocolMessage.extra = protocolMessage.extra || {};
+          protocolMessage.extra._mfrs_protocol_reconstructed = true;
+          if (typeof context?.saveChat === 'function') await context.saveChat();
+          console.info('[Hotfix] 已从【本轮摘要】重建协议块', {
+            messageIndex: protocolMessageIndex,
+            patchCount: (reconstructed.match(/"op"/g) || []).length,
+          });
+        } else {
+          console.warn('[Hotfix] 消息缺少 <UpdateVariable> 且无法从摘要重建', {
+            messageIndex: protocolMessageIndex,
+          });
+        }
+      } catch (error) {
+        console.error('[Hotfix] 协议重建失败', error);
+      }
+    }
+
     try {
       const needsRetry = await parseAndWriteMvuMessage(protocolMessageIndex, eventMessageId);
       if (needsRetry) scheduleMvuWriteBackRetries(protocolMessageIndex, eventMessageId);

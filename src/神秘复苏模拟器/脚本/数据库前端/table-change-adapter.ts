@@ -213,6 +213,9 @@ const MEMORY_MUTATION_TABLES = [
   'collected_rules',
   'sheet_collected_rules',
   '收录规律',
+  'rubbing_collection',
+  'sheet_rubbing_collection',
+  '拓本图录',
 ];
 
 export const tableChangePlanSchemaDescription = {
@@ -1772,7 +1775,7 @@ function makeInvalidMemoryDeleteResult(table?: string): TableChangeResult {
     errors: [
       {
         code: 'TABLE_DELETE_FORBIDDEN',
-        message: '人工确认删除仅限事件纪要、收录档案和收录规律。',
+        message: '人工确认删除仅限事件纪要、收录档案、收录规律和拓本图录。',
         table,
       },
     ],
@@ -1841,6 +1844,9 @@ const FORBIDDEN_DELETE_TABLES = [
   'collected_rules',
   'sheet_collected_rules',
   '收录规律',
+  'rubbing_collection',
+  'sheet_rubbing_collection',
+  '拓本图录',
   'clues',
   'sheet_clues',
   '线索',

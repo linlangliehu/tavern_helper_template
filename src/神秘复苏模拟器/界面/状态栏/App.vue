@@ -2362,23 +2362,37 @@ function handleReset() {
 }
 </script>
 
+<style>
+:root {
+  --mfrs-text: var(--SmartThemeTextColor, #d8dee5);
+  --mfrs-text-dim: color-mix(in srgb, var(--mfrs-text) 60%, transparent);
+  --mfrs-text-mute: color-mix(in srgb, var(--mfrs-text) 40%, transparent);
+  --mfrs-border: color-mix(in srgb, var(--mfrs-text) 25%, transparent);
+  --mfrs-bg: var(--SmartThemeBodyColor, rgba(0, 0, 0, 0.85));
+  --mfrs-accent: var(--SmartThemeQuoteColor, #ff3030);
+  /* 语义色保留 */
+  --mfrs-risk-death: #ff3030;
+  --mfrs-risk-revive: #ff8c00;
+  --mfrs-risk-safe: #4caf50;
+}
+</style>
 <style scoped>
 .horror-card {
   background:
-    radial-gradient(circle at 50% 0%, rgba(165, 0, 0, 0.24), transparent 34%),
-    radial-gradient(circle at 8% 18%, rgba(120, 0, 0, 0.16), transparent 24%),
-    linear-gradient(180deg, #130000 0%, #050000 45%, #020000 100%);
-  border: 2px solid #d00000;
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--mfrs-accent) 24%, transparent), transparent 34%),
+    radial-gradient(circle at 8% 18%, color-mix(in srgb, var(--mfrs-accent) 16%, transparent), transparent 24%),
+    var(--mfrs-bg);
+  border: 2px solid var(--mfrs-border);
   width: min(92vw, 760px);
   max-width: 760px;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.66),
-    0 0 34px rgba(155, 0, 0, 0.4),
+    0 0 10px color-mix(in srgb, var(--mfrs-accent) 66%, transparent),
+    0 0 34px color-mix(in srgb, var(--mfrs-accent) 40%, transparent),
     0 18px 45px rgba(0, 0, 0, 0.88),
-    inset 0 0 64px rgba(120, 0, 0, 0.34),
+    inset 0 0 64px color-mix(in srgb, var(--mfrs-risk-death) 34%, transparent),
     inset 0 0 120px rgba(0, 0, 0, 0.94);
 }
 
@@ -2398,7 +2412,7 @@ function handleReset() {
   position: absolute;
   top: 0;
   width: 3px;
-  background: linear-gradient(180deg, #5a0a0a, #2a0000 40%, transparent);
+  background: linear-gradient(180deg, var(--mfrs-bg), var(--mfrs-bg) 40%, transparent);
   z-index: 4;
   pointer-events: none;
   border-radius: 0 0 2px 2px;
@@ -2424,7 +2438,7 @@ function handleReset() {
   bottom: 0;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 100%),
-    repeating-linear-gradient(180deg, transparent 0 7px, rgba(120, 0, 0, 0.025) 8px, transparent 9px),
+    repeating-linear-gradient(180deg, transparent 0 7px, color-mix(in srgb, var(--mfrs-risk-death) 3%, transparent) 8px, transparent 9px),
     linear-gradient(45deg, transparent 48%, rgba(30, 5, 5, 0.1) 49%, rgba(30, 5, 5, 0.1) 51%, transparent 52%),
     radial-gradient(circle at 75% 18%, rgba(110, 15, 15, 0.08), transparent 22%);
   background-size:
@@ -2441,41 +2455,41 @@ function handleReset() {
   text-align: center;
   background:
     linear-gradient(180deg, rgba(100, 0, 0, 0.58) 0%, rgba(12, 0, 0, 0.72) 100%),
-    repeating-linear-gradient(90deg, transparent 0 14px, rgba(255, 0, 0, 0.045) 15px, transparent 16px);
-  border-bottom: 2px solid #d00000;
+    repeating-linear-gradient(90deg, transparent 0 14px, color-mix(in srgb, var(--mfrs-risk-death) 5%, transparent) 15px, transparent 16px);
+  border-bottom: 2px solid var(--mfrs-border);
   position: relative;
   z-index: 2;
   box-shadow:
-    0 0 16px rgba(255, 0, 0, 0.32),
+    0 0 16px color-mix(in srgb, var(--mfrs-risk-death) 32%, transparent),
     inset 0 0 32px rgba(0, 0, 0, 0.68);
 }
 
 .header-quote {
-  color: #8a5a5a;
+  color: var(--mfrs-text-dim);
   font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 11px;
   font-style: italic;
   line-height: 1.7;
   margin: 6px 0;
   opacity: 0.9;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.24);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 24%, transparent);
 }
 
 .quote-mark {
-  color: #ff1010;
+  color: var(--mfrs-risk-death);
   font-size: 14px;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.7);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 70%, transparent);
 }
 
 .main-title {
-  color: #ff1010;
+  color: var(--mfrs-risk-death);
   font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 25px;
   font-weight: 800;
   letter-spacing: 9px;
   text-shadow:
-    0 0 4px rgba(255, 0, 0, 0.98),
-    0 0 16px rgba(255, 0, 0, 0.76),
+    0 0 4px color-mix(in srgb, var(--mfrs-risk-death) 98%, transparent),
+    0 0 16px color-mix(in srgb, var(--mfrs-risk-death) 76%, transparent),
     0 0 38px rgba(160, 0, 0, 0.62),
     0 2px 4px rgba(0, 0, 0, 0.96);
   margin: 10px 0 8px;
@@ -2484,10 +2498,10 @@ function handleReset() {
 
 .title-deco-line {
   height: 2px;
-  background: linear-gradient(90deg, transparent, #8a0000 18%, #ff1010 50%, #8a0000 82%, transparent);
+  background: linear-gradient(90deg, transparent, var(--mfrs-border) 18%, var(--mfrs-risk-death) 50%, var(--mfrs-border) 82%, transparent);
   margin: 8px auto;
   max-width: 320px;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.58);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 58%, transparent);
 }
 
 .card-module {
@@ -2499,8 +2513,8 @@ function handleReset() {
     linear-gradient(180deg, rgba(18, 0, 0, 0.9), rgba(3, 0, 0, 0.82));
   border: 1px solid rgba(210, 0, 0, 0.74);
   box-shadow:
-    0 0 8px rgba(255, 0, 0, 0.24),
-    0 0 22px rgba(120, 0, 0, 0.16),
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 24%, transparent),
+    0 0 22px color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent),
     inset 0 0 24px rgba(0, 0, 0, 0.78),
     inset 0 0 42px rgba(70, 0, 0, 0.28);
 }
@@ -2512,9 +2526,9 @@ function handleReset() {
   left: 6px;
   right: 6px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.48), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mfrs-risk-death) 48%, transparent), transparent);
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.45);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 45%, transparent);
 }
 
 .module-header {
@@ -2526,30 +2540,30 @@ function handleReset() {
 }
 
 .module-icon {
-  color: #ff1010;
+  color: var(--mfrs-risk-death);
   font-size: 15px;
   text-shadow:
-    0 0 5px rgba(255, 0, 0, 0.95),
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 95%, transparent),
     0 0 14px rgba(180, 0, 0, 0.6);
 }
 
 .module-title {
-  color: #ff2020;
+  color: var(--mfrs-risk-death);
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 3px;
   white-space: nowrap;
   text-shadow:
-    0 0 5px rgba(255, 0, 0, 0.8),
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 80%, transparent),
     0 0 14px rgba(160, 0, 0, 0.55);
 }
 
 .module-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, #ff1010, rgba(120, 0, 0, 0.45), transparent);
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.48);
+  background: linear-gradient(90deg, var(--mfrs-risk-death), color-mix(in srgb, var(--mfrs-risk-death) 45%, transparent), transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 48%, transparent);
 }
 
 .module-body {
@@ -2569,12 +2583,12 @@ function handleReset() {
 }
 
 .field-label {
-  color: #9d7373;
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  text-shadow: 0 0 6px rgba(255, 0, 0, 0.22);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--mfrs-risk-death) 22%, transparent);
 }
 
 .field-label-long {
@@ -2583,17 +2597,17 @@ function handleReset() {
   text-transform: none;
   font-family: 'Noto Serif SC', 'SimSun', serif;
   font-style: italic;
-  color: #9a5c5c;
+  color: var(--mfrs-text-dim);
   line-height: 1.5;
   margin-bottom: 2px;
-  text-shadow: 0 0 6px rgba(255, 0, 0, 0.2);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--mfrs-risk-death) 20%, transparent);
 }
 
 .field-input {
   background: linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
   border: 1px solid rgba(180, 0, 0, 0.58);
   border-radius: 0;
-  color: #d6b0b0;
+  color: var(--mfrs-text-dim);
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 13px;
   padding: 8px 10px;
@@ -2606,19 +2620,19 @@ function handleReset() {
     background 0.2s;
   box-shadow:
     inset 0 0 14px rgba(0, 0, 0, 0.78),
-    0 0 5px rgba(255, 0, 0, 0.16);
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent);
 }
 
 .field-input:focus {
-  border-color: #ff1010;
+  border-color: var(--mfrs-risk-death);
   background: linear-gradient(180deg, rgba(30, 0, 0, 0.96), rgba(6, 0, 0, 0.98));
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.46),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 46%, transparent),
     inset 0 0 10px rgba(80, 0, 0, 0.36);
 }
 
 .field-input::placeholder {
-  color: #5a3030;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
 }
 
@@ -2626,7 +2640,7 @@ function handleReset() {
   appearance: none;
   border: 1px solid rgba(180, 0, 0, 0.58);
   border-radius: 0;
-  color: #d6b0b0;
+  color: var(--mfrs-text-dim);
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
   padding: 8px 28px 8px 10px;
@@ -2645,19 +2659,19 @@ function handleReset() {
     0 0;
   box-shadow:
     inset 0 0 14px rgba(0, 0, 0, 0.78),
-    0 0 5px rgba(255, 0, 0, 0.16);
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent);
 }
 
 .field-select:focus {
-  border-color: #ff1010;
+  border-color: var(--mfrs-risk-death);
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.46),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 46%, transparent),
     inset 0 0 10px rgba(80, 0, 0, 0.36);
 }
 
 .field-select option {
-  background: #080000;
-  color: #d6b0b0;
+  background: var(--mfrs-bg);
+  color: var(--mfrs-text-dim);
 }
 
 .radio-group {
@@ -2670,7 +2684,7 @@ function handleReset() {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #8a6a6a;
+  color: var(--mfrs-text-dim);
   font-family: 'Noto Sans SC', sans-serif;
   font-size: 13px;
   cursor: pointer;
@@ -2680,41 +2694,41 @@ function handleReset() {
     box-shadow 0.2s,
     background 0.2s;
   padding: 6px 14px;
-  border: 1px solid rgba(120, 0, 0, 0.46);
+  border: 1px solid color-mix(in srgb, var(--mfrs-risk-death) 46%, transparent);
   border-radius: 0;
   background: linear-gradient(180deg, rgba(14, 0, 0, 0.86), rgba(3, 0, 0, 0.92));
   box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.72);
 }
 
 .radio-item:hover {
-  border-color: #d00000;
-  color: #caa0a0;
+  border-color: var(--mfrs-border);
+  color: var(--mfrs-text-dim);
   box-shadow:
-    0 0 8px rgba(255, 0, 0, 0.28),
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 28%, transparent),
     inset 0 0 16px rgba(80, 0, 0, 0.32);
 }
 
 .radio-item.active {
-  color: #ff3030;
-  border-color: #ff1010;
+  color: var(--mfrs-risk-death);
+  border-color: var(--mfrs-risk-death);
   background: linear-gradient(180deg, rgba(50, 0, 0, 0.86), rgba(8, 0, 0, 0.94));
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.58);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 58%, transparent);
   box-shadow:
-    0 0 8px rgba(255, 0, 0, 0.42),
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 42%, transparent),
     inset 0 0 18px rgba(100, 0, 0, 0.42);
 }
 
 .radio-item.active .radio-dot {
-  background: #ff1010;
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.86);
+  background: var(--mfrs-risk-death);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 86%, transparent);
 }
 
 .radio-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #180000;
-  border: 1px solid #9a0000;
+  background: var(--mfrs-bg);
+  border: 1px solid var(--mfrs-border);
   transition:
     background 0.2s,
     box-shadow 0.2s;
@@ -2724,7 +2738,7 @@ function handleReset() {
   background: linear-gradient(180deg, rgba(18, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
   border: 1px solid rgba(180, 0, 0, 0.58);
   border-radius: 0;
-  color: #d6b0b0;
+  color: var(--mfrs-text-dim);
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   font-size: 12px;
   padding: 8px 10px;
@@ -2740,29 +2754,29 @@ function handleReset() {
     background 0.2s;
   box-shadow:
     inset 0 0 14px rgba(0, 0, 0, 0.78),
-    0 0 5px rgba(255, 0, 0, 0.16);
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent);
 }
 
 .field-textarea:focus {
-  border-color: #ff1010;
+  border-color: var(--mfrs-risk-death);
   background: linear-gradient(180deg, rgba(30, 0, 0, 0.96), rgba(6, 0, 0, 0.98));
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.46),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 46%, transparent),
     inset 0 0 10px rgba(80, 0, 0, 0.36);
 }
 
 .field-textarea::placeholder {
-  color: #5a3030;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
 }
 
 .char-count {
   text-align: right;
-  color: #7a4040;
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', monospace;
   font-size: 9px;
   margin-top: 2px;
-  text-shadow: 0 0 5px rgba(255, 0, 0, 0.2);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 20%, transparent);
 }
 
 .item-list {
@@ -2775,11 +2789,11 @@ function handleReset() {
 .item-card {
   background: linear-gradient(180deg, rgba(18, 0, 0, 0.78), rgba(4, 0, 0, 0.9));
   border: 1px solid rgba(200, 0, 0, 0.58);
-  border-left: 4px solid #d00000;
+  border-left: 4px solid var(--mfrs-border);
   padding: 10px 12px;
   border-radius: 0;
   box-shadow:
-    0 0 8px rgba(255, 0, 0, 0.2),
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 20%, transparent),
     inset 0 0 18px rgba(0, 0, 0, 0.76);
 }
 
@@ -2791,17 +2805,17 @@ function handleReset() {
 }
 
 .item-number {
-  color: #ff3030;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', monospace;
   font-size: 10px;
   letter-spacing: 1px;
-  text-shadow: 0 0 7px rgba(255, 0, 0, 0.56);
+  text-shadow: 0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 56%, transparent);
 }
 
 .item-remove {
   background: rgba(10, 0, 0, 0.7);
   border: 1px solid rgba(180, 0, 0, 0.58);
-  color: #9a5555;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
   cursor: pointer;
   padding: 2px 6px;
@@ -2810,10 +2824,10 @@ function handleReset() {
 }
 
 .item-remove:hover {
-  color: #ff3030;
-  border-color: #ff1010;
+  color: var(--mfrs-risk-death);
+  border-color: var(--mfrs-risk-death);
   background: rgba(80, 0, 0, 0.42);
-  box-shadow: 0 0 8px rgba(255, 0, 0, 0.35);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 35%, transparent);
 }
 
 .item-add-row {
@@ -2826,7 +2840,7 @@ function handleReset() {
 .btn-add {
   background: linear-gradient(180deg, rgba(28, 0, 0, 0.76), rgba(4, 0, 0, 0.9));
   border: 1px dashed rgba(220, 0, 0, 0.72);
-  color: #ff3030;
+  color: var(--mfrs-risk-death);
   font-family: 'Noto Sans SC', sans-serif;
   font-size: 12px;
   font-weight: 700;
@@ -2835,17 +2849,17 @@ function handleReset() {
   border-radius: 0;
   transition: all 0.2s;
   letter-spacing: 1px;
-  text-shadow: 0 0 7px rgba(255, 0, 0, 0.45);
+  text-shadow: 0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 45%, transparent);
   box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.78);
 }
 
 .btn-add:hover:not(:disabled) {
-  border-color: #ff1010;
-  color: #ff6666;
+  border-color: var(--mfrs-risk-death);
+  color: var(--mfrs-risk-death);
   background: linear-gradient(180deg, rgba(70, 0, 0, 0.7), rgba(8, 0, 0, 0.95));
-  text-shadow: 0 0 10px rgba(255, 0, 0, 0.62);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 62%, transparent);
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.38),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 38%, transparent),
     inset 0 0 16px rgba(80, 0, 0, 0.42);
 }
 
@@ -2858,10 +2872,10 @@ function handleReset() {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #7a4a4a;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
   font-style: italic;
-  text-shadow: 0 0 5px rgba(255, 0, 0, 0.18);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 18%, transparent);
 }
 
 .eye-icon {
@@ -2880,23 +2894,23 @@ function handleReset() {
 .death-ended-banner {
   margin: 6px 20px 14px;
   padding: 16px 18px;
-  color: #ff1010;
+  color: var(--mfrs-risk-death);
   font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 24px;
   font-weight: 900;
   letter-spacing: 5px;
   text-align: center;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255, 0, 0, 0.22), transparent 58%),
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--mfrs-risk-death) 22%, transparent), transparent 58%),
     linear-gradient(180deg, rgba(45, 0, 0, 0.94), rgba(4, 0, 0, 0.98));
-  border: 2px solid #ff1010;
+  border: 2px solid var(--mfrs-risk-death);
   text-shadow:
-    0 0 5px rgba(255, 0, 0, 0.98),
-    0 0 18px rgba(255, 0, 0, 0.82),
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 98%, transparent),
+    0 0 18px color-mix(in srgb, var(--mfrs-risk-death) 82%, transparent),
     0 2px 0 rgba(0, 0, 0, 0.95);
   box-shadow:
-    0 0 18px rgba(255, 0, 0, 0.58),
-    inset 0 0 34px rgba(120, 0, 0, 0.62);
+    0 0 18px color-mix(in srgb, var(--mfrs-risk-death) 58%, transparent),
+    inset 0 0 34px color-mix(in srgb, var(--mfrs-risk-death) 62%, transparent);
 }
 
 .survival-strip {
@@ -2917,18 +2931,18 @@ function handleReset() {
   min-width: 0;
   padding: 10px 12px;
   background:
-    radial-gradient(circle at 0 0, rgba(255, 0, 0, 0.16), transparent 36%),
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent), transparent 36%),
     linear-gradient(180deg, rgba(28, 0, 0, 0.88), rgba(5, 0, 0, 0.96));
   border: 1px solid rgba(200, 0, 0, 0.66);
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.22),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 22%, transparent),
     inset 0 0 22px rgba(0, 0, 0, 0.76);
 }
 
 .survival-card-main {
-  border-color: #ff1010;
+  border-color: var(--mfrs-risk-death);
   box-shadow:
-    0 0 12px rgba(255, 0, 0, 0.42),
+    0 0 12px color-mix(in srgb, var(--mfrs-risk-death) 42%, transparent),
     inset 0 0 24px rgba(80, 0, 0, 0.42);
 }
 
@@ -2938,25 +2952,25 @@ function handleReset() {
 
 .survival-card-death.critical {
   background:
-    radial-gradient(circle at 0 0, rgba(255, 0, 0, 0.28), transparent 42%),
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--mfrs-risk-death) 28%, transparent), transparent 42%),
     linear-gradient(180deg, rgba(78, 0, 0, 0.92), rgba(8, 0, 0, 0.98));
-  border-color: #ff1010;
+  border-color: var(--mfrs-risk-death);
   box-shadow:
-    0 0 16px rgba(255, 0, 0, 0.68),
-    inset 0 0 30px rgba(120, 0, 0, 0.58);
+    0 0 16px color-mix(in srgb, var(--mfrs-risk-death) 68%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--mfrs-risk-death) 58%, transparent);
 }
 
 .survival-icon {
   grid-area: icon;
-  color: #ff2020;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', monospace;
   font-size: 24px;
-  text-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--mfrs-risk-death) 80%, transparent);
 }
 
 .survival-label {
   grid-area: label;
-  color: #9b6666;
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 1.6px;
@@ -2965,11 +2979,11 @@ function handleReset() {
 .survival-card strong {
   grid-area: value;
   min-width: 0;
-  color: #e8b8b8;
+  color: var(--mfrs-text-dim);
   font-size: 13px;
   line-height: 1.35;
   overflow-wrap: anywhere;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.26);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 26%, transparent);
 }
 
 .archive-layout {
@@ -2983,13 +2997,13 @@ function handleReset() {
   min-width: 0;
   padding: 16px 14px;
   background:
-    radial-gradient(circle at 50% 34%, rgba(255, 0, 0, 0.18), transparent 38%),
-    repeating-linear-gradient(180deg, transparent 0 9px, rgba(255, 0, 0, 0.035) 10px),
+    radial-gradient(circle at 50% 34%, color-mix(in srgb, var(--mfrs-risk-death) 18%, transparent), transparent 38%),
+    repeating-linear-gradient(180deg, transparent 0 9px, color-mix(in srgb, var(--mfrs-risk-death) 4%, transparent) 10px),
     linear-gradient(180deg, rgba(16, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
   border: 1px solid rgba(210, 0, 0, 0.72);
   text-align: center;
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.24),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 24%, transparent),
     inset 0 0 34px rgba(0, 0, 0, 0.86);
 }
 
@@ -2997,16 +3011,16 @@ function handleReset() {
   width: 48px;
   height: 48px;
   margin: 0 auto 8px;
-  color: #ff1515;
+  color: var(--mfrs-risk-death);
   font-size: 33px;
   line-height: 48px;
   text-shadow:
-    0 0 8px rgba(255, 0, 0, 0.96),
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 96%, transparent),
     0 0 24px rgba(160, 0, 0, 0.78);
 }
 
 .event-file-no {
-  color: #8b5c5c;
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', monospace;
   font-size: 9px;
   letter-spacing: 1.2px;
@@ -3015,21 +3029,21 @@ function handleReset() {
 
 .event-dossier-card h2 {
   margin: 0 0 12px;
-  color: #ff2828;
+  color: var(--mfrs-risk-death);
   font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 18px;
   letter-spacing: 2px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   text-shadow:
-    0 0 6px rgba(255, 0, 0, 0.72),
+    0 0 6px color-mix(in srgb, var(--mfrs-risk-death) 72%, transparent),
     0 0 18px rgba(160, 0, 0, 0.55);
 }
 
 .event-state-row {
   display: grid;
   gap: 6px;
-  color: #b78a8a;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -3049,24 +3063,24 @@ function handleReset() {
   padding: 10px;
   background:
     linear-gradient(180deg, rgba(14, 0, 0, 0.9), rgba(3, 0, 0, 0.96)),
-    repeating-linear-gradient(90deg, rgba(255, 0, 0, 0.05) 0 1px, transparent 1px 12px);
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--mfrs-risk-death) 5%, transparent) 0 1px, transparent 1px 12px);
   border: 1px solid rgba(170, 0, 0, 0.56);
   box-shadow:
     inset 0 0 18px rgba(0, 0, 0, 0.78),
-    0 0 7px rgba(255, 0, 0, 0.16);
+    0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent);
 }
 
 .archive-icon {
   width: 32px;
   height: 32px;
-  color: #ff2020;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', monospace;
   font-size: 19px;
   line-height: 32px;
   text-align: center;
   background: rgba(55, 0, 0, 0.42);
   border: 1px solid rgba(210, 0, 0, 0.58);
-  box-shadow: 0 0 9px rgba(255, 0, 0, 0.25);
+  box-shadow: 0 0 9px color-mix(in srgb, var(--mfrs-risk-death) 25%, transparent);
 }
 
 .archive-copy {
@@ -3075,7 +3089,7 @@ function handleReset() {
 
 .archive-copy span {
   display: block;
-  color: #9b6666;
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 9px;
   letter-spacing: 1.3px;
@@ -3084,11 +3098,11 @@ function handleReset() {
 
 .archive-copy strong {
   display: block;
-  color: #d8abab;
+  color: var(--mfrs-text-dim);
   font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
-  text-shadow: 0 0 7px rgba(255, 0, 0, 0.2);
+  text-shadow: 0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 20%, transparent);
 }
 
 .intel-list {
@@ -3104,25 +3118,25 @@ function handleReset() {
   gap: 8px;
   padding: 8px 10px;
   background: linear-gradient(180deg, rgba(12, 0, 0, 0.84), rgba(3, 0, 0, 0.92));
-  border: 1px solid rgba(155, 0, 0, 0.48);
+  border: 1px solid color-mix(in srgb, var(--mfrs-risk-death) 48%, transparent);
   box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.68);
 }
 
 .intel-card span {
-  color: #ff3030;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 11px;
   letter-spacing: 1px;
-  text-shadow: 0 0 7px rgba(255, 0, 0, 0.4);
+  text-shadow: 0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 40%, transparent);
 }
 
 .intel-card em {
-  color: #c8a0a0;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
   font-style: normal;
   line-height: 1.6;
   overflow-wrap: anywhere;
-  text-shadow: 0 0 5px rgba(255, 0, 0, 0.16);
+  text-shadow: 0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent);
 }
 
 .runtime-detail-grid {
@@ -3137,21 +3151,21 @@ function handleReset() {
   padding: 10px;
   background:
     linear-gradient(180deg, rgba(14, 0, 0, 0.88), rgba(3, 0, 0, 0.95)),
-    repeating-linear-gradient(180deg, rgba(255, 0, 0, 0.04) 0 1px, transparent 1px 10px);
+    repeating-linear-gradient(180deg, color-mix(in srgb, var(--mfrs-risk-death) 4%, transparent) 0 1px, transparent 1px 10px);
   border: 1px solid rgba(170, 0, 0, 0.52);
   box-shadow:
     inset 0 0 18px rgba(0, 0, 0, 0.76),
-    0 0 8px rgba(255, 0, 0, 0.15);
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 15%, transparent);
 }
 
 .runtime-detail-title {
   margin-bottom: 8px;
-  color: #ff3030;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1.2px;
-  text-shadow: 0 0 7px rgba(255, 0, 0, 0.38);
+  text-shadow: 0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 38%, transparent);
 }
 
 .runtime-detail-list {
@@ -3175,14 +3189,14 @@ function handleReset() {
 }
 
 .runtime-detail-head strong {
-  color: #e6b2b2;
+  color: var(--mfrs-text-dim);
   font-size: 12px;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .runtime-detail-head span {
-  color: #9b6666;
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 9px;
   line-height: 1.35;
@@ -3197,14 +3211,14 @@ function handleReset() {
 }
 
 .runtime-detail-item dt {
-  color: #ff3030;
+  color: var(--mfrs-risk-death);
   font-size: 10px;
   line-height: 1.45;
 }
 
 .runtime-detail-item dd {
   margin: 0;
-  color: #c8a0a0;
+  color: var(--mfrs-text-dim);
   font-size: 10px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -3214,7 +3228,7 @@ function handleReset() {
   min-height: 64px;
   display: grid;
   place-items: center;
-  color: #7c4a4a;
+  color: var(--mfrs-text-dim);
   font-size: 11px;
   border: 1px dashed rgba(150, 0, 0, 0.42);
   background: rgba(4, 0, 0, 0.5);
@@ -3244,13 +3258,13 @@ function handleReset() {
   padding: 18px 20px 16px;
   margin: 12px 14px 14px;
   background:
-    radial-gradient(circle at 50% 0%, rgba(120, 0, 0, 0.16), transparent 40%),
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent), transparent 40%),
     linear-gradient(180deg, rgba(18, 0, 0, 0.86), rgba(4, 0, 0, 0.94));
   border: 1px solid rgba(210, 0, 0, 0.72);
   position: relative;
   z-index: 2;
   box-shadow:
-    0 0 8px rgba(255, 0, 0, 0.24),
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 24%, transparent),
     inset 0 0 22px rgba(0, 0, 0, 0.72);
 }
 
@@ -3281,23 +3295,23 @@ function handleReset() {
 
 .btn-start {
   background: linear-gradient(180deg, rgba(95, 0, 0, 0.92), rgba(16, 0, 0, 0.98));
-  border: 1px solid #ff1010;
-  color: #ff3030;
+  border: 1px solid var(--mfrs-risk-death);
+  color: var(--mfrs-risk-death);
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.45),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 45%, transparent),
     inset 0 0 18px rgba(0, 0, 0, 0.72);
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.62);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 62%, transparent);
 }
 
 .btn-start:hover {
   background: linear-gradient(180deg, rgba(130, 0, 0, 0.96), rgba(24, 0, 0, 1));
-  border-color: #ff4a4a;
-  color: #ff7777;
+  border-color: var(--mfrs-risk-death);
+  color: var(--mfrs-risk-death);
   box-shadow:
-    0 0 16px rgba(255, 0, 0, 0.62),
-    0 0 30px rgba(120, 0, 0, 0.35),
-    inset 0 0 18px rgba(120, 0, 0, 0.42);
-  text-shadow: 0 0 10px rgba(255, 0, 0, 0.86);
+    0 0 16px color-mix(in srgb, var(--mfrs-risk-death) 62%, transparent),
+    0 0 30px color-mix(in srgb, var(--mfrs-risk-death) 35%, transparent),
+    inset 0 0 18px color-mix(in srgb, var(--mfrs-risk-death) 42%, transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 86%, transparent);
 }
 
 .btn-start:active {
@@ -3308,16 +3322,16 @@ function handleReset() {
 .btn-reset {
   background: linear-gradient(180deg, rgba(12, 0, 0, 0.82), rgba(2, 0, 0, 0.94));
   border: 1px solid rgba(150, 0, 0, 0.5);
-  color: #8a6262;
+  color: var(--mfrs-text-dim);
   box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.72);
 }
 
 .btn-reset:hover {
-  border-color: #d00000;
-  color: #c89a9a;
+  border-color: var(--mfrs-border);
+  color: var(--mfrs-text-dim);
   background: linear-gradient(180deg, rgba(35, 0, 0, 0.86), rgba(6, 0, 0, 0.96));
   box-shadow:
-    0 0 9px rgba(255, 0, 0, 0.28),
+    0 0 9px color-mix(in srgb, var(--mfrs-risk-death) 28%, transparent),
     inset 0 0 16px rgba(90, 0, 0, 0.34);
 }
 
@@ -3327,14 +3341,14 @@ function handleReset() {
 }
 
 .footer-warning {
-  color: #9a5d5d;
+  color: var(--mfrs-text-dim);
   font-family: 'Noto Serif SC', serif;
   font-size: 10px;
   font-style: italic;
   text-align: center;
   letter-spacing: 1px;
   line-height: 1.6;
-  text-shadow: 0 0 7px rgba(255, 0, 0, 0.28);
+  text-shadow: 0 0 7px color-mix(in srgb, var(--mfrs-risk-death) 28%, transparent);
 }
 
 .options-module {
@@ -3343,9 +3357,9 @@ function handleReset() {
   background:
     radial-gradient(circle at 50% 0%, rgba(130, 0, 0, 0.18), transparent 32%),
     linear-gradient(180deg, rgba(20, 0, 0, 0.92), rgba(3, 0, 0, 0.96));
-  border: 2px solid #e00000;
+  border: 2px solid var(--mfrs-border);
   box-shadow:
-    0 0 10px rgba(255, 0, 0, 0.74),
+    0 0 10px color-mix(in srgb, var(--mfrs-risk-death) 74%, transparent),
     0 0 28px rgba(160, 0, 0, 0.38),
     inset 0 0 42px rgba(90, 0, 0, 0.46),
     inset 0 0 90px rgba(0, 0, 0, 0.86);
@@ -3353,8 +3367,8 @@ function handleReset() {
 
 .options-module::before {
   background:
-    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 0, 0, 0.032) 4px),
-    radial-gradient(circle at 12% 0%, rgba(255, 0, 0, 0.16), transparent 18%);
+    repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in srgb, var(--mfrs-risk-death) 3%, transparent) 4px),
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--mfrs-risk-death) 16%, transparent), transparent 18%);
 }
 
 .option-status-strip {
@@ -3365,12 +3379,12 @@ function handleReset() {
   padding: 10px 12px;
   max-width: 88%;
   background: linear-gradient(90deg, rgba(95, 0, 0, 0.72), rgba(22, 0, 0, 0.66));
-  border-left: 7px solid #d80000;
-  color: #9d8c8c;
+  border-left: 7px solid var(--mfrs-border);
+  color: var(--mfrs-text-dim);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 12px;
   letter-spacing: 1px;
-  text-shadow: 0 0 6px rgba(255, 0, 0, 0.24);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--mfrs-risk-death) 24%, transparent);
   box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.7);
 }
 
@@ -3380,46 +3394,46 @@ function handleReset() {
   justify-content: center;
   gap: 18px;
   margin: 4px 0 16px;
-  color: #ff1010;
+  color: var(--mfrs-risk-death);
   font-family: 'Noto Serif SC', 'SimSun', serif;
   font-size: 25px;
   font-weight: 800;
   letter-spacing: 5px;
   text-align: center;
   text-shadow:
-    0 0 4px rgba(255, 0, 0, 0.96),
-    0 0 15px rgba(255, 0, 0, 0.76),
+    0 0 4px color-mix(in srgb, var(--mfrs-risk-death) 96%, transparent),
+    0 0 15px color-mix(in srgb, var(--mfrs-risk-death) 76%, transparent),
     0 0 34px rgba(150, 0, 0, 0.64);
 }
 
 .warning-cross {
-  color: #f20000;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', monospace;
   font-size: 27px;
-  filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.88));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 88%, transparent));
 }
 
 .option-action-line {
   height: 14px;
   margin: 0 auto 14px;
   max-width: 90%;
-  background: linear-gradient(180deg, #111, #050505);
-  border: 1px solid #4d0000;
+  background: linear-gradient(180deg, var(--mfrs-bg), var(--mfrs-bg));
+  border: 1px solid var(--mfrs-border);
   box-shadow:
     inset 0 0 9px rgba(0, 0, 0, 0.95),
-    0 0 8px rgba(120, 0, 0, 0.42);
+    0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 42%, transparent);
 }
 
 .option-action-text {
   margin-bottom: 18px;
-  color: #ff1515;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 4px;
   text-align: center;
   text-shadow:
-    0 0 5px rgba(255, 0, 0, 0.94),
+    0 0 5px color-mix(in srgb, var(--mfrs-risk-death) 94%, transparent),
     0 0 18px rgba(180, 0, 0, 0.7);
 }
 
@@ -3442,7 +3456,7 @@ function handleReset() {
   padding: 16px 18px;
   background: linear-gradient(180deg, rgba(42, 0, 0, 0.88), rgba(7, 0, 0, 0.96));
   border: 1px solid rgba(210, 0, 0, 0.76);
-  color: #d8abab;
+  color: var(--mfrs-text-dim);
   cursor: pointer;
   text-align: left;
   font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
@@ -3454,7 +3468,7 @@ function handleReset() {
     box-shadow 0.22s ease,
     transform 0.12s ease;
   outline: none;
-  text-shadow: 0 0 6px rgba(255, 0, 0, 0.2);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--mfrs-risk-death) 20%, transparent);
   box-shadow:
     inset 0 0 24px rgba(0, 0, 0, 0.78),
     0 0 8px rgba(180, 0, 0, 0.28),
@@ -3462,13 +3476,13 @@ function handleReset() {
 }
 
 .option-btn:hover {
-  border-color: #ff2020;
-  color: #ffe0e0;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.38);
+  border-color: var(--mfrs-risk-death);
+  color: var(--mfrs-text);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 38%, transparent);
   box-shadow:
     inset 0 0 28px rgba(90, 0, 0, 0.5),
-    0 0 12px rgba(255, 0, 0, 0.58),
-    0 0 26px rgba(120, 0, 0, 0.34);
+    0 0 12px color-mix(in srgb, var(--mfrs-risk-death) 58%, transparent),
+    0 0 26px color-mix(in srgb, var(--mfrs-risk-death) 34%, transparent);
 }
 
 .option-btn:active {
@@ -3481,12 +3495,12 @@ function handleReset() {
 .opt-key {
   flex-shrink: 0;
   min-width: 32px;
-  color: #ff3030;
+  color: var(--mfrs-risk-death);
   font-family: 'Share Tech Mono', monospace;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 1px;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.58);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 58%, transparent);
 }
 
 .opt-text {
@@ -3501,7 +3515,7 @@ function handleReset() {
   padding: 3px 8px;
   border: 1px solid rgba(170, 48, 48, 0.68);
   border-radius: 999px;
-  color: #d8b6a0;
+  color: var(--mfrs-text-dim);
   background: rgba(20, 0, 0, 0.72);
   font-size: 11px;
   line-height: 1.4;
@@ -3529,7 +3543,7 @@ function handleReset() {
 .opt-risk.risk-suicide {
   border-color: rgba(255, 36, 36, 0.86);
   color: #ff6b6b;
-  text-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--mfrs-risk-death) 50%, transparent);
 }
 
 .opt-risk.risk-revive {

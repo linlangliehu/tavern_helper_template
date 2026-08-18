@@ -335,7 +335,6 @@ for (const root of [mfrsRoot, releaseRoot]) {
     '「is_dead」为 true',
     '「主线进度.阶段状态」为「模拟结束」',
     '「行动建议」为 []',
-    '禁止输出 <choices>',
   ]) {
     assert.ok(variableRules.includes(required), `${root} revival terminal contract missing: ${required}`);
   }

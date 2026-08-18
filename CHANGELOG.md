@@ -2,6 +2,28 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.24] - 2026-08-18
+
+### 新增
+- **拓本图录表（sheet_rubbing_collection）**：适配开局厉鬼"鬼拓本"，记录鬼拓本接触厉鬼规律、受害痕迹、灵异媒介或鬼域残留后拓印的规律及其融合/分解状态。新增 schema `RubbingEntrySchema`、SQL 模板第 15 张表、数据库前端召回规则、记忆编辑器配置和 table-change-adapter 禁删保护。
+- **鬼档案核心机制**：玩家选择"鬼档案"作为开局厉鬼时，鬼档案自动出现在收录档案中（收录进度 100），收录进度达 100 后触发复苏转移（鬼档案死机，复苏代价由已收录厉鬼承担）。变量更新规则新增完整鬼档案机制章节。
+- **协议重建（从摘要重建 UpdateVariable）**：当 AI 消息缺少 `<UpdateVariable>` 但包含【本轮摘要】时，`reconstructUpdateVariableFromSummary` 自动从摘要提取位置、状态、风险数值并重建最小 JSONPatch 协议块，避免变量冻结。
+
+### 变更
+- **移除 `<choices>` 协议**：选项的显示和交互改由预设或前端负责，AI 不再输出 `<choices>` 标签。`<UpdateVariable>` 中仍必须 replace `/行动建议` 保持 MVU 变量一致。系统提示词、世界书规则（必须输出推演选项、数据库联动、事件 MVU 联动、死亡裁定、灵异判定路由、灵异对抗判定、短标签字段协议）、对话示例均已同步移除 `<choices>` 引用。
+- **界面美化精简**：移除全局主题覆盖（body/top-bar/send_form/left-nav/scrollbar/selection），改为 CSS 变量适配酒馆主题（`var(--SmartThemeTextColor)` / `var(--SmartThemeBodyColor)` / `var(--SmartThemeQuoteColor)`），仅保留 MFRS 专属组件样式。
+- **App.vue 状态栏主题适配**：硬编码颜色改为 `var(--mfrs-*)` 语义变量，复用酒馆主题色。
+- **欢迎页主题适配**：开局欢迎页 CSS 变量改为 `var(--SmartThemeBodyColor)` / `var(--SmartThemeTextColor)` / `var(--SmartThemeQuoteColor)` fallback。
+- **灵异物品格式规范化**：`/灵异资源/灵异物品` 每项必须为对象 `{ 名称, 类型, 剩余次数, 效果, 副作用 }`；黄金写入 `/灵异资源/黄金储备` 字符串。
+- **数据库联动规则**：14 表→15 表，新增拓本图录镜像职责；行动建议不再要求与 `<choices>` 一致，改为与 MVU `/行动建议` 一致。
+
+### 修复
+- **门禁同步**：recallTableRules 期望值 10→11、模板表 14→15、schema 根键 36→37、archive-ui actions 渲染断言更新（actions slot 清空 + actions host 隐藏，选项由预设负责）。
+
+### 验证
+- ✅ `pnpm verify:mfrs-source-gates` 13/13 全绿
+- ✅ 真页运行时验收：CDP 9225 确认 HUD 沉浸模式左右面板渲染正常（左栏 9 区块、右栏 7 导航、状态卡片完整、抽卡宿主就绪）
+
 ## [v8.15.20] - 2026-08-15
 
 ### 修复

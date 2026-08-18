@@ -464,6 +464,51 @@
         }
       }
     },
+    "拓本图录": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "来源厉鬼": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "拓印载体": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "规律类型": {
+            "default": "未分类",
+            "type": "string"
+          },
+          "拓印内容": {
+            "default": "未确认",
+            "type": "string"
+          },
+          "融合状态": {
+            "default": "未融合",
+            "type": "string"
+          },
+          "分解状态": {
+            "default": "未分解",
+            "type": "string"
+          },
+          "拓本页码": {
+            "default": "未编目",
+            "type": "string"
+          },
+          "完整度": {
+            "default": "未知",
+            "type": "string"
+          },
+          "复写污染": {
+            "default": "无",
+            "type": "string"
+          }
+        }
+      }
+    },
     "灵异资源": {
       "default": {
         "鬼拼图": [],

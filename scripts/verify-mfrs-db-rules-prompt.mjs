@@ -23,7 +23,7 @@ const template = JSON.parse(readFileSync(templatePath, 'utf8'));
 const rules = readFileSync(rulesPath, 'utf8');
 
 const sheets = Object.entries(template).filter(([key]) => key.startsWith('sheet_'));
-assert.equal(sheets.length, 14, `模板应有 14 张表，实际 ${sheets.length}`);
+assert.equal(sheets.length, 15, `模板应有 15 张表，实际 ${sheets.length}`);
 
 // ─────────────────────── 1. 中文列名全覆盖 ───────────────────────
 const missingColumns = [];

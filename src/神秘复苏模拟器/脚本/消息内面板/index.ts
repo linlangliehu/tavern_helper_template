@@ -789,6 +789,31 @@ const HUD_MEMORY_EDITOR_FALLBACK: HudMemoryEditorRule[] = [
       maxLengthHeaders: { 规律内容: 180, 风险备注: 160, 可见摘要: 180 },
     },
   },
+  {
+    key: 'sheet_rubbing_collection',
+    names: ['拓本图录'],
+    icon: 'fa-copy',
+    titleHeaders: ['来源厉鬼', '规律类型'],
+    tagHeaders: ['拓印载体', '融合状态', '分解状态', '完整度'],
+    memoryEditor: {
+      tabLabel: '拓本图录',
+      fieldHeaders: [
+        '来源厉鬼',
+        '拓印载体',
+        '规律类型',
+        '拓印内容',
+        '融合状态',
+        '分解状态',
+        '拓本页码',
+        '完整度',
+        '复写污染',
+        '可见摘要',
+      ],
+      hiddenHeaders: ['row_id'],
+      textareaHeaders: ['拓印内容', '复写污染', '可见摘要'],
+      maxLengthHeaders: { 拓印内容: 180, 复写污染: 160, 可见摘要: 180 },
+    },
+  },
 ];
 
 function getHudMemoryEditorRules(): HudMemoryEditorRule[] {
@@ -936,7 +961,7 @@ ${resourceBlock}
 `;
 }
 
-/** 构建「状态面板」tab 的 HTML（历史楼收束：顶栏 + 双列 + 拟办意见） */
+/** 构建「状态面板」tab 的 HTML（历史楼收束：顶栏 + 双列） */
 function buildStatusTabHtml(data: StatusData): string {
   const location = valueText(data.所在位置);
   const phase = valueText(_.get(data, '主线进度.当前阶段'));
@@ -950,10 +975,6 @@ function buildStatusTabHtml(data: StatusData): string {
 </div>
 <div class="mfrs-msg-dossier-history">
   ${buildDossierSectionsHtml(data)}
-</div>
-<div class="mfrs-msg-section mfrs-msg-section-full">
-  <div class="mfrs-msg-section-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>拟办意见</span></div>
-  <div class="mfrs-msg-actions">${buildActionsHtml(data)}</div>
 </div>
 `;
 }
@@ -1906,10 +1927,21 @@ function ensureHudStyle() {
   }
   style.textContent = `
 #${HUD_SHELL_ID} {
-  --mfrs-corpse-cyan: #3d6b66;
-  --mfrs-blood-red: #6b2a26;
-  --mfrs-bone-white: #c8c0ae;
-  --mfrs-ink: #0a0b0b;
+  /* 跟随酒馆主题 */
+  --mfrs-text: var(--SmartThemeTextColor, #d8dee5);
+  --mfrs-text-dim: color-mix(in srgb, var(--mfrs-text) 60%, transparent);
+  --mfrs-text-mute: color-mix(in srgb, var(--mfrs-text) 40%, transparent);
+  --mfrs-border: color-mix(in srgb, var(--mfrs-text) 25%, transparent);
+  --mfrs-bg: var(--SmartThemeBodyColor, rgba(10, 11, 11, 0.92));
+  /* 兼容旧引用 */
+  --mfrs-corpse-cyan: var(--mfrs-border);
+  --mfrs-blood-red: var(--mfrs-text-dim);
+  --mfrs-bone-white: var(--mfrs-text);
+  --mfrs-ink: var(--mfrs-bg);
+  /* 功能语义色保留 */
+  --mfrs-risk-death: #ff3030;
+  --mfrs-risk-revive: #ff8c00;
+  --mfrs-risk-safe: #4caf50;
   box-sizing: border-box;
   position: fixed;
   inset: 0;
@@ -1921,10 +1953,9 @@ function ensureHudStyle() {
     "top top top"
     "left center right";
   gap: 0;
-  color: var(--mfrs-bone-white);
-  background:
-    linear-gradient(180deg, rgba(12, 14, 14, 0.98), rgba(8, 10, 10, 0.96)),
-    var(--mfrs-ink);
+  color: var(--mfrs-text);
+  background: var(--mfrs-bg);
+  backdrop-filter: blur(var(--SmartThemeBlurStrength, 4px));
   border: 0;
   font-family: inherit;
 }
@@ -2553,6 +2584,28 @@ function ensureHudStyle() {
   font-size: 12px;
   line-height: 1.65;
   padding: 1px 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-item-row > b {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-item-type {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-left: 4px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(128,128,128,0.15);
+}
+#${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-item-row.is-depleted {
+  opacity: 0.4;
+  text-decoration: line-through;
 }
 #${HUD_SHELL_ID} .mfrs-hud-dossier .mfrs-msg-risk-copy {
   display: none;
@@ -4456,22 +4509,189 @@ function formatResourceField(value: unknown): string {
   return String(value);
 }
 
+/**
+ * 将灵异物品数组渲染为每项一行、带剩余次数/数量的 KV 行 HTML。
+ *
+ * 渲染策略：
+ * - 每个物品独立一行，格式「<span>名称</span><b>剩余次数</b>」
+ * - 剩余次数为数字时显示「×N」（如红色鬼烛 ×5）
+ * - 剩余次数为「未知」或缺失时只显示名称
+ * - 剩余次数为 0 时标记 depleted 样式（灰色删除线）
+ * - 类型标注为小标签附在名称后面（消耗品/装备/其他）
+ */
+/**
+ * 从字符串中解析物品名称和数量。
+ * 支持格式：
+ * - "红色鬼烛x3" / "红色鬼烛×3" / "红色鬼烛X3"
+ * - "红色鬼烛3根" / "黄金子弹5颗"
+ * - "3根" / "5发" / "1块"（纯数量+量词，无名称）
+ * - "黄金手枪" / "白色鬼烛"（无数量的只返回名称）
+ */
+function parseItemString(text: string): { name: string; qty: string | number | null } {
+  const trimmed = text.trim();
+  // 匹配 "名称xN" / "名称×N" / "名称XN" (大小写不敏感)
+  const xMatch = trimmed.match(/^(.+?)\s*[x×X]\s*(\d+)$/i);
+  if (xMatch) return { name: xMatch[1].trim(), qty: parseInt(xMatch[2], 10) };
+  // 匹配 "名称N根/颗/支/把/个/块/份" 等中文量词（名称在前）
+  const cnMatch = trimmed.match(/^(.+?)(\d+)\s*(?:根|颗|支|把|个|块|份|发|张|条|瓶|盒|包|件|柄)$/);
+  if (cnMatch) return { name: cnMatch[1].trim(), qty: parseInt(cnMatch[2], 10) };
+  // 匹配 "N根/颗/支..." 等纯数量+量词（无名称，可能有后缀如"5发子弹"）
+  const pureQtyMatch = trimmed.match(/^(\d+)\s*(?:根|颗|支|把|个|块|份|发|张|条|瓶|盒|包|件|柄)/);
+  if (pureQtyMatch) return { name: '', qty: parseInt(pureQtyMatch[1], 10) };
+  // 匹配 "N发子弹" / "N克" 等数量+单位描述（可能有后缀）
+  const qtyUnitMatch = trimmed.match(/^(\d+)\s*(?:发|克|枚|粒|卷|册|本|把|台|套|箱|捆|堆)/);
+  if (qtyUnitMatch) return { name: '', qty: parseInt(qtyUnitMatch[1], 10) };
+  // 无数量
+  return { name: trimmed, qty: null };
+}
+
+function buildItemsKvRows(itemsValue: unknown): string[] {
+  if (!Array.isArray(itemsValue)) {
+    // 兼容旧格式：灵异物品可能不是数组而是字符串
+    const text = formatResourceField(itemsValue);
+    return text ? [`<div class="mfrs-msg-kv"><span>物品</span><b>${_.escape(text)}</b></div>`] : [];
+  }
+  const rows: string[] = [];
+  for (const item of itemsValue) {
+    if (item === null || item === undefined) continue;
+
+    // 如果是字符串，尝试解析 "物品名x数量" 格式
+    if (typeof item === 'string') {
+      const parsed = parseItemString(item);
+      if (!parsed.name) continue;
+      let qtyHtml = '';
+      let itemClass = 'mfrs-msg-kv mfrs-msg-item-row';
+      if (typeof parsed.qty === 'number') {
+        if (parsed.qty === 0) itemClass += ' is-depleted';
+        qtyHtml = `<b>×${parsed.qty}</b>`;
+      }
+      rows.push(`<div class="${itemClass}"><span>${_.escape(parsed.name)}</span>${qtyHtml}</div>`);
+      continue;
+    }
+
+    const record = (typeof item === 'object' ? item : {}) as Record<string, unknown>;
+    const name = valueText(record.名称 ?? record.name ?? record.代号 ?? record.物品名, '');
+    if (!name) continue;
+    const type = valueText(record.类型 ?? record.type, '');
+    const remaining = record.剩余次数 ?? record.count ?? record.数量 ?? record.quantity ?? record.数量或状态;
+    const typeTag = type && type !== '其他' ? `<span class="mfrs-msg-item-type">${_.escape(type)}</span>` : '';
+    let qtyHtml = '';
+    let itemClass = 'mfrs-msg-kv mfrs-msg-item-row';
+    if (typeof remaining === 'number') {
+      if (remaining === 0) itemClass += ' is-depleted';
+      qtyHtml = `<b>×${remaining}</b>`;
+    } else if (typeof remaining === 'string' && remaining !== '' && remaining !== '未知') {
+      if (/^\d+$/.test(remaining)) {
+        const n = parseInt(remaining, 10);
+        if (n === 0) itemClass += ' is-depleted';
+        qtyHtml = `<b>×${n}</b>`;
+      } else {
+        // 尝试从 "3根"、"5发子弹"、"1块" 等格式中提取数字
+        const parsed = parseItemString(remaining);
+        if (typeof parsed.qty === 'number') {
+          if (parsed.qty === 0) itemClass += ' is-depleted';
+          qtyHtml = `<b>×${parsed.qty}</b>`;
+        } else {
+          // 无法解析数字时直接显示原文（如 "5发子弹"）
+          qtyHtml = `<b>${_.escape(remaining)}</b>`;
+        }
+      }
+    }
+    rows.push(
+      `<div class="${itemClass}"><span>${_.escape(name)}${typeTag}</span>${qtyHtml}</div>`,
+    );
+  }
+  return rows;
+}
+
+/**
+ * 黄金相关物品名称的匹配关键词（AI 可能用各种写法把黄金塞进物品数组）。
+ */
+const GOLD_ITEM_NAMES = ['黄金储备', '黄金', '鬼钱', '金块', '金条'];
+
+/** 判断物品名称是否为黄金类资源（而非灵异消耗品/武器）。 */
+function isGoldItem(name: string): boolean {
+  const lower = name.trim();
+  return GOLD_ITEM_NAMES.some(keyword => lower === keyword);
+}
+
+/**
+ * 从物品数组中提取黄金类物品的数量/状态文本，并返回过滤后的物品数组。
+ * 如果没有黄金类物品，返回 { items: itemsValue, goldFromItems: null }。
+ */
+function extractGoldFromItems(itemsValue: unknown): { items: unknown; goldFromItems: string | null } {
+  if (!Array.isArray(itemsValue)) return { items: itemsValue, goldFromItems: null };
+  const remainingItems: unknown[] = [];
+  let goldFromItems: string | null = null;
+  for (const item of itemsValue) {
+    let name = '';
+    if (typeof item === 'string') {
+      const parsed = parseItemString(item);
+      name = parsed.name;
+    } else if (typeof item === 'object' && item !== null) {
+      const record = item as Record<string, unknown>;
+      name = valueText(record.名称 ?? record.name ?? record.代号 ?? record.物品名, '');
+    }
+    if (isGoldItem(name)) {
+      // 提取数量或状态
+      if (typeof item === 'string') {
+        const parsed = parseItemString(item);
+        if (parsed.name && typeof parsed.qty === 'number') goldFromItems = `${parsed.qty}克`;
+        else if (parsed.name) goldFromItems = parsed.name;
+      } else if (typeof item === 'object' && item !== null) {
+        const record = item as Record<string, unknown>;
+        const remaining = record.剩余次数 ?? record.count ?? record.数量 ?? record.quantity ?? record.数量或状态;
+        if (remaining !== undefined && remaining !== null && valueText(remaining, '') !== '' && valueText(remaining, '') !== '未知') {
+          goldFromItems = valueText(remaining, '');
+        }
+      }
+      // 不加入 remainingItems（已合并到黄金行）
+    } else {
+      remainingItems.push(item);
+    }
+  }
+  return { items: remainingItems, goldFromItems };
+}
+
 function buildHudResourceSectionsHtml(data: StatusData): string {
   const resourceRoot = data.灵异资源;
   const puzzle = formatResourceField(
     _.get(data, '灵异资源.鬼拼图') ?? _.get(data, '灵异资源.拼图') ?? _.get(data, '鬼拼图'),
   );
-  const items = formatResourceField(_.get(data, '灵异资源.灵异物品') ?? data.灵异物品 ?? _.get(data, '持有物品'));
-  const gold = formatResourceField(
+  const rawItemsValue = _.get(data, '灵异资源.灵异物品') ?? data.灵异物品 ?? _.get(data, '持有物品');
+  let gold = formatResourceField(
     _.get(data, '灵异资源.黄金储备') ??
       _.get(data, '灵异资源.黄金') ??
       _.get(data, '灵异资源.鬼钱') ??
       _.get(data, '黄金'),
   );
+
+  // 从物品数组中提取黄金类物品，合并到黄金行
+  const { items: filteredItems, goldFromItems } = extractGoldFromItems(rawItemsValue);
+  const effectiveGold = goldFromItems || gold;
+
+  // 物品逐行渲染（带数量/剩余次数）
+  const itemRows = buildItemsKvRows(filteredItems);
+
+  // 黄金：合并后展示
+  const goldReady = effectiveGold && effectiveGold !== '未准备' && effectiveGold !== '';
+  const goldRow = effectiveGold
+    ? goldReady
+      ? (() => {
+          // 尝试从 "100克"、"3块" 等格式中提取数字显示为 ×N
+          const parsed = parseItemString(effectiveGold);
+          if (typeof parsed.qty === 'number' && !parsed.name) {
+            return `<div class="mfrs-msg-kv mfrs-msg-item-row"><span>黄金<span class="mfrs-msg-item-type">资源</span></span><b>×${parsed.qty}</b></div>`;
+          }
+          return `<div class="mfrs-msg-kv mfrs-msg-item-row"><span>黄金<span class="mfrs-msg-item-type">资源</span></span><b>${_.escape(effectiveGold)}</b></div>`;
+        })()
+      : `<div class="mfrs-msg-kv"><span>黄金</span><b>${_.escape(effectiveGold)}</b></div>`
+    : '';
+
   const rows = [
     puzzle && `<div class="mfrs-msg-kv"><span>拼图</span><b>${_.escape(puzzle)}</b></div>`,
-    items && `<div class="mfrs-msg-kv"><span>物品</span><b>${_.escape(items)}</b></div>`,
-    gold && `<div class="mfrs-msg-kv"><span>黄金</span><b>${_.escape(gold)}</b></div>`,
+    ...itemRows,
+    goldRow,
   ].filter(Boolean);
 
   if (rows.length) {
@@ -4593,7 +4813,7 @@ function buildHudMemoryPanelHtml(): string {
   });
   return `
 <p class="mfrs-hud-panel-title">记忆与收录</p>
-<p class="mfrs-hud-panel-sub">事件纪要 · 收录档案 · 收录规律（可直接新增、编辑、删除）</p>
+<p class="mfrs-hud-panel-sub">事件纪要 · 收录档案 · 收录规律 · 拓本图录（可直接新增、编辑、删除）</p>
 ${sections.join('')}
 `;
 }
@@ -5206,20 +5426,14 @@ function refreshHudPanels(force = false) {
   const dossierSlot = shell.querySelector('[data-mfrs-hud="dossier-slot"]');
   if (dossierSlot) dossierSlot.innerHTML = buildHudDossierHtml(data);
 
-  // 本轮选项唯一入口：输入框上方 HUD；无真实行动建议时整栏隐藏
+  // 本轮选项 + 检定建议：已移除（由预设或前端负责选项交互）
   const actionsHost = shell.querySelector('[data-mfrs-hud="actions"]') as HTMLElement | null;
   const actionsSlot = shell.querySelector('[data-mfrs-hud="actions-slot"]');
-  if (actionsHost && actionsSlot) {
-    if (actionSuggestions.length > 0) {
-      actionsHost.hidden = false;
-      actionsHost.setAttribute('open', '');
-      actionsSlot.innerHTML = buildActionsHtml(data, actionSuggestions);
-    } else {
-      actionsHost.hidden = true;
-      actionsHost.removeAttribute('open');
-      actionsSlot.innerHTML = '';
-    }
+  if (actionsHost) {
+    actionsHost.hidden = true;
+    actionsHost.removeAttribute('open');
   }
+  if (actionsSlot) actionsSlot.innerHTML = '';
 
   const relationSlot = shell.querySelector('[data-mfrs-hud="relation-slot"]');
   if (relationSlot) relationSlot.innerHTML = buildHudRelationHtml(data);
