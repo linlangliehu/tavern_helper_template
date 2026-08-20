@@ -1,5 +1,23 @@
 # 进度日志
 
+## 2026-08-20 发布 v8.15.28（完成）
+
+### 发布流程（两阶段）
+- **阶段 1**：stop-dev 还原 index.yaml → ff 同步 origin（bot Bump deps `9d5b2e64`）→ production build → release 常量 8.15.26→8.15.28、cache v81528_20260820_01、CDN_REF 保持旧值 → 开发版 index.yaml 版本+cache+7处 CDN_REF → CHANGELOG → `verify:mfrs-source-gates` 13 项全绿 → 精确提交 9 文件（4 业务源码+3 规划+常量+CHANGELOG，无 dist/PNG/lockfile）→ push `35b9591c` 触发 bot
+- **阶段 2**：bot bundle `d049bf63`（tag v8.15.28）→ ff 同步 + 还原本地 dist 噪声 → CDN_REF 更新为 `d049bf635a539d1f13514dfd4a5ad276507491fe` → 开发版 index.yaml 7 处 CDN_REF 同步 → publish-card --dist-no-build（G1 dist 新鲜度通过、镜像 5 目录、替换 15 处链接、生成发布版 PNG、release-png 门禁 8.15.28/refs7/cache8/regex33/scripts8）→ `verify:mfrs-gates` 14 项全绿 → 提交 4 发布物 → push `b673969e` → 再触发 bot bundle `cda1d511`（仅 dist module-id + 开发版 PNG 重建，正常）
+
+### 验证
+- 7 个 CDN URL 全部 HTTP 200（`--ssl-no-revoke` 绕过 Windows schannel 吊销检查离线）
+- 发布版 PNG `version=8.15.28, refs=7, cache=8, regex=33, scripts=8`；bot 未改动发布版 PNG
+- 最终 HEAD `cda1d511`（v8.15.28），工作区干净，本地与远程同步
+- CDN_REF warn「落后 HEAD 2 提交」为预期（pin 指向 CDN dist d049bf63，HEAD 领先仅含发布元数据+module-id 噪声，无 dist 实质遗漏）
+
+### 版本号决策
+- 远程 tag 已到 v8.15.27（bot autotag），新版本取 8.15.28 避开冲突；v8.15.28 tag 由 bot 打在 `d049bf63`
+
+### 分发文件
+- `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（可直接导入酒馆）
+
 ## 2026-08-20 真机验证：消耗逻辑 + 修复 number 格式 bug（完成）
 
 ### 真机环境
