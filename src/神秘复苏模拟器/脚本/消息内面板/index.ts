@@ -5,10 +5,21 @@ import { applyUpdateProtocolToStatData } from './raw-status-data';
 registerMfrsRuntimeBuild('消息内面板');
 
 type StatusData = Record<string, any>;
+type ItemUseContextPayload = {
+  itemName: string;
+  itemType: string;
+  effect: string;
+  description: string;
+  effectDetail: string;
+  progress: number;
+  source: string;
+};
+
 type MessagePanelApi = {
   refreshAll: () => void;
   refreshMessage: (messageId: number | string) => void;
   getHudActiveView: () => string;
+  openItemUseDialog: (ctx: ItemUseContextPayload) => void;
 };
 type EventSubscription = { stop: () => void };
 type HudGachaPanelHandle = {
@@ -893,6 +904,144 @@ function buildHudTableSummaryListHtml(
     .join('');
 }
 
+/**
+ * 从文本中解析进度比例（0-1）。
+ * 支持格式：`+50%`、`档案进度 +50%`、`规律进度 +25%`、`（档案进度 +10%）` 等。
+ * 匹配失败返回 0。
+ */
+function parseProgressFromText(text: string): number {
+  if (!text || typeof text !== 'string') return 0;
+  const match = text.match(/\+(\d+)%/);
+  if (!match) return 0;
+  const n = parseInt(match[1], 10);
+  if (isNaN(n) || n < 0 || n > 100) return 0;
+  return n / 100;
+}
+
+/**
+ * 构建抽卡所得物品的「使用」按钮 HTML。
+ * 每个物品项携带 data-mfrs-item-use 属性，包含编码后的物品信息。
+ * 点击后弹出厉鬼档案选择弹窗，选定厉鬼后调 applyTableChangePlan 更新收录进度。
+ */
+function buildGachaItemUseButtonHtml(item: {
+  name: string;
+  type: string;
+  effect?: string;
+  description?: string;
+  effectDetail?: string;
+  progress?: number;
+  source?: string;
+}): string {
+  const payload = {
+    itemName: item.name,
+    itemType: item.type,
+    effect: item.effect || '',
+    description: item.description || '',
+    effectDetail: item.effectDetail || '',
+    progress: typeof item.progress === 'number' ? item.progress : 0,
+    source: item.source || '灵异抽卡',
+  };
+  const encoded = _.escape(encodeURIComponent(JSON.stringify(payload)));
+  const icon =
+    item.type === 'supernatural'
+      ? 'fa-hand-sparkles'
+      : item.type === 'clue'
+        ? 'fa-magnifying-glass'
+        : item.type === 'knowledge'
+          ? 'fa-book-open'
+          : 'fa-arrow-up-right-from-square';
+  return `<button type="button" class="mfrs-msg-item-use-btn" data-mfrs-item-use="${encoded}" title="使用${_.escape(item.name)}"><i class="fa-solid ${icon}" aria-hidden="true"></i><span>使用</span></button>`;
+}
+
+/**
+ * 构建「持有物品」区块：展示抽卡所得的灵异物品、收录规律和线索。
+ * 每项带「使用」按钮，点击后选择目标厉鬼档案并结算收录进度。
+ */
+function buildGachaItemsSectionHtml(data: StatusData): string {
+  const sections: string[] = [];
+
+  const supernaturalItems = _.get(data, '灵异资源.灵异物品') ?? data.灵异物品;
+  if (Array.isArray(supernaturalItems) && supernaturalItems.length) {
+    const rows = supernaturalItems
+      .filter(item => item && typeof item === 'object')
+      .map((item: any) => {
+        const name = valueText(item.名称 ?? item.name, '');
+        if (!name) return '';
+        const type = valueText(item.类型 ?? item.type, '');
+        const effect = valueText(item.效果 ?? item.effect, '');
+        const usage = valueText(item.剩余次数 ?? item.usageLimit, '');
+        const typeTag = type && type !== '其他' ? `<span class="mfrs-msg-item-type">${_.escape(type)}</span>` : '';
+        const usageTag = usage ? `<span class="mfrs-msg-item-type">${_.escape(usage)}</span>` : '';
+        return `<div class="mfrs-msg-kv mfrs-msg-item-row" data-mfrs-item-row="${_.escape(encodeURIComponent(name))}">
+  <span>${_.escape(name)}${typeTag}${usageTag}</span>
+  <b>${_.escape(effect || '—')}</b>
+  ${buildGachaItemUseButtonHtml({ name, type: 'supernatural', effect, description: '', source: '灵异抽卡' })}
+</div>`;
+      })
+      .filter(Boolean);
+    if (rows.length) {
+      sections.push(`<details class="mfrs-msg-fold" data-fold="gacha-supernatural">
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-hand-sparkles" aria-hidden="true"></i><span>灵异物品</span></summary>
+  <div class="mfrs-msg-fold-body">${rows.join('')}</div>
+</details>`);
+    }
+  }
+
+  const collectedRules = data.收录规律;
+  if (Array.isArray(collectedRules) && collectedRules.length) {
+    const rows = collectedRules
+      .filter(item => item && typeof item === 'object')
+      .map((item: any) => {
+        const ruleType = valueText(item.规律类型, '');
+        if (!ruleType) return '';
+        const source = valueText(item.获取方式, '未确认');
+        const completeness = valueText(item.完整度, '未知');
+        const isGacha = source === '灵异抽卡';
+        const sourceTag = isGacha ? '<span class="mfrs-msg-item-type">抽卡</span>' : '';
+        const knowledgeProgress = parseProgressFromText(completeness);
+        return `<div class="mfrs-msg-kv mfrs-msg-item-row" data-mfrs-item-row="${_.escape(encodeURIComponent(ruleType))}">
+  <span>${_.escape(ruleType)}${sourceTag}</span>
+  <b>${_.escape(completeness)}</b>
+  ${buildGachaItemUseButtonHtml({ name: ruleType, type: 'knowledge', effect: completeness, description: valueText(item.规律内容, ''), progress: knowledgeProgress, source })}
+</div>`;
+      })
+      .filter(Boolean);
+    if (rows.length) {
+      sections.push(`<details class="mfrs-msg-fold" data-fold="gacha-knowledge">
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>收录规律</span></summary>
+  <div class="mfrs-msg-fold-body">${rows.join('')}</div>
+</details>`);
+    }
+  }
+
+  const unverifiedGuesses = _.get(data, '可见档案.未验证猜测');
+  if (Array.isArray(unverifiedGuesses) && unverifiedGuesses.length) {
+    const rows = unverifiedGuesses
+      .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      .map(text => {
+        const isGachaClue = text.startsWith('【线索】');
+        const displayText = isGachaClue ? text.slice(4) : text;
+        const sourceTag = isGachaClue ? '<span class="mfrs-msg-item-type">抽卡</span>' : '';
+        const clueProgress = parseProgressFromText(text);
+        return `<div class="mfrs-msg-kv mfrs-msg-item-row" data-mfrs-item-row="${_.escape(encodeURIComponent(text))}">
+  <span>${_.escape(clipHudLine(displayText, 48))}${sourceTag}</span>
+  ${buildGachaItemUseButtonHtml({ name: text, type: 'clue', effect: '', description: text, progress: clueProgress, source: isGachaClue ? '灵异抽卡' : '剧情推断' })}
+</div>`;
+      })
+      .filter(Boolean);
+    if (rows.length) {
+      sections.push(`<details class="mfrs-msg-fold" data-fold="gacha-clue">
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>线索与猜测</span></summary>
+  <div class="mfrs-msg-fold-body">${rows.join('')}</div>
+</details>`);
+    }
+  }
+
+  if (!sections.length) return '';
+
+  return `<p class="mfrs-hud-dossier-group-title">持有物品</p>${sections.join('')}`;
+}
+
 function buildDossierSectionsHtml(data: StatusData): string {
   const name = valueText(data.姓名);
   const gender = valueText(data.性别);
@@ -915,6 +1064,7 @@ function buildDossierSectionsHtml(data: StatusData): string {
 
   // 委托 buildHudResourceSectionsHtml 处理嵌套对象，避免 String({}) → [object Object]
   const resourceBlock = buildHudResourceSectionsHtml(data);
+  const gachaItemsBlock = buildGachaItemsSectionHtml(data);
 
   return `
 <details class="mfrs-msg-fold" data-fold="identity" open>
@@ -958,6 +1108,7 @@ function buildDossierSectionsHtml(data: StatusData): string {
   <div class="mfrs-msg-fold-body"><div class="mfrs-msg-ghost-list">${buildGhostListHtml(data)}</div></div>
 </details>
 ${resourceBlock}
+${gachaItemsBlock}
 `;
 }
 
@@ -2326,6 +2477,169 @@ function ensureHudStyle() {
 #${HUD_SHELL_ID} .mfrs-hud-memory-add-btn:hover {
   border-color: var(--mfrs-corpse-cyan);
   background: color-mix(in srgb, var(--mfrs-corpse-cyan) 12%, transparent);
+}
+/* 物品「使用」按钮 */
+#${HUD_SHELL_ID} .mfrs-msg-item-use-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan) 40%, transparent);
+  background: transparent;
+  color: var(--mfrs-corpse-cyan);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+#${HUD_SHELL_ID} .mfrs-msg-item-use-btn:hover {
+  border-color: var(--mfrs-corpse-cyan);
+  background: color-mix(in srgb, var(--mfrs-corpse-cyan) 18%, transparent);
+}
+#${HUD_SHELL_ID} .mfrs-msg-item-use-btn i {
+  font-size: 10px;
+}
+#${HUD_SHELL_ID} .mfrs-msg-item-row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+#${HUD_SHELL_ID} .mfrs-msg-item-row > .mfrs-msg-item-use-btn {
+  margin-left: auto;
+}
+/* 物品使用弹窗 */
+#mfrs-hud-item-use-dialog {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2147483500;
+  max-width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--mfrs-corpse-cyan, #3d6b66) 55%, transparent);
+  background: rgba(8, 10, 10, 0.98);
+  color: #c8c0ae;
+  font: inherit;
+  font-size: 13px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+}
+#mfrs-hud-item-use-dialog.is-visible {
+  display: block;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid color-mix(in srgb, #3d6b66 28%, transparent);
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-title {
+  font-size: 14px;
+  color: color-mix(in srgb, #3d6b66 80%, #c8c0ae);
+  letter-spacing: 0.06em;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-close {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, #3d6b66 40%, transparent);
+  background: transparent;
+  color: #c8c0ae;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  border-radius: 4px;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-close:hover {
+  border-color: #3d6b66;
+  background: color-mix(in srgb, #3d6b66 18%, transparent);
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info {
+  padding: 8px 14px;
+  border-bottom: 1px solid color-mix(in srgb, #3d6b66 18%, transparent);
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info .mfrs-msg-kv {
+  display: flex;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px dashed color-mix(in srgb, #3d6b66 18%, transparent);
+  font-size: 12px;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info .mfrs-msg-kv:last-child {
+  border-bottom: 0;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info .mfrs-msg-kv span {
+  color: color-mix(in srgb, #c8c0ae 55%, #888);
+  flex: 0 0 auto;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info .mfrs-msg-kv b {
+  color: #c8c0ae;
+  font-weight: normal;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info .mfrs-msg-info-text {
+  padding: 4px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, #c8c0ae 78%, #888);
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-item-info .mfrs-msg-info-text strong {
+  color: color-mix(in srgb, #3d6b66 75%, #c8c0ae);
+  margin-right: 4px;
+  font-weight: normal;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-label {
+  padding: 8px 14px 4px;
+  font-size: 12px;
+  color: color-mix(in srgb, #3d6b66 75%, #c8c0ae);
+  letter-spacing: 0.06em;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-list {
+  padding: 0 14px 14px;
+  display: grid;
+  gap: 4px;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, #3d6b66 35%, transparent);
+  border-left: 2px solid color-mix(in srgb, #3d6b66 45%, transparent);
+  background: transparent;
+  color: #c8c0ae;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-btn:hover,
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-btn:focus-visible {
+  outline: none;
+  border-left-color: #3d6b66;
+  background: color-mix(in srgb, #3d6b66 12%, transparent);
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#mfrs-hud-item-use-dialog .mfrs-hud-item-use-ghost-meta {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: color-mix(in srgb, #c8c0ae 52%, #888);
+}
+#mfrs-hud-item-use-dialog .mfrs-msg-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: color-mix(in srgb, #c8c0ae 52%, #888);
 }
 #${HUD_SHELL_ID} .mfrs-hud-memory-form {
   display: grid;
@@ -5404,6 +5718,267 @@ async function executeHudMemoryDelete(tableKey: string, rowId: string) {
   }
 }
 
+/** 当前使用物品按钮上下文，用于在弹窗选择厉鬼后回调用 */
+interface HudItemUseContext {
+  itemName: string;
+  itemType: string;
+  effect: string;
+  description: string;
+  effectDetail: string;
+  progress: number;
+  source: string;
+}
+
+let hudItemUsePending: HudItemUseContext | null = null;
+
+const HUD_ITEM_USE_DIALOG_ID = 'mfrs-hud-item-use-dialog';
+
+/** 读取 sheet_collected_archives 表的厉鬼列表 */
+function readCollectedArchivesForItemUse(): { rowId: string; ghostName: string; status: string; progress: number }[] {
+  const tables = readHudDatabaseTables();
+  const table = Object.values(tables).find(
+    t => t.key === 'sheet_collected_archives' || t.name.includes('收录档案'),
+  );
+  if (!table) return [];
+  return table.rows
+    .map(row => {
+      const rowId = hudRowField(table.headers, row, 'row_id');
+      const ghostName = hudRowField(table.headers, row, '档案厉鬼名称');
+      const status = hudRowField(table.headers, row, '收录状态');
+      const progressText = hudRowField(table.headers, row, '收录进度');
+      const progress = parseInt(progressText, 10);
+      return {
+        rowId,
+        ghostName,
+        status,
+        progress: isNaN(progress) ? 0 : progress,
+      };
+    })
+    .filter(item => item.ghostName);
+}
+
+/** 构建「使用物品」弹窗 HTML */
+function buildItemUseDialogHtml(ctx: HudItemUseContext): string {
+  const archives = readCollectedArchivesForItemUse();
+  const progressPercent = Math.round(ctx.progress * 100);
+
+  const itemTypeLabel =
+    ctx.itemType === 'supernatural'
+      ? '灵异物品'
+      : ctx.itemType === 'clue'
+        ? '线索'
+        : ctx.itemType === 'knowledge'
+          ? '规律知识'
+          : '物品';
+
+  const archiveItems = archives.length
+    ? archives
+        .map(
+          arch =>
+            `<button type="button" class="mfrs-hud-item-use-ghost-btn" data-mfrs-item-use-ghost-row-id="${_.escape(arch.rowId)}" data-mfrs-item-use-ghost-name="${_.escape(arch.ghostName)}" title="收录进度: ${arch.progress}%, 状态: ${_.escape(arch.status)}">
+  <span class="mfrs-hud-item-use-ghost-name">${_.escape(clipHudLine(arch.ghostName, 24))}</span>
+  <span class="mfrs-hud-item-use-ghost-meta">${_.escape(arch.status)} · ${arch.progress}%</span>
+</button>`,
+        )
+        .join('')
+    : '<div class="mfrs-msg-empty">暂无收录档案，请先在档案中发现厉鬼</div>';
+
+  return `
+<div class="mfrs-hud-item-use-dialog-body">
+  <div class="mfrs-hud-item-use-header">
+    <span class="mfrs-hud-item-use-title">使用${_.escape(itemTypeLabel)}</span>
+    <button type="button" class="mfrs-hud-item-use-close" data-mfrs-item-use-action="cancel" title="关闭"><i class="fa-solid fa-times" aria-hidden="true"></i></button>
+  </div>
+  <div class="mfrs-hud-item-use-item-info">
+    <div class="mfrs-msg-kv"><span>名称</span><b>${_.escape(ctx.itemName)}</b></div>
+    ${ctx.effect ? `<div class="mfrs-msg-info-text"><strong>效果</strong>${_.escape(ctx.effect)}</div>` : ''}
+    ${progressPercent > 0 ? `<div class="mfrs-msg-kv"><span>档案进度</span><b>+${progressPercent}%</b></div>` : ''}
+    ${ctx.description ? `<div class="mfrs-msg-info-text"><strong>说明</strong>${_.escape(clipHudLine(ctx.description, 120))}</div>` : ''}
+  </div>
+  <div class="mfrs-hud-item-use-ghost-label">选择目标厉鬼档案</div>
+  <div class="mfrs-hud-item-use-ghost-list">${archiveItems}</div>
+</div>`;
+}
+
+/** 打开「使用物品」弹窗 */
+function openItemUseDialog(ctx: HudItemUseContext) {
+  hudItemUsePending = ctx;
+  let dialog = doc.getElementById(HUD_ITEM_USE_DIALOG_ID) as HTMLElement | null;
+  if (!dialog) {
+    dialog = doc.createElement('div');
+    dialog.id = HUD_ITEM_USE_DIALOG_ID;
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-label', '使用物品');
+    doc.body.appendChild(dialog);
+  }
+  dialog.innerHTML = buildItemUseDialogHtml(ctx);
+  dialog.classList.add('is-visible');
+}
+
+/** 关闭「使用物品」弹窗 */
+function closeItemUseDialog() {
+  hudItemUsePending = null;
+  const dialog = doc.getElementById(HUD_ITEM_USE_DIALOG_ID);
+  if (dialog) {
+    dialog.classList.remove('is-visible');
+    dialog.innerHTML = '';
+  }
+}
+
+/**
+ * 执行「使用物品」：对 sheet_collected_archives 对应行 updateCell 收录进度，
+ * 并填入酒馆输入框同步 AI。
+ * - clue: 收录进度 += progress*100
+ * - knowledge: 完整度更新为 progress*100%
+ * - supernatural: 只填入输入框提示 AI（不改数据库收录进度）
+ */
+async function executeItemUseOnGhost(rowId: string, ghostName: string) {
+  const ctx = hudItemUsePending;
+  if (!ctx) {
+    closeItemUseDialog();
+    return;
+  }
+
+  const progressPercent = Math.round(ctx.progress * 100);
+
+  if (ctx.itemType === 'clue' || ctx.itemType === 'knowledge') {
+    const frontend = (hostWindow as any).MysteryDatabaseFrontend;
+    if (!frontend || typeof frontend.applyMemoryChange !== 'function') {
+      showHudToast('数据库前端未就绪');
+      return;
+    }
+
+    const tableName = '收录档案';
+    let plan: Record<string, unknown>;
+
+    if (ctx.itemType === 'clue') {
+      const tables = readHudDatabaseTables();
+      const table = Object.values(tables).find(
+        t => t.key === 'sheet_collected_archives' || t.name.includes('收录档案'),
+      );
+      let currentProgress = 0;
+      if (table) {
+        const row = table.rows.find(r => hudRowId(table, r) === rowId);
+        if (row) {
+          const text = hudRowField(table.headers, row, '收录进度');
+          const n = parseInt(text, 10);
+          if (!isNaN(n)) currentProgress = n;
+        }
+      }
+      const nextProgress = Math.min(100, currentProgress + progressPercent);
+      const nextStatus = nextProgress >= 100 ? '已收录' : '收录中';
+      plan = {
+        action: 'updateCell',
+        table: tableName,
+        match: { row_id: rowId },
+        set: {
+          收录进度: nextProgress,
+          收录状态: nextStatus,
+          ...(progressPercent > 0 ? { 档案完整度: `+${progressPercent}%` } : {}),
+        },
+      };
+    } else {
+      plan = {
+        action: 'updateCell',
+        table: tableName,
+        match: { row_id: rowId },
+        set: {
+          已知规律: ctx.description || ctx.itemName,
+          ...(progressPercent > 0 ? { 档案完整度: `+${progressPercent}%` } : {}),
+        },
+      };
+    }
+
+    try {
+      const result = await frontend.applyMemoryChange(plan);
+      if (!result?.ok) {
+        const msg = Array.isArray(result?.errors) && result.errors[0]?.message ? result.errors[0].message : '更新收录档案失败';
+        showHudToast(msg);
+        return;
+      }
+    } catch (err) {
+      showHudToast(`更新异常: ${String(err?.message || err || '')}`);
+      return;
+    }
+  }
+
+  const promptText = buildItemUsePromptText(ctx, ghostName);
+  fillChatInputForItemUse(promptText);
+
+  // 消耗物品：从 stat_data 移除知识/线索，或扣减灵异物品剩余次数（归 0 移除）。
+  // 失败不阻断主流程（收录进度已加、提示词已填），仅日志降级。
+  const mfrs = (hostWindow as any).MFRS;
+  if (mfrs && typeof mfrs.consumeItem === 'function') {
+    try {
+      await mfrs.consumeItem({
+        itemName: ctx.itemName,
+        itemType: ctx.itemType,
+      });
+    } catch (err) {
+      console.warn('[MFRS] 消耗物品失败，不影响收录进度与提示词', err);
+    }
+  }
+
+  showHudToast(`已对「${ghostName}」使用${ctx.itemType === 'clue' ? '线索' : ctx.itemType === 'knowledge' ? '知识' : '物品'}，已填入输入框`);
+  closeItemUseDialog();
+}
+
+/** 构造「使用物品」的 AI 提示词 */
+function buildItemUsePromptText(ctx: HudItemUseContext, ghostName: string): string {
+  const progressPercent = Math.round(ctx.progress * 100);
+  const parts: string[] = [];
+
+  if (ctx.itemType === 'supernatural') {
+    parts.push(`我使用灵异物品【${ctx.itemName}】。`);
+    if (ctx.effect) parts.push(`效果：${ctx.effect}。`);
+  } else if (ctx.itemType === 'clue') {
+    parts.push(`我使用线索【${ctx.itemName}】对厉鬼「${ghostName}」。`);
+    if (ctx.description) parts.push(`内容：${ctx.description}。`);
+    if (progressPercent > 0) parts.push(`档案进度 +${progressPercent}%。`);
+  } else if (ctx.itemType === 'knowledge') {
+    parts.push(`我运用知识【${ctx.itemName}】对厉鬼「${ghostName}」。`);
+    if (ctx.description) parts.push(`规律内容：${ctx.description}。`);
+    if (progressPercent > 0) parts.push(`规律完整度 +${progressPercent}%。`);
+  }
+
+  parts.push('请根据上述信息更新「收录档案」表中该厉鬼的收录进度与状态。');
+  return parts.join('\n');
+}
+
+/** 填入酒馆输入框（只填不自动发送） */
+function fillChatInputForItemUse(promptText: string) {
+  const prompt = String(promptText ?? '').trim();
+  if (!prompt) return;
+  const ta = doc.getElementById('send_textarea') as HTMLTextAreaElement | null;
+  if (!ta) {
+    showHudToast('未找到酒馆输入框');
+    return;
+  }
+  const $ = (hostWindow as any).jQuery || (hostWindow as any).$;
+  const $ta = typeof $ === 'function' ? $(ta) : null;
+  const previousPrompt = String(
+    ta._mfrsDbInsertedPrompt || ($ta && $ta.data('mfrs-db-inserted-prompt')) || '',
+  ).trim();
+  const currentText = String(ta.value || '');
+  let nextText = prompt;
+  if (currentText.trim()) {
+    nextText =
+      previousPrompt && currentText.includes(previousPrompt)
+        ? currentText.replace(previousPrompt, prompt)
+        : `${currentText.trimEnd()}\n${prompt}`;
+  }
+
+  ta.value = nextText;
+  ta._mfrsDbInsertedPrompt = prompt;
+  if ($ta) $ta.data('mfrs-db-inserted-prompt', prompt);
+
+  const eventWindow = ta.ownerDocument?.defaultView || hostWindow;
+  ta.dispatchEvent(new eventWindow.Event('input', { bubbles: true }));
+  ta.dispatchEvent(new eventWindow.Event('change', { bubbles: true }));
+  ta.focus();
+}
+
 function refreshHudPanels(force = false) {
   if (!isHudMounted()) return;
   // 数据库脚本可能晚于本面板就绪，activate 时的注册会静默跳过；
@@ -5593,6 +6168,27 @@ function handleHudShellClick(e: Event) {
   const target = e.target as HTMLElement | null;
   if (!target) return;
 
+  // 物品使用弹窗内的操作（弹窗挂在 body 上，不在 shell 内，需在 shell 检查之前处理）
+  const itemUseAction = target.closest('[data-mfrs-item-use-action]') as HTMLElement | null;
+  if (itemUseAction) {
+    e.preventDefault();
+    const act = itemUseAction.getAttribute('data-mfrs-item-use-action');
+    if (act === 'cancel') closeItemUseDialog();
+    return;
+  }
+  const itemUseGhostBtn = target.closest('[data-mfrs-item-use-ghost-row-id]') as HTMLElement | null;
+  if (itemUseGhostBtn) {
+    e.preventDefault();
+    const rowId = itemUseGhostBtn.getAttribute('data-mfrs-item-use-ghost-row-id') || '';
+    const ghostName = itemUseGhostBtn.getAttribute('data-mfrs-item-use-ghost-name') || '';
+    if (!rowId || !ghostName) {
+      showHudToast('厉鬼档案信息无效');
+      return;
+    }
+    void executeItemUseOnGhost(rowId, ghostName);
+    return;
+  }
+
   // HUD 内设置动作由 runHudTavernAction 独占 watcher session；其他外部入口统一让层。
   const menuActionBtn = target.closest('[data-mfrs-hud-menu-action]') as HTMLElement | null;
   if (!menuActionBtn) maybeYieldHudForExternalOverlay(target);
@@ -5643,6 +6239,23 @@ function handleHudShellClick(e: Event) {
   if (gachaRetryBtn) {
     e.preventDefault();
     ensureHudGachaPanelMounted(shell, true);
+    return;
+  }
+  // 物品「使用」按钮：点击后弹出厉鬼档案选择弹窗
+  const itemUseBtn = target.closest('[data-mfrs-item-use]') as HTMLElement | null;
+  if (itemUseBtn) {
+    e.preventDefault();
+    try {
+      const raw = itemUseBtn.getAttribute('data-mfrs-item-use') || '';
+      const payload = JSON.parse(decodeURIComponent(raw)) as HudItemUseContext;
+      if (!payload.itemName) {
+        showHudToast('物品信息无效');
+        return;
+      }
+      openItemUseDialog(payload);
+    } catch {
+      showHudToast('物品信息解析失败');
+    }
     return;
   }
   // 记忆中栏 CRUD 操作
@@ -5893,6 +6506,7 @@ function unmountHudImmersive() {
   // 退出/切卡：清空只读档案选中态，避免下次挂载残留指向已失效表行
   hudArchiveSelection = null;
   hudMemoryEditState = null;
+  hudItemUsePending = null;
   shell?.classList.remove(
     'is-left-open',
     'is-right-open',
@@ -5902,6 +6516,7 @@ function unmountHudImmersive() {
   );
   doc.getElementById('mfrs-hud-st-return')?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
+  doc.getElementById(HUD_ITEM_USE_DIALOG_ID)?.remove();
   rebindMessageObserverToChat();
   pauseMessageObserverTemporarily(180);
   // 退出：先同步最新楼，历史楼分片补齐（不再同步全量扫 DOM）
@@ -5942,11 +6557,13 @@ function destroyHudImmersive() {
   doc.getElementById(HUD_STYLE_ID)?.remove();
   doc.getElementById('mfrs-hud-toast')?.remove();
   doc.getElementById('mfrs-hud-st-return')?.remove();
+  doc.getElementById(HUD_ITEM_USE_DIALOG_ID)?.remove();
   hudImmersivePreferred = true;
   hudActiveView = 'story';
   hudPanelsRenderKey = '';
   hudArchiveSelection = null;
   hudMemoryEditState = null;
+  hudItemUsePending = null;
 }
 
 $(() => {
@@ -7063,6 +7680,10 @@ $(() => {
     },
     refreshMessage: processOneMessage,
     getHudActiveView: () => hudActiveView,
+    openItemUseDialog: (ctx: ItemUseContextPayload) => {
+      if (!ctx || !ctx.itemName) return;
+      openItemUseDialog(ctx);
+    },
   };
   const refreshEvents = [
     tavern_events.MESSAGE_RECEIVED,

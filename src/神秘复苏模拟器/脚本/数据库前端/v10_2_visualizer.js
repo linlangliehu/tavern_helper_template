@@ -8881,7 +8881,7 @@
                         </div>
 
                         <!-- 抽卡历史 -->
-                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px;">
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px; margin-bottom:15px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                                 <div style="color:var(--acu-title-color); font-weight:bold; font-size:14px;">抽卡历史</div>
                                 <button id="gacha-history-toggle" data-mfrs-action="gacha-history-toggle" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:12px;">
@@ -8889,6 +8889,17 @@
                                 </button>
                             </div>
                             <div id="gacha-history-content" style="display:none; max-height:200px; overflow-y:auto;"></div>
+                        </div>
+
+                        <!-- 持有物品 -->
+                        <div style="background:var(--acu-table-head); border-radius:12px; padding:15px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                                <div style="color:var(--acu-title-color); font-weight:bold; font-size:14px;">持有物品 <span id="gacha-owned-count" style="font-size:12px; font-weight:normal; color:var(--acu-text-sub);"></span></div>
+                                <button id="gacha-owned-toggle" data-mfrs-action="gacha-owned-toggle" style="background:transparent; border:none; color:var(--acu-text-sub); cursor:pointer; font-size:12px;">
+                                    <i class="fa-solid fa-chevron-down"></i> 展开
+                                </button>
+                            </div>
+                            <div id="gacha-owned-content" style="display:none; max-height:300px; overflow-y:auto;"></div>
                         </div>
                     </div>
                 </div>
@@ -8958,6 +8969,13 @@
       dialog.find('#gacha-economy-history').text(nextEconomy.historyCount);
       dialog.find('#gacha-economy-detail').html(buildEconomyDetailHtml(nextEconomy));
       dialog.find('#gacha-pity-grid').html(buildPityHtml(getGachaPity()));
+      // 持有物品计数
+      const ownedCount = getOwnedItems().length;
+      dialog.find('#gacha-owned-count').text(ownedCount > 0 ? `(${ownedCount})` : '');
+      // 若持有物品区已展开，刷新内容
+      if (dialog.find('#gacha-owned-content').is(':visible')) {
+        dialog.find('#gacha-owned-content').html(buildOwnedItemsHtml());
+      }
       if (!resetInteraction) return;
       selectedPool = GACHA_POOL_TYPE.ALL;
       dialog.find('.gacha-pool-btn').removeClass('active').css('border-color', 'var(--acu-border)');
@@ -8993,7 +9011,29 @@
       $resultItems.empty();
 
       items.forEach(item => {
-        const $card = $(`
+        // 构建「使用」按钮：复用消息内面板的「使用物品」弹窗入口（openItemUseDialog）
+        // 按钮携带 data-mfrs-item-use 属性（HudItemUseContext payload），
+        // 在 HUD embedded 模式下由 handleHudShellClick 捕获；
+        // 在 overlay 模式下由下方 jQuery click 处理调用 host.MysteryMessagePanel.openItemUseDialog。
+        const itemUsePayload = {
+          itemName: item.name || '',
+          itemType: item.type || '',
+          effect: item.effect || '',
+          description: item.description || '',
+          effectDetail: item.effectDetail || '',
+          progress: typeof item.progress === 'number' ? item.progress : 0,
+          source: '灵异抽卡',
+        };
+        const encodedItemUse = escapeHtml(encodeURIComponent(JSON.stringify(itemUsePayload)));
+        const itemUseBtn =
+          item.type === GACHA_ITEM_TYPE.SUPERNATURAL ||
+          item.type === GACHA_ITEM_TYPE.CLUE ||
+          item.type === GACHA_ITEM_TYPE.KNOWLEDGE
+            ? `<button type="button" class="gacha-result-use-btn" data-mfrs-item-use="${encodedItemUse}" style="margin-top:8px; padding:4px 12px; background:linear-gradient(135deg, var(--acu-highlight, #4a90d9) 0%, #357abd 100%); border:none; border-radius:6px; color:#fff; font-size:11px; font-weight:bold; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s; pointer-events:auto;"><i class="fa-solid fa-hand-sparkles" style="margin-right:4px;"></i>使用</button>`
+            : '';
+
+        const $card = $(
+          `
                     <div class="gacha-result-card" style="background:var(--acu-btn-bg); border:2px solid ${item.rarity.color}; border-radius:10px; padding:12px; text-align:center; position:relative; overflow:hidden; cursor:pointer; transition:transform 0.2s;">
                         <div style="position:absolute; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg, ${item.rarity.color}22 0%, transparent 100%); pointer-events:none;"></div>
                         <div style="position:relative; z-index:1;">
@@ -9001,9 +9041,11 @@
                             <div style="color:${item.rarity.color}; font-size:11px; margin-bottom:5px;">${item.rarity.stars}</div>
                             <div style="color:var(--acu-text-main); font-weight:bold; font-size:13px; margin-bottom:5px;">${item.name}</div>
                             <div style="color:var(--acu-text-sub); font-size:11px;">${item.effect}</div>
+                            ${itemUseBtn}
                         </div>
                     </div>
-                `);
+                `,
+        );
 
         // 翻卡动画
         $card.css({
@@ -9032,6 +9074,43 @@
         $card.on('click.mfrsGachaPanel', function () {
           trackSecondary(release => showGachaItemDetail(item, container.ownerDocument, release));
         });
+
+        // 「使用」按钮：调用消息内面板的 openItemUseDialog（优先走 host.MysteryMessagePanel 入口，
+        // 覆盖 overlay 和 embedded 两种模式）。阻止冒泡避免触发卡片详情点击。
+        $card
+          .find('.gacha-result-use-btn')
+          .on('click.mfrsGachaPanel', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const host = getHost();
+            const panel = host.MysteryMessagePanel;
+            if (panel && typeof panel.openItemUseDialog === 'function') {
+              try {
+                panel.openItemUseDialog(itemUsePayload);
+                return;
+              } catch (err) {
+                console.warn('[MFRS Gacha] 调用 openItemUseDialog 失败，降级到 fillChatInput', err);
+              }
+            }
+            // 降级：直接填入输入框（不经过厉鬼选择弹窗）
+            try {
+              const parts = [`我使用${item.type === 'clue' ? '线索' : item.type === 'knowledge' ? '知识' : '灵异物品'}【${item.name}】。`];
+              if (item.effect) parts.push(`效果：${item.effect}。`);
+              if (item.effectDetail) parts.push(`详情：${item.effectDetail}。`);
+              fillChatInput(parts.join(''));
+            } catch (err) {
+              console.warn('[MFRS Gacha] 降级 fillChatInput 失败', err);
+              if (window.toastr) window.toastr.error('使用失败：消息面板未就绪');
+            }
+          })
+          .on('mouseenter.mfrsGachaPanel', function (e) {
+            e.stopPropagation();
+            $(this).css('transform', 'translateY(-2px) scale(1.03)');
+          })
+          .on('mouseleave.mfrsGachaPanel', function (e) {
+            e.stopPropagation();
+            $(this).css('transform', 'scale(1)');
+          });
 
         $resultItems.append($card);
       });
@@ -9121,6 +9200,80 @@
         if (window.toastr) window.toastr.success(`十连完成！获得 ${highlights.join('、')}！`);
       } else {
         if (window.toastr) window.toastr.success('十连完成！');
+      }
+    };
+
+    // 持有物品：从 getOwnedItems() 的 id 列表映射回完整物品定义，生成卡片 HTML
+    const buildOwnedItemsHtml = () => {
+      const ownedIds = getOwnedItems();
+      if (!ownedIds.length) {
+        return '<div style="text-align:center; color:var(--acu-text-sub); padding:20px; font-size:12px;">暂无已拥有物品</div>';
+      }
+
+      const allDefs = getAllGachaItemDefinitions();
+      const allItems = [...allDefs.supernatural, ...allDefs.clue, ...allDefs.knowledge];
+      const ownedSet = new Set(ownedIds);
+      const ownedItems = allItems.filter(item => ownedSet.has(item.id));
+
+      if (!ownedItems.length) {
+        return '<div style="text-align:center; color:var(--acu-text-sub); padding:20px; font-size:12px;">暂无已拥有物品</div>';
+      }
+
+      // 按稀有度降序排列
+      ownedItems.sort((a, b) => (b.rarity?.level || 0) - (a.rarity?.level || 0));
+
+      return ownedItems
+        .map(item => {
+          const itemUsePayload = {
+            itemName: item.name || '',
+            itemType: item.type || '',
+            effect: item.effect || '',
+            description: item.description || '',
+            effectDetail: item.effectDetail || '',
+            progress: typeof item.progress === 'number' ? item.progress : 0,
+            source: '灵异抽卡',
+          };
+          const encodedItemUse = escapeHtml(encodeURIComponent(JSON.stringify(itemUsePayload)));
+          const useBtn =
+            item.type === GACHA_ITEM_TYPE.SUPERNATURAL ||
+            item.type === GACHA_ITEM_TYPE.CLUE ||
+            item.type === GACHA_ITEM_TYPE.KNOWLEDGE
+              ? `<button type="button" class="gacha-result-use-btn" data-mfrs-item-use="${encodedItemUse}" style="margin-top:6px; padding:3px 10px; background:linear-gradient(135deg, var(--acu-highlight, #4a90d9) 0%, #357abd 100%); border:none; border-radius:6px; color:#fff; font-size:11px; font-weight:bold; cursor:pointer; pointer-events:auto;"><i class="fa-solid fa-hand-sparkles" style="margin-right:4px;"></i>使用</button>`
+              : '';
+
+          return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--acu-btn-bg); border-radius:6px; margin-bottom:6px; font-size:12px;">
+                            <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+                                <span style="font-size:20px; flex-shrink:0;">${item.icon || '📦'}</span>
+                                <div style="min-width:0; overflow:hidden;">
+                                    <div style="color:var(--acu-text-main); font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
+                                    <div style="color:${item.rarity?.color || 'var(--acu-text-sub)'}; font-size:11px;">${item.rarity?.stars || ''}</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                <span style="color:var(--acu-text-sub); font-size:11px; max-width:120px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(item.effect || '')}">${item.effect || ''}</span>
+                                ${useBtn}
+                            </div>
+                        </div>
+                    `;
+        })
+        .join('');
+    };
+
+    // 持有物品折叠/展开
+    const toggleOwnedItems = () => {
+      const $content = dialog.find('#gacha-owned-content');
+      const $icon = dialog.find('#gacha-owned-toggle').find('i');
+
+      if ($content.is(':visible')) {
+        $content.slideUp(200);
+        $icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        dialog.find('#gacha-owned-toggle').html('<i class="fa-solid fa-chevron-down"></i> 展开');
+      } else {
+        $content.html(buildOwnedItemsHtml());
+        $content.slideDown(200);
+        $icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        dialog.find('#gacha-owned-toggle').html('<i class="fa-solid fa-chevron-up"></i> 收起');
       }
     };
 
@@ -9261,8 +9414,52 @@
         case 'gacha-history-toggle':
           toggleHistory();
           break;
+        case 'gacha-owned-toggle':
+          toggleOwnedItems();
+          break;
       }
     });
+
+    // 委托式 click：处理持有物品区等动态插入的「使用」按钮
+    dialog.on('click.mfrsGachaPanel', '.gacha-result-use-btn', function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      if (!isCurrentOwner()) return;
+      const encoded = $(this).attr('data-mfrs-item-use');
+      if (!encoded) return;
+      let payload;
+      try {
+        payload = JSON.parse(decodeURIComponent(encoded));
+      } catch (err) {
+        console.warn('[MFRS Gacha] 持有物品使用按钮 payload 解析失败', err);
+        return;
+      }
+      const host = getHost();
+      const panel = host.MysteryMessagePanel;
+      if (panel && typeof panel.openItemUseDialog === 'function') {
+        try {
+          panel.openItemUseDialog(payload);
+          return;
+        } catch (err) {
+          console.warn('[MFRS Gacha] 调用 openItemUseDialog 失败，降级到 fillChatInput', err);
+        }
+      }
+      // 降级：直接填入输入框
+      try {
+        const parts = [`我使用${payload.itemType === 'clue' ? '线索' : payload.itemType === 'knowledge' ? '知识' : '灵异物品'}【${payload.itemName}】。`];
+        if (payload.effect) parts.push(`效果：${payload.effect}。`);
+        if (payload.effectDetail) parts.push(`详情：${payload.effectDetail}。`);
+        fillChatInput(parts.join('\n'));
+      } catch (err) {
+        console.warn('[MFRS Gacha] 降级 fillChatInput 失败', err);
+        if (window.toastr) window.toastr.error('使用失败：消息面板未就绪');
+      }
+    });
+
+    // 初始化面板数据（持有物品计数等）。
+    // 延迟到微任务执行：mountGachaPanel 会在本函数返回后注册 gachaPanelMounts，
+    // isCurrentOwner() 需要 mounts 已注册才返回 true。
+    schedule(refreshPanelData, 0);
 
     return handle;
   };
@@ -9298,6 +9495,7 @@
         if (gachaPanelMounts.get(container) === destroyedHandle) gachaPanelMounts.delete(container);
       },
     });
+
     gachaPanelMounts.set(container, handle);
     return handle;
   };
@@ -10478,9 +10676,417 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
     }
     if (results.skipped > 0) console.info('[Gacha 写库去重明细]', results.skippedItems);
 
+    // 同步抽卡所得物品进 MVU stat_data（主线 D），使左侧现场档案可见；失败不阻塞抽卡主流程。
+    await syncGachaItemsToMvuStatData(items);
+
     // 刷新界面
     renderInterface();
     return results;
+  };
+
+  // ═══════════════════ 抽卡物品同步进 MVU stat_data（主线 D） ═══════════════════
+
+  /**
+   * 跨窗口 throwing getter 兜底：酒馆助手给脚本 iframe 注入的 SillyTavern / Mvu /
+   * getVariables 等 getter 内部会立即解引用 window.parent，宿主未就绪时「读属性本身」
+   * 即抛 TypeError（`?.` 与后置 try 均拦不住）。所有跨窗口读取都经由本函数。
+   */
+  const safeHostRead = read => {
+    try {
+      return read();
+    } catch (e) {
+      return undefined;
+    }
+  };
+
+  // 定位 MVU 权威写回 API：Mvu.replaceMvuData / getMvuData 优先，getVariables /
+  // updateVariablesWith 兜底（与 hotfix 写回策略保持一致）。
+  const getMvuWriteApi = () => {
+    const host = getHost();
+    const mvu = safeHostRead(() => host.Mvu) ?? safeHostRead(() => window.Mvu);
+    const getVariables =
+      safeHostRead(() => host.getVariables) ??
+      safeHostRead(() => host.TavernHelper?.getVariables) ??
+      safeHostRead(() => window.getVariables) ??
+      safeHostRead(() => window.TavernHelper?.getVariables);
+    const updateVariablesWith =
+      safeHostRead(() => host.updateVariablesWith) ??
+      safeHostRead(() => host.TavernHelper?.updateVariablesWith) ??
+      safeHostRead(() => window.updateVariablesWith) ??
+      safeHostRead(() => window.TavernHelper?.updateVariablesWith);
+    return { mvu, getVariables, updateVariablesWith };
+  };
+
+  // 读最新消息的完整 MVU 变量（含 stat_data），读不到返回 null。
+  const readLatestMvuData = () => {
+    const { mvu, getVariables } = getMvuWriteApi();
+    const option = { type: 'message', message_id: 'latest' };
+    try {
+      const data = mvu?.getMvuData?.(option);
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data;
+    } catch (e) {
+      // fall through to getVariables
+    }
+    try {
+      const variables = getVariables?.(option);
+      if (variables && typeof variables === 'object' && !Array.isArray(variables)) return variables;
+    } catch (e) {
+      // fall through
+    }
+    return null;
+  };
+
+  const cloneMvuData = data => {
+    try {
+      return JSON.parse(JSON.stringify(data ?? {}));
+    } catch (e) {
+      return { ...(data ?? {}) };
+    }
+  };
+
+  const gachaUsageLimitText = item => {
+    if (item.usageLimit === 'unlimited') return '无限使用';
+    if (item.usageLimit === 'stack') return '可叠加';
+    return `${item.usageLimit}次`;
+  };
+
+  /**
+   * 按契约把抽卡所得物品合并进 stat_data（幂等：同名/同规律类型去重，只 append 新增项）。
+   *
+   * 契约映射（遵守 schema.ts 字段名，见「变量更新规则.yaml」「变量输出格式.yaml」）：
+   * - supernatural（灵异物品）→ 灵异资源.灵异物品 append { 名称, 类型, 剩余次数, 效果, 副作用 }
+   * - knowledge（知识/规律）→ 收录规律 append { 来源厉鬼, 获取方式, 规律类型, 规律内容, 规律进阶, 规律分解, 完整度, 风险备注 }
+   * - clue（线索，档案进度消耗品）→ 可见档案.未验证猜测 append 字符串「【线索】name：description（effect）」
+   *
+   * 不触碰终局字段（风险值 / is_dead / 主线进度.阶段状态 / 已驾驭厉鬼），只做纯增量 append。
+   * 返回 { stat, appended }；stat 为深拷贝后的新 stat_data，未新增时 appended 为 0。
+   */
+  const mergeGachaItemsIntoStatData = (statData, items) => {
+    const stat = cloneMvuData(statData);
+    if (!stat || typeof stat !== 'object' || Array.isArray(stat)) return { stat, appended: 0 };
+    const ensureArray = value => (Array.isArray(value) ? value : []);
+    let appended = 0;
+
+    for (const item of items) {
+      if (!item || item.isDuplicate) continue;
+      const name = normalizeGachaDedupText(item.name);
+      if (!name) continue;
+
+      if (item.type === GACHA_ITEM_TYPE.SUPERNATURAL) {
+        // SupernaturalItemSchema：{ 名称, 类型, 剩余次数, 效果, 副作用 }
+        const res =
+          stat.灵异资源 && typeof stat.灵异资源 === 'object' && !Array.isArray(stat.灵异资源)
+            ? stat.灵异资源
+            : (stat.灵异资源 = {});
+        const arr = ensureArray(res.灵异物品);
+        if (arr.some(existing => normalizeGachaDedupText(existing?.名称) === name)) continue;
+        arr.push({
+          名称: item.name,
+          类型: '灵异物品',
+          剩余次数: gachaUsageLimitText(item),
+          效果: (item.effect || '').slice(0, 160),
+          副作用: '无',
+        });
+        res.灵异物品 = arr;
+        appended += 1;
+      } else if (item.type === GACHA_ITEM_TYPE.KNOWLEDGE) {
+        // CollectedRuleSchema：{ 来源厉鬼, 获取方式, 规律类型, 规律内容, 规律进阶, 规律分解, 完整度, 风险备注 }
+        const arr = ensureArray(stat.收录规律);
+        if (
+          arr.some(
+            existing => existing?.获取方式 === '灵异抽卡' && normalizeGachaDedupText(existing?.规律类型) === name,
+          )
+        ) {
+          continue;
+        }
+        arr.push({
+          来源厉鬼: '待分配',
+          获取方式: '灵异抽卡',
+          规律类型: item.name,
+          规律内容: (item.description || '').slice(0, 180),
+          规律进阶: '待研究',
+          规律分解: '待研究',
+          完整度: `+${Math.round(item.progress * 100)}%`,
+          风险备注: (item.effectDetail || '无').slice(0, 160),
+        });
+        stat.收录规律 = arr;
+        appended += 1;
+      } else if (item.type === GACHA_ITEM_TYPE.CLUE) {
+        // 线索是档案进度消耗品；MVU 无专用线索字段，挂到可见档案.未验证猜测（string[]）。
+        const visible =
+          stat.可见档案 && typeof stat.可见档案 === 'object' && !Array.isArray(stat.可见档案)
+            ? stat.可见档案
+            : (stat.可见档案 = {});
+        const arr = ensureArray(visible.未验证猜测);
+        const clueText = `【线索】${item.name}：${item.description || item.effectDetail || ''}（${item.effect || ''}）`;
+        if (arr.some(existing => String(existing).includes(`【线索】${item.name}`))) continue;
+        arr.push(clueText);
+        visible.未验证猜测 = arr;
+        appended += 1;
+      }
+    }
+
+    return { stat, appended };
+  };
+
+  /**
+   * 通用 stat_data 权威写回：读旧 MVU → mutateFn(stat) 返回 { stat, changed } →
+   * 写回 → 读回校验 → 不一致时直写 chat.variables + saveChat 兜底 → 刷新消息内面板。
+   * 与 hotfix 写回策略一致，全程防御：任一环节失败仅降级为日志，不抛错、不阻塞调用方。
+   * changed=false 时不写回（幂等，热重载/重复点击安全）。
+   * 返回 { ok, changed, writer, verified, persisted, reason }。
+   */
+  const writeStatDataToMvu = async mutateFn => {
+    const oldData = readLatestMvuData();
+    if (
+      !oldData ||
+      !oldData.stat_data ||
+      typeof oldData.stat_data !== 'object' ||
+      Array.isArray(oldData.stat_data)
+    ) {
+      console.warn('[MFRS stat_data 写回] 未读到有效 stat_data，跳过写回', { hasData: !!oldData });
+      return { ok: false, changed: false, reason: 'NO_STAT_DATA' };
+    }
+
+    let stat;
+    let changed = false;
+    try {
+      const mutated = mutateFn(oldData.stat_data);
+      stat = mutated.stat;
+      changed = !!mutated.changed;
+    } catch (e) {
+      console.warn('[MFRS stat_data 写回] mutateFn 执行失败，跳过写回', e);
+      return { ok: false, changed: false, reason: 'MUTATE_FAILED' };
+    }
+    if (!changed) {
+      console.info('[MFRS stat_data 写回] 无变化（未找到匹配项或已消耗），跳过写回');
+      return { ok: true, changed: false, reason: 'NO_CHANGE' };
+    }
+
+    const nextData = { ...oldData, stat_data: stat };
+    const option = { type: 'message', message_id: 'latest' };
+    const { mvu, updateVariablesWith } = getMvuWriteApi();
+
+    let writer = '';
+    try {
+      if (typeof mvu?.replaceMvuData === 'function') {
+        await mvu.replaceMvuData(nextData, option);
+        writer = 'Mvu.replaceMvuData';
+      } else if (typeof updateVariablesWith === 'function') {
+        await updateVariablesWith(() => nextData, option);
+        writer = 'updateVariablesWith';
+      } else {
+        throw new Error('Mvu.replaceMvuData / updateVariablesWith 均不可用');
+      }
+    } catch (e) {
+      console.warn('[MFRS stat_data 写回] 权威写回失败，尝试直写 chat.variables 兜底', e);
+    }
+
+    // 读回校验；不一致则直写 chat 最后一条非用户消息 + saveChat 兜底。
+    let verified = false;
+    let persisted = false;
+    try {
+      const actual = readLatestMvuData();
+      verified = actual && actual.stat_data && JSON.stringify(actual.stat_data) === JSON.stringify(stat);
+    } catch (e) {
+      // ignore
+    }
+
+    if (!verified) {
+      try {
+        const context = getSillyTavernContext();
+        const chat = context?.chat;
+        if (Array.isArray(chat) && chat.length) {
+          let messageIndex = -1;
+          for (let i = chat.length - 1; i >= 0; i -= 1) {
+            if (chat[i] && !chat[i].is_user) {
+              messageIndex = i;
+              break;
+            }
+          }
+          if (messageIndex >= 0) {
+            const message = chat[messageIndex];
+            const cloned = cloneMvuData(nextData);
+            if (Array.isArray(message.variables)) {
+              message.variables[Number(message.swipe_id ?? 0)] = cloned;
+            } else if (!message.variables) {
+              const variables = [];
+              variables[Number(message.swipe_id ?? 0)] = cloned;
+              message.variables = variables;
+            } else {
+              message.variables = cloned;
+            }
+            if (typeof context.saveChat === 'function') {
+              await context.saveChat();
+              persisted = true;
+            }
+            writer = writer ? `${writer}+chat.variables` : 'chat.variables';
+          }
+        }
+      } catch (e) {
+        console.warn('[MFRS stat_data 写回] 直写 chat.variables 兜底失败', e);
+      }
+    }
+
+    // 刷新左侧现场档案（消息内面板）。
+    try {
+      const host = getHost();
+      host.MysteryMessagePanel?.refreshMessage?.('latest');
+      window.setTimeout(() => host.MysteryMessagePanel?.refreshMessage?.('latest'), 250);
+    } catch (e) {
+      console.debug('[MFRS stat_data 写回] 消息内面板刷新失败，忽略', e);
+    }
+
+    console.info('[MFRS stat_data 写回] 已写回', { writer, verified, persisted });
+    return { ok: true, changed: true, writer, verified, persisted };
+  };
+
+  /**
+   * 消耗抽卡所得物品：使用后从 stat_data 移除（knowledge/clue）或扣减剩余次数（supernatural）。
+   *
+   * 契约（与 mergeGachaItemsIntoStatData 对称，遵守 schema.ts 字段名）：
+   * - knowledge → 从 收录规律 移除 规律类型===name 且 获取方式==='灵异抽卡' 的项
+   * - clue → 从 可见档案.未验证猜测 移除以「【线索】name」开头的字符串
+   * - supernatural → 灵异资源.灵异物品：剩余次数='N次' 时 N-1，归 0 移除；'无限使用'/'可叠加' 不消耗
+   *
+   * 幂等：找不到匹配项时 changed=false，不写回、不报错（热重载/重复点击安全）。
+   * 不触碰终局字段（风险值 / is_dead / 主线进度.阶段状态 / 已驾驭厉鬼）。
+   */
+  const consumeGachaItemFromStatData = async payload => {
+    if (!payload || !payload.itemName || !payload.itemType) {
+      return { ok: false, changed: false, reason: 'INVALID_PAYLOAD' };
+    }
+    const name = normalizeGachaDedupText(payload.itemName);
+    const itemType = payload.itemType;
+    if (!name) return { ok: false, changed: false, reason: 'INVALID_NAME' };
+
+    return writeStatDataToMvu(statData => {
+      const stat = cloneMvuData(statData);
+      if (!stat || typeof stat !== 'object' || Array.isArray(stat)) return { stat, changed: false };
+
+      if (itemType === 'knowledge') {
+        const arr = Array.isArray(stat.收录规律) ? stat.收录规律 : [];
+        const next = arr.filter(item => {
+          if (!item || typeof item !== 'object') return true;
+          const keep = !(
+            item.获取方式 === '灵异抽卡' && normalizeGachaDedupText(item.规律类型) === name
+          );
+          return keep;
+        });
+        if (next.length === arr.length) return { stat, changed: false };
+        stat.收录规律 = next;
+        return { stat, changed: true };
+      }
+
+      if (itemType === 'clue') {
+        const visible =
+          stat.可见档案 && typeof stat.可见档案 === 'object' && !Array.isArray(stat.可见档案)
+            ? stat.可见档案
+            : (stat.可见档案 = {});
+        const arr = Array.isArray(visible.未验证猜测) ? visible.未验证猜测 : [];
+        const prefix = `【线索】${payload.itemName}`;
+        const next = arr.filter(item => typeof item === 'string' && !item.startsWith(prefix));
+        if (next.length === arr.length) return { stat, changed: false };
+        visible.未验证猜测 = next;
+        stat.可见档案 = visible;
+        return { stat, changed: true };
+      }
+
+      if (itemType === 'supernatural') {
+        const res =
+          stat.灵异资源 && typeof stat.灵异资源 === 'object' && !Array.isArray(stat.灵异资源)
+            ? stat.灵异资源
+            : (stat.灵异资源 = {});
+        const arr = Array.isArray(res.灵异物品) ? res.灵异物品 : [];
+        let changed = false;
+        const next = [];
+        for (const item of arr) {
+          if (!item || typeof item !== 'object' || normalizeGachaDedupText(item.名称) !== name) {
+            next.push(item);
+            continue;
+          }
+          // 剩余次数 schema 为 number | string，兼容两种格式：
+          //   number 5 → 扣减为 4（保持数字）；<=1 移除
+          //   string "N次" → 扣减为 "(N-1)次"；<=1 移除
+          //   "无限使用" / "可叠加" / "未知" / 无法解析 → 不消耗
+          const rawUsage = item.剩余次数;
+          if (typeof rawUsage === 'number' && !isNaN(rawUsage)) {
+            if (rawUsage <= 1) {
+              changed = true; // 归 0/1：移除该行
+            } else {
+              next.push({ ...item, 剩余次数: rawUsage - 1 });
+              changed = true;
+            }
+          } else {
+            const usage = String(rawUsage ?? '');
+            const m = usage.match(/^(\d+)次$/);
+            if (m) {
+              const n = parseInt(m[1], 10);
+              if (isNaN(n) || n <= 1) {
+                changed = true; // 归 0/1 次：移除该行
+              } else {
+                next.push({ ...item, 剩余次数: `${n - 1}次` });
+                changed = true;
+              }
+            } else {
+              // '无限使用' / '可叠加' / 无法解析：不消耗，保留原样
+              next.push(item);
+            }
+          }
+        }
+        if (!changed) return { stat, changed: false };
+        res.灵异物品 = next;
+        stat.灵异资源 = res;
+        return { stat, changed: true };
+      }
+
+      return { stat, changed: false };
+    });
+  };
+
+  /**
+   * 将抽卡所得物品同步进 MVU stat_data（主线 D）。
+   * 权威写回链路：读旧 MVU → 按契约幂等合并 → Mvu.replaceMvuData / updateVariablesWith 写回 →
+   * 读回校验 → 不一致时直写 chat 最后一条非用户消息 variables + saveChat 兜底 → 刷新消息内面板。
+   * 全程防御：任一环节失败仅降级为日志，不抛错、不影响抽卡与写库主流程。
+   */
+  const syncGachaItemsToMvuStatData = async items => {
+    if (!Array.isArray(items) || items.length === 0) return { ok: false, reason: 'EMPTY' };
+
+    const oldData = readLatestMvuData();
+    if (
+      !oldData ||
+      !oldData.stat_data ||
+      typeof oldData.stat_data !== 'object' ||
+      Array.isArray(oldData.stat_data)
+    ) {
+      console.warn('[Gacha MVU 同步] 未读到有效 stat_data，跳过写回', { hasData: !!oldData });
+      return { ok: false, reason: 'NO_STAT_DATA' };
+    }
+
+    let stat;
+    let appended = 0;
+    try {
+      const merged = mergeGachaItemsIntoStatData(oldData.stat_data, items);
+      stat = merged.stat;
+      appended = merged.appended;
+    } catch (e) {
+      console.warn('[Gacha MVU 同步] 合并抽卡物品进 stat_data 失败，跳过写回', e);
+      return { ok: false, reason: 'MERGE_FAILED' };
+    }
+    if (appended === 0) {
+      console.info('[Gacha MVU 同步] 无新增物品（均已存在），跳过写回', { total: items.length });
+      return { ok: true, appended: 0, reason: 'ALL_DUPLICATE' };
+    }
+
+    const result = await writeStatDataToMvu(() => ({ stat, changed: true }));
+    console.info('[Gacha MVU 同步] 已同步抽卡物品进 stat_data', {
+      appended,
+      writer: result.writer,
+      verified: result.verified,
+      persisted: result.persisted,
+    });
+    return { ok: true, appended, writer: result.writer, verified: result.verified, persisted: result.persisted };
   };
 
   // ==================== window.MFRS 公开 API ====================
@@ -10553,6 +11159,8 @@ ${currentType === 'supernatural' ? '灵异物品需要有明确的 usageLimit（
       // --- 写库 ---
       syncToDatabase: syncGachaResultToDatabase,
       validateAndInsert: validateAndInsertGachaRow,
+      // --- 消耗物品（MVU stat_data 权威写回；使用后移除知识/线索、扣灵异物品次数）---
+      consumeItem: consumeGachaItemFromStatData,
       // --- 版本 ---
       version: '1.0',
     });

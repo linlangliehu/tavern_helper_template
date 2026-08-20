@@ -1,3 +1,39 @@
+## 抽卡物品并入现场档案 + 现场档案使用按钮（2026-08-19，计划修订）
+
+### 结论
+
+- 抽卡 clue / knowledge 类物品的 `effect`（如「档案进度 +10%」）与 `progress`（0.05/0.1/0.25/0.5）字段**全仓无代码读取**，只是卡片文案，抽到后不产生任何进度效果。
+- 抽卡面板 `showGachaResult` 无「使用」按钮；左栏现场档案只读 MVU `stat_data`，不显示抽卡所得。
+- 唯一隐藏使用路径：HUD 系统 → 打开全库编辑 → `sheet_clues` 表 → 每行「使用」按钮（`buildRowInteractionHtml`）→ `buildCluePrompt` 生成「我使用线索【X】…」→ `fillChatInput` 填输入框 → 需手动补指定厉鬼 → 靠 AI 改 `sheet_collected_archives` 的「收录进度」（0-100）。
+- 「收录进度」字段在 `sheet_collected_archives` 表（`消息内面板/index.ts:738`），约束「已收录→进度=100」在 `table-change-adapter.ts:1910`。
+- 抽卡物品去向：面板结果区（即时）→ localStorage `mfrs_gacha_history`（≤100，按聊天 scope 隔离）→ 写库 `sheet_supernatural_items`/`sheet_clues`/`sheet_collected_rules`（来源=灵异抽卡）；重复转灵异残屑；不写 MVU、不进现场档案。
+- 本次修订：按用户要求，将「同步 MVU `stat_data` / 左侧现场档案展示」和「现场档案使用按钮」定为主线。
+
+### 修订后的实施计划（主线 D + 现场档案使用按钮）
+
+- **主线 D**：将抽卡所得物品同步进 MVU `stat_data`，使左侧「现场档案」显示这些物品；必须走现有权威写回路径。
+- **主线：现场档案「使用」按钮**：在左栏现场档案的抽卡物品项增加「使用」按钮；点击后指定厉鬼档案，`applyTableChangePlan` 对 `sheet_collected_archives` 对应行 `updateCell`，收录进度 `+Math.round(item.progress*100)`，并填输入框同步 AI。
+- **支持 A**：`showGachaResult` 结果卡片保留/增加「使用」按钮，作为即时入口与兜底。
+- **复用 C**：把原「用于档案 ▾」下拉逻辑复用到现场档案使用按钮，减少重复实现。
+- **可选 B**：抽卡面板新增「持有物品」区（读 `mfrs_gacha_owned_items` + 来源=灵异抽卡的行）。
+- **权威写回保障**：遵守 `schema.ts` → 变量输出格式 → 系统提示词 → 对话示例 → 脚本解析；补 fixture/门禁，确保幂等与终局字段不被破坏。
+
+### 阶段一实现（2026-08-19，代码已改）
+
+- **契约映射**（遵守 schema.ts 字段名，不新增字段）：
+  - `supernatural`（灵异物品）→ `stat_data.灵异资源.灵异物品` append `{ 名称, 类型:'灵异物品', 剩余次数, 效果, 副作用 }`（`SupernaturalItemSchema`）。
+  - `knowledge`（知识/规律）→ `stat_data.收录规律` append `{ 来源厉鬼:'待分配', 获取方式:'灵异抽卡', 规律类型, 规律内容, 规律进阶:'待研究', 规律分解:'待研究', 完整度:'+N%', 风险备注 }`（`CollectedRuleSchema`）。
+  - `clue`（线索，档案进度消耗品）→ `stat_data.可见档案.未验证猜测` append 字符串「【线索】name：description（effect）」。MVU 无专用线索字段，选语义最接近的挂载点；线索最终归宿仍是阶段三「使用按钮」对 `sheet_collected_archives` 的收录进度结算。
+- **权威写回链路**：新增 `syncGachaItemsToMvuStatData`（`v10_2_visualizer.js:10640`）读旧 MVU → 幂等合并 → `Mvu.replaceMvuData`/`updateVariablesWith` 写回 → 读回校验 → `chat.variables` 直写 + `saveChat` 兜底 → 刷新消息内面板。与 hotfix 写回策略一致，全程防御、不阻塞抽卡。
+- **调用点**：`syncGachaResultToDatabase` 末尾 `renderInterface()` 前（`v10_2_visualizer.js:10482`），写库成功后同步 MVU。
+- **幂等**：按名称/规律类型去重，只 append 新增项；不触碰终局字段（风险值/is_dead/主线进度.阶段状态/已驾驭厉鬼）。
+- **门禁现状**：`verify:mfrs-database-frontend-p3` 的 `destroyed mount ownership cleanup` 断言要求 `onDestroy: (destroyedHandle) =>` 带括号，而源码（HEAD）为 `destroyedHandle =>` 不带括号，属预先存在的门禁与源码不同步，非本次改动引入。
+
+### 末尾状态条说明（`mfrs-msg-brand`）
+
+- 每段对话末尾「阶段/位置/死亡风险」= `mfrs-msg-brand`（现场档案状态条，`消息内面板/index.ts:1085` `buildBrandHtml`），插在每条 AI 楼层**正文上方**作快照。
+- 与左栏「现场档案」是「概要 vs 详情、每楼 vs 最新楼」关系，不重复；历史楼无左栏档案，brand 是唯一状态可视化。
+
 ## MVU UpdateVariable 楼层写回根因 v2（2026-08-15，P7 真实对话复现）
 
 ### A1/A2 真页恢复证据（2026-08-15）

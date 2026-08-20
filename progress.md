@@ -1,5 +1,159 @@
 # 进度日志
 
+## 2026-08-20 真机验证：消耗逻辑 + 修复 number 格式 bug（完成）
+
+### 真机环境
+- 酒馆 1.18.0 @ `127.0.0.1:8000`，CDP 9225，开发卡「神秘复苏模拟器」激活
+- 5510 dist 含新代码（`consumeGachaItemFromStatData` ×2、`writeStatDataToMvu` ×3、`consumeItem` API、`剩余次数` 显示）
+- 运行时确认 `window.MFRS.consumeItem` 是 function（证明页面加载本地 5510 bundle 而非 CDN 旧代码）
+
+### 数据源确认（修正探测偏差）
+- `Mvu.getMvuData()` **无参** 读到旧快照（1 灵异物品/0 知识）
+- `Mvu.getMvuData({type:'message',message_id:'latest'})` 与最新 AI 楼真实数据一致（2 物品/1 知识）
+- `writeStatDataToMvu` 用的是后者（正确），前面探测用无参造成假性数据源不一致误判
+
+### 新发现 bug：supernatural 消耗漏数字格式（已修）
+- schema `剩余次数: z.union([z.number(), z.string()])` 允许数字和字符串两种
+- AI/开局写入数字 `5`；抽卡同步写字符串 `"5次"`
+- 原 `consumeGachaItemFromStatData` 只 `match(/^(\d+)次$/)`，对数字 `5` → `String(5)="5"` 无「次」字 → 不匹配 → 当无限使用跳过 → **永远不消耗**
+- 修复：supernatural 分支先判 `typeof rawUsage === 'number'` 直接 `rawUsage-1`（保持数字格式），≤1 移除；否则走字符串 "N次" 逻辑
+
+### 真机验证结果（全通过）
+1. **知识消耗**：使用「深入知识」对敲门鬼G0002 → `收录规律` 1项→0项 ✓；左栏知识按钮消失 ✓；敲门鬼「已知规律」更新为规律内容、「档案完整度」+10% ✓（knowledge 不加收录进度，符合设计）；提示词填入「我运用知识【深入知识】对厉鬼「敲门鬼[G0002]」...」 ✓
+2. **灵异物品消耗（数字格式）**：直接调 `consumeItem` 红色鬼烛 → 剩余次数 `5`→`4`（number 保持）✓；`writer:'Mvu.replaceMvuData', verified:true` ✓
+3. **连续消耗归0移除**：4→3→2→1→**移除** ✓；最终只剩灵异记录本
+4. **Reload 持久化**：reload 后鬼烛保持移除、知识保持消耗、收录档案终局字段不动、按钮不复活 ✓
+5. **幂等保护**：无限使用物品（灵异记录本）消耗返回 `{changed:false,NO_CHANGE}` 不写入 ✓；不存在物品同样不报错 ✓
+
+### 验证要点
+- 现场档案使用按钮分两处渲染：左栏 `aside.mfrs-hud-left`（最新楼层快照）+ 消息内面板三栏 `aside.mfrs-msg-tri-left`（历史楼层快照），都读 stat_data
+- knowledge 类写库只更新「已知规律」+「档案完整度」，**不加收录进度**（设计如此）；clue 类才加收录进度
+- supernatural 使用也弹厉鬼选择弹窗（但写库对 supernatural 跳过，只填提示词+消耗）
+
+### 修复文件
+- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：`consumeGachaItemFromStatData` supernatural 分支 number 格式兼容
+- 静态：`node --check` ✓；`verify:mfrs-archive-ui` phase5 242 checks ✓
+
+## 2026-08-20 修复：抽卡物品「使用」按钮不消耗物品（完成）
+
+### 根因
+真机发现：使用「深入知识」后档案进度加了 10%，但知识没消失可重复使用；灵异物品使用后也无次数递减。
+`消息内面板/index.ts:5834` 的 `executeItemUseOnGhost` 只做了「updateCell 加收录进度 + 填输入框提示词」，**完全缺失消耗逻辑**。
+
+### 消耗语义（已与用户确认）
+- knowledge（知识）→ 从 `stat_data.收录规律` 移除 `规律类型===name && 获取方式==='灵异抽卡'` 的行
+- clue（线索）→ 从 `stat_data.可见档案.未验证猜测` 移除以「【线索】name」开头的字符串
+- supernatural（灵异物品）→ `stat_data.灵异资源.灵异物品` 的 `剩余次数`（如「3次」）-1，归 0/1 次时移除该行；`无限使用`/`可叠加` 不消耗
+
+### 实现
+1. **数据库前端 `v10_2_visualizer.js`**：
+   - 抽取 `syncGachaItemsToMvuStatData` 的权威写回链路为通用函数 `writeStatDataToMvu(mutateFn)`（读旧→改→replaceMvuData/updateVariablesWith→读回校验→chat.variables+saveChat 兜底→刷新消息内面板）
+   - 新增 `consumeGachaItemFromStatData(payload)`，按类型从 stat_data 移除/扣减；幂等（未匹配到 `changed=false` 不写回）
+   - `MFRS` API 挂载 `consumeItem: consumeGachaItemFromStatData`
+   - `syncGachaItemsToMvuStatData` 改为复用 `writeStatDataToMvu`
+2. **消息内面板 `index.ts`**：
+   - `executeItemUseOnGhost` 在 `fillChatInputForItemUse` 后调 `MFRS.consumeItem({itemName, itemType})`，失败仅日志降级不阻断主流程
+   - `buildGachaItemsSectionHtml` 灵异物品行新增「剩余次数」标签显示（名称 + 类型 + 次数 + 效果）
+3. 数据库表 `sheet_supernatural_items` 的「数量或状态」字段不直接同步——提示词告知 AI 后由 AI 按规则更新（与现有只写收录档案、靠 AI 同步其它表的设计一致）
+
+### 验证
+- `node --check v10_2_visualizer.js`：通过
+- `pnpm verify:mfrs-archive-ui`（phase5 242 checks）：通过
+- `tsc` 本轮编辑行无新增错误（剩余全是预先存在的 UMD global / getVariables 全局声明噪声）
+- `pnpm verify:mfrs-frontend` 仍报预先存在的 `destroyedHandle =>` 括号不匹配（stash 验证为 HEAD 已有，非本轮引入）
+- 待真机：抽知识→使用→档案进度+N%✓且知识消失✓；抽有限次灵异物品→使用→次数-1→归0移除✓；无限物品→次数不变✓；Reload 持久化正确
+
+## 2026-08-19 阶段四：真机 CDP 端到端验证（完成）
+
+### 验证环境
+- 酒馆 1.18.0 运行于 `http://127.0.0.1:8000/`，CDP 端口 9225
+- 神秘复苏模拟器卡激活，MVU/消息内面板/数据库前端/MFRS API 全部就绪
+- 本地 dev server 5510 提供 dist 产物
+
+### 阶段四-1：抽卡后 stat_data 落盘（通过）
+- 基线：`stat_data.可见档案.未验证猜测` = 0 项，`灵异资源.灵异物品` = 1 项，货币 22
+- 在 HUD embedded 抽卡面板选择「厉鬼档案池」单抽，抽到「决定性线索」★★★★（progress=0.5）
+- 抽卡结果卡片底部正确显示「使用」按钮（阶段三新增）
+- 抽卡后 stat_data 读回：`未验证猜测` = 1 项，内容 = `【线索】决定性线索：关键的决定性线索，大幅提升档案完成度（档案进度 +50%）`，完全匹配契约
+- 货币 22→12（消耗 10），余额正确
+- 现场档案左栏「线索与猜测」折叠段正确渲染线索 + 「使用」按钮（阶段二新增）
+
+### 阶段四-2：Reload 不丢不翻倍（通过）
+- Reload 前指纹：`{g:1, g0:"【线索】决定性线索...", r:0, s:1, s0:"红色鬼烛"}`
+- 页面 `reload(ignoreCache)` → 重新进入聊天 → 读回指纹完全一致
+- stat_data 持久化正确，reload 后无丢失、无翻倍
+- UI 也正确渲染：线索折叠段有 1 行 + 1 个使用按钮，payload 字段名 `itemName`/`itemType` 正确
+
+### 阶段四-3：现场档案「使用」按钮端到端验收（通过 + 修复 bug）
+- 点击现场档案中线索的「使用」按钮 → 弹出 `dialog[modal]`「使用物品」弹窗
+- 弹窗正确显示物品名称/说明 + 厉鬼列表（从 `sheet_collected_archives` 读取，2 条：鬼档案自身 100%、敲门声 65%）
+- **发现 bug**：弹窗挂在 `doc.body` 上而非 `#mfrs-hud-shell` 内，`handleHudShellClick` 的 `if (!shell) return` 导致弹窗内的厉鬼按钮点击和关闭按钮点击全部被跳过，`executeItemUseOnGhost` 永远不会被调用
+- **修复**：把 `data-mfrs-item-use-action`（关闭按钮）和 `data-mfrs-item-use-ghost-row-id`（厉鬼选择按钮）的点击处理移到 `shell` 检查之前（`handleHudShellClick` 开头）
+- 修复后重新打包 + reload，再次测试：
+  - 点击「使用」按钮 → 弹窗弹出 ✓
+  - 点击「敲门声（暂编号）」→ 弹窗关闭 ✓
+  - 输入框填入提示词 ✓：`我使用线索【...】对厉鬼「敲门声（暂编号）」。\n内容：...\n请根据上述信息更新「收录档案」表中该厉鬼的收录进度与状态。`
+  - `applyMemoryChange` 执行成功（`result.ok = true`）✓
+- 使用按钮通过 `parseProgressFromText`（`消息内面板/index.ts:912`）从 `+N%` 文本解析 progress：clue 从线索文本、knowledge 从 `完整度` 字段解析，按钮携带正确 progress 值，写库时 `+Math.round(progress*100)` 实际增加收录进度。
+
+### 修复的 bug
+- `handleHudShellClick` 中弹窗操作（`data-mfrs-item-use-action`/`data-mfrs-item-use-ghost-row-id`）被 `if (!shell) return` 遮断，移到 shell 检查之前修复
+
+## 2026-08-19 阶段三：抽卡结果卡片「使用」按钮 + 复用阶段二弹窗逻辑（完成）
+
+- 在 `v10_2_visualizer.js` 的 `showGachaResult`（:8988）中，每张抽卡结果卡片底部新增「使用」按钮：
+  - 按钮携带 `data-mfrs-item-use` 属性（编码 `HudItemUseContext` payload：itemName/itemType/effect/description/effectDetail/progress/source）
+  - 仅对 `supernatural`/`clue`/`knowledge` 三类物品渲染按钮
+  - 按钮 jQuery click 事件：`stopPropagation` 避免触发卡片详情点击 → 优先调 `host.MysteryMessagePanel.openItemUseDialog(ctx)` → 降级 `fillChatInput` 直接填入输入框
+- 在 `消息内面板/index.ts` 的 `MessagePanelApi` 类型和 `messagePanelApi` 对象新增 `openItemUseDialog(ctx)` 方法，对外暴露阶段二的厉鬼选择弹窗入口
+- 在 `数据库前端/index.ts` 的 `MysteryMessagePanel` 类型声明补全 `refreshMessage`/`openItemUseDialog` 签名
+- 修复阶段二遗留的字段名不一致：`buildGachaItemUseButtonHtml` 的 payload 字段从 `name`/`type` 改为 `itemName`/`itemType`（匹配 `HudItemUseContext` 接口）；`handleHudShellClick` 中 `payload.name` 检查改为 `payload.itemName`
+- 覆盖范围：
+  - HUD embedded 模式（抽卡面板挂在 `#mfrs-hud-shell` 内）：`handleHudShellClick` capture listener 捕获 `data-mfrs-item-use` 点击 → `openItemUseDialog`
+  - overlay 模式（`showGachaPanel` 全屏弹窗）：jQuery click 直接调 `host.MysteryMessagePanel.openItemUseDialog`
+- 验证：
+  - TypeScript `tsc --noEmit`：无新增错误（剩余全是预先存在的 49→56 行差异为 stash 导致的 dist 产物变化，非 src 代码引入）
+  - webpack production 打包成功
+  - `verify-mfrs-archive-ui-regressions --stage phase5`：242 checks 通过
+  - `verify-mfrs-database-frontend-p3`：仍报预先存在的 `destroyedHandle =>` 断言不匹配，非本次引入
+- 待阶段四：真机 CDP 验证「抽卡结果卡片使用按钮 → 厉鬼选择弹窗 → updateCell 写库 → 输入框填入」
+
+## 2026-08-19 阶段二：现场档案「使用」按钮 UI + 写库逻辑（完成）
+
+- 在 `buildDossierSectionsHtml` 末尾新增「持有物品」区块（`buildGachaItemsSectionHtml`），展示三类抽卡所得物品：
+  - `灵异资源.灵异物品`：每项一行，显示名称/类型标签/效果 + 「使用」按钮
+  - `收录规律`：筛选含 `获取方式=灵异抽卡` 的行，显示规律类型/完整度 + 「使用」按钮
+  - `可见档案.未验证猜测`：识别 `【线索】` 前缀的抽卡线索，显示内容 + 「使用」按钮
+- 每个物品项的「使用」按钮携带 `data-mfrs-item-use` 属性（编码后的物品 payload：name/type/effect/description/effectDetail/progress/source）
+- 点击「使用」按钮 → `openItemUseDialog` 弹出固定定位的居中弹窗，读取 `sheet_collected_archives` 表的厉鬼列表供选择
+- 选定厉鬼后 `executeItemUseOnGhost`：
+  - `clue` 类：读当前收录进度 → `+Math.round(progress*100)` → `updateCell` 收录进度 + 收录状态（达 100→已收录，否则→收录中）+ 档案完整度
+  - `knowledge` 类：`updateCell` 已知规律 + 档案完整度
+  - `supernatural` 类：只填入输入框提示 AI（不改数据库收录进度）
+  - 所有类型都通过 `fillChatInputForItemUse` 把提示词填入酒馆输入框（只填不自动发送）
+- 写库走 `frontend.applyMemoryChange(plan)` → `applyTableChangePlan`，遵守 `table-change-adapter.ts` 的 `updateCell` 语义与 `crossFieldRules`（已收录→进度=100）
+- 弹窗 CSS 使用项目既有色彩变量（`--mfrs-corpse-cyan`、`--mfrs-bone-white`），与记忆中栏按钮风格一致
+- 生命周期清理：`unmountHudImmersive` 和 `deactivate` 均移除弹窗 DOM 和 `hudItemUsePending`
+- TypeScript transpile 通过；`verify-mfrs-archive-ui-regressions` baseline 50 checks 通过；`verify-mfrs-database-frontend-p3` 仍报预先存在的 `destroyed mount ownership cleanup` 断言不匹配（HEAD 源码 `destroyedHandle =>` 无括号 vs 门禁要求 `(destroyedHandle) =>`），非本次引入
+- 待阶段四：真机 CDP 验证「抽卡后 stat_data 落盘、现场档案显示物品、使用按钮弹出厉鬼选择、updateCell 写库、输入框填入」
+
+## 2026-08-19 抽卡物品并入现场档案 + 现场档案使用按钮（计划修订 + 阶段一代码完成）
+
+- 用户抽到「重要线索」（档案进度 +10%）后无法在正文/现场档案找到使用入口。
+- 诊断确认：抽卡 clue/knowledge 类物品的 `progress`/`effect` 是死文案，全仓无代码读取；抽卡面板无「使用」按钮；现场档案只读 MVU，不显示抽卡所得。
+- 现有隐藏路径：HUD 系统 → 打开全库编辑 → `sheet_clues` 表 → 每行「使用」按钮 → 填输入框「我使用线索…」→ 手动指定厉鬼 → 靠 AI 改 `sheet_collected_archives` 收录进度。
+- 计划修订：主线改为 D（抽卡物品同步 MVU `stat_data`，进入左侧现场档案）+ 现场档案物品项增加「使用」按钮；A/C/B 降为支持/复用/可选，并新增权威写回保障。已同步 `task_plan.md` 顶部与 `findings.md`。
+- 附带结论：末尾「阶段/位置/死亡风险」状态条 = `mfrs-msg-brand`（现场档案状态条），与左栏档案是概要 vs 详情关系，不重复。
+- 当前 HEAD `56cff0fb` = v8.15.26；工作区处于开发模式（`index.yaml` 已切 localhost:5510 + watch dist 噪声）。
+
+### 阶段一：数据层契约与权威写回打通（完成）
+
+- 在 `v10_2_visualizer.js` 新增 `syncGachaItemsToMvuStatData`，并在 `syncGachaResultToDatabase` 写库成功后调用，把抽卡所得物品按契约同步进 MVU `stat_data`。
+- 契约映射（见 findings.md「阶段一实现」）：supernatural → `灵异资源.灵异物品`；knowledge → `收录规律`；clue → `可见档案.未验证猜测`。全部遵守 schema.ts 字段名，不新增字段、不触碰终局字段（风险值/is_dead/阶段状态/已驾驭厉鬼）。
+- 权威写回链路：读旧 MVU → 幂等合并 → `Mvu.replaceMvuData` / `updateVariablesWith` → 读回校验 → `chat.variables` 直写 + `saveChat` 兜底 → 刷新消息内面板；与 hotfix 策略一致，全程防御、不阻塞抽卡。
+- 语法 `node --check` 通过。`verify:mfrs-database-frontend-p3` 现报 `destroyed mount ownership cleanup` 括号不匹配，为预先存在（HEAD 源码 `destroyedHandle =>` 无括号 vs 门禁要求 `(destroyedHandle) =>`），非本次引入。
+- 待阶段四：真机 CDP 验证「抽卡后 stat_data 落盘、Reload/Swipe 不丢不翻倍」。
+
 ## 2026-08-15 P7 A1/A2 真页恢复（完成）
 
 - 恢复开发卡真实对话，定位最新 AI 楼层 idx6 / swipe0。

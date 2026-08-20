@@ -1,5 +1,35 @@
 # 任务计划：神秘复苏模拟器 · 审计缺陷修复
 
+## 抽卡物品并入现场档案 + 现场档案使用按钮（2026-08-19，计划修订）
+
+> 本次修订把主攻方向改为：抽卡所得物品同步到左侧「现场档案」的 MVU `stat_data`，并在现场档案物品项上增加「使用」按钮。仍未改业务代码。
+
+- [x] **核心缺口**：抽到线索/知识类物品后，`effect` 与 `progress` 字段原为纯文案；现已通过 `parseProgressFromText` 从 `+N%` 文本解析 progress（线索从 `（档案进度 +50%）`、知识从 `完整度` 字段），使用按钮携带正确 progress 值，写库时实际增加收录进度。抽卡所得同步进 MVU stat_data 已在主线 D 实现。
+- [x] **主线 D**：将抽卡所得物品同步进 MVU `stat_data`，使左侧「现场档案」显示这些物品（阶段一已实现 `syncGachaItemsToMvuStatData`，契约见 findings.md；真机验收归入阶段四）。
+- [x] **主线：现场档案「使用」按钮**：在左栏现场档案的抽卡物品项增加「使用」按钮；点击后指定厉鬼档案，调 `applyTableChangePlan` 对 `sheet_collected_archives` 对应行 `updateCell`，收录进度 `+Math.round(item.progress*100)`，并填输入框同步 AI。（阶段二已实现 `buildGachaItemsSectionHtml` + `executeItemUseOnGhost` + 弹窗 UI）
+- [x] **支持 A**：`showGachaResult` 结果卡片底部新增「使用」按钮，按钮带 `data-mfrs-item-use` payload + jQuery click 优先调 `host.MysteryMessagePanel.openItemUseDialog`，降级 `fillChatInput`。（阶段三已实现）
+- [x] **复用 C**：现场档案使用按钮和抽卡结果卡片使用按钮统一复用 `openItemUseDialog` → `executeItemUseOnGhost` → `fillChatInputForItemUse` 链路；原 `buildCluePrompt`/`buildRulePrompt`/`buildSupernaturalItemPrompt`/`fillChatInput` 逻辑由 `buildItemUsePromptText`/`fillChatInputForItemUse` 对应复用。（阶段二+三已实现）
+- [x] **可选 B**：抽卡面板新增「持有物品」区（读 `mfrs_gacha_owned_items` + 来源=灵异抽卡的行）。已实现 `buildOwnedItemsHtml` + `toggleOwnedItems` + 委托式 click handler + 持有物品计数；附带修复 `mountGachaPanel` 未注册 `gachaPanelMounts` 的 bug。
+- [x] **阶段四真机验证**：抽卡后 stat_data 落盘 ✓；Reload 不丢不翻倍 ✓；现场档案使用按钮端到端 ✓（修复弹窗点击被 shell 检查遮断的 bug）。使用按钮通过 `parseProgressFromText` 从 `+N%` 文本解析 progress（clue 从线索文本、knowledge 从 `完整度` 字段），写库时 `+Math.round(progress*100)` 实际增加收录进度。
+
+### 关键代码位置
+
+| 位置 | 文件:行 |
+|------|--------|
+| 抽卡物品元数据（progress/effect 死文案） | `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js:7733-7834` |
+| 抽卡结果渲染 | `v10_2_visualizer.js:8988` `showGachaResult` |
+| 抽卡写库 | `v10_2_visualizer.js:10383` `syncGachaResultToDatabase` |
+| 全库「使用」按钮 + 提示词生成 | `v10_2_visualizer.js:269` `buildRowInteractionHtml`、`:210` `buildCluePrompt`、`:296` `fillChatInput` |
+| 收录档案表 + 收录进度字段（0-100） | `src/神秘复苏模拟器/脚本/消息内面板/index.ts:738` |
+| 收录进度约束（已收录→进度=100） | `src/神秘复苏模拟器/脚本/数据库前端/table-change-adapter.ts:1910` |
+| 左栏现场档案容器（`aria-label="现场档案"`） | `src/神秘复苏模拟器/脚本/消息内面板/index.ts:1183` |
+
+### 本会话结论与修订
+
+- 每段对话末尾「阶段/位置/死亡风险」状态条 = `mfrs-msg-brand`（现场档案状态条），插在每条 AI 楼层**正文上方**作快照；与左栏现场档案是「概要 vs 详情、每楼 vs 最新楼」关系，不重复。
+- 抽卡物品现有去向：面板结果区（即时）→ 抽卡历史（localStorage `mfrs_gacha_history` ≤100，按聊天 scope 隔离）→ 写库 `sheet_supernatural_items` / `sheet_clues` / `sheet_collected_rules`（来源=灵异抽卡）；重复物品转灵异残屑；目前不写 MVU、不进现场档案。
+- 修订方向：按用户要求，把「同步 MVU `stat_data` / 左侧现场档案展示」和「现场档案使用按钮」定为主线；A/C/B 降为支持、复用或可选，且新增权威写回保障项。
+
 ## 运行时复验：SP数据库 III 空表修复（2026-08-17）
 
 - [x] 恢复上轮根因与修复证据：数据库模板内 3 处未转义 ASCII 双引号导致前端模块加载失败。
@@ -194,11 +224,11 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | v8.15.20 已发布：raw applier 成为 JSONPatch 唯一权威，空占位楼生命周期修复已进入正式卡；CDN 7 个脚本 200。 |
-| 我要去哪里？ | 无在途发布任务。可选收尾：正式 PNG 干净导入验收、把 parseMessage 结论写入 `.cursor/rules`、补多轮连续 delta fixture。 |
+| 我在哪里？ | 当前 HEAD `56cff0fb` = v8.15.26（发布版）；工作区处于**开发模式**（`index.yaml` 已切 localhost:5510，含 DEV_MODE 注释与 watch dist 噪声）。 |
+| 我要去哪里？ | 新任务：抽卡物品并入左侧现场档案 + 现场档案使用按钮（见文件顶部）。主线 D（同步 MVU/现场档案展示）→ 现场档案使用按钮；A/C/B 为支持/复用/可选。 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
-| 我学到了什么？ | 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta。协议必须由本地 applier 权威应用，并按 swipe+协议指纹保证恢复扫描与重试幂等。 |
-| 我做了什么？ | 完成真实复杂 fixture、四类 mutation proof、真实 25→90 与 99→100、五项终局写集、正文/UI/协议清洗、空楼层恢复及 save/reload 幂等验证。 |
+| 我学到了什么？ | ① 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta，协议必须由本地 applier 权威应用。② 抽卡物品 `progress`/`effect` 是纯文案，当前不进入 MVU；新主线需同步 MVU 并在现场档案提供使用按钮，且必须走权威写回。 |
+| 我做了什么？ | 完成真实复杂 fixture、四类 mutation proof、真实 25→90 与 99→100、五项终局写集、正文/UI/协议清洗、空楼层恢复及 save/reload 幂等验证。另完成抽卡使用缺口与末尾状态条问答诊断（无代码改动）。 |
 
 ## 硬约束（勿破）
 
@@ -209,17 +239,18 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 - 契约真源顺序：`schema.ts` → 变量输出格式 → 系统提示词 → 对话示例 → 脚本解析
 - 开发源 `index.yaml` CDN 仍可能 pin 旧 hash；发布以 `publish-card.mjs` 的 `CDN_REF` 为准
 - **提交前必清**：dev 模式污染的 `index.yaml`（localhost:5510）、本地 webpack 噪声 `dist`、本地导出物
+- **新主线写回约束**：现场档案物品与「使用」按钮不得绕过权威 applier/schema/门禁；MVU 同步和收录进度变更必须幂等、不破坏终局字段。
 
 ## 当前基线
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.15.20**（release `b89565c7`；CDN_REF/tag `9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；cache `v81520_20260815_01`）。跳过 8.15.19（bot autotag 占用）。 |
-| 仓库运行时基线 | 本地与远端同为 `main@b89565c7`，生产模式，工作区干净。`.agent-artifacts/` 已 ignore。 |
+| 发布内容版本 | **8.15.26**（HEAD `56cff0fb` docs/CHANGELOG；release `b26b6b24`；bundle `f9535cea`）。工作区当前**开发模式**：`index.yaml` 已切 localhost:5510。 |
+| 仓库运行时基线 | 本地 `main@56cff0fb`；工作区有 dev 模式 `index.yaml` + watch 噪声 dist（11 个 dist 文件），业务源码无改动。 |
 | 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
 | 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync · 6621 webpack HMR · 9225 调试 Chrome（CDP/MCP） |
-| 下一阶段 | 无在途发布任务；可选收尾见「发布后可选收尾」。 |
+| 下一阶段 | 抽卡物品并入现场档案 + 现场档案使用按钮（见文件顶部）；主线 D + 现场档案使用按钮，A/C/B 为支持/复用/可选。 |
 
 ## 各阶段
 
@@ -515,7 +546,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 ```
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
-当前发布内容为 8.14.0；旧 MFRS、feature worktree、动态端口、派生 DEV 卡和 runtime identity 流程均已归档，不得恢复执行。
+当前发布内容为 8.15.26；旧 MFRS、feature worktree、动态端口、派生 DEV 卡和 runtime identity 流程均已归档，不得恢复执行。
 当前开发流程：F5 → 切换开发模式 → pnpm watch 仅编译 → 固定 5510 静态服务 → SillyTavern 8000 真页验收；结束运行 pnpm stop-dev。
 当前发布流程：阶段 1 跑 verify:mfrs-source-gates 并推送源码 → 等 bot bundle → 阶段 2 更新 CDN_REF → publish-card --dist-no-build → verify:mfrs-gates → 提交发布物和正式 tag。
 当前具体任务优先读取本文件顶部最新条目和 docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md。

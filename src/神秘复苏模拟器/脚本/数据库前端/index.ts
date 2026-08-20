@@ -100,6 +100,16 @@ type HostWindow = Window & {
   MysteryMessagePanel?: {
     getHudActiveView?: () => unknown;
     refreshAll?: () => void;
+    refreshMessage?: (messageId: number | string) => void;
+    openItemUseDialog?: (ctx: {
+      itemName: string;
+      itemType: string;
+      effect: string;
+      description: string;
+      effectDetail: string;
+      progress: number;
+      source: string;
+    }) => void;
   };
   MFRS?:
     | {
