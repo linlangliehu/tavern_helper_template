@@ -4,7 +4,7 @@
  */
 export const REPO = 'linlangliehu/tavern_helper_template';
 // v8.15.30: 修复 MVU「假性已应用」stat_data 重载退回初值（历史假性已应用楼层重写 + 阻止新增）
-export const CDN_REF = 'd049bf635a539d1f13514dfd4a5ad276507491fe';
+export const CDN_REF = '8ff362d08355f5f0e25496b90ae8025ce35c9c79';
 export const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 export const CDN_CACHE_VERSION = 'v81530_20260820_01';
 export const RELEASE_VERSION = '8.15.30';
