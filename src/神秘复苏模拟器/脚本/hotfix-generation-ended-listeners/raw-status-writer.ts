@@ -202,33 +202,46 @@ function extractWhitelistedDeltaPatches(normalizedMessage: string): DeltaPatch[]
   return out;
 }
 
+function readStatPointer(stat: Record<string, unknown>, path: string): unknown {
+  let current: unknown = stat;
+  for (const key of path.split('/').filter(Boolean)) {
+    if (current == null || typeof current !== 'object' || Array.isArray(current)) return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+function createFalseApplyDefaultData(): MvuData {
+  return {
+    stat_data: {
+      风险值: 0,
+      厉鬼复苏程度: 0,
+      驭鬼者状态: { 总复苏风险: 0 },
+    },
+  };
+}
+
 /**
  * 判定「假性已应用」：协议已写回过（applied_hash 命中），但 stat_data 退回初值。
  *
  * 规则（保守，宁可漏判也不误清）：
- * 1. 仅当协议含白名单 delta 且 delta 值 ≠ 0 才参与判定；无 delta → false。
- * 2. 读当前 stat_data 对应字段，若仍为 schema 初值 0 → 判定为假性已应用。
- * 3. 字段非 0、非数值、或为 0 但 delta 也为 0（no-op）→ 不判。
+ * 1. 仅检查 schema default 为 0 的白名单 delta 路径。
+ * 2. 从 schema default 按协议原顺序完整重放；只有该路径的预期终值 > 0、当前却仍为 0，才判定回退。
+ * 3. 单个负 delta、正负 delta 净归零、或后续 replace 归零都视为合法归零，不得重放。
  *
  * 不读 mes、不读预设标签；只读 oldData.stat_data + 解析 <UpdateVariable>。
  */
 export function isFalselyAppliedStat(oldData: MvuData | undefined, normalizedMessage: string): boolean {
-  const deltas = extractWhitelistedDeltaPatches(normalizedMessage).filter(d => d.value !== 0);
-  if (deltas.length === 0) return false;
-  const stat = (oldData && (oldData as MvuData).stat_data) || {};
-  for (const { path } of deltas) {
-    const keys = path.split('/').filter(k => k.length > 0);
-    let cur: unknown = stat;
-    for (const k of keys) {
-      if (cur == null || typeof cur !== 'object' || Array.isArray(cur)) {
-        cur = undefined;
-        break;
-      }
-      cur = (cur as Record<string, unknown>)[k];
-    }
-    if (typeof cur === 'number' && cur === 0) return true;
-  }
-  return false;
+  const paths = [...new Set(extractWhitelistedDeltaPatches(normalizedMessage).map(delta => delta.path))];
+  if (paths.length === 0) return false;
+
+  const currentStat = (oldData && (oldData as MvuData).stat_data) || {};
+  const expectedStat = applyRawProtocolToMvuData(createFalseApplyDefaultData(), normalizedMessage).data.stat_data || {};
+  return paths.some(path => {
+    const current = readStatPointer(currentStat, path);
+    const expected = readStatPointer(expectedStat, path);
+    return typeof current === 'number' && current === 0 && typeof expected === 'number' && expected > 0;
+  });
 }
 
 export function applyRawProtocolToMvuData(oldData: MvuData, normalizedMessage: string): RawWriteResult {

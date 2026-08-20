@@ -269,8 +269,8 @@ assert.equal(
   'hotfix must NOT call mvu.parseMessage for JSONPatch (delta loss bug)',
 );
 assert.ok(
-  hotfixSource.includes('writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption)'),
-  'hotfix should write parsed MVU data back through verified writeback',
+  /writeMvuDataWithVerification\(\s*hostWindow,\s*chat,\s*messageIndex,\s*expectedSwipeId,\s*fallback\.data,\s*messageOption,\s*isCurrentProtocol,?\s*\)/.test(hotfixSource),
+  'hotfix should write parsed MVU data back through verified writeback pinned to the transaction swipe',
 );
 assert.equal(hotfixSource.includes('parseMessage(lastMessageIndex'), false, 'hotfix must not pass message index to parseMessage');
 assert.ok(hotfixSource.includes('RAW_PROTOCOL_EXTRA_KEY'), 'hotfix should preserve raw protocol before cleaning mes');
@@ -492,7 +492,7 @@ assert.ok(
 
 // P3-S2: 权威写回必须通过 writeMvuDataWithVerification（不旁路验证）
 assert.ok(
-  /applyRawProtocolToMvuData\(oldData,[\s\S]{0,600}?writeMvuDataWithVerification\(hostWindow, chat, messageIndex, fallback\.data, messageOption\)/.test(hotfixSource),
+  /applyRawProtocolToMvuData\(oldData,[\s\S]{0,600}?writeMvuDataWithVerification\([\s\S]*?fallback\.data,[\s\S]*?messageOption,[\s\S]*?isCurrentProtocol,?\s*\)/.test(hotfixSource),
   'P3-S2: hotfix JSONPatch writeback must go through writeMvuDataWithVerification',
 );
 

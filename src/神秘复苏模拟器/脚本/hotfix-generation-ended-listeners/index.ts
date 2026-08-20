@@ -1,5 +1,11 @@
 import * as protocolNormalizer from './protocol-normalizer.js';
 const { reconstructUpdateVariableFromSummary } = protocolNormalizer;
+import {
+  createDebouncedSingleFlight,
+  createObjectKeyedSingleFlight,
+  runProtocolApplicationController,
+  selectFalselyAppliedRepairIndexes,
+} from './falsely-applied-controller';
 import { applyRawProtocolToMvuData, isFalselyAppliedStat } from './raw-status-writer';
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 
@@ -57,6 +63,21 @@ const { normalizeMfrsUpdateVariableProtocol } = protocolNormalizer as {
 const RAW_PROTOCOL_EXTRA_KEY = '_mfrs_raw_protocol_message';
 const RAW_PROTOCOL_APPLIED_HASH_KEY = '_mfrs_raw_protocol_applied_hash';
 const RAW_PROTOCOL_APPLIED_AT_KEY = '_mfrs_raw_protocol_applied_at';
+let runProtocolApplicationSingleFlight = createObjectKeyedSingleFlight<ChatMessage, string, boolean>();
+let hotfixEpoch = 0;
+let installScanTimer: ReturnType<typeof window.setTimeout> | undefined;
+const hotfixRetryTimers = new Set<ReturnType<typeof window.setTimeout>>();
+
+function scheduleHotfixRetry(callback: () => void, delay: number, epoch = hotfixEpoch) {
+  let timer: ReturnType<typeof window.setTimeout>;
+  timer = window.setTimeout(() => {
+    hotfixRetryTimers.delete(timer);
+    if (epoch !== hotfixEpoch) return;
+    callback();
+  }, delay);
+  hotfixRetryTimers.add(timer);
+  return timer;
+}
 
 type HostWindow = Window & {
   SillyTavern?: {
@@ -495,27 +516,42 @@ async function replaceMvuData(hostWindow: HostWindow, data: MvuData, messageOpti
   throw new Error('Mvu.replaceMvuData / updateVariablesWith 均不可用');
 }
 
-function assignMessageVariablesDirectly(chat: ChatMessage[], messageIndex: number, data: MvuData) {
+function assignMessageVariablesDirectly(
+  chat: ChatMessage[],
+  messageIndex: number,
+  expectedSwipeId: number,
+  data: MvuData,
+) {
   const message = chat[messageIndex];
   if (!message) return '';
 
   const clonedData = cloneMvuData(data);
   if (!message.variables) {
-    const swipeId = getMessageSwipeId(message);
     const variables: Record<string, unknown>[] = [];
-    variables[swipeId] = clonedData;
+    variables[expectedSwipeId] = clonedData;
     message.variables = variables;
-    return `chat.variables[${swipeId}]`;
+    return `chat.variables[${expectedSwipeId}]`;
   }
 
   if (Array.isArray(message.variables)) {
-    const swipeId = getMessageSwipeId(message);
-    message.variables[swipeId] = clonedData;
-    return `chat.variables[${swipeId}]`;
+    message.variables[expectedSwipeId] = clonedData;
+    return `chat.variables[${expectedSwipeId}]`;
   }
 
+  if (expectedSwipeId !== 0) return '';
   message.variables = clonedData;
   return 'chat.variables';
+}
+
+function readMessageVariablesDirectly(
+  chat: ChatMessage[],
+  messageIndex: number,
+  expectedSwipeId: number,
+): MvuData | undefined {
+  const message = chat[messageIndex];
+  if (!message?.variables) return undefined;
+  if (Array.isArray(message.variables)) return message.variables[expectedSwipeId] as MvuData | undefined;
+  return expectedSwipeId === 0 ? message.variables as MvuData : undefined;
 }
 
 async function persistDirectMessageVariables(hostWindow: HostWindow, messageIndex: number) {
@@ -535,19 +571,26 @@ async function writeMvuDataWithVerification(
   hostWindow: HostWindow,
   chat: ChatMessage[],
   messageIndex: number,
+  expectedSwipeId: number,
   data: MvuData,
   messageOption: MessageVariableOption,
+  isCurrentProtocol: () => boolean,
 ) {
+  if (!isCurrentProtocol()) return { writer: '', verified: false, persisted: false };
   const primaryWriter = await replaceMvuData(hostWindow, data, messageOption);
+  if (!isCurrentProtocol()) return { writer: primaryWriter, verified: false, persisted: false };
   let verified = hasSameStatData(readOldMvuData(hostWindow, messageOption), data);
   let directWriter = '';
   let persisted = false;
 
-  if (!verified) {
-    directWriter = assignMessageVariablesDirectly(chat, messageIndex, data);
+  if (!verified && isCurrentProtocol()) {
+    directWriter = assignMessageVariablesDirectly(chat, messageIndex, expectedSwipeId, data);
     verified = hasSameStatData(readOldMvuData(hostWindow, messageOption), data);
-    if (directWriter) {
+    if (directWriter && isCurrentProtocol()) {
       persisted = await persistDirectMessageVariables(hostWindow, messageIndex);
+      if (persisted && hasSameStatData(readMessageVariablesDirectly(chat, messageIndex, expectedSwipeId), data)) {
+        verified = true;
+      }
     }
   }
 
@@ -572,7 +615,12 @@ function refreshMessagePanel(hostWindow: HostWindow, messageId: number | string)
  * 返回 true 表示写回未通过验证、需要延迟重试；返回 false 表示已写回或无需写回（不应重试）。
  * 重要：只有在 verified=false 时才应安排重试，否则 delta patch 会在每次重试时重复累积。
  */
-async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: unknown): Promise<boolean> {
+async function parseAndWriteMvuMessage(
+  messageIndex: number,
+  eventMessageId?: unknown,
+  entryEpoch = hotfixEpoch,
+): Promise<boolean> {
+  if (entryEpoch !== hotfixEpoch) return false;
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
@@ -591,105 +639,179 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
   };
   const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
   const applicationKey = getProtocolApplicationKey(message, normalized.message);
-  if (message.extra?.[RAW_PROTOCOL_APPLIED_HASH_KEY] === applicationKey) {
-    // 假性已应用修复：标记命中，但 stat_data 可能已退回初值（重载后 stat_data 被 MVU 重建为 schema default，
-    // 而 applied_hash 标记留存，导致 hotfix 永久跳过写回、变量卡死）。
-    // 仅当协议含白名单 delta≠0 且对应字段仍为初值 0 时，判定为假性已应用，清标记并继续走下方正常写回；
-    // 真·已应用楼层（字段已有累积值）维持原跳过逻辑，不重复写回、不重复累积。
-    const oldDataForCheck = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
-    if (isFalselyAppliedStat(oldDataForCheck, normalized.message)) {
-      console.info('[Hotfix] 检测到假性已应用，清除标记并重新写回', {
+  return runProtocolApplicationSingleFlight(message, applicationKey, async () => {
+    const transactionEpoch = entryEpoch;
+    const expectedSwipeId = getMessageSwipeId(message);
+    const isCurrentProtocol = () => {
+      if (transactionEpoch !== hotfixEpoch) return false;
+      const latestContext = getSillyTavernContext(hostWindow);
+      const latestMessage = latestContext?.chat?.[messageIndex];
+      if (latestContext?.chat !== chat || latestMessage !== message || getMessageSwipeId(message) !== expectedSwipeId) {
+        return false;
+      }
+      const latestRaw = readMessageTextForMvu(message);
+      if (!latestRaw.trim() || !hasInternalProtocol(latestRaw)) return false;
+      const latestNormalized = normalizeMfrsUpdateVariableProtocol(latestRaw);
+      return getProtocolApplicationKey(message, latestNormalized.message) === applicationKey;
+    };
+    if (!isCurrentProtocol()) return false;
+
+    const markerMatches = message.extra?.[RAW_PROTOCOL_APPLIED_HASH_KEY] === applicationKey;
+    const oldDataForCheck = markerMatches
+      ? seedMissingStatPaths(readOldMvuData(hostWindow, messageOption))
+      : undefined;
+    const falselyApplied = markerMatches && isFalselyAppliedStat(oldDataForCheck, normalized.message);
+  if (falselyApplied) {
+    console.info('[Hotfix] 检测到假性已应用，清除标记并重新写回', {
+      messageIndex,
+      messageId: messageOption.message_id,
+      applicationKey,
+    });
+  }
+
+  const controllerResult = await runProtocolApplicationController({
+    markerMatches,
+    falselyApplied,
+    clearMarker: () => {
+      if (message.extra) delete message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY];
+    },
+    write: async () => {
+      if (!isCurrentProtocol()) return null;
+      const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
+
+      // 根因 v2（P7 真实对话复现）：Mvu.parseMessage 对 <UpdateVariable><JSONPatch> 的解析不可靠——
+      // 当 stat_data 的「规律推理记录」含字段「是否触发规律」时，delta 操作被静默丢弃，
+      // 仅 replace/insert 生效，导致复苏风险/死亡风险永远无法累积。
+      // 因此 JSONPatch 的写回一律以本地 applyRawProtocolToMvuData 为权威，
+      // 不再依赖 Mvu.parseMessage（它只能解析原生宏指令格式，无法正确消费 JSONPatch）。
+      const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
+      if (fallback.applied === 0) {
+        console.info('[Hotfix] JSONPatch 无可写 patch，跳过', {
+          messageIndex,
+          messageId: messageOption.message_id,
+          normalized: normalized.stats,
+          skipped: fallback.skipped,
+        });
+        return null;
+      }
+      const writeResult = await writeMvuDataWithVerification(
+        hostWindow,
+        chat,
+        messageIndex,
+        expectedSwipeId,
+        fallback.data,
+        messageOption,
+        isCurrentProtocol,
+      );
+      if (!isCurrentProtocol()) return null;
+      refreshMessagePanel(hostWindow, messageOption.message_id);
+      console.info('[Hotfix] 已通过本地 JSONPatch 写回消息变量', {
         messageIndex,
         messageId: messageOption.message_id,
+        applied: fallback.applied,
+        skipped: fallback.skipped,
+        writer: writeResult.writer,
+        verified: writeResult.verified,
+        persisted: writeResult.persisted,
         applicationKey,
+        normalized: normalized.stats,
       });
-      if (message.extra) delete message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY];
-    } else {
-      const markerPersisted = await persistDirectMessageVariables(hostWindow, messageIndex);
+      if (!writeResult.verified) {
+        console.warn('[Hotfix] JSONPatch 写回后读回仍不一致，保留延迟重试', {
+          messageIndex,
+          messageId: messageOption.message_id,
+        });
+      }
+      return writeResult;
+    },
+    markApplied: () => {
+      if (!isCurrentProtocol()) return;
+      message.extra = message.extra || {};
+      message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY] = applicationKey;
+      message.extra[RAW_PROTOCOL_APPLIED_AT_KEY] = Date.now();
+    },
+    persistMarker: () => isCurrentProtocol() ? persistDirectMessageVariables(hostWindow, messageIndex) : Promise.resolve(false),
+  });
+
+    if (controllerResult.action === 'skip') {
       console.debug('[Hotfix] 当前 swipe 协议已写回，跳过重复应用', {
         messageIndex,
         messageId: messageOption.message_id,
         applicationKey,
-        markerPersisted,
+        markerPersisted: controllerResult.markerPersisted,
       });
-      return !markerPersisted;
     }
-  }
-  const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
-
-  // 根因 v2（P7 真实对话复现）：Mvu.parseMessage 对 <UpdateVariable><JSONPatch> 的解析不可靠——
-  // 当 stat_data 的「规律推理记录」含字段「是否触发规律」时，delta 操作被静默丢弃，
-  // 仅 replace/insert 生效，导致复苏风险/死亡风险永远无法累积。
-  // 因此 JSONPatch 的写回一律以本地 applyRawProtocolToMvuData 为权威，
-  // 不再依赖 Mvu.parseMessage（它只能解析原生宏指令格式，无法正确消费 JSONPatch）。
-  const fallback = applyRawProtocolToMvuData(oldData, normalized.message);
-  if (fallback.applied === 0) {
-    console.info('[Hotfix] JSONPatch 无可写 patch，跳过', {
-      messageIndex,
-      messageId: messageOption.message_id,
-      normalized: normalized.stats,
-      skipped: fallback.skipped,
-    });
-    return false;
-  }
-  const writeResult = await writeMvuDataWithVerification(hostWindow, chat, messageIndex, fallback.data, messageOption);
-  let markerPersisted = false;
-  if (writeResult.verified) {
-    message.extra = message.extra || {};
-    message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY] = applicationKey;
-    message.extra[RAW_PROTOCOL_APPLIED_AT_KEY] = Date.now();
-    markerPersisted = await persistDirectMessageVariables(hostWindow, messageIndex);
-  }
-  refreshMessagePanel(hostWindow, messageOption.message_id);
-  console.info('[Hotfix] 已通过本地 JSONPatch 写回消息变量', {
-    messageIndex,
-    messageId: messageOption.message_id,
-    applied: fallback.applied,
-    skipped: fallback.skipped,
-    writer: writeResult.writer,
-    verified: writeResult.verified,
-    persisted: writeResult.persisted,
-    markerPersisted,
-    applicationKey,
-    normalized: normalized.stats,
+    return controllerResult.needsRetry;
   });
-  if (!writeResult.verified) {
-    console.warn('[Hotfix] JSONPatch 写回后读回仍不一致，保留延迟重试', {
-      messageIndex,
-      messageId: messageOption.message_id,
-    });
-  }
-  return !writeResult.verified || !markerPersisted;
 }
 
-function scheduleMvuWriteBackRetries(messageIndex: number, eventMessageId?: unknown) {
-  for (const delay of [250, 1000, 2500]) {
-    window.setTimeout(() => {
-      parseAndWriteMvuMessage(messageIndex, eventMessageId).catch(error => {
+function scheduleMvuWriteBackRetries(
+  messageIndex: number,
+  eventMessageId?: unknown,
+  attempt = 0,
+  expectedChat?: ChatMessage[],
+  expectedMessage?: ChatMessage,
+  scheduleEpoch = hotfixEpoch,
+) {
+  if (scheduleEpoch !== hotfixEpoch) return;
+  const hostWindow = getHostWindow();
+  const currentChat = getSillyTavernContext(hostWindow)?.chat;
+  const targetChat = expectedChat ?? currentChat;
+  const targetMessage = expectedMessage ?? targetChat?.[messageIndex];
+  if (!targetChat || !targetMessage || currentChat !== targetChat || targetChat[messageIndex] !== targetMessage) return;
+
+  const delays = [250, 1000, 2500];
+  if (attempt >= delays.length) return;
+  const delay = delays[attempt];
+  scheduleHotfixRetry(() => {
+    const latestChat = getSillyTavernContext(hostWindow)?.chat;
+    if (latestChat !== targetChat || latestChat?.[messageIndex] !== targetMessage) return;
+    parseAndWriteMvuMessage(messageIndex, eventMessageId, scheduleEpoch)
+      .then(needsRetry => {
+        if (needsRetry) {
+          scheduleMvuWriteBackRetries(
+            messageIndex,
+            eventMessageId,
+            attempt + 1,
+            targetChat,
+            targetMessage,
+            scheduleEpoch,
+          );
+        }
+      })
+      .catch(error => {
         console.warn('[Hotfix] MVU 延迟写回重试失败', { messageIndex, delay, error });
+        scheduleMvuWriteBackRetries(
+          messageIndex,
+          eventMessageId,
+          attempt + 1,
+          targetChat,
+          targetMessage,
+          scheduleEpoch,
+        );
       });
-    }, delay);
-  }
+  }, delay, scheduleEpoch);
 }
 
 /** 上下文不可用时重跑整条 GENERATION_ENDED 流水线（写回 + 清洗），避免本轮协议永久丢失。 */
-function scheduleGenerationEndedRetry(eventMessageId?: unknown, attempt = 0) {
+function scheduleGenerationEndedRetry(eventMessageId?: unknown, attempt = 0, scheduleEpoch = hotfixEpoch) {
+  if (scheduleEpoch !== hotfixEpoch) return;
   const delays = [200, 800, 2000];
   if (attempt >= delays.length) {
     console.warn('[Hotfix] GENERATION_ENDED 重试次数耗尽，本轮放弃', { eventMessageId });
     return;
   }
-  window.setTimeout(() => {
+  scheduleHotfixRetry(() => {
     const context = getSillyTavernContext(getHostWindow());
     if (!context?.chat || context.chat.length === 0) {
-      scheduleGenerationEndedRetry(eventMessageId, attempt + 1);
+      scheduleGenerationEndedRetry(eventMessageId, attempt + 1, scheduleEpoch);
       return;
     }
     console.info('[Hotfix] GENERATION_ENDED 上下文已就绪，重跑流水线', { attempt, eventMessageId });
-    runGenerationEndedPipeline(eventMessageId).catch(error => {
+    runGenerationEndedPipeline(eventMessageId, scheduleEpoch).catch(error => {
       console.warn('[Hotfix] GENERATION_ENDED 重试失败', { attempt, error });
     });
-  }, delays[attempt]);
+  }, delays[attempt], scheduleEpoch);
 }
 
 /**
@@ -699,32 +821,39 @@ function scheduleGenerationEndedRetry(eventMessageId?: unknown, attempt = 0) {
  * （面向「导入旧档缺协议快照」）；本函数扫全部、只对假性已应用楼层重写（面向重载后
  * stat_data 被 MVU 重建为初值、applied_hash 留存导致永久卡死的存量历史楼）。
  *
- * 竞态防护：跳过最后一条 AI 楼（可能是正在生成的本轮，交由 GENERATION_ENDED + 层面 A 处理）；
- * 判定为纯函数，不写回，命中才 parseAndWriteMvuMessage，全扫成本可控。
+ * 竞态防护：仅在生成 UI 仍处于忙碌态时跳过最后一条 AI 楼；稳定聊天的最后一楼也必须参与修复。
+ * CHAT_CHANGED 扫描由 debounce + single-flight 合并，避免重复事件并发重放同一 delta。
  */
 async function repairFalselyAppliedFloors() {
+  const repairEpoch = hotfixEpoch;
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
   if (!chat || chat.length === 0) return;
 
-  // 最后一条 AI 楼在本轮生成期间正在被 GENERATION_ENDED 处理，跳过避免竞态。
-  let lastAiIndex = -1;
-  for (let index = chat.length - 1; index >= 0; index -= 1) {
-    if (!chat[index]?.is_user) { lastAiIndex = index; break; }
+  let activeGenerationMessageIndex = -1;
+  if (isSendUiStuck(hostWindow)) {
+    for (let index = chat.length - 1; index >= 0; index -= 1) {
+      if (!chat[index]?.is_user) {
+        activeGenerationMessageIndex = index;
+        break;
+      }
+    }
   }
 
   let repaired = 0;
-  for (let index = 0; index < chat.length; index += 1) {
-    if (index === lastAiIndex) continue;
+  for (const index of selectFalselyAppliedRepairIndexes(chat, activeGenerationMessageIndex)) {
+    if (repairEpoch !== hotfixEpoch || getSillyTavernContext(hostWindow)?.chat !== chat) return;
     const message = chat[index];
-    if (!message || message.is_user) continue;
-    if (!message.extra || typeof message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY] === 'undefined') continue;
+    if (!message?.extra) continue;
 
     const rawMessage = readMessageTextForMvu(message);
     if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) continue;
 
     const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
+    const applicationKey = getProtocolApplicationKey(message, normalized.message);
+    if (message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY] !== applicationKey) continue;
+
     const messageOption: MessageVariableOption = {
       type: 'message',
       message_id: getMessageVariableId(message, index),
@@ -734,7 +863,11 @@ async function repairFalselyAppliedFloors() {
 
     try {
       console.info('[Hotfix] 历史楼层假性已应用，重新写回', { messageIndex: index });
-      await parseAndWriteMvuMessage(index);
+      const needsRetry = await parseAndWriteMvuMessage(index);
+      if (needsRetry) {
+        scheduleMvuWriteBackRetries(index);
+        continue;
+      }
       repaired += 1;
     } catch (error) {
       console.warn('[Hotfix] 历史楼层假性已应用修复失败', { messageIndex: index, error });
@@ -746,7 +879,8 @@ async function repairFalselyAppliedFloors() {
   }
 }
 
-async function recoverRecentRawProtocolMessages() {
+async function recoverRecentRawProtocolMessages(entryEpoch = hotfixEpoch) {
+  if (entryEpoch !== hotfixEpoch) return;
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
@@ -754,6 +888,7 @@ async function recoverRecentRawProtocolMessages() {
 
   let candidates = 0;
   for (let index = Math.max(0, chat.length - 12); index < chat.length; index += 1) {
+    if (entryEpoch !== hotfixEpoch || getSillyTavernContext(hostWindow)?.chat !== chat) return;
     const message = chat[index];
     if (!message || message.is_user) continue;
     const rawMessage = readMessageTextForMvu(message);
@@ -761,11 +896,13 @@ async function recoverRecentRawProtocolMessages() {
 
     candidates += 1;
     try {
-      await parseAndWriteMvuMessage(index);
+      const needsRetry = await parseAndWriteMvuMessage(index, undefined, entryEpoch);
+      if (entryEpoch !== hotfixEpoch || getSillyTavernContext(hostWindow)?.chat !== chat) return;
+      if (needsRetry) scheduleMvuWriteBackRetries(index, undefined, 0, chat, message, entryEpoch);
       // RH3（BF6）：导入旧档/历史 raw 消息补写 MVU 后，同样清洗 mes 里的协议残块。
       // 此前只补 MVU 不洗 mes → 导入旧档时协议块仍留在正文并回传 AI。
       // cleanProtocolBlocks 内部会先 snapshot raw（幂等，不覆盖已存 raw），故 UI/MVU 仍可读原文。
-      await cleanProtocolBlocks(index);
+      await cleanProtocolBlocks(index, entryEpoch);
     } catch (error) {
       console.warn('[Hotfix] 历史 raw protocol 消息补写失败', { messageIndex: index, error });
     }
@@ -776,7 +913,8 @@ async function recoverRecentRawProtocolMessages() {
   }
 }
 
-async function cleanProtocolBlocks(messageIndex: number) {
+async function cleanProtocolBlocks(messageIndex: number, entryEpoch = hotfixEpoch) {
+  if (entryEpoch !== hotfixEpoch) return;
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
@@ -889,16 +1027,20 @@ async function handleMessageReceived(eventMessageId?: unknown) {
   await cleanProtocolBlocks(lastMessageIndex);
 }
 
+const chatChangedRepair = createDebouncedSingleFlight({
+  task: repairFalselyAppliedFloors,
+  delay: 800,
+  schedule: (callback, delay) => window.setTimeout(callback, delay),
+  cancel: timer => window.clearTimeout(timer),
+  onError: error => console.warn('[Hotfix] CHAT_CHANGED 假性已应用修复扫描失败', error),
+});
+
 /**
  * 切卡/重载聊天后修复历史假性已应用楼层。
- * CHAT_CHANGED 在新聊天加载完成时触发；延迟扫描避免和正在进行的 GENERATION_ENDED 抢锁。
+ * CHAT_CHANGED 在新聊天加载完成时触发；重复事件合并为一次扫描，且扫描本身 single-flight。
  */
 function handleChatChanged() {
-  window.setTimeout(() => {
-    repairFalselyAppliedFloors().catch(error => {
-      console.warn('[Hotfix] CHAT_CHANGED 假性已应用修复扫描失败', error);
-    });
-  }, 800);
+  chatChangedRepair.trigger();
 }
 
 function isStopButtonVisible(hostWindow: HostWindow) {
@@ -1016,10 +1158,11 @@ function recoverSendUiAfterEmptyGeneration(
 }
 
 async function handleGenerationEnded(eventMessageId?: unknown) {
-  await runGenerationEndedPipeline(eventMessageId);
+  await runGenerationEndedPipeline(eventMessageId, hotfixEpoch);
 }
 
-async function runGenerationEndedPipeline(eventMessageId?: unknown) {
+async function runGenerationEndedPipeline(eventMessageId?: unknown, entryEpoch = hotfixEpoch) {
+  if (entryEpoch !== hotfixEpoch) return;
   const hostWindow = getHostWindow();
   const context = getSillyTavernContext(hostWindow);
   const chat = context?.chat;
@@ -1031,7 +1174,7 @@ async function runGenerationEndedPipeline(eventMessageId?: unknown) {
       hasContext: !!context,
       eventMessageId,
     });
-    scheduleGenerationEndedRetry(eventMessageId);
+    scheduleGenerationEndedRetry(eventMessageId, 0, entryEpoch);
     forceRecoverSendUi(hostWindow, 'generation_ended_empty_chat');
     return;
   }
@@ -1093,14 +1236,16 @@ async function runGenerationEndedPipeline(eventMessageId?: unknown) {
     }
 
     try {
-      const needsRetry = await parseAndWriteMvuMessage(protocolMessageIndex, eventMessageId);
-      if (needsRetry) scheduleMvuWriteBackRetries(protocolMessageIndex, eventMessageId);
+      const needsRetry = await parseAndWriteMvuMessage(protocolMessageIndex, eventMessageId, entryEpoch);
+      if (needsRetry && entryEpoch === hotfixEpoch) {
+        scheduleMvuWriteBackRetries(protocolMessageIndex, eventMessageId, 0, chat, protocolMessage, entryEpoch);
+      }
     } catch (error) {
       console.error('[Hotfix] MVU parseMessage 执行失败', error);
     }
 
     // 2. 再次清洗协议块（防御性清洗，以防 MESSAGE_RECEIVED 未触发或 MVU 解析后内容变化）
-    await cleanProtocolBlocks(protocolMessageIndex);
+    await cleanProtocolBlocks(protocolMessageIndex, entryEpoch);
   }
 
   // 3. 触发数据库刷新（如果需要）
@@ -1300,6 +1445,15 @@ async function waitForDependencies(maxAttempts = 30, interval = 500) {
 }
 
 function cleanupHotfix(hostWindow: HostWindow = getHostWindow()) {
+  hotfixEpoch += 1;
+  runProtocolApplicationSingleFlight = createObjectKeyedSingleFlight<ChatMessage, string, boolean>();
+  if (installScanTimer !== undefined) {
+    window.clearTimeout(installScanTimer);
+    installScanTimer = undefined;
+  }
+  for (const timer of hotfixRetryTimers) window.clearTimeout(timer);
+  hotfixRetryTimers.clear();
+  chatChangedRepair.cancel();
   unbindHotfixListeners();
   hostWindow.__mfrsHotfixInstalled__ = false;
   delete hostWindow.__mfrsHotfixCleanup__;
@@ -1324,15 +1478,17 @@ async function installHotfix() {
 
   const success = registerEventListeners();
   if (success) {
+    hotfixEpoch += 1;
     hostWindow.__mfrsHotfixInstalled__ = true;
     hostWindow.__mfrsHotfixCleanup__ = () => cleanupHotfix(hostWindow);
     console.info('[Hotfix] GENERATION_ENDED 监听器补丁安装成功');
-    window.setTimeout(() => {
+    installScanTimer = window.setTimeout(() => {
+      installScanTimer = undefined;
       recoverRecentRawProtocolMessages().catch(error => {
         console.warn('[Hotfix] 历史 raw protocol 消息补写扫描失败', error);
       });
       // 首装时聊天可能已打开（无后续 CHAT_CHANGED），同样跑一次假性已应用修复。
-      repairFalselyAppliedFloors().catch(error => {
+      chatChangedRepair.runNow().catch(error => {
         console.warn('[Hotfix] 首装假性已应用修复扫描失败', error);
       });
     }, 1000);

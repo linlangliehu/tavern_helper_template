@@ -24,6 +24,7 @@ const mfrsRoot = join(repoRoot, 'src', '神秘复苏模拟器');
 const scriptRoot = join(mfrsRoot, '脚本');
 const hotfixDir = join(scriptRoot, 'hotfix-generation-ended-listeners');
 const hotfixPath = join(hotfixDir, 'index.ts');
+const falselyAppliedControllerPath = join(hotfixDir, 'falsely-applied-controller.ts');
 const rawWriterPath = join(hotfixDir, 'raw-status-writer.ts');
 const panelDir = join(scriptRoot, '消息内面板');
 const panelPath = join(panelDir, 'index.ts');
@@ -511,6 +512,7 @@ for (const broken of [{}, { stat_data: null }, { stat_data: [] }, { stat_data: '
 // ────────────────────────────────────────────────────────────────
 
 const hotfixSource = readText(hotfixPath);
+const falselyAppliedControllerSource = readText(falselyAppliedControllerPath);
 const panelSource = readText(panelPath);
 
 function assertAuthoritativeHotfixContract(source, label = 'hotfix') {
@@ -525,8 +527,13 @@ function assertAuthoritativeHotfixContract(source, label = 'hotfix') {
   );
   assert.match(
     source,
-    /const needsRetry = await parseAndWriteMvuMessage\([^;]+;\s*if \(needsRetry\) scheduleMvuWriteBackRetries/,
-    `${label} must only schedule retries after verified=false`,
+    /await parseAndWriteMvuMessage\([^;]+\);[\s\S]{0,200}?if \(needsRetry[^)]*\)\s*(?:\{|&& )[\s\S]{0,120}?scheduleMvuWriteBackRetries\(/,
+    `${label} must only schedule initial retries when the write still needs retry`,
+  );
+  assert.match(
+    source,
+    /\.then\(needsRetry => \{\s*if \(needsRetry[^)]*\)\s*\{\s*scheduleMvuWriteBackRetries\(/,
+    `${label} must only continue sequential retries while the write still needs retry`,
   );
 }
 
@@ -547,7 +554,7 @@ assert.ok(
   'hotfix must apply raw protocol to oldData as authoritative JSONPatch writeback (#8)',
 );
 assert.ok(
-  /applyRawProtocolToMvuData[\s\S]{0,900}?writeMvuDataWithVerification\(hostWindow, chat, messageIndex, fallback\.data, messageOption\)/.test(
+  /applyRawProtocolToMvuData[\s\S]{0,900}?writeMvuDataWithVerification\([\s\S]*?fallback\.data,[\s\S]*?messageOption,[\s\S]*?isCurrentProtocol,?\s*\)/.test(
     hotfixSource,
   ),
   'raw fallback must write back through writeMvuDataWithVerification (#8)',
@@ -585,11 +592,16 @@ assert.ok(
 );
 assert.match(
   hotfixSource,
-  /if \(writeResult\.verified\) \{[\s\S]{0,300}?RAW_PROTOCOL_APPLIED_HASH_KEY[\s\S]{0,300}?persistDirectMessageVariables/,
+  /runProtocolApplicationController\(\{[\s\S]*?markApplied:[\s\S]*?RAW_PROTOCOL_APPLIED_HASH_KEY[\s\S]*?persistMarker:\s*\(\) =>[\s\S]*?persistDirectMessageVariables/,
+  'P7 idempotency gate: hotfix must delegate marker persistence through the tested protocol controller',
+);
+assert.match(
+  falselyAppliedControllerSource,
+  /if \(writeResult\.verified\) \{\s*options\.markApplied\(\);\s*markerPersisted = await options\.persistMarker\(\);/,
   'P7 idempotency gate: application fingerprint may only be persisted after verified writeback',
 );
 assert.ok(
-  hotfixSource.includes('return !writeResult.verified || !markerPersisted;'),
+  falselyAppliedControllerSource.includes('needsRetry: !writeResult.verified || !markerPersisted'),
   'P7 idempotency gate: marker persistence failure must remain retryable without reapplying delta',
 );
 
@@ -611,13 +623,13 @@ assert.throws(
 );
 
 const unconditionalRetryMutation = hotfixSource.replace(
-  /if \(needsRetry\) scheduleMvuWriteBackRetries\(([^;]+)\);/,
+  /if \(needsRetry[^)]*\)\s*\{\s*scheduleMvuWriteBackRetries\(([\s\S]*?)\);\s*\}/g,
   'scheduleMvuWriteBackRetries($1);',
 );
-assert.notEqual(unconditionalRetryMutation, hotfixSource, 'mutation setup must remove the retry condition');
+assert.notEqual(unconditionalRetryMutation, hotfixSource, 'mutation setup must remove a retry condition');
 assert.throws(
   () => assertAuthoritativeHotfixContract(unconditionalRetryMutation, 'unconditional retry mutation'),
-  /must only schedule retries/,
+  /must only schedule initial retries|must only continue sequential retries/,
   'gate must reject unconditional retries that double-apply delta',
 );
 
@@ -720,7 +732,7 @@ const pipeStart = hotfixSource.indexOf('async function runGenerationEndedPipelin
 assert.notEqual(pipeStart, -1, 'runGenerationEndedPipeline must exist');
 const pipeHead = hotfixSource.slice(pipeStart, pipeStart + 1200);
 assert.ok(
-  pipeHead.includes('scheduleGenerationEndedRetry(eventMessageId)'),
+  pipeHead.includes('scheduleGenerationEndedRetry(eventMessageId') && /scheduleGenerationEndedRetry\(eventMessageId[^)]*\)/.test(pipeHead),
   'the empty-context branch must schedule a retry instead of dropping the turn',
 );
 
@@ -991,15 +1003,11 @@ assert.deepEqual(
   'multi-turn: hotfix and HUD appliers must produce identical stat_data after 3 rounds of continuous delta accumulation',
 );
 
-// 重复应用同一轮协议必须被指纹拦截（幂等性验证）
-// 模拟 swipe 不变时，同一 turn3Raw 对 turn3OldData 再次应用
+// 从相同 oldData 重放相同协议必须保持确定性。
+// 真正的重复事件 / marker 幂等性由 verify-mfrs-falsely-applied-regressions.mjs 覆盖。
 const turn3Result2 = applyRawProtocolToMvuData(clone(turn3OldData), turn3Raw);
-// applier 本身没有指纹缓存（那在 hotfix handler 层），这里验证的是重复应用是否产生双倍 delta
-// 如果指纹在 handler 层生效，applier 不会被调用；如果指纹失效，applier 会再跑一次
-// 每次 apply 都是独立的完整重放，delta 会再次累加——这正是为什么需要指纹拦截
-assert.equal(turn3Result2.data.stat_data[RISK], 100, 'multi-turn idempotency: re-applying turn 3 from same oldData produces same result (stateless)');
-assert.equal(turn3Result2.applied, turn3Patches.length, 'multi-turn idempotency: re-applied turn 3 has same applied count');
-// 关键断言：从同样的 oldData 重复应用，结果必须相同（幂等的前提是 oldData 不变）
-assert.deepEqual(turn3Result2.data.stat_data, turn3Result.data.stat_data, 'multi-turn idempotency: same oldData + same raw must yield identical result');
+assert.equal(turn3Result2.data.stat_data[RISK], 100, 'multi-turn determinism: same oldData + same raw keeps terminal risk');
+assert.equal(turn3Result2.applied, turn3Patches.length, 'multi-turn determinism: replay has the same applied count');
+assert.deepEqual(turn3Result2.data.stat_data, turn3Result.data.stat_data, 'multi-turn determinism: same oldData + same raw yields the same result');
 
 console.log('verify-mfrs-raw-status-fallback: passed');
