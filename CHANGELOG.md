@@ -2,6 +2,14 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.30] - 2026-08-20
+
+### 修复
+- **MVU「假性已应用」stat_data 重载退回初值**：重载后 `message.extra._mfrs_raw_protocol_applied_hash` 标记留存，但 MVU `stat_data` 退回 schema 初值（风险值=0、收录档案空），hotfix 命中标记 → 永久跳过写回 → stat_data 卡死在初值，下游记忆面板"暂无记录"、HUD 风险显示 0。两层修复：
+  - **层面 A — 阻止新增假性已应用**（`hotfix-generation-ended-listeners/index.ts` `parseAndWriteMvuMessage` 跳过分支前 pre-check）：标记命中时调 `isFalselyAppliedStat` 判定，仅当协议含白名单 delta≠0（`/风险值`、`/厉鬼复苏程度`、`/驭鬼者状态/总复苏风险`，schema default 均 0）且字段仍为 0 时清标记、落到正常写回；真·已应用楼层（字段已有累积值）维持原跳过，不重复写回、不重复累积。
+  - **层面 B — 修复历史假性已应用**（新增 `repairFalselyAppliedFloors` + `CHAT_CHANGED` 监听）：切卡/重载后扫全楼层，只对"标记在且假性"的楼层调 `parseAndWriteMvuMessage` 重写，跳过最后一条 AI 楼避免与正在进行的 `GENERATION_ENDED` 竞态；首装时（`installHotfix`）也跑一次扫描。
+- 新增辅助函数 `isFalselyAppliedStat` + `extractWhitelistedDeltaPatches`（白名单 delta 提取，复用 `applyRawProtocolToMvuData` 的 `<UpdateVariable>/<JSONPatch>` 解析口径）。写回链路只读 `<UpdateVariable>` 协议 + `stat_data`，不读不写 `mes`/预设标签，不影响预设。
+
 ## [v8.15.28] - 2026-08-20
 
 ### 修复

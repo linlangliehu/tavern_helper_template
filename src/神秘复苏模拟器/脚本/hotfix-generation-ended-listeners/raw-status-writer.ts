@@ -156,6 +156,81 @@ function extractJsonArray(text: string) {
   return '';
 }
 
+/**
+ * 数值型 delta 判定白名单：schema default 均为 0 的字段。
+ * 只有这些字段才能用「协议声称 delta≠0 但当前值仍为 0」反推假性已应用——
+ * 因为它们的初值确定就是 0，当前为 0 几乎只可能源自「重载后 stat_data 退回初值」。
+ * 非数值字段、初值非 0 字段一律不纳入，避免误清合法 replace/归零楼层。
+ */
+const FALSAPPLY_DELTA_WHITELIST: ReadonlySet<string> = new Set([
+  '/风险值',
+  '/厉鬼复苏程度',
+  '/驭鬼者状态/总复苏风险',
+]);
+
+type DeltaPatch = { path: string; value: number };
+
+/**
+ * 从归一化后的协议文本中提取所有 delta 操作（仅白名单路径）。
+ * 复用与 applyRawProtocolToMvuData 一致的 <UpdateVariable>/<JSONPatch> 解析口径，
+ * 确保判定与权威写回看的是同一批 patch。
+ */
+function extractWhitelistedDeltaPatches(normalizedMessage: string): DeltaPatch[] {
+  const blocks = String(normalizedMessage).match(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi) ?? [];
+  const out: DeltaPatch[] = [];
+  for (const block of blocks) {
+    const match = block.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    const arrayText = match ? extractJsonArray(match[1]) : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
+    if (!arrayText) continue;
+    let patches: Patch[];
+    try {
+      patches = JSON.parse(arrayText);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(patches)) continue;
+    for (const patch of patches) {
+      const op = String(patch.op ?? '').trim().toLowerCase();
+      if (op !== 'delta') continue;
+      const path = String(patch.path ?? '');
+      if (!FALSAPPLY_DELTA_WHITELIST.has(path)) continue;
+      const value = Number(patch.value ?? NaN);
+      if (!Number.isFinite(value)) continue;
+      out.push({ path, value });
+    }
+  }
+  return out;
+}
+
+/**
+ * 判定「假性已应用」：协议已写回过（applied_hash 命中），但 stat_data 退回初值。
+ *
+ * 规则（保守，宁可漏判也不误清）：
+ * 1. 仅当协议含白名单 delta 且 delta 值 ≠ 0 才参与判定；无 delta → false。
+ * 2. 读当前 stat_data 对应字段，若仍为 schema 初值 0 → 判定为假性已应用。
+ * 3. 字段非 0、非数值、或为 0 但 delta 也为 0（no-op）→ 不判。
+ *
+ * 不读 mes、不读预设标签；只读 oldData.stat_data + 解析 <UpdateVariable>。
+ */
+export function isFalselyAppliedStat(oldData: MvuData | undefined, normalizedMessage: string): boolean {
+  const deltas = extractWhitelistedDeltaPatches(normalizedMessage).filter(d => d.value !== 0);
+  if (deltas.length === 0) return false;
+  const stat = (oldData && (oldData as MvuData).stat_data) || {};
+  for (const { path } of deltas) {
+    const keys = path.split('/').filter(k => k.length > 0);
+    let cur: unknown = stat;
+    for (const k of keys) {
+      if (cur == null || typeof cur !== 'object' || Array.isArray(cur)) {
+        cur = undefined;
+        break;
+      }
+      cur = (cur as Record<string, unknown>)[k];
+    }
+    if (typeof cur === 'number' && cur === 0) return true;
+  }
+  return false;
+}
+
 export function applyRawProtocolToMvuData(oldData: MvuData, normalizedMessage: string): RawWriteResult {
   const next = clone(oldData);
   if (!next.stat_data || typeof next.stat_data !== 'object' || Array.isArray(next.stat_data)) next.stat_data = {};

@@ -1,6 +1,6 @@
 import * as protocolNormalizer from './protocol-normalizer.js';
 const { reconstructUpdateVariableFromSummary } = protocolNormalizer;
-import { applyRawProtocolToMvuData } from './raw-status-writer';
+import { applyRawProtocolToMvuData, isFalselyAppliedStat } from './raw-status-writer';
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 
 registerMfrsRuntimeBuild('hotfix-generation-ended-listeners');
@@ -185,7 +185,7 @@ function getRuntimeFunction<K extends 'getVariables' | 'updateVariablesWith'>(ho
 
 function getTavernEventName(
   hostWindow: HostWindow,
-  key: 'MESSAGE_RECEIVED' | 'GENERATION_ENDED' | 'GENERATION_STOPPED',
+  key: 'MESSAGE_RECEIVED' | 'GENERATION_ENDED' | 'GENERATION_STOPPED' | 'CHAT_CHANGED',
   fallback: string,
 ) {
   const context = getSillyTavernContext(hostWindow);
@@ -592,14 +592,28 @@ async function parseAndWriteMvuMessage(messageIndex: number, eventMessageId?: un
   const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
   const applicationKey = getProtocolApplicationKey(message, normalized.message);
   if (message.extra?.[RAW_PROTOCOL_APPLIED_HASH_KEY] === applicationKey) {
-    const markerPersisted = await persistDirectMessageVariables(hostWindow, messageIndex);
-    console.debug('[Hotfix] 当前 swipe 协议已写回，跳过重复应用', {
-      messageIndex,
-      messageId: messageOption.message_id,
-      applicationKey,
-      markerPersisted,
-    });
-    return !markerPersisted;
+    // 假性已应用修复：标记命中，但 stat_data 可能已退回初值（重载后 stat_data 被 MVU 重建为 schema default，
+    // 而 applied_hash 标记留存，导致 hotfix 永久跳过写回、变量卡死）。
+    // 仅当协议含白名单 delta≠0 且对应字段仍为初值 0 时，判定为假性已应用，清标记并继续走下方正常写回；
+    // 真·已应用楼层（字段已有累积值）维持原跳过逻辑，不重复写回、不重复累积。
+    const oldDataForCheck = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
+    if (isFalselyAppliedStat(oldDataForCheck, normalized.message)) {
+      console.info('[Hotfix] 检测到假性已应用，清除标记并重新写回', {
+        messageIndex,
+        messageId: messageOption.message_id,
+        applicationKey,
+      });
+      if (message.extra) delete message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY];
+    } else {
+      const markerPersisted = await persistDirectMessageVariables(hostWindow, messageIndex);
+      console.debug('[Hotfix] 当前 swipe 协议已写回，跳过重复应用', {
+        messageIndex,
+        messageId: messageOption.message_id,
+        applicationKey,
+        markerPersisted,
+      });
+      return !markerPersisted;
+    }
   }
   const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
 
@@ -676,6 +690,60 @@ function scheduleGenerationEndedRetry(eventMessageId?: unknown, attempt = 0) {
       console.warn('[Hotfix] GENERATION_ENDED 重试失败', { attempt, error });
     });
   }, delays[attempt]);
+}
+
+/**
+ * 修复历史「假性已应用」楼层：扫全楼层，只对「标记命中且 stat_data 退回初值」的楼层重写。
+ *
+ * 与 recoverRecentRawProtocolMessages 的区别：后者扫最近 12 条、对所有含协议楼补写
+ * （面向「导入旧档缺协议快照」）；本函数扫全部、只对假性已应用楼层重写（面向重载后
+ * stat_data 被 MVU 重建为初值、applied_hash 留存导致永久卡死的存量历史楼）。
+ *
+ * 竞态防护：跳过最后一条 AI 楼（可能是正在生成的本轮，交由 GENERATION_ENDED + 层面 A 处理）；
+ * 判定为纯函数，不写回，命中才 parseAndWriteMvuMessage，全扫成本可控。
+ */
+async function repairFalselyAppliedFloors() {
+  const hostWindow = getHostWindow();
+  const context = getSillyTavernContext(hostWindow);
+  const chat = context?.chat;
+  if (!chat || chat.length === 0) return;
+
+  // 最后一条 AI 楼在本轮生成期间正在被 GENERATION_ENDED 处理，跳过避免竞态。
+  let lastAiIndex = -1;
+  for (let index = chat.length - 1; index >= 0; index -= 1) {
+    if (!chat[index]?.is_user) { lastAiIndex = index; break; }
+  }
+
+  let repaired = 0;
+  for (let index = 0; index < chat.length; index += 1) {
+    if (index === lastAiIndex) continue;
+    const message = chat[index];
+    if (!message || message.is_user) continue;
+    if (!message.extra || typeof message.extra[RAW_PROTOCOL_APPLIED_HASH_KEY] === 'undefined') continue;
+
+    const rawMessage = readMessageTextForMvu(message);
+    if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) continue;
+
+    const normalized = normalizeMfrsUpdateVariableProtocol(rawMessage);
+    const messageOption: MessageVariableOption = {
+      type: 'message',
+      message_id: getMessageVariableId(message, index),
+    };
+    const oldData = seedMissingStatPaths(readOldMvuData(hostWindow, messageOption));
+    if (!isFalselyAppliedStat(oldData, normalized.message)) continue;
+
+    try {
+      console.info('[Hotfix] 历史楼层假性已应用，重新写回', { messageIndex: index });
+      await parseAndWriteMvuMessage(index);
+      repaired += 1;
+    } catch (error) {
+      console.warn('[Hotfix] 历史楼层假性已应用修复失败', { messageIndex: index, error });
+    }
+  }
+
+  if (repaired > 0) {
+    console.info('[Hotfix] 假性已应用楼层修复完成', { repaired });
+  }
 }
 
 async function recoverRecentRawProtocolMessages() {
@@ -819,6 +887,18 @@ async function handleMessageReceived(eventMessageId?: unknown) {
   // 立即清洗协议块（在界面渲染之前）
   // 这样可以确保内存与界面同步
   await cleanProtocolBlocks(lastMessageIndex);
+}
+
+/**
+ * 切卡/重载聊天后修复历史假性已应用楼层。
+ * CHAT_CHANGED 在新聊天加载完成时触发；延迟扫描避免和正在进行的 GENERATION_ENDED 抢锁。
+ */
+function handleChatChanged() {
+  window.setTimeout(() => {
+    repairFalselyAppliedFloors().catch(error => {
+      console.warn('[Hotfix] CHAT_CHANGED 假性已应用修复扫描失败', error);
+    });
+  }, 800);
 }
 
 function isStopButtonVisible(hostWindow: HostWindow) {
@@ -1159,6 +1239,7 @@ function registerEventListeners() {
   const messageReceivedEvent = getTavernEventName(hostWindow, 'MESSAGE_RECEIVED', 'message_received');
   const generationEndedEvent = getTavernEventName(hostWindow, 'GENERATION_ENDED', 'generation_ended');
   const generationStoppedEvent = getTavernEventName(hostWindow, 'GENERATION_STOPPED', 'generation_stopped');
+  const chatChangedEvent = getTavernEventName(hostWindow, 'CHAT_CHANGED', 'chat_changed');
   const events = eventSource.events || {};
   const existingGenerationEndedListeners =
     events[generationEndedEvent] || events.GENERATION_ENDED || events.generation_ended || [];
@@ -1169,6 +1250,7 @@ function registerEventListeners() {
     messageReceivedEvent,
     generationEndedEvent,
     generationStoppedEvent,
+    chatChangedEvent,
     GENERATION_ENDED: Array.isArray(existingGenerationEndedListeners) ? existingGenerationEndedListeners.length : 0,
     MESSAGE_RECEIVED: Array.isArray(existingMessageReceivedListeners) ? existingMessageReceivedListeners.length : 0,
     allEvents: Object.keys(events).length,
@@ -1185,6 +1267,9 @@ function registerEventListeners() {
   }
   if (bindHotfixListener(hostWindow, eventSource, generationStoppedEvent, handleGenerationStopped)) {
     console.info('[Hotfix] 已注册 GENERATION_STOPPED 监听器', { eventName: generationStoppedEvent });
+  }
+  if (chatChangedEvent && bindHotfixListener(hostWindow, eventSource, chatChangedEvent, handleChatChanged)) {
+    console.info('[Hotfix] 已注册 CHAT_CHANGED 监听器（假性已应用修复）', { eventName: chatChangedEvent });
   }
 
   if (successCount === 0) {
@@ -1245,6 +1330,10 @@ async function installHotfix() {
     window.setTimeout(() => {
       recoverRecentRawProtocolMessages().catch(error => {
         console.warn('[Hotfix] 历史 raw protocol 消息补写扫描失败', error);
+      });
+      // 首装时聊天可能已打开（无后续 CHAT_CHANGED），同样跑一次假性已应用修复。
+      repairFalselyAppliedFloors().catch(error => {
+        console.warn('[Hotfix] 首装假性已应用修复扫描失败', error);
       });
     }, 1000);
   } else {

@@ -1,5 +1,39 @@
 # 进度日志
 
+## 2026-08-20 修复：MVU「假性已应用」stat_data 重载退回初值（完成·发布中 v8.15.30）
+
+### 根因
+重载后 `message.extra._mfrs_raw_protocol_applied_hash` 标记留存，但 MVU `stat_data` 退回 schema 初值（风险值=0、收录档案空）。hotfix 命中标记 → 永久跳过写回 → stat_data 卡死在初值 → 下游记忆面板"暂无记录"、HUD 风险显示 0。
+
+### 两层修复（均已真机验证生效）
+**层面 A — 阻止新假性已应用**（`index.ts` `parseAndWriteMvuMessage` 跳过分支前 pre-check）
+- 标记命中时调 `isFalselyAppliedStat(oldData, normalized.message)` 判定
+- 仅当协议含白名单 delta≠0（`/风险值`、`/厉鬼复苏程度`、`/驭鬼者状态/总复苏风险`，schema default 均 0）且字段仍为 0 → 清标记、落到正常写回
+- 真·已应用楼层（字段已有累积值）维持原跳过，不重复写回、不重复累积
+
+**层面 B — 修复历史假性已应用**（新增 `repairFalselyAppliedFloors` + `CHAT_CHANGED` 监听）
+- 切卡/重载后扫全楼层，只对"标记在且假性"的楼层调 `parseAndWriteMvuMessage` 重写
+- 跳过最后一条 AI 楼（避免和正在进行的 GENERATION_ENDED 竞态）
+- 首装时（`installHotfix`）也跑一次扫描
+
+### 为什么不影响预设
+写回链路只读 `<UpdateVariable>` 协议 + `stat_data`，不读不写 `mes`/预设标签（`<draft_notes>`/`<w2g>`/`<bginfor>`/`<catsay>`/`<CEstuff>`/`<VariableCheck>`）。pre-check 和扫描只动 `extra.applied_hash` 标记 + `stat_data`。
+
+### 真机验证（CDP 9225，酒馆 1.18.0 @ 127.0.0.1:8000，开发卡 5510）
+- ✅ 13/13 source gates 全绿
+- ✅ console 日志链：`CHAT_CHANGED 监听器已注册` → `历史楼层假性已应用，重新写回` → `检测到假性已应用，清除标记并重新写回` → `已通过本地 JSONPatch 写回消息变量` → `假性已应用楼层修复完成`
+- ✅ stat_data 恢复：复苏风险 0→18%，位置恢复为"大昌市第七中学大门外侧幽暗梧桐便道"（匹配 `<VariableCheck>` 协议 `0 -> 18`）
+
+### 改动文件（未提交）
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/raw-status-writer.ts`：新增 `isFalselyAppliedStat` + `extractWhitelistedDeltaPatches`（白名单 delta 提取，复用 `applyRawProtocolToMvuData` 的 `<UpdateVariable>/<JSONPatch>` 解析口径）
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：层面 A pre-check + 层面 B `repairFalselyAppliedFloors` + `handleChatChanged` + `CHAT_CHANGED` 监听注册 + 首装扫描 + `getTavernEventName` key 类型扩展
+
+### 待发布（未执行，需用户授权）
+- 当前正式版本 v8.15.28（HEAD `cda1d511`，远程 tag 已到 v8.15.29，由 bot autotag 打在 `cda1d511`）
+- 发布需按 publish workflow：bump `RELEASE_VERSION`（建议 8.15.30 避开已占用的 v8.15.29）→ `pnpm stop-dev` 还原 `index.yaml` → `pnpm build` production → 更新 `CDN_REF` → `publish-card` → `verify:mfrs-gates`
+- dist 当前为 dev/watch 产物（噪声），发布前须 `pnpm build` production 重建
+- `index.yaml`/PNG 当前为 dev 模式（localhost:5510），发布前须 `pnpm stop-dev` 还原
+
 ## 2026-08-20 发布 v8.15.28（完成）
 
 ### 发布流程（两阶段）
