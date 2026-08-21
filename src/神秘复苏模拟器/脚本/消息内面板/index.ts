@@ -2408,6 +2408,19 @@ function ensureHudStyle() {
   border-color: var(--mfrs-corpse-cyan);
   background: color-mix(in srgb, var(--mfrs-corpse-cyan) 22%, transparent);
 }
+#${HUD_SHELL_ID} .mfrs-hud-system-fold {
+  margin-top: 10px;
+  border-top: 1px solid rgba(61, 107, 102, 0.18);
+  padding-top: 0;
+}
+#${HUD_SHELL_ID} .mfrs-hud-system-fold .mfrs-msg-fold-summary {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+#${HUD_SHELL_ID} .mfrs-hud-system-fold .mfrs-msg-fold-body {
+  padding: 4px 8px 8px;
+}
 /* 记忆中栏 CRUD */
 #${HUD_SHELL_ID} .mfrs-hud-memory-row {
   display: grid;
@@ -5294,12 +5307,17 @@ function buildHudSystemPanelHtml(data: StatusData): string {
   <div class="mfrs-hud-panel-section-title"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i><span>一致性</span></div>
   ${consHtml}
 </section>
-<div class="mfrs-hud-system-actions">
-  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-full-library">打开全库编辑</button>
-  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_global_search">全库 · 总览页</button>
-  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_recall">全库 · 召回页</button>
-  <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_consistency">全库 · 一致性</button>
-</div>
+<details class="mfrs-msg-fold mfrs-hud-system-fold" data-fold="full-library">
+  <summary class="mfrs-msg-fold-summary"><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i><span>全库工具</span></summary>
+  <div class="mfrs-msg-fold-body">
+    <div class="mfrs-hud-system-actions">
+      <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud="open-full-library">打开全库编辑</button>
+      <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_global_search">全库 · 总览页</button>
+      <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_recall">全库 · 召回页</button>
+      <button type="button" class="mfrs-hud-system-btn" data-mfrs-hud-open-table="acu_tab_mfrs_consistency">全库 · 一致性</button>
+    </div>
+  </div>
+</details>
 `;
 }
 

@@ -1,6 +1,34 @@
 # 进度日志
 
-## 2026-08-20 修复：MVU「假性已应用」stat_data 重载退回初值（完成·发布中 v8.15.30）
+## 2026-08-21 优化：HUD 系统面板「全库工具」按钮组改为可折叠（完成 · 待发布 v8.15.34）
+
+### 改动
+- `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：`buildHudSystemPanelHtml` 底部的四个全库按钮（打开全库编辑 / 总览页 / 召回页 / 一致性）从平铺 `<div class="mfrs-hud-system-actions">` 改为 `<details class="mfrs-msg-fold mfrs-hud-system-fold" data-fold="full-library">` 折叠块，默认收起仅占一行「全库工具」，点击展开后显示按钮组。
+- 新增配套 CSS：`mfrs-hud-system-fold`（顶部分隔线 + margin）、`mfrs-msg-fold-summary`（min-height/字号）、`mfrs-msg-fold-body`（内边距）。
+
+### 真机验证（CDP 9225，酒馆 1.18.0 @ 127.0.0.1:8000，开发卡 5510）
+- ✅ 开发模式确认：`MFRS.mountPanel` / `MFRS.consumeItem` 均为 function（页面加载本地 5510 bundle）
+- ✅ 系统面板底部出现折叠块 `DisclosureTriangle "全库工具 ▸"`，默认收起
+- ✅ 点击展开后四个按钮完整可点：打开全库编辑、全库 · 总览页、全库 · 召回页、全库 · 一致性
+- ✅ 截图存档 `.tmp-research/system-fold-verify.png`
+
+### 发布流程（阶段 1 完成，待 push 触发 bot）
+- `pnpm stop-dev` 还原 `index.yaml` 到生产 CDN（`8ff362d0`）
+- `git checkout HEAD -- dist/` 还原 watch dist 噪声
+- `pnpm verify:mfrs-source-gates` 13/13 全绿
+- release-constants：`RELEASE_VERSION 8.15.30→8.15.34`、`CDN_CACHE_VERSION v81530→v81534_20260821_01`、`CDN_REF` 暂留旧值（阶段 2 更新）
+- 开发版 `index.yaml`：版本号 + 7 处 cache 同步到 `v81534_20260821_01`
+- CHANGELOG 新增 `[v8.15.34]` 条目
+- 版本号决策：远端最新 tag 已到 `v8.15.33`（bot autotag），新版本取 `8.15.34` 避开冲突
+
+### 改动文件
+- `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：折叠 UI + 配套 CSS
+- `scripts/mfrs-release-constants.mjs`：版本/cache 常量
+- `src/神秘复苏模拟器/index.yaml`：版本号 + cache
+- `CHANGELOG.md`：新条目
+- `progress.md` / `task_plan.md`：规划同步
+
+## 2026-08-20 修复：MVU「假性已应用」stat_data 重载退回初值（完成 · 已发布 v8.15.30）
 
 ### 根因
 重载后 `message.extra._mfrs_raw_protocol_applied_hash` 标记留存，但 MVU `stat_data` 退回 schema 初值（风险值=0、收录档案空）。hotfix 命中标记 → 永久跳过写回 → stat_data 卡死在初值 → 下游记忆面板"暂无记录"、HUD 风险显示 0。
@@ -28,11 +56,10 @@
 - `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/raw-status-writer.ts`：新增 `isFalselyAppliedStat` + `extractWhitelistedDeltaPatches`（白名单 delta 提取，复用 `applyRawProtocolToMvuData` 的 `<UpdateVariable>/<JSONPatch>` 解析口径）
 - `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：层面 A pre-check + 层面 B `repairFalselyAppliedFloors` + `handleChatChanged` + `CHAT_CHANGED` 监听注册 + 首装扫描 + `getTavernEventName` key 类型扩展
 
-### 待发布（未执行，需用户授权）
-- 当前正式版本 v8.15.28（HEAD `cda1d511`，远程 tag 已到 v8.15.29，由 bot autotag 打在 `cda1d511`）
-- 发布需按 publish workflow：bump `RELEASE_VERSION`（建议 8.15.30 避开已占用的 v8.15.29）→ `pnpm stop-dev` 还原 `index.yaml` → `pnpm build` production → 更新 `CDN_REF` → `publish-card` → `verify:mfrs-gates`
-- dist 当前为 dev/watch 产物（噪声），发布前须 `pnpm build` production 重建
-- `index.yaml`/PNG 当前为 dev 模式（localhost:5510），发布前须 `pnpm stop-dev` 还原
+### 待发布（已完成 · v8.15.30 已发布）
+- **v8.15.30 已发布**（release `79edef2d`；CDN bundle `8ff362d0`；tag `v8.15.30`→`418c6cec`；cache `v81530_20260820_01`；CDN_REF `8ff362d08355f5f0e25496b90ae8025ce35c9c79`）。
+- 发布流程：bump `RELEASE_VERSION` 8.15.28→8.15.30 → `pnpm stop-dev` 还原 `index.yaml` → `pnpm build` production → 更新 `CDN_REF` → `publish-card` → `verify:mfrs-gates` 14 项全绿 → 两阶段发布完成。
+- HEAD `348d8ce8`（bot bundle）；本地与远端 `origin/main@348d8ce8` 同步；工作区处于开发模式（`index.yaml` 切 localhost:5510 + watch dist 噪声）。
 
 ## 2026-08-20 发布 v8.15.28（完成）
 
@@ -196,7 +223,7 @@
 - 现有隐藏路径：HUD 系统 → 打开全库编辑 → `sheet_clues` 表 → 每行「使用」按钮 → 填输入框「我使用线索…」→ 手动指定厉鬼 → 靠 AI 改 `sheet_collected_archives` 收录进度。
 - 计划修订：主线改为 D（抽卡物品同步 MVU `stat_data`，进入左侧现场档案）+ 现场档案物品项增加「使用」按钮；A/C/B 降为支持/复用/可选，并新增权威写回保障。已同步 `task_plan.md` 顶部与 `findings.md`。
 - 附带结论：末尾「阶段/位置/死亡风险」状态条 = `mfrs-msg-brand`（现场档案状态条），与左栏档案是概要 vs 详情关系，不重复。
-- 当前 HEAD `56cff0fb` = v8.15.26；工作区处于开发模式（`index.yaml` 已切 localhost:5510 + watch dist 噪声）。
+- 当前 HEAD `348d8ce8` = v8.15.30（已发布）；工作区处于开发模式（`index.yaml` 已切 localhost:5510 + watch dist 噪声）。
 
 ### 阶段一：数据层契约与权威写回打通（完成）
 

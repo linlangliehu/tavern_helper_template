@@ -74,12 +74,12 @@
 - 持久化：重复事件、250/1000/2500ms 重试、saveChat、reload 后终态不变。
 - 生命周期：尾随空 AI 楼层回溯到相邻协议楼层并自动删除；协议按 swipe+hash 只应用一次并转存 raw extra。
 
-- **当前正式版本：v8.15.20**（release `b89565c7`；CDN bundle/tag `9199ff39`；`CDN_REF=9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；cache `v81520_20260815_01`）。跳过 8.15.19（已被 bot autotag 占用）。
-- **已完成：** v8.15.18 第一轮 JSONPatch fallback 被 P7 证明不完整；v8.15.20 改为 raw applier 唯一权威，A-D 验收与两阶段发布均已完成。
+- **当前正式版本：v8.15.30**（release `79edef2d`；CDN bundle `8ff362d0`；tag `v8.15.30`→`418c6cec`；`CDN_REF=8ff362d08355f5f0e25496b90ae8025ce35c9c79`；cache `v81530_20260820_01`）。v8.15.28 已发布抽卡物品消耗逻辑（release `b673969e`；CDN bundle `d049bf63`；tag→`cda1d511`）。v8.15.20 改为 raw applier 唯一权威，A-D 验收与两阶段发布均已完成。
+- **已完成：** v8.15.18 第一轮 JSONPatch fallback 被 P7 证明不完整；v8.15.20 改为 raw applier 唯一权威；v8.15.24 拓本图录+鬼档案+移除 choices；v8.15.26 HUD 弹窗修复；v8.15.28 抽卡物品消耗逻辑+数字格式兼容；v8.15.30 MVU 假性已应用修复（两层）。
 - **当前工作焦点：** 无在途发布任务。剩余可选收尾见「发布后可选收尾」。
 - **已确认事实：** 完整 36 根混合协议、真实 25→90、真实 99→100 终局、尾随空 AI 楼层、协议清洗、指纹幂等、HUD 和 reload 持久化均已验证；CDN 7 个脚本 200，产物含权威写回与占位楼清理日志。
 - **根因结论：** `Mvu.parseMessage` 不能作为 `<UpdateVariable><JSONPatch>` 权威解析器；在真实 `规律推理记录.是否触发规律` 数据下可出现 replace/insert 生效而 delta 丢失。
-- **Git 快照：** 本地与远端同为 `main@b89565c7`；工作区干净。`.agent-artifacts/` 已加入 `.gitignore`。
+- **Git 快照：** 本地与远端同为 `main@348d8ce8`（含开发模式 `index.yaml` + watch dist 噪声）；`.agent-artifacts/` 已加入 `.gitignore`。
 
 ### 发布后可选收尾
 
@@ -219,16 +219,21 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 DUAL-CARD-AUDIT-FIX：双卡审计缺陷修复 — complete（8.14.15 已发布，R1/R2/R3 已修复；T7.3/T7.4 已于 2026-08-14 完成，仅 T0.1/T6.3 余项，见 TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md）**
 **阶段 MFRS-MVU-CORE-MIRROR：人物/地点 stat_data 镜像 — complete（8.15.0 已发布 2026-08-12）**
 **阶段 MFRS-MVU-WRITEBACK：UpdateVariable 权威写回与真实终局验收 — complete（2026-08-15；已发布 v8.15.20）**
+**阶段 MFRS-RUBBING-GHOST-ARCHIVE：拓本图录 + 鬼档案机制 + 移除 choices + 界面主题重构 + 协议重建 — complete（2026-08-18；已发布 v8.15.24）**
+**阶段 MFRS-HUD-PROMPT-EDIT-FIX：HUD 沉浸模式提示词编辑弹窗遮挡修复 — complete（2026-08-19；已发布 v8.15.26）**
+**阶段 MFRS-GACHA-ITEM-USE：抽卡物品并入现场档案 + 现场档案使用按钮 + 消耗逻辑 — complete（2026-08-20；已发布 v8.15.28）**
+**阶段 MFRS-FALSELY-APPLIED-FIX：MVU 假性已应用 stat_data 重载退回初值修复 — complete（2026-08-20；已发布 v8.15.30）**
+**阶段 MFRS-SYSTEM-FOLD：HUD 系统面板「全库工具」按钮组可折叠 — complete（2026-08-21；待发布 v8.15.34）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 当前 HEAD `56cff0fb` = v8.15.26（发布版）；工作区处于**开发模式**（`index.yaml` 已切 localhost:5510，含 DEV_MODE 注释与 watch dist 噪声）。 |
-| 我要去哪里？ | 新任务：抽卡物品并入左侧现场档案 + 现场档案使用按钮（见文件顶部）。主线 D（同步 MVU/现场档案展示）→ 现场档案使用按钮；A/C/B 为支持/复用/可选。 |
+| 我在哪里？ | 当前 HEAD `348d8ce8` = v8.15.30（已发布）；工作区有 v8.15.34 发布阶段 1 的未提交改动（折叠 UI 源码 + 版本常量 + CHANGELOG + 规划文件）。`index.yaml` 已切回生产模式。 |
+| 我要去哪里？ | 提交 v8.15.34 阶段 1 源码 → push → 等 bot bundle → 阶段 2 更新 CDN_REF → publish-card → 完整门禁 → 提交发布物。 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
-| 我学到了什么？ | ① 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta，协议必须由本地 applier 权威应用。② 抽卡物品 `progress`/`effect` 是纯文案，当前不进入 MVU；新主线需同步 MVU 并在现场档案提供使用按钮，且必须走权威写回。 |
-| 我做了什么？ | 完成真实复杂 fixture、四类 mutation proof、真实 25→90 与 99→100、五项终局写集、正文/UI/协议清洗、空楼层恢复及 save/reload 幂等验证。另完成抽卡使用缺口与末尾状态条问答诊断（无代码改动）。 |
+| 我学到了什么？ | ① 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta，协议必须由本地 applier 权威应用。② 抽卡物品 `progress`/`effect` 原为纯文案，已通过 `parseProgressFromText` 解析 progress + `syncGachaItemsToMvuStatData` 同步 MVU。③ `剩余次数: z.union([z.number(), z.string()])` 双格式需分别处理，否则数字格式永不消耗。④ MVU「假性已应用」标记留存但 stat_data 退回初值时，hotfix 永久跳过写回，需两层修复（pre-check + 历史扫描）。⑤ bot autotag 每次 `[bot] bundle` 自动 +1，版本号需查最新 tag 避开冲突。 |
+| 我做了什么？ | 完成 v8.15.24 拓本图录+鬼档案+移除 choices，v8.15.26 HUD 弹窗修复，v8.15.28 抽卡物品消耗+使用按钮四阶段，v8.15.30 MVU 假性已应用两层修复。当前 v8.15.34 HUD 系统面板折叠 UI 已真机验证通过，阶段 1 准备完成待 push。 |
 
 ## 硬约束（勿破）
 
@@ -245,12 +250,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.15.26**（HEAD `56cff0fb` docs/CHANGELOG；release `b26b6b24`；bundle `f9535cea`）。工作区当前**开发模式**：`index.yaml` 已切 localhost:5510。 |
-| 仓库运行时基线 | 本地 `main@56cff0fb`；工作区有 dev 模式 `index.yaml` + watch 噪声 dist（11 个 dist 文件），业务源码无改动。 |
+| 发布内容版本 | **8.15.30**（已发布；HEAD `348d8ce8`；release `79edef2d`；bundle `8ff362d0`；tag `v8.15.30`→`418c6cec`；cache `v81530_20260820_01`；CDN_REF `8ff362d08355f5f0e25496b90ae8025ce35c9c79`）。**v8.15.34 阶段 1 待 push**：release-constants 已改为 8.15.34/cache `v81534_20260821_01`，CDN_REF 暂留旧值。 |
+| 仓库运行时基线 | 本地 `main@348d8ce8`；远端 `origin/main@348d8ce8` 同步；工作区有 v8.15.34 阶段 1 改动（源码 1 + 常量 1 + yaml 1 + CHANGELOG 1 + 规划 2），`index.yaml` 已切回生产模式，dist 已还原。 |
 | 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
 | 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync · 6621 webpack HMR · 9225 调试 Chrome（CDP/MCP） |
-| 下一阶段 | 抽卡物品并入现场档案 + 现场档案使用按钮（见文件顶部）；主线 D + 现场档案使用按钮，A/C/B 为支持/复用/可选。 |
+| 下一阶段 | v8.15.34 阶段 1 待 push；阶段 2 等 bot bundle 后更新 CDN_REF 并 publish-card。 |
 
 ## 各阶段
 
@@ -497,11 +502,15 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 ## 当前任务状态
 
-1. **8.14.0 已发布**：抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换均已进入发布卡。
-2. **旧 HUD-UX-NEXT / PROJECT-FLOW-FIX 已归档**：对应 MFRS、feature worktree、动态端口、DEV 卡和 runtime identity 流程均已废弃，不得继续执行旧清单。
-3. **当前运行流程**：F5 → 切换开发模式 → `pnpm watch` 仅编译 → 固定 5510 静态服务 → SillyTavern 8000 真页验收；结束使用 `pnpm stop-dev`。
-4. **当前发布流程**：阶段 1 运行 `verify:mfrs-source-gates` 并推送源码；等待 bot bundle；阶段 2 更新 `CDN_REF`，运行 `publish-card --dist-no-build` 与完整 `verify:mfrs-gates`，再提交发布物和正式 tag。
-5. 当前具体任务以本文件顶部最新条目和 `docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md` 为准；历史任务清单仅作证据，不作为操作入口。
+1. **v8.15.34 待发布**：HUD 系统面板「全库工具」按钮组改为可折叠 `<details>`（默认收起一行，展开后显示四个全库按钮）。真机验证通过，源码门禁 13/13 全绿，阶段 1 准备完成，待 push 触发 bot bundle 后走阶段 2。
+2. **8.15.30 已发布**：MVU 假性已应用 stat_data 重载退回初值修复（两层：pre-check + 历史扫描）+ 专项回归门禁。
+2. **8.15.28 已发布**：抽卡物品「使用」按钮消耗逻辑 + 数字格式剩余次数兼容 + 现场档案使用按钮 UI + 抽卡结果卡片使用按钮。
+3. **8.15.26 已发布**：HUD 沉浸模式提示词编辑弹窗遮挡修复。
+4. **8.15.24 已发布**：拓本图录表 + 鬼档案核心机制 + 移除 choices 协议 + 界面主题重构 + 协议重建。
+5. **旧 HUD-UX-NEXT / PROJECT-FLOW-FIX 已归档**：对应 MFRS、feature worktree、动态端口、DEV 卡和 runtime identity 流程均已废弃，不得继续执行旧清单。
+6. **当前运行流程**：F5 → 切换开发模式 → `pnpm watch` 仅编译 → 固定 5510 静态服务 → SillyTavern 8000 真页验收；结束使用 `pnpm stop-dev`。
+7. **当前发布流程**：阶段 1 运行 `verify:mfrs-source-gates` 并推送源码；等待 bot bundle；阶段 2 更新 `CDN_REF`，运行 `publish-card --dist-no-build` 与完整 `verify:mfrs-gates`，再提交发布物和正式 tag。
+8. 当前具体任务以本文件顶部最新条目为准；历史任务清单仅作证据，不作为操作入口。
 
 ## 遇到的错误
 
@@ -546,7 +555,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 ```
 恢复当前项目状态。
 先读：task_plan.md、findings.md、progress.md。
-当前发布内容为 8.15.26；旧 MFRS、feature worktree、动态端口、派生 DEV 卡和 runtime identity 流程均已归档，不得恢复执行。
+当前发布内容为 8.15.30；旧 MFRS、feature worktree、动态端口、派生 DEV 卡和 runtime identity 流程均已归档，不得恢复执行。
 当前开发流程：F5 → 切换开发模式 → pnpm watch 仅编译 → 固定 5510 静态服务 → SillyTavern 8000 真页验收；结束运行 pnpm stop-dev。
 当前发布流程：阶段 1 跑 verify:mfrs-source-gates 并推送源码 → 等 bot bundle → 阶段 2 更新 CDN_REF → publish-card --dist-no-build → verify:mfrs-gates → 提交发布物和正式 tag。
 当前具体任务优先读取本文件顶部最新条目和 docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md。
