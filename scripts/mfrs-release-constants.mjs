@@ -4,7 +4,7 @@
  */
 export const REPO = 'linlangliehu/tavern_helper_template';
 // v8.15.34: HUD 系统面板「全库工具」按钮组改为可折叠 details（减少误触、收起后仅占一行）
-export const CDN_REF = '8ff362d08355f5f0e25496b90ae8025ce35c9c79';
+export const CDN_REF = 'df8a73ea2a66873398627cf170cb0956007f74e2';
 export const CDN = `https://testingcf.jsdelivr.net/gh/${REPO}@${CDN_REF}/`;
 export const CDN_CACHE_VERSION = 'v81534_20260821_01';
 export const RELEASE_VERSION = '8.15.34';
