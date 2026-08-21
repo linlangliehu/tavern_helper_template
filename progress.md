@@ -1,5 +1,28 @@
 # 进度日志
 
+## 2026-08-21 修复：沉浸模式 ST 抽屉被 HUD 遮挡（完成 · 待发布 v8.15.38）
+
+### 根因
+沉浸模式下 `#mfrs-hud-shell`（z-index: 10000，全屏 fixed）遮挡了 ST 原生抽屉。抽屉 yield CSS 规则只对 `body.mfrs-hud-st-ui-open`（默认模式）生效，沉浸模式（`body.mfrs-hud-immersive`）没有等效规则。用户点击「管理聊天文件」时面板被遮挡不可见。
+
+### 修复
+- 新增常量 `HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR`（与 `HUD_ST_OPEN_DRAWER_SELECTOR` 结构相同，但前缀为 `body.mfrs-hud-immersive`）
+- 新增 CSS 块：沉浸模式下对 10 个 ST 抽屉选择器（`.drawer-content.openDrawer`、`#left-nav-panel.openDrawer`、`#right-nav-panel.openDrawer` 等）抬升到 `z-index: 10080` + `position: fixed` + `max-height: 100vh` + `overflow: auto`，与默认模式行为一致
+- 改动文件：`src/神秘复苏模拟器/脚本/消息内面板/index.ts`
+
+### 真机验证（CDP 9225，沉浸模式）
+- ✅ 注入 yield CSS 后点击「管理聊天文件」→ 聊天记录面板完整可见（搜索框、新建/导入/备份按钮、聊天文件列表）
+- ✅ 面板可交互（重命名、导出、删除按钮均可操作）
+- ✅ 此前面板只在默认模式（st-ui-open）下可见，沉浸模式不可见 → 修复后两种模式均可见
+
+### 发布流程（阶段 1 准备完成，待 push）
+- `pnpm stop-dev` 还原 `index.yaml` 到生产 CDN
+- `pnpm verify:mfrs-source-gates` 全绿
+- release-constants：`RELEASE_VERSION 8.15.34→8.15.38`、`CDN_CACHE_VERSION v81534→v81538_20260821_02`、CDN_REF 暂留旧值
+- 开发版 index.yaml：版本号 + 8 处 cache 同步
+- CHANGELOG 新增条目
+- 版本号决策：远端最新 tag 已到 `v8.15.36`（bot autotag），新版本取 `8.15.38`
+
 ## 2026-08-21 优化：HUD 系统面板「全库工具」按钮组改为可折叠（完成 · 待发布 v8.15.34）
 
 ### 改动

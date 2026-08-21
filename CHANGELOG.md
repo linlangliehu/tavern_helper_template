@@ -2,6 +2,11 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.38] - 2026-08-21
+
+### 修复
+- **沉浸模式 ST 抽屉被 HUD 遮挡**：在沉浸式模式（`body.mfrs-hud-immersive`）下，点击「管理聊天文件」等需要打开 ST 原生抽屉的功能时，面板被 `#mfrs-hud-shell`（z-index: 10000）遮挡，用户只能看到一闪而过的关闭按钮，面板内容不可见。根因：抽屉 yield CSS 规则只对 `body.mfrs-hud-st-ui-open`（默认模式）生效，沉浸模式没有等效规则。修复：新增 `HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR` 常量和对应 CSS，在沉浸模式下对 `.drawer-content.openDrawer`、`#left-nav-panel.openDrawer`、`#right-nav-panel.openDrawer` 等 10 个 ST 抽屉选择器同样抬升到 `z-index: 10080` + `position: fixed`，与默认模式行为一致。
+
 ## [v8.15.34] - 2026-08-21
 
 ### 优化

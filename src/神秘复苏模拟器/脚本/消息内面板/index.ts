@@ -1991,6 +1991,9 @@ const ST_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.join(', ');
 const HUD_ST_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.map(
   selector => `body.${HUD_ST_UI_CLASS} ${selector}`,
 ).join(',\n');
+const HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.map(
+  selector => `body.${HUD_BODY_CLASS} ${selector}`,
+).join(',\n');
 
 type DomRestorePoint = {
   parent: Node;
@@ -3319,6 +3322,14 @@ body.${HUD_ST_UI_CLASS} [data-mfrs-hud-overlay-lift="1"] {
 }
 ${HUD_ST_OPEN_DRAWER_SELECTOR} {
   position: fixed !important;
+}
+/* 沉浸模式：用户打开 ST 抽屉时也需抬升到壳之上，否则被 z=10000 遮挡（管理聊天文件等） */
+${HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR} {
+  z-index: ${HUD_Z_SHELL + 80} !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  max-height: 100vh;
+  overflow: auto;
 }
 #${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: none; }
 #${HUD_SHELL_ID} .mfrs-hud-tool-btn {

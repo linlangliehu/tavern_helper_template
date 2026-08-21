@@ -223,7 +223,8 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 MFRS-HUD-PROMPT-EDIT-FIX：HUD 沉浸模式提示词编辑弹窗遮挡修复 — complete（2026-08-19；已发布 v8.15.26）**
 **阶段 MFRS-GACHA-ITEM-USE：抽卡物品并入现场档案 + 现场档案使用按钮 + 消耗逻辑 — complete（2026-08-20；已发布 v8.15.28）**
 **阶段 MFRS-FALSELY-APPLIED-FIX：MVU 假性已应用 stat_data 重载退回初值修复 — complete（2026-08-20；已发布 v8.15.30）**
-**阶段 MFRS-SYSTEM-FOLD：HUD 系统面板「全库工具」按钮组可折叠 — complete（2026-08-21；待发布 v8.15.34）**
+**阶段 MFRS-SYSTEM-FOLD：HUD 系统面板「全库工具」按钮组可折叠 — complete（2026-08-21；已发布 v8.15.34）**
+**阶段 MFRS-IMMERSIVE-DRAWER-YIELD：沉浸模式 ST 抽屉 yield 修复 — complete（2026-08-21；待发布 v8.15.38）**
 
 ## 五问重启（新对话先读）
 
