@@ -2,6 +2,15 @@
 
 本文档记录《神秘复苏模拟器》角色卡的版本历史和重要更新。
 
+## [v8.15.40] - 2026-08-21
+
+### 修复
+- **沉浸模式 ST popup 被 HUD 遮挡**：v8.15.38 只修复了 `.drawer-content.openDrawer` 类抽屉，但「管理聊天文件」实际打开的是 `#select_chat_popup`（z-index: 2066）+ `#shadow_select_chat_popup`（z-index: 4100）popup，不匹配 `.drawer-content` 选择器，仍被 `#mfrs-hud-shell`（z-index: 10000）遮挡。修复：
+  - 新增 `ST_POPUP_SELECTORS` 常量，覆盖 `#select_chat_popup`、`#shadow_select_chat_popup`、`#shadow_popup`、`#dialogue_popup`、`#character_popup`、`#export_format_popup`、`#completion_prompt_manager_popup`、`#completion_prompt_manager_popup_edit` 8 个 ST popup。
+  - 沉浸模式下对这些 popup 同样抬升到 `z-index: 10080`。
+  - 沉浸模式下对动态标记 `[data-mfrs-hud-overlay-lift="1"]` 的元素也抬升到 `z-index: 10080`（与默认模式 `mfrs-hud-st-ui-open` 一致）。
+  - 将 `ST_POPUP_SELECTOR` 加入 `collectHudCoverableOverlays` 和 `isHudCoverableExternalOverlay` 白名单，使 MutationObserver 动态检测也能识别 popup。
+
 ## [v8.15.38] - 2026-08-21
 
 ### 修复

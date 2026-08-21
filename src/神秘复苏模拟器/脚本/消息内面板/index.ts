@@ -1994,6 +1994,20 @@ const HUD_ST_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.map(
 const HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR = ST_OPEN_DRAWER_SELECTORS.map(
   selector => `body.${HUD_BODY_CLASS} ${selector}`,
 ).join(',\n');
+const ST_POPUP_SELECTORS = [
+  '#select_chat_popup',
+  '#shadow_select_chat_popup',
+  '#shadow_popup',
+  '#dialogue_popup',
+  '#character_popup',
+  '#export_format_popup',
+  '#completion_prompt_manager_popup',
+  '#completion_prompt_manager_popup_edit',
+] as const;
+const ST_POPUP_SELECTOR = ST_POPUP_SELECTORS.join(', ');
+const HUD_IMMERSIVE_POPUP_SELECTOR = ST_POPUP_SELECTORS.map(
+  selector => `body.${HUD_BODY_CLASS} ${selector}`,
+).join(',\n');
 
 type DomRestorePoint = {
   parent: Node;
@@ -3331,6 +3345,16 @@ ${HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR} {
   max-height: 100vh;
   overflow: auto;
 }
+/* 沉浸模式：ST popup（聊天管理、对话框、角色编辑等）也需抬升到壳之上 */
+${HUD_IMMERSIVE_POPUP_SELECTOR} {
+  z-index: ${HUD_Z_SHELL + 80} !important;
+  pointer-events: auto !important;
+}
+/* 沉浸模式：动态标记的 overlay-lift 元素（MutationObserver 检测到的弹出面板） */
+body.${HUD_BODY_CLASS} [data-mfrs-hud-overlay-lift="1"] {
+  z-index: ${HUD_Z_SHELL + 80} !important;
+  pointer-events: auto !important;
+}
 #${HUD_SHELL_ID} .mfrs-hud-mobile-only { display: none; }
 #${HUD_SHELL_ID} .mfrs-hud-tool-btn {
   min-width: 44px;
@@ -4074,6 +4098,7 @@ function isHudCoverableExternalOverlay(el: HTMLElement): boolean {
   // 白名单：已知外置面板（不靠面积误伤 #sheld/#bg1）
   if (el.matches?.(SP_DB_UI_SELECTOR) || el.closest?.(SP_DB_UI_SELECTOR)) return true;
   if (el.matches?.(ST_OPEN_DRAWER_SELECTOR)) return true;
+  if (el.matches?.(ST_POPUP_SELECTOR)) return true;
   if (el.classList?.contains('popup') || el.classList?.contains('dialogue_popup')) return true;
   if (el.id === 'floatingPrompt' || el.id === 'cfgConfig' || el.id === 'logprobsViewer') return true;
   if (el.id === 'completion_prompt_manager_popup' || el.id === 'completion_prompt_manager_popup_edit') return true;
@@ -4109,6 +4134,7 @@ function collectHudCoverableOverlays(): HTMLElement[] {
       [
         SP_DB_UI_SELECTOR,
         ST_OPEN_DRAWER_SELECTOR,
+        ST_POPUP_SELECTOR,
         '.popup',
         '.dialogue_popup',
         '#floatingPrompt',
