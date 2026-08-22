@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 .vscode/chrome-debug-profile/
 
@@ -69,3 +70,5 @@ et --hard
 屏幕截图*.png
 2026-*.png
 current-vscode-browser.png
+=======
+>>>>>>> c27dc311feeca88f575184c70cd539091ffeaf47
