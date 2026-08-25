@@ -44,30 +44,49 @@ function getItemIcon(name: string): string {
 .item-row {
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   border: 1px solid var(--c-gold-dark);
   padding: 8px;
   background: var(--c-dark-surface);
   transition: all 0.2s;
+=======
+  border: 1.5px solid var(--c-granite);
+  padding: 8px;
+  background: #fff;
+  transition: transform 0.2s;
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
 }
 
 .item-row:hover {
   transform: translateX(5px);
+<<<<<<< HEAD
   border-color: var(--c-gold-dim);
   box-shadow: 0 0 8px var(--c-gold-glow);
+=======
+  background: var(--c-mint-cream);
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
 }
 
 .item-icon {
   width: 28px;
   height: 28px;
+<<<<<<< HEAD
   background: linear-gradient(135deg, var(--c-gold-dark), var(--c-gold-dim));
   border: 1px solid var(--c-gold);
+=======
+  background: var(--c-celadon);
+  border: 1.5px solid var(--c-granite);
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 10px;
   font-weight: bold;
   font-size: 0.7rem;
+<<<<<<< HEAD
   color: var(--c-charcoal);
+=======
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
 }
 
 .item-detail {
@@ -77,11 +96,15 @@ function getItemIcon(name: string): string {
 .item-name {
   font-weight: bold;
   display: block;
+<<<<<<< HEAD
   color: var(--c-white);
+=======
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
 }
 
 .item-desc {
   font-size: 0.76rem;
+<<<<<<< HEAD
   color: var(--c-ghost);
 }
 
@@ -92,15 +115,31 @@ function getItemIcon(name: string): string {
   font-size: 0.72rem;
   font-weight: bold;
   letter-spacing: 0.5px;
+=======
+  color: var(--c-grey-olive);
+}
+
+.item-count {
+  background: var(--c-granite);
+  color: #fff;
+  padding: 2px 5px;
+  font-size: 0.72rem;
+  border-radius: 3px;
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
 }
 
 .empty-state {
   text-align: center;
+<<<<<<< HEAD
   color: var(--c-ghost);
+=======
+  color: var(--c-grey-olive);
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
   padding: 18px;
   font-style: italic;
   font-size: 0.85rem;
 }
+<<<<<<< HEAD
 
 .section-head {
   font-size: 0.95rem;
@@ -120,4 +159,6 @@ function getItemIcon(name: string): string {
     vertical-align: middle;
   }
 }
+=======
+>>>>>>> bc44abea1c2f7980dd9a2d9b909b4ad64bc8bdee
 </style>
