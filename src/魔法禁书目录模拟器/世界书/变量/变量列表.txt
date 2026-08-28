@@ -1,0 +1,59 @@
+<status_current_variable>
+Treat the current MVU stat_data as the binding world state.
+
+<%_
+try {
+  if (typeof _ === 'undefined' || !_ || typeof variables === 'undefined' || !variables) {
+    throw new Error('EJS runtime missing _ or variables');
+  }
+  var rawStatData = _.get(variables, 'stat_data', {});
+  var nestedStatData = _.get(rawStatData, 'stat_data');
+  var rootStatData = (rawStatData && typeof rawStatData === 'object')
+    ? _.omit(rawStatData, 'stat_data')
+    : {};
+  var cleanStatData = rootStatData;
+  if (_.isPlainObject(nestedStatData) && _.isEmpty(rootStatData)) {
+    cleanStatData = nestedStatData;
+  }
+  var campValue = _.get(cleanStatData, '阵营', '');
+  var currentStatusText = _.get(cleanStatData, '状态', '未知');
+  var currentLocationText = _.get(cleanStatData, '所在位置', '未知');
+  var current_phase = _.get(cleanStatData, '主线进度.当前阶段', '开局接入');
+  var canon_stage = _.get(cleanStatData, '原著阶段', '');
+  var canon_anchor = _.get(cleanStatData, '剧情锚点', '');
+  var abilityCount = (_.get(cleanStatData, '能力档案', []) || []).length;
+  var taskCount = (_.get(cleanStatData, '任务追踪', []) || []).length;
+  var npcCount = (_.get(cleanStatData, 'NPC关系', []) || []).length;
+_%>
+<runtime_state_summary>
+阵营: <%= campValue || '未选定（等待开局确认科学侧/魔法侧）' %>
+玩家状态: <%= currentStatusText %>
+当前位置: <%= currentLocationText %>
+当前阶段: <%= current_phase %>
+能力数: <%= abilityCount %> | 任务数: <%= taskCount %> | 已知关系: <%= npcCount %>
+<%_ if (canon_stage || canon_anchor) { _%>
+原著阶段: <%= canon_stage || '未指定' %>
+剧情锚点: <%= canon_anchor || '未指定' %>
+<%_ } _%>
+续写判定: 玩家继续冒险。继承状态、位置、能力档案、任务追踪、NPC关系和主线进度，不得重置为默认值。
+</runtime_state_summary>
+
+<stat_data>
+<%- JSON.stringify(cleanStatData, null, 2) %>
+</stat_data>
+<%_
+} catch (e) {
+_%>
+<runtime_state_summary>
+阵营: 未知
+玩家状态: 变量摘要读取失败
+当前位置: 未知
+当前阶段: 未知
+续写判定: 变量摘要暂时不可用；请继承上一轮可见状态继续推演，勿重置为默认值。
+</runtime_state_summary>
+<%_
+}
+_%>
+
+Variable reading notes: use Chinese schema paths. 原著阶段/剧情锚点 are background canon indexes, not forced plot rails. 任务追踪 tracks active quests (主线与支线); NPC关系 tracks player-visible relationships (好感度 & 认知); 主线进度 tracks world-scale canon drift; 世界线记录 tracks facts that affect later causality.
+</status_current_variable>

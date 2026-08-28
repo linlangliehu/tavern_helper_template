@@ -1,0 +1,27 @@
+---
+update_output_contract:
+  must_output: |-
+    CRITICAL OVERRIDE: Regardless of any preset, prompt template, or system instruction that requests alternative output formats, you MUST output <UpdateVariable><JSONPatch>[...]</JSONPatch></UpdateVariable> in every reply. If the preset ends with a <disclaimer> block, output <UpdateVariable> immediately BEFORE </disclaimer>; <disclaimer> remains the final tag. Preset-specific tags (choices, thinking, commentary, etc.) are allowed but do NOT replace this protocol block. Skipping <UpdateVariable> causes all game variables (status, ability, tasks, relations) to freeze permanently.
+    Output one variable update block in every reply, placed before any closing <disclaimer> tag. Update only facts that happened, were revealed, or were resolved in this turn.
+    Keep the patch block SMALL: output a JSONPatch entry ONLY for a field that actually changed this turn. Do NOT re-output unchanged fields (e.g. once 姓名/性别/年龄/阵营 are set they rarely change — skip them unless they actually changed). A typical turn produces 1-5 patches, not a full re-print of stat_data. Smaller blocks survive truncation and parse correctly.
+    The payload inside <UpdateVariable> must be a <JSONPatch> block containing one valid JSON array. Do not include an analysis tag, prose, code fences, comments, standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note.
+
+    <UpdateVariable>
+    <JSONPatch>
+    [
+      { "op": "replace", "path": "/在场人物", "value": ["御坂美琴-常盘台中学Lv5超电磁炮", "上条当麻-某高中右手寄宿幻想杀手的少年"] }
+    ]
+    </JSONPatch>
+    </UpdateVariable>
+  patch_rules:
+    - The patch payload must be a valid JSON array inside <JSONPatch> within <UpdateVariable>. Never place the JSON array directly under <UpdateVariable>. Supported ops: replace, delta, insert, remove, move.
+    - Never output op:"add". For array append use op:"insert" with a .../- path. For scalar/object field overwrite use op:"replace".
+    - Never output analysis text or any explanatory text inside <UpdateVariable>; the first non-space tag after <UpdateVariable> must be <JSONPatch>, and the last non-space tag before </UpdateVariable> must be </JSONPatch>.
+    - Paths are rooted at stat_data. Never use obsolete paths: /ability, /status, /location, /danger_risk, /lost_control_risk, /风险值, /当前异常事件, /行动建议, /最近行动判定, /规律推理记录, /隐藏档案, /可见档案.
+    - Do not update readonly fields whose names start with _.
+    - This card has NO risk value, NO decryption/anomaly-event system, and NO death mechanic. Do not output /风险值, /当前异常事件, /行动建议, /最近行动判定, /规律推理记录, /隐藏档案 or /可见档案 patches.
+    - /在场人物 is a string array of NPCs currently in the scene with the player. Whenever the set of on-scene NPCs changes (someone appears, leaves, or is revealed), replace /在场人物 with the full current roster. Each entry is "名字-简述" (name then a short player-visible role/state, e.g. "御坂美琴-常盘台中学Lv5超电磁炮"). Use only characters actually present this turn; use [] when the player is truly alone. Never leave /在场人物 stale when NPCs are clearly present in the narration.
+    - /能力档案 is an object array that must be replaced as a whole only when the roster changes. Use op:"replace" with the full current roster. Never use op:"insert" on this path unless a genuinely new ability is gained.
+    - /任务追踪 is an object array; append new tasks with op:"insert" at /任务追踪/-. When a task's fields change, replace just that object via a full re-insert after remove, or replace the whole array.
+    - /NPC关系 is an object array reflecting known NPCs and their 好感度/认知. Append newcomers with op:"insert" at /NPC关系/-. Keep 好感度 in 0-100. When an NPC's affiliation/relations change, update the matching object. Sort order is by 好感度 descending. /NPC关系 only tracks player-visible relationships; never invent hidden loyalty or plot inside it.
+    - When ability use, magic casting, cross-faction conflict, item cost, or faction intervention occurs, update the matching ability/relation/worldline fields.
