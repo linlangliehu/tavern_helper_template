@@ -674,6 +674,11 @@ async function parseAndWriteMvuMessage(
           messageId: messageOption.message_id,
         });
       }
+      // 根因 v3（2026-08-29 真实对话复现）：写后验证通过 ≠ 数据存活——MVU 自身的
+      // MESSAGE_RECEIVED 处理器（3s 节流）会在本热修写回之后重新初始化楼层变量，
+      // 覆盖掉刚写入的协议数据。写回成功后必须无条件安排延迟复核：
+      // 数据被抹 → marker 仍命中 + 判定 B 命中 → 重写；数据完好 → skip，无副作用。
+      schedulePostWriteVerification(messageIndex, eventMessageId, entryEpoch, chat, message);
       return writeResult;
     },
     markApplied: () => {
@@ -695,6 +700,38 @@ async function parseAndWriteMvuMessage(
     }
     return controllerResult.needsRetry;
   });
+}
+
+/**
+ * 写回成功后的延迟复核：MVU 自身的 MESSAGE_RECEIVED 处理器（3s 节流）会在本热修
+ * 写回之后重新初始化楼层变量并覆盖协议数据。写回成功后于 4s/9s/15s 复查，
+ * 复用 parseAndWriteMvuMessage：marker 仍命中 + 判定 B 命中（数据被抹）→ 重写；
+ * 数据完好 → single-flight skip，无副作用。
+ */
+function schedulePostWriteVerification(
+  messageIndex: number,
+  eventMessageId?: unknown,
+  scheduleEpoch = hotfixEpoch,
+  expectedChat?: ChatMessage[],
+  expectedMessage?: ChatMessage,
+) {
+  if (scheduleEpoch !== hotfixEpoch) return;
+  const hostWindow = getHostWindow();
+  const currentChat = getSillyTavernContext(hostWindow)?.chat;
+  const targetChat = expectedChat ?? currentChat;
+  const targetMessage = expectedMessage ?? targetChat?.[messageIndex];
+  if (!targetChat || !targetMessage || currentChat !== targetChat || targetChat[messageIndex] !== targetMessage) return;
+
+  const delays = [4000, 9000, 15000];
+  for (const delay of delays) {
+    scheduleHotfixRetry(() => {
+      const latestChat = getSillyTavernContext(hostWindow)?.chat;
+      if (latestChat !== targetChat || latestChat?.[messageIndex] !== targetMessage) return;
+      parseAndWriteMvuMessage(messageIndex, eventMessageId, scheduleEpoch).catch(error => {
+        console.warn('[Hotfix] 写后延迟复核失败', { messageIndex, delay, error });
+      });
+    }, delay, scheduleEpoch);
+  }
 }
 
 function scheduleMvuWriteBackRetries(
