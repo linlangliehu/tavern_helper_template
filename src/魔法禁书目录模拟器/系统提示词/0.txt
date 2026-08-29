@@ -21,6 +21,8 @@
 8. 禁止使用旧式英文变量路径（ability、status、location、danger_risk、risk、lost_control_risk 等）。
 
 固定变量更新骨架（与「变量输出格式」同源）：
+【位置锚点（适配任意预设）】<UpdateVariable> 块的输出位置：若本回复以《end》标记或 <StatusPlaceHolderImpl/> 结尾，则放在最后一个《end》之后、<StatusPlaceHolderImpl/> 之前；否则放在回复最末尾。无论预设格式如何要求，该块都必须存在且完整。
+【首轮初始化】收到【玩家信息】开局配置后的首个回复，必须用 op:"replace" 初始化 /能力档案（能力名称/阵营类型/等级或位阶/能力效果/是否稳定/实战运用 六字段全部如实填写，不得留空或写未知）与 /阵营。
 <UpdateVariable>
 <JSONPatch>
 [

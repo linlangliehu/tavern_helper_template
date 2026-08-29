@@ -2,6 +2,156 @@ import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 
 registerMfrsRuntimeBuild('界面美化');
 
+// ===== 变量基线兜底（任意预设下保证能力卡片显示真实开局数据） =====
+// 背景：变量初始化依赖模型输出 <UpdateVariable> 协议块；预设切换/锚点失配会导致协议块整块丢失，
+// 面板随即用空档案兜底渲染成 Level 0。此层把开局基线由脚本直接写入聊天变量并逐楼层补齐，
+// 不依赖模型服从任何文本指令；协议缺失时另有一次性提示。
+
+type MfrsTHLike = {
+  getVariables?: (options?: Record<string, unknown>) => Promise<Record<string, unknown>> | Record<string, unknown>;
+  updateVariablesWith?: (
+    updater: (vars: Record<string, unknown>) => Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => Promise<unknown> | unknown;
+  insertOrAssignVariables?: (
+    patch: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => Promise<unknown> | unknown;
+  getChatMessages?: (id: number | string, options?: Record<string, unknown>) => Promise<unknown> | unknown;
+};
+
+declare const eventOn: undefined | ((event: string, handler: (...args: unknown[]) => void) => void);
+declare const tavern_events: undefined | Record<string, string>;
+
+const MFRS_BASELINE_KEY = '__mfrs_baseline';
+const MFRS_WARN_KEY = '__mfrs_uv_warned';
+
+function mfrsGetTH(): MfrsTHLike | undefined {
+  try {
+    const host = (window.parent as (Window & { TavernHelper?: MfrsTHLike }) | null)?.TavernHelper;
+    return host ?? (window as unknown as { TavernHelper?: MfrsTHLike }).TavernHelper;
+  } catch {
+    return (window as unknown as { TavernHelper?: MfrsTHLike }).TavernHelper;
+  }
+}
+
+function mfrsSetChatBaseline(baseline: Record<string, unknown>): boolean {
+  const th = mfrsGetTH();
+  if (!th?.insertOrAssignVariables) return false;
+  try {
+    const result = th.insertOrAssignVariables({ [MFRS_BASELINE_KEY]: baseline }, { type: 'chat' });
+    if (result && typeof (result as Promise<unknown>).catch === 'function') {
+      (result as Promise<unknown>).catch(() => {});
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+interface MfrsChatMessageLike {
+  is_user?: boolean;
+  message_id?: number;
+  message?: string;
+  mes?: string;
+}
+
+async function mfrsGetLastChatMessage(): Promise<MfrsChatMessageLike | undefined> {
+  const th = mfrsGetTH();
+  if (!th?.getChatMessages) return undefined;
+  const raw = await th.getChatMessages(-1);
+  const last = Array.isArray(raw) ? raw[0] : raw;
+  return last as MfrsChatMessageLike | undefined;
+}
+
+// 字段级守卫：只填空字段，绝不覆盖模型已写入的非空值。
+async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
+  const th = mfrsGetTH();
+  if (!th?.getVariables || !th?.updateVariablesWith) return;
+  try {
+    const last = await mfrsGetLastChatMessage();
+    if (!last || last.is_user || typeof last.message_id !== 'number') return;
+    const floorVars = await th.getVariables({ type: 'message', message_id: last.message_id });
+    const statData = ((floorVars?.stat_data as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
+    const roster = Array.isArray(statData.能力档案) ? (statData.能力档案 as unknown[]) : [];
+    if (roster.length > 0) return; // 已有档案（模型写入或此前已兜底）→ 不动
+    const chatVars = await th.getVariables({ type: 'chat' });
+    const baseline = chatVars?.[MFRS_BASELINE_KEY] as Record<string, unknown> | undefined;
+    if (!baseline) return; // 旧聊天/未经开局表单 → 降级空转
+    await th.updateVariablesWith(
+      current => {
+        const next = { ...((current?.stat_data as Record<string, unknown> | undefined) ?? {}) };
+        for (const [key, value] of Object.entries(baseline)) {
+          if (key === '能力档案') continue;
+          const existing = next[key];
+          if (existing === undefined || existing === null || existing === '') next[key] = value;
+        }
+        next.能力档案 = baseline.能力档案; // 仅当档案为空时才会走到这里（整组写入）
+        return { ...(current ?? {}), stat_data: next };
+      },
+      { type: 'message', message_id: last.message_id },
+    );
+  } catch {
+    /* 兜底失败不影响主流程 */
+  }
+}
+
+// MVU 对新楼层初始化 stat_data 的时机与渲染事件存在竞态 → 错峰重试；幂等（档案非空即跳过）。
+function mfrsEnsureWithRetry(): void {
+  [400, 1600, 3600].forEach(delay => {
+    window.setTimeout(() => { void mfrsEnsureLatestFloorBaseline(); }, delay);
+  });
+}
+
+async function mfrsWarnIfProtocolMissing(): Promise<void> {
+  const th = mfrsGetTH();
+  if (!th?.getVariables || !th?.insertOrAssignVariables) return;
+  try {
+    const last = await mfrsGetLastChatMessage();
+    if (!last || last.is_user || typeof last.message_id !== 'number' || last.message_id < 2) return;
+    const text = String(last.message ?? last.mes ?? '');
+    if (!text || text.includes('<UpdateVariable')) return;
+    const chatVars = await th.getVariables({ type: 'chat' });
+    if (chatVars?.[MFRS_WARN_KEY]) return; // 每聊天只提示一次
+    await th.insertOrAssignVariables({ [MFRS_WARN_KEY]: true }, { type: 'chat' });
+    const hostWin = (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ?? window;
+    hostWin.toastr?.warning?.(
+      '当前预设/模型未输出变量协议块：动态数据（好感度/任务/认知）可能冻结；能力卡片已由开局基线兜底。建议检查预设或重开聊天后使用开局表单。',
+      '魔法禁书目录',
+    );
+  } catch {
+    /* noop */
+  }
+}
+
+let mfrsBaselineHooksInstalled = false;
+function mfrsInstallBaselineHooks(): void {
+  if (mfrsBaselineHooksInstalled) return;
+  if (typeof eventOn !== 'function' || typeof tavern_events === 'undefined') return;
+  const ensureEvents = [
+    tavern_events.CHARACTER_MESSAGE_RENDERED,
+    tavern_events.MESSAGE_UPDATED,
+    tavern_events.MESSAGE_SWIPED,
+    tavern_events.CHAT_CHANGED,
+  ].filter((value): value is string => typeof value === 'string');
+  ensureEvents.forEach(eventName => {
+    try {
+      eventOn(eventName, () => mfrsEnsureWithRetry());
+    } catch {
+      /* noop */
+    }
+  });
+  if (typeof tavern_events.GENERATION_ENDED === 'string') {
+    try {
+      eventOn(tavern_events.GENERATION_ENDED, () => { void mfrsWarnIfProtocolMissing(); });
+    } catch {
+      /* noop */
+    }
+  }
+  mfrsBaselineHooksInstalled = true;
+}
+mfrsInstallBaselineHooks();
+
 function getHostDocument() {
   try {
     return window.parent?.document ?? document;
@@ -1328,6 +1478,37 @@ $(() => {
         }
         L.push('', '【开场白】', sceneText);
         const cfg = L.join('\n');
+        // 开局基线：由脚本直接写入聊天变量，不依赖模型协议块（变量基线兜底层）
+        const isScienceSide = side === 'science';
+        const mfrsBaseline: Record<string, unknown> = {
+          姓名: name,
+          性别: gender,
+          年龄: age + '岁',
+          性格: pers,
+          外貌: look,
+          阵营: isScienceSide ? '科学侧（学园都市）' : '魔法侧',
+          身份:
+            supp ||
+            (isScienceSide
+              ? school && school !== '未选择学校'
+                ? school + '学生'
+                : ''
+              : org && org !== '未选择组织'
+                ? org + '成员'
+                : ''),
+          能力档案: [
+            {
+              能力名称: (isScienceSide ? ability : magic) || '未觉醒',
+              阵营类型: isScienceSide ? '超能力' : '术式',
+              等级或位阶: (isScienceSide ? level : realm) || '未指定',
+              能力效果: (isScienceSide ? abilityD : magicD) || '依设定与剧情判定',
+              是否稳定: true,
+              实战运用: '随剧情展开；战斗与日常分别描述',
+            },
+          ],
+        };
+        (root as HTMLElement & { _pendingCfg?: string; _pendingBaseline?: Record<string, unknown> })._pendingBaseline =
+          mfrsBaseline;
         (root as HTMLElement & { _pendingCfg?: string })._pendingCfg = cfg;
         const cfgOut = q('#cfgOut') as HTMLTextAreaElement | null;
         if (cfgOut) cfgOut.value = cfg;
@@ -1343,9 +1524,19 @@ $(() => {
           const input = getSendTextarea(hostDocument);
           if (!input) throw new Error('no textarea');
           setTextareaValue(input, cfg2);
+          const pendingBaseline = (root as HTMLElement & { _pendingBaseline?: Record<string, unknown> })._pendingBaseline;
+          if (pendingBaseline) {
+            const stored = mfrsSetChatBaseline(pendingBaseline);
+            mfrsWelcomeToast(
+              root,
+              stored ? '开局配置已填入发送框，基线已落盘，点击发送开始冒险！' : '开局配置已填入发送框，点击发送开始冒险！（基线落盘失败，将依赖模型协议初始化）',
+              stored ? 2 : 1,
+            );
+          } else {
+            mfrsWelcomeToast(root, '开局配置已填入发送框，点击发送开始冒险！', 2);
+          }
           const mask = q('#copyMask');
           if (mask) mask.classList.remove('custom-open', 'open');
-          mfrsWelcomeToast(root, '开局配置已填入发送框，点击发送开始冒险！', 2);
         } catch {
           mfrsWelcomeToast(root, '填入发送框失败，请复制后手动粘贴', 1);
         }
