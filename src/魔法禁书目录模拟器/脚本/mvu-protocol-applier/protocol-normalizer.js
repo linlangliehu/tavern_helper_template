@@ -48,7 +48,10 @@ function normalizeJsonPointerPath(path) {
   if (typeof path !== 'string') return '';
   const trimmed = path.trim();
   if (!trimmed) return '';
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  const pointer = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  // 模型偶发用点号分隔层级（如 /主线进度.当前阶段）；本卡 schema 键名不含点，
+  // 统一归一为 JSON Pointer 斜杠，否则 replace 会写进垃圾键静默丢失。
+  return pointer.replace(/\./g, '/');
 }
 
 function normalizeAddPatch(patch) {
@@ -99,15 +102,19 @@ function normalizePatchArrayText(arrayText) {
   let addToReplace = 0;
   let skipped = 0;
   const normalized = [];
+  let pathChanged = false;
   for (const patch of patches) {
+    const pathBefore = typeof patch?.path === 'string' ? patch.path : undefined;
     const result = normalizeAddPatch(patch);
+    if (pathBefore !== undefined && result.patch && result.patch.path !== pathBefore) pathChanged = true;
     addToInsert += result.addToInsert;
     addToReplace += result.addToReplace;
     skipped += result.skipped;
     if (result.patch) normalized.push(result.patch);
   }
 
-  const changed = addToInsert > 0 || addToReplace > 0 || skipped > 0 || normalized.length !== patches.length;
+  // 路径归一化（点号→斜杠）也必须触发重序列化，否则消费方拿到的还是点号路径
+  const changed = addToInsert > 0 || addToReplace > 0 || skipped > 0 || pathChanged || normalized.length !== patches.length;
   return {
     arrayText: changed ? JSON.stringify(normalized, null, 2) : arrayText,
     changed,

@@ -27,6 +27,22 @@ const MFRS_BASELINE_KEY = '__mfrs_baseline';
 const MFRS_WARN_KEY = '__mfrs_uv_warned';
 // initvar.yaml 的非空默认值：MVU 每层初始化会先填入，字段守卫必须把它们视为「空」否则开局表单值永远填不进去
 const MFRS_INITVAR_DEFAULTS: Record<string, unknown> = { 性别: '男', 年龄: '18岁' };
+const MFRS_RAW_PROTOCOL_KEY = '_mfrs_raw_protocol_message';
+
+/** 读宿主 ctx 中指定楼层被 mvu-protocol-applier 清洗前保存的协议快照（TH extra 拷贝不含该键）。 */
+function mfrsReadHostRawProtocolSnapshot(messageId: number): string {
+  try {
+    const host = window.parent as (Window & {
+      SillyTavern?: { getContext?: () => { chat?: Array<{ extra?: Record<string, unknown> }> } };
+    }) | null;
+    const chat = host?.SillyTavern?.getContext?.().chat;
+    const msg = chat && messageId >= 0 ? chat[messageId] : undefined;
+    const raw = msg?.extra?.[MFRS_RAW_PROTOCOL_KEY];
+    return typeof raw === 'string' ? raw : '';
+  } catch {
+    return '';
+  }
+}
 
 
 function mfrsGetTH(): MfrsTHLike | undefined {
@@ -114,7 +130,11 @@ async function mfrsWarnIfProtocolMissing(): Promise<void> {
     const last = await mfrsGetLastChatMessage();
     if (!last || last.is_user || typeof last.message_id !== 'number' || last.message_id < 2) return;
     const text = String(last.message ?? last.mes ?? '');
-    if (!text || text.includes('<UpdateVariable')) return;
+    if (!text) return;
+    if (text.includes('<UpdateVariable')) return;
+    // mvu-protocol-applier 会把协议块应用后从 mes 清洗进 extra._mfrs_raw_protocol_message 快照：
+    // 快照存在即协议存在（已应用），不得误报。TH getChatMessages 的 extra 是白名单拷贝，须读宿主 ctx。
+    if (mfrsReadHostRawProtocolSnapshot(last.message_id).includes('<UpdateVariable')) return;
     const chatVars = await th.getVariables({ type: 'chat' });
     if (chatVars?.[MFRS_WARN_KEY]) return; // 每聊天只提示一次
     await th.insertOrAssignVariables({ [MFRS_WARN_KEY]: true }, { type: 'chat' });

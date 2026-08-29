@@ -60,7 +60,9 @@ function parseIndex(value: string, length: number, allowEnd = false) {
 
 function applyPatch(root: MvuData, patch: Patch): boolean {
   const op = String(patch.op ?? '').trim().toLowerCase();
-  const pathParts = decodePointer(String(patch.path ?? ''));
+  // 防御性归一：模型偶发输出点号路径（/主线进度.当前阶段），统一转斜杠，
+  // 避免值静默写进垃圾键（schema 键名不含点，归一安全）。
+  const pathParts = decodePointer(String(patch.path ?? '').replace(/\./g, '/'));
   if (pathParts.length === 0) return false;
   const fullParts = ['stat_data', ...pathParts];
   const parent = getParent(root, fullParts, op === 'replace' || op === 'delta' || op === 'insert');
@@ -216,27 +218,78 @@ function createFalseApplyDefaultData(): MvuData {
     },
   };
 }
+/**
+ * 提取归一化协议中的全部 replace 路径（去重）。
+ * replace 是绝对值赋值且幂等：数据已正确写回时重放结果与当前值一致；
+ * 若 stat_data 被重载/重初始化抹掉，replace 路径必然偏离 patch 值 → 以此判定假性已应用。
+ * insert 不参与比对（重放会产生重复元素）、delta 由白名单判定覆盖，均保守跳过。
+ */
+function extractReplacePaths(normalizedMessage: string): string[] {
+  const blocks = String(normalizedMessage).match(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi) ?? [];
+  const out: string[] = [];
+  for (const block of blocks) {
+    const match = block.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
+    const arrayText = match ? extractJsonArray(match[1]) : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
+    if (!arrayText) continue;
+    let patches: Patch[];
+    try {
+      patches = JSON.parse(arrayText);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(patches)) continue;
+    for (const patch of patches) {
+      if (String(patch.op ?? '').trim().toLowerCase() !== 'replace') continue;
+      const path = String(patch.path ?? '').replace(/\./g, '/');
+      if (path) out.push(path);
+    }
+  }
+  return [...new Set(out)];
+}
+
+/** 键序无关的深度序列化，用于 replace 路径值比对。 */
+function canonicalStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'undefined';
+  if (Array.isArray(value)) return `[${value.map(canonicalStringify).join(',')}]`;
+  const record = value as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
+  return `{${keys.map(key => `${JSON.stringify(key)}:${canonicalStringify(record[key])}`).join(',')}}`;
+}
 
 /**
  * 判定「假性已应用」：协议已写回过（applied_hash 命中），但 stat_data 退回初值。
  *
  * 规则（保守，宁可漏判也不误清）：
- * 1. 仅检查 schema default 为 0 的白名单 delta 路径。
- * 2. 从 schema default 按协议原顺序完整重放；只有该路径的预期终值 > 0、当前却仍为 0，才判定回退。
- * 3. 单个负 delta、正负 delta 净归零、或后续 replace 归零都视为合法归零，不得重放。
+ * 1. 判定 A（delta 白名单）：仅检查 schema default 为 0 的白名单 delta 路径，从初值重放后预期 >0 而当前仍为 0。
+ * 2. 判定 B（replace 路径比对，魔禁卡主路径）：replace 幂等，重放后该路径预期值若与当前值不一致，
+ *    说明 stat_data 已偏离写回时的状态（典型：页面重载/聊天重载后 MVU 重新初始化抹掉协议数据）。
+ * 3. insert/REMOVE 路径不参与判定（重放不幂等，无法区分重复插入与正常状态）。
  *
  * 不读 mes、不读预设标签；只读 oldData.stat_data + 解析 <UpdateVariable>。
  */
 export function isFalselyAppliedStat(oldData: MvuData | undefined, normalizedMessage: string): boolean {
-  const paths = [...new Set(extractWhitelistedDeltaPatches(normalizedMessage).map(delta => delta.path))];
-  if (paths.length === 0) return false;
-
   const currentStat = (oldData && (oldData as MvuData).stat_data) || {};
-  const expectedStat = applyRawProtocolToMvuData(createFalseApplyDefaultData(), normalizedMessage).data.stat_data || {};
-  return paths.some(path => {
+
+  // 判定 A：delta 白名单（神秘复苏路径；魔禁卡白名单为空，恒不命中）
+  const deltaPaths = [...new Set(extractWhitelistedDeltaPatches(normalizedMessage).map(delta => delta.path))];
+  if (deltaPaths.length > 0) {
+    const expectedStat = applyRawProtocolToMvuData(createFalseApplyDefaultData(), normalizedMessage).data.stat_data || {};
+    const deltaHit = deltaPaths.some(path => {
+      const current = readStatPointer(currentStat, path);
+      const expected = readStatPointer(expectedStat, path);
+      return typeof current === 'number' && current === 0 && typeof expected === 'number' && expected > 0;
+    });
+    if (deltaHit) return true;
+  }
+
+  // 判定 B：replace 路径比对（魔禁卡模型输出以 replace 为主）
+  const replacePaths = extractReplacePaths(normalizedMessage);
+  if (replacePaths.length === 0) return false;
+  const replayedStat = applyRawProtocolToMvuData({ stat_data: clone(currentStat) }, normalizedMessage).data.stat_data || {};
+  return replacePaths.some(path => {
     const current = readStatPointer(currentStat, path);
-    const expected = readStatPointer(expectedStat, path);
-    return typeof current === 'number' && current === 0 && typeof expected === 'number' && expected > 0;
+    const expected = readStatPointer(replayedStat, path);
+    return canonicalStringify(current) !== canonicalStringify(expected);
   });
 }
 
