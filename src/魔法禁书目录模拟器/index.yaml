@@ -1815,11 +1815,11 @@
             console.error(`[${label}] 加载失败，请检查 CDN 可用性`);
           };
           // 串行加载 6 个模块（同一 ES module 作用域共享 loadModule，保证 MVU 先就位）
-          await loadModule('MVU', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@22a72e86/dist/魔法禁书目录模拟器/脚本/MVU/index.js');
-          await loadModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@22a72e86/dist/魔法禁书目录模拟器/脚本/变量结构/index.js');
-          await loadModule('mvu协议应用', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@22a72e86/dist/魔法禁书目录模拟器/脚本/mvu-protocol-applier/index.js');
-          await loadModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@22a72e86/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
-          await loadModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@22a72e86/dist/魔法禁书目录模拟器/脚本/固定状态栏/index.js');
-          await loadModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@22a72e86/dist/魔法禁书目录模拟器/脚本/消息内面板/index.js');
+          await loadModule('MVU', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b9dda4d2/dist/魔法禁书目录模拟器/脚本/MVU/index.js');
+          await loadModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b9dda4d2/dist/魔法禁书目录模拟器/脚本/变量结构/index.js');
+          await loadModule('mvu协议应用', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b9dda4d2/dist/魔法禁书目录模拟器/脚本/mvu-protocol-applier/index.js');
+          await loadModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b9dda4d2/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
+          await loadModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b9dda4d2/dist/魔法禁书目录模拟器/脚本/固定状态栏/index.js');
+          await loadModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@b9dda4d2/dist/魔法禁书目录模拟器/脚本/消息内面板/index.js');
 
 
