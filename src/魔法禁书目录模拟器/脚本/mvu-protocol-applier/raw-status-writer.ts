@@ -86,7 +86,22 @@ function applyPatch(root: MvuData, patch: Patch): boolean {
     if (!Array.isArray(parent)) return false;
     const index = key === '-' ? parent.length : parseIndex(key, parent.length, true);
     if (index === null) return false;
-    parent.splice(index, 0, clone(patch.value));
+    // 幂等化（2026-08-29 实机翻倍教训）：重放路径（写后延迟复核/CHAT_CHANGED 恢复扫描/
+    // 写回重试）可能对同一协议应用多次。若插入对象带 角色名 且数组中已存在同名元素，
+    // 改为合并字段而非 splice 追加，避免「两个御坂美琴」式重复。
+    const value = patch.value;
+    const dupKey =
+      value && typeof value === 'object' && !Array.isArray(value) ? String((value as any)['角色名'] ?? '') : '';
+    if (dupKey) {
+      const existing = (parent as any[]).find(
+        (el) => el && typeof el === 'object' && String((el as any)['角色名'] ?? '') === dupKey,
+      );
+      if (existing) {
+        Object.assign(existing as Record<string, unknown>, clone(value) as Record<string, unknown>);
+        return true;
+      }
+    }
+    parent.splice(index, 0, clone(value));
     return true;
   }
 
