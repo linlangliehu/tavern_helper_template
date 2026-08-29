@@ -697,11 +697,11 @@
         .mw-title {
         text-align: center; font-size: 30px; letter-spacing: 12px; font-weight: 800;
         margin: 14px 0 4px;
-        text-shadow: 0 0 18px var(--mw-glow), 0 0 42px rgba(51,153,255,.4);
+        text-shadow: 0 0 18px var(--mw-glow), 0 0 42px rgba(51,153,255,.4) !important;
         }
         .mw-slogan { text-align: center; color: var(--mw-dim); font-size: 13px; margin-bottom: 26px; line-height: 2; }
         .mw-slogan .em { color: var(--mw-accent); }
-        .mw-slogan-main { display: block; font-size: 22px; font-weight: 700; color: var(--mw-accent); letter-spacing: 6px; text-shadow: 0 0 12px rgba(102,204,255,0.6); margin-bottom: 6px; }
+        .mw-slogan-main { display: block; font-size: 22px; font-weight: 700; color: var(--mw-accent); letter-spacing: 6px; text-shadow: 0 0 12px rgba(102,204,255,0.6) !important; margin-bottom: 6px; }
         .mw-slogan-sub { display: block; font-size: 13px; color: var(--mw-dim); letter-spacing: 1px; }
         
         /* ---- 区块 ---- */
@@ -900,9 +900,10 @@
         .mw-music {
         position: fixed; right: 14px; bottom: 16px; z-index: 150;
         width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
-        display: flex; align-items: center; justify-content: center; font-size: 18px;
+        display: flex; align-items: center; justify-content: center; font-size: 18px; padding: 0; font: inherit; appearance: none;
         color: var(--mw-accent); background: rgba(10, 16, 48, 0.85);
         border: 1px solid var(--mw-line); transition: all .2s;
+        box-sizing: border-box;
         }
         .mw-music:hover { border-color: var(--mw-accent); }
         .mw-music.playing { color: var(--mw-cyan); border-color: var(--mw-cyan); animation: mwSpin 3s linear infinite; }
@@ -1760,7 +1761,7 @@
         </div>
         
         <!-- 配置复制兜底弹窗 -->
-        <div class="mw-modal-mask" id="copyMask">
+        <div class="mw-modal-mask" id="copyMask" role="dialog" aria-modal="true" aria-label="生成配置确认">
         <div class="mw-modal">
         <div class="mw-modal-close" data-act="modalclose">✕</div>
         <div class="mw-modal-name" style="font-size:15px;margin-bottom:10px">角色配置预览</div>
@@ -1774,7 +1775,7 @@
         
         <!-- 背景音乐 -->
         <audio id="bgm" loop preload="none" src="https://raw.githubusercontent.com/linlangliehu/bgm/main/only-my-railgun.mp3"></audio>
-        <div class="mw-music" data-act="music" title="背景音乐"><i class="fa-solid fa-music"></i></div>
+        <button type="button" class="mw-music" data-act="music" title="背景音乐" aria-label="背景音乐"><i class="fa-solid fa-music"></i></button>
         
         <!-- 提示条 -->
         <div class="mw-toast"></div>
