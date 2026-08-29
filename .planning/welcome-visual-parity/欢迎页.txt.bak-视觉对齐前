@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法禁书目录</title>
+<style>
+/* ===== 魔法禁书目录·开局设定（原创实现，深蓝科幻霓虹）===== */
+:root {
+  --mw-bg-a: #0a0a2a;
+  --mw-bg-b: #1a1a4a;
+  --mw-glow: rgba(100, 200, 255, 0.5);
+  --mw-accent: #66ccff;
+  --mw-accent-2: #3399ff;
+  --mw-cyan: #00ffaa;
+  --mw-text: #e8f4ff;
+  --mw-dim: #99ddff;
+  --mw-card: rgba(18, 24, 66, 0.72);
+  --mw-line: rgba(102, 204, 255, 0.28);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; min-height: 100%; }
+body {
+  background: linear-gradient(135deg, var(--mw-bg-a), var(--mw-bg-b), var(--mw-bg-a)) fixed;
+  color: var(--mw-text);
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(102,204,255,.35); border-radius: 4px; }
+
+/* ---- 顶部导航 ---- */
+.mw-nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 14px;
+  background: rgba(8, 8, 32, 0.9);
+  border-bottom: 1px solid var(--mw-line);
+  backdrop-filter: blur(6px);
+}
+.mw-brand {
+  font-weight: 700; letter-spacing: 2px;
+  background: linear-gradient(to right, var(--mw-accent), var(--mw-accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  white-space: nowrap;
+}
+.mw-navtabs { display: flex; gap: 6px; }
+.mw-navtab {
+  padding: 7px 16px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--mw-line); background: transparent; color: var(--mw-dim);
+  font-size: 13px; transition: all .2s;
+}
+.mw-navtab:hover { color: var(--mw-text); border-color: var(--mw-accent); }
+.mw-navtab.active {
+  color: #06122b; font-weight: 600;
+  background: linear-gradient(to right, var(--mw-accent), var(--mw-accent-2));
+  border-color: transparent;
+}
+
+/* ---- 页面容器 ---- */
+.mw-page { display: none; max-width: 720px; margin: 0 auto; padding: 20px 14px 90px; }
+.mw-page.active { display: block; animation: mwFade .35s ease; }
+@keyframes mwFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.mw-title {
+  text-align: center; font-size: 30px; letter-spacing: 12px; font-weight: 800;
+  margin: 14px 0 4px;
+  text-shadow: 0 0 18px var(--mw-glow), 0 0 42px rgba(51,153,255,.4);
+}
+.mw-slogan { text-align: center; color: var(--mw-dim); font-size: 13px; margin-bottom: 26px; }
+.mw-slogan .em { color: var(--mw-accent); }
+
+/* ---- 区块 ---- */
+.mw-sec {
+  background: var(--mw-card);
+  border: 1px solid var(--mw-line);
+  border-radius: 14px;
+  padding: 16px 16px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 12px 34px rgba(0, 8, 30, 0.45);
+}
+.mw-sec h2 { font-size: 17px; letter-spacing: 3px; text-align: center; margin-bottom: 14px; color: var(--mw-accent); }
+.mw-sec h3 { font-size: 15px; letter-spacing: 2px; margin: 4px 0 12px; color: var(--mw-accent); }
+.mw-sec h4 { font-size: 13.5px; letter-spacing: 1.5px; margin: 16px 0 10px; color: var(--mw-dim); }
+.mw-hint { font-size: 11.5px; color: var(--mw-dim); opacity: .85; margin: -6px 0 12px; }
+.mw-backlink {
+  display: inline-block; font-size: 12px; color: var(--mw-accent);
+  cursor: pointer; margin-bottom: 8px; user-select: none;
+}
+.mw-backlink:hover { text-decoration: underline; }
+
+/* ---- 表单 ---- */
+.mw-row { margin-bottom: 12px; }
+.mw-label { display: block; font-size: 12.5px; color: var(--mw-dim); margin-bottom: 5px; }
+.mw-input, .mw-select, .mw-textarea {
+  width: 100%; padding: 9px 12px; font-size: 13.5px;
+  color: var(--mw-text); background: rgba(8, 14, 44, 0.65);
+  border: 1px solid var(--mw-line); border-radius: 9px; outline: none;
+  font-family: inherit; transition: border-color .2s, box-shadow .2s;
+}
+.mw-input:focus, .mw-select:focus, .mw-textarea:focus {
+  border-color: var(--mw-accent);
+  box-shadow: 0 0 0 2px rgba(102, 204, 255, 0.18);
+}
+.mw-textarea { resize: vertical; min-height: 58px; }
+.mw-select option { background: #101838; color: var(--mw-text); }
+.mw-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ---- 阵营卡片 ---- */
+.mw-side-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.mw-side-card {
+  position: relative; cursor: pointer; text-align: center;
+  border: 1px solid var(--mw-line); border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0,30,60,.55), rgba(0,50,100,.5));
+  padding: 18px 12px 15px; transition: all .2s;
+}
+.mw-side-card:hover { transform: translateY(-2px); border-color: var(--mw-accent); }
+.mw-side-card.selected {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--mw-card), var(--mw-card)) padding-box,
+    linear-gradient(to right, var(--mw-accent), var(--mw-accent-2)) border-box;
+  border: 1px solid transparent;
+  box-shadow: 0 0 0 1px rgba(102,204,255,.4), 0 10px 30px rgba(20,80,160,.35);
+}
+.mw-side-ico { font-size: 26px; margin-bottom: 6px; }
+.mw-side-name { font-size: 15.5px; font-weight: 700; letter-spacing: 2px; color: var(--mw-text); }
+.mw-side-desc { font-size: 11.5px; color: var(--mw-dim); margin-top: 6px; min-height: 34px; }
+
+/* ---- 选项网格 ---- */
+.mw-opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.mw-opt {
+  padding: 9px 6px; font-size: 12.5px; text-align: center; cursor: pointer;
+  color: var(--mw-text); background: rgba(10, 18, 52, 0.7);
+  border: 1px solid var(--mw-line); border-radius: 9px;
+  transition: all .18s; word-break: break-all; font-family: inherit;
+}
+.mw-opt small { display: block; font-size: 10px; color: var(--mw-cyan); margin-top: 2px; }
+.mw-opt:hover { border-color: var(--mw-accent); background: rgba(102,204,255,.12); }
+.mw-opt.selected {
+  color: #06122b; font-weight: 600;
+  background: linear-gradient(to right, var(--mw-accent), var(--mw-accent-2));
+  border-color: transparent;
+}
+.mw-opt.selected small { color: #06264a; }
+.mw-opt.locked { opacity: .3; cursor: not-allowed; }
+.mw-custom-box { display: none; margin-top: 8px; }
+
+/* ---- 开场白卡片 ---- */
+.mw-scenes { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.mw-scene {
+  cursor: pointer; padding: 10px 12px;
+  border: 1px solid var(--mw-line); border-left: 3px solid var(--mw-accent-2);
+  border-radius: 9px; background: rgba(10, 16, 48, 0.66);
+  transition: all .18s;
+}
+.mw-scene:hover { border-color: var(--mw-accent); background: rgba(102,204,255,.08); }
+.mw-scene.selected {
+  background: linear-gradient(135deg, rgba(102,204,255,.16), rgba(51,153,255,.12));
+  border-color: var(--mw-accent);
+}
+.mw-scene-head { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.mw-scene-date { font-weight: 700; color: var(--mw-accent); font-size: 13px; }
+.mw-scene-tag {
+  font-size: 10.5px; color: var(--mw-cyan);
+  border: 1px solid rgba(0,255,170,.4); border-radius: 999px; padding: 1px 8px;
+}
+.mw-scene-desc { font-size: 12px; color: var(--mw-dim); }
+
+/* ---- 主按钮 ---- */
+.mw-gen-btn {
+  display: block; width: 100%; margin-top: 14px; padding: 12px;
+  font-size: 15px; font-weight: 700; letter-spacing: 4px; cursor: pointer;
+  color: #06122b; border: none; border-radius: 11px; font-family: inherit;
+  background: linear-gradient(to right, var(--mw-accent), var(--mw-accent-2));
+  box-shadow: 0 8px 24px rgba(40, 120, 220, 0.4);
+  transition: all .2s;
+}
+.mw-gen-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(40,140,255,.5); }
+.mw-gen-btn:disabled { opacity: .38; cursor: not-allowed; box-shadow: none; }
+
+/* ---- 角色介绍 ---- */
+.mw-intro-tip { text-align: center; color: var(--mw-dim); font-size: 12.5px; margin-bottom: 16px; }
+.mw-char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.mw-char-tile {
+  cursor: pointer; text-align: center; padding: 14px 6px 10px;
+  border: 1px solid var(--mw-line); border-radius: 12px;
+  background: rgba(12, 18, 52, 0.72); transition: all .2s;
+}
+.mw-char-tile:hover { transform: translateY(-3px); border-color: var(--mw-accent); box-shadow: 0 8px 22px rgba(20,90,180,.35); }
+.mw-char-face {
+  width: 54px; height: 54px; line-height: 54px; margin: 0 auto 8px;
+  border-radius: 50%; font-size: 22px; font-weight: 700; color: #06122b;
+  background: radial-gradient(circle at 30% 25%, var(--mw-glow), transparent 60%),
+              linear-gradient(135deg, var(--mw-accent), var(--mw-accent-2));
+}
+.mw-char-nm { font-size: 13px; font-weight: 600; }
+.mw-char-tag { font-size: 10.5px; color: var(--mw-dim); margin-top: 2px; }
+
+/* ---- 弹窗 ---- */
+.mw-modal-mask {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(2, 4, 18, 0.78); backdrop-filter: blur(3px);
+  align-items: center; justify-content: center; padding: 18px;
+}
+.mw-modal-mask.open { display: flex; }
+.mw-modal {
+  width: min(480px, 94vw); max-height: 82vh; overflow-y: auto;
+  background: linear-gradient(135deg, rgba(0,30,60,.95), rgba(0,20,50,.95));
+  border: 1px solid var(--mw-accent); border-radius: 16px; padding: 20px;
+  box-shadow: 0 20px 60px rgba(0,10,40,.7);
+  animation: mwPop .25s ease;
+}
+@keyframes mwPop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+.mw-modal-close { float: right; cursor: pointer; color: var(--mw-dim); font-size: 18px; line-height: 1; }
+.mw-modal-face {
+  width: 76px; height: 76px; line-height: 76px; text-align: center; margin: 4px auto 10px;
+  border-radius: 50%; font-size: 30px; font-weight: 800; color: #06122b;
+  background: radial-gradient(circle at 30% 25%, var(--mw-glow), transparent 60%),
+              linear-gradient(135deg, var(--mw-accent), var(--mw-accent-2));
+}
+.mw-modal-name { text-align: center; font-size: 18px; font-weight: 800; letter-spacing: 2px; }
+.mw-modal-tag { text-align: center; font-size: 11.5px; color: var(--mw-cyan); margin: 2px 0 12px; }
+.mw-modal-bio { font-size: 13px; color: var(--mw-text); border-top: 1px dashed var(--mw-line); padding-top: 12px; }
+
+/* ---- 音乐按钮 / 提示条 ---- */
+.mw-music {
+  position: fixed; right: 14px; bottom: 16px; z-index: 150;
+  width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  color: var(--mw-accent); background: rgba(10, 16, 48, 0.85);
+  border: 1px solid var(--mw-line); transition: all .2s;
+}
+.mw-music:hover { border-color: var(--mw-accent); }
+.mw-music.playing { color: var(--mw-cyan); border-color: var(--mw-cyan); animation: mwSpin 3s linear infinite; }
+@keyframes mwSpin { to { transform: rotate(360deg); } }
+.mw-toast {
+  position: fixed; left: 50%; top: 14px; transform: translateX(-50%) translateY(-80px);
+  z-index: 300; max-width: 86vw; padding: 10px 18px; font-size: 13px;
+  border-radius: 999px; color: var(--mw-text); pointer-events: none;
+  background: rgba(8, 12, 40, 0.95); border: 1px solid var(--mw-accent);
+  box-shadow: 0 8px 24px rgba(0,10,40,.5); transition: transform .3s ease;
+}
+.mw-toast.show { transform: translateX(-50%) translateY(0); }
+.mw-toast.err { border-color: #ff6b81; color: #ffd9df; }
+
+@media (max-width: 520px) {
+  .mw-title { font-size: 24px; letter-spacing: 8px; }
+  .mw-side-grid { grid-template-columns: 1fr; }
+  .mw-duo { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="mfrs-welcome-root" role="region" aria-label="魔法禁书目录开局设定" data-mech="inline-delegated-v3" onclick='(function(ev,root){
+var t=ev.target.closest("[data-act]");if(!t)return;
+var D=t.dataset;
+function q(s){return root.querySelector(s)}
+function qa(s){return [].slice.call(root.querySelectorAll(s))}
+function only(sel,el){qa(sel).forEach(function(x){x.classList.toggle("selected",x===el)})}
+function tt(msg,err){var s=q(".mw-toast");s.textContent=msg;s.classList.toggle("err",!!err);s.classList.add("show");clearTimeout(root._t);root._t=setTimeout(function(){s.classList.remove("show")},2200)}
+function valOf(sel){var el=q(sel+" [data-act=pick].selected");if(!el)return"";if(el.dataset.act==="pick"&&el.parentNode.querySelector(".mw-custom-box")){ }return el.dataset.val}
+function valOrCustom(sel,btnId,inputId){var b=q("#"+btnId);if(b&&b.classList.contains("selected")){var i=q("#"+inputId);return (i&&i.value.trim())||""}var p=q(sel+" [data-act=pick].selected");return p?p.dataset.val:""}
+function refresh(){
+var ok=root.dataset.side==="science"?((valOrCustom("#optSchool","schoolCustomBtn","schoolCustomInput"))&&(valOrCustom("#optAbility","abilityCustomBtn","abilityCustomInput"))&&(q("#optLevel [data-act=pick].selected"))):((valOrCustom("#optOrg","orgCustomBtn","orgCustomInput"))&&(valOrCustom("#optRealm","realmCustomBtn","realmCustomInput")));
+var so=q("#secOpening");
+if(ok){if(so.style.display==="none"){so.style.display="block";setTimeout(function(){so.scrollIntoView({behavior:"smooth",block:"start"})},60)}}
+else{so.style.display="none"}
+var sc=q("#sceneList [data-act=scene].selected");
+var cu=q("#sceneCustomBtn").classList.contains("selected")&&q("#sceneCustomInput").value.trim();
+q("#btnGenerate").disabled=!(sc||cu);
+}
+switch(D.act){
+case"tab":
+qa(".mw-page").forEach(function(p){p.classList.remove("active")});
+q("#page-"+D.page).classList.add("active");
+qa("[data-act=tab]").forEach(function(b){b.classList.toggle("active",b===t)});
+break;
+case"side":
+root.dataset.side=D.side;
+qa("[data-act=side]").forEach(function(c){c.classList.toggle("selected",c===t)});
+var show=D.side==="science"?q("#chainScience"):q("#chainMagic");
+var hide=D.side==="science"?q("#chainMagic"):q("#chainScience");
+show.style.display="block";hide.style.display="none";
+hide.querySelectorAll(".selected").forEach(function(x){x.classList.remove("selected")});
+hide.querySelectorAll(".mw-custom-box").forEach(function(b){b.style.display="none"});
+hide.querySelectorAll(".mw-custom-box input").forEach(function(i){i.value=""});
+hide.querySelectorAll(".locked").forEach(function(x){x.classList.remove("locked")});
+q("#secOpening").style.display="none";
+setTimeout(function(){show.scrollIntoView({behavior:"smooth",block:"start"})},60);
+refresh();break;
+case"pick":{
+var grp=t.closest(".mw-opts");
+only("#"+grp.id+" [data-act=pick]",t);
+var cb=grp.parentElement.querySelector(".mw-custom-box");
+if(cb)cb.style.display="none";
+var cbBtn=grp.querySelector("[data-act=custom]");
+if(cbBtn)cbBtn.classList.remove("selected");
+if(grp.id==="optAbility"){
+if(D.val==="幻想杀手"){
+var lv0=q("#optLevel [data-act=pick]");
+while(lv0&&lv0.dataset.val.indexOf("Level 0")!==0)lv0=lv0.nextElementSibling;
+if(lv0){only("#optLevel [data-act=pick]",lv0)}
+qa("#optLevel [data-act=pick]").forEach(function(x){x.classList.toggle("locked",x!==lv0)});
+tt("幻想杀手：能力等级锁定 Level 0");
+}else{
+qa("#optLevel [data-act=pick]").forEach(function(x){x.classList.remove("locked")});
+}}
+refresh();break}
+case"custom":{
+var box=q(D.target);
+var openNow=box.style.display!=="block";
+box.style.display=openNow?"block":"none";
+t.classList.toggle("selected",openNow);
+if(openNow){only("#"+t.closest(".mw-opts").id+" [data-act=pick]",null);var ii=box.querySelector("input");if(ii)setTimeout(function(){ii.focus()},60)}
+else{var sel=t.closest(".mw-opts").querySelector("[data-act=pick].selected");}
+refresh();break}
+case"scene":
+only("#sceneList [data-act=scene]",t);
+q("#sceneCustomBtn").classList.remove("selected");
+q("#sceneCustomBox").style.display="none";
+refresh();break;
+case"scenecustom":{
+var on=!t.classList.contains("selected");
+t.classList.toggle("selected",on);
+if(on)qa("#sceneList [data-act=scene].selected").forEach(function(x){x.classList.remove("selected")});
+q("#sceneCustomBox").style.display=on?"block":"none";
+if(on)setTimeout(function(){q("#sceneCustomInput").focus()},60);
+refresh();break}
+case"generate":{
+function gv(id){var e=q(id);return e?e.value.trim():""}
+var side=root.dataset.side;
+if(!side){tt("请先选择阵营（科学侧或魔法侧）",1);break}
+var name=gv("#pName")||"未命名",gender=q("#pGender").value,age=gv("#pAge")||"未知",pers=gv("#pPersonality")||"未设定",look=gv("#pLook")||"未描述",supp=gv("#pSupplement");
+var sc=q("#sceneList [data-act=scene].selected");
+var sceneText=sc?("【"+sc.dataset.date+" · "+sc.dataset.tag+"】"+sc.dataset.desc):q("#sceneCustomInput").value.trim();
+if(!sceneText){tt("请先选择一个开场白",1);break}
+var school=valOrCustom("#optSchool","schoolCustomBtn","schoolCustomInput")||"未选择学校";
+var ability=valOrCustom("#optAbility","abilityCustomBtn","abilityCustomInput")||"未选择能力";
+var level=(q("#optLevel [data-act=pick].selected")||{}).dataset?q("#optLevel [data-act=pick].selected").dataset.val:"未选择等级";
+var org=valOrCustom("#optOrg","orgCustomBtn","orgCustomInput")||"未选择组织";
+var realm=valOrCustom("#optRealm","realmCustomBtn","realmCustomInput")||"未选择境界";
+var L=["【玩家信息】","姓名："+name,"性别："+gender,"年龄："+age+"岁","性格："+pers,"外貌："+look];
+if(supp)L.push("补充设定："+supp);
+if(side==="science"){L.push("阵营：科学侧（学园都市）","就读学校："+school,"超能力："+ability,"能力等级："+level)}
+else{L.push("阵营：魔法侧","隶属组织："+org,"魔法境界："+realm)}
+L.push("","【开场白】",sceneText);
+var cfg=L.join("\n");
+try{
+var doc=(function(){try{return parent.document}catch(e){return null}})();
+var ta=doc&&doc.getElementById("send_textarea");
+if(!ta)throw 0;
+var setter=Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype,"value").set;
+setter.call(ta,cfg);
+ta.dispatchEvent(new Event("input",{bubbles:true}));
+tt("开局配置已填入发送框，点击发送开始冒险！");
+}catch(e){
+q("#cfgOut").value=cfg;
+q("#copyMask").classList.add("open");
+tt("已生成配置，请复制后发送",1);
+}
+break}
+case"copycfg":{
+var ta2=q("#cfgOut");ta2.focus();ta2.select();
+try{document.execCommand("copy");tt("已复制到剪贴板")}catch(e){}
+break}
+case"char":
+q("#mFace").textContent=D.init||D.name.slice(0,1);
+q("#mName").textContent=D.name;
+q("#mTag").textContent=D.tag;
+q("#mBio").textContent=D.bio;
+q("#charModal").classList.add("open");break;
+case"modalclose":
+q("#charModal").classList.remove("open");
+q("#copyMask").classList.remove("open");break;
+case"music":{
+var a=q("#bgm");
+if(!a.getAttribute("src")){tt("未内置背景音乐文件")}
+else if(a.paused){a.play();t.classList.add("playing")}
+else{a.pause();t.classList.remove("playing")}
+break}
+}
+})(event,this)'>
+
+  <!-- 顶部导航 -->
+  <nav class="mw-nav">
+    <div class="mw-brand">魔法禁书目录</div>
+    <div class="mw-navtabs">
+      <button type="button" class="mw-navtab active" data-act="tab" data-page="gen">角色生成</button>
+      <button type="button" class="mw-navtab" data-act="tab" data-page="intro">角色介绍</button>
+    </div>
+  </nav>
+
+  <!-- 页面一：角色生成 -->
+  <div class="mw-page active" id="page-gen">
+    <h1 class="mw-title">魔 法 禁 书 目 录</h1>
+    <p class="mw-slogan"><span class="em">💕</span> 众所周知，学园都市从不养闲人！！！ <span class="em">💕</span><br>你可以成为科学侧的超能力者，或魔法侧的魔法师——在这座城市展开你的冒险</p>
+
+    <!-- 玩家信息 -->
+    <section class="mw-sec">
+      <h2>玩家信息</h2>
+      <div class="mw-row">
+        <label class="mw-label" for="pName">姓名</label>
+        <input class="mw-input" id="pName" placeholder="请输入姓名">
+      </div>
+      <div class="mw-duo">
+        <div class="mw-row">
+          <label class="mw-label" for="pGender">性别</label>
+          <select class="mw-select" id="pGender">
+            <option>男</option><option>女</option><option>其他</option>
+          </select>
+        </div>
+        <div class="mw-row">
+          <label class="mw-label" for="pAge">年龄</label>
+          <input class="mw-input" id="pAge" type="number" min="12" max="30" placeholder="12-30">
+        </div>
+      </div>
+      <div class="mw-row">
+        <label class="mw-label" for="pPersonality">性格</label>
+        <input class="mw-input" id="pPersonality" placeholder="例如：热血、不服输、爱吐槽">
+      </div>
+      <div class="mw-row">
+        <label class="mw-label" for="pLook">外貌</label>
+        <textarea class="mw-textarea" id="pLook" placeholder="发色 / 瞳色 / 身形 / 常穿服饰……"></textarea>
+      </div>
+      <div class="mw-row">
+        <label class="mw-label" for="pSupplement">补充（可选）</label>
+        <textarea class="mw-textarea" id="pSupplement" placeholder="额外背景 / 特殊设定"></textarea>
+      </div>
+    </section>
+
+    <!-- 选择阵营 -->
+    <section class="mw-sec">
+      <h3>选择你的阵营</h3>
+      <div class="mw-side-grid">
+        <div class="mw-side-card" data-act="side" data-side="science">
+          <div class="mw-side-ico">⚡</div>
+          <div class="mw-side-name">科学侧</div>
+          <div class="mw-side-desc">学园都市的超能力者，开发个人现实，通过科学手段获得超凡能力</div>
+        </div>
+        <div class="mw-side-card" data-act="side" data-side="magic">
+          <div class="mw-side-ico">✦</div>
+          <div class="mw-side-name">魔法侧</div>
+          <div class="mw-side-desc">使用魔法力量的魔法师，掌握神秘术式，与科学侧对立的神秘世界</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 科学侧链路 -->
+    <section class="mw-sec" id="chainScience" style="display:none">
+      <div class="mw-backlink" data-act="side" data-side="">← 重新选择阵营</div>
+      <h3>选择你的学校</h3>
+      <div class="mw-opts" id="optSchool">
+            <button type="button" class="mw-opt" data-act="pick" data-val="某高中">某高中</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="常盘台中学">常盘台中学</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="栅川中学">栅川中学</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="长点上机学园">长点上机学园</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="雾丘女子学院">雾丘女子学院</button>
+        <button type="button" class="mw-opt" data-act="custom" data-target="#schoolCustomBox" id="schoolCustomBtn">自定义输入</button>
+      </div>
+      <div class="mw-custom-box" id="schoolCustomBox">
+        <input class="mw-input" id="schoolCustomInput" placeholder="请输入你的学校名">
+      </div>
+
+      <h3 style="margin-top:18px">选择你的超能力</h3>
+      <div class="mw-opts" id="optAbility">
+            <button type="button" class="mw-opt" data-act="pick" data-val="幻想杀手">幻想杀手<small>锁定Level 0</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="矢量操作">矢量操作</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="未元物质">未元物质</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="超电磁炮">超电磁炮</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="原子崩坏">原子崩坏</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="心理掌握">心理掌握</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="念动炮弹">念动炮弹</button>
+        <button type="button" class="mw-opt" data-act="custom" data-target="#abilityCustomBox" id="abilityCustomBtn">自定义能力</button>
+      </div>
+      <div class="mw-custom-box" id="abilityCustomBox">
+        <input class="mw-input" id="abilityCustomInput" placeholder="请输入你的能力名">
+      </div>
+
+      <h4>选择能力等级</h4>
+      <div class="mw-opts" id="optLevel">
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 0 (无能力者)">Level 0<small>无能力者</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 1 (低能力者)">Level 1<small>低能力者</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 2 (异能力者)">Level 2<small>异能力者</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 3 (强能力者)">Level 3<small>强能力者</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 4 (大能力者)">Level 4<small>大能力者</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 5 (超能力者)">Level 5<small>超能力者</small></button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="Level 6 (绝对能力者)">Level 6<small>绝对能力者</small></button>
+      </div>
+    </section>
+
+    <!-- 魔法侧链路 -->
+    <section class="mw-sec" id="chainMagic" style="display:none">
+      <div class="mw-backlink" data-act="side" data-side="">← 重新选择阵营</div>
+      <h3>选择你的魔法组织</h3>
+      <div class="mw-opts" id="optOrg">
+            <button type="button" class="mw-opt" data-act="pick" data-val="英国清教">英国清教</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="罗马正教">罗马正教</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="俄罗斯成教">俄罗斯成教</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="黄金魔法结社">黄金魔法结社</button>
+        <button type="button" class="mw-opt" data-act="custom" data-target="#orgCustomBox" id="orgCustomBtn">自定义输入</button>
+      </div>
+      <div class="mw-custom-box" id="orgCustomBox">
+        <input class="mw-input" id="orgCustomInput" placeholder="请输入你的所属组织">
+      </div>
+
+      <h3 style="margin-top:18px">选择你的魔法</h3>
+      <h4>选择魔法境界</h4>
+      <div class="mw-opts" id="optRealm">
+            <button type="button" class="mw-opt" data-act="pick" data-val="魔神">魔神</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="圣人">圣人</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="魔法师">魔法师</button>
+        <button type="button" class="mw-opt" data-act="custom" data-target="#realmCustomBox" id="realmCustomBtn">自定义输入</button>
+      </div>
+      <div class="mw-custom-box" id="realmCustomBox">
+        <input class="mw-input" id="realmCustomInput" placeholder="请输入你的魔法境界">
+      </div>
+    </section>
+
+    <!-- 选择开场白 -->
+    <section class="mw-sec" id="secOpening" style="display:none">
+      <h3>选择开场白</h3>
+      <p class="mw-hint">选择一个原著时间节点作为你故事的起点，或完全自定义。</p>
+      <div class="mw-scenes" id="sceneList">
+        <div class="mw-scene" data-act="scene" data-date="1月18日" data-tag="原石拯救篇" data-desc="Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。">
+          <div class="mw-scene-head"><span class="mw-scene-date">1月18日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="2月1日" data-tag="原石拯救篇" data-desc="伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。">
+          <div class="mw-scene-head"><span class="mw-scene-date">2月1日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="2月22日" data-tag="原石拯救篇" data-desc="上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了&quot;天使坠落&quot;的遥远引信。">
+          <div class="mw-scene-head"><span class="mw-scene-date">2月22日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了&quot;天使坠落&quot;的遥远引信。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="3月15日" data-tag="原石拯救篇" data-desc="削板军霸撂倒横须贺、救下原谷矢文。这块号称&quot;原石&quot;的硬骨头，正以蛮力在学园都市砸出自己的名字。">
+          <div class="mw-scene-head"><span class="mw-scene-date">3月15日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">削板军霸撂倒横须贺、救下原谷矢文。这块号称&quot;原石&quot;的硬骨头，正以蛮力在学园都市砸出自己的名字。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="4月某日" data-tag="美琴过去篇" data-desc="白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。">
+          <div class="mw-scene-head"><span class="mw-scene-date">4月某日</span><span class="mw-scene-tag">美琴过去篇</span></div>
+          <div class="mw-scene-desc">白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="4月5日" data-tag="原石拯救篇" data-desc="远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的&quot;偶然&quot;，就此翻身。">
+          <div class="mw-scene-head"><span class="mw-scene-date">4月5日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的&quot;偶然&quot;，就此翻身。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="4月26日" data-tag="原石拯救篇" data-desc="学舍之园的理发店里，白井黑子与老板闲聊起&quot;原石&quot;话题。平静日常之下，某种力量正在慢慢聚拢。">
+          <div class="mw-scene-head"><span class="mw-scene-date">4月26日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">学舍之园的理发店里，白井黑子与老板闲聊起&quot;原石&quot;话题。平静日常之下，某种力量正在慢慢聚拢。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="5月10日" data-tag="原石拯救篇" data-desc="米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。">
+          <div class="mw-scene-head"><span class="mw-scene-date">5月10日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="5月11日" data-tag="妹妹们篇" data-desc="实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理&quot;姐妹们&quot;的遗体。">
+          <div class="mw-scene-head"><span class="mw-scene-date">5月11日</span><span class="mw-scene-tag">妹妹们篇</span></div>
+          <div class="mw-scene-desc">实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理&quot;姐妹们&quot;的遗体。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="5月17日" data-tag="原石拯救篇" data-desc="小郭寻人途中撞见滨面仕上，一句&quot;你是忍者后裔吧&quot;的玩笑，离真相近得吓人。">
+          <div class="mw-scene-head"><span class="mw-scene-date">5月17日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">小郭寻人途中撞见滨面仕上，一句&quot;你是忍者后裔吧&quot;的玩笑，离真相近得吓人。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="6月17日" data-tag="幻想御手篇" data-desc="自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。">
+          <div class="mw-scene-head"><span class="mw-scene-date">6月17日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+          <div class="mw-scene-desc">自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月1日" data-tag="能力实演篇" data-desc="美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军&quot;新生之光&quot;的影子若隐若现。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月1日</span><span class="mw-scene-tag">能力实演篇</span></div>
+          <div class="mw-scene-desc">美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军&quot;新生之光&quot;的影子若隐若现。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月5日" data-tag="原石拯救篇" data-desc="被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月5日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月10日" data-tag="幻想御手篇" data-desc="钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月10日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+          <div class="mw-scene-desc">钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月11日" data-tag="幻想御手篇" data-desc="第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月11日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+          <div class="mw-scene-desc">第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月12日" data-tag="原石拯救篇" data-desc="云川芹亚密会统括理事贝积继敏，议题直指&quot;原石&quot;与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月12日</span><span class="mw-scene-tag">原石拯救篇</span></div>
+          <div class="mw-scene-desc">云川芹亚密会统括理事贝积继敏，议题直指&quot;原石&quot;与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月16日" data-tag="幻想御手篇" data-desc="一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月16日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+          <div class="mw-scene-desc">一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月17日" data-tag="幻想御手篇" data-desc="美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月17日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+          <div class="mw-scene-desc">美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月18日" data-tag="幻想御手篇" data-desc="钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了&quot;超电磁炮&quot;头上。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月18日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+          <div class="mw-scene-desc">钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了&quot;超电磁炮&quot;头上。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月19日" data-tag="旧约开始" data-desc="快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月19日</span><span class="mw-scene-tag">旧约开始</span></div>
+          <div class="mw-scene-desc">快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月20日" data-tag="" data-desc="暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月20日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月21日" data-tag="" data-desc="佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月21日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月24日" data-tag="" data-desc="同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月24日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="7月28日" data-tag="" data-desc="凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。">
+          <div class="mw-scene-head"><span class="mw-scene-date">7月28日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月1日" data-tag="" data-desc="第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。">
+          <div class="mw-scene-head"><span class="mw-scene-date">8月1日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月8日" data-tag="" data-desc="三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。">
+          <div class="mw-scene-head"><span class="mw-scene-date">8月8日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月15日" data-tag="" data-desc="美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。">
+          <div class="mw-scene-head"><span class="mw-scene-date">8月15日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月21日" data-tag="" data-desc="废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。">
+          <div class="mw-scene-head"><span class="mw-scene-date">8月21日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月28日" data-tag="" data-desc="天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。">
+          <div class="mw-scene-head"><span class="mw-scene-date">8月28日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月31日" data-tag="" data-desc="艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。">
+          <div class="mw-scene-head"><span class="mw-scene-date">8月31日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月1日" data-tag="" data-desc="新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月1日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月8日" data-tag="法之书篇" data-desc="为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月8日</span><span class="mw-scene-tag">法之书篇</span></div>
+          <div class="mw-scene-desc">为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月12日" data-tag="群奏活剧篇" data-desc="恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月12日</span><span class="mw-scene-tag">群奏活剧篇</span></div>
+          <div class="mw-scene-desc">恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月14日" data-tag="树状图残骸篇" data-desc="结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月14日</span><span class="mw-scene-tag">树状图残骸篇</span></div>
+          <div class="mw-scene-desc">结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月18日" data-tag="恩底弥翁篇" data-desc="塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月18日</span><span class="mw-scene-tag">恩底弥翁篇</span></div>
+          <div class="mw-scene-desc">塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月19日" data-tag="大霸星祭" data-desc="大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月19日</span><span class="mw-scene-tag">大霸星祭</span></div>
+          <div class="mw-scene-desc">大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月20日" data-tag="大霸星祭" data-desc="祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月20日</span><span class="mw-scene-tag">大霸星祭</span></div>
+          <div class="mw-scene-desc">祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月30日" data-tag="" data-desc="前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。">
+          <div class="mw-scene-head"><span class="mw-scene-date">9月30日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月9日" data-tag="暗部大战" data-desc="五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。">
+          <div class="mw-scene-head"><span class="mw-scene-date">10月9日</span><span class="mw-scene-tag">暗部大战</span></div>
+          <div class="mw-scene-desc">五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月11日" data-tag="新约开始" data-desc="世界各地的妹妹们同时行动，欧雷尔斯单骑闯关，一击击溃削板军霸。防空警报声中，神话与科学的墙在崩塌。">
+          <div class="mw-scene-head"><span class="mw-scene-date">10月11日</span><span class="mw-scene-tag">新约开始</span></div>
+          <div class="mw-scene-desc">世界各地的妹妹们同时行动，欧雷尔斯单骑闯关，一击击溃削板军霸。防空警报声中，神话与科学的墙在崩塌。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月13日" data-tag="" data-desc="后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。">
+          <div class="mw-scene-head"><span class="mw-scene-date">10月13日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月17日" data-tag="" data-desc="暗部大战落幕，自称爱华斯的存在击溃GROUP。一方通行循指引北上俄罗斯，地下避难所一片狼藉。">
+          <div class="mw-scene-head"><span class="mw-scene-date">10月17日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">暗部大战落幕，自称爱华斯的存在击溃GROUP。一方通行循指引北上俄罗斯，地下避难所一片狼藉。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月30日" data-tag="第三次世界大战" data-desc="伯利恒之星刺破苍穹，第三次世界大战爆发。屏幕上一方通行展开纯白之翼，全城通讯切换为战时频道。">
+          <div class="mw-scene-head"><span class="mw-scene-date">10月30日</span><span class="mw-scene-tag">第三次世界大战</span></div>
+          <div class="mw-scene-desc">伯利恒之星刺破苍穹，第三次世界大战爆发。屏幕上一方通行展开纯白之翼，全城通讯切换为战时频道。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="11月5日" data-tag="" data-desc="芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。">
+          <div class="mw-scene-head"><span class="mw-scene-date">11月5日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="11月13日" data-tag="" data-desc="巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。">
+          <div class="mw-scene-head"><span class="mw-scene-date">11月13日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="11月14日" data-tag="" data-desc="一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。">
+          <div class="mw-scene-head"><span class="mw-scene-date">11月14日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="11月18日" data-tag="" data-desc="人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。">
+          <div class="mw-scene-head"><span class="mw-scene-date">11月18日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="11月26日" data-tag="" data-desc="食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。">
+          <div class="mw-scene-head"><span class="mw-scene-date">11月26日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="12月1日" data-tag="" data-desc="魔神僧正降临都市，木原脑干驱动A.A.A.迎击。转播画面之前，避难所里鸦雀无声。">
+          <div class="mw-scene-head"><span class="mw-scene-date">12月1日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">魔神僧正降临都市，木原脑干驱动A.A.A.迎击。转播画面之前，避难所里鸦雀无声。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="12月5日" data-tag="" data-desc="大热浪把气温推向55度，上里翔流的&quot;理想放逐&quot;成为新的风暴眼，为水而起的骚乱在街头蔓延。">
+          <div class="mw-scene-head"><span class="mw-scene-date">12月5日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">大热浪把气温推向55度，上里翔流的&quot;理想放逐&quot;成为新的风暴眼，为水而起的骚乱在街头蔓延。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="12月9日" data-tag="" data-desc="没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。">
+          <div class="mw-scene-head"><span class="mw-scene-date">12月9日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="12月11日" data-tag="" data-desc="科隆尊撕去萝拉·斯图亚特的伪装发动突袭，亚雷斯塔轰然倒地；土御门元春的一声枪响，为旧时代画上句点。">
+          <div class="mw-scene-head"><span class="mw-scene-date">12月11日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">科隆尊撕去萝拉·斯图亚特的伪装发动突袭，亚雷斯塔轰然倒地；土御门元春的一声枪响，为旧时代画上句点。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="12月12日" data-tag="" data-desc="科隆尊率领残存魔神卷土重来，学园都市机能停摆；亚雷斯塔踏敌宣战，温莎堡夜空浮现&quot;神净讨魔&quot;的幻影。">
+          <div class="mw-scene-head"><span class="mw-scene-date">12月12日</span><span class="mw-scene-tag"></span></div>
+          <div class="mw-scene-desc">科隆尊率领残存魔神卷土重来，学园都市机能停摆；亚雷斯塔踏敌宣战，温莎堡夜空浮现&quot;神净讨魔&quot;的幻影。</div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button type="button" class="mw-opt" style="width:100%" data-act="scenecustom" id="sceneCustomBtn">✍ 自定义开场白</button>
+        <div class="mw-custom-box" id="sceneCustomBox">
+          <textarea class="mw-textarea" id="sceneCustomInput" placeholder="输入你自己的开场白，创造独一无二的开始……"></textarea>
+        </div>
+      </div>
+      <button type="button" class="mw-gen-btn" id="btnGenerate" data-act="generate" disabled>生 成 角 色 配 置 并 开 始</button>
+    </section>
+  </div>
+
+  <!-- 页面二：角色介绍 -->
+  <div class="mw-page" id="page-intro">
+    <h2 class="mw-title" style="font-size:22px;letter-spacing:6px">角色介绍</h2>
+    <p class="mw-intro-tip">点击角色卡片查看详细档案</p>
+    <div class="mw-char-grid">
+        <div class="mw-char-tile" data-act="char" data-name="上条当麻" data-tag="科学侧 · Level 0" data-bio="无能力者的少年，右手却寄宿着抹消一切异能的&quot;幻想杀手&quot;。不幸缠身的热血笨蛋，走路都能撞上世界级事件，口头禅是&quot;这样的不幸我可不要啊&quot;。">
+          <div class="mw-char-face">当</div>
+          <div class="mw-char-nm">上条当麻</div>
+          <div class="mw-char-tag">科学侧 · Level 0</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="茵蒂克丝" data-tag="魔法侧 · 魔道书图书馆" data-bio="英国清教辖下的银发修女，脑内封印着十万三千册魔道书。贪吃、怕生、毫无危机感，却是整个故事开始的理由。">
+          <div class="mw-char-face">茵</div>
+          <div class="mw-char-nm">茵蒂克丝</div>
+          <div class="mw-char-tag">魔法侧 · 魔道书图书馆</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="御坂美琴" data-tag="科学侧 · Level 5 第三位" data-bio="常盘台的王牌&quot;超电磁炮&quot;。傲娇、正义感过剩、迷恋呱太与廉价饰品，以及一位怎么也追不上的某位前辈。">
+          <div class="mw-char-face">美</div>
+          <div class="mw-char-nm">御坂美琴</div>
+          <div class="mw-char-tag">科学侧 · Level 5 第三位</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="白井黑子" data-tag="科学侧 · Level 4" data-bio="美琴的室友兼头号崇拜者，空间移动（迁界门）的使用者。风纪委员第177支部骨干，嘴上毒辣，心里忠诚。">
+          <div class="mw-char-face">黑</div>
+          <div class="mw-char-nm">白井黑子</div>
+          <div class="mw-char-tag">科学侧 · Level 4</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="初春饰利" data-tag="科学侧 · Level 1" data-bio="风纪委员的操作盘高手，定温保存能力者。头戴花环发饰的温柔女孩，关键时刻比谁都有担当。">
+          <div class="mw-char-face">初</div>
+          <div class="mw-char-nm">初春饰利</div>
+          <div class="mw-char-tag">科学侧 · Level 1</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="佐天泪子" data-tag="科学侧 · Level 0" data-bio="黑子的挚友，爱掀裙子的乐天派。虽是无能力者，却比谁都渴望触碰&quot;那个世界&quot;的入口。">
+          <div class="mw-char-face">佐</div>
+          <div class="mw-char-nm">佐天泪子</div>
+          <div class="mw-char-tag">科学侧 · Level 0</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="一方通行" data-tag="科学侧 · Level 5 第一位" data-bio="学园都市最强，矢量操作的主人。从屠杀实验的顶点跌落，走上为一个人而战的漫长赎罪之路。">
+          <div class="mw-char-face">一</div>
+          <div class="mw-char-nm">一方通行</div>
+          <div class="mw-char-tag">科学侧 · Level 5 第一位</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="食蜂操祈" data-tag="科学侧 · Level 5 第五位" data-bio="常盘台另一颗女王星，心理掌握（Mental Out）者。统领全城最大派系的情报女王，意外地痴迷可爱事物。">
+          <div class="mw-char-face">食</div>
+          <div class="mw-char-nm">食蜂操祈</div>
+          <div class="mw-char-tag">科学侧 · Level 5 第五位</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="削板军霸" data-tag="科学侧 · Level 5 第七位" data-bio="毫无能力资质却挤进Level 5的&quot;原石&quot;，靠蛮力、直觉与热血拳脚行侠仗义的野生英雄。">
+          <div class="mw-char-face">削</div>
+          <div class="mw-char-nm">削板军霸</div>
+          <div class="mw-char-tag">科学侧 · Level 5 第七位</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="神裂火织" data-tag="魔法侧 · 圣人" data-bio="英国清教&quot;必要之恶教会&quot;的魔导师，世界上不足二十位的圣人之一。七闪突刺与钢丝术式的驾驭者。">
+          <div class="mw-char-face">神</div>
+          <div class="mw-char-nm">神裂火织</div>
+          <div class="mw-char-tag">魔法侧 · 圣人</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="欧提努斯" data-tag="魔法侧 · 魔神" data-bio="以北欧主神之名降世的魔神，格雷姆林的首领。执掌骨船与神枪，追寻着打破自身绝望境地的道路。">
+          <div class="mw-char-face">欧</div>
+          <div class="mw-char-nm">欧提努斯</div>
+          <div class="mw-char-tag">魔法侧 · 魔神</div>
+        </div>
+        <div class="mw-char-tile" data-act="char" data-name="最后之作" data-tag="科学侧 · 妹妹们中枢" data-bio="御坂网络的中枢个体20001号，说话带着&quot;御坂&quot;口癖的幼小女孩。她的安危牵动着近两万个妹妹的命运。">
+          <div class="mw-char-face">末</div>
+          <div class="mw-char-nm">最后之作</div>
+          <div class="mw-char-tag">科学侧 · 妹妹们中枢</div>
+        </div>
+    </div>
+  </div>
+
+  <!-- 角色详情弹窗 -->
+  <div class="mw-modal-mask" id="charModal">
+    <div class="mw-modal">
+      <div class="mw-modal-close" data-act="modalclose">✕</div>
+      <div class="mw-modal-face" id="mFace"></div>
+      <div class="mw-modal-name" id="mName"></div>
+      <div class="mw-modal-tag" id="mTag"></div>
+      <div class="mw-modal-bio" id="mBio"></div>
+    </div>
+  </div>
+
+  <!-- 配置复制兜底弹窗 -->
+  <div class="mw-modal-mask" id="copyMask">
+    <div class="mw-modal">
+      <div class="mw-modal-close" data-act="modalclose">✕</div>
+      <div class="mw-modal-name" style="font-size:15px;margin-bottom:10px">开局配置已生成</div>
+      <textarea class="mw-textarea" id="cfgOut" rows="12" readonly style="margin-bottom:12px"></textarea>
+      <button type="button" class="mw-gen-btn" data-act="copycfg">复 制 配 置</button>
+    </div>
+  </div>
+
+  <!-- 背景音乐 -->
+  <audio id="bgm" loop preload="none"></audio>
+  <div class="mw-music" data-act="music" title="背景音乐">♪</div>
+
+  <!-- 提示条 -->
+  <div class="mw-toast"></div>
+
+</div>
+</body>
+</html>
