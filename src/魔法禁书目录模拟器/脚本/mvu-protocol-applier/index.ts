@@ -66,6 +66,7 @@ const RAW_PROTOCOL_APPLIED_AT_KEY = '_mfrs_raw_protocol_applied_at';
 let runProtocolApplicationSingleFlight = createObjectKeyedSingleFlight<ChatMessage, string, boolean>();
 let hotfixEpoch = 0;
 let installScanTimer: ReturnType<typeof window.setTimeout> | undefined;
+let periodicSweepTimer: ReturnType<typeof window.setInterval> | undefined;
 const hotfixRetryTimers = new Set<ReturnType<typeof window.setTimeout>>();
 
 function scheduleHotfixRetry(callback: () => void, delay: number, epoch = hotfixEpoch) {
@@ -1434,6 +1435,10 @@ function cleanupHotfix(hostWindow: HostWindow = getHostWindow()) {
     window.clearTimeout(installScanTimer);
     installScanTimer = undefined;
   }
+  if (periodicSweepTimer !== undefined) {
+    window.clearInterval(periodicSweepTimer);
+    periodicSweepTimer = undefined;
+  }
   for (const timer of hotfixRetryTimers) window.clearTimeout(timer);
   hotfixRetryTimers.clear();
   chatChangedRepair.cancel();
@@ -1447,8 +1452,17 @@ function cleanupHotfix(hostWindow: HostWindow = getHostWindow()) {
 async function installHotfix() {
   const hostWindow = getHostWindow();
   if (hostWindow.__mfrsHotfixInstalled__) {
-    console.info('[Hotfix] 已安装，跳过重复注册');
-    return;
+    // 2026-08-29 实机教训：TH 重启脚本后旧实例的监听器可能残留（纪元失配 → 一切事件静默 no-op），
+    // 且旧实例不会再跑启动扫描。此时不能直接跳过——必须先清理旧实例再重装，
+    // 保证总线上挂着的守卫处理器与活跃实例同纪元。
+    console.warn('[Hotfix] 检测到历史安装标志，先清理旧实例再重装', {
+      hadCleanup: typeof hostWindow.__mfrsHotfixCleanup__ === 'function',
+    });
+    try {
+      hostWindow.__mfrsHotfixCleanup__?.();
+    } catch (error) {
+      console.warn('[Hotfix] 清理旧实例失败，继续重装', error);
+    }
   }
 
   console.info('[Hotfix] 开始安装 GENERATION_ENDED 监听器补丁');
@@ -1465,16 +1479,27 @@ async function installHotfix() {
     hostWindow.__mfrsHotfixInstalled__ = true;
     hostWindow.__mfrsHotfixCleanup__ = () => cleanupHotfix(hostWindow);
     console.info('[Hotfix] GENERATION_ENDED 监听器补丁安装成功');
-    installScanTimer = window.setTimeout(() => {
-      installScanTimer = undefined;
-      recoverRecentRawProtocolMessages().catch(error => {
+    // 首装扫描 + 周期安全扫描：事件可能被整段错过（重导入后脚本重启窗口内的生成、
+    // 监听器静默失配、流式中断等）。每 30s 扫描最近 AI 楼层，发现「mes 内有协议且无
+    // applied 标记」的漏网楼层就补跑管线；已处理楼层由 single-flight + applied 标记兜住，
+    // 幂等无副作用。
+    const startupSweep = () => {
+      recoverRecentRawProtocolMessages(hotfixEpoch).catch(error => {
         console.warn('[Hotfix] 历史 raw protocol 消息补写扫描失败', error);
       });
-      // 首装时聊天可能已打开（无后续 CHAT_CHANGED），同样跑一次假性已应用修复。
       chatChangedRepair.runNow().catch(error => {
-        console.warn('[Hotfix] 首装假性已应用修复扫描失败', error);
+        console.warn('[Hotfix] 假性已应用修复扫描失败', error);
       });
+    };
+    installScanTimer = window.setTimeout(() => {
+      installScanTimer = undefined;
+      startupSweep();
     }, 1000);
+    if (periodicSweepTimer !== undefined) window.clearInterval(periodicSweepTimer);
+    periodicSweepTimer = window.setInterval(() => {
+      if (hotfixEpoch === 0) return;
+      startupSweep();
+    }, 30000);
   } else {
     console.error('[Hotfix] GENERATION_ENDED 监听器补丁安装失败');
   }
