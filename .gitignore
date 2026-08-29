@@ -69,3 +69,9 @@ et --hard
 屏幕截图*.png
 2026-*.png
 current-vscode-browser.png
+
+# 本地 BGM 冗余拷贝（正式源在 linlangliehu/bgm 仓库 raw 直链）
+*.mp3
+
+# pi 本地会话状态
+.pi/
