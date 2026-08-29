@@ -39,6 +39,8 @@ const NpcRelationSchema = z.object({
   外貌: z.string().default(''),
   好感度: PercentSchema.default(0),
   认知: z.string().default('陌生'),
+  能力名称: z.string().default(''),
+  能力效果: z.string().default(''),
 });
 
 const MagicItemSchema = z.object({

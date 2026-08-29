@@ -366,6 +366,9 @@ function buildRelationCardHtml(data: StatusData): string {
       const 年龄 = valueText(n?.年龄, '');
       const 性格 = valueText(n?.性格, '');
       const 外貌 = valueText(n?.外貌, '');
+      const 能力名称 = valueText(n?.能力名称, '');
+      const 能力效果 = valueText(n?.能力效果, '');
+      const 能力行 = [能力名称, 能力效果].filter(Boolean).join(' · ');
       const 好感度 = clampPercent(n?.好感度);
       const 认知 = valueText(n?.认知, '陌生');
       return `<details class="mfrs-mp-subcard mfrs-mp-subcard-npc" data-mfrs-npc="${i}">
@@ -376,6 +379,7 @@ function buildRelationCardHtml(data: StatusData): string {
   ${性别 ? `<div class="mfrs-mp-kv"><span class="mfrs-mp-k">性别 / 年龄</span><span class="mfrs-mp-v">${esc(性别)} · ${esc(年龄)}</span></div>` : ''}
   ${性格 ? `<div class="mfrs-mp-kv"><span class="mfrs-mp-k">性格</span><span class="mfrs-mp-v">${esc(性格)}</span></div>` : ''}
   ${外貌 ? `<div class="mfrs-mp-kv"><span class="mfrs-mp-k">外貌</span><span class="mfrs-mp-v">${esc(外貌)}</span></div>` : ''}
+  ${能力行 ? `<div class="mfrs-mp-kv"><span class="mfrs-mp-k">能力</span><span class="mfrs-mp-v">${esc(能力行)}</span></div>` : ''}
   <div class="mfrs-mp-kv"><span class="mfrs-mp-k">好感度</span><span class="mfrs-mp-v mfrs-mp-aff" data-aff="${好感度}">${好感度}%</span></div>
   <div class="mfrs-mp-kv"><span class="mfrs-mp-k">认知</span><span class="mfrs-mp-v">${esc(认知)}</span></div>
 </details>`;
