@@ -5,8 +5,7 @@
   "configurations": [
     {
       "name": "启动开发环境",
-      "type": "pwa-chrome",
-      "request": "launch",
+      "type": "pwa-chrome",    "request": "launch",
       "url": "http://127.0.0.1:8000/",
       "webRoot": "${workspaceFolder}",
       "preLaunchTask": "启动开发服务",

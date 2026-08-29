@@ -159,6 +159,20 @@ node tavern_sync.mjs bundle 神秘复苏模拟器
 2. AI 调用 `mcp_chrome_devtoo_list_pages` 确认 9225 Chrome 中的酒馆页面
 3. 用 `mcp_chrome_devtoo_take_snapshot` / `mcp_chrome_devtoo_evaluate_script` / `mcp_chrome_devtoo_click` 等工具操作该页面
 4. 若 `mcp_chrome_devtoo_*` 工具不可用，用裸 CDP：`node scripts/cdp-evaluate.mjs`（默认连 9225）
+## pi 环境下的 MCP 工具链（2026-08 实测定型）
+
+三套 MCP 已由 `C:\Users\linlang\.config\mcp\mcp.json` 配好；**改 mcp.json 后必须重启 pi 会话才生效**（stdin 型 MCP 的 env 不热加载）。
+
+1. **sillytavern（tavern-tanuki，21 工具）**
+   - 数据通道：`D:/project/tavern-tanuki/src/client.js` 已打账户登录补丁（CSRF → `/api/users/login` → 重绑 CSRF），支持开启了用户账户系统的酒馆；账号密码在 mcp.json 的 `ST_USER`/`ST_PASSWORD`（**仅家目录，禁止进 git**）
+   - 管理组 13 工具（卡/世界书/聊天/变量读写）开箱即用；**无 delete/import 工具**
+   - 删除卡片可用一次性脚本（项目根 `STClient` 直接 `POST /api/characters/delete`，参考 `.planning/mcp_workflow_upgrade/` 的做法）
+   - 陪玩组 8 工具（`play_send`/`play_get_prompt` 等）需要：酒馆助手 → 脚本库导入 `tavern-tanuki/tavern-script/酒馆小狸连接器.json`（一次性）+ **刷新酒馆页面**加载脚本后用 `play_status` 确认 `connected:true`
+2. **chrome-devtools（29 工具）**：`--browser-url http://127.0.0.1:9225` 直连 F5 调试 Chrome，操作的就是人眼前的浏览器
+3. **卡导入自动化**：酒馆导入按钮的 `<input type=file>` 不进 a11y 快照树，`upload_file` 工具对它无效；用 **`node scripts/cdp-upload-file.mjs`**（裸 CDP `DOM.setFileInputFiles`，默认连 9225）实现无对话框导入。
+
+魔禁卡全自动验收流水线（已实测通过，重跑即复用）：删旧卡(STClient) → `cdp-upload-file.mjs` 导入 → `get_character` 数据级校验（正则/脚本URL/world）→ chrome-devtools 新建对话 → 快照+点击+`evaluate_script` 视觉交互验收。
+
 ## 协作顺序
 
 1. 先只改开发版 `src/神秘复苏模拟器/`
