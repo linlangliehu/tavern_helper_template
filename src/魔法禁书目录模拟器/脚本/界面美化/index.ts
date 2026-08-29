@@ -1052,6 +1052,17 @@ $(() => {
     });
   };
 
+  const mfrsWelcomeEventBadges = (root: HTMLElement) => {
+    // 折叠态选中可见性：全量重算每个事件组的 data-has-selected 徽章（O(30)，选择变化时调用）
+    Array.from(root.querySelectorAll<HTMLElement>('.custom-mw-event-group, .mw-event-group')).forEach(grp => {
+      const has = !!grp.querySelector<HTMLElement>('[data-act="scene"].custom-selected, [data-act="scene"].selected');
+      const btn = grp.querySelector<HTMLElement>('.custom-mw-event, .mw-event');
+      if (!btn) return;
+      if (has) btn.setAttribute('data-has-selected', '');
+      else btn.removeAttribute('data-has-selected');
+    });
+  };
+
   const mfrsWelcomeToast = (root: HTMLElement, msg: string, type?: number | string) => {
     const toast = root.querySelector<HTMLElement>('.custom-mw-toast, .mw-toast');
     if (!toast) return;
@@ -1118,6 +1129,7 @@ $(() => {
     const cu = customOn && (q('#sceneCustomInput') as HTMLInputElement | null)?.value.trim();
     const btn = q('#btnGenerate') as HTMLButtonElement | null;
     if (btn) btn.disabled = !(sc || cu);
+    mfrsWelcomeEventBadges(root); // 选中变化后刷新事件折叠徽章
   };
 
   const handleMfrsWelcomeDataAct = (root: HTMLElement, target: HTMLElement, event: Event) => {
@@ -1234,6 +1246,24 @@ $(() => {
           }
         }
         mfrsWelcomeRefresh(root);
+        break;
+      }
+      case 'event': {
+        // 事件折叠：互斥 + toggle（点击已展开的收起，允许全收起态）；不碰 .mw-scene 选中态（折叠是纯视觉）
+        const group = target.closest<HTMLElement>('.custom-mw-event-group, .mw-event-group');
+        if (!group) break;
+        const wasOpen = group.classList.contains('custom-open') || group.classList.contains('open');
+        qa('.custom-mw-event-group, .mw-event-group').forEach(g => {
+          g.classList.remove('custom-open', 'open');
+          const b = g.querySelector<HTMLElement>('.custom-mw-event, .mw-event');
+          if (b) b.setAttribute('aria-expanded', 'false');
+        });
+        if (!wasOpen) {
+          group.classList.add('custom-open', 'open');
+          target.setAttribute('aria-expanded', 'true');
+          // 展开后视口对齐：标题栏对齐到滚动容器可见位置
+          hostWindow?.setTimeout?.(() => target.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+        }
         break;
       }
       case 'scene': {

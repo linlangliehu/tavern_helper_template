@@ -183,6 +183,27 @@ body {
 }
 .mw-scene-desc { font-size: 12px; color: var(--mw-dim); }
 
+/* ---- 事件折叠（二级手风琴：事件→开场白） ---- */
+.mw-event-group { border: 1px solid rgba(102,204,255,.22); border-radius: 9px; background: rgba(10, 16, 48, 0.55); overflow: hidden; }
+.mw-event {
+  appearance: none; -webkit-appearance: none; background: transparent; border: none;
+  text-align: left; width: 100%; cursor: pointer; color: inherit; font: inherit;
+  display: flex; align-items: center; gap: 8px; padding: 9px 11px; min-width: 0;
+}
+.mw-event:hover { background: rgba(102,204,255,.07); }
+.mw-event:focus-visible { outline: 2px solid var(--mw-accent); outline-offset: 2px; }
+.mw-event-name { font-weight: 700; color: var(--mw-accent); font-size: 13px; min-width: 0; overflow-wrap: anywhere; }
+.mw-event[data-has-selected] .mw-event-name::after { content: " ✦已选"; color: #00ffaa; font-size: 11px; }
+.mw-event-range { font-size: 11px; color: var(--mw-dim); flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; text-align: right; }
+.mw-event-count { font-size: 11px; color: var(--mw-cyan); background: rgba(102,204,255,.12); border-radius: 999px; padding: 1px 7px; flex: none; }
+.mw-event-arrow { flex: none; color: var(--mw-accent); font-size: 11px; transition: transform .18s ease; }
+.mw-event-group.open .mw-event { border-bottom: 1px solid rgba(102,204,255,.25); }
+.mw-event-group.open .mw-event-arrow { transform: rotate(90deg); }
+.mw-event-body { display: none; padding: 8px; flex-direction: column; gap: 8px; }
+.mw-event-group.open .mw-event-body { display: flex; }
+.mw-event-body .mw-scene { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .mw-event-arrow { transition: none; } }
+
 /* ---- 主按钮 ---- */
 .mw-gen-btn {
   display: block; width: 100%; margin-top: 14px; padding: 12px;
@@ -476,245 +497,545 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
       <h3>选择开场白</h3>
       <p class="mw-hint">选择一个原著时间节点作为你故事的起点，或完全自定义。</p>
       <div class="mw-scenes" id="sceneList">
-        <div class="mw-scene" data-act="scene" data-date="1月18日" data-tag="原石拯救篇" data-desc="Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。">
-          <div class="mw-scene-head"><span class="mw-scene-date">1月18日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。</div>
+        <div class="mw-event-group" data-event="前史·原石拯救篇">
+          <button type="button" class="mw-event" data-act="event" data-event="前史·原石拯救篇" aria-expanded="false">
+            <span class="mw-event-name">前史·原石拯救篇</span>
+            <span class="mw-event-range">1月18日—7月12日</span>
+            <span class="mw-event-count">10</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="1月18日" data-tag="前史·原石拯救篇" data-desc="Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。">
+              <div class="mw-scene-head"><span class="mw-scene-date">1月18日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="2月1日" data-tag="前史·原石拯救篇" data-desc="伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。">
+              <div class="mw-scene-head"><span class="mw-scene-date">2月1日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="2月22日" data-tag="前史·原石拯救篇" data-desc="上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了&quot;天使坠落&quot;的遥远引信。">
+              <div class="mw-scene-head"><span class="mw-scene-date">2月22日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了&quot;天使坠落&quot;的遥远引信。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="3月15日" data-tag="前史·原石拯救篇" data-desc="削板军霸撂倒横须贺、救下原谷矢文。这块号称&quot;原石&quot;的硬骨头，正以蛮力在学园都市砸出自己的名字。">
+              <div class="mw-scene-head"><span class="mw-scene-date">3月15日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">削板军霸撂倒横须贺、救下原谷矢文。这块号称&quot;原石&quot;的硬骨头，正以蛮力在学园都市砸出自己的名字。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="4月5日" data-tag="前史·原石拯救篇" data-desc="远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的&quot;偶然&quot;，就此翻身。">
+              <div class="mw-scene-head"><span class="mw-scene-date">4月5日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的&quot;偶然&quot;，就此翻身。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="4月26日" data-tag="前史·原石拯救篇" data-desc="学舍之园的理发店里，白井黑子与老板闲聊起&quot;原石&quot;话题。平静日常之下，某种力量正在慢慢聚拢。">
+              <div class="mw-scene-head"><span class="mw-scene-date">4月26日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">学舍之园的理发店里，白井黑子与老板闲聊起&quot;原石&quot;话题。平静日常之下，某种力量正在慢慢聚拢。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="5月10日" data-tag="前史·原石拯救篇" data-desc="米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。">
+              <div class="mw-scene-head"><span class="mw-scene-date">5月10日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="5月17日" data-tag="前史·原石拯救篇" data-desc="小郭寻人途中撞见滨面仕上，一句&quot;你是忍者后裔吧&quot;的玩笑，离真相近得吓人。">
+              <div class="mw-scene-head"><span class="mw-scene-date">5月17日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">小郭寻人途中撞见滨面仕上，一句&quot;你是忍者后裔吧&quot;的玩笑，离真相近得吓人。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月5日" data-tag="前史·原石拯救篇" data-desc="被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月5日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月12日" data-tag="前史·原石拯救篇" data-desc="云川芹亚密会统括理事贝积继敏，议题直指&quot;原石&quot;与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月12日</span><span class="mw-scene-tag">前史·原石拯救篇</span></div>
+              <div class="mw-scene-desc">云川芹亚密会统括理事贝积继敏，议题直指&quot;原石&quot;与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="2月1日" data-tag="原石拯救篇" data-desc="伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。">
-          <div class="mw-scene-head"><span class="mw-scene-date">2月1日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。</div>
+        <div class="mw-event-group" data-event="美琴过去篇">
+          <button type="button" class="mw-event" data-act="event" data-event="美琴过去篇" aria-expanded="false">
+            <span class="mw-event-name">美琴过去篇</span>
+            <span class="mw-event-range">4月某日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="4月某日" data-tag="美琴过去篇" data-desc="白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。">
+              <div class="mw-scene-head"><span class="mw-scene-date">4月某日</span><span class="mw-scene-tag">美琴过去篇</span></div>
+              <div class="mw-scene-desc">白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="2月22日" data-tag="原石拯救篇" data-desc="上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了&quot;天使坠落&quot;的遥远引信。">
-          <div class="mw-scene-head"><span class="mw-scene-date">2月22日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了&quot;天使坠落&quot;的遥远引信。</div>
+        <div class="mw-event-group" data-event="妹妹们篇（克隆前史）">
+          <button type="button" class="mw-event" data-act="event" data-event="妹妹们篇（克隆前史）" aria-expanded="false">
+            <span class="mw-event-name">妹妹们篇（克隆前史）</span>
+            <span class="mw-event-range">5月11日—8月10日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="5月11日" data-tag="妹妹们篇（克隆前史）" data-desc="实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理&quot;姐妹们&quot;的遗体。">
+              <div class="mw-scene-head"><span class="mw-scene-date">5月11日</span><span class="mw-scene-tag">妹妹们篇（克隆前史）</span></div>
+              <div class="mw-scene-desc">实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理&quot;姐妹们&quot;的遗体。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月10日" data-tag="妹妹们篇（克隆前史）" data-desc="御坂美琴循着&quot;现金卡&quot;的都市传说，傍晚撞见了布束砥信，一个被废弃的克隆人计划从阴影里浮出水面。她还不知道，自己将为此赌上全部。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月10日</span><span class="mw-scene-tag">妹妹们篇（克隆前史）</span></div>
+              <div class="mw-scene-desc">御坂美琴循着&quot;现金卡&quot;的都市传说，傍晚撞见了布束砥信，一个被废弃的克隆人计划从阴影里浮出水面。她还不知道，自己将为此赌上全部。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="3月15日" data-tag="原石拯救篇" data-desc="削板军霸撂倒横须贺、救下原谷矢文。这块号称&quot;原石&quot;的硬骨头，正以蛮力在学园都市砸出自己的名字。">
-          <div class="mw-scene-head"><span class="mw-scene-date">3月15日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">削板军霸撂倒横须贺、救下原谷矢文。这块号称&quot;原石&quot;的硬骨头，正以蛮力在学园都市砸出自己的名字。</div>
+        <div class="mw-event-group" data-event="幻想御手篇">
+          <button type="button" class="mw-event" data-act="event" data-event="幻想御手篇" aria-expanded="false">
+            <span class="mw-event-name">幻想御手篇</span>
+            <span class="mw-event-range">6月17日—7月18日</span>
+            <span class="mw-event-count">6</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="6月17日" data-tag="幻想御手篇" data-desc="自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。">
+              <div class="mw-scene-head"><span class="mw-scene-date">6月17日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+              <div class="mw-scene-desc">自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月10日" data-tag="幻想御手篇" data-desc="钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月10日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+              <div class="mw-scene-desc">钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月11日" data-tag="幻想御手篇" data-desc="第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月11日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+              <div class="mw-scene-desc">第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月16日" data-tag="幻想御手篇" data-desc="一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月16日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+              <div class="mw-scene-desc">一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月17日" data-tag="幻想御手篇" data-desc="美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月17日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+              <div class="mw-scene-desc">美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月18日" data-tag="幻想御手篇" data-desc="钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了&quot;超电磁炮&quot;头上。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月18日</span><span class="mw-scene-tag">幻想御手篇</span></div>
+              <div class="mw-scene-desc">钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了&quot;超电磁炮&quot;头上。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="4月某日" data-tag="美琴过去篇" data-desc="白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。">
-          <div class="mw-scene-head"><span class="mw-scene-date">4月某日</span><span class="mw-scene-tag">美琴过去篇</span></div>
-          <div class="mw-scene-desc">白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。</div>
+        <div class="mw-event-group" data-event="能力实演篇">
+          <button type="button" class="mw-event" data-act="event" data-event="能力实演篇" aria-expanded="false">
+            <span class="mw-event-name">能力实演篇</span>
+            <span class="mw-event-range">7月1日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="7月1日" data-tag="能力实演篇" data-desc="美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军&quot;新生之光&quot;的影子若隐若现。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月1日</span><span class="mw-scene-tag">能力实演篇</span></div>
+              <div class="mw-scene-desc">美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军&quot;新生之光&quot;的影子若隐若现。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="4月5日" data-tag="原石拯救篇" data-desc="远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的&quot;偶然&quot;，就此翻身。">
-          <div class="mw-scene-head"><span class="mw-scene-date">4月5日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的&quot;偶然&quot;，就此翻身。</div>
+        <div class="mw-event-group" data-event="禁书降临篇">
+          <button type="button" class="mw-event" data-act="event" data-event="禁书降临篇" aria-expanded="false">
+            <span class="mw-event-name">禁书降临篇</span>
+            <span class="mw-event-range">7月19日—7月28日</span>
+            <span class="mw-event-count">5</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="7月19日" data-tag="禁书降临篇" data-desc="快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月19日</span><span class="mw-scene-tag">禁书降临篇</span></div>
+              <div class="mw-scene-desc">快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月20日" data-tag="禁书降临篇" data-desc="暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月20日</span><span class="mw-scene-tag">禁书降临篇</span></div>
+              <div class="mw-scene-desc">暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月21日" data-tag="禁书降临篇" data-desc="佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月21日</span><span class="mw-scene-tag">禁书降临篇</span></div>
+              <div class="mw-scene-desc">佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月24日" data-tag="禁书降临篇" data-desc="同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月24日</span><span class="mw-scene-tag">禁书降临篇</span></div>
+              <div class="mw-scene-desc">同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="7月28日" data-tag="禁书降临篇" data-desc="凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。">
+              <div class="mw-scene-head"><span class="mw-scene-date">7月28日</span><span class="mw-scene-tag">禁书降临篇</span></div>
+              <div class="mw-scene-desc">凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="4月26日" data-tag="原石拯救篇" data-desc="学舍之园的理发店里，白井黑子与老板闲聊起&quot;原石&quot;话题。平静日常之下，某种力量正在慢慢聚拢。">
-          <div class="mw-scene-head"><span class="mw-scene-date">4月26日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">学舍之园的理发店里，白井黑子与老板闲聊起&quot;原石&quot;话题。平静日常之下，某种力量正在慢慢聚拢。</div>
+        <div class="mw-event-group" data-event="妹妹篇·绝对能力进化">
+          <button type="button" class="mw-event" data-act="event" data-event="妹妹篇·绝对能力进化" aria-expanded="false">
+            <span class="mw-event-name">妹妹篇·绝对能力进化</span>
+            <span class="mw-event-range">8月1日—8月21日</span>
+            <span class="mw-event-count">4</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="8月1日" data-tag="妹妹篇·绝对能力进化" data-desc="第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月1日</span><span class="mw-scene-tag">妹妹篇·绝对能力进化</span></div>
+              <div class="mw-scene-desc">第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月8日" data-tag="妹妹篇·绝对能力进化" data-desc="三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月8日</span><span class="mw-scene-tag">妹妹篇·绝对能力进化</span></div>
+              <div class="mw-scene-desc">三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月15日" data-tag="妹妹篇·绝对能力进化" data-desc="美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月15日</span><span class="mw-scene-tag">妹妹篇·绝对能力进化</span></div>
+              <div class="mw-scene-desc">美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月21日" data-tag="妹妹篇·绝对能力进化" data-desc="废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月21日</span><span class="mw-scene-tag">妹妹篇·绝对能力进化</span></div>
+              <div class="mw-scene-desc">废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="5月10日" data-tag="原石拯救篇" data-desc="米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。">
-          <div class="mw-scene-head"><span class="mw-scene-date">5月10日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。</div>
+        <div class="mw-event-group" data-event="天使坠落篇">
+          <button type="button" class="mw-event" data-act="event" data-event="天使坠落篇" aria-expanded="false">
+            <span class="mw-event-name">天使坠落篇</span>
+            <span class="mw-event-range">8月28日—8月31日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="8月28日" data-tag="天使坠落篇" data-desc="天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月28日</span><span class="mw-scene-tag">天使坠落篇</span></div>
+              <div class="mw-scene-desc">天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月31日" data-tag="天使坠落篇" data-desc="艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月31日</span><span class="mw-scene-tag">天使坠落篇</span></div>
+              <div class="mw-scene-desc">艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="5月11日" data-tag="妹妹们篇" data-desc="实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理&quot;姐妹们&quot;的遗体。">
-          <div class="mw-scene-head"><span class="mw-scene-date">5月11日</span><span class="mw-scene-tag">妹妹们篇</span></div>
-          <div class="mw-scene-desc">实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理&quot;姐妹们&quot;的遗体。</div>
+        <div class="mw-event-group" data-event="雪莉袭击篇">
+          <button type="button" class="mw-event" data-act="event" data-event="雪莉袭击篇" aria-expanded="false">
+            <span class="mw-event-name">雪莉袭击篇</span>
+            <span class="mw-event-range">9月1日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月1日" data-tag="雪莉袭击篇" data-desc="新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月1日</span><span class="mw-scene-tag">雪莉袭击篇</span></div>
+              <div class="mw-scene-desc">新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="5月17日" data-tag="原石拯救篇" data-desc="小郭寻人途中撞见滨面仕上，一句&quot;你是忍者后裔吧&quot;的玩笑，离真相近得吓人。">
-          <div class="mw-scene-head"><span class="mw-scene-date">5月17日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">小郭寻人途中撞见滨面仕上，一句&quot;你是忍者后裔吧&quot;的玩笑，离真相近得吓人。</div>
+        <div class="mw-event-group" data-event="法之书篇">
+          <button type="button" class="mw-event" data-act="event" data-event="法之书篇" aria-expanded="false">
+            <span class="mw-event-name">法之书篇</span>
+            <span class="mw-event-range">9月8日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月8日" data-tag="法之书篇" data-desc="为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月8日</span><span class="mw-scene-tag">法之书篇</span></div>
+              <div class="mw-scene-desc">为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="6月17日" data-tag="幻想御手篇" data-desc="自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。">
-          <div class="mw-scene-head"><span class="mw-scene-date">6月17日</span><span class="mw-scene-tag">幻想御手篇</span></div>
-          <div class="mw-scene-desc">自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。</div>
+        <div class="mw-event-group" data-event="群奏活剧篇">
+          <button type="button" class="mw-event" data-act="event" data-event="群奏活剧篇" aria-expanded="false">
+            <span class="mw-event-name">群奏活剧篇</span>
+            <span class="mw-event-range">9月12日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月12日" data-tag="群奏活剧篇" data-desc="恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月12日</span><span class="mw-scene-tag">群奏活剧篇</span></div>
+              <div class="mw-scene-desc">恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月1日" data-tag="能力实演篇" data-desc="美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军&quot;新生之光&quot;的影子若隐若现。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月1日</span><span class="mw-scene-tag">能力实演篇</span></div>
-          <div class="mw-scene-desc">美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军&quot;新生之光&quot;的影子若隐若现。</div>
+        <div class="mw-event-group" data-event="树状图残骸篇">
+          <button type="button" class="mw-event" data-act="event" data-event="树状图残骸篇" aria-expanded="false">
+            <span class="mw-event-name">树状图残骸篇</span>
+            <span class="mw-event-range">9月14日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月14日" data-tag="树状图残骸篇" data-desc="结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月14日</span><span class="mw-scene-tag">树状图残骸篇</span></div>
+              <div class="mw-scene-desc">结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月5日" data-tag="原石拯救篇" data-desc="被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月5日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。</div>
+        <div class="mw-event-group" data-event="恩底弥翁篇">
+          <button type="button" class="mw-event" data-act="event" data-event="恩底弥翁篇" aria-expanded="false">
+            <span class="mw-event-name">恩底弥翁篇</span>
+            <span class="mw-event-range">9月18日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月18日" data-tag="恩底弥翁篇" data-desc="塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月18日</span><span class="mw-scene-tag">恩底弥翁篇</span></div>
+              <div class="mw-scene-desc">塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月10日" data-tag="幻想御手篇" data-desc="钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月10日</span><span class="mw-scene-tag">幻想御手篇</span></div>
-          <div class="mw-scene-desc">钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。</div>
+        <div class="mw-event-group" data-event="大霸星祭篇">
+          <button type="button" class="mw-event" data-act="event" data-event="大霸星祭篇" aria-expanded="false">
+            <span class="mw-event-name">大霸星祭篇</span>
+            <span class="mw-event-range">9月19日—9月20日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月19日" data-tag="大霸星祭篇" data-desc="大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月19日</span><span class="mw-scene-tag">大霸星祭篇</span></div>
+              <div class="mw-scene-desc">大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="9月20日" data-tag="大霸星祭篇" data-desc="祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月20日</span><span class="mw-scene-tag">大霸星祭篇</span></div>
+              <div class="mw-scene-desc">祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月11日" data-tag="幻想御手篇" data-desc="第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月11日</span><span class="mw-scene-tag">幻想御手篇</span></div>
-          <div class="mw-scene-desc">第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。</div>
+        <div class="mw-event-group" data-event="0930篇">
+          <button type="button" class="mw-event" data-act="event" data-event="0930篇" aria-expanded="false">
+            <span class="mw-event-name">0930篇</span>
+            <span class="mw-event-range">9月30日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月30日" data-tag="0930篇" data-desc="前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月30日</span><span class="mw-scene-tag">0930篇</span></div>
+              <div class="mw-scene-desc">前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月12日" data-tag="原石拯救篇" data-desc="云川芹亚密会统括理事贝积继敏，议题直指&quot;原石&quot;与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月12日</span><span class="mw-scene-tag">原石拯救篇</span></div>
-          <div class="mw-scene-desc">云川芹亚密会统括理事贝积继敏，议题直指&quot;原石&quot;与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。</div>
+        <div class="mw-event-group" data-event="暗部大战篇">
+          <button type="button" class="mw-event" data-act="event" data-event="暗部大战篇" aria-expanded="false">
+            <span class="mw-event-name">暗部大战篇</span>
+            <span class="mw-event-range">10月9日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="10月9日" data-tag="暗部大战篇" data-desc="五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月9日</span><span class="mw-scene-tag">暗部大战篇</span></div>
+              <div class="mw-scene-desc">五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月16日" data-tag="幻想御手篇" data-desc="一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月16日</span><span class="mw-scene-tag">幻想御手篇</span></div>
-          <div class="mw-scene-desc">一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。</div>
+        <div class="mw-event-group" data-event="暗部脱逃·后方之水篇">
+          <button type="button" class="mw-event" data-act="event" data-event="暗部脱逃·后方之水篇" aria-expanded="false">
+            <span class="mw-event-name">暗部脱逃·后方之水篇</span>
+            <span class="mw-event-range">10月11日—10月17日</span>
+            <span class="mw-event-count">3</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="10月11日" data-tag="暗部脱逃·后方之水篇" data-desc="英国清教收到后方之水的战书，随信附上左方之地的半具遗体。梵蒂冈的阴影跨过海峡，当麻的命运再次被卷入西洋彼岸的棋局。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月11日</span><span class="mw-scene-tag">暗部脱逃·后方之水篇</span></div>
+              <div class="mw-scene-desc">英国清教收到后方之水的战书，随信附上左方之地的半具遗体。梵蒂冈的阴影跨过海峡，当麻的命运再次被卷入西洋彼岸的棋局。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月13日" data-tag="暗部脱逃·后方之水篇" data-desc="后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月13日</span><span class="mw-scene-tag">暗部脱逃·后方之水篇</span></div>
+              <div class="mw-scene-desc">后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月17日" data-tag="暗部脱逃·后方之水篇" data-desc="不列颠万圣节与暗部脱逃篇同时开始。后方之水获屠龙刀阿斯卡隆，英国清教向当麻发出禁书目录召集令；暗部GROUP追查&quot;龙(DRAGON)&quot;真身，一方通行即将北上俄罗斯。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月17日</span><span class="mw-scene-tag">暗部脱逃·后方之水篇</span></div>
+              <div class="mw-scene-desc">不列颠万圣节与暗部脱逃篇同时开始。后方之水获屠龙刀阿斯卡隆，英国清教向当麻发出禁书目录召集令；暗部GROUP追查&quot;龙(DRAGON)&quot;真身，一方通行即将北上俄罗斯。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月17日" data-tag="幻想御手篇" data-desc="美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月17日</span><span class="mw-scene-tag">幻想御手篇</span></div>
-          <div class="mw-scene-desc">美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。</div>
+        <div class="mw-event-group" data-event="不列颠万圣节篇">
+          <button type="button" class="mw-event" data-act="event" data-event="不列颠万圣节篇" aria-expanded="false">
+            <span class="mw-event-name">不列颠万圣节篇</span>
+            <span class="mw-event-range">10月18日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="10月18日" data-tag="不列颠万圣节篇" data-desc="英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王&quot;联合的意义&quot;之力破坏卡提纳一世，一举击溃凯莉莎。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月18日</span><span class="mw-scene-tag">不列颠万圣节篇</span></div>
+              <div class="mw-scene-desc">英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王&quot;联合的意义&quot;之力破坏卡提纳一世，一举击溃凯莉莎。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月18日" data-tag="幻想御手篇" data-desc="钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了&quot;超电磁炮&quot;头上。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月18日</span><span class="mw-scene-tag">幻想御手篇</span></div>
-          <div class="mw-scene-desc">钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了&quot;超电磁炮&quot;头上。</div>
+        <div class="mw-event-group" data-event="新约开始·WWIII">
+          <button type="button" class="mw-event" data-act="event" data-event="新约开始·WWIII" aria-expanded="false">
+            <span class="mw-event-name">新约开始·WWIII</span>
+            <span class="mw-event-range">10月19日—10月30日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="10月19日" data-tag="新约开始·WWIII" data-desc="俄罗斯向学园都市宣战，第三次世界大战爆发。当麻、一方通行、滨面仕上三位主角同时踏上前往战场的道路——新约的帷幕正式拉开。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月19日</span><span class="mw-scene-tag">新约开始·WWIII</span></div>
+              <div class="mw-scene-desc">俄罗斯向学园都市宣战，第三次世界大战爆发。当麻、一方通行、滨面仕上三位主角同时踏上前往战场的道路——新约的帷幕正式拉开。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月30日" data-tag="新约开始·WWIII" data-desc="伯利恒之星升上苍穹，旧约终战迎来终章。当麻打倒右方之火，一方通行展开纯白之翼挡下大陆级一击——三战落幕，当麻坠入北冰洋。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月30日</span><span class="mw-scene-tag">新约开始·WWIII</span></div>
+              <div class="mw-scene-desc">伯利恒之星升上苍穹，旧约终战迎来终章。当麻打倒右方之火，一方通行展开纯白之翼挡下大陆级一击——三战落幕，当麻坠入北冰洋。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月19日" data-tag="旧约开始" data-desc="快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月19日</span><span class="mw-scene-tag">旧约开始</span></div>
-          <div class="mw-scene-desc">快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。</div>
+        <div class="mw-event-group" data-event="新入生篇">
+          <button type="button" class="mw-event" data-act="event" data-event="新入生篇" aria-expanded="false">
+            <span class="mw-event-name">新入生篇</span>
+            <span class="mw-event-range">11月5日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="11月5日" data-tag="新入生篇" data-desc="芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月5日</span><span class="mw-scene-tag">新入生篇</span></div>
+              <div class="mw-scene-desc">芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月20日" data-tag="" data-desc="暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月20日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。</div>
+        <div class="mw-event-group" data-event="夏威夷篇">
+          <button type="button" class="mw-event" data-act="event" data-event="夏威夷篇" aria-expanded="false">
+            <span class="mw-event-name">夏威夷篇</span>
+            <span class="mw-event-range">11月10日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="11月10日" data-tag="夏威夷篇" data-desc="夏威夷群岛沦为三方角力场：黎明晨光、美国总统卡崔、魔法结社格雷姆林在此交锋。当麻等人拨乱反正，但二十七机关从此对学园都市起疑，各自独立成联盟。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月10日</span><span class="mw-scene-tag">夏威夷篇</span></div>
+              <div class="mw-scene-desc">夏威夷群岛沦为三方角力场：黎明晨光、美国总统卡崔、魔法结社格雷姆林在此交锋。当麻等人拨乱反正，但二十七机关从此对学园都市起疑，各自独立成联盟。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月21日" data-tag="" data-desc="佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月21日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。</div>
+        <div class="mw-event-group" data-event="天择者混战篇">
+          <button type="button" class="mw-event" data-act="event" data-event="天择者混战篇" aria-expanded="false">
+            <span class="mw-event-name">天择者混战篇</span>
+            <span class="mw-event-range">11月13日—11月18日</span>
+            <span class="mw-event-count">3</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="11月13日" data-tag="天择者混战篇" data-desc="巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月13日</span><span class="mw-scene-tag">天择者混战篇</span></div>
+              <div class="mw-scene-desc">巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="11月14日" data-tag="天择者混战篇" data-desc="一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月14日</span><span class="mw-scene-tag">天择者混战篇</span></div>
+              <div class="mw-scene-desc">一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="11月18日" data-tag="天择者混战篇" data-desc="人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月18日</span><span class="mw-scene-tag">天择者混战篇</span></div>
+              <div class="mw-scene-desc">人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月24日" data-tag="" data-desc="同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月24日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。</div>
+        <div class="mw-event-group" data-event="魔神欧提努斯篇">
+          <button type="button" class="mw-event" data-act="event" data-event="魔神欧提努斯篇" aria-expanded="false">
+            <span class="mw-event-name">魔神欧提努斯篇</span>
+            <span class="mw-event-range">11月下旬</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="11月下旬" data-tag="魔神欧提努斯篇" data-desc="欧提努斯完成主神之枪，整个世界被擦除，只留当麻一人。被连续击杀一万次后当麻与她达成相互理解——她放弃神枪化为15cm少女，当麻为一个少女的笑容对抗六十亿人类。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月下旬</span><span class="mw-scene-tag">魔神欧提努斯篇</span></div>
+              <div class="mw-scene-desc">欧提努斯完成主神之枪，整个世界被擦除，只留当麻一人。被连续击杀一万次后当麻与她达成相互理解——她放弃神枪化为15cm少女，当麻为一个少女的笑容对抗六十亿人类。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="7月28日" data-tag="" data-desc="凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。">
-          <div class="mw-scene-head"><span class="mw-scene-date">7月28日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。</div>
+        <div class="mw-event-group" data-event="心理掌握篇">
+          <button type="button" class="mw-event" data-act="event" data-event="心理掌握篇" aria-expanded="false">
+            <span class="mw-event-name">心理掌握篇</span>
+            <span class="mw-event-range">11月26日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="11月26日" data-tag="心理掌握篇" data-desc="食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。">
+              <div class="mw-scene-head"><span class="mw-scene-date">11月26日</span><span class="mw-scene-tag">心理掌握篇</span></div>
+              <div class="mw-scene-desc">食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="8月1日" data-tag="" data-desc="第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月1日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。</div>
+        <div class="mw-event-group" data-event="圣日耳曼篇">
+          <button type="button" class="mw-event" data-act="event" data-event="圣日耳曼篇" aria-expanded="false">
+            <span class="mw-event-name">圣日耳曼篇</span>
+            <span class="mw-event-range">12月1日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="12月1日" data-tag="圣日耳曼篇" data-desc="第六位蓝花悦在全城散发学生证，类钻百货被圣日耳曼封锁。茵蒂克丝识破诡计，加纳神华击败圣日耳曼——三大魔神随之现世。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月1日</span><span class="mw-scene-tag">圣日耳曼篇</span></div>
+              <div class="mw-scene-desc">第六位蓝花悦在全城散发学生证，类钻百货被圣日耳曼封锁。茵蒂克丝识破诡计，加纳神华击败圣日耳曼——三大魔神随之现世。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="8月8日" data-tag="" data-desc="三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月8日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。</div>
+        <div class="mw-event-group" data-event="魔神僧正篇">
+          <button type="button" class="mw-event" data-act="event" data-event="魔神僧正篇" aria-expanded="false">
+            <span class="mw-event-name">魔神僧正篇</span>
+            <span class="mw-event-range">12月3日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="12月3日" data-tag="魔神僧正篇" data-desc="当麻在学校天台对峙魔神僧正，拒绝成为魔神仲裁者。御坂美琴以质量加速器将僧正送入高空撞上彗星，木原脑干A.A.A.补刀——上里翔流与&quot;理想放逐&quot;就此登场。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月3日</span><span class="mw-scene-tag">魔神僧正篇</span></div>
+              <div class="mw-scene-desc">当麻在学校天台对峙魔神僧正，拒绝成为魔神仲裁者。御坂美琴以质量加速器将僧正送入高空撞上彗星，木原脑干A.A.A.补刀——上里翔流与&quot;理想放逐&quot;就此登场。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="8月10日" data-tag="妹妹们篇" data-desc="御坂美琴循着&quot;现金卡&quot;的都市传说，傍晚撞见了布束砥信，一个被废弃的克隆人计划从阴影里浮出水面。她还不知道，自己将为此赌上全部。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月10日</span><span class="mw-scene-tag">妹妹们篇</span></div>
-          <div class="mw-scene-desc">御坂美琴循着&quot;现金卡&quot;的都市传说，傍晚撞见了布束砥信，一个被废弃的克隆人计划从阴影里浮出水面。她还不知道，自己将为此赌上全部。</div>
+        <div class="mw-event-group" data-event="去鸣篇">
+          <button type="button" class="mw-event" data-act="event" data-event="去鸣篇" aria-expanded="false">
+            <span class="mw-event-name">去鸣篇</span>
+            <span class="mw-event-range">12月5日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="12月5日" data-tag="去鸣篇" data-desc="木原唯一伪装成化生院明日香，潜伏在上里翔流身边伺机复仇，去鸣篇的暗流悄然涌动。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月5日</span><span class="mw-scene-tag">去鸣篇</span></div>
+              <div class="mw-scene-desc">木原唯一伪装成化生院明日香，潜伏在上里翔流身边伺机复仇，去鸣篇的暗流悄然涌动。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="8月15日" data-tag="" data-desc="美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月15日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。</div>
+        <div class="mw-event-group" data-event="元素篇·上里归还篇">
+          <button type="button" class="mw-event" data-act="event" data-event="元素篇·上里归还篇" aria-expanded="false">
+            <span class="mw-event-name">元素篇·上里归还篇</span>
+            <span class="mw-event-range">12月9日—12月10日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="12月9日" data-tag="元素篇·上里归还篇" data-desc="没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月9日</span><span class="mw-scene-tag">元素篇·上里归还篇</span></div>
+              <div class="mw-scene-desc">没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="12月10日" data-tag="元素篇·上里归还篇" data-desc="乌丸府兰的间谍与魔法师身份暴露，营巢部队延迟爆炸接触A.A.A.核心。府兰与丰山琉华联手救出上里翔流，理想放逐重归其手，木原唯一生死不明。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月10日</span><span class="mw-scene-tag">元素篇·上里归还篇</span></div>
+              <div class="mw-scene-desc">乌丸府兰的间谍与魔法师身份暴露，营巢部队延迟爆炸接触A.A.A.核心。府兰与丰山琉华联手救出上里翔流，理想放逐重归其手，木原唯一生死不明。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="8月21日" data-tag="" data-desc="废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月21日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。</div>
+        <div class="mw-event-group" data-event="亚雷斯塔篇">
+          <button type="button" class="mw-event" data-act="event" data-event="亚雷斯塔篇" aria-expanded="false">
+            <span class="mw-event-name">亚雷斯塔篇</span>
+            <span class="mw-event-range">12月11日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="12月11日" data-tag="亚雷斯塔篇" data-desc="营巢部队宣布学园都市48小时恢复秩序。亚雷斯塔亲自出动捕捉乌丸府兰，却被土御门元春连开数枪击倒——幕后之王首次站上台前，土御门与府兰结盟寻当麻。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月11日</span><span class="mw-scene-tag">亚雷斯塔篇</span></div>
+              <div class="mw-scene-desc">营巢部队宣布学园都市48小时恢复秩序。亚雷斯塔亲自出动捕捉乌丸府兰，却被土御门元春连开数枪击倒——幕后之王首次站上台前，土御门与府兰结盟寻当麻。</div>
+            </div>
+          </div>
         </div>
-        <div class="mw-scene" data-act="scene" data-date="8月28日" data-tag="" data-desc="天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月28日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="8月31日" data-tag="" data-desc="艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。">
-          <div class="mw-scene-head"><span class="mw-scene-date">8月31日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月1日" data-tag="" data-desc="新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月1日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月8日" data-tag="法之书篇" data-desc="为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月8日</span><span class="mw-scene-tag">法之书篇</span></div>
-          <div class="mw-scene-desc">为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月12日" data-tag="群奏活剧篇" data-desc="恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月12日</span><span class="mw-scene-tag">群奏活剧篇</span></div>
-          <div class="mw-scene-desc">恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月14日" data-tag="树状图残骸篇" data-desc="结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月14日</span><span class="mw-scene-tag">树状图残骸篇</span></div>
-          <div class="mw-scene-desc">结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月18日" data-tag="恩底弥翁篇" data-desc="塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月18日</span><span class="mw-scene-tag">恩底弥翁篇</span></div>
-          <div class="mw-scene-desc">塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月19日" data-tag="大霸星祭" data-desc="大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月19日</span><span class="mw-scene-tag">大霸星祭</span></div>
-          <div class="mw-scene-desc">大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月20日" data-tag="大霸星祭" data-desc="祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月20日</span><span class="mw-scene-tag">大霸星祭</span></div>
-          <div class="mw-scene-desc">祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="9月30日" data-tag="" data-desc="前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。">
-          <div class="mw-scene-head"><span class="mw-scene-date">9月30日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月9日" data-tag="暗部大战" data-desc="五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月9日</span><span class="mw-scene-tag">暗部大战</span></div>
-          <div class="mw-scene-desc">五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月11日" data-tag="" data-desc="英国清教收到后方之水的战书，随信附上左方之地的半具遗体。梵蒂冈的阴影跨过海峡，当麻的命运再次被卷入西洋彼岸的棋局。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月11日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">英国清教收到后方之水的战书，随信附上左方之地的半具遗体。梵蒂冈的阴影跨过海峡，当麻的命运再次被卷入西洋彼岸的棋局。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月13日" data-tag="" data-desc="后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月13日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月17日" data-tag="" data-desc="暗部大战落幕，自称爱华斯的存在击溃GROUP。一方通行循指引北上俄罗斯，地下避难所一片狼藉。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月17日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">暗部大战落幕，自称爱华斯的存在击溃GROUP。一方通行循指引北上俄罗斯，地下避难所一片狼藉。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月18日" data-tag="不列颠万圣节篇" data-desc="英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王&quot;联合的意义&quot;之力破坏卡提纳一世，一举击溃凯莉莎。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月18日</span><span class="mw-scene-tag">不列颠万圣节篇</span></div>
-          <div class="mw-scene-desc">英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王&quot;联合的意义&quot;之力破坏卡提纳一世，一举击溃凯莉莎。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月19日" data-tag="新约开始" data-desc="俄罗斯向学园都市宣战，第三次世界大战爆发。当麻、一方通行、滨面仕上三位主角同时踏上前往战场的道路——新约的帷幕正式拉开。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月19日</span><span class="mw-scene-tag">新约开始</span></div>
-          <div class="mw-scene-desc">俄罗斯向学园都市宣战，第三次世界大战爆发。当麻、一方通行、滨面仕上三位主角同时踏上前往战场的道路——新约的帷幕正式拉开。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="10月30日" data-tag="第三次世界大战" data-desc="伯利恒之星升上苍穹，旧约终战迎来终章。当麻打倒右方之火，一方通行展开纯白之翼挡下大陆级一击——三战落幕，当麻坠入北冰洋。">
-          <div class="mw-scene-head"><span class="mw-scene-date">10月30日</span><span class="mw-scene-tag">第三次世界大战</span></div>
-          <div class="mw-scene-desc">伯利恒之星升上苍穹，旧约终战迎来终章。当麻打倒右方之火，一方通行展开纯白之翼挡下大陆级一击——三战落幕，当麻坠入北冰洋。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月5日" data-tag="" data-desc="芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月5日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月10日" data-tag="夏威夷篇" data-desc="夏威夷群岛沦为三方角力场：黎明晨光、美国总统卡崔、魔法结社格雷姆林在此交锋。当麻等人拨乱反正，但二十七机关从此对学园都市起疑，各自独立成联盟。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月10日</span><span class="mw-scene-tag">夏威夷篇</span></div>
-          <div class="mw-scene-desc">夏威夷群岛沦为三方角力场：黎明晨光、美国总统卡崔、魔法结社格雷姆林在此交锋。当麻等人拨乱反正，但二十七机关从此对学园都市起疑，各自独立成联盟。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月13日" data-tag="" data-desc="巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月13日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月14日" data-tag="" data-desc="一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月14日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月18日" data-tag="" data-desc="人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月18日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月下旬" data-tag="魔神欧提努斯篇" data-desc="欧提努斯完成主神之枪，整个世界被擦除，只留当麻一人。被连续击杀一万次后当麻与她达成相互理解——她放弃神枪化为15cm少女，当麻为一个少女的笑容对抗六十亿人类。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月下旬</span><span class="mw-scene-tag">魔神欧提努斯篇</span></div>
-          <div class="mw-scene-desc">欧提努斯完成主神之枪，整个世界被擦除，只留当麻一人。被连续击杀一万次后当麻与她达成相互理解——她放弃神枪化为15cm少女，当麻为一个少女的笑容对抗六十亿人类。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="11月26日" data-tag="心理掌握篇" data-desc="食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。">
-          <div class="mw-scene-head"><span class="mw-scene-date">11月26日</span><span class="mw-scene-tag">心理掌握篇</span></div>
-          <div class="mw-scene-desc">食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月1日" data-tag="圣日耳曼篇" data-desc="第六位蓝花悦在全城散发学生证，类钻百货被圣日耳曼封锁。茵蒂克丝识破诡计，加纳神华击败圣日耳曼——三大魔神随之现世。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月1日</span><span class="mw-scene-tag">圣日耳曼篇</span></div>
-          <div class="mw-scene-desc">第六位蓝花悦在全城散发学生证，类钻百货被圣日耳曼封锁。茵蒂克丝识破诡计，加纳神华击败圣日耳曼——三大魔神随之现世。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月3日" data-tag="魔神僧正篇" data-desc="当麻在学校天台对峙魔神僧正，拒绝成为魔神仲裁者。御坂美琴以质量加速器将僧正送入高空撞上彗星，木原脑干A.A.A.补刀——上里翔流与&quot;理想放逐&quot;就此登场。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月3日</span><span class="mw-scene-tag">魔神僧正篇</span></div>
-          <div class="mw-scene-desc">当麻在学校天台对峙魔神僧正，拒绝成为魔神仲裁者。御坂美琴以质量加速器将僧正送入高空撞上彗星，木原脑干A.A.A.补刀——上里翔流与&quot;理想放逐&quot;就此登场。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月5日" data-tag="" data-desc="大热浪把气温推向55度，上里翔流的&quot;理想放逐&quot;成为新的风暴眼，为水而起的骚乱在街头蔓延。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月5日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">大热浪把气温推向55度，上里翔流的&quot;理想放逐&quot;成为新的风暴眼，为水而起的骚乱在街头蔓延。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月9日" data-tag="" data-desc="没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月9日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月10日" data-tag="元素篇" data-desc="乌丸府兰的间谍与魔法师身份暴露，营巢部队延迟爆炸接触A.A.A.核心。府兰与丰山琉华联手救出上里翔流，理想放逐重归其手，木原唯一生死不明。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月10日</span><span class="mw-scene-tag">元素篇</span></div>
-          <div class="mw-scene-desc">乌丸府兰的间谍与魔法师身份暴露，营巢部队延迟爆炸接触A.A.A.核心。府兰与丰山琉华联手救出上里翔流，理想放逐重归其手，木原唯一生死不明。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月11日" data-tag="" data-desc="营巢部队宣布学园都市48小时恢复秩序。亚雷斯塔亲自出动捕捉乌丸府兰，却被土御门元春连开数枪击倒——幕后之王首次站上台前，土御门与府兰结盟寻当麻。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月11日</span><span class="mw-scene-tag"></span></div>
-          <div class="mw-scene-desc">营巢部队宣布学园都市48小时恢复秩序。亚雷斯塔亲自出动捕捉乌丸府兰，却被土御门元春连开数枪击倒——幕后之王首次站上台前，土御门与府兰结盟寻当麻。</div>
-        </div>
-        <div class="mw-scene" data-act="scene" data-date="12月12日" data-tag="科隆尊篇" data-desc="亚雷斯塔以学园都市完全停摆为代价，制造驱魔印记&quot;西旗&quot;，将大恶魔科隆尊封印于学园都市，随即渡海赴英寻找其弱点——旧时代落幕，创约的帷幕由此拉开。">
-          <div class="mw-scene-head"><span class="mw-scene-date">12月12日</span><span class="mw-scene-tag">科隆尊篇</span></div>
-          <div class="mw-scene-desc">亚雷斯塔以学园都市完全停摆为代价，制造驱魔印记&quot;西旗&quot;，将大恶魔科隆尊封印于学园都市，随即渡海赴英寻找其弱点——旧时代落幕，创约的帷幕由此拉开。</div>
+        <div class="mw-event-group" data-event="科隆尊篇">
+          <button type="button" class="mw-event" data-act="event" data-event="科隆尊篇" aria-expanded="false">
+            <span class="mw-event-name">科隆尊篇</span>
+            <span class="mw-event-range">12月12日</span>
+            <span class="mw-event-count">1</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="12月12日" data-tag="科隆尊篇" data-desc="亚雷斯塔以学园都市完全停摆为代价，制造驱魔印记&quot;西旗&quot;，将大恶魔科隆尊封印于学园都市，随即渡海赴英寻找其弱点——旧时代落幕，创约的帷幕由此拉开。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月12日</span><span class="mw-scene-tag">科隆尊篇</span></div>
+              <div class="mw-scene-desc">亚雷斯塔以学园都市完全停摆为代价，制造驱魔印记&quot;西旗&quot;，将大恶魔科隆尊封印于学园都市，随即渡海赴英寻找其弱点——旧时代落幕，创约的帷幕由此拉开。</div>
+            </div>
+          </div>
         </div>
       </div>
       <div style="margin-top:10px">
