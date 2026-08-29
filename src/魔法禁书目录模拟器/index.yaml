@@ -813,7 +813,7 @@
         .mw-scene-desc { font-size: 12px; color: var(--mw-dim); }
         
         /* ---- 事件折叠（二级手风琴：事件→开场白） ---- */
-        .mw-event-group { border: 1px solid rgba(102,204,255,.22); border-radius: 9px; background: rgba(10, 16, 48, 0.55); overflow: hidden; }
+        .mw-event-group { border: 1px solid rgba(102,204,255,.22); border-radius: 9px; background: rgba(10, 16, 48, 0.55); overflow: hidden; flex-shrink: 0; }
         .mw-event {
         appearance: none; -webkit-appearance: none; background: transparent; border: none;
         text-align: left; width: 100%; cursor: pointer; color: inherit; font: inherit;
