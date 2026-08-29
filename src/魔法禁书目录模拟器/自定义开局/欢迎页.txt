@@ -367,9 +367,7 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
       <div class="mw-duo">
         <div class="mw-row">
           <label class="mw-label" for="pGender">性别</label>
-          <select class="mw-select" id="pGender">
-            <option>男</option><option>女</option><option>其他</option>
-          </select>
+          <input class="mw-input" id="pGender" placeholder="男 / 女 / 自定义性别">
         </div>
         <div class="mw-row">
           <label class="mw-label" for="pAge">年龄</label>

@@ -1472,7 +1472,7 @@ $(() => {
         const side = root.dataset.side;
         if (!side) { mfrsWelcomeToast(root, '请先选择阵营（科学侧或魔法侧）', 1); break; }
         const name = gv('#pName') || '未命名';
-        const gender = (q('#pGender') as HTMLSelectElement | null)?.value ?? '';
+        const gender = ((q('#pGender') as HTMLInputElement | null)?.value ?? '').trim() || '未设定';
         const age = gv('#pAge') || '未知';
         const pers = gv('#pPersonality') || '未设定';
         const look = gv('#pLook') || '未描述';
