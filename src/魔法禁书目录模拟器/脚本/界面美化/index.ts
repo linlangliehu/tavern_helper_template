@@ -25,6 +25,9 @@ declare const tavern_events: undefined | Record<string, string>;
 
 const MFRS_BASELINE_KEY = '__mfrs_baseline';
 const MFRS_WARN_KEY = '__mfrs_uv_warned';
+// initvar.yaml 的非空默认值：MVU 每层初始化会先填入，字段守卫必须把它们视为「空」否则开局表单值永远填不进去
+const MFRS_INITVAR_DEFAULTS: Record<string, unknown> = { 性别: '男', 年龄: '18岁' };
+
 
 function mfrsGetTH(): MfrsTHLike | undefined {
   try {
@@ -84,7 +87,8 @@ async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
         for (const [key, value] of Object.entries(baseline)) {
           if (key === '能力档案') continue;
           const existing = next[key];
-          if (existing === undefined || existing === null || existing === '') next[key] = value;
+          const isDefault = existing !== undefined && existing === MFRS_INITVAR_DEFAULTS[key];
+          if (existing === undefined || existing === null || existing === '' || isDefault) next[key] = value;
         }
         next.能力档案 = baseline.能力档案; // 仅当档案为空时才会走到这里（整组写入）
         return { ...(current ?? {}), stat_data: next };
