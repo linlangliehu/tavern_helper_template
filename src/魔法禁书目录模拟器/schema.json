@@ -203,10 +203,18 @@
             "type": "string"
           },
           "好感度": {
-            "$ref": "#/$defs/__schema0"
+            "type": "number"
           },
           "认知": {
             "default": "陌生",
+            "type": "string"
+          },
+          "能力名称": {
+            "default": "",
+            "type": "string"
+          },
+          "能力效果": {
+            "default": "",
             "type": "string"
           }
         }
@@ -335,10 +343,14 @@
           "type": "string"
         },
         "阶段序号": {
-          "$ref": "#/$defs/__schema1"
+          "$ref": "#/$defs/__schema0"
         },
         "阶段状态": {
           "default": "未启动",
+          "type": "string"
+        },
+        "当前节点": {
+          "default": "未进入事件包",
           "type": "string"
         },
         "已完成节点": {
@@ -356,7 +368,7 @@
           }
         },
         "偏移等级": {
-          "$ref": "#/$defs/__schema1"
+          "$ref": "#/$defs/__schema0"
         },
         "正史锚点": {
           "default": {
@@ -392,9 +404,6 @@
   },
   "$defs": {
     "__schema0": {
-      "type": "number"
-    },
-    "__schema1": {
       "type": "number"
     }
   }

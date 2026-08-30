@@ -51,3 +51,37 @@
 - schema 改后跑 webpack 自动同步 schema.json
 - 发布链：webpack → push src → 等 [bot] bundle → 改 loader sha → bundle PNG → tEXt 解码 → CDP 实机验收
 - 世界书纯文本改动（不动脚本）不需要动 CDN loader sha，只需重打包 PNG
+
+## 阶段0：事件目录核对结论（2026-08-30）
+
+### 拆包依据
+
+- 0930/天使坠落：锚点总览阶段3标题即「旧约·0930 / 天使坠落篇」，0930事件=9月30日身份互换术式（天使坠落），为同一连续事件 → 合并为单包 ANGEL-FALL，内部两个节点域（身份互换主线 / 学园都市袭击）。
+- 格雷姆林/魔神：总览阶段6为单一事件窗（格雷姆林组织+魔神欧提努斯+人工天界）→ 维持单包 GREMLIN-MAGIC-GOD。
+- 结论：原著事件包 15 → 14 个；+5 支线包不变。
+
+### 14 个原著事件包终版清单
+
+阶段0: STONE-ORIGIN / MISAKA-PAST / FANTASY-HAND / SKILL-OUT
+阶段1: INDEX-ARRIVAL(改造) / LEARNING-DEVICE
+阶段2: LEVEL6-PROJECT(改造)
+阶段3: ANGEL-FALL（含0930节点域）
+阶段4: DAIHASEI(由支线大霸星祭拆分改造) / ENDYMION / CROSSES
+阶段5: WW3
+阶段6: GREMLIN-MAGIC-GOD
+阶段7: CORONZON
+
+### 现有文件处置标记
+
+- 世界书/剧情事件/主线/主线剧情导航.txt → 改造（压缩为阶段目录+换篇规则+节点说明）
+- 世界书/剧情事件/主线/主线事件·禁书降临.txt → 改造为 INDEX-ARRIVAL
+- 世界书/剧情事件/主线/主线事件·绝对能力者进化.txt → 改造为 LEVEL6-PROJECT
+- 世界书/剧情事件/支线/大霸星祭.txt → 拆分：主线 DAIHASEI + 支线 SIDE-DAIHASEI
+- 其余4支线文件 → 标准化为 SIDE-* 事件包
+- 11 个原著包 → 新增文件
+- index.yaml：现有8事件条目全部需改激活策略（蓝灯→Conditional），新增条目按包注册
+
+## 构建/工具链坑位（阶段1实测）
+1. schema.json 断链：dump_schema.ts 用 node 直接 import schema.ts，而 schema.ts import 'lodash-es'（项目未安装，webpack 靠 CDN external）→ dump 一直失败，schema.json 自初始提交未再更新。已加 node_modules/lodash-es shim（schema.ts 仅用 _.clamp）解除。
+2. tavern_sync 重打包：webpack 非 watch 构建总是执行 pnpm sync bundle all（TAVERN_HELPER_DISABLE_TAVERN_SYNC=1 仅对 watch 生效）→ 用本地 dist（dev 产物）重打包魔禁 PNG（985053→995493B）。任何"只验证编译"的构建后必须 git checkout -- PNG+dist；正式产物只能走 bot bundle 发布链。
+3. pnpm sync 在 Windows 侧可用（WSL wrapper bug 不影响此处）。

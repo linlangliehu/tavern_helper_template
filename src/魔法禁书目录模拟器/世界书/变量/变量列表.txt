@@ -19,7 +19,8 @@ try {
   var currentStatusText = _.get(cleanStatData, '状态', '未知');
   var currentLocationText = _.get(cleanStatData, '所在位置', '未知');
   var current_phase = _.get(cleanStatData, '主线进度.当前阶段', '开局接入');
-  var canon_stage = _.get(cleanStatData, '原著阶段', '');
+  var current_anchor = _.get(cleanStatData, '主线进度.正史锚点.当前锚点', '');
+  var current_node = _.get(cleanStatData, '主线进度.当前节点', '');
   var canon_anchor = _.get(cleanStatData, '剧情锚点', '');
   var abilityCount = (_.get(cleanStatData, '能力档案', []) || []).length;
   var taskCount = (_.get(cleanStatData, '任务追踪', []) || []).length;
@@ -30,6 +31,7 @@ _%>
 玩家状态: <%= currentStatusText %>
 当前位置: <%= currentLocationText %>
 当前阶段: <%= current_phase %>
+当前篇章: <%= current_anchor || '未锁定' %> | 当前节点: <%= current_node || '未进入' %>
 能力数: <%= abilityCount %> | 任务数: <%= taskCount %> | 已知关系: <%= npcCount %>
 <%_ if (canon_stage || canon_anchor) { _%>
 原著阶段: <%= canon_stage || '未指定' %>
@@ -55,5 +57,5 @@ _%>
 }
 _%>
 
-Variable reading notes: use Chinese schema paths. 原著阶段/剧情锚点 are background canon indexes, not forced plot rails. 任务追踪 tracks active quests (主线与支线); NPC关系 tracks player-visible relationships (好感度 & 认知); 主线进度 tracks world-scale canon drift; 世界线记录 tracks facts that affect later causality.
+Variable reading notes: use Chinese schema paths. 原著阶段/剧情锚点 are background canon indexes, not forced plot rails. 任务追踪 tracks active quests (主线与支线); NPC关系 tracks player-visible relationships (好感度 & 认知); 主线进度 tracks world-scale canon drift — use 当前阶段+当前锚点+当前节点 as the three-piece locator: 当前锚点 names the active chapter (event package), 当前节点 names its active node ID; 世界线记录 tracks facts that affect later causality.
 </status_current_variable>
