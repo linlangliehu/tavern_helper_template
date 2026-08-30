@@ -272,8 +272,8 @@ body {
 .mw-modal-char .mw-modal-bio { border-top: none; padding-top: 0; line-height: 1.8; }
 .mw-modal-rows { display: flex; flex-direction: column; gap: 8px; }
 .mw-modal-row { display: flex; gap: 10px; font-size: 13px; line-height: 1.7; }
-.mw-modal-lab { flex: 0 0 3.2em; color: var(--mw-cyan); font-weight: 700; text-align: justify; text-align-last: justify; }
-.mw-modal-val { flex: 1; color: var(--mw-text); }
+.mw-modal-lab { flex: 0 0 3.2em; color: #66ccff; font-weight: 700; text-align: justify; text-align-last: justify; }
+.mw-modal-val { flex: 1; color: #dcecff; }
 
 /* ---- 音乐按钮 / 提示条 ---- */
 .mw-music {

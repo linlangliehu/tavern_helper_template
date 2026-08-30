@@ -1604,13 +1604,15 @@ $(() => {
         const mTag = q('#mTag'); if (mTag) mTag.textContent = D.tag ?? '';
         const mRows = q('#mRows');
         if (mRows) {
+          // ST 渲染管线会把「」转换为 <q> 标签；属性值里的转换产物按字面剥离
+          const cleanAttr = (s: string) => s.replace(/<\/?q>/g, '');
           const profileFields: Array<[string, string]> = [
-            ['性别', D.gender ?? ''],
-            ['年龄', D.age ?? ''],
-            ['外貌', D.look ?? ''],
-            ['能力', D.ability ?? ''],
-            ['性格', D.persona ?? ''],
-            ['背景', D.bg ?? ''],
+            ['性别', cleanAttr(D.gender ?? '')],
+            ['年龄', cleanAttr(D.age ?? '')],
+            ['外貌', cleanAttr(D.look ?? '')],
+            ['能力', cleanAttr(D.ability ?? '')],
+            ['性格', cleanAttr(D.persona ?? '')],
+            ['背景', cleanAttr(D.bg ?? '')],
           ];
           mRows.textContent = '';
           for (const [lab, val] of profileFields) {
