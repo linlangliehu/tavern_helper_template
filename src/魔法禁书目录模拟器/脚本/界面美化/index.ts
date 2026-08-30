@@ -1602,7 +1602,32 @@ $(() => {
         }
         const mName = q('#mName'); if (mName) mName.textContent = D.name ?? '';
         const mTag = q('#mTag'); if (mTag) mTag.textContent = D.tag ?? '';
-        const mBio = q('#mBio'); if (mBio) mBio.textContent = D.bio ?? '';
+        const mRows = q('#mRows');
+        if (mRows) {
+          const profileFields: Array<[string, string]> = [
+            ['性别', D.gender ?? ''],
+            ['年龄', D.age ?? ''],
+            ['外貌', D.look ?? ''],
+            ['能力', D.ability ?? ''],
+            ['性格', D.persona ?? ''],
+            ['背景', D.bg ?? ''],
+          ];
+          mRows.textContent = '';
+          for (const [lab, val] of profileFields) {
+            if (!val) continue;
+            const row = hostDocument.createElement('div');
+            row.className = 'mw-modal-row custom-mw-modal-row';
+            const labEl = hostDocument.createElement('div');
+            labEl.className = 'mw-modal-lab custom-mw-modal-lab';
+            labEl.textContent = lab;
+            const valEl = hostDocument.createElement('div');
+            valEl.className = 'mw-modal-val custom-mw-modal-val';
+            valEl.textContent = val;
+            row.appendChild(labEl);
+            row.appendChild(valEl);
+            mRows.appendChild(row);
+          }
+        }
         const modal = q('#charModal'); if (modal) modal.classList.add('custom-open', 'open');
         break;
       }

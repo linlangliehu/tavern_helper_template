@@ -899,6 +899,10 @@
         .mw-modal-char .mw-modal-name { text-align: left; font-size: 1.5em; color: var(--mw-accent); text-shadow: 0 0 10px rgba(102,204,255,.5); padding-bottom: 8px; border-bottom: 1px solid var(--mw-line); margin-bottom: 12px; }
         .mw-modal-char .mw-modal-tag { text-align: left; margin: 0 0 12px; }
         .mw-modal-char .mw-modal-bio { border-top: none; padding-top: 0; line-height: 1.8; }
+        .mw-modal-rows { display: flex; flex-direction: column; gap: 8px; }
+        .mw-modal-row { display: flex; gap: 10px; font-size: 13px; line-height: 1.7; }
+        .mw-modal-lab { flex: 0 0 3.2em; color: var(--mw-cyan); font-weight: 700; text-align: justify; text-align-last: justify; }
+        .mw-modal-val { flex: 1; color: var(--mw-text); }
         
         /* ---- 音乐按钮 / 提示条 ---- */
         .mw-music {
@@ -1684,62 +1688,62 @@
         <h2 class="mw-title" style="font-size:22px;letter-spacing:6px">角色介绍</h2>
         <p class="mw-intro-tip">点击角色卡片查看详细档案</p>
         <div class="mw-char-grid">
-        <div class="mw-char-tile" data-act="char" data-name="上条当麻" data-img="kamijou_v2.webp" data-tag="科学侧 · Level 0" data-bio="无能力者的少年，右手却寄宿着抹消一切异能的&quot;幻想杀手&quot;。不幸缠身的热血笨蛋，走路都能撞上世界级事件，口头禅是&quot;这样的不幸我可不要啊&quot;。">
+        <div class="mw-char-tile" data-act="char" data-name="上条当麻" data-img="kamijou_v2.webp" data-tag="科学侧 · Level 0" data-bio="无能力者的少年，右手却寄宿着抹消一切异能的&quot;幻想杀手&quot;。不幸缠身的热血笨蛋，走路都能撞上世界级事件，口头禅是&quot;这样的不幸我可不要啊&quot;。" data-gender="男" data-age="16岁（高中二年级）" data-look="刺猬头黑发，普通校服，右手常缠绷带，长相平凡却让人安心" data-ability="幻想杀手（Imagine Breaker）——右手消除一切异能与魔法，附带不幸体质" data-persona="老好人天花板，「先救人再说」；嘴上抱怨不幸身体却很诚实，连反派都能被他念到怀疑人生" data-bg="学园都市某高中二级生，Level 0 独居学生；7月20日茵蒂克丝降临阳台后，被卷入科学×魔法交错的主线中心">
         <div class="mw-char-face"><span class="mw-fallback">当</span><img loading="lazy" decoding="async" alt="上条当麻" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/kamijou_v2.webp"></div>
         <div class="mw-char-nm">上条当麻</div>
         <div class="mw-char-tag">科学侧 · Level 0</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="茵蒂克丝" data-img="index_v2.webp" data-tag="魔法侧 · 魔道书图书馆" data-bio="英国清教辖下的银发修女，脑内封印着十万三千册魔道书。贪吃、怕生、毫无危机感，却是整个故事开始的理由。">
+        <div class="mw-char-tile" data-act="char" data-name="茵蒂克丝" data-img="index_v2.webp" data-tag="魔法侧 · 魔道书图书馆" data-bio="英国清教辖下的银发修女，脑内封印着十万三千册魔道书。贪吃、怕生、毫无危机感，却是整个故事开始的理由。" data-gender="女" data-age="14-15岁（外表）" data-look="身高148cm，银白色长发，绿色眼瞳，修女服，脖子上有项圈" data-ability="完全记忆能力，脑海中储存了103,000本魔道书的知识，可使用部分魔法" data-persona="纯真善良，贪吃（特别喜欢吃东西），对当麻十分依赖，有咬人头的不良习惯" data-bg="英国清教必要之恶教会的修女，魔道书图书馆，为逃离教会追捕而来到学园都市">
         <div class="mw-char-face"><span class="mw-fallback">茵</span><img loading="lazy" decoding="async" alt="茵蒂克丝" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/index_v2.webp"></div>
         <div class="mw-char-nm">茵蒂克丝</div>
         <div class="mw-char-tag">魔法侧 · 魔道书图书馆</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="御坂美琴" data-img="misaka_v2.webp" data-tag="科学侧 · Level 5 第三位" data-bio="常盘台的王牌&quot;超电磁炮&quot;。傲娇、正义感过剩、迷恋呱太与廉价饰品，以及一位怎么也追不上的某位前辈。">
+        <div class="mw-char-tile" data-act="char" data-name="御坂美琴" data-img="misaka_v2.webp" data-tag="科学侧 · Level 5 第三位" data-bio="常盘台的王牌&quot;超电磁炮&quot;。傲娇、正义感过剩、迷恋呱太与廉价饰品，以及一位怎么也追不上的某位前辈。" data-gender="女" data-age="14岁（中学二年级）" data-look="身高161cm，茶色短发，常盘台校服，身材高挑" data-ability="超电磁炮（Railgun）——操纵电磁，标志招式硬币电磁炮，Level 5 第三位" data-persona="傲娇教科书，嘴硬心软正义感爆棚；对朋友护短，对某位前辈格外别扭；私藏呱太周边的反差萌" data-bg="常盘台中学王牌，「御坂妹妹们」的本体；绝对能力者进化计划的被猎杀方与反抗者">
         <div class="mw-char-face"><span class="mw-fallback">美</span><img loading="lazy" decoding="async" alt="御坂美琴" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/misaka_v2.webp"></div>
         <div class="mw-char-nm">御坂美琴</div>
         <div class="mw-char-tag">科学侧 · Level 5 第三位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="白井黑子" data-img="kuroko_v2.webp" data-tag="科学侧 · Level 4" data-bio="美琴的室友兼头号崇拜者，空间移动（迁界门）的使用者。风纪委员第177支部骨干，嘴上毒辣，心里忠诚。">
+        <div class="mw-char-tile" data-act="char" data-name="白井黑子" data-img="kuroko_v2.webp" data-tag="科学侧 · Level 4" data-bio="美琴的室友兼头号崇拜者，空间移动（迁界门）的使用者。风纪委员第177支部骨干，嘴上毒辣，心里忠诚。" data-gender="女" data-age="12-13岁（中学一年级）" data-look="双马尾茶发，常盘台校服，身材娇小气场十足" data-ability="空间移动——瞬间移动自身与接触物，Level 4；风纪委员第177支部骨干" data-persona="表面端庄的风纪委员，私下是「姐姐大人」狂热仰慕者；执法一丝不苟，对朋友讲义气" data-bg="御坂美琴的室友兼头号崇拜者；科学侧日常线核心，玩家接触风纪委员的第一个窗口">
         <div class="mw-char-face"><span class="mw-fallback">黑</span><img loading="lazy" decoding="async" alt="白井黑子" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/kuroko_v2.webp"></div>
         <div class="mw-char-nm">白井黑子</div>
         <div class="mw-char-tag">科学侧 · Level 4</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="初春饰利" data-img="uiharu_v2.webp" data-tag="科学侧 · Level 1" data-bio="风纪委员的操作盘高手，定温保存能力者。头戴花环发饰的温柔女孩，关键时刻比谁都有担当。">
+        <div class="mw-char-tile" data-act="char" data-name="初春饰利" data-img="uiharu_v2.webp" data-tag="科学侧 · Level 1" data-bio="风纪委员的操作盘高手，定温保存能力者。头戴花环发饰的温柔女孩，关键时刻比谁都有担当。" data-gender="女" data-age="12-13岁（中学一年级）" data-look="黑色短发配花环发饰，栅川中学校服，气质温柔" data-ability="定温保存——保持物体温度，Level 1；操作盘高手，风纪委员电脑担当" data-persona="温柔文静嗓音软，关键时刻却比谁都有担当；和佐天泪子是形影不离的好友" data-bg="风纪委员第177支部的操作盘专家；守护学园都市日常的数据防线">
         <div class="mw-char-face"><span class="mw-fallback">初</span><img loading="lazy" decoding="async" alt="初春饰利" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/uiharu_v2.webp"></div>
         <div class="mw-char-nm">初春饰利</div>
         <div class="mw-char-tag">科学侧 · Level 1</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="佐天泪子" data-img="saten_v2.webp" data-tag="科学侧 · Level 0" data-bio="黑子的挚友，爱掀裙子的乐天派。虽是无能力者，却比谁都渴望触碰&quot;那个世界&quot;的入口。">
+        <div class="mw-char-tile" data-act="char" data-name="佐天泪子" data-img="saten_v2.webp" data-tag="科学侧 · Level 0" data-bio="黑子的挚友，爱掀裙子的乐天派。虽是无能力者，却比谁都渴望触碰&quot;那个世界&quot;的入口。" data-gender="女" data-age="12-13岁（中学一年级）" data-look="黑色长直发，栅川中学校服，戴着小耳环" data-ability="无能力者（Level 0）——但揍人的拳头意外地有力" data-persona="爱掀裙子的乐天派，开朗爱闹想得开；内心深处渴望触碰「那个世界」的入口" data-bg="初春的挚友，Level 0 中的 Level 0；用乐观对抗资质的差距，偶尔也会在意">
         <div class="mw-char-face"><span class="mw-fallback">佐</span><img loading="lazy" decoding="async" alt="佐天泪子" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/saten_v2.webp"></div>
         <div class="mw-char-nm">佐天泪子</div>
         <div class="mw-char-tag">科学侧 · Level 0</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="一方通行" data-img="accelerator_v2.webp" data-tag="科学侧 · Level 5 第一位" data-bio="学园都市最强，矢量操作的主人。从屠杀实验的顶点跌落，走上为一个人而战的漫长赎罪之路。">
+        <div class="mw-char-tile" data-act="char" data-name="一方通行" data-img="accelerator_v2.webp" data-tag="科学侧 · Level 5 第一位" data-bio="学园都市最强，矢量操作的主人。从屠杀实验的顶点跌落，走上为一个人而战的漫长赎罪之路。" data-gender="男" data-age="15-16岁（外表）" data-look="瘦削白发红瞳少年，颈装电极，常戴耳罩式耳机，标志性歪嘴笑" data-ability="矢量操作——操控一切矢量方向反射一切攻击，Level 5 第一位；脑损伤后需御坂网络辅助" data-persona="表面狂妄追求「绝对无敌」，骨子里是不会表达的别扭家伙；对最后之作笨拙地温柔" data-bg="学园都市最强，屠杀实验顶点跌落；8月31日为守护最后之作中弹转折，走上「投身黑暗保护光明」的赎罪路">
         <div class="mw-char-face"><span class="mw-fallback">一</span><img loading="lazy" decoding="async" alt="一方通行" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/accelerator_v2.webp"></div>
         <div class="mw-char-nm">一方通行</div>
         <div class="mw-char-tag">科学侧 · Level 5 第一位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="食蜂操祈" data-img="shokuhou_v2.webp" data-tag="科学侧 · Level 5 第五位" data-bio="常盘台另一颗女王星，心理掌握（Mental Out）者。统领全城最大派系的情报女王，意外地痴迷可爱事物。">
+        <div class="mw-char-tile" data-act="char" data-name="食蜂操祈" data-img="shokuhou_v2.webp" data-tag="科学侧 · Level 5 第五位" data-bio="常盘台另一颗女王星，心理掌握（Mental Out）者。统领全城最大派系的情报女王，意外地痴迷可爱事物。" data-gender="女" data-age="13岁（中学二年级）" data-look="蜂蜜色金色卷发，常盘台校服，手持装饰手杖，气场成熟" data-ability="心理掌握——读心、洗脑、记忆操作的精神系全能，Level 5 第五位" data-persona="表面优雅高冷的「女王」，骨子里怕寂寞很照顾自己人；对御坂美琴别扭地在意" data-bg="常盘台最大派阀首领，全城最大情报网；Extertor 计划的受害者，暗中调查自己被抹去的过去">
         <div class="mw-char-face"><span class="mw-fallback">食</span><img loading="lazy" decoding="async" alt="食蜂操祈" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/shokuhou_v2.webp"></div>
         <div class="mw-char-nm">食蜂操祈</div>
         <div class="mw-char-tag">科学侧 · Level 5 第五位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="削板军霸" data-img="gunha_v2.webp" data-tag="科学侧 · Level 5 第七位" data-bio="毫无能力资质却挤进Level 5的&quot;原石&quot;，靠蛮力、直觉与热血拳脚行侠仗义的野生英雄。">
+        <div class="mw-char-tile" data-act="char" data-name="削板军霸" data-img="gunha_v2.webp" data-tag="科学侧 · Level 5 第七位" data-bio="毫无能力资质却挤进Level 5的&quot;原石&quot;，靠蛮力、直觉与热血拳脚行侠仗义的野生英雄。" data-gender="男" data-age="16-17岁（高中生）" data-look="高大粗犷，随意学生装，气场像街头流氓却莫名让人信赖" data-ability="念动炮弹——原石（Gemstone）天然能力者，Level 5 第七位，原理连自己都说不清" data-persona="热血硬汉信奉「骨气」胜过计算；说话直白行动先于思考，嘴糙心实的肌肉笨蛋好人" data-bg="毫无能力开发背景却挤进 Level 5 的「不科学」存在；对强者尊重对弱者讲义气">
         <div class="mw-char-face"><span class="mw-fallback">削</span><img loading="lazy" decoding="async" alt="削板军霸" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/gunha_v2.webp"></div>
         <div class="mw-char-nm">削板军霸</div>
         <div class="mw-char-tag">科学侧 · Level 5 第七位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="神裂火织" data-img="kanzaki_v2.webp" data-tag="魔法侧 · 圣人" data-bio="英国清教&quot;必要之恶教会&quot;的魔导师，世界上不足二十位的圣人之一。七闪突刺与钢丝术式的驾驭者。">
+        <div class="mw-char-tile" data-act="char" data-name="神裂火织" data-img="kanzaki_v2.webp" data-tag="魔法侧 · 圣人" data-bio="英国清教&quot;必要之恶教会&quot;的魔导师，世界上不足二十位的圣人之一。七闪突刺与钢丝术式的驾驭者。" data-gender="女" data-age="18岁左右（外表不足二十）" data-look="黑色长马尾，T恤配牛仔裤，腰挎「七天七刀」倭刀缠钢丝" data-ability="圣人——拥有天使之力的一部分，七天七刀+钢丝术式可斩断术式与异能" data-persona="表面冷静话少，骨子里别扭的善解人意；对 Index 保护欲极强，日常被她支使团团转" data-bg="英国清教必要之恶教会魔导师，天草式十字凄教出身，世上不足二十位的圣人之一；Index 的监护人">
         <div class="mw-char-face"><span class="mw-fallback">神</span><img loading="lazy" decoding="async" alt="神裂火织" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/kanzaki_v2.webp"></div>
         <div class="mw-char-nm">神裂火织</div>
         <div class="mw-char-tag">魔法侧 · 圣人</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="欧提努斯" data-img="othinus_v2.webp" data-tag="魔法侧 · 魔神" data-bio="以北欧主神之名降世的魔神，格雷姆林的首领。执掌骨船与神枪，追寻着打破自身绝望境地的道路。">
+        <div class="mw-char-tile" data-act="char" data-name="欧提努斯" data-img="othinus_v2.webp" data-tag="魔法侧 · 魔神" data-bio="以北欧主神之名降世的魔神，格雷姆林的首领。执掌骨船与神枪，追寻着打破自身绝望境地的道路。" data-gender="女" data-age="魔神（存在了无尽岁月）" data-look="娇小少女模样，金发独眼眼罩（藏着毁灭世界的力量），北欧风格装束" data-ability="魔神——叠加/改变世界相位，篡改世界法则；眼罩下是毁灭级力量" data-persona="高傲的「观察者」超然外表下，藏着「想回到某个特定世界」的执念；绝对力量与绝对孤独的矛盾体" data-bg="北欧神话魔神，真·格雷姆林首领；与上条当麻的「能否保护所有人」信念之战后，从毁灭者转为理解者">
         <div class="mw-char-face"><span class="mw-fallback">欧</span><img loading="lazy" decoding="async" alt="欧提努斯" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/othinus_v2.webp"></div>
         <div class="mw-char-nm">欧提努斯</div>
         <div class="mw-char-tag">魔法侧 · 魔神</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="最后之作" data-img="lastorder_v2.webp" data-tag="科学侧 · 妹妹们中枢" data-bio="御坂网络的中枢个体20001号，说话带着&quot;御坂&quot;口癖的幼小女孩。她的安危牵动着近两万个妹妹的命运。">
+        <div class="mw-char-tile" data-act="char" data-name="最后之作" data-img="lastorder_v2.webp" data-tag="科学侧 · 妹妹们中枢" data-bio="御坂网络的中枢个体20001号，说话带着&quot;御坂&quot;口癖的幼小女孩。她的安危牵动着近两万个妹妹的命运。" data-gender="女" data-age="外表约10岁" data-look="茶色短发戴眼镜，常穿宽大卫衣，和御坂妹妹相似但眼神更灵动" data-ability="御坂网络指挥体——自身仅本体1%（Level 2-3），却可连接调度近两万妹妹" data-persona="天真活泼的小话痨，自来熟；嘴上「御坂」口癖，对一方通行又缠又护" data-bg="御坂妹妹们 20001 号指挥体；8月31日事件让一方通行从「杀戮者」转向「守护者」的关键存在">
         <div class="mw-char-face"><span class="mw-fallback">末</span><img loading="lazy" decoding="async" alt="最后之作" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/lastorder_v2.webp"></div>
         <div class="mw-char-nm">最后之作</div>
         <div class="mw-char-tag">科学侧 · 妹妹们中枢</div>
@@ -1756,7 +1760,7 @@
         <div class="mw-modal-body">
         <div class="mw-modal-name" id="mName"></div>
         <div class="mw-modal-tag" id="mTag"></div>
-        <div class="mw-modal-bio" id="mBio"></div>
+        <div class="mw-modal-rows" id="mRows"></div>
         </div>
         </div>
         </div>
