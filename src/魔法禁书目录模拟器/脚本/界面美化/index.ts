@@ -1576,7 +1576,30 @@ $(() => {
         break;
       }
       case 'char': {
-        const mFace = q('#mFace'); if (mFace) mFace.textContent = D.init || (D.name ?? '').slice(0, 1);
+        const mFace = q('#mFace');
+        if (mFace) {
+          const fb = D.init || (D.name ?? '').slice(0, 1);
+          const imgFile = typeof D.img === 'string' ? D.img : '';
+          const safeImg = /^[a-z0-9]+_v2\.webp$/.test(imgFile) ? imgFile : '';
+          if (safeImg) {
+            let img = mFace.querySelector('img');
+            if (!img) {
+              mFace.textContent = '';
+              const fbSpan = hostDocument.createElement('span');
+              fbSpan.className = 'mw-fallback custom-mw-fallback';
+              fbSpan.textContent = fb;
+              const newImg = hostDocument.createElement('img');
+              newImg.decoding = 'async';
+              newImg.alt = D.name ?? '';
+              mFace.appendChild(fbSpan);
+              mFace.appendChild(newImg);
+              img = newImg;
+            }
+            img.src = 'https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/' + safeImg;
+          } else {
+            mFace.textContent = fb;
+          }
+        }
         const mName = q('#mName'); if (mName) mName.textContent = D.name ?? '';
         const mTag = q('#mTag'); if (mTag) mTag.textContent = D.tag ?? '';
         const mBio = q('#mBio'); if (mBio) mBio.textContent = D.bio ?? '';
@@ -1673,11 +1696,43 @@ $(() => {
 
   hostDocument.addEventListener('click', handleWelcomeClick, true);
 
+  // 魔禁开局页图片兜底：镜像重试一次 → 终态隐藏露单字（error 不冒泡，捕获阶段委托 + init 补扫竞态）
+  const mfrsImgFallback = (img: HTMLImageElement) => {
+    if (img.dataset.mfrsTried === '1') {
+      img.style.display = 'none';
+      return;
+    }
+    img.dataset.mfrsTried = '1';
+    const src = img.getAttribute('src') ?? '';
+    if (src.includes('testingcf.jsdelivr.net')) {
+      img.setAttribute('src', src.replace('testingcf.jsdelivr.net', 'cdn.jsdelivr.net'));
+    } else {
+      img.style.display = 'none';
+    }
+  };
+  const handleMfrsImgError = (event: Event) => {
+    const t = event.target as HTMLElement | null;
+    if (t && t.tagName === 'IMG' && t.closest('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root')) {
+      mfrsImgFallback(t as HTMLImageElement);
+    }
+  };
+  hostDocument.addEventListener('error', handleMfrsImgError, true);
+  const sweepMfrsImages = () => {
+    hostDocument
+      .querySelectorAll<HTMLImageElement>('#mfrs-welcome-root img, .mfrs-welcome-root img, .custom-mfrs-welcome-root img')
+      .forEach(img => {
+        if (img.style.display !== 'none' && img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
+          mfrsImgFallback(img);
+        }
+      });
+  };
+  [0, 250, 1000, 2500].forEach(delay => timeoutIds.push(hostWindow?.setTimeout(sweepMfrsImages, delay)));
   const cleanup = () => {
     observer.disconnect();
     bodyObserver.disconnect();
     hostDocument.removeEventListener('click', handleWelcomeClick, true);
     hostDocument.removeEventListener('keydown', handleMfrsWelcomeKeydown, true);
+    hostDocument.removeEventListener('error', handleMfrsImgError, true);
     timeoutIds.forEach(id => {
       if (id !== undefined) hostWindow?.clearTimeout(id);
     });

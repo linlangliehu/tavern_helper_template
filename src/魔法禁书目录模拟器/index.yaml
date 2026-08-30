@@ -847,7 +847,7 @@
         
         /* ---- 角色介绍 ---- */
         .mw-intro-tip { text-align: center; color: var(--mw-dim); font-size: 12.5px; margin-bottom: 16px; }
-        .mw-char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+        .mw-char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; }
         .mw-char-tile {
         cursor: pointer; text-align: center; padding: 14px 6px 10px;
         border: 1px solid var(--mw-line); border-radius: 12px;
@@ -855,11 +855,14 @@
         }
         .mw-char-tile:hover { transform: translateY(-3px); border-color: var(--mw-accent); box-shadow: 0 8px 22px rgba(20,90,180,.35); }
         .mw-char-face {
-        width: 54px; height: 54px; line-height: 54px; margin: 0 auto 8px;
-        border-radius: 50%; font-size: 22px; font-weight: 700; color: #06122b;
+        position: relative; width: 100%; max-width: 110px; aspect-ratio: 5 / 7;
+        margin: 0 auto 8px; border-radius: 10px; overflow: hidden;
+        font-size: 22px; font-weight: 700; color: #06122b;
         background: radial-gradient(circle at 30% 25%, var(--mw-glow), transparent 60%),
         linear-gradient(135deg, var(--mw-accent), var(--mw-accent-2));
         }
+        .mw-char-face .mw-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+        .mw-char-face img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
         .mw-char-nm { font-size: 13px; font-weight: 600; }
         .mw-char-tag { font-size: 10.5px; color: var(--mw-dim); margin-top: 2px; }
         
@@ -890,7 +893,8 @@
         .mw-modal-bio { font-size: 13px; color: var(--mw-text); border-top: 1px dashed var(--mw-line); padding-top: 12px; }
         .mw-modal-char { width: min(800px, 94vw); }
         .mw-modal-layout { display: flex; gap: 20px; align-items: flex-start; }
-        .mw-modal-figure { width: 200px; height: 280px; flex: 0 0 200px; border-radius: 12px; font-size: 64px; font-weight: 800; color: #06122b; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 30% 25%, var(--mw-glow), transparent 60%), linear-gradient(135deg, var(--mw-accent), var(--mw-accent-2)); border: 2px solid var(--mw-accent); box-shadow: 0 0 24px rgba(102,204,255,.4); }
+        .mw-modal-figure { position: relative; overflow: hidden; width: 200px; height: 280px; flex: 0 0 200px; border-radius: 12px; font-size: 64px; font-weight: 800; color: #06122b; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 30% 25%, var(--mw-glow), transparent 60%), linear-gradient(135deg, var(--mw-accent), var(--mw-accent-2)); border: 2px solid var(--mw-accent); box-shadow: 0 0 24px rgba(102,204,255,.4); }
+        .mw-modal-figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
         .mw-modal-body { flex: 1; min-width: 0; }
         .mw-modal-char .mw-modal-name { text-align: left; font-size: 1.5em; color: var(--mw-accent); text-shadow: 0 0 10px rgba(102,204,255,.5); padding-bottom: 8px; border-bottom: 1px solid var(--mw-line); margin-bottom: 12px; }
         .mw-modal-char .mw-modal-tag { text-align: left; margin: 0 0 12px; }
@@ -1680,63 +1684,63 @@
         <h2 class="mw-title" style="font-size:22px;letter-spacing:6px">角色介绍</h2>
         <p class="mw-intro-tip">点击角色卡片查看详细档案</p>
         <div class="mw-char-grid">
-        <div class="mw-char-tile" data-act="char" data-name="上条当麻" data-tag="科学侧 · Level 0" data-bio="无能力者的少年，右手却寄宿着抹消一切异能的&quot;幻想杀手&quot;。不幸缠身的热血笨蛋，走路都能撞上世界级事件，口头禅是&quot;这样的不幸我可不要啊&quot;。">
-        <div class="mw-char-face">当</div>
+        <div class="mw-char-tile" data-act="char" data-name="上条当麻" data-img="kamijou_v2.webp" data-tag="科学侧 · Level 0" data-bio="无能力者的少年，右手却寄宿着抹消一切异能的&quot;幻想杀手&quot;。不幸缠身的热血笨蛋，走路都能撞上世界级事件，口头禅是&quot;这样的不幸我可不要啊&quot;。">
+        <div class="mw-char-face"><span class="mw-fallback">当</span><img loading="lazy" decoding="async" alt="上条当麻" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/kamijou_v2.webp"></div>
         <div class="mw-char-nm">上条当麻</div>
         <div class="mw-char-tag">科学侧 · Level 0</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="茵蒂克丝" data-tag="魔法侧 · 魔道书图书馆" data-bio="英国清教辖下的银发修女，脑内封印着十万三千册魔道书。贪吃、怕生、毫无危机感，却是整个故事开始的理由。">
-        <div class="mw-char-face">茵</div>
+        <div class="mw-char-tile" data-act="char" data-name="茵蒂克丝" data-img="index_v2.webp" data-tag="魔法侧 · 魔道书图书馆" data-bio="英国清教辖下的银发修女，脑内封印着十万三千册魔道书。贪吃、怕生、毫无危机感，却是整个故事开始的理由。">
+        <div class="mw-char-face"><span class="mw-fallback">茵</span><img loading="lazy" decoding="async" alt="茵蒂克丝" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/index_v2.webp"></div>
         <div class="mw-char-nm">茵蒂克丝</div>
         <div class="mw-char-tag">魔法侧 · 魔道书图书馆</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="御坂美琴" data-tag="科学侧 · Level 5 第三位" data-bio="常盘台的王牌&quot;超电磁炮&quot;。傲娇、正义感过剩、迷恋呱太与廉价饰品，以及一位怎么也追不上的某位前辈。">
-        <div class="mw-char-face">美</div>
+        <div class="mw-char-tile" data-act="char" data-name="御坂美琴" data-img="misaka_v2.webp" data-tag="科学侧 · Level 5 第三位" data-bio="常盘台的王牌&quot;超电磁炮&quot;。傲娇、正义感过剩、迷恋呱太与廉价饰品，以及一位怎么也追不上的某位前辈。">
+        <div class="mw-char-face"><span class="mw-fallback">美</span><img loading="lazy" decoding="async" alt="御坂美琴" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/misaka_v2.webp"></div>
         <div class="mw-char-nm">御坂美琴</div>
         <div class="mw-char-tag">科学侧 · Level 5 第三位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="白井黑子" data-tag="科学侧 · Level 4" data-bio="美琴的室友兼头号崇拜者，空间移动（迁界门）的使用者。风纪委员第177支部骨干，嘴上毒辣，心里忠诚。">
-        <div class="mw-char-face">黑</div>
+        <div class="mw-char-tile" data-act="char" data-name="白井黑子" data-img="kuroko_v2.webp" data-tag="科学侧 · Level 4" data-bio="美琴的室友兼头号崇拜者，空间移动（迁界门）的使用者。风纪委员第177支部骨干，嘴上毒辣，心里忠诚。">
+        <div class="mw-char-face"><span class="mw-fallback">黑</span><img loading="lazy" decoding="async" alt="白井黑子" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/kuroko_v2.webp"></div>
         <div class="mw-char-nm">白井黑子</div>
         <div class="mw-char-tag">科学侧 · Level 4</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="初春饰利" data-tag="科学侧 · Level 1" data-bio="风纪委员的操作盘高手，定温保存能力者。头戴花环发饰的温柔女孩，关键时刻比谁都有担当。">
-        <div class="mw-char-face">初</div>
+        <div class="mw-char-tile" data-act="char" data-name="初春饰利" data-img="uiharu_v2.webp" data-tag="科学侧 · Level 1" data-bio="风纪委员的操作盘高手，定温保存能力者。头戴花环发饰的温柔女孩，关键时刻比谁都有担当。">
+        <div class="mw-char-face"><span class="mw-fallback">初</span><img loading="lazy" decoding="async" alt="初春饰利" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/uiharu_v2.webp"></div>
         <div class="mw-char-nm">初春饰利</div>
         <div class="mw-char-tag">科学侧 · Level 1</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="佐天泪子" data-tag="科学侧 · Level 0" data-bio="黑子的挚友，爱掀裙子的乐天派。虽是无能力者，却比谁都渴望触碰&quot;那个世界&quot;的入口。">
-        <div class="mw-char-face">佐</div>
+        <div class="mw-char-tile" data-act="char" data-name="佐天泪子" data-img="saten_v2.webp" data-tag="科学侧 · Level 0" data-bio="黑子的挚友，爱掀裙子的乐天派。虽是无能力者，却比谁都渴望触碰&quot;那个世界&quot;的入口。">
+        <div class="mw-char-face"><span class="mw-fallback">佐</span><img loading="lazy" decoding="async" alt="佐天泪子" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/saten_v2.webp"></div>
         <div class="mw-char-nm">佐天泪子</div>
         <div class="mw-char-tag">科学侧 · Level 0</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="一方通行" data-tag="科学侧 · Level 5 第一位" data-bio="学园都市最强，矢量操作的主人。从屠杀实验的顶点跌落，走上为一个人而战的漫长赎罪之路。">
-        <div class="mw-char-face">一</div>
+        <div class="mw-char-tile" data-act="char" data-name="一方通行" data-img="accelerator_v2.webp" data-tag="科学侧 · Level 5 第一位" data-bio="学园都市最强，矢量操作的主人。从屠杀实验的顶点跌落，走上为一个人而战的漫长赎罪之路。">
+        <div class="mw-char-face"><span class="mw-fallback">一</span><img loading="lazy" decoding="async" alt="一方通行" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/accelerator_v2.webp"></div>
         <div class="mw-char-nm">一方通行</div>
         <div class="mw-char-tag">科学侧 · Level 5 第一位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="食蜂操祈" data-tag="科学侧 · Level 5 第五位" data-bio="常盘台另一颗女王星，心理掌握（Mental Out）者。统领全城最大派系的情报女王，意外地痴迷可爱事物。">
-        <div class="mw-char-face">食</div>
+        <div class="mw-char-tile" data-act="char" data-name="食蜂操祈" data-img="shokuhou_v2.webp" data-tag="科学侧 · Level 5 第五位" data-bio="常盘台另一颗女王星，心理掌握（Mental Out）者。统领全城最大派系的情报女王，意外地痴迷可爱事物。">
+        <div class="mw-char-face"><span class="mw-fallback">食</span><img loading="lazy" decoding="async" alt="食蜂操祈" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/shokuhou_v2.webp"></div>
         <div class="mw-char-nm">食蜂操祈</div>
         <div class="mw-char-tag">科学侧 · Level 5 第五位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="削板军霸" data-tag="科学侧 · Level 5 第七位" data-bio="毫无能力资质却挤进Level 5的&quot;原石&quot;，靠蛮力、直觉与热血拳脚行侠仗义的野生英雄。">
-        <div class="mw-char-face">削</div>
+        <div class="mw-char-tile" data-act="char" data-name="削板军霸" data-img="gunha_v2.webp" data-tag="科学侧 · Level 5 第七位" data-bio="毫无能力资质却挤进Level 5的&quot;原石&quot;，靠蛮力、直觉与热血拳脚行侠仗义的野生英雄。">
+        <div class="mw-char-face"><span class="mw-fallback">削</span><img loading="lazy" decoding="async" alt="削板军霸" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/gunha_v2.webp"></div>
         <div class="mw-char-nm">削板军霸</div>
         <div class="mw-char-tag">科学侧 · Level 5 第七位</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="神裂火织" data-tag="魔法侧 · 圣人" data-bio="英国清教&quot;必要之恶教会&quot;的魔导师，世界上不足二十位的圣人之一。七闪突刺与钢丝术式的驾驭者。">
-        <div class="mw-char-face">神</div>
+        <div class="mw-char-tile" data-act="char" data-name="神裂火织" data-img="kanzaki_v2.webp" data-tag="魔法侧 · 圣人" data-bio="英国清教&quot;必要之恶教会&quot;的魔导师，世界上不足二十位的圣人之一。七闪突刺与钢丝术式的驾驭者。">
+        <div class="mw-char-face"><span class="mw-fallback">神</span><img loading="lazy" decoding="async" alt="神裂火织" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/kanzaki_v2.webp"></div>
         <div class="mw-char-nm">神裂火织</div>
         <div class="mw-char-tag">魔法侧 · 圣人</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="欧提努斯" data-tag="魔法侧 · 魔神" data-bio="以北欧主神之名降世的魔神，格雷姆林的首领。执掌骨船与神枪，追寻着打破自身绝望境地的道路。">
-        <div class="mw-char-face">欧</div>
+        <div class="mw-char-tile" data-act="char" data-name="欧提努斯" data-img="othinus_v2.webp" data-tag="魔法侧 · 魔神" data-bio="以北欧主神之名降世的魔神，格雷姆林的首领。执掌骨船与神枪，追寻着打破自身绝望境地的道路。">
+        <div class="mw-char-face"><span class="mw-fallback">欧</span><img loading="lazy" decoding="async" alt="欧提努斯" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/othinus_v2.webp"></div>
         <div class="mw-char-nm">欧提努斯</div>
         <div class="mw-char-tag">魔法侧 · 魔神</div>
         </div>
-        <div class="mw-char-tile" data-act="char" data-name="最后之作" data-tag="科学侧 · 妹妹们中枢" data-bio="御坂网络的中枢个体20001号，说话带着&quot;御坂&quot;口癖的幼小女孩。她的安危牵动着近两万个妹妹的命运。">
-        <div class="mw-char-face">末</div>
+        <div class="mw-char-tile" data-act="char" data-name="最后之作" data-img="lastorder_v2.webp" data-tag="科学侧 · 妹妹们中枢" data-bio="御坂网络的中枢个体20001号，说话带着&quot;御坂&quot;口癖的幼小女孩。她的安危牵动着近两万个妹妹的命运。">
+        <div class="mw-char-face"><span class="mw-fallback">末</span><img loading="lazy" decoding="async" alt="最后之作" src="https://testingcf.jsdelivr.net/gh/linlangliehu/mfrs-img@d86c74d/lastorder_v2.webp"></div>
         <div class="mw-char-nm">最后之作</div>
         <div class="mw-char-tag">科学侧 · 妹妹们中枢</div>
         </div>

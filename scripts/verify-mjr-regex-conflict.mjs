@@ -24,10 +24,12 @@ const spStartRegexes = [];
 let current = null;
 for (let i = 0; i < lines.length; i++) {
   const line = lines[i];
-  const nameMatch = line.match(/^\s*-?\s*正则名称:\s*'?\[?([^\]']+)\]?'?$/);
-  if (nameMatch) {
+  const nameRaw = line.match(/^\s*-?\s*正则名称:\s*(.+?)\s*$/);
+  if (nameRaw) {
     if (current) spStartRegexes.push(current);
-    current = { name: nameMatch[1].trim(), lineNo: i + 1, findExpr: '', replaceWith: '', markdownOnly: false };
+    // 兼容带引号与「[标签]」前缀的名称（如 '[显示]渲染魔法禁书目录开局页'）
+    const nm = nameRaw[1].replace(/^'/, '').replace(/'$/, '').replace(/^\[[^\]]*\]\s*/, '').trim();
+    current = { name: nm, lineNo: i + 1, findExpr: '', replaceWith: '', markdownOnly: false };
   }
   if (current) {
     const findMatch = line.match(/^\s*查找表达式:\s*'?(.+?)'?\s*$/);
