@@ -85,3 +85,21 @@
 1. schema.json 断链：dump_schema.ts 用 node 直接 import schema.ts，而 schema.ts import 'lodash-es'（项目未安装，webpack 靠 CDN external）→ dump 一直失败，schema.json 自初始提交未再更新。已加 node_modules/lodash-es shim（schema.ts 仅用 _.clamp）解除。
 2. tavern_sync 重打包：webpack 非 watch 构建总是执行 pnpm sync bundle all（TAVERN_HELPER_DISABLE_TAVERN_SYNC=1 仅对 watch 生效）→ 用本地 dist（dev 产物）重打包魔禁 PNG（985053→995493B）。任何"只验证编译"的构建后必须 git checkout -- PNG+dist；正式产物只能走 bot bundle 发布链。
 3. pnpm sync 在 Windows 侧可用（WSL wrapper bug 不影响此处）。
+
+## 阶段2 Gate 实机验证结果（2026-08-30 · PASS）
+验证方式：用户在正式名卡（旧卡+副本+旧世界书已清，正式PNG重导）手动真实游玩6轮；CDP钩子捕获生成prompt + 全楼层MVU变量轨迹。
+
+| Gate | 结论 | 证据 |
+|---|---|---|
+| 1. 幻想御手包进入上下文 | ✅ | 末轮prompt含【事件包：幻想御手篇】+ FANTASY-HAND-01 节点表 + 篇章软锁定规则 |
+| 2. 旧包不串入 | ✅ | 禁书降临/日常校园/暗部冲突/魔法侧遭遇/学园都市委托/大霸星祭 六包正文全部未出现在prompt |
+| 3. 变量三件套落盘 | ✅ | 轨迹：自定义开局(未进入事件包)→第2轮 锚点=幻想御手篇/阶段0/进行中/FH-01；节点推进 FH-01→FH-02→FANTASY-HAND-03；已完成节点=[01,02]全ID合规；任务追踪+1(主线·幻想御手篇)；NPC关系+1(初春饰利) |
+| 4. 叙事锚定 | ✅ | 前4轮稳定停在FH-01不跳节；每轮≤1节点；无跨篇跳跃；世界书常驻层(导航/规则/协议)全在 |
+
+发现的小问题（不阻塞）：
+1. 节点ID简写：模型前两轮写 FH-01/FH-02（后自愈为全ID）——事件包节点表需强调"必须使用完整ID FANTASY-HAND-{NN}"，批量创作时写入统一契约。
+2. 下一步推进提示滞后（仍显示开局文案）——非关键字段，观察即可。
+3. 面板四卡不含主线进度展示——用户确认节点推进只能看变量；可选项：加第五张"主线"折叠卡。
+4. UpdateVariable 块被MVU应用后从消息文本剥离——用户不可见属正常，排障时需直接读楼层变量。
+
+附带修复记录：首次试点用改名卡（-试点）触发面板/状态栏身份白名单保护导致UI消失（非bug）；正式名重导后白名单通过、UI正常。
