@@ -324,6 +324,28 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/剧情事件/主线/主线事件·学习装置
+  - 名称: 主线事件·死灵术师
+    启用: true
+    激活策略:
+      类型: 绿灯
+      关键字:
+        - 死灵术师
+        - 艾丝特
+        - 罗森塔尔
+        - 禍斗
+        - 屍喰部隊
+        - 警备员之暗
+        - NECROMANCER
+        - 哥雷姆决战
+        - 一方通行·外传
+    插入位置:
+      类型: 角色定义之前
+      顺序: 14582
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/剧情事件/主线/主线事件·死灵术师
   - 名称: 主线事件·天使坠落
     启用: true
     激活策略:
@@ -413,6 +435,28 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/剧情事件/主线/主线事件·使徒十字
+  - 名称: 主线事件·暗部大战
+    启用: true
+    激活策略:
+      类型: 绿灯
+      关键字:
+        - 暗部大战
+        - Battle Royale
+        - 独立纪念日
+        - 垣根帝督
+        - 镊子失窃
+        - 滞空回线
+        - DARK-BATTLE
+        - 暗部抗争
+        - 暗部内战
+    插入位置:
+      类型: 角色定义之前
+      顺序: 14583
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/剧情事件/主线/主线事件·暗部大战
   - 名称: 主线事件·第三次世界大战
     启用: true
     激活策略:
@@ -1700,6 +1744,28 @@
         </div>
         </div>
         </div>
+        <div class="mw-event-group" data-event="死灵术师篇">
+        <button type="button" class="mw-event" data-act="event" data-event="死灵术师篇" aria-expanded="false">
+        <span class="mw-event-name">死灵术师篇</span>
+        <span class="mw-event-range">9月1日—9月8日</span>
+        <span class="mw-event-count">3</span>
+        <span class="mw-event-arrow" aria-hidden="true">▶</span>
+        </button>
+        <div class="mw-event-body">
+        <div class="mw-scene" data-act="scene" data-date="9月1日" data-tag="死灵术师篇" data-desc="医院走廊里，一个金发少女对病床上的白发少年脱口而出"师匠"——你撞见了这个不该存在的相遇。">
+        <div class="mw-scene-head"><span class="mw-scene-date">9月1日</span><span class="mw-scene-tag">死灵术师篇</span></div>
+        <div class="mw-scene-desc">医院走廊里，一个金发少女对病床上的白发少年脱口而出"师匠"——你撞见了这个不该存在的相遇。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月4日" data-tag="死灵术师篇" data-desc="披着警备员外皮的"正义"在夜间处刑。一个御坂妹失联了，黑色的狼形灵体在城市暗巷追踪着亡魂的味道。">
+        <div class="mw-scene-head"><span class="mw-scene-date">9月4日</span><span class="mw-scene-tag">死灵术师篇</span></div>
+        <div class="mw-scene-desc">披着警备员外皮的"正义"在夜间处刑。一个御坂妹失联了，黑色的狼形灵体在城市暗巷追踪着亡魂的味道。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="9月8日" data-tag="死灵术师篇" data-desc="罗森塔尔家400年的执念在棺中苏醒。善意的背叛走到了终点——这一次，谁能把"想救人的人"从悲剧里拉出来？">
+        <div class="mw-scene-head"><span class="mw-scene-date">9月8日</span><span class="mw-scene-tag">死灵术师篇</span></div>
+        <div class="mw-scene-desc">罗森塔尔家400年的执念在棺中苏醒。善意的背叛走到了终点——这一次，谁能把"想救人的人"从悲剧里拉出来？</div>
+        </div>
+        </div>
+        </div>
         <div class="mw-event-group" data-event="雪莉袭击篇">
         <button type="button" class="mw-event" data-act="event" data-event="雪莉袭击篇" aria-expanded="false">
         <span class="mw-event-name">雪莉袭击篇</span>
@@ -1871,6 +1937,28 @@
         <div class="mw-scene" data-act="scene" data-date="10月18日" data-tag="不列颠万圣节篇" data-desc="英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王&quot;联合的意义&quot;之力破坏卡提纳一世，一举击溃凯莉莎。">
         <div class="mw-scene-head"><span class="mw-scene-date">10月18日</span><span class="mw-scene-tag">不列颠万圣节篇</span></div>
         <div class="mw-scene-desc">英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王&quot;联合的意义&quot;之力破坏卡提纳一世，一举击溃凯莉莎。</div>
+        </div>
+        </div>
+        </div>
+        <div class="mw-event-group" data-event="暗部大战篇">
+        <button type="button" class="mw-event" data-act="event" data-event="暗部大战篇" aria-expanded="false">
+        <span class="mw-event-name">暗部大战篇</span>
+        <span class="mw-event-range">10月9日—10月12日</span>
+        <span class="mw-event-count">3</span>
+        <span class="mw-event-arrow" aria-hidden="true">▶</span>
+        </button>
+        <div class="mw-event-body">
+        <div class="mw-scene" data-act="scene" data-date="10月9日" data-tag="暗部大战篇" data-desc="独立纪念日。一纸"抹杀垣根帝督"的召集令送到每只暗手——学园都市最深的黑暗在同一日互相开火。">
+        <div class="mw-scene-head"><span class="mw-scene-date">10月9日</span><span class="mw-scene-tag">暗部大战篇</span></div>
+        <div class="mw-scene-desc">独立纪念日。一纸"抹杀垣根帝督"的召集令送到每只暗手——学园都市最深的黑暗在同一日互相开火。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月10日" data-tag="暗部大战篇" data-desc="卫星失明，佣兵叩城，"没有窗户的大楼"成了靶心。齿轮们在这一天回答同一个问题：为谁而战？">
+        <div class="mw-scene-head"><span class="mw-scene-date">10月10日</span><span class="mw-scene-tag">暗部大战篇</span></div>
+        <div class="mw-scene-desc">卫星失明，佣兵叩城，"没有窗户的大楼"成了靶心。齿轮们在这一天回答同一个问题：为谁而战？</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="10月12日" data-tag="暗部大战篇" data-desc="硝烟散去，四大组织的名字成了历史。幸存者拒绝再做任何人的棋子——而你的名字，被他们记住了。">
+        <div class="mw-scene-head"><span class="mw-scene-date">10月12日</span><span class="mw-scene-tag">暗部大战篇</span></div>
+        <div class="mw-scene-desc">硝烟散去，四大组织的名字成了历史。幸存者拒绝再做任何人的棋子——而你的名字，被他们记住了。</div>
         </div>
         </div>
         </div>
