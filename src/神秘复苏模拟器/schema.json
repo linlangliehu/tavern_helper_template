@@ -540,13 +540,9 @@
               },
               "剩余次数": {
                 "default": "未知",
-                "anyOf": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
+                "type": [
+                  "number",
+                  "string"
                 ]
               },
               "效果": {
