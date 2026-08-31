@@ -18,3 +18,5 @@
 - 阶段5 ✅ 违禁词扫描清洁（反噬/风险/失败收场均为"无X"否定式，与卡面铁律一致）；check-mjr-yaml YAML_OK（YAML_ERR 为基线复现的历史遗留，与本次无关）；js-yaml 结构校验：37条目、2新包位置/关键字/文件对齐
 - 阶段6 ✅ tavern_sync bundle → PNG 1443KB（+102KB）；tEXt 特征串校验 chara/ccv3 双chunk 8/8（两新包全文/春上衿衣/操齿凉子/木原幻生/loader sha/pGender/mw-event-group）
 - 待办：推送→bot→确认 loader sha 是否需更新→如需则改 sha 重打包二次提交
+- 收尾 ✅ 提交 878e9df5 推送成功；bot c92851dd 仅重建 dist 构建戳（commit/builtAt），脚本代码零变化 → loader @77c03a4c03 与线上等价，无需改 sha 重导
+- 最终产物：远程 main = c92851dd；PNG 1443KB 已随 878e9df5 推送；用户直接重导入 PNG 即生效
