@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 .vscode/chrome-debug-profile/
 
@@ -76,3 +77,5 @@ current-vscode-browser.png
 # pi 本地会话状态
 .pi/
 .mfrs-img-work/
+=======
+>>>>>>> 457044c57ea6141e665c88603ea84d7542da64a4
