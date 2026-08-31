@@ -970,6 +970,46 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             </div>
           </div>
         </div>
+        <div class="mw-event-group" data-event="越狱篇">
+          <button type="button" class="mw-event" data-act="event" data-event="越狱篇" aria-expanded="false">
+            <span class="mw-event-name">越狱篇</span>
+            <span class="mw-event-range">10月10日-15日</span>
+            <span class="mw-event-count">3</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="10月10日" data-tag="越狱篇" data-desc="第二少年院开幕，'脱狱试用赛'悬赏十亿日元。AIM干扰器、最新锐防卫系统——以及一场把整个比赛变成圈套的真脱狱。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月10日</span><span class="mw-scene-tag">越狱篇</span></div>
+              <div class="mw-scene-desc">第二少年院开幕，'脱狱试用赛'悬赏十亿日元。AIM干扰器、最新锐防卫系统——以及一场把整个比赛变成圈套的真脱狱。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月12日" data-tag="越狱篇" data-desc="宿着'龙王之颚'天使型龙的Level 0女囚春暖嬉美，挟持初春饰利，要把学园都市最高机密'能力开发技术'公开给全世界。佐天泪子挺身挡下了龙之翼。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月12日</span><span class="mw-scene-tag">越狱篇</span></div>
+              <div class="mw-scene-desc">宿着'龙王之颚'天使型龙的Level 0女囚春暖嬉美，挟持初春饰利，要把学园都市最高机密'能力开发技术'公开给全世界。佐天泪子挺身挡下了龙之翼。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月14日" data-tag="越狱篇" data-desc="绝境中，初春饰利掌握了AIM干扰器，把自身的AIM扩散力场握在手中——平凡的黑客少女，现场编出了'打消龙之力'的能力。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月14日</span><span class="mw-scene-tag">越狱篇</span></div>
+              <div class="mw-scene-desc">绝境中，初春饰利掌握了AIM干扰器，把自身的AIM扩散力场握在手中——平凡的黑客少女，现场编出了'打消龙之力'的能力。</div>
+            </div>
+          </div>
+        </div>
+        <div class="mw-event-group" data-event="幽幻姐妹支线">
+          <button type="button" class="mw-event" data-act="event" data-event="幽幻姐妹支线" aria-expanded="false">
+            <span class="mw-event-name">幽幻姐妹支线</span>
+            <span class="mw-event-range">9月22日-10月6日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月22日" data-tag="幽幻姐妹支线" data-desc="常盘台中学'幽灵骚动'：食蜂派阀No.2帆风润子被一位失忆的幽灵少女缠上了。追查的尽头，是才人工房第三研究室'内部进化'的旧伤。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月22日</span><span class="mw-scene-tag">幽幻姐妹支线</span></div>
+              <div class="mw-scene-desc">常盘台中学'幽灵骚动'：食蜂派阀No.2帆风润子被一位失忆的幽灵少女缠上了。追查的尽头，是才人工房第三研究室'内部进化'的旧伤。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月3日" data-tag="幽幻姐妹支线" data-desc="第七位·削板军霸乱入挑战，真黑幕蜜蚁爱愉的'重做实验救回孩子们'浮出水面。幽灵少女悠里千夜与研究员远峰叶理的'最后的约定'，等待一个应答。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月3日</span><span class="mw-scene-tag">幽幻姐妹支线</span></div>
+              <div class="mw-scene-desc">第七位·削板军霸乱入挑战，真黑幕蜜蚁爱愉的'重做实验救回孩子们'浮出水面。幽灵少女悠里千夜与研究员远峰叶理的'最后的约定'，等待一个应答。</div>
+            </div>
+          </div>
+        </div>
         <div class="mw-event-group" data-event="新约开始·WWIII">
           <button type="button" class="mw-event" data-act="event" data-event="新约开始·WWIII" aria-expanded="false">
             <span class="mw-event-name">新约开始·WWIII</span>
@@ -1052,17 +1092,25 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             </div>
           </div>
         </div>
-        <div class="mw-event-group" data-event="心理掌握篇">
-          <button type="button" class="mw-event" data-act="event" data-event="心理掌握篇" aria-expanded="false">
-            <span class="mw-event-name">心理掌握篇</span>
-            <span class="mw-event-range">11月26日</span>
-            <span class="mw-event-count">1</span>
+        <div class="mw-event-group" data-event="蜜蚁爱愉篇">
+          <button type="button" class="mw-event" data-act="event" data-event="蜜蚁爱愉篇" aria-expanded="false">
+            <span class="mw-event-name">蜜蚁爱愉篇</span>
+            <span class="mw-event-range">12月1日-7日</span>
+            <span class="mw-event-count">3</span>
             <span class="mw-event-arrow" aria-hidden="true">▶</span>
           </button>
           <div class="mw-event-body">
-            <div class="mw-scene" data-act="scene" data-date="11月26日" data-tag="心理掌握篇" data-desc="食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。">
-              <div class="mw-scene-head"><span class="mw-scene-date">11月26日</span><span class="mw-scene-tag">心理掌握篇</span></div>
-              <div class="mw-scene-desc">食蜂操祈的记忆出现异变，21学区人工湖测得大规模脑力扰动，FIVE_Over的炮火照亮夜空。</div>
+            <div class="mw-scene" data-act="scene" data-date="12月1日" data-tag="蜜蚁爱愉篇" data-desc="食蜂操祈的记忆出现异变，派阀内流言四起。被《资质排行》砍掉的'另一名女王候补'蜜蚁爱愉，带着Five_Over OS回来了。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月1日</span><span class="mw-scene-tag">蜜蚁爱愉篇</span></div>
+              <div class="mw-scene-desc">食蜂操祈的记忆出现异变，派阀内流言四起。被《资质排行》砍掉的'另一名女王候补'蜜蚁爱愉，带着Five_Over OS回来了。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="12月3日" data-tag="蜜蚁爱愉篇" data-desc="三秒。精神系最强的'心理掌握'被同源的'心理穿孔'击沉。女王坠入'我的记忆是否为伪造'的地狱——而真相，是一段三天之差的残酷错过。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月3日</span><span class="mw-scene-tag">蜜蚁爱愉篇</span></div>
+              <div class="mw-scene-desc">三秒。精神系最强的'心理掌握'被同源的'心理穿孔'击沉。女王坠入'我的记忆是否为伪造'的地狱——而真相，是一段三天之差的残酷错过。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="12月5日" data-tag="蜜蚁爱愉篇" data-desc="幻想杀手照亮对峙的终点。'我不是来救食蜂的，我是来救你的。'——被系统判定为'多余'的少女，等待一个迟到了太久的回答。">
+              <div class="mw-scene-head"><span class="mw-scene-date">12月5日</span><span class="mw-scene-tag">蜜蚁爱愉篇</span></div>
+              <div class="mw-scene-desc">幻想杀手照亮对峙的终点。'我不是来救食蜂的，我是来救你的。'——被系统判定为'多余'的少女，等待一个迟到了太久的回答。</div>
             </div>
           </div>
         </div>
