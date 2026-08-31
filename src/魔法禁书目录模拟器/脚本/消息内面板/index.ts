@@ -435,11 +435,13 @@ function renderPlaceholders(mesElement: Element, data: StatusData): void {
 function renderDefaultStack(mesElement: Element, data: StatusData): void {
   const mesText = mesElement.querySelector('.mes_text');
   if (!mesText) return;
-  if (mesText.querySelector('.mfrs-mp-card')) return; // 已有卡片
-  const panelId = getPanelId(mesElement.getAttribute('mesid') || '');
+  // 卡片存在性检查只保护「[[MFrsStatus]] 占位符渲染」的卡片——它们由 renderPlaceholders 单独管理，
+  // 不能在这里被 renderDefaultStack 覆盖。「本函数自己挂过的默认堆栈」绝不能用这个理由短路：
+  // renderKey 变了就必须重染，否则守卫晚写的数据会被永久冻结（开局第一轮卡片不更新的根因）。
+  const existing = mesElement.querySelector(`.mfrs-mp-stack`);
+  if (!existing && mesText.querySelector('.mfrs-mp-card')) return;
   const renderKey = getPanelRenderKey(data);
   // 已渲染过相同 key 则跳过
-  const existing = mesElement.querySelector(`.mfrs-mp-stack`);
   if (existing && existing.getAttribute('data-mfrs-render-key') === renderKey) return;
   existing?.remove();
   const stack = doc.createElement('div');
@@ -462,8 +464,10 @@ function processOneMessage(messageId: number | string): void {
   if (!mes || isUserMessage(mes)) return;
   const data = readStatusForMessage(mes);
   renderPlaceholders(mes, data);
-  // 最新消息补默认堆栈（仅在无占位符时）
-  if (mes.classList.contains('last_mes')) renderDefaultStack(mes, data);
+  // 所有 AI 楼层都维护默认堆栈（renderKey 幂等去重；只在占位符卡片缺失时补挂）。
+  // 旧楼层可能在逐条渲染/游弋数据未就绪时被挂上默认值堆栈，之后没有任何事件再触碰它们，
+  // 只刷 last_mes 会让旧楼层永远停格——这正是开局第一轮卡片不更新的根因。
+  renderDefaultStack(mes, data);
 }
 
 function processAllMessages(): void {
@@ -472,7 +476,7 @@ function processAllMessages(): void {
     if (isUserMessage(mes)) return;
     const data = readStatusForMessage(mes);
     renderPlaceholders(mes, data);
-    if (mes.classList.contains('last_mes')) renderDefaultStack(mes, data);
+    renderDefaultStack(mes, data);
   });
 }
 
@@ -487,6 +491,19 @@ function scheduleBurstRefresh(): void {
   }, 120);
 }
 
+/* 生成结束后的延迟刷新：界面美化的基线守卫在 GENERATION_ENDED 后按 400/1600/3600ms 错峰写数据，
+   变量结构的写后复核约 4000/9000/15000ms——120ms 防抖必然落在写入之前，故在每次写入拍点后再刷一轮。
+   刷新由 renderKey 幂等去重，数据未变时零成本。 */
+let lateBurstTimers: number[] = [];
+const LATE_BURST_DELAYS = [600, 1900, 4000, 9500, 16500];
+function scheduleLateBursts(): void {
+  lateBurstTimers.forEach(t => hostWindow.clearTimeout(t));
+  lateBurstTimers = LATE_BURST_DELAYS.map(delay =>
+    hostWindow.setTimeout(() => {
+      if (!disposed) processAllMessages();
+    }, delay),
+  );
+}
 function mutationTouchesChatMessage(mutation: MutationRecord): boolean {
   return mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0;
 }
@@ -602,12 +619,16 @@ function activateRuntime(): void {
   observer.observe(observedChat, { childList: true, subtree: true });
   processAllMessages();
   runtimeActive = true;
+  // 治愈历史楼层面板陈旧（如基线守卫晚于面板渲染导致的默认外观）：激活后错峰重读一次数据
+  scheduleLateBursts();
 }
 
 function deactivateRuntime(): void {
   runtimeActive = false;
   observer?.disconnect();
   unsubscribeEvents();
+  lateBurstTimers.forEach(t => hostWindow.clearTimeout(t));
+  lateBurstTimers = [];
   style.remove();
   if (hostWindow.MagicIndexMessagePanel) delete hostWindow.MagicIndexMessagePanel;
 }
@@ -623,8 +644,26 @@ function subscribeEvents(): void {
     tavern_events?.GENERATION_STOPPED,
   ].filter(Boolean) as string[];
   events.forEach(name => {
-    subscriptions.push(eventOn(name, scheduleBurstRefresh));
+    // GENERATION_ENDED 后守卫/复核才会写入数据：除即时刷新外追加错峰延迟刷新
+    if (tavern_events?.GENERATION_ENDED && name === tavern_events.GENERATION_ENDED) {
+      subscriptions.push(
+        eventOn(name, () => {
+          scheduleBurstRefresh();
+          scheduleLateBursts();
+        }),
+      );
+    } else {
+      subscriptions.push(eventOn(name, scheduleBurstRefresh));
+    }
   });
+  // MagVar(MVU) 数据事件：走 MVU 管道的变量写入完成时即时刷新（事件驱动路径）。
+  // 注意：界面美化的基线守卫用 TavernHelper 直写变量、不经过 MVU 管道，不会触发该事件——
+  // 那一支仍由 GENERATION_ENDED 错峰延迟刷新兜住，两者互补。
+  try {
+    subscriptions.push(eventOn('mag_variable_update_ended' as never, scheduleBurstRefresh));
+  } catch {
+    // 旧版 TH/MVU 无此事件时静默降级为纯定时刷新
+  }
 }
 
 function unsubscribeEvents(): void {
