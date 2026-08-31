@@ -285,6 +285,28 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/剧情事件/主线/主线事件·绝对能力者进化
+  - 名称: 主线事件·静默派对
+    启用: true
+    激活策略:
+      类型: 绿灯
+      关键字:
+        - 静默派对
+        - Silent Party
+        - 革命未明
+        - STUDY
+        - 科学结社
+        - 驱动铠
+        - 菲布莉
+        - 凯米卡罗伊德
+        - SILENT-PARTY
+    插入位置:
+      类型: 角色定义之前
+      顺序: 14584
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/剧情事件/主线/主线事件·静默派对
   - 名称: 主线事件·学习装置
     启用: true
     激活策略:
@@ -1635,6 +1657,28 @@
         <div class="mw-scene" data-act="scene" data-date="8月21日" data-tag="妹妹篇·绝对能力进化" data-desc="废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。">
         <div class="mw-scene-head"><span class="mw-scene-date">8月21日</span><span class="mw-scene-tag">妹妹篇·绝对能力进化</span></div>
         <div class="mw-scene-desc">废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。</div>
+        </div>
+        </div>
+        </div>
+        <div class="mw-event-group" data-event="静默派对篇">
+        <button type="button" class="mw-event" data-act="event" data-event="静默派对篇" aria-expanded="false">
+        <span class="mw-event-name">静默派对篇</span>
+        <span class="mw-event-range">8月22日—8月27日</span>
+        <span class="mw-event-count">3</span>
+        <span class="mw-event-arrow" aria-hidden="true">▶</span>
+        </button>
+        <div class="mw-event-body">
+        <div class="mw-scene" data-act="scene" data-date="8月22日" data-tag="静默派对篇" data-desc="水上乐园的爆炸骚动里，无人兵器在众目睽睽之下启动——暑假最后的狂欢，你却嗅到了铁锈味。">
+        <div class="mw-scene-head"><span class="mw-scene-date">8月22日</span><span class="mw-scene-tag">静默派对篇</span></div>
+        <div class="mw-scene-desc">水上乐园的爆炸骚动里，无人兵器在众目睽睽之下启动——暑假最后的狂欢，你却嗅到了铁锈味。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月24日" data-tag="静默派对篇" data-desc="一个绿发少女闯入你的视线，她说自己只剩72小时。她的名字叫菲布莉——一个"人工生命体"。">
+        <div class="mw-scene-head"><span class="mw-scene-date">8月24日</span><span class="mw-scene-tag">静默派对篇</span></div>
+        <div class="mw-scene-desc">一个绿发少女闯入你的视线，她说自己只剩72小时。她的名字叫菲布莉——一个"人工生命体"。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="8月27日" data-tag="静默派对篇" data-desc="学究会开幕。两万驱动铠在各会场同时立起，一场名为"革命"的公开实验就此开始——而你恰好站在起点。">
+        <div class="mw-scene-head"><span class="mw-scene-date">8月27日</span><span class="mw-scene-tag">静默派对篇</span></div>
+        <div class="mw-scene-desc">学究会开幕。两万驱动铠在各会场同时立起，一场名为"革命"的公开实验就此开始——而你恰好站在起点。</div>
         </div>
         </div>
         </div>

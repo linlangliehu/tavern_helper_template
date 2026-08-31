@@ -712,6 +712,28 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             </div>
           </div>
         </div>
+        <div class="mw-event-group" data-event="静默派对篇">
+          <button type="button" class="mw-event" data-act="event" data-event="静默派对篇" aria-expanded="false">
+            <span class="mw-event-name">静默派对篇</span>
+            <span class="mw-event-range">8月22日—8月27日</span>
+            <span class="mw-event-count">3</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="8月22日" data-tag="静默派对篇" data-desc="水上乐园的爆炸骚动里，无人兵器在众目睽睽之下启动——暑假最后的狂欢，你却嗅到了铁锈味。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月22日</span><span class="mw-scene-tag">静默派对篇</span></div>
+              <div class="mw-scene-desc">水上乐园的爆炸骚动里，无人兵器在众目睽睽之下启动——暑假最后的狂欢，你却嗅到了铁锈味。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月24日" data-tag="静默派对篇" data-desc="一个绿发少女闯入你的视线，她说自己只剩72小时。她的名字叫菲布莉——一个"人工生命体"。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月24日</span><span class="mw-scene-tag">静默派对篇</span></div>
+              <div class="mw-scene-desc">一个绿发少女闯入你的视线，她说自己只剩72小时。她的名字叫菲布莉——一个"人工生命体"。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月27日" data-tag="静默派对篇" data-desc="学究会开幕。两万驱动铠在各会场同时立起，一场名为"革命"的公开实验就此开始——而你恰好站在起点。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月27日</span><span class="mw-scene-tag">静默派对篇</span></div>
+              <div class="mw-scene-desc">学究会开幕。两万驱动铠在各会场同时立起，一场名为"革命"的公开实验就此开始——而你恰好站在起点。</div>
+            </div>
+          </div>
+        </div>
         <div class="mw-event-group" data-event="天使坠落篇">
           <button type="button" class="mw-event" data-act="event" data-event="天使坠落篇" aria-expanded="false">
             <span class="mw-event-name">天使坠落篇</span>
