@@ -18,6 +18,8 @@ type MfrsTHLike = {
     options?: Record<string, unknown>,
   ) => Promise<unknown> | unknown;
   getChatMessages?: (id: number | string, options?: Record<string, unknown>) => Promise<unknown> | unknown;
+  // 直接调用模型生成独立文本（静默、不进聊天、不走角色预设），用于开局能力效果 AI 补全
+  generateRaw?: (config: Record<string, unknown>) => Promise<string>;
 };
 
 declare const eventOn: undefined | ((event: string, handler: (...args: unknown[]) => void) => void);
@@ -81,6 +83,75 @@ async function mfrsGetLastChatMessage(): Promise<MfrsChatMessageLike | undefined
   const raw = await th.getChatMessages(-1);
   const last = Array.isArray(raw) ? raw[0] : raw;
   return last as MfrsChatMessageLike | undefined;
+}
+
+/** 开局表单未填能力效果时，调用模型生成「能力效果 + 实战运用」实质内容。
+ *  关键设计：不依赖主流程模型输出 <UpdateVariable>（实测为不可靠路径，首轮往往整块缺失），
+ *  这一阶段改为在玩家点击「生成开局配置」时主动调一次 generateRaw，本轮对话开始前就有内容。
+ */
+async function mfrsSynthAbilityByAi(input: {
+  side: string;
+  name: string;
+  gender: string;
+  age: string;
+  pers: string;
+  supp: string;
+  sceneText: string;
+  abilityName: string;
+  level: string;
+  orgLabel: string;
+}): Promise<{ 能力效果: string; 实战运用: string } | null> {
+  const th = mfrsGetTH();
+  const gen = th?.generateRaw?.bind(th);
+  if (!gen) return null;
+  const sideDesc =
+    input.side === 'science'
+      ? '「科学侧·超能力」：以 AIM 扩散力场与个人现实为根基'
+      : '「魔法侧·术式」：以魔力与偶像崇拜理论驱动';
+  const systemPrompt = [
+    '你是《魔法禁书目录》世界观的能力档案撰稿人。',
+    `体系：${sideDesc}。`,
+    '任务：根据玩家开局信息，为其能力撰写档案描述。',
+    '严格只输出一行 JSON 对象（不得输出任何其他字符、标签或解释）：',
+    '{"能力效果":"30~60 字：能力的原理与表现形式，要具体、有画面感","实战运用":"30~60 字：该能力在战斗与日常中的典型用法"}',
+    "要求：贴合能力名与等级；Level 5 可写出学园都市顶尖水准的表现力；严禁出现「依设定与剧情判定」「随剧情展开」等占位句。",
+  ].join('\n');
+  const userPrompt = [
+    `姓名：${input.name}（${input.gender}，${input.age}）`,
+    input.pers && input.pers !== '未设定' ? `性格：${input.pers}` : '',
+    input.supp ? `补充设定：${input.supp}` : '',
+    `能力：${input.abilityName}（${input.level}）`,
+    input.orgLabel ? `所属：${input.orgLabel}` : '',
+    `开场白：${input.sceneText}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  try {
+    const task = gen({
+      ordered_prompts: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      should_silence: true,
+      should_stream: false,
+      max_chat_history: 0,
+    }) as Promise<string>;
+    const result = await Promise.race([task, new Promise<null>(resolve => setTimeout(() => resolve(null), 25000))]);
+    if (typeof result !== 'string' || !result) return null;
+    const m = result.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    const parsed = JSON.parse(m[0]) as { 能力效果?: unknown; 实战运用?: unknown };
+    const effect = typeof parsed.能力效果 === 'string' ? parsed.能力效果.trim() : '';
+    const combat = typeof parsed.实战运用 === 'string' ? parsed.实战运用.trim() : '';
+    if (!effect || effect === '依设定与剧情判定') return null;
+    return {
+      能力效果: effect.slice(0, 200),
+      实战运用:
+        combat && combat !== '随剧情展开；战斗与日常分别描述' ? combat.slice(0, 200) : '随剧情展开；战斗与日常分别描述',
+    };
+  } catch {
+    return null;
+  }
 }
 
 // 字段级守卫：只填空字段，绝不覆盖模型已写入的非空值。
@@ -1306,7 +1377,7 @@ $(() => {
     mfrsWelcomeEventBadges(root); // 选中变化后刷新事件折叠徽章
   };
 
-  const handleMfrsWelcomeDataAct = (root: HTMLElement, target: HTMLElement, event: Event) => {
+  const handleMfrsWelcomeDataAct = async (root: HTMLElement, target: HTMLElement, event: Event) => {
     const q = (s: string) => root.querySelector<HTMLElement>(s);
     const qa = (s: string) => Array.from(root.querySelectorAll<HTMLElement>(s));
     const D = target.dataset;
@@ -1531,6 +1602,37 @@ $(() => {
             },
           ],
         };
+        // 能力效果未手工填写 → 当场用 AI 生成实质内容（不要靠"模型后续自觉输出 UpdateVariable"这条不可靠路径）
+        {
+          const userEffect = ((isScienceSide ? abilityD : magicD) || '').trim();
+          if (!userEffect) {
+            const genBtn = q('#btnGenerate') as HTMLButtonElement | null;
+            mfrsWelcomeToast(root, '能力效果未填写，AI 正在生成具体描述（最多约 25 秒）…', 2);
+            if (genBtn) genBtn.disabled = true;
+            const synth = await mfrsSynthAbilityByAi({
+              side: side ?? '',
+              name,
+              gender,
+              age,
+              pers,
+              supp,
+              sceneText,
+              abilityName: (isScienceSide ? ability : magic) || '未觉醒',
+              level: (isScienceSide ? level : realm) || '未指定',
+              orgLabel: isScienceSide ? school : org,
+            });
+            if (genBtn) genBtn.disabled = false;
+            mfrsWelcomeRefresh(root);
+            const entry0 = ((mfrsBaseline as Record<string, unknown>)['能力档案'] as Array<Record<string, unknown>>)[0];
+            if (synth && entry0) {
+              entry0['能力效果'] = synth.能力效果;
+              entry0['实战运用'] = synth.实战运用;
+              mfrsWelcomeToast(root, '能力效果已由 AI 生成 ✓', 2);
+            } else {
+              mfrsWelcomeToast(root, 'AI 生成失败或超时，已保留占位符，后续剧情中可由 AI 补写', 1);
+            }
+          }
+        }
         (root as HTMLElement & { _pendingCfg?: string; _pendingBaseline?: Record<string, unknown> })._pendingBaseline =
           mfrsBaseline;
         (root as HTMLElement & { _pendingCfg?: string })._pendingCfg = cfg;
