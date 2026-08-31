@@ -15,7 +15,9 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}
-
+  # 连续快速 push 会并发触发多次 bundle，旧运行基于旧 head 推 bot commit 会 non-fast-forward 失败；
+  # dist 只依赖最新 src，取消旧的排队/进行中运行零损失，且构建结果永远对齐最新提交。
+  cancel-in-progress: true
 jobs:
   bundle:
     runs-on: ubuntu-latest
