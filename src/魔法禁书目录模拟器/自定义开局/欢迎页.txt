@@ -664,6 +664,28 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             </div>
           </div>
         </div>
+        <div class="mw-event-group" data-event="乱雑開放篇">
+          <button type="button" class="mw-event" data-act="event" data-event="乱雑開放篇" aria-expanded="false">
+            <span class="mw-event-name">乱雑開放篇</span>
+            <span class="mw-event-range">8月2日—8月10日</span>
+            <span class="mw-event-count">3</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="8月2日" data-tag="乱雑開放篇" data-desc="暑假的街头接连出现能力失控的目击报告——不使用能力却引发现象的"灵现象"，成了都市传说的新宠。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月2日</span><span class="mw-scene-tag">乱雑開放篇</span></div>
+              <div class="mw-scene-desc">暑假的街头接连出现能力失控的目击报告——不使用能力却引发现象的"灵现象"，成了都市传说的新宠。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月6日" data-tag="乱雑開放篇" data-desc="初春饰利的新室友春上衿衣在公园里寻找儿时的同伴，你注意到她身边的幼童身上，有与暴走现场相同的装置残片。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月6日</span><span class="mw-scene-tag">乱雑開放篇</span></div>
+              <div class="mw-scene-desc">初春饰利的新室友春上衿衣在公园里寻找儿时的同伴，你注意到她身边的幼童身上，有与暴走现场相同的装置残片。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="8月10日" data-tag="乱雑開放篇" data-desc="全城能力抑制装置启动的传闻四起，地下的阴谋浮出水面。传说这一夜，灵现象将达到顶点。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月10日</span><span class="mw-scene-tag">乱雑開放篇</span></div>
+              <div class="mw-scene-desc">全城能力抑制装置启动的传闻四起，地下的阴谋浮出水面。传说这一夜，灵现象将达到顶点。</div>
+            </div>
+          </div>
+        </div>
         <div class="mw-event-group" data-event="妹妹篇·绝对能力进化">
           <button type="button" class="mw-event" data-act="event" data-event="妹妹篇·绝对能力进化" aria-expanded="false">
             <span class="mw-event-name">妹妹篇·绝对能力进化</span>
@@ -793,6 +815,28 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             <div class="mw-scene" data-act="scene" data-date="9月20日" data-tag="大霸星祭篇" data-desc="祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。">
               <div class="mw-scene-head"><span class="mw-scene-date">9月20日</span><span class="mw-scene-tag">大霸星祭篇</span></div>
               <div class="mw-scene-desc">祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。</div>
+            </div>
+          </div>
+        </div>
+        <div class="mw-event-group" data-event="天赋梦路篇">
+          <button type="button" class="mw-event" data-act="event" data-event="天赋梦路篇" aria-expanded="false">
+            <span class="mw-event-name">天赋梦路篇</span>
+            <span class="mw-event-range">9月22日—9月28日</span>
+            <span class="mw-event-count">3</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="9月22日" data-tag="天赋梦路篇" data-desc="祭典的余热未散，一种名为"印第安扑克"的卡牌在学生间流传——据说抽一张卡，就能做别人的梦。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月22日</span><span class="mw-scene-tag">天赋梦路篇</span></div>
+              <div class="mw-scene-desc">祭典的余热未散，一种名为"印第安扑克"的卡牌在学生间流传——据说抽一张卡，就能做别人的梦。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="9月26日" data-tag="天赋梦路篇" data-desc="S级卡"天赋梦路"在黑市喊出天价，持有者接连在梦中出事。有人用它学技能，有人用它做预演。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月26日</span><span class="mw-scene-tag">天赋梦路篇</span></div>
+              <div class="mw-scene-desc">S级卡"天赋梦路"在黑市喊出天价，持有者接连在梦中出事。有人用它学技能，有人用它做预演。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="9月28日" data-tag="天赋梦路篇" data-desc="大规模联机做梦的火种已被点燃，梦境与现实的边界开始渗漏。梦的尽头，是"制造灵魂"的实验。">
+              <div class="mw-scene-head"><span class="mw-scene-date">9月28日</span><span class="mw-scene-tag">天赋梦路篇</span></div>
+              <div class="mw-scene-desc">大规模联机做梦的火种已被点燃，梦境与现实的边界开始渗漏。梦的尽头，是"制造灵魂"的实验。</div>
             </div>
           </div>
         </div>
