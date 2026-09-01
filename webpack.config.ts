@@ -601,9 +601,14 @@ function parse_configuration(entry: Entry): (_env: any, argv: any) => webpack.Co
       const cdn = {
         sass: 'https://jspm.dev/sass',
       };
+      // zod 必须锁精确版本：jsdelivr /+esm 裸 zod 解析到 latest（4.5.x 构建），
+      // 其 shape 与酒馆助手内置 zod 跨实例 looseObject 重包装时会丢失 .default() 语义，
+      // 导致 MVU 开局初始化报 '期望 nonoptional，实际接收 undefined'（2026-09-01 事故）。
+      // 4.4.3 构建实测跨实例 looseObject 正常；升级 zod 时必须先在实机复测 mvu_zod 初始化链路。
+      const zodPin = request === 'zod' ? 'zod@4.4.3' : request;
       return callback(
         null,
-        'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${request}/+esm`),
+        'module-import ' + (cdn[request as keyof typeof cdn] ?? `https://testingcf.jsdelivr.net/npm/${zodPin}/+esm`),
       );
     },
   });
