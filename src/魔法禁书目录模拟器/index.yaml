@@ -184,6 +184,31 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/剧情事件/主线/主线事件·美琴过去
+  - 名称: 主线事件·美琴一年级篇
+    启用: true
+    激活策略:
+      类型: 绿灯
+      关键字:
+        - 美琴一年级
+        - 一年级篇
+        - 常盘台派阀抗争
+        - 三大派阀
+        - 永代姬君
+        - 沙淡扇
+        - 水镜凪纱
+        - 支仓冷理
+        - 琉璃学姐
+        - 洁斋雪紫
+        - 武林夜宵
+        - FIRST-YEAR
+    插入位置:
+      类型: 角色定义之前
+      顺序: 14597
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/剧情事件/主线/主线事件·美琴一年级篇
   - 名称: 主线事件·Skill-Out
     启用: true
     激活策略:
@@ -1621,6 +1646,24 @@
         <div class="mw-scene" data-act="scene" data-date="4月某日" data-tag="美琴过去篇" data-desc="白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。">
         <div class="mw-scene-head"><span class="mw-scene-date">4月某日</span><span class="mw-scene-tag">美琴过去篇</span></div>
         <div class="mw-scene-desc">白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。</div>
+        </div>
+        </div>
+        </div>
+        <div class="mw-event-group" data-event="美琴一年级篇">
+        <button type="button" class="mw-event" data-act="event" data-event="美琴一年级篇" aria-expanded="false">
+        <span class="mw-event-name">美琴一年级篇</span>
+        <span class="mw-event-range">一年级学年</span>
+        <span class="mw-event-count">2</span>
+        <span class="mw-event-arrow" aria-hidden="true">▶</span>
+        </button>
+        <div class="mw-event-body">
+        <div class="mw-scene" data-act="scene" data-date="一年级·5月" data-tag="美琴一年级篇" data-desc="入学一个月的美琴被魔之自贩机吞掉一万日元；太妹装扮的琉璃学姐传授'自贩机踢'，初代室友洁斋雪紫开始说教——而常盘台三大派阀正为'永代姬君'之位暗流涌动。">
+        <div class="mw-scene-head"><span class="mw-scene-date">一年级·5月</span><span class="mw-scene-tag">美琴一年级篇</span></div>
+        <div class="mw-scene-desc">入学一个月的美琴被魔之自贩机吞掉一万日元；太妹装扮的琉璃学姐传授'自贩机踢'，初代室友洁斋雪紫开始说教——而常盘台三大派阀正为'永代姬君'之位暗流涌动。</div>
+        </div>
+        <div class="mw-scene" data-act="scene" data-date="一年级·次期新学期" data-tag="美琴一年级篇" data-desc="白井黑子等新生入学之际，'能力再现'连环事件震撼常盘台——保健室的女帝沙淡扇就任永代姬君，为亡姐复仇的常盘台歼灭计划浮出水面。">
+        <div class="mw-scene-head"><span class="mw-scene-date">一年级·次期新学期</span><span class="mw-scene-tag">美琴一年级篇</span></div>
+        <div class="mw-scene-desc">白井黑子等新生入学之际，'能力再现'连环事件震撼常盘台——保健室的女帝沙淡扇就任永代姬君，为亡姐复仇的常盘台歼灭计划浮出水面。</div>
         </div>
         </div>
         </div>

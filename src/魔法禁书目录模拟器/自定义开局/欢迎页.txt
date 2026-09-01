@@ -568,6 +568,24 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             </div>
           </div>
         </div>
+        <div class="mw-event-group" data-event="美琴一年级篇">
+          <button type="button" class="mw-event" data-act="event" data-event="美琴一年级篇" aria-expanded="false">
+            <span class="mw-event-name">美琴一年级篇</span>
+            <span class="mw-event-range">一年级学年</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="一年级·5月" data-tag="美琴一年级篇" data-desc="入学一个月的美琴被魔之自贩机吞掉一万日元；太妹装扮的琉璃学姐传授'自贩机踢'，初代室友洁斋雪紫开始说教——而常盘台三大派阀正为'永代姬君'之位暗流涌动。">
+              <div class="mw-scene-head"><span class="mw-scene-date">一年级·5月</span><span class="mw-scene-tag">美琴一年级篇</span></div>
+              <div class="mw-scene-desc">入学一个月的美琴被魔之自贩机吞掉一万日元；太妹装扮的琉璃学姐传授'自贩机踢'，初代室友洁斋雪紫开始说教——而常盘台三大派阀正为'永代姬君'之位暗流涌动。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="一年级·次期新学期" data-tag="美琴一年级篇" data-desc="白井黑子等新生入学之际，'能力再现'连环事件震撼常盘台——保健室的女帝沙淡扇就任永代姬君，为亡姐复仇的常盘台歼灭计划浮出水面。">
+              <div class="mw-scene-head"><span class="mw-scene-date">一年级·次期新学期</span><span class="mw-scene-tag">美琴一年级篇</span></div>
+              <div class="mw-scene-desc">白井黑子等新生入学之际，'能力再现'连环事件震撼常盘台——保健室的女帝沙淡扇就任永代姬君，为亡姐复仇的常盘台歼灭计划浮出水面。</div>
+            </div>
+          </div>
+        </div>
         <div class="mw-event-group" data-event="妹妹们篇（克隆前史）">
           <button type="button" class="mw-event" data-act="event" data-event="妹妹们篇（克隆前史）" aria-expanded="false">
             <span class="mw-event-name">妹妹们篇（克隆前史）</span>
