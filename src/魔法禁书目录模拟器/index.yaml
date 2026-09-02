@@ -76,6 +76,21 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/变量/initvar
+  - 名称: 预设兼容层
+    启用: true
+    # 选项系统唯一权威：规定 <choices> 块内容与槽位（hotfix-02）。UV 落位仍以【变量输出格式】为准，此处不复述。
+    激活策略:
+      类型: 蓝灯
+    插入位置:
+      类型: 指定深度
+      角色: 系统
+      深度: 0
+      顺序: 14601
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/世界设定/预设兼容层
   - 名称: 变量列表
     启用: true
     激活策略:
@@ -1095,10 +1110,12 @@
       仅格式显示: true
       仅格式提示词: false
   - id: 5f9cc7d0-ea26-49e0-96b0-b0c974541bf4
-    正则名称: '[隐藏]隐藏choices'
+    正则名称: '[显示]渲染剧情选项'
+    # hotfix-02：隐藏→标记渲染。仅格式显示层替换为隐藏原文容器，界面美化脚本读取 .mfrs-choices-src 按行构建按钮（text 仍在存储层，模型可见）
     启用: true
-    查找表达式: '<choices>[\s\S]*?<\/choices>'
-    替换为: ''
+    查找表达式: '/<choices>([\s\S]*?)<\/choices>/i'
+    替换为: |-
+        <div class="mfrs-choices"><div class="mfrs-choices-src" style="display:none">$1</div></div>
     来源:
       用户输入: true
       AI输出: true

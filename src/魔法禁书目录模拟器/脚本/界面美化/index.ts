@@ -20,6 +20,8 @@ type MfrsTHLike = {
   getChatMessages?: (id: number | string, options?: Record<string, unknown>) => Promise<unknown> | unknown;
   // 直接调用模型生成独立文本（静默、不进聊天、不走角色预设），用于开局能力效果 AI 补全
   generateRaw?: (config: Record<string, unknown>) => Promise<string>;
+  // 执行 STScript（TH 官方 API，签名见 JS-Slash-Runner 文档）：选项按钮点击后 /send+|/trigger 发送并触发生成
+  triggerSlash?: (command: string) => Promise<string>;
 };
 
 declare const eventOn: undefined | ((event: string, handler: (...args: unknown[]) => void) => void);
@@ -341,7 +343,10 @@ function mfrsInstallBaselineHooks(): void {
   ].filter((value): value is string => typeof value === 'string');
   ensureEvents.forEach(eventName => {
     try {
-      eventOn(eventName, () => mfrsEnsureWithRetry());
+      eventOn(eventName, () => {
+        mfrsEnsureWithRetry();
+        mfrsEnsureChoiceUi(); // hotfix-02：同事件链构建选项按钮（含消息渲染/更新/swipe/换档）
+      });
     } catch {
       /* noop */
     }
@@ -364,6 +369,122 @@ function getHostDocument() {
     return document;
   }
 }
+
+// ===== hotfix-02：剧情选项渲染与发送（预设兼容层 Gate 2）=====
+// 链路：AI 输出 <choices> 块 → [显示]渲染剧情选项 正则替换为隐藏原文容器 → 本脚本按行构建按钮 →
+// 点击按钮经 TH triggerSlash('/send "…" | /trigger') 以玩家身份发送并触发生成。
+// DOMPurify 约束（消息 HTML 过 MESSAGE_SANITIZE）：禁内联事件，按钮只用 class+textContent，
+// 选项长文本不进 data 属性（防转义/截断），点击时读 textContent。
+let mfrsChoiceUiInstalled = false;
+
+const MFRS_CHOICES_CSS = [
+  '.mfrs-choices { margin: 8px 0 4px; }',
+  '.mfrs-choices-row { display: flex; flex-direction: column; gap: 6px; }',
+  '.mfrs-choice-btn { appearance: none; text-align: left; cursor: pointer; padding: 8px 14px;',
+    'border-radius: 10px; border: 1px solid rgba(102, 204, 255, 0.35);',
+    'background: linear-gradient(135deg, rgba(18, 24, 66, 0.72), rgba(26, 26, 74, 0.72));',
+    'color: #e8f4ff; font-size: 0.95em; line-height: 1.5;',
+    'transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }',
+  '.mfrs-choice-btn:hover { border-color: #66ccff; color: #ffffff;',
+    'box-shadow: 0 0 10px rgba(102, 204, 255, 0.35); transform: translateY(-1px); }',
+  '.mfrs-choice-btn:active { border-color: #00ffaa; box-shadow: 0 0 8px rgba(0, 255, 170, 0.4); }',
+].join('\n');
+
+function mfrsInjectChoiceStyles(doc: Document): void {
+  if (doc.getElementById('mfrs-choices-style')) return;
+  const style = doc.createElement('style');
+  style.id = 'mfrs-choices-style';
+  style.textContent = MFRS_CHOICES_CSS;
+  doc.head?.appendChild(style);
+}
+
+function mfrsParseChoiceLines(raw: string): string[] {
+  return raw
+    .split(/\r?\n+/)
+    .map(line => line.replace(/^[-*]\s*/, '').replace(/^\(?[A-Ea-e][)）、.．]\s*/, '').trim())
+    .filter(line => line.length > 0)
+    .slice(0, 6);
+}
+
+function mfrsBuildChoiceButtons(): void {
+  let doc: Document | null = null;
+  try { doc = getHostDocument(); } catch { return; }
+  if (!doc?.body) return;
+  mfrsInjectChoiceStyles(doc);
+  doc.querySelectorAll('.mfrs-choices:not([data-mfrs-built])').forEach(node => {
+    const container = node as HTMLElement;
+    container.setAttribute('data-mfrs-built', '1'); // 幂等标记：swipe/编辑/重渲染不重复构建
+    const src = container.querySelector('.mfrs-choices-src');
+    if (!src) return;
+    const lines = mfrsParseChoiceLines(src.textContent ?? '');
+    if (!lines.length) {
+      container.remove(); // 空块直接清理，不留残壳
+      return;
+    }
+    const row = doc.createElement('div');
+    row.className = 'mfrs-choices-row';
+    lines.forEach(text => {
+      const btn = doc.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mfrs-choice-btn';
+      btn.textContent = text; // DOMPurify 约束：文本走 textContent，不走属性
+      row.appendChild(btn);
+    });
+    src.replaceWith(row);
+  });
+}
+
+function mfrsEscapeSTScript(text: string): string {
+  // STScript 引号包裹法：双引号/反斜杠转义，管道符由引号保护
+  return text.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function mfrsInstallChoiceDelegate(): void {
+  if (mfrsChoiceUiInstalled) return;
+  let doc: Document | null = null;
+  try { doc = getHostDocument(); } catch { return; }
+  if (!doc?.body) return;
+  doc.addEventListener(
+    'click',
+    event => {
+      const target = (event.target as Element | null)?.closest?.('.mfrs-choice-btn');
+      if (!target) return; // 非选项按钮立即返回，不干扰既有 handleWelcomeClick 等委托
+      event.preventDefault();
+      event.stopPropagation();
+      const text = (target as HTMLElement).textContent?.trim() ?? '';
+      if (!text) return;
+      const th = mfrsGetTH();
+      const slash = th?.triggerSlash?.bind(th);
+      if (!slash) {
+        // 环境不支持 triggerSlash：填入发送框人工接管（对齐 C10 失败降级原则）
+        const box = doc.querySelector('#send_textarea') as HTMLTextAreaElement | null;
+        if (box) {
+          box.value = text;
+          box.focus();
+        }
+        return;
+      }
+      try {
+        const result = slash('/send "' + mfrsEscapeSTScript(text) + '" | /trigger');
+        if (result && typeof (result as Promise<unknown>).catch === 'function') {
+          (result as Promise<unknown>).catch(() => {});
+        }
+      } catch {
+        /* noop */
+      }
+    },
+    true,
+  );
+  mfrsChoiceUiInstalled = true;
+}
+
+function mfrsEnsureChoiceUi(): void {
+  mfrsBuildChoiceButtons();
+  mfrsInstallChoiceDelegate();
+}
+setTimeout(() => {
+  mfrsEnsureChoiceUi(); // 启动时对已渲染楼层补一轮（事件只覆盖后续渲染）
+}, 800);
 
 type HostWindowWithThemeCleanup = Window & {
   __mfrsMjrThemeCleanup__?: () => void;
