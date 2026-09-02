@@ -346,6 +346,7 @@ function mfrsInstallBaselineHooks(): void {
       eventOn(eventName, () => {
         mfrsEnsureWithRetry();
         mfrsEnsureChoiceUi(); // hotfix-02：同事件链构建选项按钮（含消息渲染/更新/swipe/换档）
+        window.setTimeout(() => { void mfrsFixMissingChoices(); }, 800); // hotfix-02 Gate 3：错峰守卫（让位 UV applier/按钮构建）
       });
     } catch {
       /* noop */
@@ -403,6 +404,7 @@ function mfrsParseChoiceLines(raw: string): string[] {
     .split(/\r?\n+/)
     .map(line => line.replace(/^[-*]\s*/, '').replace(/^\(?[A-Ea-e][)）、.．]\s*/, '').trim())
     .filter(line => line.length > 0)
+    .map(line => (line.length > 100 ? line.slice(0, 100) : line)) // hotfix-02 v3.1：超长行截断，防异常生成撑爆版面（对齐 hotfix-01 .slice(0,200) 先例）
     .slice(0, 6);
 }
 
@@ -482,8 +484,119 @@ function mfrsEnsureChoiceUi(): void {
   mfrsBuildChoiceButtons();
   mfrsInstallChoiceDelegate();
 }
+// ===== hotfix-02 Gate 3：选项守卫（预设思维模板接管输出结构时的补生成） =====
+// 检测末楼显示层无 <choices>（无原生块也无已渲染按钮）时，用 generateRaw 静默补生成：
+// 只注入显示层（不写楼层存储文本，applier 已定稿原文不动）；结果缓存 message 级变量，
+// swipe/编辑/刷新后由缓存直接重建按钮（不重调、不耗额）；连续失败 3 次停手（读法 B：成功重置）。
+const MFRS_CHOICES_FIX_KEY = '__mfrs_choices_fix_fails';
+const MFRS_CHOICES_CACHE_KEY = '__mfrs_choices_fix';
+const MFRS_CHOICES_FIX_MAX = 3;
+let mfrsChoicesFixInFlight = false;
+
+function mfrsInjectChoicesContainer(floorNode: Element, block: string): void {
+  let doc: Document | null = null;
+  try { doc = getHostDocument(); } catch { return; }
+  const mesText = floorNode.querySelector('.mes_text');
+  if (!doc || !mesText) return;
+  const shell = doc.createElement('div');
+  shell.innerHTML = '<div class="mfrs-choices"><div class="mfrs-choices-src" style="display:none"></div></div>';
+  const wrap = shell.firstElementChild as HTMLElement | null;
+  if (!wrap) return;
+  (wrap.querySelector('.mfrs-choices-src') as HTMLElement).textContent = block; // 动态文本只走 textContent
+  mesText.appendChild(wrap);
+  mfrsEnsureChoiceUi(); // 守卫在渲染事件之后异步完成，事件链不会替它跑构建 → 手动调用
+}
+
+async function mfrsSynthChoicesByAi(contextText: string): Promise<string | null> {
+  const th = mfrsGetTH();
+  const gen = th?.generateRaw?.bind(th);
+  if (!gen) return null;
+  const systemPrompt = [
+    '你是《魔法禁书目录》跑团主持人助手，为剧情回复补充下一步行动选项。',
+    '严格只输出一个 <choices> 块（不得输出任何其他字符或标签），内含 3-5 行选项，每行一句玩家可立即执行的下一步行动（动作/对话/调查均可）。',
+    '选项须贴合当前场景与玩家已知信息；不替玩家决定情感与动机；不得引入数值判定、风险、失败收场机制。',
+  ].join('\n');
+  try {
+    const task = gen({
+      ordered_prompts: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: contextText },
+      ],
+      should_silence: true,
+      should_stream: false,
+      max_chat_history: 0,
+    }) as Promise<string>;
+    const result = await Promise.race([task, new Promise<null>(resolve => setTimeout(() => resolve(null), 25000))]);
+    if (typeof result !== 'string' || !result) return null;
+    const m = result.match(/<choices>[\s\S]*?<\/choices>/i);
+    return m ? m[0] : null;
+  } catch {
+    return null;
+  }
+}
+
+async function mfrsFixMissingChoices(): Promise<void> {
+  if (mfrsChoicesFixInFlight) return;
+  const th = mfrsGetTH();
+  if (!th?.getVariables || !th?.insertOrAssignVariables) return;
+  let doc: Document | null = null;
+  try { doc = getHostDocument(); } catch { return; }
+  if (!doc?.body) return;
+  try {
+    const last = await mfrsGetLastChatMessage();
+    if (!last || last.is_user || typeof last.message_id !== 'number' || last.message_id < 1) return;
+    const text = String(last.message ?? last.mes ?? '');
+    if (text.includes('sp_start')) return; // 开局首楼（sp_start 开局页）不触发守卫
+    const lastNode = doc.querySelector('.mes.last_mes[is_user="false"]');
+    if (!lastNode || lastNode.querySelector('.mfrs-choices')) return; // 幂等：已有原生块或已构建按钮
+    const swipeId = (last as { swipe_id?: number }).swipe_id;
+    // 缓存命中：message 级缓存直接重建（不重调 generateRaw、不耗失败额度）；swipe 变体不匹配则视为无缓存
+    const cachedRaw = await th.getVariables({ type: 'message', message_id: last.message_id });
+    const cached = cachedRaw?.[MFRS_CHOICES_CACHE_KEY];
+    if (typeof cached === 'string' && cached) {
+      try {
+        const parsed = JSON.parse(cached) as { s?: number; b?: string };
+        if (parsed && typeof parsed.b === 'string' && parsed.b.includes('<choices>') && (parsed.s ?? -1) === (swipeId ?? -1)) {
+          mfrsInjectChoicesContainer(lastNode, parsed.b);
+          return;
+        }
+      } catch { /* 缓存损坏 → 按无缓存处理 */ }
+    }
+    // 连续失败 3 次停手（读法 B：仅失败 +1，成功重置；AI 原生输出不经过这里、不耗额度）
+    const chatVars = await th.getVariables({ type: 'chat' });
+    const fails = typeof chatVars?.[MFRS_CHOICES_FIX_KEY] === 'number' ? (chatVars[MFRS_CHOICES_FIX_KEY] as number) : 0;
+    if (fails >= MFRS_CHOICES_FIX_MAX) return;
+    mfrsChoicesFixInFlight = true;
+    try {
+      const block = await mfrsSynthChoicesByAi(
+        ['当前场景（楼层末尾摘要）：', text.slice(-600), '', '请按系统指令只输出 <choices> 块。'].join('\n'),
+      );
+      if (!block) {
+        await th.insertOrAssignVariables({ [MFRS_CHOICES_FIX_KEY]: fails + 1 }, { type: 'chat' });
+        return;
+      }
+      await th.insertOrAssignVariables({ [MFRS_CHOICES_FIX_KEY]: 0 }, { type: 'chat' }); // 成功重置
+      await th.insertOrAssignVariables(
+        { [MFRS_CHOICES_CACHE_KEY]: JSON.stringify({ s: swipeId ?? -1, b: block }) },
+        { type: 'message', message_id: last.message_id },
+      );
+      // 二次校验：重读末楼，仍是同一楼层且仍无 choices（防 swipe/换档错位）才注入
+      const recheck = await mfrsGetLastChatMessage();
+      if (!recheck || recheck.message_id !== last.message_id) return;
+      const reNode = doc.querySelector('.mes.last_mes[is_user="false"]');
+      if (!reNode || reNode.querySelector('.mfrs-choices')) return;
+      mfrsInjectChoicesContainer(reNode, block);
+    } finally {
+      mfrsChoicesFixInFlight = false;
+    }
+  } catch {
+    /* 守卫失败静默：选项系统是增强非必需 */
+  }
+}
+
 setTimeout(() => {
   mfrsEnsureChoiceUi(); // 启动时对已渲染楼层补一轮（事件只覆盖后续渲染）
+  window.setTimeout(() => { void mfrsFixMissingChoices(); }, 800); // hotfix-02 Gate 3：启动时对末楼走一次守卫（刷新后缓存重建/补生成）
 }, 800);
 
 type HostWindowWithThemeCleanup = Window & {
