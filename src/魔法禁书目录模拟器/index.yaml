@@ -408,6 +408,29 @@
       不可被其他条目激活: true
       不可激活其他条目: true
     文件: 世界书/剧情事件/主线/主线事件·大霸星祭
+  - 名称: 主线事件·神之饮物
+    启用: true
+    激活策略:
+      类型: 绿灯
+      关键字:
+        - 神之饮物
+        - 神の飲み物
+        - Nectar
+        - 姬戏茉离
+        - 体晶
+        - Full Course
+        - 食之宴
+        - 亡本里藏
+        - 埃斯科菲耶号
+        - NECTAR
+    插入位置:
+      类型: 角色定义之前
+      顺序: 14584
+    激活概率: 100
+    递归:
+      不可被其他条目激活: true
+      不可激活其他条目: true
+    文件: 世界书/剧情事件/主线/主线事件·神之饮物
   - 名称: 主线事件·天赋梦路
     启用: true
     激活策略:
@@ -2452,11 +2475,11 @@
             console.error(`[${label}] 加载失败，请检查 CDN 可用性`);
           };
           // 串行加载 6 个模块（同一 ES module 作用域共享 loadModule，保证 MVU 先就位）
-          await loadModule('MVU', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eeb25a82/dist/魔法禁书目录模拟器/脚本/MVU/index.js');
-          await loadModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eeb25a82/dist/魔法禁书目录模拟器/脚本/变量结构/index.js');
-          await loadModule('mvu协议应用', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eeb25a82/dist/魔法禁书目录模拟器/脚本/mvu-protocol-applier/index.js');
-          await loadModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eeb25a82/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
-          await loadModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eeb25a82/dist/魔法禁书目录模拟器/脚本/固定状态栏/index.js');
-          await loadModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eeb25a82/dist/魔法禁书目录模拟器/脚本/消息内面板/index.js');
+          await loadModule('MVU', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@d796fa30/dist/魔法禁书目录模拟器/脚本/MVU/index.js');
+          await loadModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@d796fa30/dist/魔法禁书目录模拟器/脚本/变量结构/index.js');
+          await loadModule('mvu协议应用', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@d796fa30/dist/魔法禁书目录模拟器/脚本/mvu-protocol-applier/index.js');
+          await loadModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@d796fa30/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
+          await loadModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@d796fa30/dist/魔法禁书目录模拟器/脚本/固定状态栏/index.js');
+          await loadModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@d796fa30/dist/魔法禁书目录模拟器/脚本/消息内面板/index.js');
 
 
