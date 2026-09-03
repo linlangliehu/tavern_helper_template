@@ -22,7 +22,7 @@ registerMfrsRuntimeBuild('mvu-protocol-applier');
  * 2. 触发 MVU 解析当前消息的 <UpdateVariable> 块
  * 3. 触发数据库自动更新逻辑
  * 4. 清洗 mes 字段：
- *    - 整段删除 <UpdateVariable>（纯内部协议）；<choices> 保留在存储（hotfix-03：显示层按钮功能依赖它，勿删）
+ *    - 整段删除 <UpdateVariable> 和 <choices>（纯内部协议）
  *    - 整段删除 <sp_*> / <mfrs_*> 旧文本面板（保留开局/输入交互面板）
  *    - raw 协议写入 extra._mfrs_raw_protocol_message 供 UI/MVU 读取
  */
@@ -252,9 +252,8 @@ function resolveMessageIndex(
 }
 
 function hasInternalProtocol(message: string) {
-  // hotfix-03：<choices> 已升级为显示层功能（[显示]渲染剧情选项 + 按钮构建），不再是内部协议标志；
-  // 若把 choices 算作协议，会让「从【本轮摘要】重建 UV」兜底分支（!hasInternalProtocol 门控）永久失效
-  return /<UpdateVariable\b/i.test(message);
+  // <choices> 计为内部协议（与 cleanProtocolBlocks 剥离自洽）；hotfix-05 回滚 hotfix-03 显示层升级
+  return /<UpdateVariable\b|<choices\b/i.test(message);
 }
 
 /**
@@ -923,7 +922,7 @@ async function cleanProtocolBlocks(messageIndex: number, entryEpoch = hotfixEpoc
   // 必须与显示正则 index.yaml #「[显示]隐藏旧 sp/mfrs 文本面板」保持同步。
   const cleanedMes = originalMes
     .replace(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi, '')
-    // hotfix-03：<choices> 不再清洗——保留在存储供 [显示]渲染剧情选项 正则与按钮构建使用（原文随历史回传 AI，可强化格式一致性）
+    .replace(/<choices\b[^>]*>[\s\S]*?<\/choices>/gi, '') // 整段删除 <choices>（纯内部协议，显示层无消费者；hotfix-05 回滚 hotfix-03）
     // 删除内部草稿/节奏/确认块与独立 JSONPatch 残渣（显示层已隐藏，此处从 mes 清除避免回传 AI）。
     .replace(/<draft\b[^>]*>[\s\S]*?<\/draft>/gi, '')
     .replace(/<pacing_rules\b[^>]*>[\s\S]*?<\/pacing_rules>/gi, '')
