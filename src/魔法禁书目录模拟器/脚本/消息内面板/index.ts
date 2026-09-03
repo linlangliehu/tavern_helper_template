@@ -343,7 +343,17 @@ function buildTaskCardHtml(data: StatusData): string {
 
 /** 关系卡：NPC关系数组（二级折叠 + 好感度从高到低排序） */
 function buildRelationCardHtml(data: StatusData): string {
-  let npcs = Array.isArray(data.NPC关系) ? data.NPC关系 : [];
+  const rawNpcs = Array.isArray(data.NPC关系) ? data.NPC关系 : [];
+  // 防御去重：按 角色名 去重，保留最后出现的条目（最近一次更新），避免 AI 误 insert 同名重复
+  const seen = new Set<string>();
+  const deduped: any[] = [];
+  for (let i = rawNpcs.length - 1; i >= 0; i--) {
+    const name = String(rawNpcs[i]?.角色名 ?? '').trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    deduped.unshift(rawNpcs[i]);
+  }
+  let npcs = deduped;
   // 好感度从高到低排序
   npcs = [...npcs].sort((a: any, b: any) => {
     const av = clampPercent(a?.好感度);
