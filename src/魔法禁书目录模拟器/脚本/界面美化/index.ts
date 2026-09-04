@@ -268,7 +268,9 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
       return;
     }
     const identityBackfill = (nameStale || levelStale) && baseRoster.length > 0;
-    const needSynth = effectStale || combatStale;
+    // hotfix-08 B：名称被污染时，效果/运用即便非占位也强制重派生（名称污染→整条不可信，防“风刃”式错位遗产）
+    const forceRederive = nameStale && baseRoster.length > 0;
+    const needSynth = effectStale || combatStale || forceRederive;
     if (needSynth && !th?.generateRaw) {
       if (!identityBackfill) return; // 环境不支持合成且无需身份回填 → 静默放弃
       // 身份回填不依赖 AI，可先做；效果占位留待下次
@@ -320,8 +322,10 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
         ((stillNameStale && !!baseName) || (stillLevelStale && !!baseLevel) || (stillCampInvalid && campValid));
       const synthEffect = synth?.能力效果 ?? '';
       const synthCombat = synth?.实战运用 ?? '';
-      const patchEffect = stillEffectStale && !!synthEffect;
-      const patchCombat = stillCombatStale && !!synthCombat;
+      // hotfix-08 B：nameStale 触发且名称当前仍污染 → 效果/运用即便非占位也重派生
+      const namePollutionActive = forceRederive && stillNameStale;
+      const patchEffect = (stillEffectStale || namePollutionActive) && !!synthEffect;
+      const patchCombat = (stillCombatStale || namePollutionActive) && !!synthCombat;
       const synthFailed = needSynth && !!th.generateRaw && !synth;
       // 合成需要但失败 → 计数（即便身份回填已写入，效果仍占位，下次重试）
       if (synthFailed) {
@@ -353,15 +357,19 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
             )
               target['阵营类型'] = baseCamp;
           }
-          if (patchEffect && mfrsIsPlaceholderAbilityText(target['能力效果'])) target['能力效果'] = synthEffect;
-          if (patchCombat && mfrsIsPlaceholderAbilityText(target['实战运用'])) target['实战运用'] = synthCombat;
+          // hotfix-08 B：namePollutionActive 时，效果/运用即便非占位也覆盖（名称当前仍污染→整条不可信）
+          const nameCurrentlyPolluted = namePollutionActive && mfrsIsPlaceholderIdentityText(target['能力名称']);
+          if (patchEffect && (mfrsIsPlaceholderAbilityText(target['能力效果']) || nameCurrentlyPolluted))
+            target['能力效果'] = synthEffect;
+          if (patchCombat && (mfrsIsPlaceholderAbilityText(target['实战运用']) || nameCurrentlyPolluted))
+            target['实战运用'] = synthCombat;
           nextStat.能力档案 = nextRoster;
           return { ...(current ?? {}), stat_data: nextStat };
         },
         { type: 'message', message_id: messageId },
       );
-      // hotfix-07 A4：写回成功 → 清零重计（仅当曾计数过才写，减少无谓写入）
-      if (!synthFailed && attempts !== 0) {
+      // hotfix-08：修 hotfix-07 A4 瑕疵——成功总是写回 0（移除 attempts!==0 门控，确保 v2 key 创建）
+      if (!synthFailed) {
         await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: 0 }, { type: 'chat' });
       }
       const hostWin =
