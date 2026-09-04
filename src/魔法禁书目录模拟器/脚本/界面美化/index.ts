@@ -189,13 +189,17 @@ async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
   }
 }
 
-// —— hotfix-01（时机二主路径）：能力卡占位符扫描与后台补写 ——
+// —— hotfix-07：能力卡占位污染守卫（hotfix-01 升级版）——
 // 触发：楼层事件（渲染/更新/swipe/聊天切换）后错峰调用；幂等，已有实质内容绝不覆盖。
-// 护栏：in-flight 去重；每聊天最多 3 次；写回前二次校验；MVU 所有权边界（只替换占位字段）。
-const MFRS_ABILITY_FIX_KEY = '__mfrs_ability_fix_attempts';
+// 分支：名称/等级被占位污染 → 从 chat 层开局基线确定性回填身份字段（不调 AI）；
+//       效果/运用占位 → generateRaw 合成，入参一律基线名称优先（修复“风刃”错位）。
+// 护栏：in-flight 去重；v2 计数与旧 key 隔离（成功清零、失败计数，上限 3）；写回前二次校验；MVU 所有权边界。
+const MFRS_ABILITY_FIX_KEY = '__mfrs_ability_fix_v2_attempts'; // hotfix-07 v2：旧 key __mfrs_ability_fix_attempts 已废弃不读
 const MFRS_ABILITY_FIX_MAX = 3;
 let mfrsAbilityFixInFlight = false;
+let mfrsAbilityFixNoBaselineWarned = false; // 无基线跳过提示每次页面加载最多一次，防楼层事件刷屏
 
+// 严格表（效果/运用长文字段）：不做裸“未知”判定（合法长文常含“未知”二字），只认下方占位文案
 function mfrsIsPlaceholderAbilityText(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   const s = value.trim();
@@ -207,14 +211,26 @@ function mfrsIsPlaceholderAbilityText(value: unknown): boolean {
     s.includes('随剧情展开') ||
     s.includes('待补全') ||
     s.includes('待揭示') ||
-    s.includes('尚未展现')
+    s.includes('尚未展现') ||
+    s.includes('待玩家填写') || // hotfix-07：实机捕获变体（楼层8 AI 凭空编造）
+    s.includes('待玩家确认') ||
+    s.includes('待剧情展开')
   );
+}
+
+// 宽表（hotfix-07 P1-1）：名称/等级短身份字段——在严格表之上放宽：整值“未知”类 + 待玩家/待确认包含
+function mfrsIsPlaceholderIdentityText(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const s = value.trim();
+  if (!s) return false;
+  if (s === '未知' || s === '未知（待玩家填写）') return true;
+  if (s.includes('待玩家') || s.includes('待确认') || s.includes('待填写')) return true;
+  return mfrsIsPlaceholderAbilityText(s);
 }
 
 async function mfrsFixAbilityPlaceholders(): Promise<void> {
   const th = mfrsGetTH();
   if (!th?.getVariables || !th?.updateVariablesWith || !th?.insertOrAssignVariables) return;
-  if (!th?.generateRaw) return; // 环境不支持 → 开局表单已提示手填，这里静默放弃
   if (mfrsAbilityFixInFlight) return;
   try {
     const last = await mfrsGetLastChatMessage();
@@ -225,73 +241,137 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
     const roster = Array.isArray(statData.能力档案) ? (statData.能力档案 as Array<Record<string, unknown>>) : [];
     if (roster.length === 0) return; // 档案整组为空 → 归 mfrsEnsureLatestFloorBaseline 兜底
     const entry = roster[0] ?? {};
+    // hotfix-07 A2：扫描 2→4 字段（名称/等级用宽判定，效果/运用维持严格判定）
+    const nameStale = mfrsIsPlaceholderIdentityText(entry['能力名称']);
+    const levelStale = mfrsIsPlaceholderIdentityText(entry['等级或位阶']);
     const effectStale = mfrsIsPlaceholderAbilityText(entry['能力效果']);
     const combatStale = mfrsIsPlaceholderAbilityText(entry['实战运用']);
-    if (!effectStale && !combatStale) return;
+    if (!nameStale && !levelStale && !effectStale && !combatStale) return;
     const chatVars = await th.getVariables({ type: 'chat' });
     const attempts =
       typeof chatVars?.[MFRS_ABILITY_FIX_KEY] === 'number' ? (chatVars[MFRS_ABILITY_FIX_KEY] as number) : 0;
     if (attempts >= MFRS_ABILITY_FIX_MAX) return; // 失败上限：停手，卡片保持现状等待手填
     const baseline = chatVars?.[MFRS_BASELINE_KEY] as Record<string, unknown> | undefined;
     const baseInfo = (baseline ?? {}) as Record<string, unknown>;
-    const baseEntry =
-      (Array.isArray(baseInfo['能力档案']) ? (baseInfo['能力档案'] as Array<Record<string, unknown>>)[0] : undefined) ?? {};
-    mfrsAbilityFixInFlight = true;
-    let synth: { 能力效果: string; 实战运用: string } | null = null;
-    try {
-      synth = await mfrsSynthAbilityByAi({
-        side: String(baseInfo['阵营'] ?? '').includes('魔法侧') ? 'magic' : 'science',
-        name: String(baseInfo['姓名'] ?? entry['能力名称'] ?? '玩家'),
-        gender: String(baseInfo['性别'] ?? ''),
-        age: String(baseInfo['年龄'] ?? ''),
-        pers: String(baseInfo['性格'] ?? ''),
-        supp: String(baseInfo['身份'] ?? ''),
-        sceneText: '',
-        abilityName: String(entry['能力名称'] ?? baseEntry['能力名称'] ?? '未觉醒'),
-        level: String(entry['等级或位阶'] ?? '未指定'),
-        orgLabel: String(baseInfo['身份'] ?? ''),
-      });
-    } finally {
-      mfrsAbilityFixInFlight = false;
-    }
-    // 尝试计数：无论成败都计入（上限护栏）
-    await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: attempts + 1 }, { type: 'chat' });
-    if (!synth) {
-      if (attempts + 1 >= MFRS_ABILITY_FIX_MAX) {
+    const baseRoster = Array.isArray(baseInfo['能力档案'])
+      ? (baseInfo['能力档案'] as Array<Record<string, unknown>>)
+      : [];
+    const baseEntry = baseRoster[0] ?? {};
+    // hotfix-07 A3 分叉①：身份字段污染但无开局基线 → 保守跳过 + 提示手填（不让 AI 编造玩家能力名）
+    if ((nameStale || levelStale) && baseRoster.length === 0) {
+      if (!mfrsAbilityFixNoBaselineWarned) {
+        mfrsAbilityFixNoBaselineWarned = true;
         const hostWin =
           (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ?? window;
-        hostWin.toastr?.warning?.('能力描述自动补全失败，请在能力卡中手动补填', '魔法禁书目录');
+        hostWin.toastr?.warning?.('能力名称/等级出现占位文本且无开局基线可恢复，请在能力卡中手动填写', '魔法禁书目录');
       }
       return;
     }
-    // 写回前二次校验：重读当层，确认占位符仍在（防 swipe/编辑期间被其他写手处理）
-    const recheck = await th.getVariables({ type: 'message', message_id: messageId });
-    const reStat = ((recheck?.stat_data as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
-    const reRoster = Array.isArray(reStat.能力档案) ? (reStat.能力档案 as Array<Record<string, unknown>>) : [];
-    const reEntry = reRoster[0] ?? {};
-    const stillStale =
-      (effectStale && mfrsIsPlaceholderAbilityText(reEntry['能力效果'])) ||
-      (combatStale && mfrsIsPlaceholderAbilityText(reEntry['实战运用']));
-    if (!stillStale) return;
-    await th.updateVariablesWith(
-      current => {
-        const nextStat = { ...((current?.stat_data as Record<string, unknown> | undefined) ?? {}) };
-        const nextRoster = Array.isArray(nextStat.能力档案)
-          ? (nextStat.能力档案 as Array<Record<string, unknown>>).map(row => ({ ...(row as Record<string, unknown>) }))
-          : [];
-        if (nextRoster.length === 0) return current ?? {}; // 档案被清空 → 放弃，不重建
-        const target = nextRoster[0];
-        // MVU 所有权边界：只替换仍为占位符的字段，其余字段（含模型已写值）一律不动
-        if (effectStale && mfrsIsPlaceholderAbilityText(target['能力效果'])) target['能力效果'] = synth.能力效果;
-        if (combatStale && mfrsIsPlaceholderAbilityText(target['实战运用'])) target['实战运用'] = synth.实战运用;
-        nextStat.能力档案 = nextRoster;
-        return { ...(current ?? {}), stat_data: nextStat };
-      },
-      { type: 'message', message_id: messageId },
+    const identityBackfill = (nameStale || levelStale) && baseRoster.length > 0;
+    const needSynth = effectStale || combatStale;
+    if (needSynth && !th?.generateRaw) {
+      if (!identityBackfill) return; // 环境不支持合成且无需身份回填 → 静默放弃
+      // 身份回填不依赖 AI，可先做；效果占位留待下次
+    }
+    // hotfix-07 P1-2 串行第一步：先从基线解析干净身份（基线优先，entry 次之）作合成入参
+    //   ——修复旧代码 abilityName: entry ?? base ?? '未觉醒' 把污染名喂给合成器产出“风刃”错位内容
+    const synthName = String(baseEntry['能力名称'] ?? entry['能力名称'] ?? '未觉醒');
+    const synthLevel = String(
+      (levelStale ? baseEntry['等级或位阶'] : undefined) ?? entry['等级或位阶'] ?? baseEntry['等级或位阶'] ?? '未指定',
     );
-    const hostWin =
-      (window.parent as (Window & { toastr?: { success?: (message: string, title?: string) => void } }) | null) ?? window;
-    hostWin.toastr?.success?.('能力效果已由 AI 补全 ✓', '魔法禁书目录');
+    mfrsAbilityFixInFlight = true;
+    let synth: { 能力效果: string; 实战运用: string } | null = null;
+    try {
+      if (needSynth && th.generateRaw) {
+        synth = await mfrsSynthAbilityByAi({
+          side: String(baseInfo['阵营'] ?? '').includes('魔法侧') ? 'magic' : 'science',
+          name: String(baseInfo['姓名'] ?? '玩家'),
+          gender: String(baseInfo['性别'] ?? ''),
+          age: String(baseInfo['年龄'] ?? ''),
+          pers: String(baseInfo['性格'] ?? ''),
+          supp: String(baseInfo['身份'] ?? ''),
+          sceneText: '',
+          abilityName: synthName,
+          level: synthLevel,
+          orgLabel: String(baseInfo['身份'] ?? ''),
+        });
+        // hotfix-07：合成器实战运用兜底值本身是占位文案，若落到兜底视为合成失败
+        if (synth && (mfrsIsPlaceholderAbilityText(synth.能力效果) || mfrsIsPlaceholderAbilityText(synth.实战运用))) {
+          synth = null;
+        }
+      }
+      // 写回前二次校验：重读当层，确认占位符仍在（防 swipe/编辑期间被其他写手处理）
+      const recheck = await th.getVariables({ type: 'message', message_id: messageId });
+      const reStat = ((recheck?.stat_data as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
+      const reRoster = Array.isArray(reStat.能力档案) ? (reStat.能力档案 as Array<Record<string, unknown>>) : [];
+      const reEntry = reRoster[0] ?? {};
+      const stillNameStale = nameStale && mfrsIsPlaceholderIdentityText(reEntry['能力名称']);
+      const stillLevelStale = levelStale && mfrsIsPlaceholderIdentityText(reEntry['等级或位阶']);
+      const stillCampInvalid =
+        identityBackfill && !['超能力', '术式', '灵装'].includes(String(reEntry['阵营类型'] ?? ''));
+      const stillEffectStale = effectStale && mfrsIsPlaceholderAbilityText(reEntry['能力效果']);
+      const stillCombatStale = combatStale && mfrsIsPlaceholderAbilityText(reEntry['实战运用']);
+      const baseName = typeof baseEntry['能力名称'] === 'string' ? (baseEntry['能力名称'] as string) : '';
+      const baseLevel = typeof baseEntry['等级或位阶'] === 'string' ? (baseEntry['等级或位阶'] as string) : '';
+      const baseCamp = String(baseEntry['阵营类型'] ?? '');
+      const campValid = ['超能力', '术式', '灵装'].includes(baseCamp);
+      const patchIdentity =
+        identityBackfill &&
+        ((stillNameStale && !!baseName) || (stillLevelStale && !!baseLevel) || (stillCampInvalid && campValid));
+      const synthEffect = synth?.能力效果 ?? '';
+      const synthCombat = synth?.实战运用 ?? '';
+      const patchEffect = stillEffectStale && !!synthEffect;
+      const patchCombat = stillCombatStale && !!synthCombat;
+      const synthFailed = needSynth && !!th.generateRaw && !synth;
+      // 合成需要但失败 → 计数（即便身份回填已写入，效果仍占位，下次重试）
+      if (synthFailed) {
+        await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: attempts + 1 }, { type: 'chat' });
+        if (attempts + 1 >= MFRS_ABILITY_FIX_MAX) {
+          const hostWin =
+            (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ?? window;
+          hostWin.toastr?.warning?.('能力描述自动补全失败，请在能力卡中手动补填', '魔法禁书目录');
+        }
+      }
+      if (!patchIdentity && !patchEffect && !patchCombat) return; // 无可写内容（他方已修/基线缺字段）
+      await th.updateVariablesWith(
+        current => {
+          const nextStat = { ...((current?.stat_data as Record<string, unknown> | undefined) ?? {}) };
+          const nextRoster = Array.isArray(nextStat.能力档案)
+            ? (nextStat.能力档案 as Array<Record<string, unknown>>).map(row => ({ ...(row as Record<string, unknown>) }))
+            : [];
+          if (nextRoster.length === 0) return current ?? {}; // 档案被清空 → 放弃，不重建
+          const target = nextRoster[0];
+          // MVU 所有权边界：只替换仍为占位符的字段，其余字段（含模型已写值）一律不动
+          if (identityBackfill) {
+            if (stillNameStale && baseName && mfrsIsPlaceholderIdentityText(target['能力名称'])) target['能力名称'] = baseName;
+            if (stillLevelStale && baseLevel && mfrsIsPlaceholderIdentityText(target['等级或位阶']))
+              target['等级或位阶'] = baseLevel;
+            if (
+              stillCampInvalid &&
+              campValid &&
+              !['超能力', '术式', '灵装'].includes(String(target['阵营类型'] ?? ''))
+            )
+              target['阵营类型'] = baseCamp;
+          }
+          if (patchEffect && mfrsIsPlaceholderAbilityText(target['能力效果'])) target['能力效果'] = synthEffect;
+          if (patchCombat && mfrsIsPlaceholderAbilityText(target['实战运用'])) target['实战运用'] = synthCombat;
+          nextStat.能力档案 = nextRoster;
+          return { ...(current ?? {}), stat_data: nextStat };
+        },
+        { type: 'message', message_id: messageId },
+      );
+      // hotfix-07 A4：写回成功 → 清零重计（仅当曾计数过才写，减少无谓写入）
+      if (!synthFailed && attempts !== 0) {
+        await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: 0 }, { type: 'chat' });
+      }
+      const hostWin =
+        (window.parent as (Window & { toastr?: { success?: (message: string, title?: string) => void } }) | null) ?? window;
+      if (patchIdentity && patchEffect) hostWin.toastr?.success?.('能力档案已从开局基线恢复并补全效果 ✓', '魔法禁书目录');
+      else if (patchIdentity) hostWin.toastr?.success?.('能力档案已从开局基线恢复 ✓', '魔法禁书目录');
+      else hostWin.toastr?.success?.('能力效果已由 AI 补全 ✓', '魔法禁书目录');
+    } finally {
+      mfrsAbilityFixInFlight = false;
+    }
   } catch {
     /* 补写失败不影响主流程 */
   }
