@@ -83,3 +83,12 @@ mvu-protocol-applier loader 指回 @40b2eff2（hotfix-09）+ git revert。单 lo
 
 ## CDN 轮次
 仅重锁 mvu-protocol-applier 1 loader（界面美化等 5 个不动）。与 hotfix-09 同 loader，叠加生效。
+
+## 实施记录（2026-09-04 已实施，待实机验收）
+- commit 3837fcc4：源码 selectFalselyAppliedRepairIndexes 倒序只返回最新楼 + plan
+- commit bb954af5：bot 首次 bundle（dist 含 length-1;n>=0 + return[n]，旧 index=0 push 已移除）
+- commit d71737b4：重锁 mvu协议应用 @40b2eff2->@bb954af5 + 重打包 PNG
+- commit 9d4da809：bot 二次 bundle（仅刷 12 dist build-hash，未碰 PNG）
+- 静态：tsc 编辑区零新增错误；check-mjr-yaml exit 0；feature string hotfix-10 ✓
+- 载荷：dist 倒序循环 + return[n] 确认；PNG chara = {9b02f733×3, bb954af5×1(新), c4f7c820×1, eab1f7a6×1}，旧 40b2eff2 已消失
+- t7 实机验收：待用户重导入 PNG（mvu协议应用 loader 切到 bb954af5）后 hook save 5 秒→应≈0 + floor 6 `at` 稳定不 tick
