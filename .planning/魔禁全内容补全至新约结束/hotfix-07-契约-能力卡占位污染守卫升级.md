@@ -160,11 +160,27 @@ commit src（界面美化 index.ts + 变量更新规则.yaml）→ bot bundle（
 - 界面美化/index.ts：+138/-58（净 +80，单函数 cohesive 重写，触及 Local Fix 上限但无 scope creep）。
 - 变量更新规则.yaml：+1 行（L14 扩充）+1 行（新条款）。
 
-### 提交链 / CDN 轮次（进行中）
-- 待提交：src/魔法禁书目录模拟器/脚本/界面美化/index.ts + 世界书/变量/变量更新规则.yaml + 本契约文档。
-- 排除：dist/*（dev 噪音，bot 重建）、src/神秘复苏模拟器/*（用户车道）、src/魔法禁书目录模拟器/index.yaml（dev toggle，t6 处理）、tmp_cover/。
-- CDN 轮次：commit src → 等 bot bundle → 重锁界面美化 loader sha → tavern_sync 重打包 PNG → 载荷终验。仅重锁界面美化 1 个 loader。
+### 提交链 / CDN 轮次 —— 已完成
+- 提交1 c0d98a8c：src（界面美化/index.ts + 变量更新规则.yaml + 本契约文档）；排除 dist/*、src/神秘复苏模拟器/*、src/魔法禁书目录模拟器/index.yaml（dev toggle）、tmp_cover/。
+- bot 首次 bundle a8e5e35b：重建 dist（界面美化 dist 含 `__mfrs_ability_fix_v2_attempts` 标记，确认热代码入库）+ tavern_sync webpack 插件用已提交 index.yaml（仍 @80a810e0）重打包 PNG。
+- 提交2 d45636ad：重锁界面美化 loader `@80a810e0 → @a8e5e35b` + tavern_sync 本地重打包 PNG。chara 内 6 loader sha 核验：界面美化@a8e5e35b、mvu协议应用@80a810e0、消息内面板@eab1f7a6、其余3个@9b02f733。
+- bot 二次 bundle b581e67a：src/index.yaml 改动触发；仅刷 12 个 dist 文件（build hash 行 +2/-1），**未触碰 PNG**——已发 PNG(d45636ad) 即终态。
+- CDN 终态：`https://testingcf.jsdelivr.net/...@a8e5e35b/.../界面美化/index.js` 200 直发，含完整 hotfix-07 逻辑（见验收记录）。
 
 ## 验收记录
 
-（待实机验收后补录）
+### 静态验证 —— 已通过
+- tsc --noEmit：编辑区（191-378 行）零新增错误（既有 478/1099/1104/1186 行错误为预存，非本次引入）。
+- check-mjr-yaml.cjs：YAML_OK，世界书 63 条目、正则 7 条不变。
+- 源码特征串：14 处 A 层标记 + 2 处 B 层标记确认；旧 key `__mfrs_ability_fix_attempts` 代码引用 0 处。
+- CDN 载荷（a8e5e35b/界面美化/index.js）fetch 验证 5 处字符串字面量均命中：① `__mfrs_ability_fix_v2_attempts`（A4 v2 key）② `'未知'===e||'未知（待玩家填写）'===e||...includes('待玩家')...`（A1 身份宽判定，结构逐字吻合）③ `待玩家填写`（A1 严格表新变体）④ `能力档案已从开局基线恢复`（A3 回填 success toast，三态分叉）⑤ `能力名称/等级出现占位文本且无开局基线可恢复`（A3 无基线保守跳过 warning）。
+- PNG 载荷（d45636ad）chara 解码核验：界面美化@a8e5e35b×1 / mvu协议应用@80a810e0×1 / 消息内面板@eab1f7a6×1 / 其余3个@9b02f733×3，与目标终态逐字一致。
+
+### 实机验收 —— 待用户重导入卡片
+- **阻塞点**：当前 ST 运行时加载的界面美化脚本仍指向旧 loader @80a810e0；hotfix-07 须由用户重新导入更新后的 PNG（src/魔法禁书目录模拟器/魔法禁书目录模拟器.png）使脚本 loader 切到 @a8e5e35b 后方可生效。
+- 琳琅档恢复（C1 自然自愈）：重导入后继续对话或刷新任一楼层的渲染事件 → 守卫扫末楼 nameStale → 从 chat 层 `__mfrs_baseline.能力档案[0]` 回填 皇帝特权/Level 5/阵营类型 → toastr「能力档案已从开局基线恢复 ✓」→ 能力卡重新显示 皇帝特权。**不修历史楼层 8-13**（契约 C2 P2 决议）。
+- 污染注入测试：手动把末楼 `能力档案[0].能力名称` 改为「未知（待玩家填写）」→ 刷新 → 守卫自动回填 → 能力卡恢复。
+- 错位修复测试：仅效果占位场景 → 合成入参用基线名称（产出贴皇帝特权而非风刃）。
+- 无基线旧聊天：名称占位 → 跳过 + 单次 warning，不调 AI 不编造。
+- 计数 v2：成功清零；失败 3 次停手；旧 key `__mfrs_ability_fix_attempts` 孤儿残留不影响。
+- **C2 立即手动回填未执行**（契约 C2 需单独授权）；琳琅档恢复走 C1 自动路径，依赖用户重导入后触发。
