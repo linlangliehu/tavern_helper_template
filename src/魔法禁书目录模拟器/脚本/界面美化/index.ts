@@ -268,40 +268,10 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
       return;
     }
     const identityBackfill = (nameStale || levelStale) && baseRoster.length > 0;
-    // hotfix-08 B：名称被污染时，效果/运用即便非占位也强制重派生（名称污染→整条不可信，防“风刃”式错位遗产）
-    const forceRederive = nameStale && baseRoster.length > 0;
-    const needSynth = effectStale || combatStale || forceRederive;
-    if (needSynth && !th?.generateRaw) {
-      if (!identityBackfill) return; // 环境不支持合成且无需身份回填 → 静默放弃
-      // 身份回填不依赖 AI，可先做；效果占位留待下次
-    }
-    // hotfix-07 P1-2 串行第一步：先从基线解析干净身份（基线优先，entry 次之）作合成入参
-    //   ——修复旧代码 abilityName: entry ?? base ?? '未觉醒' 把污染名喂给合成器产出“风刃”错位内容
-    const synthName = String(baseEntry['能力名称'] ?? entry['能力名称'] ?? '未觉醒');
-    const synthLevel = String(
-      (levelStale ? baseEntry['等级或位阶'] : undefined) ?? entry['等级或位阶'] ?? baseEntry['等级或位阶'] ?? '未指定',
-    );
-    mfrsAbilityFixInFlight = true;
-    let synth: { 能力效果: string; 实战运用: string } | null = null;
+    // hotfix-11 进阶版：删 generateRaw 死合成路径（kK 在此环境永不 resolve，自 hotfix-01 起从未成功）；
+    // nameStale 触发时 effect/combat 从基线回填（基线非占位才写），否则靠 C 模型自纠。
+    mfrsAbilityFixInFlight = true; // hotfix-11：临界区缩短——只覆盖 recheck+write（无 25s 合成 await）
     try {
-      if (needSynth && th.generateRaw) {
-        synth = await mfrsSynthAbilityByAi({
-          side: String(baseInfo['阵营'] ?? '').includes('魔法侧') ? 'magic' : 'science',
-          name: String(baseInfo['姓名'] ?? '玩家'),
-          gender: String(baseInfo['性别'] ?? ''),
-          age: String(baseInfo['年龄'] ?? ''),
-          pers: String(baseInfo['性格'] ?? ''),
-          supp: String(baseInfo['身份'] ?? ''),
-          sceneText: '',
-          abilityName: synthName,
-          level: synthLevel,
-          orgLabel: String(baseInfo['身份'] ?? ''),
-        });
-        // hotfix-07：合成器实战运用兜底值本身是占位文案，若落到兜底视为合成失败
-        if (synth && (mfrsIsPlaceholderAbilityText(synth.能力效果) || mfrsIsPlaceholderAbilityText(synth.实战运用))) {
-          synth = null;
-        }
-      }
       // 写回前二次校验：重读当层，确认占位符仍在（防 swipe/编辑期间被其他写手处理）
       const recheck = await th.getVariables({ type: 'message', message_id: messageId });
       const reStat = ((recheck?.stat_data as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
@@ -320,22 +290,14 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
       const patchIdentity =
         identityBackfill &&
         ((stillNameStale && !!baseName) || (stillLevelStale && !!baseLevel) || (stillCampInvalid && campValid));
-      const synthEffect = synth?.能力效果 ?? '';
-      const synthCombat = synth?.实战运用 ?? '';
-      // hotfix-08 B：nameStale 触发且名称当前仍污染 → 效果/运用即便非占位也重派生
-      const namePollutionActive = forceRederive && stillNameStale;
-      const patchEffect = (stillEffectStale || namePollutionActive) && !!synthEffect;
-      const patchCombat = (stillCombatStale || namePollutionActive) && !!synthCombat;
-      const synthFailed = needSynth && !!th.generateRaw && !synth;
-      // 合成需要但失败 → 计数（即便身份回填已写入，效果仍占位，下次重试）
-      if (synthFailed) {
-        await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: attempts + 1 }, { type: 'chat' });
-        if (attempts + 1 >= MFRS_ABILITY_FIX_MAX) {
-          const hostWin =
-            (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ?? window;
-          hostWin.toastr?.warning?.('能力描述自动补全失败，请在能力卡中手动补填', '魔法禁书目录');
-        }
-      }
+      const baseEffect = String(baseEntry['能力效果'] ?? '');
+      const baseCombat = String(baseEntry['实战运用'] ?? '');
+      const baseEffectValid = !!baseEffect && !mfrsIsPlaceholderAbilityText(baseEffect);
+      const baseCombatValid = !!baseCombat && !mfrsIsPlaceholderAbilityText(baseCombat);
+      // hotfix-11 进阶版：nameStale 触发时 effect/combat 从基线回填（基线非占位才写）
+      const namePollutionActive = nameStale && stillNameStale;
+      const patchEffect = (stillEffectStale || namePollutionActive) && baseEffectValid;
+      const patchCombat = (stillCombatStale || namePollutionActive) && baseCombatValid;
       if (!patchIdentity && !patchEffect && !patchCombat) return; // 无可写内容（他方已修/基线缺字段）
       await th.updateVariablesWith(
         current => {
@@ -357,26 +319,24 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
             )
               target['阵营类型'] = baseCamp;
           }
-          // hotfix-08 B：namePollutionActive 时，效果/运用即便非占位也覆盖（名称当前仍污染→整条不可信）
+          // hotfix-11 进阶版：namePollutionActive 时效果/运用从基线回填（名称污染→整条不可信）
           const nameCurrentlyPolluted = namePollutionActive && mfrsIsPlaceholderIdentityText(target['能力名称']);
           if (patchEffect && (mfrsIsPlaceholderAbilityText(target['能力效果']) || nameCurrentlyPolluted))
-            target['能力效果'] = synthEffect;
+            target['能力效果'] = baseEffect;
           if (patchCombat && (mfrsIsPlaceholderAbilityText(target['实战运用']) || nameCurrentlyPolluted))
-            target['实战运用'] = synthCombat;
+            target['实战运用'] = baseCombat;
           nextStat.能力档案 = nextRoster;
           return { ...(current ?? {}), stat_data: nextStat };
         },
         { type: 'message', message_id: messageId },
       );
-      // hotfix-08：修 hotfix-07 A4 瑕疵——成功总是写回 0（移除 attempts!==0 门控，确保 v2 key 创建）
-      if (!synthFailed) {
-        await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: 0 }, { type: 'chat' });
-      }
+      // hotfix-11：无合成失败计数——成功总是清零（守卫永不因死合成停手）
+      await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: 0 }, { type: 'chat' });
       const hostWin =
         (window.parent as (Window & { toastr?: { success?: (message: string, title?: string) => void } }) | null) ?? window;
       if (patchIdentity && patchEffect) hostWin.toastr?.success?.('能力档案已从开局基线恢复并补全效果 ✓', '魔法禁书目录');
       else if (patchIdentity) hostWin.toastr?.success?.('能力档案已从开局基线恢复 ✓', '魔法禁书目录');
-      else hostWin.toastr?.success?.('能力效果已由 AI 补全 ✓', '魔法禁书目录');
+      else hostWin.toastr?.success?.('能力效果已从开局基线恢复 ✓', '魔法禁书目录');
     } finally {
       mfrsAbilityFixInFlight = false;
     }

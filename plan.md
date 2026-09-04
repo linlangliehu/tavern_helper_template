@@ -1,102 +1,83 @@
-# hotfix-10：根治 save 洪流（限制假性已应用修复只扫最新楼）
-
-## 状态：待审查 → 待你授权实施（未实施）
+# hotfix-11 契约：删 generateRaw 死路径 + 基线回填 effect/combat（进阶版）
 
 ## 背景
-hotfix-09 修了 skip 分支冗余 persist（洪流 4.4→1.4/秒），但主源未堵：历史楼 6 被 `selectFalselyAppliedRepairIndexes` 反复扫描→falselyApplied 误判→clearMarker+write+persist(saveChat)→CHAT_CHANGED→递归复核→自持续振荡 1.4/秒。实机复核（sillytavern-runtime-debug skill）确认：仅 floor 6 `at` 追踪实时（8/12/20 稳定），applier persistMarker 是 ~75% save 源，振荡非衰减。
+hotfix-08 的 B 层 forceRederive 合成依赖 `TavernHelper.generateRaw`。实机排查（§484-514）确认 generateRaw 在此 ST 环境的 kK 生成核心 promise **永不 resolve**（自 hotfix-01 起从未成功，`old_attempts=3` 旧计数触顶为证）。B 的合成路径是**死代码**，带来 3 项危害：
+1. 每次触发 25s 空等（in-flight 持续，阻塞新楼层事件守卫）
+2. `synthFailed` 计数 +1 → 3 次后守卫对整个聊天永久停手（连确定性身份回填都停）
+3. 死代码误导维护者
 
-## 根因（已实机确认，证据闭环）
-`selectFalselyAppliedRepairIndexes`（controller.ts:51-64）返回**所有非 user 楼**。`repairFalselyAppliedFloors`（index.ts:818）在每次 CHAT_CHANGED（debounce 800ms）遍历这些楼，对"标记命中 + isFalselyAppliedStat=true"的楼 clearMarker+write+persistMarker(saveChat)。
+## 根因（已实证，非推测）
+- generateRaw（jK→kK）与 generate（AK→kK）共享 kK 派发，全部 25s 超时无 resolve
+- HTTP 请求已派发（`/api/backends/chat-completions/generate` 捕到 1 次），但 kK 的 promise resolution 失效
+- 排除：事件循环流畅、无生成态卡死、配置无关（silence/stream 全变体均挂）
+- floor 23 实测：能力卡自愈靠 **C 条款（模型主动写 能力档案 op）**，非 B 合成
 
-`isFalselyAppliedStat` 判定 B（replace 路径比对）**无法区分两种"data ≠ 本楼协议值"**：
-- 真假性（应修）：重载后 stat_data 被 MVU 重建为初值，标记留存 → 修复回本楼协议值正确
-- 假假性（不应修）：本楼协议值被**后续楼合法覆盖**（floor 6 的 FANTASY-HAND-02 被 floor 8 的 FANTASY-HAND-06 覆盖）→ 判定 B 误判为假性 → "修复"回旧值 FANTASY-HAND-02 → 被后续楼再覆盖 → 永久 mismatch → 每次扫描都修 → save 洪流
+## 修法（进阶版）
+删 generateRaw 调用 + 相关 synth 判定 + 死计数；**nameStale 触发时，effect/combat 从基线回填**（若基线非占位），否则纯靠 C。
 
-设计注释（index.ts:808-814）本意是"重载后重建初值的存量历史楼"，但判定 B 把"合法覆盖"也当"假性" → 对历史楼修复**语义错误**（修复=回退到已被超越的旧值）。
+### 改动点（界面美化/index.ts 守卫内）
 
-## 修复（1 处，~3-5 行）
-`selectFalselyAppliedRepairIndexes`（controller.ts:51-64）改为**只返回最新非 user 楼**（排除 activeGenerationMessageIndex）。
+**改动 1：删 forceRederive/needSynth 的 generateRaw 依赖**
+- 删 `const forceRederive = nameStale && baseRoster.length > 0;` → 改为标识 nameStale 连带回填 effect/combat
+- 删 `const needSynth = effectStale || combatStale || forceRederive;` → needSynth 不再含 forceRederive（合成已删）
+- 删 `if (needSynth && !th?.generateRaw) { ... }` 整块（环境守卫不再需要，不调 generateRaw）
+- 删 synthName/synthLevel 合成入参计算（不再合成）
 
-```ts
-// 改前：返回所有非 user 楼（导致历史楼假假性循环）
-export function selectFalselyAppliedRepairIndexes(chat, activeGenerationMessageIndex = -1): number[] {
-  const indexes: number[] = [];
-  for (let index = 0; index < chat.length; index += 1) {
-    const message = chat[index];
-    if (!message || message.is_user || index === activeGenerationMessageIndex) continue;
-    indexes.push(index);
-  }
-  return indexes;
-}
+**改动 2：删 generateRaw 调用块**
+- 删 `mfrsAbilityFixInFlight = true;` → 改为只在 write 前置 true（或保留但缩短临界区到无 await）
+- 删 `let synth = null; try { if (needSynth && th.generateRaw) { synth = await mfrsSynthAbilityByAi(...) } }` 整块
+- in-flight 临界区缩短为只覆盖 updateVariablesWith（无 25s await）
 
-// 改后：只返回最新非 user 楼（hotfix-10：历史楼"被后续覆盖"非假性，修回旧值是回退；只最新楼无被覆盖可能）
-export function selectFalselyAppliedRepairIndexes(chat, activeGenerationMessageIndex = -1): number[] {
-  for (let index = chat.length - 1; index >= 0; index -= 1) {
-    const message = chat[index];
-    if (!message || message.is_user || index === activeGenerationMessageIndex) continue;
-    return [index];
-  }
-  return [];
-}
-```
+**改动 3：patch 计算改为基线回填（进阶版核心）**
+- 删 `const synthEffect/synthCombat = synth?...` 
+- 加 `const baseEffect = String(baseEntry['能力效果'] ?? ''); const baseCombat = String(baseEntry['实战运用'] ?? '');`
+- 加 `const baseEffectValid = !!baseEffect && !mfrsIsPlaceholderAbilityText(baseEffect);`
+- 加 `const baseCombatValid = !!baseCombat && !mfrsIsPlaceholderAbilityText(baseCombat);`
+- `patchEffect`：`stillEffectStale && baseEffectValid`（原占位回填）**或** `namePollutionActive && baseEffectValid`（进阶：nameStale 连带）
+- `patchCombat`：同理
 
-## 为什么正确且安全
-1. **最新楼无"被后续楼覆盖"可能** → 其"data ≠ 协议值"只可能是真假性（重载重置）→ 修复正确。保留重载修复能力。
-2. **历史楼修复本就语义错误**：修复=把数据回退到该楼协议值，但该值已被后续楼合法超越 → 回退是数据损坏，非修复。放弃它非回归，是修正。
-3. **断反馈环**：floor 6/8/12/20 不再进队列 → 无 falselyApplied 修复 → 无 persistMarker(saveChat) from repair → CHAT_CHANGED 不再被 repair 触发 → 振荡止。
-4. **hotfix-09 的 skip 分支修复保留**（互不冲突），两源全堵 → 洪流归零。
-5. `recoverRecentRawProtocolMessages`（index.ts:857，扫最近 12 楼补写缺协议快照）不受影响 → 导入旧档补写能力保留。
+**改动 4：updater 写 effect/combat 用基线值**
+- 删 `const nameCurrentlyPolluted = ...`（基线回填不破 MVU 边界——只写占位/污染时）
+- 写条件：`patchEffect && (mfrsIsPlaceholderAbilityText(target['能力效果']) || nameCurrentlyPolluted) → baseEffect`
+- 同理 patchCombat → baseCombat
+- **MVU 边界保留**：nameStale 时 effect 非占位也覆盖（名称污染→整条不可信，与 hotfix-08 B 同理）；name 非 stale 时只覆盖占位
 
-## 不改的
-- `isFalselyAppliedStat`（判定逻辑）不动 → 仍能识别真假性
-- `repairFalselyAppliedFloors` 主体不动 → 仍对队列内楼正确修复
-- `falsely-applied-controller.ts` 的 skip/write/falselyApplied 三分支不动（hotfix-09 已修 skip）
-- 界面美化/消息内面板等其余 5 loader 不动
+**改动 5：删死计数**
+- 删 `const synthFailed = needSynth && !!th.generateRaw && !synth;`
+- 删 `if (synthFailed) { insertOrAssignVariables(+1) + warn }` 整块
+- 成功计数逻辑保留：`if (!synthFailed)` → 改为无条件 `insertOrAssignVariables(0)`（无合成失败计数了，总清零）
 
-## 实施步骤
-1. 改 `falsely-applied-controller.ts:51-64` selectFalselyAppliedRepairIndexes（~3-5 行）
-2. tsc + check-mjr-yaml 静态门禁
-3. commit src + push
-4. 等 bot bundle → 重锁 mvu-protocol-applier loader sha
-5. tavern_sync 重打包 PNG + chara 终验
-6. 载荷终验（CDN dist 确认只返回最新楼逻辑）
-7. 实机验证（重导入 PNG → hook save 5 秒 → 应≈0；floor 6 `at` 应稳定不 tick）
-8. 补录契约记录
+**改动 6：toastr 文案**
+- 删"能力效果已由 AI 补全"（不再 AI 合成）
+- patchIdentity+patchEffect → "能力档案已从开局基线恢复 ✓"
+- 仅 patchIdentity → "能力档案已从开局基线恢复 ✓"
+- 仅 patchEffect（无 identity，纯 effect 占位回填）→ "能力效果已从开局基线恢复 ✓"
 
-## 验收矩阵
-1. tsc：编辑区零新增错误
-2. check-mjr-yaml：exit 0
-3. CDN 载荷：selectFalselyAppliedRepairIndexes 逻辑为"倒序找首个非 user 楼返回 [index]"
-4. **实机 save 率**：hook /api/chats/save 5 秒 → 应≈0（hotfix-09 后 1.4/秒消失）
-5. **floor 6 `at` 稳定**：5 秒内不 tick（不再被反复重应用）
-6. 能力卡无回归：皇帝特权 + 效果正常显示
-7. 最新楼重载修复保留：模拟最新楼 data 重置 → 应被修复（若可测）
-8. recoverRecentRawProtocolMessages 不受影响：导入旧档补写仍工作（若可测）
+## 边界
+- 空聊/全 user → 早期 return
+- nameStale 无基线 → 保守跳过+提示（不变）
+- effect/combat 占位但**基线也占位**（用户没填开局表单）→ baseEffectValid=false → patchEffect=false → **不写**（靠 C 模型自纠）。对没填表单的用户无损害。
+- roster 空 → updater 返回 current（不变）
+
+## 红线
+- 不动 MVU 所有权边界（name 非 stale 时只覆盖占位）
+- 不动 mfrsSynthAbilityByAi 函数本身（保留供未来 generateRaw 修复后复用，或单独清理）
+- ≤30 行改动，仅界面美化 1 loader
+- 不动其余 5 loader / yaml / 欢迎页
+
+## 验收
+1. 静态：tsc 编辑区零新增错误 + check-mjr-yaml exit 0 + feature string hotfix-11
+2. 新聊天回归：开局表单 → 能力卡正常（无回归）
+3. 污染注入：末楼名称改"未知"+effect 改"风刃" → 刷新 → 守卫**即时**回填（无 25s 空等）name+level+camp+effect+combat 全从基线 + toastr ✓
+4. 仅 effect 占位（name 干净）：刷新 → effect 从基线回填（若基线非占位）
+5. 无基线旧聊天：effect 占位 → 跳过 effect（靠 C），名称占位 → 提示手填
+6. v2 计数：成功即清零，无合成失败误耗 → 守卫永不因死合成停手
+7. 实机：in-flight 临界区无 25s await → 新楼层事件守卫不被阻塞
 
 ## 回滚
-mvu-protocol-applier loader 指回 @40b2eff2（hotfix-09）+ git revert。单 loader 粒度可独立回退。
+界面美化 loader 指回 @c4f7c820 + git revert。单 loader 粒度可独立回退。
 
 ## 残留风险
-1. 真重载场景下，历史楼若被 MVU 重建为初值（非被后续覆盖），不再被修复 → 但修复本就回退旧值（数据损坏），不修反而更好；最新楼仍修
-2. MVU message-scope 语义（per-floor 快照 vs 共享态）未最终核实——若 per-floor 快照，历史楼本不应被覆盖，floor 6 现象需另释；但 fix 不依赖该语义（只扫最新楼在两种语义下都断环）
-3. generateRaw 失效独立于此，不修（B 合成降级另议）
-
-## CDN 轮次
-仅重锁 mvu-protocol-applier 1 loader（界面美化等 5 个不动）。与 hotfix-09 同 loader，叠加生效。
-
-## 实施记录（2026-09-04 已实施，待实机验收）
-- commit 3837fcc4：源码 selectFalselyAppliedRepairIndexes 倒序只返回最新楼 + plan
-- commit bb954af5：bot 首次 bundle（dist 含 length-1;n>=0 + return[n]，旧 index=0 push 已移除）
-- commit d71737b4：重锁 mvu协议应用 @40b2eff2->@bb954af5 + 重打包 PNG
-- commit 9d4da809：bot 二次 bundle（仅刷 12 dist build-hash，未碰 PNG）
-- 静态：tsc 编辑区零新增错误；check-mjr-yaml exit 0；feature string hotfix-10 ✓
-- 载荷：dist 倒序循环 + return[n] 确认；PNG chara = {9b02f733×3, bb954af5×1(新), c4f7c820×1, eab1f7a6×1}，旧 40b2eff2 已消失
-- t7 实机验收：待用户重导入 PNG（mvu协议应用 loader 切到 bb954af5）后 hook save 5 秒→应≈0 + floor 6 `at` 稳定不 tick
-
-## 实机验收记录（2026-09-04 用户重导入+新对话后）
-- save 洪流：hook /api/chats/save 5秒 → **saveCount=0（0.00/秒）** ✓ 归零（hotfix-09 后 1.4/秒→hotfix-10 后 0）
-- floor 6 `at` 稳定性：8秒窗无任何楼 tick（tickedCount=0）✓ 历史楼不再被反复重应用
-- floor 6 `at`=1788508363746（测量时 now=1788509349372，delta=-985626ms，即停于约16分钟前，非追踪实时）✓ 稳定
-- 能力卡无回归：末楼（floor 26）皇帝特权/科学侧/Level 5/正典效果（借用强化他人能力…）+ 正典运用 ✓
-- CDN 载荷 @bb954af5 确认含 length-1;+return[ 倒序只返回最新楼逻辑 ✓
-- 裁定：**hotfix-09 + hotfix-10 双修根治 save 洪流**，能力卡自愈机制（C 条款+身份回填）无回归
+1. mfrsSynthAbilityByAi 函数保留为死代码（不调用了）—— 可接受（未来 generateRaw 修复后可复用，或单独清理）
+2. 无基线 effect 占位的用户仍靠 C—— 已是现状，非回归
+3. generateRaw 失效根因（TH kK）未修—— 超出魔禁卡范畴
