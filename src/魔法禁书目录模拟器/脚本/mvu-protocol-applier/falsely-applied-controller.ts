@@ -48,17 +48,19 @@ export async function runProtocolApplicationController<T extends ProtocolApplica
   };
 }
 
+// hotfix-10：只返回最新非 user 楼（排除正在生成的楼）。
+// 根因：原实现扫全楼导致历史楼"被后续楼合法覆盖"被判定 B 误判为假性已应用→反复"修复"回退旧值→再覆盖→save 洪流。
+// 历史楼若 data≠本楼协议值，多为被后续楼合法覆盖（修回是数据损坏）；最新楼无被覆盖可能，其假性才为真（重载重置）。
 export function selectFalselyAppliedRepairIndexes(
   chat: ReadonlyArray<{ is_user?: boolean } | undefined>,
   activeGenerationMessageIndex = -1,
 ): number[] {
-  const indexes: number[] = [];
-  for (let index = 0; index < chat.length; index += 1) {
+  for (let index = chat.length - 1; index >= 0; index -= 1) {
     const message = chat[index];
     if (!message || message.is_user || index === activeGenerationMessageIndex) continue;
-    indexes.push(index);
+    return [index];
   }
-  return indexes;
+  return [];
 }
 
 export function createObjectKeyedSingleFlight<ObjectKey extends object, SecondaryKey, T>() {

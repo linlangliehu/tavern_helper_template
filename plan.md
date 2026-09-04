@@ -1,81 +1,85 @@
-# hotfix-09 计划：save 洪流根因修复（mvu-protocol-applier skip 分支冗余 persistMarker）
+# hotfix-10：根治 save 洪流（限制假性已应用修复只扫最新楼）
 
-## 根因（Step 1 实机取证闭合，已推翻旧假设）
+## 状态：待审查 → 待你授权实施（未实施）
 
-旧假设"历史楼假性已应用乒乓"已被实机 hook 推翻：5 秒计数 `检测到假性已应用`=0、`历史楼层假性已应用`=0、任何 `[Hotfix]` 日志=0，但 `/api/chats/save`=22（4.4/秒）。
+## 背景
+hotfix-09 修了 skip 分支冗余 persist（洪流 4.4→1.4/秒），但主源未堵：历史楼 6 被 `selectFalselyAppliedRepairIndexes` 反复扫描→falselyApplied 误判→clearMarker+write+persist(saveChat)→CHAT_CHANGED→递归复核→自持续振荡 1.4/秒。实机复核（sillytavern-runtime-debug skill）确认：仅 floor 6 `at` 追踪实时（8/12/20 稳定），applier persistMarker 是 ~75% save 源，振荡非衰减。
 
-**真根因**：`falsely-applied-controller.ts:25`（runProtocolApplicationController 的 skip 分支）冗余 persistMarker 自反馈环。
+## 根因（已实机确认，证据闭环）
+`selectFalselyAppliedRepairIndexes`（controller.ts:51-64）返回**所有非 user 楼**。`repairFalselyAppliedFloors`（index.ts:818）在每次 CHAT_CHANGED（debounce 800ms）遍历这些楼，对"标记命中 + isFalselyAppliedStat=true"的楼 clearMarker+write+persistMarker(saveChat)。
 
-源码（falsely-applied-controller.ts DKB-K3S 行）：
+`isFalselyAppliedStat` 判定 B（replace 路径比对）**无法区分两种"data ≠ 本楼协议值"**：
+- 真假性（应修）：重载后 stat_data 被 MVU 重建为初值，标记留存 → 修复回本楼协议值正确
+- 假假性（不应修）：本楼协议值被**后续楼合法覆盖**（floor 6 的 FANTASY-HAND-02 被 floor 8 的 FANTASY-HAND-06 覆盖）→ 判定 B 误判为假性 → "修复"回旧值 FANTASY-HAND-02 → 被后续楼再覆盖 → 永久 mismatch → 每次扫描都修 → save 洪流
+
+设计注释（index.ts:808-814）本意是"重载后重建初值的存量历史楼"，但判定 B 把"合法覆盖"也当"假性" → 对历史楼修复**语义错误**（修复=回退到已被超越的旧值）。
+
+## 修复（1 处，~3-5 行）
+`selectFalselyAppliedRepairIndexes`（controller.ts:51-64）改为**只返回最新非 user 楼**（排除 activeGenerationMessageIndex）。
+
 ```ts
-if (options.markerMatches && !options.falselyApplied) {   // 标记已应用 + 数据正确
-    const markerPersisted = await options.persistMarker(); // ← 冗余 saveChat
-    return { action: 'skip', needsRetry: !markerPersisted, markerPersisted };
+// 改前：返回所有非 user 楼（导致历史楼假假性循环）
+export function selectFalselyAppliedRepairIndexes(chat, activeGenerationMessageIndex = -1): number[] {
+  const indexes: number[] = [];
+  for (let index = 0; index < chat.length; index += 1) {
+    const message = chat[index];
+    if (!message || message.is_user || index === activeGenerationMessageIndex) continue;
+    indexes.push(index);
+  }
+  return indexes;
+}
+
+// 改后：只返回最新非 user 楼（hotfix-10：历史楼"被后续覆盖"非假性，修回旧值是回退；只最新楼无被覆盖可能）
+export function selectFalselyAppliedRepairIndexes(chat, activeGenerationMessageIndex = -1): number[] {
+  for (let index = chat.length - 1; index >= 0; index -= 1) {
+    const message = chat[index];
+    if (!message || message.is_user || index === activeGenerationMessageIndex) continue;
+    return [index];
+  }
+  return [];
 }
 ```
 
-机制链：
-1. 标记已设（markerMatches=true，extra[S]===applicationKey，已持久化在磁盘）+ 数据正确（!falselyApplied）→ skip 分支
-2. skip 分支本应"无事可做"，却仍调 persistMarker()→saveChat（重复持久化已存标记）
-3. saveChat 触发 ST 事件（MESSAGE_UPDATED/CHAT_CHANGED）→ applier 事件监听器重跑 → 又进 skip 分支 → saveChat → **4.4/秒反馈环**
-4. 此路径无日志（日志只在 falselyApplied=true 时打）→ 解释为何 save 洪流但 [Hotfix] 日志全 0
+## 为什么正确且安全
+1. **最新楼无"被后续楼覆盖"可能** → 其"data ≠ 协议值"只可能是真假性（重载重置）→ 修复正确。保留重载修复能力。
+2. **历史楼修复本就语义错误**：修复=把数据回退到该楼协议值，但该值已被后续楼合法超越 → 回退是数据损坏，非修复。放弃它非回归，是修正。
+3. **断反馈环**：floor 6/8/12/20 不再进队列 → 无 falselyApplied 修复 → 无 persistMarker(saveChat) from repair → CHAT_CHANGED 不再被 repair 触发 → 振荡止。
+4. **hotfix-09 的 skip 分支修复保留**（互不冲突），两源全堵 → 洪流归零。
+5. `recoverRecentRawProtocolMessages`（index.ts:857，扫最近 12 楼补写缺协议快照）不受影响 → 导入旧档补写能力保留。
 
-为何是 bug：markerMatches=true ⟹ extra[S]===f（加载自磁盘或 write 分支已 persist）→ 标记已存盘，skip 分支重复 persist 纯冗余。标记的首次持久化由 write 分支（line C8e markApplied+persistMarker）完成。
-
-**取证证据**：save 调用栈 `saveChat ← saveChatConditional ← te(persistMarker) ← falsely-applied-controller 内联(dist:15944/16264)`；other_hotfix 日志=0 证走 skip 分支（无日志路径）。
-
-## 目标
-
-消除 save 洪流（4.4/秒→0），保留"真重载抹掉"修复能力。零能力卡回归。
-
-## 红线
-
-1. 不破 MVU 所有权边界（只动 skip 分支的 persistMarker 调用，不动写回逻辑）
-2. 不碰界面美化 loader（本修在 mvu-protocol-applier loader @80a810e0）
-3. 改动预算 ≤5 行（Local Fix 范畴，实际 ~2 行）
-4. 不废掉整个假性已应用修复机制——write 分支（真抹掉修复）保持不变
-
-## 修复方案
-
-`falsely-applied-controller.ts:25` skip 分支**不调 persistMarker**，直接返回 `markerPersisted:true, needsRetry:false`。
-
-改动（DKB-K3S 两行 → 一行）：
-```ts
-if (options.markerMatches && !options.falselyApplied) {
-    return { action: 'skip', needsRetry: false, markerPersisted: true };
-}
-```
-
-安全性论证：
-- markerMatches=true ⟹ 标记已在磁盘（加载自磁盘或 write 分支已 persist）→ skip 不 persist 不丢标记
-- needsRetry:false → 不再重试 → 断反馈环
-- write 分支（line C8e markApplied+persistMarker）不变 → 真抹掉修复能力保留
+## 不改的
+- `isFalselyAppliedStat`（判定逻辑）不动 → 仍能识别真假性
+- `repairFalselyAppliedFloors` 主体不动 → 仍对队列内楼正确修复
+- `falsely-applied-controller.ts` 的 skip/write/falselyApplied 三分支不动（hotfix-09 已修 skip）
+- 界面美化/消息内面板等其余 5 loader 不动
 
 ## 实施步骤
-
-1. 改 falsely-applied-controller.ts:25（删 persistMarker 调用，硬编码 true）
+1. 改 `falsely-applied-controller.ts:51-64` selectFalselyAppliedRepairIndexes（~3-5 行）
 2. tsc + check-mjr-yaml 静态门禁
-3. commit src → 等 bot bundle
-4. 重锁 mvu-protocol-applier loader（@80a810e0→新 sha）+ tavern_sync 重打包 PNG
-5. 载荷终验（dist skip 分支逻辑）
-6. 实机验证：hook save 5 秒→0 + 能力卡无回归
-7. 契约补录
+3. commit src + push
+4. 等 bot bundle → 重锁 mvu-protocol-applier loader sha
+5. tavern_sync 重打包 PNG + chara 终验
+6. 载荷终验（CDN dist 确认只返回最新楼逻辑）
+7. 实机验证（重导入 PNG → hook save 5 秒 → 应≈0；floor 6 `at` 应稳定不 tick）
+8. 补录契约记录
 
-## 验收
-
-1. tsc 编辑区零新增错误
-2. check-mjr-yaml 63 条目不变
-3. CDN 载荷 skip 分支无 persistMarker 调用
-4. **实机**：hook /api/chats/save 5 秒 → 0（洪流止）
-5. 实机：能力卡正常显示（皇帝特权+正典效果，无回归）
-6. 实机：注入污染→守卫身份回填+合成仍工作（hotfix-07/08 不回归）
-7. PNG chara：仅 mvu-protocol-applier sha 移动，其余 5 loader 不变
+## 验收矩阵
+1. tsc：编辑区零新增错误
+2. check-mjr-yaml：exit 0
+3. CDN 载荷：selectFalselyAppliedRepairIndexes 逻辑为"倒序找首个非 user 楼返回 [index]"
+4. **实机 save 率**：hook /api/chats/save 5 秒 → 应≈0（hotfix-09 后 1.4/秒消失）
+5. **floor 6 `at` 稳定**：5 秒内不 tick（不再被反复重应用）
+6. 能力卡无回归：皇帝特权 + 效果正常显示
+7. 最新楼重载修复保留：模拟最新楼 data 重置 → 应被修复（若可测）
+8. recoverRecentRawProtocolMessages 不受影响：导入旧档补写仍工作（若可测）
 
 ## 回滚
-
-mvu-protocol-applier loader 指回 @80a810e0 + git revert。单 loader 粒度可独立回退。
+mvu-protocol-applier loader 指回 @40b2eff2（hotfix-09）+ git revert。单 loader 粒度可独立回退。
 
 ## 残留风险
+1. 真重载场景下，历史楼若被 MVU 重建为初值（非被后续覆盖），不再被修复 → 但修复本就回退旧值（数据损坏），不修反而更好；最新楼仍修
+2. MVU message-scope 语义（per-floor 快照 vs 共享态）未最终核实——若 per-floor 快照，历史楼本不应被覆盖，floor 6 现象需另释；但 fix 不依赖该语义（只扫最新楼在两种语义下都断环）
+3. generateRaw 失效独立于此，不修（B 合成降级另议）
 
-1. 若某调用方在 markerMatches=true 但标记未真正落盘的极边缘场景依赖 skip 分支 persist→不再 persist→标记仅内存态→重载丢失。但 markerMatches 计算自 extra（磁盘加载），此场景逻辑不成立。风险趋近 0。
-2. generateRaw 失效独立于此，不修（B 的合成降级另议）。
+## CDN 轮次
+仅重锁 mvu-protocol-applier 1 loader（界面美化等 5 个不动）。与 hotfix-09 同 loader，叠加生效。
