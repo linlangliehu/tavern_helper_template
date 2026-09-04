@@ -22,8 +22,9 @@ export async function runProtocolApplicationController<T extends ProtocolApplica
   options: ProtocolApplicationControllerOptions<T>,
 ): Promise<ProtocolApplicationControllerResult<T>> {
   if (options.markerMatches && !options.falselyApplied) {
-    const markerPersisted = await options.persistMarker();
-    return { action: 'skip', needsRetry: !markerPersisted, markerPersisted };
+    // hotfix-09：标记已应用且数据正确（markerMatches 意味着 extra[S]===applicationKey，已落盘）→
+    // skip 分支不重复 persistMarker，断 saveChat→事件→重跑→save 的反馈环（原 4.4/秒 save 洪流根因）
+    return { action: 'skip', needsRetry: false, markerPersisted: true };
   }
 
   if (options.markerMatches) options.clearMarker();
