@@ -26,7 +26,7 @@ const indexPath = join(frontendDir, 'index.ts');
 const adapterPath = join(frontendDir, 'table-change-adapter.ts');
 const configPath = join(frontendDir, 'frontend-config.js');
 const visualizerPath = join(frontendDir, 'v10_2_visualizer.js');
-const smokePath = join(repoRoot, 'mfrs-database-frontend-smoke.md');
+const smokePath = join(repoRoot, 'archive', 'mfrs-database-frontend-smoke.md');
 
 const fixedStatusSource = readFileSync(fixedStatusPath, 'utf8');
 const indexSource = readFileSync(indexPath, 'utf8');
