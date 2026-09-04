@@ -92,3 +92,11 @@ mvu-protocol-applier loader 指回 @40b2eff2（hotfix-09）+ git revert。单 lo
 - 静态：tsc 编辑区零新增错误；check-mjr-yaml exit 0；feature string hotfix-10 ✓
 - 载荷：dist 倒序循环 + return[n] 确认；PNG chara = {9b02f733×3, bb954af5×1(新), c4f7c820×1, eab1f7a6×1}，旧 40b2eff2 已消失
 - t7 实机验收：待用户重导入 PNG（mvu协议应用 loader 切到 bb954af5）后 hook save 5 秒→应≈0 + floor 6 `at` 稳定不 tick
+
+## 实机验收记录（2026-09-04 用户重导入+新对话后）
+- save 洪流：hook /api/chats/save 5秒 → **saveCount=0（0.00/秒）** ✓ 归零（hotfix-09 后 1.4/秒→hotfix-10 后 0）
+- floor 6 `at` 稳定性：8秒窗无任何楼 tick（tickedCount=0）✓ 历史楼不再被反复重应用
+- floor 6 `at`=1788508363746（测量时 now=1788509349372，delta=-985626ms，即停于约16分钟前，非追踪实时）✓ 稳定
+- 能力卡无回归：末楼（floor 26）皇帝特权/科学侧/Level 5/正典效果（借用强化他人能力…）+ 正典运用 ✓
+- CDN 载荷 @bb954af5 确认含 length-1;+return[ 倒序只返回最新楼逻辑 ✓
+- 裁定：**hotfix-09 + hotfix-10 双修根治 save 洪流**，能力卡自愈机制（C 条款+身份回填）无回归
