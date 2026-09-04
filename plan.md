@@ -81,3 +81,15 @@ hotfix-08 的 B 层 forceRederive 合成依赖 `TavernHelper.generateRaw`。实�
 1. mfrsSynthAbilityByAi 函数保留为死代码（不调用了）—— 可接受（未来 generateRaw 修复后可复用，或单独清理）
 2. 无基线 effect 占位的用户仍靠 C—— 已是现状，非回归
 3. generateRaw 失效根因（TH kK）未修—— 超出魔禁卡范畴
+
+## 实施记录（hotfix-11）
+- t1 源码：界面美化/index.ts 6 处编辑——删 forceRederive/needSynth/synthName/synthLevel/generateRaw 调用/synthFailed 守卫 + 基线回填 effect/combat + namePollutionActive=nameStale&&stillNameStale + in-flight 临界区缩短（仅 recheck+write）+ 无条件清零 + 新 toastr
+- t2 静态门禁：tsc 编辑区零新增错误 / check-mjr-yaml exit 0 / feature string hotfix-11×5
+- t3 提交：e85a1cff（src + plan.md）
+- t4 bot bundle：0fd1b27b（dist 含 hotfix-11 逻辑：无 generateRaw + baseEffect/baseCombat 回填 + 无条件清零）
+- t5 重锁 loader @c4f7c820→@0fd1b27b + tavern_sync 重打包 PNG + chara 终验 {9b02f733×3, bb954af5×1, 0fd1b27b×1, eab1f7a6×1}
+- t6 bot 二次 bundle：d8b19e0f（仅刷 dist build-hash，未碰 PNG）
+
+## 实机验收记录（待 t7）
+- 阻塞中：需用户重导入 PNG 使 loader 切到 @0fd1b27b 后实机验证
+- 验收点：注入污染→即时回填（无 25s 空等）+ 计数永不停手 + 能力卡无回归
