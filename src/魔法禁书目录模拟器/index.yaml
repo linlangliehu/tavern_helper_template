@@ -2545,7 +2545,7 @@
           await loadModule('MVU', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@9b02f733/dist/魔法禁书目录模拟器/脚本/MVU/index.js');
           await loadModule('变量结构', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@9b02f733/dist/魔法禁书目录模拟器/脚本/变量结构/index.js');
           await loadModule('mvu协议应用', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@80a810e0/dist/魔法禁书目录模拟器/脚本/mvu-protocol-applier/index.js');
-          await loadModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@80a810e0/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
+          await loadModule('界面美化', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@a8e5e35b/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
           await loadModule('固定状态栏', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@9b02f733/dist/魔法禁书目录模拟器/脚本/固定状态栏/index.js');
           await loadModule('消息内面板', 'https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@eab1f7a6/dist/魔法禁书目录模拟器/脚本/消息内面板/index.js');
 
