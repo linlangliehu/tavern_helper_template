@@ -70,8 +70,12 @@ hotfix-07 上线后实机验收发现：守卫对"名称被污染"的楼能正�
 - Layer B：界面美化/index.ts 4 处编辑完成——①needSynth 加 forceRederive（nameStale && 基线存在）；②patchEffect/patchCombat 纳入 namePollutionActive；③updater 写条件加 nameCurrentlyPolluted（名称当前仍污染则覆盖非占位效果/运用）；④修 v2 key 瑕疵（移除 attempts!==0 门控，成功总写回 0）。
 - Layer C：变量更新规则.yaml 在身份资产条款后插入【hotfix-08 名称-效果一致性】条款（模型自纠 B 抓不到的单 op 直写错配）。
 - 静态门禁：tsc 编辑区零新增错误（4 处预存错误 486/1107/1112/1194 均在编辑区外）；check-mjr-yaml OK（63 条目/7 正则不变）；特征串 forceRederive/namePollutionActive/nameCurrentlyPolluted/hotfix-08 命中。
-- 待 CDN 轮次：提交 src → bot bundle → 重锁界面美化 loader → tavern_sync 重打包 PNG → 载荷终验。
+- CDN 轮次完成：src 提交 68124737 → bot 首次 bundle c4f7c820 → 重锁界面美化 loader @c4f7c820 + tavern_sync 重打包 PNG(c7b627c8) → bot 二次 bundle 504bbd07（仅刷 12 个 dist build-hash 行，未碰 PNG）。
+- 载荷终验：CDN @c4f7c820 界面美化 dist 经 fetch 取回，minified 逐行确认 hotfix-08 全部逻辑在位——A=g&&E.length>0(forceRederive)、C=h||b||A(needSynth+forceRederive)、D=A&&s(namePollutionActive)、V=(d||D)&&!!I / P=(f||D)&&!!O(patch)、r=D&&m(o['能力名称'])(nameCurrentlyPolluted)、写条件 V&&(c(o['能力效果'])||r)、v2 key 无条件写 0（移除 attempts!==0 门控）。
+- PNG chara 终态：界面美化@c4f7c820×1 / mvu协议应用@80a810e0 / 消息内面板@eab1f7a6 / 其余3@9b02f733——仅界面美化移动，其余 5 个不变。
+- 顺带修：v2 key 瑕疵（首次成功不写回 key）已随本 hotfix 修复。
 
 ## 验收记录
 
-（待填）
+- 静态验收：CDN 载荷 hotfix-08 逻辑逐行确认（见实施记录）；PNG chara sha 终态正确；tsc/yaml 门禁通过。
+- 实机验收：待用户重导入更新后 PNG + 注入测试（新楼手动写"未知名+风刃效果"→ 刷新 → 守卫回填名+重合成效果）。琳琅档既有风刃无法由 B 自动修（名称已干净，nameStale=FALSE 不触发），需 A 手动回填（另议）。
