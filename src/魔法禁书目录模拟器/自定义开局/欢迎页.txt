@@ -752,9 +752,9 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             </div>
           </div>
         </div>
-        <div class="mw-event-group" data-event="天使坠落篇">
-          <button type="button" class="mw-event" data-act="event" data-event="天使坠落篇" aria-expanded="false">
-            <span class="mw-event-name">天使坠落篇</span>
+        <div class="mw-event-group" data-event="天使坠落·最后之作篇">
+          <button type="button" class="mw-event" data-act="event" data-event="天使坠落·最后之作篇" aria-expanded="false">
+            <span class="mw-event-name">天使坠落·最后之作篇</span>
             <span class="mw-event-range">8月28日—8月31日</span>
             <span class="mw-event-count">2</span>
             <span class="mw-event-arrow" aria-hidden="true">▶</span>
@@ -764,8 +764,8 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
               <div class="mw-scene-head"><span class="mw-scene-date">8月28日</span><span class="mw-scene-tag">天使坠落篇</span></div>
               <div class="mw-scene-desc">天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。</div>
             </div>
-            <div class="mw-scene" data-act="scene" data-date="8月31日" data-tag="天使坠落篇" data-desc="艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。">
-              <div class="mw-scene-head"><span class="mw-scene-date">8月31日</span><span class="mw-scene-tag">天使坠落篇</span></div>
+            <div class="mw-scene" data-act="scene" data-date="8月31日" data-tag="天使坠落·最后之作篇" data-desc="艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。">
+              <div class="mw-scene-head"><span class="mw-scene-date">8月31日</span><span class="mw-scene-tag">天使坠落·最后之作篇</span></div>
               <div class="mw-scene-desc">艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。</div>
             </div>
           </div>
@@ -883,8 +883,8 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
         <div class="mw-event-group" data-event="天赋梦路篇">
           <button type="button" class="mw-event" data-act="event" data-event="天赋梦路篇" aria-expanded="false">
             <span class="mw-event-name">天赋梦路篇</span>
-            <span class="mw-event-range">9月22日—9月28日</span>
-            <span class="mw-event-count">3</span>
+            <span class="mw-event-range">9月22日—10月上旬</span>
+            <span class="mw-event-count">4</span>
             <span class="mw-event-arrow" aria-hidden="true">▶</span>
           </button>
           <div class="mw-event-body">
@@ -900,6 +900,10 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
               <div class="mw-scene-head"><span class="mw-scene-date">9月28日</span><span class="mw-scene-tag">天赋梦路篇</span></div>
               <div class="mw-scene-desc">大规模联机做梦的火种已被点燃，梦境与现实的边界开始渗漏。梦的尽头，是"制造灵魂"的实验。</div>
             </div>
+            <div class="mw-scene" data-act="scene" data-date="10月上旬" data-tag="天赋梦路篇" data-desc="梦游症的余波就没停过：FRAGILE 的"联机梦境"与 SCHOOL 狙击弗兰达的暗杀同时上演——梦的传染源，在暗部的狙击镜下浮出水面。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月上旬</span><span class="mw-scene-tag">天赋梦路篇</span></div>
+              <div class="mw-scene-desc">梦游症的余波就没停过：FRAGILE 的"联机梦境"与 SCHOOL 狙击弗兰达的暗杀同时上演——梦的传染源，在暗部的狙击镜下浮出水面。</div>
+            </div>
           </div>
         </div>
         <div class="mw-event-group" data-event="0930篇">
@@ -913,6 +917,24 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             <div class="mw-scene" data-act="scene" data-date="9月30日" data-tag="0930篇" data-desc="前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。">
               <div class="mw-scene-head"><span class="mw-scene-date">9月30日</span><span class="mw-scene-tag">0930篇</span></div>
               <div class="mw-scene-desc">前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。</div>
+            </div>
+          </div>
+        </div>
+        <div class="mw-event-group" data-event="C文书篇">
+          <button type="button" class="mw-event" data-act="event" data-event="C文书篇" aria-expanded="false">
+            <span class="mw-event-name">C文书篇</span>
+            <span class="mw-event-range">10月1日—8日</span>
+            <span class="mw-event-count">2</span>
+            <span class="mw-event-arrow" aria-hidden="true">▶</span>
+          </button>
+          <div class="mw-event-body">
+            <div class="mw-scene" data-act="scene" data-date="10月1日" data-tag="C文书篇" data-desc="罗马正教大主教口语密令'C文书'落到一课郎手中，追杀令同步下达——笔记本流转到谁手里，谁就卷进法国广场的密谋。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月1日</span><span class="mw-scene-tag">C文书篇</span></div>
+              <div class="mw-scene-desc">罗马正教大主教口语密令'C文书'落到一课郎手中，追杀令同步下达——笔记本流转到谁手里，谁就卷进法国广场的密谋。</div>
+            </div>
+            <div class="mw-scene" data-act="scene" data-date="10月8日" data-tag="C文书篇" data-desc="法国·阿维尼翁攻防战到达顶点，C文书的矛头终于露到了纸面之外——联合会议场上的暗杀与火器，是魔法侧洗地的号角。">
+              <div class="mw-scene-head"><span class="mw-scene-date">10月8日</span><span class="mw-scene-tag">C文书篇</span></div>
+              <div class="mw-scene-desc">法国·阿维尼翁攻防战到达顶点，C文书的矛头终于露到了纸面之外——联合会议场上的暗杀与火器，是魔法侧洗地的号角。</div>
             </div>
           </div>
         </div>
