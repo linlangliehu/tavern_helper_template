@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build:dev": "webpack --mode development",
-    "build": "webpack --mode production",
+    "build": "node scripts/verify-production-mode.mjs && webpack --mode production",
     "watch": "webpack --mode development --watch --progress",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}\" --no-error-on-unmatched-pattern",
     "lint": "eslint",
@@ -12,6 +12,8 @@
     "dev-server": "node scripts/mfrs-dev-server-simple.mjs",
     "toggle-dev": "node scripts/toggle-dev-mode.mjs",
     "stop-dev": "node scripts/stop-dev-environment.mjs",
+    "verify:workspace": "node scripts/verify-production-mode.mjs",
+    "verify:production-mode": "node scripts/verify-production-mode.mjs",
     "verify:mfrs-frontend": "node scripts/verify-mfrs-database-frontend-p3.mjs",
     "verify:mfrs-mvu-hotfix": "node scripts/verify-mfrs-mvu-hotfix-regressions.mjs",
     "verify:mfrs-falsely-applied": "node scripts/verify-mfrs-falsely-applied-regressions.mjs",
