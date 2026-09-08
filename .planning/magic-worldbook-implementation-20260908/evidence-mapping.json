@@ -1,0 +1,2025 @@
+[
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·才人工房.txt"
+    ],
+    "packageIds": [
+      "TALENT-WORKSHOP"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "P01"
+    ],
+    "nodeIds": [
+      "TALENT-WORKSHOP-01",
+      "TALENT-WORKSHOP-02"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+    ],
+    "packageIds": [
+      "FIRST-YEAR"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P02"
+    ],
+    "nodeIds": [
+      "FIRST-YEAR-01",
+      "FIRST-YEAR-02"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+    ],
+    "packageIds": [
+      "FIRST-YEAR"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P03"
+    ],
+    "nodeIds": [
+      "FIRST-YEAR-02"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+    ],
+    "packageIds": [
+      "FIRST-YEAR"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P04"
+    ],
+    "nodeIds": [
+      "FIRST-YEAR-03",
+      "FIRST-YEAR-04",
+      "FIRST-YEAR-05"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "P05"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第一卷.txt"
+    ],
+    "packageIds": [
+      "ITEM-01"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P06"
+    ],
+    "nodeIds": [
+      "ITEM-01-01"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·生物黑客.txt"
+    ],
+    "packageIds": [
+      "BIOHACKER"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P07"
+    ],
+    "nodeIds": [
+      "BIOHACKER-01",
+      "BIOHACKER-02"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·上蜂往事.txt"
+    ],
+    "packageIds": [
+      "MENTAL-PAST"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P08"
+    ],
+    "nodeIds": [
+      "MENTAL-PAST-01",
+      "MENTAL-PAST-02",
+      "MENTAL-PAST-04",
+      "MENTAL-PAST-05",
+      "MENTAL-PAST-06",
+      "MENTAL-PAST-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第二卷.txt"
+    ],
+    "packageIds": [
+      "ITEM-02"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P09"
+    ],
+    "nodeIds": [
+      "ITEM-02-01",
+      "ITEM-02-02"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第三卷.txt"
+    ],
+    "packageIds": [
+      "ITEM-03"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P10"
+    ],
+    "nodeIds": [
+      "ITEM-03-01",
+      "ITEM-03-02",
+      "ITEM-03-04"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第四卷.txt"
+    ],
+    "packageIds": [
+      "ITEM-04"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P11"
+    ],
+    "nodeIds": [
+      "ITEM-04-01",
+      "ITEM-04-03"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第五卷.txt"
+    ],
+    "packageIds": [
+      "ITEM-05"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P12"
+    ],
+    "nodeIds": [
+      "ITEM-05-01",
+      "ITEM-05-04"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+    ],
+    "packageIds": [
+      "FIRST-YEAR"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P13"
+    ],
+    "nodeIds": [
+      "FIRST-YEAR-05",
+      "FIRST-YEAR-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第六卷.txt"
+    ],
+    "packageIds": [
+      "ITEM-06"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P14"
+    ],
+    "nodeIds": [
+      "ITEM-06-01",
+      "ITEM-06-02",
+      "ITEM-06-03"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+    ],
+    "packageIds": [
+      "FIRST-YEAR"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "P15"
+    ],
+    "nodeIds": [
+      "FIRST-YEAR-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+    ],
+    "packageIds": [
+      "GEMSTONE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "S01"
+    ],
+    "nodeIds": [
+      "GEMSTONE-01",
+      "GEMSTONE-02",
+      "GEMSTONE-03",
+      "GEMSTONE-04",
+      "GEMSTONE-05",
+      "GEMSTONE-06",
+      "GEMSTONE-07",
+      "GEMSTONE-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "S02"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "S03"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+    ],
+    "packageIds": [
+      "GEMSTONE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "S04"
+    ],
+    "nodeIds": [
+      "GEMSTONE-01",
+      "GEMSTONE-02",
+      "GEMSTONE-03",
+      "GEMSTONE-04",
+      "GEMSTONE-05",
+      "GEMSTONE-06",
+      "GEMSTONE-07",
+      "GEMSTONE-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴过去.txt"
+    ],
+    "packageIds": [
+      "MIKOTO-PAST"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "S05"
+    ],
+    "nodeIds": [
+      "MIKOTO-PAST-01",
+      "MIKOTO-PAST-07",
+      "MIKOTO-PAST-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "S06"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+    ],
+    "packageIds": [
+      "GEMSTONE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "S07"
+    ],
+    "nodeIds": [
+      "GEMSTONE-01",
+      "GEMSTONE-02",
+      "GEMSTONE-03",
+      "GEMSTONE-04",
+      "GEMSTONE-05",
+      "GEMSTONE-06",
+      "GEMSTONE-07",
+      "GEMSTONE-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·学习装置.txt"
+    ],
+    "packageIds": [
+      "LEARNING-DEVICE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "S08"
+    ],
+    "nodeIds": [
+      "LEARNING-DEVICE-01",
+      "LEARNING-DEVICE-02",
+      "LEARNING-DEVICE-03",
+      "LEARNING-DEVICE-04",
+      "LEARNING-DEVICE-05",
+      "LEARNING-DEVICE-06",
+      "LEARNING-DEVICE-07",
+      "LEARNING-DEVICE-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "S09"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·俄罗斯能力实演.txt"
+    ],
+    "packageIds": [
+      "RUSSIA-DEMONSTRATION"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "S10"
+    ],
+    "nodeIds": [
+      "RUSSIA-DEMONSTRATION-01",
+      "RUSSIA-DEMONSTRATION-02",
+      "RUSSIA-DEMONSTRATION-03",
+      "RUSSIA-DEMONSTRATION-04",
+      "RUSSIA-DEMONSTRATION-05",
+      "RUSSIA-DEMONSTRATION-06",
+      "RUSSIA-DEMONSTRATION-07",
+      "RUSSIA-DEMONSTRATION-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+    ],
+    "packageIds": [
+      "GEMSTONE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "S11"
+    ],
+    "nodeIds": [
+      "GEMSTONE-01",
+      "GEMSTONE-02",
+      "GEMSTONE-03",
+      "GEMSTONE-04",
+      "GEMSTONE-05",
+      "GEMSTONE-06",
+      "GEMSTONE-07",
+      "GEMSTONE-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·幻想御手.txt"
+    ],
+    "packageIds": [
+      "FANTASY-HAND"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O01"
+    ],
+    "nodeIds": [
+      "FANTASY-HAND-01",
+      "FANTASY-HAND-02",
+      "FANTASY-HAND-03",
+      "FANTASY-HAND-04",
+      "FANTASY-HAND-05",
+      "FANTASY-HAND-06",
+      "FANTASY-HAND-07",
+      "FANTASY-HAND-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·禁书降临.txt"
+    ],
+    "packageIds": [
+      "INDEX-FALL"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O02"
+    ],
+    "nodeIds": [
+      "INDEX-FALL-01",
+      "INDEX-FALL-02",
+      "INDEX-FALL-03",
+      "INDEX-FALL-04",
+      "INDEX-FALL-05",
+      "INDEX-FALL-06",
+      "INDEX-FALL-07",
+      "INDEX-FALL-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "O03"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "O04"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "O05"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·吸血杀手.txt"
+    ],
+    "packageIds": [
+      "DEEP-BLOOD"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O06"
+    ],
+    "nodeIds": [
+      "DEEP-BLOOD-01",
+      "DEEP-BLOOD-02",
+      "DEEP-BLOOD-03",
+      "DEEP-BLOOD-04",
+      "DEEP-BLOOD-05",
+      "DEEP-BLOOD-06",
+      "DEEP-BLOOD-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·乱雑開放.txt"
+    ],
+    "packageIds": [
+      "POLTERGEIST"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O07"
+    ],
+    "nodeIds": [
+      "POLTERGEIST-01",
+      "POLTERGEIST-02",
+      "POLTERGEIST-03",
+      "POLTERGEIST-04",
+      "POLTERGEIST-05",
+      "POLTERGEIST-06",
+      "POLTERGEIST-07",
+      "POLTERGEIST-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·绝对能力者进化.txt"
+    ],
+    "packageIds": [
+      "ABSOLUTE-EVOLVE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O08"
+    ],
+    "nodeIds": [
+      "ABSOLUTE-EVOLVE-01",
+      "ABSOLUTE-EVOLVE-02",
+      "ABSOLUTE-EVOLVE-03",
+      "ABSOLUTE-EVOLVE-04",
+      "ABSOLUTE-EVOLVE-05",
+      "ABSOLUTE-EVOLVE-06",
+      "ABSOLUTE-EVOLVE-07",
+      "ABSOLUTE-EVOLVE-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·静默派对.txt"
+    ],
+    "packageIds": [
+      "SILENT-PARTY"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O09"
+    ],
+    "nodeIds": [
+      "SILENT-PARTY-01",
+      "SILENT-PARTY-02",
+      "SILENT-PARTY-03",
+      "SILENT-PARTY-04",
+      "SILENT-PARTY-05",
+      "SILENT-PARTY-06",
+      "SILENT-PARTY-07",
+      "SILENT-PARTY-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·天使坠落.txt"
+    ],
+    "packageIds": [
+      "ANGEL-FALL"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O10"
+    ],
+    "nodeIds": [
+      "ANGEL-FALL-01",
+      "ANGEL-FALL-02",
+      "ANGEL-FALL-03",
+      "ANGEL-FALL-04",
+      "ANGEL-FALL-05",
+      "ANGEL-FALL-06",
+      "ANGEL-FALL-07",
+      "ANGEL-FALL-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·八月三十一日.txt"
+    ],
+    "packageIds": [
+      "AUGUST-31"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O11"
+    ],
+    "nodeIds": [
+      "AUGUST-31-01",
+      "AUGUST-31-02",
+      "AUGUST-31-03",
+      "AUGUST-31-04",
+      "AUGUST-31-05",
+      "AUGUST-31-06",
+      "AUGUST-31-07",
+      "AUGUST-31-08",
+      "AUGUST-31-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·0930事件.txt"
+    ],
+    "packageIds": [
+      "ST0930"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O12"
+    ],
+    "nodeIds": [
+      "ST0930-01",
+      "ST0930-02",
+      "ST0930-03",
+      "ST0930-04",
+      "ST0930-05",
+      "ST0930-06",
+      "ST0930-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·学艺都市.txt"
+    ],
+    "packageIds": [
+      "LIBERAL-ARTS-CITY"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "O13"
+    ],
+    "nodeIds": [
+      "LIBERAL-ARTS-CITY-01",
+      "LIBERAL-ARTS-CITY-02",
+      "LIBERAL-ARTS-CITY-03",
+      "LIBERAL-ARTS-CITY-04",
+      "LIBERAL-ARTS-CITY-05",
+      "LIBERAL-ARTS-CITY-06",
+      "LIBERAL-ARTS-CITY-07",
+      "LIBERAL-ARTS-CITY-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·死灵术师.txt"
+    ],
+    "packageIds": [
+      "NECROMANCER"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O14"
+    ],
+    "nodeIds": [
+      "NECROMANCER-01",
+      "NECROMANCER-02",
+      "NECROMANCER-03",
+      "NECROMANCER-04",
+      "NECROMANCER-05",
+      "NECROMANCER-06",
+      "NECROMANCER-07",
+      "NECROMANCER-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·未元物质.txt"
+    ],
+    "packageIds": [
+      "DARK-MATTER"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "O15"
+    ],
+    "nodeIds": [
+      "DARK-MATTER-01",
+      "DARK-MATTER-02",
+      "DARK-MATTER-03",
+      "DARK-MATTER-04",
+      "DARK-MATTER-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·法之书.txt"
+    ],
+    "packageIds": [
+      "BOOK-OF-LAW"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O16"
+    ],
+    "nodeIds": [
+      "BOOK-OF-LAW-01",
+      "BOOK-OF-LAW-02",
+      "BOOK-OF-LAW-03",
+      "BOOK-OF-LAW-04",
+      "BOOK-OF-LAW-05",
+      "BOOK-OF-LAW-06",
+      "BOOK-OF-LAW-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·法之书.txt"
+    ],
+    "packageIds": [
+      "BOOK-OF-LAW"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O17"
+    ],
+    "nodeIds": [
+      "BOOK-OF-LAW-01",
+      "BOOK-OF-LAW-02",
+      "BOOK-OF-LAW-03",
+      "BOOK-OF-LAW-04",
+      "BOOK-OF-LAW-05",
+      "BOOK-OF-LAW-06",
+      "BOOK-OF-LAW-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "O18"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·神之饮物.txt"
+    ],
+    "packageIds": [
+      "NECTAR"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "O19"
+    ],
+    "nodeIds": [
+      "NECTAR-01",
+      "NECTAR-02",
+      "NECTAR-03",
+      "NECTAR-04",
+      "NECTAR-05",
+      "NECTAR-06",
+      "NECTAR-07",
+      "NECTAR-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·树状图残骸.txt"
+    ],
+    "packageIds": [
+      "TREE-DIAGRAM-REMNANT"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O20"
+    ],
+    "nodeIds": [
+      "TREE-DIAGRAM-REMNANT-01",
+      "TREE-DIAGRAM-REMNANT-02",
+      "TREE-DIAGRAM-REMNANT-03",
+      "TREE-DIAGRAM-REMNANT-04",
+      "TREE-DIAGRAM-REMNANT-05",
+      "TREE-DIAGRAM-REMNANT-06",
+      "TREE-DIAGRAM-REMNANT-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·恩底弥翁.txt"
+    ],
+    "packageIds": [
+      "ENDEYMION"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O21"
+    ],
+    "nodeIds": [
+      "ENDEYMION-01",
+      "ENDEYMION-02",
+      "ENDEYMION-03",
+      "ENDEYMION-04",
+      "ENDEYMION-05",
+      "ENDEYMION-06",
+      "ENDEYMION-07",
+      "ENDEYMION-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大霸星祭.txt"
+    ],
+    "packageIds": [
+      "DAIHASEISAI"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O22"
+    ],
+    "nodeIds": [
+      "DAIHASEISAI-01",
+      "DAIHASEISAI-02",
+      "DAIHASEISAI-03",
+      "DAIHASEISAI-04",
+      "DAIHASEISAI-05",
+      "DAIHASEISAI-06",
+      "DAIHASEISAI-07",
+      "DAIHASEISAI-08",
+      "DAIHASEISAI-09",
+      "DAIHASEISAI-10",
+      "DAIHASEISAI-11"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·使徒十字.txt"
+    ],
+    "packageIds": [
+      "ST-CROSS"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O23"
+    ],
+    "nodeIds": [
+      "ST-CROSS-01",
+      "ST-CROSS-02",
+      "ST-CROSS-03",
+      "ST-CROSS-04",
+      "ST-CROSS-05",
+      "ST-CROSS-06",
+      "ST-CROSS-07",
+      "ST-CROSS-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大霸星祭.txt"
+    ],
+    "packageIds": [
+      "DAIHASEISAI"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O24"
+    ],
+    "nodeIds": [
+      "DAIHASEISAI-01",
+      "DAIHASEISAI-02",
+      "DAIHASEISAI-03",
+      "DAIHASEISAI-04",
+      "DAIHASEISAI-05",
+      "DAIHASEISAI-06",
+      "DAIHASEISAI-07",
+      "DAIHASEISAI-08",
+      "DAIHASEISAI-09",
+      "DAIHASEISAI-10",
+      "DAIHASEISAI-11"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·亚得里亚海女王.txt"
+    ],
+    "packageIds": [
+      "ADRIA"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O25"
+    ],
+    "nodeIds": [
+      "ADRIA-01",
+      "ADRIA-02",
+      "ADRIA-03",
+      "ADRIA-04",
+      "ADRIA-05"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·天赋梦路.txt"
+    ],
+    "packageIds": [
+      "DREAM-RANKER"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O26"
+    ],
+    "nodeIds": [
+      "DREAM-RANKER-01",
+      "DREAM-RANKER-02",
+      "DREAM-RANKER-03",
+      "DREAM-RANKER-04",
+      "DREAM-RANKER-05",
+      "DREAM-RANKER-06",
+      "DREAM-RANKER-07",
+      "DREAM-RANKER-09",
+      "DREAM-RANKER-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/支线事件·幽幻姐妹.txt"
+    ],
+    "packageIds": [
+      "ASTRAL-BUDDY"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "O27"
+    ],
+    "nodeIds": [
+      "ASTRAL-BUDDY-01",
+      "ASTRAL-BUDDY-02",
+      "ASTRAL-BUDDY-03",
+      "ASTRAL-BUDDY-04",
+      "ASTRAL-BUDDY-05",
+      "ASTRAL-BUDDY-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·Skill-Out.txt"
+    ],
+    "packageIds": [
+      "SKILL-OUT"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O28"
+    ],
+    "nodeIds": [
+      "SKILL-OUT-01",
+      "SKILL-OUT-02",
+      "SKILL-OUT-03",
+      "SKILL-OUT-04",
+      "SKILL-OUT-05",
+      "SKILL-OUT-06",
+      "SKILL-OUT-07",
+      "SKILL-OUT-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·Skill-Out.txt"
+    ],
+    "packageIds": [
+      "SKILL-OUT"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O29"
+    ],
+    "nodeIds": [
+      "SKILL-OUT-01",
+      "SKILL-OUT-02",
+      "SKILL-OUT-03",
+      "SKILL-OUT-04",
+      "SKILL-OUT-05",
+      "SKILL-OUT-06",
+      "SKILL-OUT-07",
+      "SKILL-OUT-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·心理掌握漫画.txt"
+    ],
+    "packageIds": [
+      "MENTAL-OUT"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "O30"
+    ],
+    "nodeIds": [
+      "MENTAL-OUT-01"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·C文书.txt"
+    ],
+    "packageIds": [
+      "CDOC"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O31"
+    ],
+    "nodeIds": [
+      "CDOC-01",
+      "CDOC-02",
+      "CDOC-03",
+      "CDOC-04",
+      "CDOC-05"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·DRAGON.txt"
+    ],
+    "packageIds": [
+      "DRAGON"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O32"
+    ],
+    "nodeIds": [
+      "DRAGON-01",
+      "DRAGON-02",
+      "DRAGON-03",
+      "DRAGON-04",
+      "DRAGON-05",
+      "DRAGON-06",
+      "DRAGON-07",
+      "DRAGON-08",
+      "DRAGON-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·越狱篇.txt"
+    ],
+    "packageIds": [
+      "JAILBREAK"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "O33"
+    ],
+    "nodeIds": [
+      "JAILBREAK-01",
+      "JAILBREAK-02",
+      "JAILBREAK-03",
+      "JAILBREAK-04",
+      "JAILBREAK-05",
+      "JAILBREAK-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·英国王室.txt"
+    ],
+    "packageIds": [
+      "BRITISH-ROYAL"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O34"
+    ],
+    "nodeIds": [
+      "BRITISH-ROYAL-01",
+      "BRITISH-ROYAL-02",
+      "BRITISH-ROYAL-03",
+      "BRITISH-ROYAL-04",
+      "BRITISH-ROYAL-05",
+      "BRITISH-ROYAL-06",
+      "BRITISH-ROYAL-07",
+      "BRITISH-ROYAL-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·第三次世界大战.txt"
+    ],
+    "packageIds": [
+      "WW3"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O35"
+    ],
+    "nodeIds": [
+      "WW3-01",
+      "WW3-02",
+      "WW3-03",
+      "WW3-04",
+      "WW3-05",
+      "WW3-06",
+      "WW3-07",
+      "WW3-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·DRAGON.txt"
+    ],
+    "packageIds": [
+      "DRAGON"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O36"
+    ],
+    "nodeIds": [
+      "DRAGON-01",
+      "DRAGON-02",
+      "DRAGON-03",
+      "DRAGON-04",
+      "DRAGON-05",
+      "DRAGON-06",
+      "DRAGON-07",
+      "DRAGON-08",
+      "DRAGON-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·DRAGON.txt"
+    ],
+    "packageIds": [
+      "DRAGON"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "O37"
+    ],
+    "nodeIds": [
+      "DRAGON-01",
+      "DRAGON-02",
+      "DRAGON-03",
+      "DRAGON-04",
+      "DRAGON-05",
+      "DRAGON-06",
+      "DRAGON-07",
+      "DRAGON-08",
+      "DRAGON-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新入生与归还.txt"
+    ],
+    "packageIds": [
+      "NT-FRESHMEN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N01"
+    ],
+    "nodeIds": [
+      "NT-FRESHMEN-01",
+      "NT-FRESHMEN-02",
+      "NT-FRESHMEN-03",
+      "NT-FRESHMEN-04",
+      "NT-FRESHMEN-05",
+      "NT-FRESHMEN-06",
+      "NT-FRESHMEN-07",
+      "NT-FRESHMEN-08",
+      "NT-FRESHMEN-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新入生与归还.txt"
+    ],
+    "packageIds": [
+      "NT-FRESHMEN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N02"
+    ],
+    "nodeIds": [
+      "NT-FRESHMEN-01",
+      "NT-FRESHMEN-02",
+      "NT-FRESHMEN-03",
+      "NT-FRESHMEN-04",
+      "NT-FRESHMEN-05",
+      "NT-FRESHMEN-06",
+      "NT-FRESHMEN-07",
+      "NT-FRESHMEN-08",
+      "NT-FRESHMEN-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·夏威夷入侵.txt"
+    ],
+    "packageIds": [
+      "NT-HAWAII"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N03"
+    ],
+    "nodeIds": [
+      "NT-HAWAII-01",
+      "NT-HAWAII-02",
+      "NT-HAWAII-03",
+      "NT-HAWAII-04",
+      "NT-HAWAII-05",
+      "NT-HAWAII-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·自然选择者.txt"
+    ],
+    "packageIds": [
+      "NT-NATURAL-SELECTOR"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N04"
+    ],
+    "nodeIds": [
+      "NT-NATURAL-SELECTOR-01",
+      "NT-NATURAL-SELECTOR-02",
+      "NT-NATURAL-SELECTOR-03",
+      "NT-NATURAL-SELECTOR-04",
+      "NT-NATURAL-SELECTOR-05",
+      "NT-NATURAL-SELECTOR-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·一端览祭.txt"
+    ],
+    "packageIds": [
+      "NT-ICHIHANARAN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N05"
+    ],
+    "nodeIds": [
+      "NT-ICHIHANARAN-01",
+      "NT-ICHIHANARAN-02",
+      "NT-ICHIHANARAN-03",
+      "NT-ICHIHANARAN-04",
+      "NT-ICHIHANARAN-05",
+      "NT-ICHIHANARAN-06",
+      "NT-ICHIHANARAN-07",
+      "NT-ICHIHANARAN-08",
+      "NT-ICHIHANARAN-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·人力资源计划.txt"
+    ],
+    "packageIds": [
+      "NT-AGITATE-HALATION"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N06"
+    ],
+    "nodeIds": [
+      "NT-AGITATE-HALATION-01",
+      "NT-AGITATE-HALATION-02",
+      "NT-AGITATE-HALATION-03",
+      "NT-AGITATE-HALATION-04",
+      "NT-AGITATE-HALATION-05",
+      "NT-AGITATE-HALATION-06",
+      "NT-AGITATE-HALATION-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt"
+    ],
+    "packageIds": [
+      "GREMLIN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N07"
+    ],
+    "nodeIds": [
+      "GREMLIN-01",
+      "GREMLIN-02",
+      "GREMLIN-03",
+      "GREMLIN-04",
+      "GREMLIN-05",
+      "GREMLIN-06",
+      "GREMLIN-07",
+      "GREMLIN-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt"
+    ],
+    "packageIds": [
+      "GREMLIN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N08"
+    ],
+    "nodeIds": [
+      "GREMLIN-01",
+      "GREMLIN-02",
+      "GREMLIN-03",
+      "GREMLIN-04",
+      "GREMLIN-05",
+      "GREMLIN-06",
+      "GREMLIN-07",
+      "GREMLIN-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt"
+    ],
+    "packageIds": [
+      "GREMLIN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N09"
+    ],
+    "nodeIds": [
+      "GREMLIN-01",
+      "GREMLIN-02",
+      "GREMLIN-03",
+      "GREMLIN-04",
+      "GREMLIN-05",
+      "GREMLIN-06",
+      "GREMLIN-07",
+      "GREMLIN-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·蜜蚁爱愉篇.txt"
+    ],
+    "packageIds": [
+      "MENTAL-STINGER"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N10"
+    ],
+    "nodeIds": [
+      "MENTAL-STINGER-01",
+      "MENTAL-STINGER-02",
+      "MENTAL-STINGER-03",
+      "MENTAL-STINGER-04",
+      "MENTAL-STINGER-05",
+      "MENTAL-STINGER-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "N11"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·圣日耳曼.txt"
+    ],
+    "packageIds": [
+      "NT-SAINT-GERMAIN"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N12"
+    ],
+    "nodeIds": [
+      "NT-SAINT-GERMAIN-01",
+      "NT-SAINT-GERMAIN-02",
+      "NT-SAINT-GERMAIN-03",
+      "NT-SAINT-GERMAIN-04",
+      "NT-SAINT-GERMAIN-05",
+      "NT-SAINT-GERMAIN-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·僧正追击.txt"
+    ],
+    "packageIds": [
+      "NT-HIGH-PRIEST"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N13"
+    ],
+    "nodeIds": [
+      "NT-HIGH-PRIEST-01",
+      "NT-HIGH-PRIEST-02",
+      "NT-HIGH-PRIEST-03",
+      "NT-HIGH-PRIEST-04",
+      "NT-HIGH-PRIEST-05",
+      "NT-HIGH-PRIEST-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·理想送行.txt"
+    ],
+    "packageIds": [
+      "NT-WORLD-REJECTER"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N14"
+    ],
+    "nodeIds": [
+      "NT-WORLD-REJECTER-01",
+      "NT-WORLD-REJECTER-02",
+      "NT-WORLD-REJECTER-03",
+      "NT-WORLD-REJECTER-04",
+      "NT-WORLD-REJECTER-05",
+      "NT-WORLD-REJECTER-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·上里阵营与去鸣.txt"
+    ],
+    "packageIds": [
+      "NT-SALOME"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N15"
+    ],
+    "nodeIds": [
+      "NT-SALOME-01",
+      "NT-SALOME-02",
+      "NT-SALOME-03",
+      "NT-SALOME-04",
+      "NT-SALOME-05",
+      "NT-SALOME-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大热浪与元素.txt"
+    ],
+    "packageIds": [
+      "NT-HEAT-WAVE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N16"
+    ],
+    "nodeIds": [
+      "NT-HEAT-WAVE-01",
+      "NT-HEAT-WAVE-02",
+      "NT-HEAT-WAVE-03",
+      "NT-HEAT-WAVE-04",
+      "NT-HEAT-WAVE-05",
+      "NT-HEAT-WAVE-06",
+      "NT-HEAT-WAVE-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·夺回上里.txt"
+    ],
+    "packageIds": [
+      "NT-KAMISATO-RESCUE"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N17"
+    ],
+    "nodeIds": [
+      "NT-KAMISATO-RESCUE-01",
+      "NT-KAMISATO-RESCUE-02",
+      "NT-KAMISATO-RESCUE-03",
+      "NT-KAMISATO-RESCUE-04",
+      "NT-KAMISATO-RESCUE-05",
+      "NT-KAMISATO-RESCUE-06",
+      "NT-KAMISATO-RESCUE-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·亚雷斯塔攻楼.txt"
+    ],
+    "packageIds": [
+      "NT-ALEISTER"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N18"
+    ],
+    "nodeIds": [
+      "NT-ALEISTER-01",
+      "NT-ALEISTER-02",
+      "NT-ALEISTER-03",
+      "NT-ALEISTER-04",
+      "NT-ALEISTER-05",
+      "NT-ALEISTER-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·演算战斗服.txt"
+    ],
+    "packageIds": [
+      "NT-PROCESSOR-SUIT"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N19"
+    ],
+    "nodeIds": [
+      "NT-PROCESSOR-SUIT-01",
+      "NT-PROCESSOR-SUIT-02",
+      "NT-PROCESSOR-SUIT-03",
+      "NT-PROCESSOR-SUIT-04",
+      "NT-PROCESSOR-SUIT-05",
+      "NT-PROCESSOR-SUIT-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt"
+    ],
+    "packageIds": [
+      "CORONZON"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N20"
+    ],
+    "nodeIds": [
+      "CORONZON-01",
+      "CORONZON-02",
+      "CORONZON-03",
+      "CORONZON-04",
+      "CORONZON-05",
+      "CORONZON-06",
+      "CORONZON-07",
+      "CORONZON-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt"
+    ],
+    "packageIds": [
+      "CORONZON"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N21"
+    ],
+    "nodeIds": [
+      "CORONZON-01",
+      "CORONZON-02",
+      "CORONZON-03",
+      "CORONZON-04",
+      "CORONZON-05",
+      "CORONZON-06",
+      "CORONZON-07",
+      "CORONZON-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt"
+    ],
+    "packageIds": [
+      "CORONZON"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "N22"
+    ],
+    "nodeIds": [
+      "CORONZON-01",
+      "CORONZON-02",
+      "CORONZON-03",
+      "CORONZON-04",
+      "CORONZON-05",
+      "CORONZON-06",
+      "CORONZON-07",
+      "CORONZON-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新约22R温莎收尾.txt"
+    ],
+    "packageIds": [
+      "NT-22R"
+    ],
+    "coverage": "partial",
+    "evidenceIds": [
+      "N23"
+    ],
+    "nodeIds": [
+      "NT-22R-01",
+      "NT-22R-02",
+      "NT-22R-03",
+      "NT-22R-04",
+      "NT-22R-05",
+      "NT-22R-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第一卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-01"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G01"
+    ],
+    "nodeIds": [
+      "GENESIS-01-01",
+      "GENESIS-01-02",
+      "GENESIS-01-03",
+      "GENESIS-01-04",
+      "GENESIS-01-05",
+      "GENESIS-01-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第二卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-02"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G02"
+    ],
+    "nodeIds": [
+      "GENESIS-02-01",
+      "GENESIS-02-02",
+      "GENESIS-02-03",
+      "GENESIS-02-04",
+      "GENESIS-02-05",
+      "GENESIS-02-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第三卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-03"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G03"
+    ],
+    "nodeIds": [
+      "GENESIS-03-01",
+      "GENESIS-03-02",
+      "GENESIS-03-03",
+      "GENESIS-03-04",
+      "GENESIS-03-05",
+      "GENESIS-03-06",
+      "GENESIS-03-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第四卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-04"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G04"
+    ],
+    "nodeIds": [
+      "GENESIS-04-01",
+      "GENESIS-04-02",
+      "GENESIS-04-03",
+      "GENESIS-04-04",
+      "GENESIS-04-05",
+      "GENESIS-04-06",
+      "GENESIS-04-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第五卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-05"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G05"
+    ],
+    "nodeIds": [
+      "GENESIS-05-01",
+      "GENESIS-05-02",
+      "GENESIS-05-03",
+      "GENESIS-05-04",
+      "GENESIS-05-05",
+      "GENESIS-05-06",
+      "GENESIS-05-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第六卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-06"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G06"
+    ],
+    "nodeIds": [
+      "GENESIS-06-01",
+      "GENESIS-06-02",
+      "GENESIS-06-03",
+      "GENESIS-06-04",
+      "GENESIS-06-05",
+      "GENESIS-06-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第七卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-07"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G07"
+    ],
+    "nodeIds": [
+      "GENESIS-07-01",
+      "GENESIS-07-02",
+      "GENESIS-07-03",
+      "GENESIS-07-04",
+      "GENESIS-07-05",
+      "GENESIS-07-06",
+      "GENESIS-07-07",
+      "GENESIS-07-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第八卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-08"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G08"
+    ],
+    "nodeIds": [
+      "GENESIS-08-01",
+      "GENESIS-08-02",
+      "GENESIS-08-03",
+      "GENESIS-08-04",
+      "GENESIS-08-05",
+      "GENESIS-08-06",
+      "GENESIS-08-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第九卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-09"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G09"
+    ],
+    "nodeIds": [
+      "GENESIS-09-01",
+      "GENESIS-09-02",
+      "GENESIS-09-03",
+      "GENESIS-09-04",
+      "GENESIS-09-05",
+      "GENESIS-09-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-10"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G10"
+    ],
+    "nodeIds": [
+      "GENESIS-10-01",
+      "GENESIS-10-02",
+      "GENESIS-10-03",
+      "GENESIS-10-04",
+      "GENESIS-10-05",
+      "GENESIS-10-06",
+      "GENESIS-10-07"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十一卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-11"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G11"
+    ],
+    "nodeIds": [
+      "GENESIS-11-01",
+      "GENESIS-11-02",
+      "GENESIS-11-03",
+      "GENESIS-11-04",
+      "GENESIS-11-05",
+      "GENESIS-11-06"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十二卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-12"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G12"
+    ],
+    "nodeIds": [
+      "GENESIS-12-01",
+      "GENESIS-12-02",
+      "GENESIS-12-03",
+      "GENESIS-12-04",
+      "GENESIS-12-05",
+      "GENESIS-12-06",
+      "GENESIS-12-07",
+      "GENESIS-12-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十三卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-13"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G13"
+    ],
+    "nodeIds": [
+      "GENESIS-13-01",
+      "GENESIS-13-02",
+      "GENESIS-13-03",
+      "GENESIS-13-04",
+      "GENESIS-13-05",
+      "GENESIS-13-06",
+      "GENESIS-13-07",
+      "GENESIS-13-08"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十四卷.txt"
+    ],
+    "packageIds": [
+      "GENESIS-14"
+    ],
+    "coverage": "playable-chain",
+    "evidenceIds": [
+      "G14"
+    ],
+    "nodeIds": [
+      "GENESIS-14-01",
+      "GENESIS-14-02",
+      "GENESIS-14-03",
+      "GENESIS-14-04",
+      "GENESIS-14-05",
+      "GENESIS-14-06",
+      "GENESIS-14-07",
+      "GENESIS-14-08",
+      "GENESIS-14-09"
+    ]
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "X01"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "X02"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "X03"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "X04"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "X05"
+    ],
+    "nodeIds": []
+  },
+  {
+    "files": [
+      "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+    ],
+    "packageIds": [],
+    "coverage": "reference-only",
+    "evidenceIds": [
+      "X06"
+    ],
+    "nodeIds": []
+  }
+]

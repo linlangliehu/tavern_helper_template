@@ -1,0 +1,2353 @@
+{
+  "worker": "ot",
+  "taskDate": "2026-09-08",
+  "scope": "13个既有主线包、7个新增主线包、1个既有祭典支线；另仅写本交接文件",
+  "route": {
+    "primarySkill": "tavern-card-builder",
+    "guideId": "ST-A3",
+    "inheritedFromPrimaryAgent": true,
+    "acceptanceBoundary": "静态正文与清单验证；同轮MVU沿用，不新增API，不代表宿主验收"
+  },
+  "files": [
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·幻想御手.txt",
+      "packageId": "FANTASY-HAND",
+      "title": "幻想御手篇",
+      "action": "modify",
+      "stage": 0,
+      "yearLayer": "Y",
+      "window": "七月中下旬；官动层为七月中旬异常前奏、下旬主体，不强填漫画逐日日期",
+      "evidenceIds": [
+        "O01"
+      ],
+      "volumes": [
+        "科学超电磁炮1–3"
+      ],
+      "keywords": [
+        "幻想御手事件",
+        "幻想猛兽事件",
+        "FANTASY-HAND",
+        "FANTASY-HAND-01"
+      ],
+      "entryNode": "FANTASY-HAND-01",
+      "nodeIds": [
+        "FANTASY-HAND-01",
+        "FANTASY-HAND-02",
+        "FANTASY-HAND-03",
+        "FANTASY-HAND-04",
+        "FANTASY-HAND-05",
+        "FANTASY-HAND-06",
+        "FANTASY-HAND-07",
+        "FANTASY-HAND-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "漫画逐日日期未逐页核；仅采用官动的七月中旬前奏、下旬主体。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O01",
+          "nodeIds": [
+            "FANTASY-HAND-01",
+            "FANTASY-HAND-02",
+            "FANTASY-HAND-03"
+          ],
+          "scope": "音频传播、昏迷与脑波调查",
+          "sourceRefs": [
+            "chronicle",
+            "railgun"
+          ]
+        },
+        {
+          "evidenceId": "O01",
+          "nodeIds": [
+            "FANTASY-HAND-04",
+            "FANTASY-HAND-05"
+          ],
+          "scope": "治疗程序、木山与置弃儿童的动机",
+          "sourceRefs": [
+            "chronicle",
+            "railgun"
+          ]
+        },
+        {
+          "evidenceId": "O01",
+          "nodeIds": [
+            "FANTASY-HAND-06",
+            "FANTASY-HAND-07",
+            "FANTASY-HAND-08"
+          ],
+          "scope": "幻想猛兽、使用者苏醒与仍未完成的儿童救治",
+          "sourceRefs": [
+            "chronicle",
+            "railgun"
+          ]
+        }
+      ],
+      "sha256": "d7ea3abfd8e44c99ae93bf1a796fbee74c18c72cf38232952247ecf19510d298"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·禁书降临.txt",
+      "packageId": "INDEX-FALL",
+      "title": "禁书降临篇",
+      "action": "modify",
+      "stage": 1,
+      "yearLayer": "Y",
+      "window": "官动层7月19日前奏、20日初遇、28日危机、29日住院余波",
+      "evidenceIds": [
+        "O02"
+      ],
+      "volumes": [
+        "旧约1"
+      ],
+      "keywords": [
+        "禁书降临篇",
+        "七月记忆危机",
+        "INDEX-FALL",
+        "INDEX-FALL-01"
+      ],
+      "entryNode": "INDEX-FALL-01",
+      "nodeIds": [
+        "INDEX-FALL-01",
+        "INDEX-FALL-02",
+        "INDEX-FALL-03",
+        "INDEX-FALL-04",
+        "INDEX-FALL-05",
+        "INDEX-FALL-06",
+        "INDEX-FALL-07",
+        "INDEX-FALL-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "19日前奏、20日初遇、28日核心、29日余波属于官动日期层，不提升为所有媒介逐日一致。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "INDEX-FALL-01",
+            "INDEX-FALL-02",
+            "INDEX-FALL-03",
+            "INDEX-FALL-04",
+            "INDEX-FALL-05"
+          ],
+          "scope": "初遇、监护人说明与清忆谎言",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "INDEX-FALL-06",
+            "INDEX-FALL-07",
+            "INDEX-FALL-08"
+          ],
+          "scope": "自动书记、树状图被毁与七月失忆后的隐瞒",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "a30db432c74a71422a88ddc6f6f0993d90196c46c907764b0a051c710bed3dda"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·吸血杀手.txt",
+      "packageId": "DEEP-BLOOD",
+      "title": "吸血杀手篇",
+      "action": "add",
+      "stage": 2,
+      "yearLayer": "Y",
+      "window": "八月上旬；官动层8月8日三泽塾事件、9日治疗余波",
+      "evidenceIds": [
+        "O06",
+        "O02"
+      ],
+      "volumes": [
+        "旧约2"
+      ],
+      "keywords": [
+        "吸血杀手篇",
+        "三泽塾事件",
+        "DEEP-BLOOD",
+        "DEEP-BLOOD-01"
+      ],
+      "entryNode": "DEEP-BLOOD-01",
+      "nodeIds": [
+        "DEEP-BLOOD-01",
+        "DEEP-BLOOD-02",
+        "DEEP-BLOOD-03",
+        "DEEP-BLOOD-04",
+        "DEEP-BLOOD-05",
+        "DEEP-BLOOD-06",
+        "DEEP-BLOOD-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "小说与动画在分身、圣歌队等支节的删改未逐页对勘；已实现姬神救援、炼成控制、真相动摇与解除的关键链。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O06",
+          "nodeIds": [
+            "DEEP-BLOOD-01",
+            "DEEP-BLOOD-02",
+            "DEEP-BLOOD-03"
+          ],
+          "scope": "委托、三泽塾控制与入侵记忆处理",
+          "sourceRefs": [
+            "OT02",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O06",
+          "nodeIds": [
+            "DEEP-BLOOD-04",
+            "DEEP-BLOOD-05",
+            "DEEP-BLOOD-06"
+          ],
+          "scope": "茵蒂克丝被带走、救法失去前提与断臂龙头",
+          "sourceRefs": [
+            "OT02",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O06",
+          "nodeIds": [
+            "DEEP-BLOOD-07"
+          ],
+          "scope": "治疗与姬神安置",
+          "sourceRefs": [
+            "OT02",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "DEEP-BLOOD-05"
+          ],
+          "scope": "七月已获救仅为本次对质前因",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "3f98acfa05ae04d8200f398f2670f787eb9b61795f37182fbc591f6973f758cd"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·绝对能力者进化.txt",
+      "packageId": "ABSOLUTE-EVOLVE",
+      "title": "绝对能力者进化篇",
+      "action": "modify",
+      "stage": 2,
+      "yearLayer": "Y",
+      "window": "八月中下旬调查；官动层8月21日决战、22日中止通知与余波",
+      "evidenceIds": [
+        "O08",
+        "O02"
+      ],
+      "volumes": [
+        "旧约3",
+        "科学超电磁炮4–7"
+      ],
+      "keywords": [
+        "绝对能力者进化实验",
+        "妹妹实验中止",
+        "ABSOLUTE-EVOLVE",
+        "ABSOLUTE-EVOLVE-01"
+      ],
+      "entryNode": "ABSOLUTE-EVOLVE-01",
+      "nodeIds": [
+        "ABSOLUTE-EVOLVE-01",
+        "ABSOLUTE-EVOLVE-02",
+        "ABSOLUTE-EVOLVE-03",
+        "ABSOLUTE-EVOLVE-04",
+        "ABSOLUTE-EVOLVE-05",
+        "ABSOLUTE-EVOLVE-06",
+        "ABSOLUTE-EVOLVE-07",
+        "ABSOLUTE-EVOLVE-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "超炮调查前奏保留八月中下旬，不用8月21日决战反推每次研究所行动日期。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O08",
+          "nodeIds": [
+            "ABSOLUTE-EVOLVE-01",
+            "ABSOLUTE-EVOLVE-02",
+            "ABSOLUTE-EVOLVE-03"
+          ],
+          "scope": "克隆计划、研究所调查与演算前提",
+          "sourceRefs": [
+            "OT03",
+            "railgun",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O08",
+          "nodeIds": [
+            "ABSOLUTE-EVOLVE-04",
+            "ABSOLUTE-EVOLVE-05",
+            "ABSOLUTE-EVOLVE-06"
+          ],
+          "scope": "铁桥阻止、上条对一方与妹妹协助",
+          "sourceRefs": [
+            "OT03",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O08",
+          "nodeIds": [
+            "ABSOLUTE-EVOLVE-07",
+            "ABSOLUTE-EVOLVE-08"
+          ],
+          "scope": "实验中止和8月22日余波；不预结算OT5",
+          "sourceRefs": [
+            "OT03",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "ABSOLUTE-EVOLVE-03"
+          ],
+          "scope": "树状图已毁的前因",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "c1005e59e3e763cfce7aed0b0983c982053bbf8dc255890075cacb145347ba38"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·天使坠落.txt",
+      "packageId": "ANGEL-FALL",
+      "title": "天使坠落篇",
+      "action": "modify",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "官动层8月27日海边前奏、28–29日事态、30日后日谈；不含8月31日",
+      "evidenceIds": [
+        "O10"
+      ],
+      "volumes": [
+        "旧约4"
+      ],
+      "keywords": [
+        "天使坠落篇",
+        "海边外貌互换事件",
+        "ANGEL-FALL",
+        "ANGEL-FALL-01"
+      ],
+      "entryNode": "ANGEL-FALL-01",
+      "nodeIds": [
+        "ANGEL-FALL-01",
+        "ANGEL-FALL-02",
+        "ANGEL-FALL-03",
+        "ANGEL-FALL-04",
+        "ANGEL-FALL-05",
+        "ANGEL-FALL-06",
+        "ANGEL-FALL-07",
+        "ANGEL-FALL-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "8月27–30日采用官动分层；个别媒介支节不强行统一，8月31日不属于本包。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O10",
+          "nodeIds": [
+            "ANGEL-FALL-01",
+            "ANGEL-FALL-02",
+            "ANGEL-FALL-03"
+          ],
+          "scope": "海边前奏、认知错位与魔法侧调查",
+          "sourceRefs": [
+            "OT04",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O10",
+          "nodeIds": [
+            "ANGEL-FALL-04",
+            "ANGEL-FALL-05",
+            "ANGEL-FALL-06"
+          ],
+          "scope": "刀夜、偶成仪式与米夏真身",
+          "sourceRefs": [
+            "OT04",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O10",
+          "nodeIds": [
+            "ANGEL-FALL-07",
+            "ANGEL-FALL-08"
+          ],
+          "scope": "两处救援、解除与30日后日谈",
+          "sourceRefs": [
+            "OT04",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "2f1ea70e8e2e851d0853ddbf0a53f2ef4367051a75d5d45668ba25a05ba76657"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·八月三十一日.txt",
+      "packageId": "AUGUST-31",
+      "title": "八月三十一日篇",
+      "action": "add",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "官动层8月30日深夜最后之作来访；31日三条并行线及当日余波，康复安排另按实际日期",
+      "evidenceIds": [
+        "O11"
+      ],
+      "volumes": [
+        "旧约5"
+      ],
+      "keywords": [
+        "八月三十一日三线事件",
+        "最后之作病毒事件",
+        "两个海原事件",
+        "闇咲绑架事件",
+        "AUGUST-31",
+        "AUGUST-31-01"
+      ],
+      "entryNode": "AUGUST-31-01",
+      "nodeIds": [
+        "AUGUST-31-01",
+        "AUGUST-31-02",
+        "AUGUST-31-03",
+        "AUGUST-31-04",
+        "AUGUST-31-05",
+        "AUGUST-31-06",
+        "AUGUST-31-07",
+        "AUGUST-31-08",
+        "AUGUST-31-09"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "电极配发的具体日与艾扎力约定原句未核；不填虚构日期或复制对白。",
+        "闇咲线只确认绑架终止与解咒援助提出，不把远处患者当场治愈写成已证。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O11",
+          "nodeIds": [
+            "AUGUST-31-01",
+            "AUGUST-31-02",
+            "AUGUST-31-03",
+            "AUGUST-31-04"
+          ],
+          "scope": "最后之作来访、病毒、枪击与救治",
+          "sourceRefs": [
+            "OT05",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O11",
+          "nodeIds": [
+            "AUGUST-31-05",
+            "AUGUST-31-06"
+          ],
+          "scope": "海原真假身份、艾扎力任务与约定",
+          "sourceRefs": [
+            "OT05",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O11",
+          "nodeIds": [
+            "AUGUST-31-07",
+            "AUGUST-31-08"
+          ],
+          "scope": "暑假末绑架与不用夺书的解咒援助",
+          "sourceRefs": [
+            "OT05",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O11",
+          "nodeIds": [
+            "AUGUST-31-09"
+          ],
+          "scope": "三线分别收尾和新学期交接",
+          "sourceRefs": [
+            "OT05",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "72d63ebbd9c8a2984697119263be508b61e2831088cf4307070be1d988c9362c"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·风斩冰华.txt",
+      "packageId": "KAZAKIRI",
+      "title": "风斩冰华篇",
+      "action": "add",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "9月1日；官动层上午相识、下午地下街事件、傍晚告别",
+      "evidenceIds": [
+        "O12"
+      ],
+      "volumes": [
+        "旧约6"
+      ],
+      "keywords": [
+        "风斩冰华事件",
+        "雪莉地下街入侵",
+        "KAZAKIRI",
+        "KAZAKIRI-01"
+      ],
+      "entryNode": "KAZAKIRI-01",
+      "nodeIds": [
+        "KAZAKIRI-01",
+        "KAZAKIRI-02",
+        "KAZAKIRI-03",
+        "KAZAKIRI-04",
+        "KAZAKIRI-05",
+        "KAZAKIRI-06",
+        "KAZAKIRI-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "9月1日的上午／下午／傍晚采用官动层；不在本篇补写0930人工天使启动细节。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O12",
+          "nodeIds": [
+            "KAZAKIRI-01",
+            "KAZAKIRI-02",
+            "KAZAKIRI-03"
+          ],
+          "scope": "新学期相识、地下街疏散与石像袭击",
+          "sourceRefs": [
+            "OT06",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O12",
+          "nodeIds": [
+            "KAZAKIRI-04",
+            "KAZAKIRI-05",
+            "KAZAKIRI-06"
+          ],
+          "scope": "AIM存在、雪莉战与保护朋友",
+          "sourceRefs": [
+            "OT06",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O12",
+          "nodeIds": [
+            "KAZAKIRI-07"
+          ],
+          "scope": "傍晚告别与可延续的友谊",
+          "sourceRefs": [
+            "OT06",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "0e8e791de9b78962b8775ec5d5a94310c09510cea19c3f99576cee4299a3552f"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·法之书.txt",
+      "packageId": "BOOK-OF-LAW",
+      "title": "法之书篇",
+      "action": "add",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "九月上旬；官动层9月8日委托与救援、9日凌晨反救及白天余波",
+      "evidenceIds": [
+        "O16",
+        "O17"
+      ],
+      "volumes": [
+        "旧约7"
+      ],
+      "keywords": [
+        "法之书争夺事件",
+        "奥索拉救援事件",
+        "BOOK-OF-LAW",
+        "BOOK-OF-LAW-01"
+      ],
+      "entryNode": "BOOK-OF-LAW-01",
+      "nodeIds": [
+        "BOOK-OF-LAW-01",
+        "BOOK-OF-LAW-02",
+        "BOOK-OF-LAW-03",
+        "BOOK-OF-LAW-04",
+        "BOOK-OF-LAW-05",
+        "BOOK-OF-LAW-06",
+        "BOOK-OF-LAW-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "错误解读机关的具体机制尚缺一手细核；不把奥索拉的解读主张写成已掌握法之书力量。",
+        "特别编入考试只列法之书后的九月上旬相对后继，不在OT7包代演。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O16",
+          "nodeIds": [
+            "BOOK-OF-LAW-01",
+            "BOOK-OF-LAW-02",
+            "BOOK-OF-LAW-03"
+          ],
+          "scope": "委托版本、天草式冲突与误交奥索拉",
+          "sourceRefs": [
+            "OT07",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O16",
+          "nodeIds": [
+            "BOOK-OF-LAW-04",
+            "BOOK-OF-LAW-05",
+            "BOOK-OF-LAW-06"
+          ],
+          "scope": "建宫说明、反救与击败雅妮丝",
+          "sourceRefs": [
+            "OT07",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O16",
+          "nodeIds": [
+            "BOOK-OF-LAW-07"
+          ],
+          "scope": "清教庇护与安全归属",
+          "sourceRefs": [
+            "OT07",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O17",
+          "nodeIds": [
+            "BOOK-OF-LAW-07"
+          ],
+          "scope": "仅作相对后继，不计入本卷可玩覆盖",
+          "sourceRefs": [
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "997d31be6a26e3846d38bbe87dd019c158c41c4bdab43f7d19de9c5ffc1a02c3"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·树状图残骸.txt",
+      "packageId": "TREE-DIAGRAM-REMNANT",
+      "title": "树状图残骸篇",
+      "action": "add",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "9月14日前后；官动层14日傍晚调查、夜间争夺与营救",
+      "evidenceIds": [
+        "O20",
+        "O02",
+        "O08"
+      ],
+      "volumes": [
+        "旧约8"
+      ],
+      "keywords": [
+        "树状图残骸争夺事件",
+        "结标残骸运输事件",
+        "TREE-DIAGRAM-REMNANT",
+        "TREE-DIAGRAM-REMNANT-01"
+      ],
+      "entryNode": "TREE-DIAGRAM-REMNANT-01",
+      "nodeIds": [
+        "TREE-DIAGRAM-REMNANT-01",
+        "TREE-DIAGRAM-REMNANT-02",
+        "TREE-DIAGRAM-REMNANT-03",
+        "TREE-DIAGRAM-REMNANT-04",
+        "TREE-DIAGRAM-REMNANT-05",
+        "TREE-DIAGRAM-REMNANT-06",
+        "TREE-DIAGRAM-REMNANT-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "9月14日前后采用官动层；黑子恢复与结标后续只沿实际伤情和后继包，不捏造康复日。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O20",
+          "nodeIds": [
+            "TREE-DIAGRAM-REMNANT-01",
+            "TREE-DIAGRAM-REMNANT-02",
+            "TREE-DIAGRAM-REMNANT-03"
+          ],
+          "scope": "手提箱、空间移动差异与复原威胁",
+          "sourceRefs": [
+            "OT08",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O20",
+          "nodeIds": [
+            "TREE-DIAGRAM-REMNANT-04",
+            "TREE-DIAGRAM-REMNANT-05",
+            "TREE-DIAGRAM-REMNANT-06"
+          ],
+          "scope": "拒绝招揽、上条救人、一方摧毁残骸",
+          "sourceRefs": [
+            "OT08",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O20",
+          "nodeIds": [
+            "TREE-DIAGRAM-REMNANT-07"
+          ],
+          "scope": "伤情与残骸去向分别结算",
+          "sourceRefs": [
+            "OT08",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "TREE-DIAGRAM-REMNANT-03"
+          ],
+          "scope": "七月树状图被毁的前因",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O08",
+          "nodeIds": [
+            "TREE-DIAGRAM-REMNANT-03",
+            "TREE-DIAGRAM-REMNANT-06"
+          ],
+          "scope": "妹妹实验已中止、阻止重启的前因",
+          "sourceRefs": [
+            "OT03",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "5f67765a84832c54ab7643cf5c3358399873ea1fefe29151b7f8a8c8b90d3640"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·使徒十字.txt",
+      "packageId": "ST-CROSS",
+      "title": "使徒十字篇",
+      "action": "modify",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "9月19日追缉、当夜仪式失败；20日凌晨追捕余波。祭典背景另为19–25日",
+      "evidenceIds": [
+        "O23",
+        "O22"
+      ],
+      "volumes": [
+        "旧约9",
+        "旧约10"
+      ],
+      "keywords": [
+        "使徒十字事件",
+        "刺突杭剑假交易",
+        "ST-CROSS",
+        "ST-CROSS-01"
+      ],
+      "entryNode": "ST-CROSS-01",
+      "nodeIds": [
+        "ST-CROSS-01",
+        "ST-CROSS-02",
+        "ST-CROSS-03",
+        "ST-CROSS-04",
+        "ST-CROSS-05",
+        "ST-CROSS-06",
+        "ST-CROSS-07",
+        "ST-CROSS-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "19日晚核心与20日凌晨追捕余波采用官动层；不把整个祭典的19–25日当作仪式持续期。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O23",
+          "nodeIds": [
+            "ST-CROSS-01",
+            "ST-CROSS-02",
+            "ST-CROSS-03",
+            "ST-CROSS-04",
+            "ST-CROSS-05",
+            "ST-CROSS-06"
+          ],
+          "scope": "假交易、受害者、星象部署与搬运人对决",
+          "sourceRefs": [
+            "OT09",
+            "OT10",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O23",
+          "nodeIds": [
+            "ST-CROSS-07",
+            "ST-CROSS-08"
+          ],
+          "scope": "19日夜仪式失败、20日凌晨追捕余波",
+          "sourceRefs": [
+            "OT10",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O22",
+          "nodeIds": [
+            "ST-CROSS-01",
+            "ST-CROSS-07",
+            "ST-CROSS-08"
+          ],
+          "scope": "开幕日烟花与七日祭典背景的边界",
+          "sourceRefs": [
+            "festival",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "dca411db02df55eac438d850e88d005962153b06f881f721162f8ec425b833f2"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大霸星祭.txt",
+      "packageId": "DAIHASEISAI",
+      "title": "大霸星祭篇",
+      "action": "modify",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "9月19日开幕、翌日事件；祭典背景19–25日，后续重逢不强填逐日日期",
+      "evidenceIds": [
+        "O22",
+        "O24"
+      ],
+      "volumes": [
+        "科学超电磁炮7–10"
+      ],
+      "keywords": [
+        "超炮大霸星祭事件",
+        "外装代脑自毁事件",
+        "美琴异变事件",
+        "DAIHASEISAI",
+        "DAIHASEISAI-01"
+      ],
+      "entryNode": "DAIHASEISAI-01",
+      "nodeIds": [
+        "DAIHASEISAI-01",
+        "DAIHASEISAI-02",
+        "DAIHASEISAI-03",
+        "DAIHASEISAI-04",
+        "DAIHASEISAI-05",
+        "DAIHASEISAI-06",
+        "DAIHASEISAI-07",
+        "DAIHASEISAI-08",
+        "DAIHASEISAI-09",
+        "DAIHASEISAI-10",
+        "DAIHASEISAI-11"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "19日／翌日为本次采用的官动层；多莉妹妹重逢不硬填日期。",
+        "小说与漫画未提供的逐时战斗排程不从动画镜头长度推算。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O22",
+          "nodeIds": [
+            "DAIHASEISAI-01"
+          ],
+          "scope": "祭典开幕背景",
+          "sourceRefs": [
+            "festival",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O24",
+          "nodeIds": [
+            "DAIHASEISAI-02",
+            "DAIHASEISAI-03",
+            "DAIHASEISAI-04",
+            "DAIHASEISAI-05"
+          ],
+          "scope": "妹妹误认参赛、MEMBER、记忆遮蔽与人质",
+          "sourceRefs": [
+            "railgun",
+            "railgun-t-03",
+            "railgun-t-07"
+          ]
+        },
+        {
+          "evidenceId": "O24",
+          "nodeIds": [
+            "DAIHASEISAI-06",
+            "DAIHASEISAI-07"
+          ],
+          "scope": "才人工房、多莉与美琴异变",
+          "sourceRefs": [
+            "railgun",
+            "railgun-t-10",
+            "railgun-t-12"
+          ]
+        },
+        {
+          "evidenceId": "O24",
+          "nodeIds": [
+            "DAIHASEISAI-08",
+            "DAIHASEISAI-09",
+            "DAIHASEISAI-10"
+          ],
+          "scope": "警策遥控、Exterior口令陷阱与八龙救援",
+          "sourceRefs": [
+            "railgun-t-12",
+            "railgun-t-13",
+            "railgun-t-14"
+          ]
+        },
+        {
+          "evidenceId": "O24",
+          "nodeIds": [
+            "DAIHASEISAI-11"
+          ],
+          "scope": "多莉妹妹与后续重逢；警策非研究员",
+          "sourceRefs": [
+            "railgun-t-15",
+            "railgun"
+          ]
+        }
+      ],
+      "sha256": "de54e3eda6aec52f1720a35361f28d68304adac54745f73dad1eb0d4596301aa"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·亚得里亚海女王.txt",
+      "packageId": "ADRIA",
+      "title": "亚得里亚海女王篇",
+      "action": "modify",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "官动层9月25日中奖、27日赴意与舰队行动；重伤送返属于旅行首日收尾",
+      "evidenceIds": [
+        "O25",
+        "O16"
+      ],
+      "volumes": [
+        "旧约11"
+      ],
+      "keywords": [
+        "亚得里亚海女王事件",
+        "女王舰队救援",
+        "ADRIA",
+        "ADRIA-01"
+      ],
+      "entryNode": "ADRIA-01",
+      "nodeIds": [
+        "ADRIA-01",
+        "ADRIA-02",
+        "ADRIA-03",
+        "ADRIA-04",
+        "ADRIA-05"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "25日中奖、27日旅行主体采用官动层；不把旅程首日重伤后写成继续正常观光。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O25",
+          "nodeIds": [
+            "ADRIA-01",
+            "ADRIA-02"
+          ],
+          "scope": "中奖、赴意、奥索拉与冰船",
+          "sourceRefs": [
+            "OT11",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O25",
+          "nodeIds": [
+            "ADRIA-03",
+            "ADRIA-04"
+          ],
+          "scope": "救修女、刻限的玫瑰十字与彼亚吉欧",
+          "sourceRefs": [
+            "OT11",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O25",
+          "nodeIds": [
+            "ADRIA-05"
+          ],
+          "scope": "送返都市与治疗余波",
+          "sourceRefs": [
+            "OT11",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O16",
+          "nodeIds": [
+            "ADRIA-02",
+            "ADRIA-03"
+          ],
+          "scope": "雅妮丝与奥索拉的前篇关系",
+          "sourceRefs": [
+            "OT07",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "c418dce2b3db30be151587ba3312193a1f16592358f6b46ee473280eb0395c66"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·0930事件.txt",
+      "packageId": "ST0930",
+      "title": "0930事件篇",
+      "action": "modify",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "9月30日白天日常前奏、夜间入侵与两线决战；收治和暗部交涉为随后余波",
+      "evidenceIds": [
+        "O28",
+        "O12",
+        "O02"
+      ],
+      "volumes": [
+        "旧约12",
+        "旧约13"
+      ],
+      "keywords": [
+        "0930事件",
+        "九三〇袭击事件",
+        "猎犬部队袭击",
+        "ST0930",
+        "ST0930-01"
+      ],
+      "entryNode": "ST0930-01",
+      "nodeIds": [
+        "ST0930-01",
+        "ST0930-02",
+        "ST0930-03",
+        "ST0930-04",
+        "ST0930-05",
+        "ST0930-06",
+        "ST0930-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "收治与GROUP交涉属于随后余波，未补造全部行动发生在30日同一小时的精确表。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O28",
+          "nodeIds": [
+            "ST0930-01"
+          ],
+          "scope": "出院日常前奏",
+          "sourceRefs": [
+            "OT12",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O28",
+          "nodeIds": [
+            "ST0930-02",
+            "ST0930-03",
+            "ST0930-04"
+          ],
+          "scope": "前方之风、木原数多与人工天使",
+          "sourceRefs": [
+            "OT13",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O28",
+          "nodeIds": [
+            "ST0930-05",
+            "ST0930-06",
+            "ST0930-07"
+          ],
+          "scope": "双线决战、歌唱救援与暗部交涉",
+          "sourceRefs": [
+            "OT13",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O12",
+          "nodeIds": [
+            "ST0930-04"
+          ],
+          "scope": "风斩既有关系而非9月首次相识",
+          "sourceRefs": [
+            "OT06",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "ST0930-07"
+          ],
+          "scope": "上条沿用七月记忆状态，不新增失忆",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "a7bfb35d46441096b919368adc8c5d4f4b16ad9f1a80bccb0c8b84e84e6e60df"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·Skill-Out.txt",
+      "packageId": "SKILL-OUT",
+      "title": "Skill-Out篇",
+      "action": "modify",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "官动层10月3日，白天GROUP初次任务、夜间御坂美铃遇袭与收尾",
+      "evidenceIds": [
+        "O29",
+        "O28"
+      ],
+      "volumes": [
+        "旧约SS（第1册）"
+      ],
+      "keywords": [
+        "Skill-Out事件",
+        "驹场利德讨伐行动",
+        "御坂美铃遇袭事件",
+        "SKILL-OUT",
+        "SKILL-OUT-01"
+      ],
+      "entryNode": "SKILL-OUT-01",
+      "nodeIds": [
+        "SKILL-OUT-01",
+        "SKILL-OUT-02",
+        "SKILL-OUT-03",
+        "SKILL-OUT-04",
+        "SKILL-OUT-05",
+        "SKILL-OUT-06",
+        "SKILL-OUT-07",
+        "SKILL-OUT-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "当日行动采用官动10月3日；滨面进入ITEM为后继去向，不硬填报到日。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O29",
+          "nodeIds": [
+            "SKILL-OUT-01",
+            "SKILL-OUT-02",
+            "SKILL-OUT-03",
+            "SKILL-OUT-04"
+          ],
+          "scope": "GROUP首份任务、驹场与手机",
+          "sourceRefs": [
+            "OTSS",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O29",
+          "nodeIds": [
+            "SKILL-OUT-05",
+            "SKILL-OUT-06",
+            "SKILL-OUT-07",
+            "SKILL-OUT-08"
+          ],
+          "scope": "美铃遇袭、一方暗援、上条与滨面及收尾",
+          "sourceRefs": [
+            "OTSS",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O28",
+          "nodeIds": [
+            "SKILL-OUT-01"
+          ],
+          "scope": "GROUP交涉前因",
+          "sourceRefs": [
+            "OT13",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "3a8802d387027e36d498f3a560091a855e2be01237a073ffb4dbdc520a829eca"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·C文书.txt",
+      "packageId": "CDOC",
+      "title": "C文书篇",
+      "action": "modify",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "10月7–8日委托与阿维尼翁行动；日本与法国场景存在时差，不逐幕强填同一日界",
+      "evidenceIds": [
+        "O31",
+        "O02"
+      ],
+      "volumes": [
+        "旧约14"
+      ],
+      "keywords": [
+        "C文书事件",
+        "阿维尼翁地脉行动",
+        "CDOC",
+        "CDOC-01"
+      ],
+      "entryNode": "CDOC-01",
+      "nodeIds": [
+        "CDOC-01",
+        "CDOC-02",
+        "CDOC-03",
+        "CDOC-04",
+        "CDOC-05"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "10月7–8日为官动行程层；日本与法国时差下的逐幕日界尚不强定。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O31",
+          "nodeIds": [
+            "CDOC-01",
+            "CDOC-02"
+          ],
+          "scope": "亲船委托、五和会合、地脉切断受阻",
+          "sourceRefs": [
+            "OT14",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O31",
+          "nodeIds": [
+            "CDOC-03",
+            "CDOC-04"
+          ],
+          "scope": "都市军事介入、再战左方与文书破坏",
+          "sourceRefs": [
+            "OT14",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O31",
+          "nodeIds": [
+            "CDOC-05"
+          ],
+          "scope": "左方被肃清及未挂断的电话",
+          "sourceRefs": [
+            "OT14",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O02",
+          "nodeIds": [
+            "CDOC-05"
+          ],
+          "scope": "美琴得知的失忆是七月既有事实",
+          "sourceRefs": [
+            "OT01",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "497d31eeb06f2aded9ae4bacc530a4e0ba2eccbd29fa9c6b8b4949dec7e8c892"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·暗部大战.txt",
+      "packageId": "DARK-BATTLE",
+      "title": "暗部大战篇",
+      "action": "modify",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "10月9日主战；随后治疗、组织变化与线索追查另记余波，不延长主战日",
+      "evidenceIds": [
+        "O32"
+      ],
+      "volumes": [
+        "旧约15"
+      ],
+      "keywords": [
+        "暗部大战",
+        "镊子争夺事件",
+        "五组织冲突",
+        "DARK-BATTLE",
+        "DARK-BATTLE-01"
+      ],
+      "entryNode": "DARK-BATTLE-01",
+      "nodeIds": [
+        "DARK-BATTLE-01",
+        "DARK-BATTLE-02",
+        "DARK-BATTLE-03",
+        "DARK-BATTLE-04",
+        "DARK-BATTLE-05",
+        "DARK-BATTLE-06",
+        "DARK-BATTLE-07",
+        "DARK-BATTLE-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "“10/9独立纪念日”社区称呼的一手出处未核；已撤出硬锚，不声称已证明该称呼不存在。",
+        "10月9日主战与之后的治疗、组织变化分开；未强填全部余波日期。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O32",
+          "nodeIds": [
+            "DARK-BATTLE-01",
+            "DARK-BATTLE-02",
+            "DARK-BATTLE-03",
+            "DARK-BATTLE-04"
+          ],
+          "scope": "镊子、BLOCK行动、GROUP与艾扎力侧战",
+          "sourceRefs": [
+            "OT15",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O32",
+          "nodeIds": [
+            "DARK-BATTLE-05",
+            "DARK-BATTLE-06"
+          ],
+          "scope": "ITEM崩裂与滨面保护泷壶",
+          "sourceRefs": [
+            "OT15",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O32",
+          "nodeIds": [
+            "DARK-BATTLE-07",
+            "DARK-BATTLE-08"
+          ],
+          "scope": "垣根战、暴走制止与DRAGON线索",
+          "sourceRefs": [
+            "OT15",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "f18e5c065386b4099ce903423c1bf806d87ee2dcbc7cd2b1495606690f8ef50f"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·圣人袭来.txt",
+      "packageId": "ACQUA",
+      "title": "圣人袭来·后方之水篇",
+      "action": "modify",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "十月中旬；暗部大战之后、英国王室之前，现有官动只证相对窗，不强填起讫日",
+      "evidenceIds": [
+        "O34"
+      ],
+      "volumes": [
+        "旧约16"
+      ],
+      "keywords": [
+        "后方之水来袭",
+        "圣人崩合击事件",
+        "ACQUA",
+        "ACQUA-01"
+      ],
+      "entryNode": "ACQUA-01",
+      "nodeIds": [
+        "ACQUA-01",
+        "ACQUA-02",
+        "ACQUA-03",
+        "ACQUA-04",
+        "ACQUA-05"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "仅确证十月中旬及先后关系，旧10/11–17精确窗不沿用为已证；英国再登场另包处理。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O34",
+          "nodeIds": [
+            "ACQUA-01",
+            "ACQUA-02"
+          ],
+          "scope": "护卫、交臂要求与天草式初战",
+          "sourceRefs": [
+            "OT16",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O34",
+          "nodeIds": [
+            "ACQUA-03",
+            "ACQUA-04"
+          ],
+          "scope": "神裂与上条、五和的合击",
+          "sourceRefs": [
+            "OT16",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O34",
+          "nodeIds": [
+            "ACQUA-05"
+          ],
+          "scope": "救治与英国前序交接",
+          "sourceRefs": [
+            "OT16",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "9afa203f8862fbbb36bb5a7d020534dda92854b3a17e6c479df3a1ffd94390e5"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·英国王室.txt",
+      "packageId": "BRITISH-ROYAL",
+      "title": "英国王室篇",
+      "action": "add",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "十月中旬后段；官动层10月16日隧道消息、17日赴英、18日前后政变与收束",
+      "evidenceIds": [
+        "O35",
+        "O34",
+        "O37"
+      ],
+      "volumes": [
+        "旧约17",
+        "旧约18"
+      ],
+      "keywords": [
+        "英国王室政变",
+        "不列颠万圣节",
+        "卡提纳正统事件",
+        "BRITISH-ROYAL",
+        "BRITISH-ROYAL-01"
+      ],
+      "entryNode": "BRITISH-ROYAL-01",
+      "nodeIds": [
+        "BRITISH-ROYAL-01",
+        "BRITISH-ROYAL-02",
+        "BRITISH-ROYAL-03",
+        "BRITISH-ROYAL-04",
+        "BRITISH-ROYAL-05",
+        "BRITISH-ROYAL-06",
+        "BRITISH-ROYAL-07",
+        "BRITISH-ROYAL-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "10月16–18日采用官动层；不把各方异地事件强拼成同一逐时路线。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O35",
+          "nodeIds": [
+            "BRITISH-ROYAL-01",
+            "BRITISH-ROYAL-02",
+            "BRITISH-ROYAL-03"
+          ],
+          "scope": "隧道、航班与新生之光运输",
+          "sourceRefs": [
+            "OT17",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O35",
+          "nodeIds": [
+            "BRITISH-ROYAL-04",
+            "BRITISH-ROYAL-05",
+            "BRITISH-ROYAL-06",
+            "BRITISH-ROYAL-07"
+          ],
+          "scope": "政变、第三王女救援、夺回茵蒂克丝与宫前决战",
+          "sourceRefs": [
+            "OT18",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O35",
+          "nodeIds": [
+            "BRITISH-ROYAL-08"
+          ],
+          "scope": "右方之火夺取远隔控制灵装",
+          "sourceRefs": [
+            "OT18",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O34",
+          "nodeIds": [
+            "BRITISH-ROYAL-05"
+          ],
+          "scope": "威廉此前来袭的身份前因",
+          "sourceRefs": [
+            "OT16",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O37",
+          "nodeIds": [
+            "BRITISH-ROYAL-08"
+          ],
+          "scope": "赴俄救人的后继动机，不将OT20并入本包",
+          "sourceRefs": [
+            "OT20"
+          ]
+        }
+      ],
+      "sha256": "3602890c20ad1b9b04067836df2af0bd0f7b6e46913364809c2f56feda9f700d"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·DRAGON.txt",
+      "packageId": "DRAGON",
+      "title": "DRAGON篇",
+      "action": "add",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "官动层10月17–18日都市主体；尾段仅写夜后未明与离境顺序，不强填下一日日期",
+      "evidenceIds": [
+        "O36",
+        "O32",
+        "O37"
+      ],
+      "volumes": [
+        "旧约19"
+      ],
+      "keywords": [
+        "DRAGON事件",
+        "迎电部队人质事件",
+        "潮岸追杀事件",
+        "DRAGON",
+        "DRAGON-01"
+      ],
+      "entryNode": "DRAGON-01",
+      "nodeIds": [
+        "DRAGON-01",
+        "DRAGON-02",
+        "DRAGON-03",
+        "DRAGON-04",
+        "DRAGON-05",
+        "DRAGON-06",
+        "DRAGON-07",
+        "DRAGON-08",
+        "DRAGON-09"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "官动主体为10月17–18日，尾段仅“未明”；不擅自把离境日定成19日。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O36",
+          "nodeIds": [
+            "DRAGON-01",
+            "DRAGON-02",
+            "DRAGON-03"
+          ],
+          "scope": "人质事件、滨面与一方交汇、潮岸追杀",
+          "sourceRefs": [
+            "OT19",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O36",
+          "nodeIds": [
+            "DRAGON-04",
+            "DRAGON-05",
+            "DRAGON-06"
+          ],
+          "scope": "艾扎力、绢旗侧战与电极控制反制",
+          "sourceRefs": [
+            "OT19",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O36",
+          "nodeIds": [
+            "DRAGON-07",
+            "DRAGON-08",
+            "DRAGON-09"
+          ],
+          "scope": "艾华斯、机场逃离与两组赴俄",
+          "sourceRefs": [
+            "OT19",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O32",
+          "nodeIds": [
+            "DRAGON-01"
+          ],
+          "scope": "镊子获得的DRAGON线索前因",
+          "sourceRefs": [
+            "OT15",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O37",
+          "nodeIds": [
+            "DRAGON-09"
+          ],
+          "scope": "最后之作与泷壶的后继救治目标",
+          "sourceRefs": [
+            "OT20"
+          ]
+        }
+      ],
+      "sha256": "99773f271e5aede682329ae7fde21552d105b62e3f1d80a7ca8535e94d411d0f"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·第三次世界大战.txt",
+      "packageId": "WW3",
+      "title": "第三次世界大战篇",
+      "action": "modify",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "10月18日宣战（旧约20官介／官动）；19日起战事块（图排）；10月30日终战（官动层，旧约21官介明确当日战事）",
+      "evidenceIds": [
+        "O37",
+        "O35",
+        "O36"
+      ],
+      "volumes": [
+        "旧约20",
+        "旧约21",
+        "旧约22"
+      ],
+      "keywords": [
+        "第三次世界大战",
+        "俄罗斯战争篇",
+        "伯利恒之星",
+        "克里姆林报告",
+        "WW3",
+        "WW3-01"
+      ],
+      "entryNode": "WW3-01",
+      "nodeIds": [
+        "WW3-01",
+        "WW3-02",
+        "WW3-03",
+        "WW3-04",
+        "WW3-05",
+        "WW3-06",
+        "WW3-07",
+        "WW3-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "18日宣战由旧约20官介和官动支持；19日起战事是图排层，不捏造19–29日逐日主角活动。",
+        "官动将俄国主角高潮集中于30日；终战后的搜救与幸存消息仅留后继，不硬填当天全部知情。",
+        "右臂断口“某物”的最终本质不在本包定名，也不照搬超炮祭典八龙。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O37",
+          "nodeIds": [
+            "WW3-01"
+          ],
+          "scope": "宣战、图排战事块与三人赴俄理由",
+          "sourceRefs": [
+            "OT20",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O37",
+          "nodeIds": [
+            "WW3-02",
+            "WW3-03"
+          ],
+          "scope": "独立同盟、萨莎被夺、番外个体与守护目标",
+          "sourceRefs": [
+            "OT20",
+            "OT21",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O37",
+          "nodeIds": [
+            "WW3-04",
+            "WW3-05"
+          ],
+          "scope": "伯利恒之星、天使出击与吸收天使之力",
+          "sourceRefs": [
+            "OT21",
+            "OT22",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O37",
+          "nodeIds": [
+            "WW3-06",
+            "WW3-07",
+            "WW3-08"
+          ],
+          "scope": "村落与克里姆林报告、两种救法、右手、失踪与终战",
+          "sourceRefs": [
+            "OT22",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O35",
+          "nodeIds": [
+            "WW3-01",
+            "WW3-04"
+          ],
+          "scope": "遥控灵装和英国线是前置及并行视角",
+          "sourceRefs": [
+            "OT18",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O36",
+          "nodeIds": [
+            "WW3-01",
+            "WW3-03"
+          ],
+          "scope": "艾华斯给最后之作造成负荷及调查前因",
+          "sourceRefs": [
+            "OT19",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "6b12ab6a15155e26c05e6496db98603ee42e6a04df56e072779fab5dc094b3ff"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/大霸星祭.txt",
+      "packageId": "FESTIVAL",
+      "title": "大霸星祭·活动框架（支线）",
+      "action": "modify",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "9月19–25日七日背景；19日开幕夜与25日闭幕分开",
+      "evidenceIds": [
+        "O22",
+        "O23",
+        "O24"
+      ],
+      "volumes": [
+        "旧约9",
+        "旧约10",
+        "科学超电磁炮7–10（并行背景）"
+      ],
+      "keywords": [
+        "大霸星祭活动",
+        "大霸星祭观赛",
+        "大霸星祭场边日常",
+        "FESTIVAL",
+        "FESTIVAL-01"
+      ],
+      "entryNode": "FESTIVAL-01",
+      "nodeIds": [
+        "FESTIVAL-01",
+        "FESTIVAL-02",
+        "FESTIVAL-03",
+        "FESTIVAL-04",
+        "FESTIVAL-05"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "日常比赛与社交为开放玩家路线，不把所有原创活动写成原作已发生；多莉后日谈不归本活动补定日。"
+      ],
+      "evidenceMapping": [
+        {
+          "evidenceId": "O22",
+          "nodeIds": [
+            "FESTIVAL-01",
+            "FESTIVAL-02",
+            "FESTIVAL-03",
+            "FESTIVAL-04",
+            "FESTIVAL-05"
+          ],
+          "scope": "七日祭典背景、入场／比赛／场边／开幕烟花／告别框架",
+          "sourceRefs": [
+            "festival",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O23",
+          "nodeIds": [
+            "FESTIVAL-03",
+            "FESTIVAL-04",
+            "FESTIVAL-05"
+          ],
+          "scope": "使徒十字仅作让位与知情边界，不在支线结案",
+          "sourceRefs": [
+            "OT09",
+            "OT10",
+            "chronicle"
+          ]
+        },
+        {
+          "evidenceId": "O24",
+          "nodeIds": [
+            "FESTIVAL-02",
+            "FESTIVAL-03",
+            "FESTIVAL-05"
+          ],
+          "scope": "伤员、主线人员去向与科学侧事件让位",
+          "sourceRefs": [
+            "railgun",
+            "chronicle"
+          ]
+        }
+      ],
+      "sha256": "1e10c3b4b40cf6957b7f8bbed58d8bf6faa323e7c7466b6d7eb1af444c517418"
+    }
+  ],
+  "crossReferences": [
+    {
+      "id": "register-new-ot-packages",
+      "paths": [
+        "src/魔法禁书目录模拟器/index.yaml",
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt"
+      ],
+      "packageIds": [
+        "DEEP-BLOOD",
+        "AUGUST-31",
+        "KAZAKIRI",
+        "BOOK-OF-LAW",
+        "TREE-DIAGRAM-REMNANT",
+        "BRITISH-ROYAL",
+        "DRAGON"
+      ],
+      "entryNodes": [
+        "DEEP-BLOOD-01",
+        "AUGUST-31-01",
+        "KAZAKIRI-01",
+        "BOOK-OF-LAW-01",
+        "TREE-DIAGRAM-REMNANT-01",
+        "BRITISH-ROYAL-01",
+        "DRAGON-01"
+      ],
+      "requiredChange": "按files中的专属关键词、年层、阶段、窗口和全部nodeIds注册7个新包；保留原绿灯／递归策略，不引入新路由API。"
+    },
+    {
+      "id": "date-stage-year-alignment",
+      "paths": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt",
+        "src/魔法禁书目录模拟器/index.yaml"
+      ],
+      "packageIds": [
+        "FANTASY-HAND",
+        "INDEX-FALL",
+        "DEEP-BLOOD",
+        "ABSOLUTE-EVOLVE",
+        "ANGEL-FALL",
+        "AUGUST-31",
+        "KAZAKIRI",
+        "BOOK-OF-LAW",
+        "TREE-DIAGRAM-REMNANT",
+        "ST-CROSS",
+        "DAIHASEISAI",
+        "ADRIA",
+        "ST0930",
+        "SKILL-OUT",
+        "CDOC",
+        "DARK-BATTLE",
+        "ACQUA",
+        "BRITISH-ROYAL",
+        "DRAGON",
+        "WW3"
+      ],
+      "requiredChange": "幻想御手归七月；OT5/6与法之书阶段3，残骸／女王阶段4，英国／DRAGON／三战阶段5；本清单所有当前事件为Y层，勿以角色回忆改变包年层。"
+    },
+    {
+      "id": "august-handoff",
+      "paths": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt",
+        "src/魔法禁书目录模拟器/index.yaml"
+      ],
+      "nodeIds": [
+        "ABSOLUTE-EVOLVE-07",
+        "ABSOLUTE-EVOLVE-08",
+        "ANGEL-FALL-08",
+        "AUGUST-31-01",
+        "AUGUST-31-05",
+        "AUGUST-31-07",
+        "KAZAKIRI-01"
+      ],
+      "requiredChange": "妹妹实验8/22中止，旧ABSOLUTE-EVOLVE-07只做兼容移交；OT4在8/30收束；OT5独立三视角到8/31，OT6接9/1。旧玩家事实保留，不撤销、不重演。"
+    },
+    {
+      "id": "festival-two-mainlines",
+      "paths": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt",
+        "src/魔法禁书目录模拟器/index.yaml"
+      ],
+      "packageIds": [
+        "ST-CROSS",
+        "DAIHASEISAI",
+        "FESTIVAL"
+      ],
+      "requiredChange": "19–25日是祭典背景；使徒十字19日夜失败、20日凌晨追捕余波；超炮侧为独立翌日调查与异变，FESTIVAL日常不覆盖两条主线锚点或替其结案。"
+    },
+    {
+      "id": "october-causal-order",
+      "paths": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt",
+        "src/魔法禁书目录模拟器/index.yaml"
+      ],
+      "packageIds": [
+        "ST0930",
+        "SKILL-OUT",
+        "CDOC",
+        "DARK-BATTLE",
+        "ACQUA",
+        "BRITISH-ROYAL",
+        "DRAGON",
+        "WW3"
+      ],
+      "requiredChange": "0930后的GROUP交涉→10/3 Skill-Out→10/7–8 C文书→10/9暗部主战→后方之水中旬→英国与DRAGON并行前置→三战；治疗余波单记，未证日期不填整日占位。"
+    },
+    {
+      "id": "ww3-old-testament-ending",
+      "paths": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt",
+        "src/魔法禁书目录模拟器/index.yaml"
+      ],
+      "packageIds": [
+        "BRITISH-ROYAL",
+        "DRAGON",
+        "WW3"
+      ],
+      "requiredChange": "英国OT17–18、DRAGON OT19、三战OT20–22各自成链；18日宣战／19日起图排战事／30日终战；十一月新约另接，不能由WW3旧别名推断为新约战争。"
+    },
+    {
+      "id": "legacy-local-end-tags",
+      "paths": [
+        "src/魔法禁书目录模拟器/index.yaml",
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt"
+      ],
+      "packageIds": [
+        "ADRIA",
+        "ST0930",
+        "CDOC",
+        "ACQUA"
+      ],
+      "requiredChange": "保留局部NT-END-A至D兼容收束标签；它们不是全局唯一节点，也不表示包属于新约。完整数字节点ID才用于nodeIds与当前节点。"
+    },
+    {
+      "id": "character-claim-audit",
+      "scope": "相关角色档案与其他非本写集引用；只交统一集成核查",
+      "packageIds": [
+        "ST0930",
+        "DARK-BATTLE",
+        "WW3"
+      ],
+      "requiredChange": "若仍引用0930再次失忆、三战左手龙王／龙王叹息觉醒、暗部组织全灭或GROUP当日解散，应以已核事件替换；“10/9独立纪念日”先撤硬锚、保留未核说明，不把社区称呼直接判伪。"
+    },
+    {
+      "id": "next-chapter-registration",
+      "paths": [
+        "src/魔法禁书目录模拟器/index.yaml",
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线剧情导航.txt",
+        "src/魔法禁书目录模拟器/世界书/世界设定/原著剧情锚点总览.txt"
+      ],
+      "packageIds": [
+        "AUGUST-31",
+        "KAZAKIRI",
+        "BOOK-OF-LAW",
+        "TREE-DIAGRAM-REMNANT",
+        "ADRIA",
+        "WW3"
+      ],
+      "requiredChange": "统一接入科方、特别编入考试、祭典、战后新约等其他工作者包时，匹配其最终包ID与入口；本工作者只保留已证相对后继，不替其他写集注册。"
+    }
+  ],
+  "checks": {
+    "validationScope": "只读取并验证files列出的21个内容文件；比较这些路径的HEAD以核兼容，不以全仓状态归属并行改动",
+    "structure": {
+      "status": "passed",
+      "fileCount": 21,
+      "mainlineFileCount": 20,
+      "sideFileCount": 1,
+      "nodeCount": 156,
+      "mainlineNodeCount": 151,
+      "sideNodeCount": 5,
+      "nineSectionFiles": 21,
+      "sixFieldNodeCount": 156,
+      "fieldCount": 936,
+      "uniqueNodeIds": 156,
+      "stageRange": "0–5",
+      "yearLayers": [
+        "Y"
+      ],
+      "encoding": "UTF-8 without BOM"
+    },
+    "compatibility": {
+      "status": "passed",
+      "legacyMainlineFiles": 13,
+      "legacyNodeCount": 97,
+      "legacyEndTagCount": 60,
+      "method": "与各既有文件HEAD比较完整数字节点定义、包ID及旧收束标签；未撤销玩家事实"
+    },
+    "graph": {
+      "status": "passed",
+      "entryReachesAllNodes": true,
+      "everyNodeReachesTerminal": true,
+      "unresolvedNextNodeIds": [],
+      "note": "按下一节点字段构造有限图；并行条件与FESTIVAL循环允许，不宣称执行了宿主调度"
+    },
+    "evidenceMapping": {
+      "status": "passed",
+      "allNodesMapped": true,
+      "allEvidenceIdsPresentInApprovedTable": true,
+      "sourceReferenceIdsResolved": true,
+      "note": "映射证明证据定位，不把官动／图排升级为小说逐日一手；具体未决项见各文件remainingEvidence"
+    },
+    "targetedCanonicalReview": {
+      "status": "performed",
+      "items": [
+        "幻想御手七月",
+        "使徒十字19夜与20凌晨／七日背景拆层",
+        "OT4与OT5三线分离",
+        "OT2/6/7/8卷级救援关键链",
+        "10/3、10/7–8、10/9主战与余波",
+        "英国／DRAGON／三战三包卷别",
+        "0930七月失忆延续而非再次失忆",
+        "WW3右臂某物与超炮祭典八龙分开",
+        "反剧透限视角且不封后继",
+        "支线不覆盖主线锚点"
+      ],
+      "boundary": "人工对照已留存官介／官动及取证回执；不声称完成原作全卷逐页对勘"
+    },
+    "whitespace": {
+      "status": "passed",
+      "gitDiffCheckExitCode": 0,
+      "untrackedContentFilesCheckedForTrailingWhitespace": true
+    },
+    "manifestConsistency": {
+      "status": "passed",
+      "verifiedFileCount": 21,
+      "verifiedNodeCount": 156,
+      "contract": "21个files对象须与实际标题、包ID、阶段、Y层、窗口、入口、全部nodeIds及SHA256一致"
+    },
+    "notRun": [
+      "宿主导入／关键词触发／MVU真实同轮验收",
+      "依赖安装或node_modules操作",
+      "watch、构建、打包",
+      "提交、推送、回滚其他人的改动"
+    ],
+    "outsideWriteSet": "未修改导航、锚点总览、index、角色档案、其他剧情、欢迎页、PNG、dist或机制；这些文件的状态不纳入本工作者验收"
+  },
+  "evidencePolicy": [
+    "旧包用于结构和ID兼容，不作为原作事实证据。",
+    "精确日区分官介、官动与图排；未知日使用相对窗。",
+    "网络仅只读取证；未执行远程网页或脚本内容。",
+    "现有反剧透仅限当前视角，不阻断未来篇章；玩家自由改写不设惩罚。"
+  ],
+  "sourceReceipts": [
+    {
+      "sourceId": "OT01",
+      "url": "https://dengekibunko.jp/product/index/312005300000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT01.txt",
+      "sha256": "c331cc5c2e761edd635d5078407aafc1f83964d48bee8c675ee35f4bd9c631d4",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT02",
+      "url": "https://dengekibunko.jp/product/index/312050700000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT02.txt",
+      "sha256": "2a24d40acefd2c6a726d72b04c40115629c56faaa5d2498a951709f0476897c4",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT03",
+      "url": "https://dengekibunko.jp/product/index/312032600000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT03.txt",
+      "sha256": "b4571ccac13d6a2e2de6e64686ca90c34e80ce73959b02c9ad6fe4193f40583c",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT04",
+      "url": "https://dengekibunko.jp/product/index/312050800000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT04.txt",
+      "sha256": "7d5282ccfd5244d349bd985abb520981c8f41e826ccb16d11cbaf1023f8a7537",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT05",
+      "url": "https://dengekibunko.jp/product/index/312097100000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT05.txt",
+      "sha256": "3811f26aabd44e17290141a7b69e99333d3d2d476f25b2c37fc7478e93954688",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT06",
+      "url": "https://dengekibunko.jp/product/index/312119200000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT06.txt",
+      "sha256": "d721b5cdefaaadd3c6cf2ffda415cb491784fd5370f479d534d5347d798e1ecf",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT07",
+      "url": "https://dengekibunko.jp/product/index/312050900000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT07.txt",
+      "sha256": "6e0234334bd41505878cd5ba679e6edaf1a24daaf07b78877f0c5fc9471de3bb",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT08",
+      "url": "https://dengekibunko.jp/product/index/312051000000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT08.txt",
+      "sha256": "50f7e5e196c0fd79da8d9ede6f4a80239ef4f64630a2f61e81188eaf14350e4c",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT09",
+      "url": "https://dengekibunko.jp/product/index/312097200000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT09.txt",
+      "sha256": "1ef3f83f85c098cde3558cf1ee4ea785f206a2de34ecb19eb85fd776415d7aa1",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT10",
+      "url": "https://dengekibunko.jp/product/index/312051100000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT10.txt",
+      "sha256": "b1829aaa04207a11a56f72c213ae97b2ea1dcf2552941f64c9e32af7ffe32182",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT11",
+      "url": "https://dengekibunko.jp/product/index/312245700000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT11.txt",
+      "sha256": "275995811ae92dfe6d96de17aeba820db6c929fbd90cf258317ca1f4b258aed1",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT12",
+      "url": "https://dengekibunko.jp/product/index/312097300000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT12.txt",
+      "sha256": "b9477b31c98824e49b2b6d5f9c46988620fe4582184f4e01db7103ba0c596227",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT13",
+      "url": "https://dengekibunko.jp/product/index/312097400000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT13.txt",
+      "sha256": "2416a1f0cc1e2ab4a754e9ba3436ac9aabcae23a77662d98c0f1426e1d96c873",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT14",
+      "url": "https://dengekibunko.jp/product/index/312032700000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT14.txt",
+      "sha256": "413702d8efc48c721da01eb4f2e7cdf0cbad9ba7cffe3d02eb64c5904f2f496f",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT15",
+      "url": "https://dengekibunko.jp/product/index/312032800000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT15.txt",
+      "sha256": "da5fb855ab64cd6c662812036880fa8778fb1930cdf3a2c435141d5e8351ad2e",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT16",
+      "url": "https://dengekibunko.jp/product/index/200805000433.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT16.txt",
+      "sha256": "a383539290439b664209bac60f88eb00158adac67d76658c150937dc810d1f8a",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT17",
+      "url": "https://dengekibunko.jp/product/index/200902000235.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT17.txt",
+      "sha256": "17efa21712d7b6e351e2ac487b1794ecb026c45630bc4c640962dcc08466635c",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT18",
+      "url": "https://dengekibunko.jp/product/index/200906000267.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT18.txt",
+      "sha256": "721723e91c3530456d9d93e724d8855d51baf7d2a11db8cad210f865aa95eb27",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT19",
+      "url": "https://dengekibunko.jp/product/index/200910000285.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT19.txt",
+      "sha256": "7d54451f46d947819d1ebc910b4b66059e87d32a1fbb85c77ae077c1c1ab9075",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT20",
+      "url": "https://dengekibunko.jp/product/index/201002000333.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT20.txt",
+      "sha256": "7e48be36e5bec01db3b9ba90cb51c74589c1214eb5e93bdc6360b26ac493b883",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT21",
+      "url": "https://dengekibunko.jp/product/index/201007000390.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT21.txt",
+      "sha256": "e027471bf6762df8a22199de8a2cf769e60d0773419840fcc63161a789fc297e",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OT22",
+      "url": "https://dengekibunko.jp/product/index/201007000012.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OT22.txt",
+      "sha256": "9df78167ea53d29cc90d2997373cf5ee1e05545212910fd699f578dc268b2f69",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "OTSS",
+      "url": "https://dengekibunko.jp/product/index/312097500000.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/OTSS.txt",
+      "sha256": "382a2ce7d849aa79b4c9e559da07cd73e482f6afe22b3443bd6818d3fba14cbc",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "chronicle",
+      "url": "https://toaru-project.com/world/chronicle/",
+      "path": ".agent-artifacts/timeline-review-20260907/web/web05-chronicle.txt",
+      "sha256": "ed7b26d7e1c471c333c244694f1383d4fba91199c97f07ab09b1e9bf06bfa685",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "railgun",
+      "url": "https://ja.wikipedia.org/wiki/とある科学の超電磁砲",
+      "path": ".agent-artifacts/timeline-review-20260907/web/wiki-railgun.txt",
+      "sha256": "2b89d89bac006b0bdbf843e524eb5683baf4df670afb9086fd03010561b133e6",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "festival",
+      "url": "https://toaru-project.com/railgun_t/special/daihaseisai.html",
+      "path": ".agent-artifacts/timeline-review-20260907/web/web01-festival.txt",
+      "sha256": "a09af524c8237b0d16423010f3477cdeff269bd476f2db35f2b0b910fbcd630f",
+      "artifact": "已留存正文；仅作只读依据"
+    },
+    {
+      "sourceId": "railgun-t-10",
+      "url": "https://toaru-project.com/railgun_t/story/10.html",
+      "httpStatus": 200,
+      "sha256": "aa0d8309a3cab8eb7362bafb8208009109610d11987a848c3bb73c1fe8ab09a3",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "railgun-t-12",
+      "url": "https://toaru-project.com/railgun_t/story/12.html",
+      "httpStatus": 200,
+      "sha256": "58da0928060c3be26a949b2b9ab38887e8d13e9492a05218bed9c797eeef37ac",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "railgun-t-13",
+      "url": "https://toaru-project.com/railgun_t/story/13.html",
+      "httpStatus": 200,
+      "sha256": "100bb43720e123f985671f2812ed8614e9122aeb0563ebecbc4e2f9fa68fe443",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "railgun-t-14",
+      "url": "https://toaru-project.com/railgun_t/story/14.html",
+      "httpStatus": 200,
+      "sha256": "f6a1634103800661cb5b2d357d254576cd9d6f3fccf63cc29cc3ba6333910077",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "railgun-t-15",
+      "url": "https://toaru-project.com/railgun_t/story/15.html",
+      "httpStatus": 200,
+      "sha256": "4a06756832e418b3c8f407b86db9a0de133741ab46dcd8df897d291b7c8e8cae",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "railgun-t-03",
+      "url": "https://toaru-project.com/railgun_t/story/03.html",
+      "httpStatus": 200,
+      "sha256": "41a00d2e467a5eeb35d26be3f14c75b89cd0c35204bc436cf06c54c1848136c5",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "railgun-t-07",
+      "url": "https://toaru-project.com/railgun_t/story/07.html",
+      "httpStatus": 200,
+      "sha256": "2a5bf5a72cc10401e46f63fe5ae5d0aa057756debcbd72e7f7c52b9f71f77a99",
+      "artifact": "本任务前序只读GET的HTML哈希回执；未另写缓存、未执行页面内容"
+    },
+    {
+      "sourceId": "index-ja-summary",
+      "url": "https://ja.wikipedia.org/wiki/とある魔術の禁書目録",
+      "httpStatus": 200,
+      "sha256": "823569fa2be0957ba2304cd787b6649109fcb6321153e747d456e00a16795e15",
+      "artifact": "本任务前序只读GET回执；社区概述不升级为小说一手"
+    }
+  ]
+}

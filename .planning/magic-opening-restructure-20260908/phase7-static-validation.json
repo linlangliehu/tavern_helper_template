@@ -1,0 +1,5228 @@
+{
+  "version": 1,
+  "generatedOn": "2026-09-08T09:58:40.473Z",
+  "scope": "static-validation-only",
+  "sourceArtifacts": {
+    "phase1": ".planning\\magic-opening-restructure-20260908\\phase1-opening-mapping.json",
+    "phase2": ".planning\\magic-opening-restructure-20260908\\phase2-opening-ids.json",
+    "phase5": ".planning\\magic-opening-restructure-20260908\\phase5-complete-openings.json",
+    "phase6": ".planning\\magic-opening-restructure-20260908\\phase6-initialization.json",
+    "schema": "src/魔法禁书目录模拟器/schema.json"
+  },
+  "implementationBoundary": {
+    "runtimeFilesModified": false,
+    "runtimeValidationClaimed": false,
+    "phase8Required": true
+  },
+  "phase5Corrections": [
+    {
+      "openingId": "OP-O28-01",
+      "issue": "日期前缀重复",
+      "correction": "移除重复的“9月30日”前缀，保留单一日期前缀。"
+    },
+    {
+      "openingId": "OP-O32-01",
+      "issue": "误选英国政变入口",
+      "correction": "改回10月9日暗部大战／垣根帝督入口，禁止凯莉莎与英国政变文本。"
+    },
+    {
+      "openingId": "OP-O37-01",
+      "issue": "误用10月3日旧入口",
+      "correction": "改回10月19日俄罗斯宣战与第三次世界大战入口。"
+    }
+  ],
+  "displayModel": {
+    "hierarchy": [
+      "时间层",
+      "作品线｜剧情阶段／篇章",
+      "具体开场白"
+    ],
+    "layers": [
+      {
+        "timeLayerId": "TL-YMINUS1",
+        "timeLayerLabel": "Y−1及更早前史",
+        "timeLayerOrder": 1,
+        "groupCount": 15,
+        "openingCount": 16,
+        "groups": [
+          {
+            "groupId": "WL-RAILGUN｜CH-P13",
+            "groupLabel": "某科学的超电磁炮｜食蜂建派阀、剧院失火、武林夜宫调查",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P13",
+            "chapterLabel": "食蜂建派阀、剧院失火、武林夜宫调查",
+            "openings": [
+              {
+                "openingId": "OP-P13-01",
+                "displayDate": "Y−1年次期新学期",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "relative",
+                "sortKey": {
+                  "year": 0,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年次期新学期"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P13-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年次期新学期"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-P01",
+            "groupLabel": "某科学的超电磁炮｜食蜂夺取才人工房（人才工坊）",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P01",
+            "chapterLabel": "食蜂夺取才人工房（人才工坊）",
+            "openings": [
+              {
+                "openingId": "OP-P01-01",
+                "displayDate": "Y−1年4月初",
+                "slot": 1,
+                "slotLabel": "夺取才人工房",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 4,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年4月初"
+                }
+              },
+              {
+                "openingId": "OP-P01-02",
+                "displayDate": "Y−1年4月初",
+                "slot": 2,
+                "slotLabel": "控制权变化",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 4,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年4月初"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P01-01",
+              "OP-P01-02"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 4,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年4月初"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-P02",
+            "groupLabel": "某科学的超电磁炮｜蜂琴入学与美琴一年级生活",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P02",
+            "chapterLabel": "蜂琴入学与美琴一年级生活",
+            "openings": [
+              {
+                "openingId": "OP-P02-01",
+                "displayDate": "Y−1年4月起",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "range",
+                "sortKey": {
+                  "year": 0,
+                  "month": 4,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年4月起"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P02-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 4,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年4月起"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-P03",
+            "groupLabel": "某科学的超电磁炮｜雪紫生日礼物／支仓冷理指导",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P03",
+            "chapterLabel": "雪紫生日礼物／支仓冷理指导",
+            "openings": [
+              {
+                "openingId": "OP-P03-01",
+                "displayDate": "Y−1年5月",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 0,
+                  "month": 5,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年5月"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P03-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 5,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年5月"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-P04",
+            "groupLabel": "某科学的超电磁炮｜常盘台派阀斗争未遂",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P04",
+            "chapterLabel": "常盘台派阀斗争未遂",
+            "openings": [
+              {
+                "openingId": "OP-P04-01",
+                "displayDate": "Y−1年6月",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 0,
+                  "month": 6,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年6月"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P04-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 6,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年6月"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-P05",
+            "groupLabel": "某科学的超电磁炮｜暗黑五月计划背景",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P05",
+            "chapterLabel": "暗黑五月计划背景",
+            "openings": [
+              {
+                "openingId": "OP-P05-01",
+                "displayDate": "Y−1年6月30日附近",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 6,
+                  "day": 30,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年6月30日附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P05-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 6,
+              "day": 30,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年6月30日附近"
+            }
+          },
+          {
+            "groupId": "WL-ITEM｜CH-P06",
+            "groupLabel": "暗部的ITEM｜ITEM组建、华野超美与委托阴谋",
+            "workLineId": "WL-ITEM",
+            "workLineLabel": "暗部的ITEM",
+            "workLineOrder": 4,
+            "stageId": "ST-ITEM-VOLUME",
+            "stageLabel": "ITEM卷",
+            "stageOrder": 7,
+            "chapterId": "CH-P06",
+            "chapterLabel": "ITEM组建、华野超美与委托阴谋",
+            "openings": [
+              {
+                "openingId": "OP-P06-01",
+                "displayDate": "Y−1年7月",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 0,
+                  "month": 7,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年7月"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P06-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 7,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年7月"
+            }
+          },
+          {
+            "groupId": "WL-ACCELERATOR｜CH-P07",
+            "groupLabel": "某科学的一方通行｜生物黑客／上条、蜜蚁、云川的相遇",
+            "workLineId": "WL-ACCELERATOR",
+            "workLineLabel": "某科学的一方通行",
+            "workLineOrder": 3,
+            "stageId": "ST-ACCELERATOR-ARC",
+            "stageLabel": "一方通行篇章",
+            "stageOrder": 6,
+            "chapterId": "CH-P07",
+            "chapterLabel": "生物黑客／上条、蜜蚁、云川的相遇",
+            "openings": [
+              {
+                "openingId": "OP-P07-01",
+                "displayDate": "Y−1年7月末",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 7,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年7月末"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P07-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 7,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年7月末"
+            }
+          },
+          {
+            "groupId": "WL-ITEM｜CH-P09",
+            "groupLabel": "暗部的ITEM｜蜂蜜女王",
+            "workLineId": "WL-ITEM",
+            "workLineLabel": "暗部的ITEM",
+            "workLineOrder": 4,
+            "stageId": "ST-ITEM-VOLUME",
+            "stageLabel": "ITEM卷",
+            "stageOrder": 7,
+            "chapterId": "CH-P09",
+            "chapterLabel": "蜂蜜女王",
+            "openings": [
+              {
+                "openingId": "OP-P09-01",
+                "displayDate": "Y−1年8月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 8,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年8月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P09-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 8,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年8月上旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-P08",
+            "groupLabel": "魔法禁书目录本篇｜上蜂相遇、相处与死结往事",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-P08",
+            "chapterLabel": "上蜂相遇、相处与死结往事",
+            "openings": [
+              {
+                "openingId": "OP-P08-01",
+                "displayDate": "Y−1年8月2日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 0,
+                  "month": 8,
+                  "day": 2,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年8月2日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P08-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 8,
+              "day": 2,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年8月2日"
+            }
+          },
+          {
+            "groupId": "WL-ITEM｜CH-P10",
+            "groupLabel": "暗部的ITEM｜正义伙伴竞争者／正义篇",
+            "workLineId": "WL-ITEM",
+            "workLineLabel": "暗部的ITEM",
+            "workLineOrder": 4,
+            "stageId": "ST-ITEM-VOLUME",
+            "stageLabel": "ITEM卷",
+            "stageOrder": 7,
+            "chapterId": "CH-P10",
+            "chapterLabel": "正义伙伴竞争者／正义篇",
+            "openings": [
+              {
+                "openingId": "OP-P10-01",
+                "displayDate": "Y−1年8月末",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 8,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年8月末"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P10-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 8,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年8月末"
+            }
+          },
+          {
+            "groupId": "WL-ITEM｜CH-P11",
+            "groupLabel": "暗部的ITEM｜麦野本家／越墙与新宿事件候选",
+            "workLineId": "WL-ITEM",
+            "workLineLabel": "暗部的ITEM",
+            "workLineOrder": 4,
+            "stageId": "ST-ITEM-VOLUME",
+            "stageLabel": "ITEM卷",
+            "stageOrder": 7,
+            "chapterId": "CH-P11",
+            "chapterLabel": "麦野本家／越墙与新宿事件候选",
+            "openings": [
+              {
+                "openingId": "OP-P11-01",
+                "displayDate": "Y−1年9月初",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 9,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年9月初"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P11-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 9,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年9月初"
+            }
+          },
+          {
+            "groupId": "WL-ITEM｜CH-P12",
+            "groupLabel": "暗部的ITEM｜D子／前一年大霸星祭调查",
+            "workLineId": "WL-ITEM",
+            "workLineLabel": "暗部的ITEM",
+            "workLineOrder": 4,
+            "stageId": "ST-ITEM-VOLUME",
+            "stageLabel": "ITEM卷",
+            "stageOrder": 7,
+            "chapterId": "CH-P12",
+            "chapterLabel": "D子／前一年大霸星祭调查",
+            "openings": [
+              {
+                "openingId": "OP-P12-01",
+                "displayDate": "Y−1年9月中旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 9,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年9月中旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P12-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 9,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年9月中旬"
+            }
+          },
+          {
+            "groupId": "WL-ITEM｜CH-P14",
+            "groupLabel": "暗部的ITEM｜ITEM6秋日银行劫案",
+            "workLineId": "WL-ITEM",
+            "workLineLabel": "暗部的ITEM",
+            "workLineOrder": 4,
+            "stageId": "ST-ITEM-VOLUME",
+            "stageLabel": "ITEM卷",
+            "stageOrder": 7,
+            "chapterId": "CH-P14",
+            "chapterLabel": "ITEM6秋日银行劫案",
+            "openings": [
+              {
+                "openingId": "OP-P14-01",
+                "displayDate": "Y−1年10月",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 0,
+                  "month": 10,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年10月"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P14-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 10,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年10月"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-P15",
+            "groupLabel": "某科学的超电磁炮｜绝对等速事件",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-P15",
+            "chapterLabel": "绝对等速事件",
+            "openings": [
+              {
+                "openingId": "OP-P15-01",
+                "displayDate": "Y−1年12月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 0,
+                  "month": 12,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 1,
+                  "displayDate": "Y−1年12月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-P15-01"
+            ],
+            "sortKey": {
+              "year": 0,
+              "month": 12,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 1,
+              "displayDate": "Y−1年12月上旬"
+            }
+          }
+        ]
+      },
+      {
+        "timeLayerId": "TL-Y",
+        "timeLayerLabel": "Y年",
+        "timeLayerOrder": 2,
+        "groupCount": 77,
+        "openingCount": 80,
+        "groups": [
+          {
+            "groupId": "WL-INDEX｜CH-N11",
+            "groupLabel": "魔法禁书目录本篇｜回生者／幻想收束原创、大乱斗",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N11",
+            "chapterLabel": "回生者／幻想收束原创、大乱斗",
+            "openings": [
+              {
+                "openingId": "OP-N11-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 1,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N11-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O03",
+            "groupLabel": "某科学的超电磁炮｜大蜘蛛、OVA及动画日常散点",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O03",
+            "chapterLabel": "大蜘蛛、OVA及动画日常散点",
+            "openings": [
+              {
+                "openingId": "OP-O03-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 1,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O03-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-MENTAL-OUT｜CH-O30",
+            "groupLabel": "心理掌握｜独立心理掌握：选举、帆风疑云、遗产与幕后势力",
+            "workLineId": "WL-MENTAL-OUT",
+            "workLineLabel": "心理掌握",
+            "workLineOrder": 5,
+            "stageId": "ST-MENTAL-OUT-ARC",
+            "stageLabel": "心理掌握篇章",
+            "stageOrder": 8,
+            "chapterId": "CH-O30",
+            "chapterLabel": "独立心理掌握：选举、帆风疑云、遗产与幕后势力",
+            "openings": [
+              {
+                "openingId": "OP-O30-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 1,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O30-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-S01",
+            "groupLabel": "魔法禁书目录本篇｜SS2的Skill-Out短篇",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-S01",
+            "chapterLabel": "SS2的Skill-Out短篇",
+            "openings": [
+              {
+                "openingId": "OP-S01-01",
+                "displayDate": "Y年1月18日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 1,
+                  "day": 18,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年1月18日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S01-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 1,
+              "day": 18,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年1月18日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-S02",
+            "groupLabel": "魔法禁书目录本篇｜牛仔裤短篇",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-S02",
+            "chapterLabel": "牛仔裤短篇",
+            "openings": [
+              {
+                "openingId": "OP-S02-01",
+                "displayDate": "Y年2月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 2,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年2月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S02-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 2,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年2月1日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-S03",
+            "groupLabel": "魔法禁书目录本篇｜上条刀夜短篇",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-S03",
+            "chapterLabel": "上条刀夜短篇",
+            "openings": [
+              {
+                "openingId": "OP-S03-01",
+                "displayDate": "Y年2月22日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 2,
+                  "day": 22,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年2月22日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S03-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 2,
+              "day": 22,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年2月22日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-S04",
+            "groupLabel": "魔法禁书目录本篇｜削板军霸短篇／毕业过渡",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-S04",
+            "chapterLabel": "削板军霸短篇／毕业过渡",
+            "openings": [
+              {
+                "openingId": "OP-S04-01",
+                "displayDate": "Y年3月15日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 3,
+                  "day": 15,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年3月15日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S04-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 3,
+              "day": 15,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年3月15日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-S05",
+            "groupLabel": "某科学的超电磁炮｜美琴过去篇后半、雪紫离校",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-S05",
+            "chapterLabel": "美琴过去篇后半、雪紫离校",
+            "openings": [
+              {
+                "openingId": "OP-S05-01",
+                "displayDate": "Y年4月某日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 4,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年4月某日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S05-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 4,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年4月某日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-S07",
+            "groupLabel": "魔法禁书目录本篇｜SS2春季散点",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-S07",
+            "chapterLabel": "SS2春季散点",
+            "openings": [
+              {
+                "openingId": "OP-S07-01",
+                "displayDate": "Y年4月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 4,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年4月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S07-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 4,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年4月5日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-S06",
+            "groupLabel": "某科学的超电磁炮｜初春与佐天交友、栅川定向越野",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-S06",
+            "chapterLabel": "初春与佐天交友、栅川定向越野",
+            "openings": [
+              {
+                "openingId": "OP-S06-01",
+                "displayDate": "Y年4月下旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 4,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年4月下旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S06-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 4,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年4月下旬"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-S08",
+            "groupLabel": "某科学的超电磁炮｜美琴生日／黑子入住、9982诞生",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-S08",
+            "chapterLabel": "美琴生日／黑子入住、9982诞生",
+            "openings": [
+              {
+                "openingId": "OP-S08-01",
+                "displayDate": "Y年5月11日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 5,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年5月11日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S08-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 5,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年5月11日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-S09",
+            "groupLabel": "某科学的超电磁炮｜上条与美琴初遇",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-S09",
+            "chapterLabel": "上条与美琴初遇",
+            "openings": [
+              {
+                "openingId": "OP-S09-01",
+                "displayDate": "Y年6月17日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 6,
+                  "day": 17,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年6月17日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S09-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 6,
+              "day": 17,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年6月17日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-S10",
+            "groupLabel": "某科学的超电磁炮｜俄罗斯能力实演旅行",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-S10",
+            "chapterLabel": "俄罗斯能力实演旅行",
+            "openings": [
+              {
+                "openingId": "OP-S10-01",
+                "displayDate": "Y年7月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 7,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年7月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S10-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 7,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年7月1日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-S11",
+            "groupLabel": "魔法禁书目录本篇｜SS2夏季散点",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-PREHISTORY",
+            "stageLabel": "本篇前史",
+            "stageOrder": 1,
+            "chapterId": "CH-S11",
+            "chapterLabel": "SS2夏季散点",
+            "openings": [
+              {
+                "openingId": "OP-S11-01",
+                "displayDate": "Y年7月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 7,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年7月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-S11-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 7,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年7月5日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O01",
+            "groupLabel": "某科学的超电磁炮｜幻想御手",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O01",
+            "chapterLabel": "幻想御手",
+            "openings": [
+              {
+                "openingId": "OP-O01-01",
+                "displayDate": "Y年7月中旬",
+                "slot": 1,
+                "slotLabel": "前奏",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 7,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年7月中旬"
+                }
+              },
+              {
+                "openingId": "OP-O01-02",
+                "displayDate": "Y年7月10日",
+                "slot": 2,
+                "slotLabel": "主体",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 7,
+                  "day": 10,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年7月10日"
+                }
+              },
+              {
+                "openingId": "OP-O01-03",
+                "displayDate": "7月17日",
+                "slot": 3,
+                "slotLabel": "收束",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 7,
+                  "day": 17,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "7月17日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O01-01",
+              "OP-O01-02",
+              "OP-O01-03"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 7,
+              "day": 10,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年7月10日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O02",
+            "groupLabel": "魔法禁书目录本篇｜茵蒂克丝初遇、记忆危机",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O02",
+            "chapterLabel": "茵蒂克丝初遇、记忆危机",
+            "openings": [
+              {
+                "openingId": "OP-O02-01",
+                "displayDate": "Y年7月19日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 7,
+                  "day": 19,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年7月19日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O02-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 7,
+              "day": 19,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年7月19日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O06",
+            "groupLabel": "魔法禁书目录本篇｜吸血杀手／三泽塾",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O06",
+            "chapterLabel": "吸血杀手／三泽塾",
+            "openings": [
+              {
+                "openingId": "OP-O06-01",
+                "displayDate": "Y年8月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年8月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O06-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年8月上旬"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O04",
+            "groupLabel": "某科学的超电磁炮｜初春SP事件",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O04",
+            "chapterLabel": "初春SP事件",
+            "openings": [
+              {
+                "openingId": "OP-O04-01",
+                "displayDate": "Y年8月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年8月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O04-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年8月1日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O05",
+            "groupLabel": "某科学的超电磁炮｜盛夏祭／白鳄部队",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O05",
+            "chapterLabel": "盛夏祭／白鳄部队",
+            "openings": [
+              {
+                "openingId": "OP-O05-01",
+                "displayDate": "Y年8月初",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年8月初"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O05-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年8月初"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O07",
+            "groupLabel": "某科学的超电磁炮｜乱杂开放",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O07",
+            "chapterLabel": "乱杂开放",
+            "openings": [
+              {
+                "openingId": "OP-O07-01",
+                "displayDate": "8月2日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 2,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "8月2日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O07-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 2,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "8月2日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O08",
+            "groupLabel": "魔法禁书目录本篇｜妹妹调查／绝对能力者进化",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O08",
+            "chapterLabel": "妹妹调查／绝对能力者进化",
+            "openings": [
+              {
+                "openingId": "OP-O08-01",
+                "displayDate": "8月15日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 15,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "8月15日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O08-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 15,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "8月15日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O09",
+            "groupLabel": "某科学的超电磁炮｜静默派对",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O09",
+            "chapterLabel": "静默派对",
+            "openings": [
+              {
+                "openingId": "OP-O09-01",
+                "displayDate": "8月24日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 24,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "8月24日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O09-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 24,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "8月24日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O10",
+            "groupLabel": "魔法禁书目录本篇｜天使坠落",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O10",
+            "chapterLabel": "天使坠落",
+            "openings": [
+              {
+                "openingId": "OP-O10-01",
+                "displayDate": "Y年8月28日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 28,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年8月28日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O10-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 28,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年8月28日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O11",
+            "groupLabel": "魔法禁书目录本篇｜最后之作／天井亚雄、艾扎力、闇咲逢魔三线",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O11",
+            "chapterLabel": "最后之作／天井亚雄、艾扎力、闇咲逢魔三线",
+            "openings": [
+              {
+                "openingId": "OP-O11-01",
+                "displayDate": "Y年8月31日",
+                "slot": 1,
+                "slotLabel": "最后之作线",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 31,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年8月31日"
+                }
+              },
+              {
+                "openingId": "OP-O11-02",
+                "displayDate": "Y年8月31日",
+                "slot": 2,
+                "slotLabel": "三线并行",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 8,
+                  "day": 31,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年8月31日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O11-01",
+              "OP-O11-02"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 8,
+              "day": 31,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年8月31日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O12",
+            "groupLabel": "魔法禁书目录本篇｜新学期、风斩冰华与雪莉入侵",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O12",
+            "chapterLabel": "新学期、风斩冰华与雪莉入侵",
+            "openings": [
+              {
+                "openingId": "OP-O12-01",
+                "displayDate": "Y年9月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O12-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月1日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O13",
+            "groupLabel": "某科学的超电磁炮｜学艺都市",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O13",
+            "chapterLabel": "学艺都市",
+            "openings": [
+              {
+                "openingId": "OP-O13-01",
+                "displayDate": "Y年9月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O13-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月上旬"
+            }
+          },
+          {
+            "groupId": "WL-ACCELERATOR｜CH-O14",
+            "groupLabel": "某科学的一方通行｜死灵术师",
+            "workLineId": "WL-ACCELERATOR",
+            "workLineLabel": "某科学的一方通行",
+            "workLineOrder": 3,
+            "stageId": "ST-ACCELERATOR-ARC",
+            "stageLabel": "一方通行篇章",
+            "stageOrder": 6,
+            "chapterId": "CH-O14",
+            "chapterLabel": "死灵术师",
+            "openings": [
+              {
+                "openingId": "OP-O14-01",
+                "displayDate": "9月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "9月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O14-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "9月1日"
+            }
+          },
+          {
+            "groupId": "WL-OTHER-OFFICIAL｜CH-O15",
+            "groupLabel": "其他正式外传｜未元物质／杠林檎",
+            "workLineId": "WL-OTHER-OFFICIAL",
+            "workLineLabel": "其他正式外传",
+            "workLineOrder": 6,
+            "stageId": "ST-OFFICIAL-ARC",
+            "stageLabel": "正式外传篇章",
+            "stageOrder": 9,
+            "chapterId": "CH-O15",
+            "chapterLabel": "未元物质／杠林檎",
+            "openings": [
+              {
+                "openingId": "OP-O15-01",
+                "displayDate": "Y年9月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O15-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月上旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O16",
+            "groupLabel": "魔法禁书目录本篇｜法之书／奥索拉",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O16",
+            "chapterLabel": "法之书／奥索拉",
+            "openings": [
+              {
+                "openingId": "OP-O16-01",
+                "displayDate": "Y年9月8日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 8,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月8日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O16-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 8,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月8日"
+            }
+          },
+          {
+            "groupId": "WL-ACCELERATOR｜CH-O19",
+            "groupLabel": "某科学的一方通行｜神之饮物 Nectar",
+            "workLineId": "WL-ACCELERATOR",
+            "workLineLabel": "某科学的一方通行",
+            "workLineOrder": 3,
+            "stageId": "ST-ACCELERATOR-ARC",
+            "stageLabel": "一方通行篇章",
+            "stageOrder": 6,
+            "chapterId": "CH-O19",
+            "chapterLabel": "神之饮物 Nectar",
+            "openings": [
+              {
+                "openingId": "OP-O19-01",
+                "displayDate": "Y年9月中旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月中旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O19-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月中旬"
+            }
+          },
+          {
+            "groupId": "WL-OTHER-OFFICIAL｜CH-O17",
+            "groupLabel": "其他正式外传｜必要之恶教会特别编入考试",
+            "workLineId": "WL-OTHER-OFFICIAL",
+            "workLineLabel": "其他正式外传",
+            "workLineOrder": 6,
+            "stageId": "ST-OFFICIAL-ARC",
+            "stageLabel": "正式外传篇章",
+            "stageOrder": 9,
+            "chapterId": "CH-O17",
+            "chapterLabel": "必要之恶教会特别编入考试",
+            "openings": [
+              {
+                "openingId": "OP-O17-01",
+                "displayDate": "Y年9月中旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月中旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O17-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月中旬"
+            }
+          },
+          {
+            "groupId": "WL-OTHER-OFFICIAL｜CH-O18",
+            "groupLabel": "其他正式外传｜Road to Endymion／群奏活剧相关路线",
+            "workLineId": "WL-OTHER-OFFICIAL",
+            "workLineLabel": "其他正式外传",
+            "workLineOrder": 6,
+            "stageId": "ST-OFFICIAL-ARC",
+            "stageLabel": "正式外传篇章",
+            "stageOrder": 9,
+            "chapterId": "CH-O18",
+            "chapterLabel": "Road to Endymion／群奏活剧相关路线",
+            "openings": [
+              {
+                "openingId": "OP-O18-01",
+                "displayDate": "Y年9月12日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 12,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月12日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O18-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 12,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月12日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O20",
+            "groupLabel": "魔法禁书目录本篇｜树状图设计者残骸",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O20",
+            "chapterLabel": "树状图设计者残骸",
+            "openings": [
+              {
+                "openingId": "OP-O20-01",
+                "displayDate": "Y年9月14日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 14,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月14日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O20-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 14,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月14日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O21",
+            "groupLabel": "魔法禁书目录本篇｜恩底弥翁剧场版本篇",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O21",
+            "chapterLabel": "恩底弥翁剧场版本篇",
+            "openings": [
+              {
+                "openingId": "OP-O21-01",
+                "displayDate": "9月18日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 18,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "9月18日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O21-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 18,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "9月18日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O22",
+            "groupLabel": "魔法禁书目录本篇｜大霸星祭七日背景",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O22",
+            "chapterLabel": "大霸星祭七日背景",
+            "openings": [
+              {
+                "openingId": "OP-O22-01",
+                "displayDate": "Y年9月19日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 19,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月19日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O22-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 19,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月19日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O23",
+            "groupLabel": "魔法禁书目录本篇｜使徒十字",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O23",
+            "chapterLabel": "使徒十字",
+            "openings": [
+              {
+                "openingId": "OP-O23-01",
+                "displayDate": "Y年9月19日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 19,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月19日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O23-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 19,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月19日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O24",
+            "groupLabel": "某科学的超电磁炮｜超炮大霸星祭／警策、木原幻生与美琴异变",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O24",
+            "chapterLabel": "超炮大霸星祭／警策、木原幻生与美琴异变",
+            "openings": [
+              {
+                "openingId": "OP-O24-01",
+                "displayDate": "9月20日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 20,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "9月20日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O24-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 20,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "9月20日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O25",
+            "groupLabel": "魔法禁书目录本篇｜亚得里亚海女王",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O25",
+            "chapterLabel": "亚得里亚海女王",
+            "openings": [
+              {
+                "openingId": "OP-O25-01",
+                "displayDate": "Y年9月下旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年9月下旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O25-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年9月下旬"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O26",
+            "groupLabel": "某科学的超电磁炮｜天赋梦路／芙兰达与猎虎桥",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O26",
+            "chapterLabel": "天赋梦路／芙兰达与猎虎桥",
+            "openings": [
+              {
+                "openingId": "OP-O26-01",
+                "displayDate": "9月22日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 22,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "9月22日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O26-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 22,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "9月22日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O28",
+            "groupLabel": "魔法禁书目录本篇｜0930／前方之风、风斩与学园都市入侵",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O28",
+            "chapterLabel": "0930／前方之风、风斩与学园都市入侵",
+            "openings": [
+              {
+                "openingId": "OP-O28-01",
+                "displayDate": "9月30日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 9,
+                  "day": 30,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "9月30日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O28-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 9,
+              "day": 30,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "9月30日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O29",
+            "groupLabel": "魔法禁书目录本篇｜Skill-Out／驹场利德、滨面",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O29",
+            "chapterLabel": "Skill-Out／驹场利德、滨面",
+            "openings": [
+              {
+                "openingId": "OP-O29-01",
+                "displayDate": "Y年10月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年10月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O29-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年10月上旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O31",
+            "groupLabel": "魔法禁书目录本篇｜C文书",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O31",
+            "chapterLabel": "C文书",
+            "openings": [
+              {
+                "openingId": "OP-O31-01",
+                "displayDate": "Y年10月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年10月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O31-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年10月1日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O32",
+            "groupLabel": "魔法禁书目录本篇｜暗部大战 Battle Royale",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O32",
+            "chapterLabel": "暗部大战 Battle Royale",
+            "openings": [
+              {
+                "openingId": "OP-O32-01",
+                "displayDate": "Y年10月9日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 9,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年10月9日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O32-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 9,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年10月9日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O34",
+            "groupLabel": "魔法禁书目录本篇｜后方之水",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O34",
+            "chapterLabel": "后方之水",
+            "openings": [
+              {
+                "openingId": "OP-O34-01",
+                "displayDate": "10月11日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "10月11日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O34-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "10月11日"
+            }
+          },
+          {
+            "groupId": "WL-RAILGUN｜CH-O33",
+            "groupLabel": "某科学的超电磁炮｜越狱",
+            "workLineId": "WL-RAILGUN",
+            "workLineLabel": "某科学的超电磁炮",
+            "workLineOrder": 2,
+            "stageId": "ST-RAILGUN-ARC",
+            "stageLabel": "超电磁炮篇章",
+            "stageOrder": 5,
+            "chapterId": "CH-O33",
+            "chapterLabel": "越狱",
+            "openings": [
+              {
+                "openingId": "OP-O33-01",
+                "displayDate": "10月12日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 12,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "10月12日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O33-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 12,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "10月12日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O36",
+            "groupLabel": "魔法禁书目录本篇｜DRAGON／学园都市暗线",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O36",
+            "chapterLabel": "DRAGON／学园都市暗线",
+            "openings": [
+              {
+                "openingId": "OP-O36-01",
+                "displayDate": "10月13日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 13,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "10月13日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O36-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 13,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "10月13日"
+            }
+          },
+          {
+            "groupId": "WL-OTHER-OFFICIAL｜CH-O27",
+            "groupLabel": "其他正式外传｜幽幻姐妹 Astral Buddy",
+            "workLineId": "WL-OTHER-OFFICIAL",
+            "workLineLabel": "其他正式外传",
+            "workLineOrder": 6,
+            "stageId": "ST-OFFICIAL-ARC",
+            "stageLabel": "正式外传篇章",
+            "stageOrder": 9,
+            "chapterId": "CH-O27",
+            "chapterLabel": "幽幻姐妹 Astral Buddy",
+            "openings": [
+              {
+                "openingId": "OP-O27-01",
+                "displayDate": "10月14日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 14,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "10月14日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O27-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 14,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "10月14日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O35",
+            "groupLabel": "魔法禁书目录本篇｜英国王室／不列颠万圣节",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O35",
+            "chapterLabel": "英国王室／不列颠万圣节",
+            "openings": [
+              {
+                "openingId": "OP-O35-01",
+                "displayDate": "10月17日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 17,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "10月17日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O35-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 17,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "10月17日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-O37",
+            "groupLabel": "魔法禁书目录本篇｜第三次世界大战",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-OT",
+            "stageLabel": "旧约",
+            "stageOrder": 2,
+            "chapterId": "CH-O37",
+            "chapterLabel": "第三次世界大战",
+            "openings": [
+              {
+                "openingId": "OP-O37-01",
+                "displayDate": "Y年10月19日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 19,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年10月19日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-O37-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 19,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年10月19日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N01",
+            "groupLabel": "魔法禁书目录本篇｜新入生／黑夜海鸟、芙蕾梅亚",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N01",
+            "chapterLabel": "新入生／黑夜海鸟、芙蕾梅亚",
+            "openings": [
+              {
+                "openingId": "OP-N01-01",
+                "displayDate": "10月30日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 10,
+                  "day": 30,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "10月30日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N01-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 10,
+              "day": 30,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "10月30日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N02",
+            "groupLabel": "魔法禁书目录本篇｜战后三人交汇与魔法说明",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N02",
+            "chapterLabel": "战后三人交汇与魔法说明",
+            "openings": [
+              {
+                "openingId": "OP-N02-01",
+                "displayDate": "Y年11月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年11月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N02-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年11月5日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N03",
+            "groupLabel": "魔法禁书目录本篇｜夏威夷",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N03",
+            "chapterLabel": "夏威夷",
+            "openings": [
+              {
+                "openingId": "OP-N03-01",
+                "displayDate": "11月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "11月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N03-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "11月5日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N04",
+            "groupLabel": "魔法禁书目录本篇｜巴格吉城／自然选择者",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N04",
+            "chapterLabel": "巴格吉城／自然选择者",
+            "openings": [
+              {
+                "openingId": "OP-N04-01",
+                "displayDate": "11月10日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 10,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "11月10日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N04-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 10,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "11月10日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N05",
+            "groupLabel": "魔法禁书目录本篇｜一端览祭／芙蕾梅亚争夺",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N05",
+            "chapterLabel": "一端览祭／芙蕾梅亚争夺",
+            "openings": [
+              {
+                "openingId": "OP-N05-01",
+                "displayDate": "11月13日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 13,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "11月13日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N05-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 13,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "11月13日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N06",
+            "groupLabel": "魔法禁书目录本篇｜人力资源／药味久子",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N06",
+            "chapterLabel": "人力资源／药味久子",
+            "openings": [
+              {
+                "openingId": "OP-N06-01",
+                "displayDate": "Y年11月14日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 14,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年11月14日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N06-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 14,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年11月14日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N08",
+            "groupLabel": "魔法禁书目录本篇｜欧提努斯／世界重置与上条的选择",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N08",
+            "chapterLabel": "欧提努斯／世界重置与上条的选择",
+            "openings": [
+              {
+                "openingId": "OP-N08-01",
+                "displayDate": "Y年11月18日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 18,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年11月18日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N08-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 18,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年11月18日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N07",
+            "groupLabel": "魔法禁书目录本篇｜格雷姆林决战前段",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N07",
+            "chapterLabel": "格雷姆林决战前段",
+            "openings": [
+              {
+                "openingId": "OP-N07-01",
+                "displayDate": "Y年11月下旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年11月下旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N07-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年11月下旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N09",
+            "groupLabel": "魔法禁书目录本篇｜欧提努斯救援与追逐",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N09",
+            "chapterLabel": "欧提努斯救援与追逐",
+            "openings": [
+              {
+                "openingId": "OP-N09-01",
+                "displayDate": "Y年11月下旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年11月下旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N09-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年11月下旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N10",
+            "groupLabel": "魔法禁书目录本篇｜心理掌握／蜜蚁爱愉：当前框架",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N10",
+            "chapterLabel": "心理掌握／蜜蚁爱愉：当前框架",
+            "openings": [
+              {
+                "openingId": "OP-N10-01",
+                "displayDate": "11月下旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 11,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "11月下旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N10-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 11,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "11月下旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N13",
+            "groupLabel": "魔法禁书目录本篇｜僧正／真格雷姆林",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N13",
+            "chapterLabel": "僧正／真格雷姆林",
+            "openings": [
+              {
+                "openingId": "OP-N13-01",
+                "displayDate": "12月1日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月1日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N13-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月1日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N14",
+            "groupLabel": "魔法禁书目录本篇｜理想送行／上里登场",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N14",
+            "chapterLabel": "理想送行／上里登场",
+            "openings": [
+              {
+                "openingId": "OP-N14-01",
+                "displayDate": "Y年12月上旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月上旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N14-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月上旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N15",
+            "groupLabel": "魔法禁书目录本篇｜木原唯一／上里阵营",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N15",
+            "chapterLabel": "木原唯一／上里阵营",
+            "openings": [
+              {
+                "openingId": "OP-N15-01",
+                "displayDate": "12月3日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 3,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月3日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N15-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 3,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月3日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N12",
+            "groupLabel": "魔法禁书目录本篇｜圣日耳曼／钻石大楼",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N12",
+            "chapterLabel": "圣日耳曼／钻石大楼",
+            "openings": [
+              {
+                "openingId": "OP-N12-01",
+                "displayDate": "12月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N12-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月5日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N16",
+            "groupLabel": "魔法禁书目录本篇｜大热浪／元素",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N16",
+            "chapterLabel": "大热浪／元素",
+            "openings": [
+              {
+                "openingId": "OP-N16-01",
+                "displayDate": "12月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N16-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月5日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N17",
+            "groupLabel": "魔法禁书目录本篇｜夺回上里",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N17",
+            "chapterLabel": "夺回上里",
+            "openings": [
+              {
+                "openingId": "OP-N17-01",
+                "displayDate": "12月9日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 9,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月9日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N17-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 9,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月9日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N18",
+            "groupLabel": "魔法禁书目录本篇｜亚雷斯塔",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N18",
+            "chapterLabel": "亚雷斯塔",
+            "openings": [
+              {
+                "openingId": "OP-N18-01",
+                "displayDate": "12月10日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 10,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月10日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N18-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 10,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月10日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N19",
+            "groupLabel": "魔法禁书目录本篇｜演算战斗服／学园都市后续",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N19",
+            "chapterLabel": "演算战斗服／学园都市后续",
+            "openings": [
+              {
+                "openingId": "OP-N19-01",
+                "displayDate": "Y年12月11日附近",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月11日附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N19-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月11日附近"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N20",
+            "groupLabel": "魔法禁书目录本篇｜科隆尊主线前段／赴英与冲突升级",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N20",
+            "chapterLabel": "科隆尊主线前段／赴英与冲突升级",
+            "openings": [
+              {
+                "openingId": "OP-N20-01",
+                "displayDate": "12月11日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "12月11日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N20-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "12月11日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N21",
+            "groupLabel": "魔法禁书目录本篇｜科隆尊主线中段",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N21",
+            "chapterLabel": "科隆尊主线中段",
+            "openings": [
+              {
+                "openingId": "OP-N21-01",
+                "displayDate": "Y年12月中旬",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 11,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月中旬"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N21-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 11,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月中旬"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N22",
+            "groupLabel": "魔法禁书目录本篇｜科隆尊决战／新约正卷收束",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N22",
+            "chapterLabel": "科隆尊决战／新约正卷收束",
+            "openings": [
+              {
+                "openingId": "OP-N22-01",
+                "displayDate": "Y年12月20日附近",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 20,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月20日附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N22-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 20,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月20日附近"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-N23",
+            "groupLabel": "魔法禁书目录本篇｜22 Reverse／上条身份冲突与后续",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-NT",
+            "stageLabel": "新约",
+            "stageOrder": 3,
+            "chapterId": "CH-N23",
+            "chapterLabel": "22 Reverse／上条身份冲突与后续",
+            "openings": [
+              {
+                "openingId": "OP-N23-01",
+                "displayDate": "Y年12月21日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 21,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月21日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-N23-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 21,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月21日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G01",
+            "groupLabel": "魔法禁书目录本篇｜创约开幕／平安夜",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G01",
+            "chapterLabel": "创约开幕／平安夜",
+            "openings": [
+              {
+                "openingId": "OP-G01-01",
+                "displayDate": "Y年12月24日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 24,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月24日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G01-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 24,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月24日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G02",
+            "groupLabel": "魔法禁书目录本篇｜圣诞日、安娜与住院上条／蜂琴共斗",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G02",
+            "chapterLabel": "圣诞日、安娜与住院上条／蜂琴共斗",
+            "openings": [
+              {
+                "openingId": "OP-G02-01",
+                "displayDate": "Y年12月25日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 25,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月25日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G02-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 25,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月25日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G03",
+            "groupLabel": "魔法禁书目录本篇｜手铐行动 Operation Handcuffs",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G03",
+            "chapterLabel": "手铐行动 Operation Handcuffs",
+            "openings": [
+              {
+                "openingId": "OP-G03-01",
+                "displayDate": "Y年12月25日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 25,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月25日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G03-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 25,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月25日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G04",
+            "groupLabel": "魔法禁书目录本篇｜洛杉矶全人口消失／R&C Occultics",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G04",
+            "chapterLabel": "洛杉矶全人口消失／R&C Occultics",
+            "openings": [
+              {
+                "openingId": "OP-G04-01",
+                "displayDate": "Y年12月26日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 26,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月26日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G04-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 26,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月26日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G05",
+            "groupLabel": "魔法禁书目录本篇｜暗部残党、装甲列车与爱丽丝介入",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G05",
+            "chapterLabel": "暗部残党、装甲列车与爱丽丝介入",
+            "openings": [
+              {
+                "openingId": "OP-G05-01",
+                "displayDate": "Y年12月29日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 29,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月29日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G05-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 29,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月29日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G06",
+            "groupLabel": "魔法禁书目录本篇｜涩谷／阿拉迪娅",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G06",
+            "chapterLabel": "涩谷／阿拉迪娅",
+            "openings": [
+              {
+                "openingId": "OP-G06-01",
+                "displayDate": "Y年12月31日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 1,
+                  "month": 12,
+                  "day": 31,
+                  "minute": 0,
+                  "timeLayerOrder": 2,
+                  "displayDate": "Y年12月31日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G06-01"
+            ],
+            "sortKey": {
+              "year": 1,
+              "month": 12,
+              "day": 31,
+              "minute": 0,
+              "timeLayerOrder": 2,
+              "displayDate": "Y年12月31日"
+            }
+          }
+        ]
+      },
+      {
+        "timeLayerId": "TL-YPLUS1",
+        "timeLayerLabel": "Y＋1年",
+        "timeLayerOrder": 3,
+        "groupCount": 8,
+        "openingCount": 12,
+        "groups": [
+          {
+            "groupId": "WL-INDEX｜CH-G07",
+            "groupLabel": "魔法禁书目录本篇｜元旦／领事馆与桥架结社",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G07",
+            "chapterLabel": "元旦／领事馆与桥架结社",
+            "openings": [
+              {
+                "openingId": "OP-G07-01",
+                "displayDate": "Y＋1年1月1日",
+                "slot": 1,
+                "slotLabel": "1月1日",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月1日"
+                }
+              },
+              {
+                "openingId": "OP-G07-02",
+                "displayDate": "Y＋1年1月2日",
+                "slot": 2,
+                "slotLabel": "1月2日",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 2,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月2日"
+                }
+              },
+              {
+                "openingId": "OP-G07-03",
+                "displayDate": "Y＋1年1月3日",
+                "slot": 3,
+                "slotLabel": "1月3日",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 3,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月3日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G07-01",
+              "OP-G07-02",
+              "OP-G07-03"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月1日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G08",
+            "groupLabel": "魔法禁书目录本篇｜保护安娜／多方追击",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G08",
+            "chapterLabel": "保护安娜／多方追击",
+            "openings": [
+              {
+                "openingId": "OP-G08-01",
+                "displayDate": "Y＋1年1月3日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 3,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月3日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G08-01"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 3,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月3日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G09",
+            "groupLabel": "魔法禁书目录本篇｜CRC攻城、医院保卫战",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G09",
+            "chapterLabel": "CRC攻城、医院保卫战",
+            "openings": [
+              {
+                "openingId": "OP-G09-01",
+                "displayDate": "Y＋1年1月5日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 5,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月5日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G09-01"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 5,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月5日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G10",
+            "groupLabel": "魔法禁书目录本篇｜爱丽丝复活／茵蒂克丝危机与救援",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G10",
+            "chapterLabel": "爱丽丝复活／茵蒂克丝危机与救援",
+            "openings": [
+              {
+                "openingId": "OP-G10-01",
+                "displayDate": "Y＋1年1月6日",
+                "slot": 1,
+                "slotLabel": "冲突开始前",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 6,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月6日"
+                }
+              },
+              {
+                "openingId": "OP-G10-02",
+                "displayDate": "Y＋1年1月6日23:58附近",
+                "slot": 2,
+                "slotLabel": "1月6日23:58附近",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 6,
+                  "minute": 1438,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月6日23:58附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G10-01",
+              "OP-G10-02"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 6,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月6日"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G11",
+            "groupLabel": "魔法禁书目录本篇｜死后／伪地狱与金斯福德",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G11",
+            "chapterLabel": "死后／伪地狱与金斯福德",
+            "openings": [
+              {
+                "openingId": "OP-G11-01",
+                "displayDate": "Y＋1年1月7日附近",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 7,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月7日附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G11-01"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 7,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月7日附近"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G12",
+            "groupLabel": "魔法禁书目录本篇｜葬礼、复活及复活后事态",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G12",
+            "chapterLabel": "葬礼、复活及复活后事态",
+            "openings": [
+              {
+                "openingId": "OP-G12-01",
+                "displayDate": "Y＋1年1月8日附近",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 8,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月8日附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G12-01"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 8,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月8日附近"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G13",
+            "groupLabel": "魔法禁书目录本篇｜阿蒂迦利迦／红雪与再战科隆尊",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G13",
+            "chapterLabel": "阿蒂迦利迦／红雪与再战科隆尊",
+            "openings": [
+              {
+                "openingId": "OP-G13-01",
+                "displayDate": "Y＋1年1月8日之后",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "range",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 8,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月8日之后"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G13-01"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 8,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月8日之后"
+            }
+          },
+          {
+            "groupId": "WL-INDEX｜CH-G14",
+            "groupLabel": "魔法禁书目录本篇｜科隆尊逃亡／追击与尾声",
+            "workLineId": "WL-INDEX",
+            "workLineLabel": "魔法禁书目录本篇",
+            "workLineOrder": 1,
+            "stageId": "ST-INDEX-GT",
+            "stageLabel": "创约",
+            "stageOrder": 4,
+            "chapterId": "CH-G14",
+            "chapterLabel": "科隆尊逃亡／追击与尾声",
+            "openings": [
+              {
+                "openingId": "OP-G14-01",
+                "displayDate": "Y＋1年1月9日早晨",
+                "slot": 1,
+                "slotLabel": "1月9日早晨",
+                "datePrecision": "exact",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 9,
+                  "minute": 0,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月9日早晨"
+                }
+              },
+              {
+                "openingId": "OP-G14-02",
+                "displayDate": "Y＋1年1月9日08:30附近",
+                "slot": 2,
+                "slotLabel": "1月9日08:30附近",
+                "datePrecision": "approximate",
+                "sortKey": {
+                  "year": 2,
+                  "month": 1,
+                  "day": 9,
+                  "minute": 510,
+                  "timeLayerOrder": 3,
+                  "displayDate": "Y＋1年1月9日08:30附近"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-G14-01",
+              "OP-G14-02"
+            ],
+            "sortKey": {
+              "year": 2,
+              "month": 1,
+              "day": 9,
+              "minute": 0,
+              "timeLayerOrder": 3,
+              "displayDate": "Y＋1年1月9日早晨"
+            }
+          }
+        ]
+      },
+      {
+        "timeLayerId": "TL-UNDATED",
+        "timeLayerLabel": "未定日／相对顺序",
+        "timeLayerOrder": 4,
+        "groupCount": 6,
+        "openingCount": 6,
+        "groups": [
+          {
+            "groupId": "WL-MEDIA-UNDATED｜CH-X01",
+            "groupLabel": "动画、游戏、特典及未定日衍生｜其余SS2／SP／特典散点",
+            "workLineId": "WL-MEDIA-UNDATED",
+            "workLineLabel": "动画、游戏、特典及未定日衍生",
+            "workLineOrder": 7,
+            "stageId": "ST-MEDIA-UNDATED",
+            "stageLabel": "媒体／未定日",
+            "stageOrder": 10,
+            "chapterId": "CH-X01",
+            "chapterLabel": "其余SS2／SP／特典散点",
+            "openings": [
+              {
+                "openingId": "OP-X01-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 3,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 4,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-X01-01"
+            ],
+            "sortKey": {
+              "year": 3,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 4,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-MEDIA-UNDATED｜CH-X02",
+            "groupLabel": "动画、游戏、特典及未定日衍生｜原石拯救／学习装置现有原创疑点",
+            "workLineId": "WL-MEDIA-UNDATED",
+            "workLineLabel": "动画、游戏、特典及未定日衍生",
+            "workLineOrder": 7,
+            "stageId": "ST-MEDIA-UNDATED",
+            "stageLabel": "媒体／未定日",
+            "stageOrder": 10,
+            "chapterId": "CH-X02",
+            "chapterLabel": "原石拯救／学习装置现有原创疑点",
+            "openings": [
+              {
+                "openingId": "OP-X02-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 3,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 4,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-X02-01"
+            ],
+            "sortKey": {
+              "year": 3,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 4,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-MEDIA-UNDATED｜CH-X03",
+            "groupLabel": "动画、游戏、特典及未定日衍生｜神裂SS、SP马克／火星、Cold Game",
+            "workLineId": "WL-MEDIA-UNDATED",
+            "workLineLabel": "动画、游戏、特典及未定日衍生",
+            "workLineOrder": 7,
+            "stageId": "ST-MEDIA-UNDATED",
+            "stageLabel": "媒体／未定日",
+            "stageOrder": 10,
+            "chapterId": "CH-X03",
+            "chapterLabel": "神裂SS、SP马克／火星、Cold Game",
+            "openings": [
+              {
+                "openingId": "OP-X03-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 3,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 4,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-X03-01"
+            ],
+            "sortKey": {
+              "year": 3,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 4,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-MEDIA-UNDATED｜CH-X04",
+            "groupLabel": "动画、游戏、特典及未定日衍生｜超炮SS3、雅妮丝SS、蜂琴外传与特典",
+            "workLineId": "WL-MEDIA-UNDATED",
+            "workLineLabel": "动画、游戏、特典及未定日衍生",
+            "workLineOrder": 7,
+            "stageId": "ST-MEDIA-UNDATED",
+            "stageLabel": "媒体／未定日",
+            "stageOrder": 10,
+            "chapterId": "CH-X04",
+            "chapterLabel": "超炮SS3、雅妮丝SS、蜂琴外传与特典",
+            "openings": [
+              {
+                "openingId": "OP-X04-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 3,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 4,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-X04-01"
+            ],
+            "sortKey": {
+              "year": 3,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 4,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-MEDIA-UNDATED｜CH-X05",
+            "groupLabel": "动画、游戏、特典及未定日衍生｜黄金SS等更早历史",
+            "workLineId": "WL-MEDIA-UNDATED",
+            "workLineLabel": "动画、游戏、特典及未定日衍生",
+            "workLineOrder": 7,
+            "stageId": "ST-MEDIA-UNDATED",
+            "stageLabel": "媒体／未定日",
+            "stageOrder": 10,
+            "chapterId": "CH-X05",
+            "chapterLabel": "黄金SS等更早历史",
+            "openings": [
+              {
+                "openingId": "OP-X05-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 3,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 4,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-X05-01"
+            ],
+            "sortKey": {
+              "year": 3,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 4,
+              "displayDate": "未定日"
+            }
+          },
+          {
+            "groupId": "WL-MEDIA-UNDATED｜CH-X06",
+            "groupLabel": "动画、游戏、特典及未定日衍生｜超出图版的卷话／新目录项",
+            "workLineId": "WL-MEDIA-UNDATED",
+            "workLineLabel": "动画、游戏、特典及未定日衍生",
+            "workLineOrder": 7,
+            "stageId": "ST-MEDIA-UNDATED",
+            "stageLabel": "媒体／未定日",
+            "stageOrder": 10,
+            "chapterId": "CH-X06",
+            "chapterLabel": "超出图版的卷话／新目录项",
+            "openings": [
+              {
+                "openingId": "OP-X06-01",
+                "displayDate": "未定日",
+                "slot": 1,
+                "slotLabel": "默认入口",
+                "datePrecision": "undated",
+                "sortKey": {
+                  "year": 3,
+                  "month": 1,
+                  "day": 1,
+                  "minute": 0,
+                  "timeLayerOrder": 4,
+                  "displayDate": "未定日"
+                }
+              }
+            ],
+            "openingIds": [
+              "OP-X06-01"
+            ],
+            "sortKey": {
+              "year": 3,
+              "month": 1,
+              "day": 1,
+              "minute": 0,
+              "timeLayerOrder": 4,
+              "displayDate": "未定日"
+            }
+          }
+        ]
+      }
+    ],
+    "canonicalOpeningOrder": [
+      "OP-P13-01",
+      "OP-P01-01",
+      "OP-P01-02",
+      "OP-P02-01",
+      "OP-P03-01",
+      "OP-P04-01",
+      "OP-P05-01",
+      "OP-P06-01",
+      "OP-P07-01",
+      "OP-P09-01",
+      "OP-P08-01",
+      "OP-P10-01",
+      "OP-P11-01",
+      "OP-P12-01",
+      "OP-P14-01",
+      "OP-P15-01",
+      "OP-N11-01",
+      "OP-O03-01",
+      "OP-O30-01",
+      "OP-S01-01",
+      "OP-S02-01",
+      "OP-S03-01",
+      "OP-S04-01",
+      "OP-S05-01",
+      "OP-S07-01",
+      "OP-S06-01",
+      "OP-S08-01",
+      "OP-S09-01",
+      "OP-S10-01",
+      "OP-S11-01",
+      "OP-O01-01",
+      "OP-O01-02",
+      "OP-O01-03",
+      "OP-O02-01",
+      "OP-O06-01",
+      "OP-O04-01",
+      "OP-O05-01",
+      "OP-O07-01",
+      "OP-O08-01",
+      "OP-O09-01",
+      "OP-O10-01",
+      "OP-O11-01",
+      "OP-O11-02",
+      "OP-O12-01",
+      "OP-O13-01",
+      "OP-O14-01",
+      "OP-O15-01",
+      "OP-O16-01",
+      "OP-O19-01",
+      "OP-O17-01",
+      "OP-O18-01",
+      "OP-O20-01",
+      "OP-O21-01",
+      "OP-O22-01",
+      "OP-O23-01",
+      "OP-O24-01",
+      "OP-O25-01",
+      "OP-O26-01",
+      "OP-O28-01",
+      "OP-O29-01",
+      "OP-O31-01",
+      "OP-O32-01",
+      "OP-O34-01",
+      "OP-O33-01",
+      "OP-O36-01",
+      "OP-O27-01",
+      "OP-O35-01",
+      "OP-O37-01",
+      "OP-N01-01",
+      "OP-N02-01",
+      "OP-N03-01",
+      "OP-N04-01",
+      "OP-N05-01",
+      "OP-N06-01",
+      "OP-N08-01",
+      "OP-N07-01",
+      "OP-N09-01",
+      "OP-N10-01",
+      "OP-N13-01",
+      "OP-N14-01",
+      "OP-N15-01",
+      "OP-N12-01",
+      "OP-N16-01",
+      "OP-N17-01",
+      "OP-N18-01",
+      "OP-N19-01",
+      "OP-N20-01",
+      "OP-N21-01",
+      "OP-N22-01",
+      "OP-N23-01",
+      "OP-G01-01",
+      "OP-G02-01",
+      "OP-G03-01",
+      "OP-G04-01",
+      "OP-G05-01",
+      "OP-G06-01",
+      "OP-G07-01",
+      "OP-G07-02",
+      "OP-G07-03",
+      "OP-G08-01",
+      "OP-G09-01",
+      "OP-G10-01",
+      "OP-G10-02",
+      "OP-G11-01",
+      "OP-G12-01",
+      "OP-G13-01",
+      "OP-G14-01",
+      "OP-G14-02",
+      "OP-X01-01",
+      "OP-X02-01",
+      "OP-X03-01",
+      "OP-X04-01",
+      "OP-X05-01",
+      "OP-X06-01"
+    ]
+  },
+  "orderAudit": {
+    "strategy": "时间层 → 组内最早日期 → 作品线顺序 → 阶段顺序；组内 Opening 先按槽位再按日期。",
+    "inputOrder": [
+      "OP-P01-01",
+      "OP-P01-02",
+      "OP-P02-01",
+      "OP-P03-01",
+      "OP-P04-01",
+      "OP-P05-01",
+      "OP-P06-01",
+      "OP-P07-01",
+      "OP-P08-01",
+      "OP-P09-01",
+      "OP-P10-01",
+      "OP-P11-01",
+      "OP-P12-01",
+      "OP-P13-01",
+      "OP-P14-01",
+      "OP-P15-01",
+      "OP-S01-01",
+      "OP-S02-01",
+      "OP-S03-01",
+      "OP-S04-01",
+      "OP-S05-01",
+      "OP-S06-01",
+      "OP-S07-01",
+      "OP-S08-01",
+      "OP-S09-01",
+      "OP-S10-01",
+      "OP-S11-01",
+      "OP-O01-01",
+      "OP-O01-02",
+      "OP-O01-03",
+      "OP-O02-01",
+      "OP-O03-01",
+      "OP-O04-01",
+      "OP-O05-01",
+      "OP-O06-01",
+      "OP-O07-01",
+      "OP-O08-01",
+      "OP-O09-01",
+      "OP-O10-01",
+      "OP-O11-01",
+      "OP-O11-02",
+      "OP-O12-01",
+      "OP-O13-01",
+      "OP-O14-01",
+      "OP-O15-01",
+      "OP-O16-01",
+      "OP-O17-01",
+      "OP-O18-01",
+      "OP-O19-01",
+      "OP-O20-01",
+      "OP-O21-01",
+      "OP-O22-01",
+      "OP-O23-01",
+      "OP-O24-01",
+      "OP-O25-01",
+      "OP-O26-01",
+      "OP-O27-01",
+      "OP-O28-01",
+      "OP-O29-01",
+      "OP-O30-01",
+      "OP-O31-01",
+      "OP-O32-01",
+      "OP-O33-01",
+      "OP-O34-01",
+      "OP-O35-01",
+      "OP-O36-01",
+      "OP-O37-01",
+      "OP-N01-01",
+      "OP-N02-01",
+      "OP-N03-01",
+      "OP-N04-01",
+      "OP-N05-01",
+      "OP-N06-01",
+      "OP-N07-01",
+      "OP-N08-01",
+      "OP-N09-01",
+      "OP-N10-01",
+      "OP-N11-01",
+      "OP-N12-01",
+      "OP-N13-01",
+      "OP-N14-01",
+      "OP-N15-01",
+      "OP-N16-01",
+      "OP-N17-01",
+      "OP-N18-01",
+      "OP-N19-01",
+      "OP-N20-01",
+      "OP-N21-01",
+      "OP-N22-01",
+      "OP-N23-01",
+      "OP-G01-01",
+      "OP-G02-01",
+      "OP-G03-01",
+      "OP-G04-01",
+      "OP-G05-01",
+      "OP-G06-01",
+      "OP-G07-01",
+      "OP-G07-02",
+      "OP-G07-03",
+      "OP-G08-01",
+      "OP-G09-01",
+      "OP-G10-01",
+      "OP-G10-02",
+      "OP-G11-01",
+      "OP-G12-01",
+      "OP-G13-01",
+      "OP-G14-01",
+      "OP-G14-02",
+      "OP-X01-01",
+      "OP-X02-01",
+      "OP-X03-01",
+      "OP-X04-01",
+      "OP-X05-01",
+      "OP-X06-01"
+    ],
+    "canonicalOrder": [
+      "OP-P13-01",
+      "OP-P01-01",
+      "OP-P01-02",
+      "OP-P02-01",
+      "OP-P03-01",
+      "OP-P04-01",
+      "OP-P05-01",
+      "OP-P06-01",
+      "OP-P07-01",
+      "OP-P09-01",
+      "OP-P08-01",
+      "OP-P10-01",
+      "OP-P11-01",
+      "OP-P12-01",
+      "OP-P14-01",
+      "OP-P15-01",
+      "OP-N11-01",
+      "OP-O03-01",
+      "OP-O30-01",
+      "OP-S01-01",
+      "OP-S02-01",
+      "OP-S03-01",
+      "OP-S04-01",
+      "OP-S05-01",
+      "OP-S07-01",
+      "OP-S06-01",
+      "OP-S08-01",
+      "OP-S09-01",
+      "OP-S10-01",
+      "OP-S11-01",
+      "OP-O01-01",
+      "OP-O01-02",
+      "OP-O01-03",
+      "OP-O02-01",
+      "OP-O06-01",
+      "OP-O04-01",
+      "OP-O05-01",
+      "OP-O07-01",
+      "OP-O08-01",
+      "OP-O09-01",
+      "OP-O10-01",
+      "OP-O11-01",
+      "OP-O11-02",
+      "OP-O12-01",
+      "OP-O13-01",
+      "OP-O14-01",
+      "OP-O15-01",
+      "OP-O16-01",
+      "OP-O19-01",
+      "OP-O17-01",
+      "OP-O18-01",
+      "OP-O20-01",
+      "OP-O21-01",
+      "OP-O22-01",
+      "OP-O23-01",
+      "OP-O24-01",
+      "OP-O25-01",
+      "OP-O26-01",
+      "OP-O28-01",
+      "OP-O29-01",
+      "OP-O31-01",
+      "OP-O32-01",
+      "OP-O34-01",
+      "OP-O33-01",
+      "OP-O36-01",
+      "OP-O27-01",
+      "OP-O35-01",
+      "OP-O37-01",
+      "OP-N01-01",
+      "OP-N02-01",
+      "OP-N03-01",
+      "OP-N04-01",
+      "OP-N05-01",
+      "OP-N06-01",
+      "OP-N08-01",
+      "OP-N07-01",
+      "OP-N09-01",
+      "OP-N10-01",
+      "OP-N13-01",
+      "OP-N14-01",
+      "OP-N15-01",
+      "OP-N12-01",
+      "OP-N16-01",
+      "OP-N17-01",
+      "OP-N18-01",
+      "OP-N19-01",
+      "OP-N20-01",
+      "OP-N21-01",
+      "OP-N22-01",
+      "OP-N23-01",
+      "OP-G01-01",
+      "OP-G02-01",
+      "OP-G03-01",
+      "OP-G04-01",
+      "OP-G05-01",
+      "OP-G06-01",
+      "OP-G07-01",
+      "OP-G07-02",
+      "OP-G07-03",
+      "OP-G08-01",
+      "OP-G09-01",
+      "OP-G10-01",
+      "OP-G10-02",
+      "OP-G11-01",
+      "OP-G12-01",
+      "OP-G13-01",
+      "OP-G14-01",
+      "OP-G14-02",
+      "OP-X01-01",
+      "OP-X02-01",
+      "OP-X03-01",
+      "OP-X04-01",
+      "OP-X05-01",
+      "OP-X06-01"
+    ],
+    "reorderedPositions": [
+      {
+        "openingId": "OP-P01-01",
+        "inputIndex": 0,
+        "canonicalIndex": 1
+      },
+      {
+        "openingId": "OP-P01-02",
+        "inputIndex": 1,
+        "canonicalIndex": 2
+      },
+      {
+        "openingId": "OP-P02-01",
+        "inputIndex": 2,
+        "canonicalIndex": 3
+      },
+      {
+        "openingId": "OP-P03-01",
+        "inputIndex": 3,
+        "canonicalIndex": 4
+      },
+      {
+        "openingId": "OP-P04-01",
+        "inputIndex": 4,
+        "canonicalIndex": 5
+      },
+      {
+        "openingId": "OP-P05-01",
+        "inputIndex": 5,
+        "canonicalIndex": 6
+      },
+      {
+        "openingId": "OP-P06-01",
+        "inputIndex": 6,
+        "canonicalIndex": 7
+      },
+      {
+        "openingId": "OP-P07-01",
+        "inputIndex": 7,
+        "canonicalIndex": 8
+      },
+      {
+        "openingId": "OP-P08-01",
+        "inputIndex": 8,
+        "canonicalIndex": 10
+      },
+      {
+        "openingId": "OP-P10-01",
+        "inputIndex": 10,
+        "canonicalIndex": 11
+      },
+      {
+        "openingId": "OP-P11-01",
+        "inputIndex": 11,
+        "canonicalIndex": 12
+      },
+      {
+        "openingId": "OP-P12-01",
+        "inputIndex": 12,
+        "canonicalIndex": 13
+      },
+      {
+        "openingId": "OP-P13-01",
+        "inputIndex": 13,
+        "canonicalIndex": 0
+      },
+      {
+        "openingId": "OP-S01-01",
+        "inputIndex": 16,
+        "canonicalIndex": 19
+      },
+      {
+        "openingId": "OP-S02-01",
+        "inputIndex": 17,
+        "canonicalIndex": 20
+      },
+      {
+        "openingId": "OP-S03-01",
+        "inputIndex": 18,
+        "canonicalIndex": 21
+      },
+      {
+        "openingId": "OP-S04-01",
+        "inputIndex": 19,
+        "canonicalIndex": 22
+      },
+      {
+        "openingId": "OP-S05-01",
+        "inputIndex": 20,
+        "canonicalIndex": 23
+      },
+      {
+        "openingId": "OP-S06-01",
+        "inputIndex": 21,
+        "canonicalIndex": 25
+      },
+      {
+        "openingId": "OP-S07-01",
+        "inputIndex": 22,
+        "canonicalIndex": 24
+      },
+      {
+        "openingId": "OP-S08-01",
+        "inputIndex": 23,
+        "canonicalIndex": 26
+      },
+      {
+        "openingId": "OP-S09-01",
+        "inputIndex": 24,
+        "canonicalIndex": 27
+      },
+      {
+        "openingId": "OP-S10-01",
+        "inputIndex": 25,
+        "canonicalIndex": 28
+      },
+      {
+        "openingId": "OP-S11-01",
+        "inputIndex": 26,
+        "canonicalIndex": 29
+      },
+      {
+        "openingId": "OP-O01-01",
+        "inputIndex": 27,
+        "canonicalIndex": 30
+      },
+      {
+        "openingId": "OP-O01-02",
+        "inputIndex": 28,
+        "canonicalIndex": 31
+      },
+      {
+        "openingId": "OP-O01-03",
+        "inputIndex": 29,
+        "canonicalIndex": 32
+      },
+      {
+        "openingId": "OP-O02-01",
+        "inputIndex": 30,
+        "canonicalIndex": 33
+      },
+      {
+        "openingId": "OP-O03-01",
+        "inputIndex": 31,
+        "canonicalIndex": 17
+      },
+      {
+        "openingId": "OP-O04-01",
+        "inputIndex": 32,
+        "canonicalIndex": 35
+      },
+      {
+        "openingId": "OP-O05-01",
+        "inputIndex": 33,
+        "canonicalIndex": 36
+      },
+      {
+        "openingId": "OP-O07-01",
+        "inputIndex": 35,
+        "canonicalIndex": 37
+      },
+      {
+        "openingId": "OP-O08-01",
+        "inputIndex": 36,
+        "canonicalIndex": 38
+      },
+      {
+        "openingId": "OP-O09-01",
+        "inputIndex": 37,
+        "canonicalIndex": 39
+      },
+      {
+        "openingId": "OP-O10-01",
+        "inputIndex": 38,
+        "canonicalIndex": 40
+      },
+      {
+        "openingId": "OP-O11-01",
+        "inputIndex": 39,
+        "canonicalIndex": 41
+      },
+      {
+        "openingId": "OP-O11-02",
+        "inputIndex": 40,
+        "canonicalIndex": 42
+      },
+      {
+        "openingId": "OP-O12-01",
+        "inputIndex": 41,
+        "canonicalIndex": 43
+      },
+      {
+        "openingId": "OP-O13-01",
+        "inputIndex": 42,
+        "canonicalIndex": 44
+      },
+      {
+        "openingId": "OP-O14-01",
+        "inputIndex": 43,
+        "canonicalIndex": 45
+      },
+      {
+        "openingId": "OP-O15-01",
+        "inputIndex": 44,
+        "canonicalIndex": 46
+      },
+      {
+        "openingId": "OP-O16-01",
+        "inputIndex": 45,
+        "canonicalIndex": 47
+      },
+      {
+        "openingId": "OP-O17-01",
+        "inputIndex": 46,
+        "canonicalIndex": 49
+      },
+      {
+        "openingId": "OP-O18-01",
+        "inputIndex": 47,
+        "canonicalIndex": 50
+      },
+      {
+        "openingId": "OP-O20-01",
+        "inputIndex": 49,
+        "canonicalIndex": 51
+      },
+      {
+        "openingId": "OP-O21-01",
+        "inputIndex": 50,
+        "canonicalIndex": 52
+      },
+      {
+        "openingId": "OP-O22-01",
+        "inputIndex": 51,
+        "canonicalIndex": 53
+      },
+      {
+        "openingId": "OP-O23-01",
+        "inputIndex": 52,
+        "canonicalIndex": 54
+      },
+      {
+        "openingId": "OP-O24-01",
+        "inputIndex": 53,
+        "canonicalIndex": 55
+      },
+      {
+        "openingId": "OP-O25-01",
+        "inputIndex": 54,
+        "canonicalIndex": 56
+      },
+      {
+        "openingId": "OP-O26-01",
+        "inputIndex": 55,
+        "canonicalIndex": 57
+      },
+      {
+        "openingId": "OP-O27-01",
+        "inputIndex": 56,
+        "canonicalIndex": 65
+      },
+      {
+        "openingId": "OP-O28-01",
+        "inputIndex": 57,
+        "canonicalIndex": 58
+      },
+      {
+        "openingId": "OP-O29-01",
+        "inputIndex": 58,
+        "canonicalIndex": 59
+      },
+      {
+        "openingId": "OP-O30-01",
+        "inputIndex": 59,
+        "canonicalIndex": 18
+      },
+      {
+        "openingId": "OP-O33-01",
+        "inputIndex": 62,
+        "canonicalIndex": 63
+      },
+      {
+        "openingId": "OP-O34-01",
+        "inputIndex": 63,
+        "canonicalIndex": 62
+      },
+      {
+        "openingId": "OP-O35-01",
+        "inputIndex": 64,
+        "canonicalIndex": 66
+      },
+      {
+        "openingId": "OP-O36-01",
+        "inputIndex": 65,
+        "canonicalIndex": 64
+      },
+      {
+        "openingId": "OP-O37-01",
+        "inputIndex": 66,
+        "canonicalIndex": 67
+      },
+      {
+        "openingId": "OP-N01-01",
+        "inputIndex": 67,
+        "canonicalIndex": 68
+      },
+      {
+        "openingId": "OP-N02-01",
+        "inputIndex": 68,
+        "canonicalIndex": 69
+      },
+      {
+        "openingId": "OP-N03-01",
+        "inputIndex": 69,
+        "canonicalIndex": 70
+      },
+      {
+        "openingId": "OP-N04-01",
+        "inputIndex": 70,
+        "canonicalIndex": 71
+      },
+      {
+        "openingId": "OP-N05-01",
+        "inputIndex": 71,
+        "canonicalIndex": 72
+      },
+      {
+        "openingId": "OP-N06-01",
+        "inputIndex": 72,
+        "canonicalIndex": 73
+      },
+      {
+        "openingId": "OP-N07-01",
+        "inputIndex": 73,
+        "canonicalIndex": 75
+      },
+      {
+        "openingId": "OP-N09-01",
+        "inputIndex": 75,
+        "canonicalIndex": 76
+      },
+      {
+        "openingId": "OP-N10-01",
+        "inputIndex": 76,
+        "canonicalIndex": 77
+      },
+      {
+        "openingId": "OP-N11-01",
+        "inputIndex": 77,
+        "canonicalIndex": 16
+      },
+      {
+        "openingId": "OP-N12-01",
+        "inputIndex": 78,
+        "canonicalIndex": 81
+      },
+      {
+        "openingId": "OP-N13-01",
+        "inputIndex": 79,
+        "canonicalIndex": 78
+      },
+      {
+        "openingId": "OP-N14-01",
+        "inputIndex": 80,
+        "canonicalIndex": 79
+      },
+      {
+        "openingId": "OP-N15-01",
+        "inputIndex": 81,
+        "canonicalIndex": 80
+      }
+    ]
+  },
+  "summary": {
+    "recordCount": 114,
+    "displayLayerCount": 4,
+    "displayGroupCount": 106,
+    "canonicalOpeningOrderCount": 114,
+    "reorderedPositionCount": 74,
+    "inputOrderMatchesCanonicalOrder": false,
+    "nodeChainCount": 98,
+    "referenceOnlyNoPackageCount": 15,
+    "referenceOnlyRelatedPackageCount": 1,
+    "semanticAnchorCount": 9,
+    "byTimeLayer": {
+      "TL-YMINUS1": 16,
+      "TL-Y": 80,
+      "TL-YPLUS1": 12,
+      "TL-UNDATED": 6
+    },
+    "byWorkLine": {
+      "WL-RAILGUN": 25,
+      "WL-ITEM": 6,
+      "WL-ACCELERATOR": 3,
+      "WL-INDEX": 69,
+      "WL-OTHER-OFFICIAL": 4,
+      "WL-MENTAL-OUT": 1,
+      "WL-MEDIA-UNDATED": 6
+    },
+    "byDatePrecision": {
+      "approximate": 31,
+      "range": 2,
+      "exact": 71,
+      "relative": 1,
+      "undated": 9
+    }
+  },
+  "validation": {
+    "status": "passed-static-only",
+    "errors": [],
+    "warnings": [],
+    "checks": [
+      "Phase 1–6 输入门禁均为通过状态",
+      "114 条 Opening ID 唯一且与 Phase 2 目标集合一致",
+      "数据层保持时间层、作品线、剧情阶段／篇章、开场四级",
+      "欢迎页显示层压缩为时间层、作品线｜篇章、开场三级",
+      "时间层、作品线、阶段、篇章归属全部通过 taxonomy 校验",
+      "作品线与阶段归属一致，事件包归属能回溯到证据映射",
+      "98 条 node-chain 的起始、当前、已完成与尚未发生节点全部存在",
+      "15 条无包 reference-only 不携带伪节点",
+      "多槽位同包 Opening 当前节点互不相同",
+      "日期精度、时间段、日期前缀与未定日策略一致",
+      "Phase 1 语义修正锚点全部通过，O28/O32/O37 已修复",
+      "正文长度、介入点、禁用结局用语与安全字符全部通过",
+      "兼容载荷字段与当前 schema 完全匹配",
+      "扩展字段仍标记为待 schema 升级，不宣称运行时支持",
+      "显示模型 114 个 Opening 全覆盖且无重复",
+      "时间层排序与组内槽位／精确日期排序通过",
+      "未出现创约15"
+    ]
+  }
+}

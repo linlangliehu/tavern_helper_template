@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "generatedOn": "2026-09-08T11:33:16.127Z",
+  "status": "passed-offline-static",
+  "runtimeAcceptance": "passed-user-sillytavern-read-only",
+  "artifact": {
+    "path": "D:\\project\\tavern_helper_template\\src\\魔法禁书目录模拟器\\魔法禁书目录模拟器.png",
+    "sizeBytes": 7319397,
+    "sha256": "3e97f4d7e808e3777f6b131b81daabf3e0a66172930dfa2f6fbc3d8eaeb596a5",
+    "payloadKeyword": "ccv3",
+    "pngChunkCount": 2
+  },
+  "card": {
+    "name": "魔法禁书目录模拟器",
+    "version": "1.1.1",
+    "spec": "chara_card_v3",
+    "specVersion": "3.0",
+    "worldbookEntryCount": 114
+  },
+  "checks": [
+    "PNG signature and text chunks parse successfully",
+    "chara/ccv3 payload decodes to valid JSON",
+    "Card version is 1.1.1",
+    "Packaged welcome exactly matches source welcome",
+    "Packaged display regex exactly matches transformed source welcome",
+    "114 unique openings are embedded",
+    "114 unique openings are embedded in the display regex",
+    "All compatibility and metadata payloads parse as JSON",
+    "Compatibility fields match the current schema contract",
+    "Metadata matches Phase 6 initialization records",
+    "All node-chain IDs are present in the packaged worldbook",
+    "4 time layers and 106 display groups are embedded",
+    "4 time layers and 106 display groups are embedded in the display regex",
+    "Genesis 15 is absent",
+    "Custom opening controls are preserved",
+    "Development interface script is present and contains Phase 8 logic"
+  ],
+  "counts": {
+    "layers": 4,
+    "groups": 106,
+    "openings": 114,
+    "uniqueOpeningIds": 114,
+    "regexOpenings": 114,
+    "uniqueRegexOpeningIds": 114,
+    "compatibilityPayloads": 114,
+    "metadataPayloads": 114,
+    "nodeChainRecords": 98,
+    "requiredNodeIds": 541
+  }
+}

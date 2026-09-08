@@ -1,0 +1,1557 @@
+{
+  "worker": "side-stories",
+  "status": "complete",
+  "updatedOn": "2026-09-08",
+  "delivery": "worldbook-source-only",
+  "integrationStatus": "新增文件尚未注册；index、导航、总览交主代理统一集成，未构建、未打包、未导入酒馆。",
+  "yearConvention": "当前年统一Y；Y−1仅用于明确标识的往事；索引内未定日与更早历史不强分当前年。",
+  "evidenceLevels": {
+    "A": "官方公开原文；只证明实际已读部分，不外推未公开章节。",
+    "B": "官方动画剧情表、出版物官介与目录；证明所述事件或作品身份，不等于全书正文。",
+    "C": "社区条目、译本目录、时间表与考察；可支持定位与剧情整理，不冒充官方逐日证明。",
+    "D": "用户图经六列表转述、项目旧窗口与实施笔记；图排和项目约定单列，旧包仅用于ID保留而非原作事实。"
+  },
+  "requiredReadings": [
+    "docs/魔禁剧情修改方案-四月至次年一月.md",
+    "docs/魔禁四月至次年一月-事件证据表.md",
+    ".planning/magic-apr-jan-20260908/research-science.md",
+    ".planning/magic-apr-jan-20260908/research-coverage.md",
+    ".planning/magic-worldbook-implementation-20260908/task_plan.md"
+  ],
+  "files": [
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·乱雑開放.txt",
+      "packageId": "POLTERGEIST",
+      "title": "乱雑開放篇",
+      "action": "modified",
+      "stage": 1,
+      "yearLayer": "Y",
+      "window": "Y年八月上旬，采用《超电磁炮》动画窗口；8月2日—10日为原项目排期，图排8月10日收束不作为全媒介硬终点。",
+      "evidenceIds": [
+        "O07"
+      ],
+      "volumes": [
+        "超炮第一季动画：乱杂开放原创后半"
+      ],
+      "keywords": [
+        "乱雑開放",
+        "乱杂开放篇",
+        "Poltergeist",
+        "POLTERGEIST",
+        "POLTERGEIST-01"
+      ],
+      "entryNode": "POLTERGEIST-01",
+      "nodeIds": [
+        "POLTERGEIST-01",
+        "POLTERGEIST-02",
+        "POLTERGEIST-03",
+        "POLTERGEIST-04",
+        "POLTERGEIST-05",
+        "POLTERGEIST-06",
+        "POLTERGEIST-07",
+        "POLTERGEIST-08"
+      ],
+      "endingIds": [
+        "PG-END-A",
+        "PG-END-B",
+        "PG-END-C",
+        "PG-END-D"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "图8/10及旧项目8/2—10不构成全媒介已证起讫；后日谈精确日仍待话页。"
+      ],
+      "sourceIds": [
+        "OFFICIAL-CHRONICLE"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O07",
+          "nodeIds": [
+            "POLTERGEIST-01",
+            "POLTERGEIST-02",
+            "POLTERGEIST-03",
+            "POLTERGEIST-04",
+            "POLTERGEIST-05",
+            "POLTERGEIST-06",
+            "POLTERGEIST-07",
+            "POLTERGEIST-08"
+          ],
+          "sourceIds": [
+            "OFFICIAL-CHRONICLE"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ],
+      "stageReason": "保留原包阶段1尾声，不把动画支路强改为其他阶段。"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·静默派对.txt",
+      "packageId": "SILENT-PARTY",
+      "title": "静默派对篇",
+      "action": "modified",
+      "stage": 2,
+      "yearLayer": "Y",
+      "window": "Y年八月下旬至九月上旬，采用《超电磁炮S》动画窗口；图排及旧项目8月22日—27日单列为排期参考，不强制置于天使坠落之前。",
+      "evidenceIds": [
+        "O09"
+      ],
+      "volumes": [
+        "超炮S动画第17—24集原创后半"
+      ],
+      "keywords": [
+        "静默派对篇",
+        "Silent Party",
+        "革命未明",
+        "SILENT-PARTY",
+        "SILENT-PARTY-01"
+      ],
+      "entryNode": "SILENT-PARTY-01",
+      "nodeIds": [
+        "SILENT-PARTY-01",
+        "SILENT-PARTY-02",
+        "SILENT-PARTY-03",
+        "SILENT-PARTY-04",
+        "SILENT-PARTY-05",
+        "SILENT-PARTY-06",
+        "SILENT-PARTY-07",
+        "SILENT-PARTY-08"
+      ],
+      "endingIds": [
+        "SP-END-A",
+        "SP-END-B",
+        "SP-END-C",
+        "SP-END-D"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "图8/22—27与官方八月下旬至九月上旬的冲突保留；未裁成同一窗口。"
+      ],
+      "sourceIds": [
+        "OFFICIAL-CHRONICLE"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O09",
+          "nodeIds": [
+            "SILENT-PARTY-01",
+            "SILENT-PARTY-02",
+            "SILENT-PARTY-03",
+            "SILENT-PARTY-04",
+            "SILENT-PARTY-05",
+            "SILENT-PARTY-06",
+            "SILENT-PARTY-07",
+            "SILENT-PARTY-08"
+          ],
+          "sourceIds": [
+            "OFFICIAL-CHRONICLE"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ],
+      "stageReason": "保留原包阶段2；阶段数不作为强制发生在天使坠落前的日期证据。"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·死灵术师.txt",
+      "packageId": "NECROMANCER",
+      "title": "死灵术师篇",
+      "action": "modified",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "Y年九月上旬，一方通行8月31日负伤住院以后；图排约9月6日—9日，旧项目窗9月1日—8日，均不硬裁全篇精确起讫。",
+      "evidenceIds": [
+        "O14"
+      ],
+      "volumes": [
+        "科方漫画1—7卷交界",
+        "科方动画1—12集"
+      ],
+      "keywords": [
+        "死灵术师篇",
+        "死霊術師編",
+        "NECROMANCER",
+        "NECROMANCER-01"
+      ],
+      "entryNode": "NECROMANCER-01",
+      "nodeIds": [
+        "NECROMANCER-01",
+        "NECROMANCER-02",
+        "NECROMANCER-03",
+        "NECROMANCER-04",
+        "NECROMANCER-05",
+        "NECROMANCER-06",
+        "NECROMANCER-07",
+        "NECROMANCER-08"
+      ],
+      "endingIds": [
+        "NC-END-A",
+        "NC-END-B",
+        "NC-END-C",
+        "NC-END-D"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "官方仅九月上旬；图约9/6—9和旧项目9/1—8不是共同已证精确日。",
+        "逐卷与动画细部对应未逐页穷尽；本包保留前弧而非重建缺包。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-ACCELERATOR",
+        "OFFICIAL-ACCELERATOR-12"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O14",
+          "nodeIds": [
+            "NECROMANCER-01",
+            "NECROMANCER-02",
+            "NECROMANCER-03",
+            "NECROMANCER-04",
+            "NECROMANCER-05",
+            "NECROMANCER-06",
+            "NECROMANCER-07",
+            "NECROMANCER-08"
+          ],
+          "sourceIds": [
+            "COMMUNITY-ACCELERATOR",
+            "OFFICIAL-ACCELERATOR-12"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·神之饮物.txt",
+      "packageId": "NECTAR",
+      "title": "神之饮物篇",
+      "action": "modified",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "死灵术师事件解决后稍后；图排约Y年9月13日—14日，旧项目窗9月9日—14日，不把两种排期合并成已证精确日。",
+      "evidenceIds": [
+        "O19"
+      ],
+      "volumes": [
+        "科方漫画7—12卷，卷7与前弧交界；动画未覆盖本弧"
+      ],
+      "keywords": [
+        "神之饮物篇",
+        "神の飲み物",
+        "Nectar",
+        "NECTAR",
+        "NECTAR-01"
+      ],
+      "entryNode": "NECTAR-01",
+      "nodeIds": [
+        "NECTAR-01",
+        "NECTAR-02",
+        "NECTAR-03",
+        "NECTAR-04",
+        "NECTAR-05",
+        "NECTAR-06",
+        "NECTAR-07",
+        "NECTAR-08"
+      ],
+      "endingIds": [
+        "NT-END-A",
+        "NT-END-B",
+        "NT-END-C",
+        "NT-END-D"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "官介支持食之宴、Full Course决着和继续救少女的方向，不证明每名患者的最终医疗状态。",
+        "亡本最终司法处置、个体去向、具体手术与卷12残骸桥细节待原页；不声称后弧完整终局已核。",
+        "图约9/13—14与旧项目9/9—14并列，先死灵术师后Nectar。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-ACCELERATOR",
+        "OFFICIAL-ACCELERATOR-V12"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O19",
+          "nodeIds": [
+            "NECTAR-01",
+            "NECTAR-02",
+            "NECTAR-03",
+            "NECTAR-04",
+            "NECTAR-05",
+            "NECTAR-06",
+            "NECTAR-07",
+            "NECTAR-08"
+          ],
+          "sourceIds": [
+            "COMMUNITY-ACCELERATOR",
+            "OFFICIAL-ACCELERATOR-V12"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·恩底弥翁.txt",
+      "packageId": "ENDEYMION",
+      "title": "恩底弥翁的奇迹",
+      "action": "modified",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "Y年9月15日—18日（剧场版本篇窗口）；9月19日祭典另篇处理。",
+      "evidenceIds": [
+        "O21"
+      ],
+      "volumes": [
+        "剧场版《恩底弥翁的奇迹》本篇"
+      ],
+      "keywords": [
+        "恩底弥翁的奇迹",
+        "エンデュミオンの奇蹟",
+        "ENDEYMION",
+        "ENDEYMION-01"
+      ],
+      "entryNode": "ENDEYMION-01",
+      "nodeIds": [
+        "ENDEYMION-01",
+        "ENDEYMION-02",
+        "ENDEYMION-03",
+        "ENDEYMION-04",
+        "ENDEYMION-05",
+        "ENDEYMION-06",
+        "ENDEYMION-07",
+        "ENDEYMION-08"
+      ],
+      "endingIds": [
+        "ED-END-A",
+        "ED-END-B",
+        "ED-END-C",
+        "ED-END-D",
+        "ED-END-E"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "O18前传与群奏活剧各路线未建剧情链，本篇不为游戏全路线背书。"
+      ],
+      "sourceIds": [
+        "OFFICIAL-CHRONICLE",
+        "COMMUNITY-ENDYMION"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O21",
+          "nodeIds": [
+            "ENDEYMION-01",
+            "ENDEYMION-02",
+            "ENDEYMION-03",
+            "ENDEYMION-04",
+            "ENDEYMION-05",
+            "ENDEYMION-06",
+            "ENDEYMION-07",
+            "ENDEYMION-08"
+          ],
+          "sourceIds": [
+            "OFFICIAL-CHRONICLE",
+            "COMMUNITY-ENDYMION"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ],
+      "stageReason": "保留阶段4与官方电影9/15—18；三年前事故仅作往事。"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·天赋梦路.txt",
+      "packageId": "DREAM-RANKER",
+      "title": "天赋梦路篇",
+      "action": "modified",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "Y年9月26日起跨至十月；9月22日只可作旧项目的卡牌流言预热，不能当成已证本篇起日。各支线的十月精确日不强行统一。",
+      "evidenceIds": [
+        "O26"
+      ],
+      "volumes": [
+        "超炮漫画11—13卷",
+        "超炮T动画16—25集"
+      ],
+      "keywords": [
+        "天赋梦路篇",
+        "天賦夢路",
+        "Dream Ranker",
+        "DREAM-RANKER",
+        "DREAM-RANKER-01"
+      ],
+      "entryNode": "DREAM-RANKER-01",
+      "nodeIds": [
+        "DREAM-RANKER-01",
+        "DREAM-RANKER-02",
+        "DREAM-RANKER-03",
+        "DREAM-RANKER-04",
+        "DREAM-RANKER-05",
+        "DREAM-RANKER-06",
+        "DREAM-RANKER-07",
+        "DREAM-RANKER-09",
+        "DREAM-RANKER-08"
+      ],
+      "endingIds": [
+        "DR-END-A",
+        "DR-END-B",
+        "DR-END-C",
+        "DR-END-D"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "9/26起跨十月；9/22仅旧项目预热。",
+        "猎虎约10/6只为图排；不与10/9同日化。07b保留，预知事故过期可跳过，禁止为补节点倒退时间。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-RAILGUN",
+        "OFFICIAL-RAILGUN-V13",
+        "OFFICIAL-RAILGUN-T25"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O26",
+          "nodeIds": [
+            "DREAM-RANKER-01",
+            "DREAM-RANKER-02",
+            "DREAM-RANKER-03",
+            "DREAM-RANKER-04",
+            "DREAM-RANKER-05",
+            "DREAM-RANKER-06",
+            "DREAM-RANKER-07",
+            "DREAM-RANKER-09",
+            "DREAM-RANKER-08"
+          ],
+          "sourceIds": [
+            "COMMUNITY-RAILGUN",
+            "OFFICIAL-RAILGUN-V13",
+            "OFFICIAL-RAILGUN-T25"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·越狱篇.txt",
+      "packageId": "JAILBREAK",
+      "title": "越狱篇",
+      "action": "modified",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "十月中旬，图排另有约10月20日后续；旧项目10月10日—15日仅是精选入口，不是漫画全篇已证起讫，也不把全篇硬压在第三次世界大战之前。",
+      "evidenceIds": [
+        "O33"
+      ],
+      "volumes": [
+        "超炮漫画14—16卷；不是SS2"
+      ],
+      "keywords": [
+        "越狱篇",
+        "獄門開錠",
+        "脱狱试用赛",
+        "JAILBREAK",
+        "JAILBREAK-01"
+      ],
+      "entryNode": "JAILBREAK-01",
+      "nodeIds": [
+        "JAILBREAK-01",
+        "JAILBREAK-02",
+        "JAILBREAK-03",
+        "JAILBREAK-04",
+        "JAILBREAK-05",
+        "JAILBREAK-06"
+      ],
+      "endingIds": [
+        "JB-END-A",
+        "JB-END-B",
+        "JB-END-C",
+        "JB-END-D"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "默认链至初春假意合作、寻找逃路及同伴营救；后续反制、龙的最终归属和收监处置未核。",
+        "十月中旬及约20日后续只图排；旧10/10—15不能硬锁全篇或强压三战前。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-RAILGUN",
+        "OFFICIAL-RAILGUN-V16"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O33",
+          "nodeIds": [
+            "JAILBREAK-01",
+            "JAILBREAK-02",
+            "JAILBREAK-03",
+            "JAILBREAK-04",
+            "JAILBREAK-05",
+            "JAILBREAK-06"
+          ],
+          "sourceIds": [
+            "COMMUNITY-RAILGUN",
+            "OFFICIAL-RAILGUN-V16"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·未元物质.txt",
+      "packageId": "DARK-MATTER",
+      "title": "未元物质",
+      "action": "added",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "九月候选窗口；图排9月7日—9日，社区历表仅将第4话定位为约9月8日，不能据此把全篇压成一天或确定全部起讫。",
+      "evidenceIds": [
+        "O15"
+      ],
+      "volumes": [
+        "独立未元物质漫画1卷4话"
+      ],
+      "keywords": [
+        "未元物质外传",
+        "杠林檎事件",
+        "DARK-MATTER",
+        "DARK-MATTER-01"
+      ],
+      "entryNode": "DARK-MATTER-01",
+      "nodeIds": [
+        "DARK-MATTER-01",
+        "DARK-MATTER-02",
+        "DARK-MATTER-03",
+        "DARK-MATTER-04",
+        "DARK-MATTER-05",
+        "DARK-MATTER-06"
+      ],
+      "endingIds": [
+        "DM-END-A",
+        "DM-END-B",
+        "DM-END-C"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "官介证垣根、林檎、演算数据与三方争夺；DA、黑夜、木原的逐话出场先后及最终交战结果未核。",
+        "六节点为有事实约束的保护／调查调度；林檎与数据最终去向未写成原作终局。",
+        "社区第4话约9/8不是全篇一天；图9/7—9全边界仍待原页。"
+      ],
+      "sourceIds": [
+        "OFFICIAL-DARK-MATTER",
+        "COMMUNITY-CHARACTERS",
+        "COMMUNITY-CALENDAR"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O15",
+          "nodeIds": [
+            "DARK-MATTER-01",
+            "DARK-MATTER-02",
+            "DARK-MATTER-03",
+            "DARK-MATTER-04",
+            "DARK-MATTER-06"
+          ],
+          "sourceIds": [
+            "OFFICIAL-DARK-MATTER"
+          ],
+          "scope": "官介只证接触、数据目的、DA／黑夜／木原争夺；03与04为可互换调查线，不声称逐话顺序。06是本包局部交接。"
+        },
+        {
+          "evidenceId": "O15",
+          "nodeIds": [
+            "DARK-MATTER-05"
+          ],
+          "sourceIds": [
+            "COMMUNITY-CHARACTERS"
+          ],
+          "scope": "林檎记忆、知果创伤与念动力信息为社区人物整理；不作为官方结局。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·心理掌握漫画.txt",
+      "packageId": "MENTAL-OUT",
+      "title": "心理掌握漫画",
+      "action": "added",
+      "stage": 5,
+      "yearLayer": "Y",
+      "window": "社区历表把第34话的当前进度记为十月；这不是全部连载的起讫，更不是34.5话均发生在同一天。进入本包时沿用已选择的同期日期，不为补全选举进程倒退时间。",
+      "evidenceIds": [
+        "O30"
+      ],
+      "volumes": [
+        "独立心理掌握漫画1—4卷",
+        "连载封顶34.5话；不假定全收在4卷"
+      ],
+      "keywords": [
+        "心理掌握漫画",
+        "常盘台学生会选举篇",
+        "MENTAL-OUT",
+        "MENTAL-OUT-01"
+      ],
+      "entryNode": "MENTAL-OUT-01",
+      "nodeIds": [
+        "MENTAL-OUT-01",
+        "MENTAL-OUT-02",
+        "MENTAL-OUT-03",
+        "MENTAL-OUT-04",
+        "MENTAL-OUT-05",
+        "MENTAL-OUT-06",
+        "MENTAL-OUT-07"
+      ],
+      "endingIds": [
+        "MO-END-A",
+        "MO-END-B",
+        "MO-END-C"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "官介支持选举、帆风疑云、雅王院合作、遗产、先代第一位与校舍危机；选举最终结果与遗产终局未核。",
+        "社区第34话十月只为进度点；全篇起讫及34.5话日期未证。",
+        "不是NT11、ITEM第二卷或前一年建派阀重演；不引入第5卷。"
+      ],
+      "sourceIds": [
+        "OFFICIAL-MENTAL-01",
+        "OFFICIAL-MENTAL-02",
+        "OFFICIAL-MENTAL-03",
+        "OFFICIAL-MENTAL-04",
+        "COMMUNITY-CALENDAR"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O30",
+          "nodeIds": [
+            "MENTAL-OUT-01"
+          ],
+          "sourceIds": [
+            "OFFICIAL-MENTAL-01"
+          ],
+          "scope": "卷1官介：选举入口。"
+        },
+        {
+          "evidenceId": "O30",
+          "nodeIds": [
+            "MENTAL-OUT-02",
+            "MENTAL-OUT-03",
+            "MENTAL-OUT-04"
+          ],
+          "sourceIds": [
+            "OFFICIAL-MENTAL-02"
+          ],
+          "scope": "卷2官介：帆风疑云、雅王院共同调查、警策与遗产；不预判幕后。"
+        },
+        {
+          "evidenceId": "O30",
+          "nodeIds": [
+            "MENTAL-OUT-05"
+          ],
+          "sourceIds": [
+            "OFFICIAL-MENTAL-03"
+          ],
+          "scope": "卷3官介：先代第一位、木原与常盘台理事长介入。"
+        },
+        {
+          "evidenceId": "O30",
+          "nodeIds": [
+            "MENTAL-OUT-06",
+            "MENTAL-OUT-07"
+          ],
+          "sourceIds": [
+            "OFFICIAL-MENTAL-04"
+          ],
+          "scope": "卷4官介：寮监对唯一、校舍破坏及选举危机；07仅为阶段交接，不是选举终局。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·俄罗斯能力实演.txt",
+      "packageId": "RUSSIA-DEMONSTRATION",
+      "title": "俄罗斯能力实演",
+      "action": "added",
+      "stage": 0,
+      "yearLayer": "Y",
+      "window": "社区叙事以7月1日开端，图排7月1日—3日；完整三日起讫未逐章确认。不是十月第三次世界大战期间的俄罗斯事件。",
+      "evidenceIds": [
+        "S10"
+      ],
+      "volumes": [
+        "超炮SS2《能力实演旅行篇》BD／DVD特典全8话",
+        "外典书库2再收录；不是禁书SS2"
+      ],
+      "keywords": [
+        "俄罗斯能力实演",
+        "能力实演旅行篇",
+        "超炮SS2",
+        "RUSSIA-DEMONSTRATION",
+        "RUSSIA-DEMONSTRATION-01"
+      ],
+      "entryNode": "RUSSIA-DEMONSTRATION-01",
+      "nodeIds": [
+        "RUSSIA-DEMONSTRATION-01",
+        "RUSSIA-DEMONSTRATION-02",
+        "RUSSIA-DEMONSTRATION-03",
+        "RUSSIA-DEMONSTRATION-04",
+        "RUSSIA-DEMONSTRATION-05",
+        "RUSSIA-DEMONSTRATION-06",
+        "RUSSIA-DEMONSTRATION-07",
+        "RUSSIA-DEMONSTRATION-08"
+      ],
+      "endingIds": [
+        "RD-END-A",
+        "RD-END-B",
+        "RD-END-C"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "八节点落实至学园都市潜入者被捕、铀摆饰指向核攻击可能；全篇阻止核袭击的具体终局尚未核。",
+        "社区7/1开端与图7/1—3分列，完整起讫未逐章证实。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-RAILGUN",
+        "OFFICIAL-ARCHIVES-02",
+        "COMMUNITY-BAKA-INDEX"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "S10",
+          "nodeIds": [
+            "RUSSIA-DEMONSTRATION-01",
+            "RUSSIA-DEMONSTRATION-02",
+            "RUSSIA-DEMONSTRATION-03",
+            "RUSSIA-DEMONSTRATION-04",
+            "RUSSIA-DEMONSTRATION-05",
+            "RUSSIA-DEMONSTRATION-06",
+            "RUSSIA-DEMONSTRATION-07",
+            "RUSSIA-DEMONSTRATION-08"
+          ],
+          "sourceIds": [
+            "COMMUNITY-RAILGUN",
+            "OFFICIAL-ARCHIVES-02",
+            "COMMUNITY-BAKA-INDEX"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·学艺都市.txt",
+      "packageId": "LIBERAL-ARTS-CITY",
+      "title": "学艺都市",
+      "action": "added",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "社区叙事以9月3日抵达开端，图排9月3日—6日；后续“翌日”关系与图窗可作调度参考，不能冒充逐章已证的完整精确日历。",
+      "evidenceIds": [
+        "O13"
+      ],
+      "volumes": [
+        "超炮SS《学艺都市篇》BD／DVD特典全8话",
+        "外典书库2再收录"
+      ],
+      "keywords": [
+        "学艺都市篇",
+        "Liberal Arts City",
+        "LIBERAL-ARTS-CITY",
+        "LIBERAL-ARTS-CITY-01"
+      ],
+      "entryNode": "LIBERAL-ARTS-CITY-01",
+      "nodeIds": [
+        "LIBERAL-ARTS-CITY-01",
+        "LIBERAL-ARTS-CITY-02",
+        "LIBERAL-ARTS-CITY-03",
+        "LIBERAL-ARTS-CITY-04",
+        "LIBERAL-ARTS-CITY-05",
+        "LIBERAL-ARTS-CITY-06",
+        "LIBERAL-ARTS-CITY-07",
+        "LIBERAL-ARTS-CITY-08"
+      ],
+      "endingIds": [
+        "LAC-END-A",
+        "LAC-END-B",
+        "LAC-END-C"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "八节点落实至佐天获救、酒店袭击被挡下、Salmon Red疏散与海上交锋；全岛最终撤离、损害及相关人物终局未核。",
+        "社区9/3开端与翌日关系支持进程，图9/3—6不当逐章已证完整边界。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-RAILGUN",
+        "OFFICIAL-ARCHIVES-02",
+        "COMMUNITY-BAKA-INDEX"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O13",
+          "nodeIds": [
+            "LIBERAL-ARTS-CITY-01",
+            "LIBERAL-ARTS-CITY-02",
+            "LIBERAL-ARTS-CITY-03",
+            "LIBERAL-ARTS-CITY-04",
+            "LIBERAL-ARTS-CITY-05",
+            "LIBERAL-ARTS-CITY-06",
+            "LIBERAL-ARTS-CITY-07",
+            "LIBERAL-ARTS-CITY-08"
+          ],
+          "sourceIds": [
+            "COMMUNITY-RAILGUN",
+            "OFFICIAL-ARCHIVES-02",
+            "COMMUNITY-BAKA-INDEX"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·特别编入考试.txt",
+      "packageId": "NECESSARIUS-EXAM",
+      "title": "必要之恶教会特别编入考试",
+      "action": "added",
+      "stage": 3,
+      "yearLayer": "Y",
+      "window": "原文为九月上旬、法之书事件刚过；图排9月11日—12日与此存在差异，分开保留，不把“上旬”擅自换算成9月10日。",
+      "evidenceIds": [
+        "O17"
+      ],
+      "volumes": [
+        "必要之恶教会特别编入考试篇全8话／外典书库1",
+        "已读官方公开第一话①—⑥"
+      ],
+      "keywords": [
+        "必要之恶教会特别编入考试",
+        "特别编入考试篇",
+        "NECESSARIUS-EXAM",
+        "NECESSARIUS-EXAM-01"
+      ],
+      "entryNode": "NECESSARIUS-EXAM-01",
+      "nodeIds": [
+        "NECESSARIUS-EXAM-01",
+        "NECESSARIUS-EXAM-02",
+        "NECESSARIUS-EXAM-03",
+        "NECESSARIUS-EXAM-04",
+        "NECESSARIUS-EXAM-05",
+        "NECESSARIUS-EXAM-06",
+        "NECESSARIUS-EXAM-07"
+      ],
+      "endingIds": [
+        "NE-END-A",
+        "NE-END-B",
+        "NE-END-C"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "七节点完整呈现第一话起案：地下铁骗局、尸蜡脱困、Free Pass被冒领与追捕开始；第二至第八话未读取，不声称考试通过或全篇完成。",
+        "官方九月上旬且法之书后，与图9/11—12冲突保留；不另造9/10。",
+        "第一话③原始响应哈希未留存，URL与已读范围明确登记。"
+      ],
+      "sourceIds": [
+        "OFFICIAL-EXAM-01",
+        "OFFICIAL-EXAM-02",
+        "OFFICIAL-EXAM-03",
+        "OFFICIAL-EXAM-04",
+        "OFFICIAL-EXAM-05",
+        "OFFICIAL-EXAM-06",
+        "OFFICIAL-ARCHIVES-01"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O17",
+          "nodeIds": [
+            "NECESSARIUS-EXAM-01",
+            "NECESSARIUS-EXAM-02",
+            "NECESSARIUS-EXAM-03",
+            "NECESSARIUS-EXAM-04",
+            "NECESSARIUS-EXAM-05",
+            "NECESSARIUS-EXAM-06",
+            "NECESSARIUS-EXAM-07"
+          ],
+          "sourceIds": [
+            "OFFICIAL-EXAM-01",
+            "OFFICIAL-EXAM-02",
+            "OFFICIAL-EXAM-03",
+            "OFFICIAL-EXAM-04",
+            "OFFICIAL-EXAM-05",
+            "OFFICIAL-EXAM-06",
+            "OFFICIAL-ARCHIVES-01"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/支线事件·幽幻姐妹.txt",
+      "packageId": "ASTRAL-BUDDY",
+      "title": "幽幻姐妹",
+      "action": "modified",
+      "stage": 4,
+      "yearLayer": "Y",
+      "window": "九月下旬跨入十月上旬，与天赋梦路部分并行；旧项目9月22日—10月6日不是全30话已经证实的精确起讫，不能把本篇排成天赋梦路完成后的必接事件。",
+      "evidenceIds": [
+        "O27"
+      ],
+      "volumes": [
+        "幽幻姐妹独立漫画4卷30话"
+      ],
+      "keywords": [
+        "幽幻姐妹",
+        "Astral Buddy",
+        "幽体连理",
+        "ASTRAL-BUDDY",
+        "ASTRAL-BUDDY-01"
+      ],
+      "entryNode": "ASTRAL-BUDDY-01",
+      "nodeIds": [
+        "ASTRAL-BUDDY-01",
+        "ASTRAL-BUDDY-02",
+        "ASTRAL-BUDDY-03",
+        "ASTRAL-BUDDY-04",
+        "ASTRAL-BUDDY-05",
+        "ASTRAL-BUDDY-06"
+      ],
+      "endingIds": [
+        "AB-END-A",
+        "AB-END-B",
+        "AB-END-C",
+        "AB-END-D"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "六节点至派阀救援、身份／旧实验、削板挑战与蜜蚁计划的阶段交接；30话终局、千夜最终意识及肉体状态未核。",
+        "九月下旬跨十月上旬；旧9/22—10/6和研究至约28话的考察不能证明全30话精确日界。",
+        "不预写千夜消散或已死者复活；支线不得写主线锚点或数组。"
+      ],
+      "sourceIds": [
+        "COMMUNITY-RAILGUN",
+        "COMMUNITY-ASTRAL-ANALYSIS",
+        "OFFICIAL-ASTRAL-V4"
+      ],
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "O27",
+          "nodeIds": [
+            "ASTRAL-BUDDY-01",
+            "ASTRAL-BUDDY-02",
+            "ASTRAL-BUDDY-03",
+            "ASTRAL-BUDDY-04",
+            "ASTRAL-BUDDY-05",
+            "ASTRAL-BUDDY-06"
+          ],
+          "sourceIds": [
+            "COMMUNITY-RAILGUN",
+            "COMMUNITY-ASTRAL-ANALYSIS",
+            "OFFICIAL-ASTRAL-V4"
+          ],
+          "scope": "剧情事实受所列资料等级限制；玩家行动和自由分支是调度，不把它们冒充原作逐句情节。"
+        }
+      ],
+      "mainAnchorPolicy": "yield-only；仅现有任务追踪文字、NPC关系与世界线记录，不更新主线状态。"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt",
+      "packageId": null,
+      "title": "动画、游戏与未定日外传索引",
+      "action": "added",
+      "stage": null,
+      "yearLayer": null,
+      "window": "按条目区分Y夏季／九月／十一月下旬、未定日、更早历史及范围外；不统一分配日期。",
+      "evidenceIds": [
+        "O03",
+        "O05",
+        "O18",
+        "N11",
+        "X03",
+        "X04",
+        "X06",
+        "X02",
+        "X05",
+        "O04"
+      ],
+      "primaryEvidenceIds": [
+        "O03",
+        "O05",
+        "O18",
+        "N11",
+        "X03",
+        "X04",
+        "X06",
+        "O04"
+      ],
+      "referenceEvidenceIds": [
+        "X02",
+        "X05"
+      ],
+      "volumes": [
+        "超炮动画原创／OVA／PSP游戏候选",
+        "Road to Endymion与群奏活剧各路线",
+        "回生者／幻想收束原创／大乱斗游戏标签",
+        "神裂SS、SP、Cold Game、超炮SS3、雅妮丝SS、蜂琴外传／特典",
+        "X02／X05仅指向前史组；X06为超图版范围说明"
+      ],
+      "keywords": [
+        "动画游戏与未定日外传索引",
+        "魔禁可选媒体索引",
+        "O03-动画散点索引",
+        "O05-超炮PSP索引",
+        "O18-前传路线索引",
+        "N11-游戏分支索引",
+        "X03-未定日SS索引",
+        "X04-外传特典索引",
+        "X06-范围边界索引"
+      ],
+      "entryNode": null,
+      "nodeIds": [],
+      "coverage": "reference-only",
+      "remainingEvidence": [
+        "O03逐集日常、O05 PSP路线、O18各游戏路线、N11具体游戏／活动正文与日期未核，没有剧情链。",
+        "X03／X04的未定日篇目未建节点；部分原载—收录关系已核不代表剧情可玩。",
+        "X02／X05由前史组实际覆盖，本索引仅交叉引用；X01是其余SS2／SP／特典散点，非黄金历史。",
+        "X06不自动引入GT15、心理掌握5卷或更后连载。"
+      ],
+      "sourceIds": [
+        "DOC-EVIDENCE-106",
+        "OFFICIAL-CHRONICLE",
+        "COMMUNITY-ENDYMION",
+        "OFFICIAL-ARCHIVES-01",
+        "OFFICIAL-ARCHIVES-02",
+        "OFFICIAL-ARCHIVES-03",
+        "OFFICIAL-ARCHIVES-04",
+        "OFFICIAL-MENTAL-SPECIAL",
+        "COMMUNITY-BAKA-INDEX"
+      ],
+      "evidenceNodeRanges": [],
+      "mainAnchorPolicy": "reference-only，nodeIds为空，不更新主线状态。"
+    }
+  ],
+  "crossReferences": [
+    {
+      "fromPackageId": "NECROMANCER",
+      "fromNodeIds": [
+        "NECROMANCER-08"
+      ],
+      "toPackageId": "NECTAR",
+      "entryNode": "NECTAR-01",
+      "rule": "先解决死灵术师，稍后另选Nectar；不硬接天使坠落，也不重建已存在后弧。",
+      "targetModifiedByThisWorker": true
+    },
+    {
+      "fromPackageId": "NECTAR",
+      "evidenceIds": [
+        "O19",
+        "O20"
+      ],
+      "toTitle": "树状图残骸",
+      "rule": "卷12末的残骸桥仅留外部核对项，不把尚未读取的桥段写成已完成主线节点。",
+      "targetModifiedByThisWorker": false
+    },
+    {
+      "fromPackageIds": [
+        "DREAM-RANKER",
+        "ASTRAL-BUDDY",
+        "MENTAL-OUT"
+      ],
+      "toPackageId": "MENTAL-STINGER",
+      "rule": "NT11当前Y十一月下旬／Y−1夏日回忆分层；删除旧十二月交叉引用，不替代独立心理掌握或ITEM第二卷。",
+      "targetModifiedByThisWorker": false
+    },
+    {
+      "fromPackageId": "DREAM-RANKER",
+      "fromNodeIds": [
+        "DREAM-RANKER-09"
+      ],
+      "toTitle": "暗部大战",
+      "rule": "猎虎约10/6仅图排；芙兰达10/9后按默认死亡事实处理，不因本篇跨月再次作为活人登场。",
+      "targetModifiedByThisWorker": false
+    },
+    {
+      "fromPackageId": "ASTRAL-BUDDY",
+      "toPackageId": "DREAM-RANKER",
+      "rule": "九月下旬至十月上旬部分并行，不要求梦路完结再开幽幻；幽幻仅用任务文字记录节点，永不抢主线状态。",
+      "targetModifiedByThisWorker": true
+    },
+    {
+      "fromPackageId": "RUSSIA-DEMONSTRATION",
+      "evidenceIds": [
+        "S10",
+        "X01"
+      ],
+      "rule": "超炮SS2能力实演与禁书SS2散点不同；X01为其余SS2／SP／特典散点，由前史组承接。",
+      "targetPath": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt",
+      "targetModifiedByThisWorker": false
+    },
+    {
+      "evidenceIds": [
+        "O18",
+        "O21"
+      ],
+      "fromTitle": "前传与群奏活剧路线索引",
+      "toPackageId": "ENDEYMION",
+      "rule": "电影本篇9/15—18可玩链与Road前传／游戏路线分层；本篇不覆盖全部游戏线路。",
+      "coverage": "reference-only",
+      "nodeIds": []
+    },
+    {
+      "evidenceIds": [
+        "N11"
+      ],
+      "title": "回生者／幻想收束原创、大乱斗",
+      "owner": "side-stories",
+      "coverage": "reference-only",
+      "nodeIds": [],
+      "rule": "N11是106项游戏分支编号，不是NT11小说，也不是MENTAL-OUT；图十一月下旬仅候选窗。"
+    },
+    {
+      "evidenceIds": [
+        "O17"
+      ],
+      "toPackageId": "NECESSARIUS-EXAM",
+      "entryNode": "NECESSARIUS-EXAM-01",
+      "rule": "特别编入考试对应O17；官方九月上旬且法之书后，与图11—12日保留差异，不改成9/10。"
+    },
+    {
+      "evidenceIds": [
+        "X02"
+      ],
+      "title": "原石拯救／学习装置现有原创疑点",
+      "owner": "prehistory",
+      "coverage": "reference-only",
+      "nodeIds": [],
+      "targetPackageIds": [
+        "GEMSTONE",
+        "LEARNING-DEVICE"
+      ],
+      "targetPath": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt",
+      "rule": "本worker只保留指针；实际内容由前史组维护，原作设定不替旧包全链背书。",
+      "targetModifiedByThisWorker": false
+    },
+    {
+      "evidenceIds": [
+        "X05"
+      ],
+      "title": "黄金SS等更早历史",
+      "owner": "prehistory",
+      "coverage": "reference-only",
+      "nodeIds": [],
+      "targetPath": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt",
+      "rule": "十九世纪后半更早历史，仅交叉引用；不强塞Y−1四月或Y。X01不是黄金历史。",
+      "targetModifiedByThisWorker": false
+    },
+    {
+      "evidenceIds": [
+        "X03",
+        "X04",
+        "X06"
+      ],
+      "owner": "side-stories",
+      "coverage": "reference-only",
+      "nodeIds": [],
+      "rule": "主索引保留神裂SS／SP／Cold Game、超炮SS3／雅妮丝SS／蜂琴特典及超图版范围；不把目录身份当成已完成剧情链。"
+    },
+    {
+      "kind": "integration-handoff",
+      "rule": "只提交14项内容文件和本清单；新增6项（5事件＋1索引）的index注册、导航、总览由主代理统一处理。keywords为篇名／包ID／完整入口ID，不用泛角色名触发。",
+      "sharedFilesModified": false,
+      "runtimeImported": false
+    }
+  ],
+  "sources": [
+    {
+      "id": "DOC-EVIDENCE-106",
+      "level": "D",
+      "url": null,
+      "reviewedOn": "2026-09-08",
+      "locator": "六列表：S10、O03/O05/O07/O09/O13/O14/O15/O17/O18/O19/O21/O26/O27/O30/O33、N11、X01—X06",
+      "supports": "106项映射、图排与项目窗口差异；本worker没有把转述图格当成原文明示日期。",
+      "limitations": "方案与研究笔记是实施依据；旧世界书仅用于ID基线。",
+      "artifactPath": "docs/魔禁四月至次年一月-事件证据表.md",
+      "artifactSha256": "4f10131fa5cf3976dad1059177e3571887dc0d421e5ecc7a4453f72007eb6a90"
+    },
+    {
+      "id": "OFFICIAL-CHRONICLE",
+      "level": "B",
+      "url": "https://toaru-project.com/world/chronicle/",
+      "reviewedOn": "2026-09-08",
+      "locator": "电影9/15—18段；乱杂开放约字符19450—20180；静默派对约21100—22900",
+      "supports": "动画媒介剧情、乱杂救援与孩子苏醒、静默派对八月下旬至九月上旬、电影窗口。",
+      "limitations": "动画窗不统一覆盖漫画、小说或游戏。",
+      "artifactPath": ".agent-artifacts/timeline-review-20260907/web/web05-chronicle.txt",
+      "artifactSha256": "ed7b26d7e1c471c333c244694f1383d4fba91199c97f07ab09b1e9bf06bfa685",
+      "rawArtifactPath": ".agent-artifacts/timeline-review-20260907/web/web05-chronicle.html",
+      "rawArtifactSha256": "ff03ac127a64cdff53fac1e4a435ae6b0222252d0901e185d69ca8fa92016c6a"
+    },
+    {
+      "id": "COMMUNITY-ACCELERATOR",
+      "level": "C",
+      "url": "https://ja.wikipedia.org/wiki/とある科学の一方通行",
+      "reviewedOn": "2026-09-08",
+      "locator": "剧情与人物条目，约字符3900—12100",
+      "supports": "科方两弧已存在、先死灵后Nectar、人物身份和供应体系。",
+      "limitations": "社区叙事不证明精确日、全部医疗结局与司法处置。",
+      "artifactPath": ".agent-artifacts/timeline-review-20260907/web/wiki-accelerator.txt",
+      "artifactSha256": "2938b31bb5b8a72bffdf0d1ff750e847f52eeb94f4f6ce72b16118e53dd1d1f4",
+      "rawArtifactPath": ".agent-artifacts/timeline-review-20260907/web/wiki-accelerator.html",
+      "rawArtifactSha256": "d8a0c2cf0c3c7b57bed3a1163810c575531cba512b1272b01bab8016fb332a9d"
+    },
+    {
+      "id": "COMMUNITY-RAILGUN",
+      "level": "C",
+      "url": "https://ja.wikipedia.org/wiki/とある科学の超電磁砲",
+      "reviewedOn": "2026-09-08",
+      "locator": "L431—438梦路／越狱；L449—457两篇SS；L462—464幽幻；L831—872及L975—1000人物",
+      "supports": "梦路、越狱、俄罗斯、学艺都市与幽幻中段情节和人物纠错。",
+      "limitations": "不能以概述或单个开端日证明全篇日期与未记载终局。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/railgun-wiki-live.txt",
+      "artifactSha256": "9c596744fd1e49f5075bc53bf59d5aabf72e81f6ad27f9a9ce3978c9659e17bb"
+    },
+    {
+      "id": "COMMUNITY-ENDYMION",
+      "level": "C",
+      "url": "https://ja.wikipedia.org/wiki/劇場版_とある魔術の禁書目録_-エンデュミオンの奇蹟-",
+      "reviewedOn": "2026-09-08",
+      "locator": "あらすじ、登場人物、Road to Endymion／群奏活劇关系",
+      "supports": "电影人物与终局、前传和游戏魔术表路线对应关系。",
+      "limitations": "不能外推全部游戏路线同窗同正史。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/endymion-wiki.txt",
+      "artifactSha256": "79dceea5ecb23086d3ceb52039c6b1cdc91ac37f1ab8bba6bfa0fb661ae3b62e"
+    },
+    {
+      "id": "COMMUNITY-ASTRAL-ANALYSIS",
+      "level": "C",
+      "url": "https://zombiecatcut.hatenablog.com/entry/2020/04/27/112655",
+      "reviewedOn": "2026-09-08",
+      "locator": "幽幻时序考察至约28话",
+      "supports": "九月下旬至十月上旬的相对定位线索。",
+      "limitations": "发表时尚未核全30话；不当成全篇精确日历。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/astral-analysis.txt",
+      "artifactSha256": "80bf4bf4cbc48f43a87cfd1528b8a61d6ff99b9e80c783cf6c93b868262f617f"
+    },
+    {
+      "id": "OFFICIAL-ACCELERATOR-12",
+      "level": "B",
+      "url": "https://toaru-project.com/accelerator/story/12.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "动画第12话官方剧情简介",
+      "supports": "舜帝之剑干涉檮杌伪魂、一方开路、艾丝特与禍斗／干比古／10046到以撒前。",
+      "limitations": "官动简介不是漫画全卷全文；完全魔像不与装尸体的棺桶混同。",
+      "responseSha256": "05f12b736b93abd9d28f898f385fe23c9d03d5bf59b03dba95917717427615e4",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-ACCELERATOR-V12",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322005000077/",
+      "reviewedOn": "2026-09-08",
+      "locator": "科方漫画第12卷官介",
+      "supports": "Full Course对决将决着，仍有少女困于黑暗，一方继续救援。",
+      "limitations": "未证全员死亡、亡本自首、具体手术结果。",
+      "responseSha256": "78759f5f11cc4fba6afdd71abc7c1d42548d404bab7a3104cd81892a63d53753",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-RAILGUN-V13",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/321707000214/",
+      "reviewedOn": "2026-09-08",
+      "locator": "超炮漫画第13卷官介",
+      "supports": "梦路后段及清醒梦／研究事件身份。",
+      "limitations": "不证明全卷精确日历。",
+      "responseSha256": "ee877cbfeacc159b997fe6079d89f52c7b853954ed0b2ab32222f96d5e46480d",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-RAILGUN-V16",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322006000521/",
+      "reviewedOn": "2026-09-08",
+      "locator": "超炮漫画第16卷官介",
+      "supports": "嬉美胁迫初春构建世界级网络公开能力开发技术；初春假意配合并寻找逃路。",
+      "limitations": "未读完整终局，不能据此确认龙去向或收监处置。",
+      "responseSha256": "31d6f0634c58d83c5640429297827fef39551af9fd8397445334a03a07c71dc1",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-ASTRAL-V4",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322005000073/",
+      "reviewedOn": "2026-09-08",
+      "locator": "幽幻姐妹第4卷官介",
+      "supports": "削板向帆风挑战、蜜蚁作为幕后推进计划、全城混乱。",
+      "limitations": "官介未给千夜最终状态，不据此造消散或复活。",
+      "responseSha256": "42a1960f677404f94a993375ea842b767d457b751dc80ce621a02ebd7034686d",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-RAILGUN-T25",
+      "level": "B",
+      "url": "https://toaru-project.com/railgun_t/story/25.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "超炮T第25话官方剧情简介",
+      "supports": "揭破附身机制，美琴识破飞行船虚张声势与目的，凉子要求停止实验。",
+      "limitations": "不替代全部梦路漫画逐页校对。",
+      "responseSha256": "18a76c6bd5e64976587a54ac753c00447dfcabee1905a78adc63388dd2b37d9f",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-DARK-MATTER",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/321911000750/",
+      "reviewedOn": "2026-09-08",
+      "locator": "L630—638官介，排除页面用户书评",
+      "supports": "垣根接触林檎、索求第一位演算模式、DA／黑夜／木原争夺。",
+      "limitations": "官介不证三方逐话出场顺序、少女或数据最终去向。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-darkmatter.txt",
+      "artifactSha256": "fb8b37efa86cab59709d88cae070c08b4e3d67e73c47856a28840ef4df22ce79",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-darkmatter.meta.json",
+      "responseSha256": "6f82ba84e76dffee1aa3cdde19790ab9401465fa8059a1d7978697e737c83e6e",
+      "captureStatus": 200
+    },
+    {
+      "id": "COMMUNITY-CHARACTERS",
+      "level": "C",
+      "url": "https://ja.wikipedia.org/wiki/とある魔術の禁書目録の登場人物",
+      "reviewedOn": "2026-09-08",
+      "locator": "杠林檎／流郷知果条目",
+      "supports": "林檎记忆脱落、计划创伤、低等级念动力与压力下异常表现。",
+      "limitations": "只作社区人物信息；未从此页取得未元物质或幽幻完整终局。一次无User-Agent请求403未当证据。",
+      "responseSha256": "cced4f4fee56a7ac74026f22126259e83d9474906ec5565daba2f45ef93aefdc",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-MENTAL-01",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322109000714/",
+      "reviewedOn": "2026-09-08",
+      "locator": "L630—632官介，排除书评",
+      "supports": "常盘台会长选举、食蜂候选人与派阀领袖身份。",
+      "limitations": "不证最终胜者或全篇起讫。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental01.txt",
+      "artifactSha256": "b3b609f5984d85ee142552dc30a3e99e9296acd1d4b17b33479136f75ede5cbc",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental01.meta.json",
+      "responseSha256": "0ef3b9900318a62e1a0517dea0798fd12e0e8a59e430d4b6155a41199d412e3e",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-MENTAL-02",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322204000456/",
+      "reviewedOn": "2026-09-08",
+      "locator": "L630—632官介",
+      "supports": "帆风疑云、食蜂与雅王院共同行动、警策追遗产。",
+      "limitations": "不预判疑云真相或遗产用途。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental02.txt",
+      "artifactSha256": "9cc231448c936e756986dadd7e005de5468017c075856f5d72efddd830573f31",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental02.meta.json",
+      "responseSha256": "d6132475482a23cd162ee1f7531a9fa7224ce1950b9ccad75edfbfc866e273b5",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-MENTAL-03",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322311000711/",
+      "reviewedOn": "2026-09-08",
+      "locator": "L630—634官介",
+      "supports": "先代第一位、木原一族女性、常盘台中学理事长介入。",
+      "limitations": "不与学园都市统括理事长混同。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental03.txt",
+      "artifactSha256": "08038909e9974d05b1aed02e6507d36252692704da6d1059967d232908bbe370",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental03.meta.json",
+      "responseSha256": "d095eaf3bfb53ed20ca86616b1a3a3b32f5ba3f5b8552dd52915ee7a3f04d9b2",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-MENTAL-04",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322410001112/",
+      "reviewedOn": "2026-09-08",
+      "locator": "L630—634官介",
+      "supports": "寮监对木原唯一、校舍破坏与选举危机。",
+      "limitations": "不证明选举或遗产终局，不扩到第5卷。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental04.txt",
+      "artifactSha256": "66c2662c6f413539c19b5e64d71d21b637dd9bf586ccd6ffdeb2afe49172f55b",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental04.meta.json",
+      "responseSha256": "1211bafcaecdef42818ee4a4901b8c90cb701a9848f1edc9d85b0e2e6a212822",
+      "captureStatus": 200
+    },
+    {
+      "id": "COMMUNITY-CALENDAR",
+      "level": "C",
+      "url": "https://www.baka-tsuki.org/project/index.php?title=Index_Calendar",
+      "reviewedOn": "2026-09-08",
+      "locator": "L27—30、L48—59；oldid=587348",
+      "supports": "未元物质第4话约9/8、心理掌握第34话十月等进度点。",
+      "limitations": "不能把进度点当全篇起讫或所有话同日。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/community-index-calendar.txt",
+      "artifactSha256": "0698772e04f295480875f8256a3151e97ee37a8573ecb979d72893503eec7342",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/community-index-calendar.meta.json",
+      "responseSha256": "9cb5345b0427eb4a7a3016af5aafcc8fd2ca878a3062a3cd766f67688625acad",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-ARCHIVES-01",
+      "level": "B",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/",
+      "reviewedOn": "2026-09-08",
+      "locator": "外典1公开连载目录及收录作品",
+      "supports": "神裂篇、特别编入考试、Road to Endymion身份与收录；考试免费部分为第一话①—⑥。",
+      "limitations": "第二至第八话在书中；目录不是后续全文。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/ss-archive-free-index.txt",
+      "artifactSha256": "c73806c32a2341f0f40f41a2a3f2ba13b40a6f9f0e2d693c26af90ce0e715bbd"
+    },
+    {
+      "id": "OFFICIAL-ARCHIVES-02",
+      "level": "B",
+      "url": "https://dengekibunko.jp/product/index/322002000146.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "L71—72；缓存文件名虽为archive1，实际正文为外典书库2",
+      "supports": "学艺都市、能力实演旅行与Cold Game的再收录身份。",
+      "limitations": "官介不证两篇SS全部结局或精确日。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/ss-archive1.txt",
+      "artifactSha256": "61588dd445bb574a479e895431077daeaf13001c8798ec24dbda969b1fba6b06"
+    },
+    {
+      "id": "OFFICIAL-ARCHIVES-03",
+      "level": "B",
+      "url": "https://dengekibunko.jp/product/index/322407001844.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "外典书库3官介",
+      "supports": "雅妮丝魔法侧工作体验篇收录身份。",
+      "limitations": "不从出版日推故事日；生物黑客不归本写集。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-archives03.txt",
+      "artifactSha256": "b1f62a70e8d634cd9cf05b8c4cc13775853067dacbf64c04bd69a87f28355ef7",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-archives03.meta.json",
+      "responseSha256": "1b6a4c437ac74fe00fdd92148093f800cce552e90159eb0cc50de48bb857249d",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-ARCHIVES-04",
+      "level": "B",
+      "url": "https://dengekibunko.jp/product/index/322410000808.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "外典书库4官介与META DESCRIPTION",
+      "supports": "Stativarius与蜂琴相关新写外传身份。",
+      "limitations": "只建参考索引，不把官介展开为完整剧情链。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-archives04.txt",
+      "artifactSha256": "fc524bb125ba2c240e5e6f8723decff0b1cc080308aa2d0035955bab957a2c24",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-archives04.meta.json",
+      "responseSha256": "1a9ed72aee22fedcc6c54c8fc8a2d2bd1c12deaad48456c81dcaaf464b62b6e6",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-MENTAL-SPECIAL",
+      "level": "B",
+      "url": "https://www.kadokawa.co.jp/product/322311000712/",
+      "reviewedOn": "2026-09-08",
+      "locator": "标题及L625—629",
+      "supports": "心理掌握3特装附册《じょおうのおしばい》与假日记忆题材身份。",
+      "limitations": "不证明剧院失火日期或其他特典全部剧情。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental03-special.txt",
+      "artifactSha256": "24966f64ca6f9171b1cf71267ee91f1729ca1c735434ba2afb46bd2d53f78390",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/official-mental03-special.meta.json",
+      "responseSha256": "d18ce9b291311d575b125f046fafb09c9cd6d1e9b7f79a7e805f20155a6b8acc",
+      "captureStatus": 200
+    },
+    {
+      "id": "COMMUNITY-BAKA-INDEX",
+      "level": "C",
+      "url": "https://www.baka-tsuki.org/project/index.php?title=Toaru_Majutsu_no_Index",
+      "reviewedOn": "2026-09-08",
+      "locator": "约L697—715外传书目；HTML对应Gaiten Shoko目录",
+      "supports": "两篇超炮SS原载全8话、Cold Game杂志附录、SS3与雅妮丝SS原载特典及再收录关系。",
+      "limitations": "只读目录，不冒称已经读取两篇SS末章译文。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/science/community-bakatsuki-index.txt",
+      "artifactSha256": "8ca1d502c7cf36d67e9c5610baee6a2bde8ca0ef9ffb91f977a1cf4c95d3015e",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/science/community-bakatsuki-index.meta.json",
+      "responseSha256": "0d4a662d186e5d17e30a179fe5601e7870a0df0b868b8d6f599bc3281193fa6e",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-EXAM-01",
+      "level": "A",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/16818093074852049958.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "特别编入考试：官方公开第一话第01部分",
+      "supports": "六部分合证七节点起案：备考、假地下铁考试、取血尸蜡、交叉冒名、脱困与误判追捕。",
+      "limitations": "不外推第二至第八话；逐部分不拆成未经再次核对的精确句级映射。",
+      "artifactPath": ".agent-artifacts/magic-apr-jan-20260908/necessarius-first-official.txt",
+      "artifactSha256": "7f07c3593289551978862e3cd1a25f0a1c4b9a43964a16cdbbe8a57ad27cb252",
+      "metadataPath": ".agent-artifacts/magic-apr-jan-20260908/necessarius-first-official.meta.json",
+      "responseSha256": "a8e92913817f1572d50997ffb2656ffcb0be9125600d56753ae7f0127790116d",
+      "captureStatus": 200
+    },
+    {
+      "id": "OFFICIAL-EXAM-02",
+      "level": "A",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/16818093074852110203.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "特别编入考试：官方公开第一话第02部分",
+      "supports": "六部分合证七节点起案：备考、假地下铁考试、取血尸蜡、交叉冒名、脱困与误判追捕。",
+      "limitations": "不外推第二至第八话；逐部分不拆成未经再次核对的精确句级映射。",
+      "responseSha256": "58c797fed56650336983ea14f20fa536726b710ef32bc3279b2ad7f0b1b9283c",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-EXAM-03",
+      "level": "A",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/16818093074852160309.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "特别编入考试：官方公开第一话第03部分",
+      "supports": "六部分合证七节点起案：备考、假地下铁考试、取血尸蜡、交叉冒名、脱困与误判追捕。",
+      "limitations": "不外推第二至第八话；逐部分不拆成未经再次核对的精确句级映射。 第③部分原始响应哈希未留存。",
+      "responseSha256": null,
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-EXAM-04",
+      "level": "A",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/16818093074852235816.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "特别编入考试：官方公开第一话第04部分",
+      "supports": "六部分合证七节点起案：备考、假地下铁考试、取血尸蜡、交叉冒名、脱困与误判追捕。",
+      "limitations": "不外推第二至第八话；逐部分不拆成未经再次核对的精确句级映射。",
+      "responseSha256": "e833439cd4b83aa0ff88748cd2aa759a7bec056a34609f2635698eaf82114155",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-EXAM-05",
+      "level": "A",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/16818093074852249055.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "特别编入考试：官方公开第一话第05部分",
+      "supports": "六部分合证七节点起案：备考、假地下铁考试、取血尸蜡、交叉冒名、脱困与误判追捕。",
+      "limitations": "不外推第二至第八话；逐部分不拆成未经再次核对的精确句级映射。",
+      "responseSha256": "785e823cf50188f0125dda712d2557bba654456798726824924c0ab48e6b8d11",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    },
+    {
+      "id": "OFFICIAL-EXAM-06",
+      "level": "A",
+      "url": "https://dengekibunko.jp/novecomi/novel/16818093074851343056/16818093074852271682.html",
+      "reviewedOn": "2026-09-08",
+      "locator": "特别编入考试：官方公开第一话第06部分",
+      "supports": "六部分合证七节点起案：备考、假地下铁考试、取血尸蜡、交叉冒名、脱困与误判追捕。",
+      "limitations": "不外推第二至第八话；逐部分不拆成未经再次核对的精确句级映射。",
+      "responseSha256": "2a02f8cbbc901c8e58e9b03387254abce7c861ebefa8b1dd210f98800fac9b10",
+      "artifactPath": null,
+      "retention": "只读取证，正文未另存；仅记录URL、所证范围和可用响应哈希。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "receipt-schema",
+      "status": "passed",
+      "detail": "已核对声明文件、覆盖级别、证据ID、节点ID与注册目标。"
+    },
+    {
+      "name": "static-node-review",
+      "status": "passed",
+      "detail": "已核对支线及外传索引的静态节点、引用和证据范围；未声称宿主运行通过。"
+    }
+  ]
+}

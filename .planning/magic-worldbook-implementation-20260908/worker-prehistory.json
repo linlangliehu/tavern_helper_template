@@ -1,0 +1,1424 @@
+{
+  "worker": "prehistory",
+  "status": "complete",
+  "scope": "四个指定旧包、九个指定新包、前史与SS2资料索引；不改共享注册、导航、角色档案或其他组文件",
+  "routeReceipt": {
+    "primarySkill": "tavern-card-builder",
+    "snapshot": "2026-08-18",
+    "authority": "沿用主代理已完成的A0与资料路由；同轮MVU、既有字段和事件包结构不迁移",
+    "runtime": "仅世界书源码；不构建、不导入、不声称宿主通过"
+  },
+  "baseline": [
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴过去.txt",
+      "sha256": "402dcdd86a26dd73cd0c269fc693e702b39607d3b3aa2917ff5dac03ca2351cd",
+      "nodeIds": [
+        "MIKOTO-PAST-01",
+        "MIKOTO-PAST-02",
+        "MIKOTO-PAST-03",
+        "MIKOTO-PAST-04",
+        "MIKOTO-PAST-05",
+        "MIKOTO-PAST-06",
+        "MIKOTO-PAST-07",
+        "MIKOTO-PAST-08"
+      ],
+      "endingIds": [
+        "MP-END-A",
+        "MP-END-B",
+        "MP-END-C",
+        "MP-END-D",
+        "MP-END-E"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt",
+      "sha256": "e04b5404a7c0421d985e514f204f3e3860f61a627b1371a125fc7118d2f9aedb",
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "endingIds": [
+        "FY-END-A",
+        "FY-END-B",
+        "FY-END-C",
+        "FY-END-D"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt",
+      "sha256": "9e94f52171fc62a987664714b8c21b66cccaaa527358c0c5a62b3adbd9aaecf60",
+      "nodeIds": [
+        "GEMSTONE-01",
+        "GEMSTONE-02",
+        "GEMSTONE-03",
+        "GEMSTONE-04",
+        "GEMSTONE-05",
+        "GEMSTONE-06",
+        "GEMSTONE-07",
+        "GEMSTONE-08"
+      ],
+      "endingIds": [
+        "GS-END-A",
+        "GS-END-B",
+        "GS-END-C",
+        "GS-END-D",
+        "GS-END-E"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·学习装置.txt",
+      "sha256": "33309667d0a15081c9b817a3727d7f4088cda51abf2ef976a46bc64480955604",
+      "nodeIds": [
+        "LEARNING-DEVICE-01",
+        "LEARNING-DEVICE-02",
+        "LEARNING-DEVICE-03",
+        "LEARNING-DEVICE-04",
+        "LEARNING-DEVICE-05",
+        "LEARNING-DEVICE-06",
+        "LEARNING-DEVICE-07",
+        "LEARNING-DEVICE-08"
+      ],
+      "endingIds": [
+        "LD-END-A",
+        "LD-END-B",
+        "LD-END-C",
+        "LD-END-D",
+        "LD-END-E"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴过去.txt",
+      "packageId": "MIKOTO-PAST",
+      "title": "美琴过去篇·新学年续段",
+      "action": "modify",
+      "stage": 0,
+      "yearLayer": "Y",
+      "window": "Y年四月起，持续时间未知；151–169话及雪紫离校为图排候选范围",
+      "evidenceIds": [
+        "S05",
+        "S08"
+      ],
+      "volumes": [
+        "超炮一年级篇的新学年续段；图标151–169话未逐话核，单行本与连载分别计数"
+      ],
+      "keywords": [
+        "美琴过去篇",
+        "雪紫离校前后",
+        "MIKOTO-PAST",
+        "MIKOTO-PAST-01"
+      ],
+      "entryNode": "MIKOTO-PAST-01",
+      "nodeIds": [
+        "MIKOTO-PAST-01",
+        "MIKOTO-PAST-02",
+        "MIKOTO-PAST-03",
+        "MIKOTO-PAST-04",
+        "MIKOTO-PAST-05",
+        "MIKOTO-PAST-06",
+        "MIKOTO-PAST-07",
+        "MIKOTO-PAST-08"
+      ],
+      "nodeCount": 8,
+      "coverage": "partial",
+      "adaptationScope": "旧完整ID保留；校内交接、流言调查与解围为项目串场，不冒充151–169完整原作链",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "S05",
+          "nodeIds": [
+            "MIKOTO-PAST-01",
+            "MIKOTO-PAST-07",
+            "MIKOTO-PAST-08"
+          ],
+          "basis": "仅定位学年交界、雪紫去留与续段时层；细节及结束日未证"
+        },
+        {
+          "evidenceId": "S08",
+          "nodeIds": [
+            "MIKOTO-PAST-07"
+          ],
+          "basis": "同室关系的Y年状态边界，不证明5月2日逐页情节"
+        }
+      ],
+      "remainingEvidence": [
+        "151–169逐话情节、先后和雪紫离校的原文章页未核，不能宣称完整终章",
+        "四月起的持续时间未知；黑子日记月份差异仍需原文对照",
+        "Y年生日、黑子入住与雪紫去留的精确对应未核；不与FIRST-YEAR重复亲历"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt",
+      "packageId": "FIRST-YEAR",
+      "title": "美琴一年级篇",
+      "action": "modify",
+      "stage": 0,
+      "yearLayer": "Y−1→Y",
+      "window": "Y−1入学后的春季至Y春交接；五月、六月、十月与冬季图排均非连续确日",
+      "evidenceIds": [
+        "P02",
+        "P03",
+        "P04",
+        "P13",
+        "P15",
+        "S05",
+        "S08"
+      ],
+      "volumes": [
+        "超炮一年级篇，17卷起；图例单行本20卷与连载169话分别封顶，不扩成17–21卷完整终章"
+      ],
+      "keywords": [
+        "美琴一年级篇",
+        "常盘台三派阀往事",
+        "一年级学年交接",
+        "FIRST-YEAR",
+        "FIRST-YEAR-01"
+      ],
+      "entryNode": "FIRST-YEAR-01",
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "nodeCount": 8,
+      "coverage": "partial",
+      "adaptationScope": "前六节点为Y−1校园前史局部链；后两节点仅学年交接，详细Y年续段另选MIKOTO-PAST；旧案只作待核线索",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P02",
+          "nodeIds": [
+            "FIRST-YEAR-01",
+            "FIRST-YEAR-02"
+          ],
+          "basis": "一年级、三派阀及雪紫同期室友框架；不证明全部场景对白"
+        },
+        {
+          "evidenceId": "P03",
+          "nodeIds": [
+            "FIRST-YEAR-02"
+          ],
+          "basis": "生日礼物与指导为图排候选"
+        },
+        {
+          "evidenceId": "P04",
+          "nodeIds": [
+            "FIRST-YEAR-03",
+            "FIRST-YEAR-04",
+            "FIRST-YEAR-05"
+          ],
+          "basis": "派阀风波的局部改编，具体话页与终战未证"
+        },
+        {
+          "evidenceId": "P13",
+          "nodeIds": [
+            "FIRST-YEAR-05",
+            "FIRST-YEAR-06"
+          ],
+          "basis": "建派阀选择及剧院、武林旧案只作候选资料，不计原作完整事件"
+        },
+        {
+          "evidenceId": "P15",
+          "nodeIds": [
+            "FIRST-YEAR-06"
+          ],
+          "basis": "绝对等速仅待核线索，不计原作可玩全链"
+        },
+        {
+          "evidenceId": "S05",
+          "nodeIds": [
+            "FIRST-YEAR-07",
+            "FIRST-YEAR-08"
+          ],
+          "basis": "Y年学年交接，不与MIKOTO-PAST重复计算续段"
+        },
+        {
+          "evidenceId": "S08",
+          "nodeIds": [
+            "FIRST-YEAR-07"
+          ],
+          "basis": "Y年生日及同室关系的候选边界"
+        }
+      ],
+      "remainingEvidence": [
+        "五月礼物、支仓指导与六月风波的逐话细节和准确日期未核",
+        "P13剧院失火、武林夜宫／旧包夜宵名称、载体与家族关联未核",
+        "P15绝对等速的事件身份、12月8–10图格与完整因果未核，不能编造武林结局",
+        "151–169后半、雪紫离校及Y年5月2日关系状态未逐页核；发卡权能、企业全灭、终战不作确认事实"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt",
+      "packageId": "GEMSTONE",
+      "title": "原石拯救篇·项目改编",
+      "action": "modify",
+      "stage": 0,
+      "yearLayer": "Y",
+      "window": "Y年本篇前奏可选委托；日期由当前剧情确定，撤销固定1月18日",
+      "evidenceIds": [
+        "S01",
+        "S04",
+        "S07",
+        "S11"
+      ],
+      "volumes": [
+        "项目改编支线；无已核原作卷章对应，不计禁书SS2全篇覆盖"
+      ],
+      "keywords": [
+        "原石拯救篇",
+        "原石庇护委托",
+        "GEMSTONE",
+        "GEMSTONE-01"
+      ],
+      "entryNode": "GEMSTONE-01",
+      "nodeIds": [
+        "GEMSTONE-01",
+        "GEMSTONE-02",
+        "GEMSTONE-03",
+        "GEMSTONE-04",
+        "GEMSTONE-05",
+        "GEMSTONE-06",
+        "GEMSTONE-07",
+        "GEMSTONE-08"
+      ],
+      "nodeCount": 8,
+      "coverage": "playable-chain",
+      "adaptationScope": "八节点均为项目原创庇护委托；默认本人同意的临时庇护、停止强制采样并保留越界证据，不称原作结局",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "S01",
+          "nodeIds": [],
+          "basis": "身份排除：不是禁书SS2 Skill-Out短篇"
+        },
+        {
+          "evidenceId": "S04",
+          "nodeIds": [],
+          "basis": "身份排除：不能替代削板小节或毕业背景"
+        },
+        {
+          "evidenceId": "S07",
+          "nodeIds": [],
+          "basis": "身份排除：SS2春季各小节不并入本项目链"
+        },
+        {
+          "evidenceId": "S11",
+          "nodeIds": [],
+          "basis": "身份排除：SS2夏季各小节另列参考索引"
+        }
+      ],
+      "remainingEvidence": [
+        "未找到旧委托链对应的原作卷章，按项目改编保留，不将此缺口隐藏为官方故事",
+        "禁书SS2的原石相关原文章节与各独立小节仍需逐节定位；本包可玩完成不代表这些原作内容完成"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·学习装置.txt",
+      "packageId": "LEARNING-DEVICE",
+      "title": "学习装置篇·项目改编",
+      "action": "modify",
+      "stage": 0,
+      "yearLayer": "Y",
+      "window": "Y年本篇前奏可选科研委托；无原作确日，撤销7月下旬至8月初绑定",
+      "evidenceIds": [
+        "S08"
+      ],
+      "volumes": [
+        "项目改编支线；同名学习技术与妹妹学习过程仅作身份区分，不建立原作卷章映射"
+      ],
+      "keywords": [
+        "学习装置篇",
+        "黑市速成原型机",
+        "LEARNING-DEVICE",
+        "LEARNING-DEVICE-01"
+      ],
+      "entryNode": "LEARNING-DEVICE-01",
+      "nodeIds": [
+        "LEARNING-DEVICE-01",
+        "LEARNING-DEVICE-02",
+        "LEARNING-DEVICE-03",
+        "LEARNING-DEVICE-04",
+        "LEARNING-DEVICE-05",
+        "LEARNING-DEVICE-06",
+        "LEARNING-DEVICE-07",
+        "LEARNING-DEVICE-08"
+      ],
+      "nodeCount": 8,
+      "coverage": "playable-chain",
+      "adaptationScope": "八节点均为项目原创的黑市设备与研究室争夺；默认封存设备和记录、随访受影响者并留下责任凭据",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "S08",
+          "nodeIds": [],
+          "basis": "仅排除同名技术与妹妹前史的混同；S08不支持黑市速成委托是原作"
+        }
+      ],
+      "remainingEvidence": [
+        "旧包黑市速成机、研究室和争夺链无已核原作出处，已显式保留为项目改编",
+        "若以后对接原作学习装置技术，仍须独立核对载体、工作机制与日期，不能倒用本包广告作为世界规律"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·才人工房.txt",
+      "packageId": "TALENT-WORKSHOP",
+      "title": "才人工房往事",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1；相识可能更早",
+      "window": "常盘台入学前；四月仅图排，4月1–5合并格不是连续确日",
+      "evidenceIds": [
+        "P01"
+      ],
+      "volumes": [
+        "超炮大霸星祭回忆；漫画9卷为社区定位",
+        "某科学的超电磁炮T第10话官方简介"
+      ],
+      "keywords": [
+        "才人工房往事",
+        "食蜂夺取人才工坊",
+        "食蜂夺取才人工房",
+        "TALENT-WORKSHOP",
+        "TALENT-WORKSHOP-01"
+      ],
+      "entryNode": "TALENT-WORKSHOP-01",
+      "nodeIds": [
+        "TALENT-WORKSHOP-01",
+        "TALENT-WORKSHOP-02",
+        "TALENT-WORKSHOP-03",
+        "TALENT-WORKSHOP-04",
+        "TALENT-WORKSHOP-05",
+        "TALENT-WORKSHOP-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "playable-chain",
+      "adaptationScope": "以相识、照护、默认多莉死亡和食蜂控制研究者组成入学前可玩起点；玩家可救援改写，不强制补死",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P01",
+          "nodeIds": [
+            "TALENT-WORKSHOP-01",
+            "TALENT-WORKSHOP-02"
+          ],
+          "basis": "T第10话官介支持封闭设施中的相识与多莉处境"
+        },
+        {
+          "evidenceId": "P01",
+          "nodeIds": [
+            "TALENT-WORKSHOP-04",
+            "TALENT-WORKSHOP-05",
+            "TALENT-WORKSHOP-06"
+          ],
+          "basis": "社区年表支持多莉去向、控制研究者及入学前相对位置；不证明四月日序"
+        }
+      ],
+      "remainingEvidence": [
+        "漫画9卷的精确话页、相识与夺取之间的跨度未核",
+        "四月仅图排，不能压成4月1–5连续夺取或把相识移到入学同日",
+        "照护和救援操作为可玩场景扩展；多莉其他个体、内部进化及后续回忆不自动在本包解决"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·上蜂往事.txt",
+      "packageId": "MENTAL-PAST",
+      "title": "上蜂往事",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "八月候选；8月2／10／13–15／20仅图排，不与新约11的Y年当前框架同日重演",
+      "evidenceIds": [
+        "P08"
+      ],
+      "volumes": [
+        "新约魔法禁书目录11卷的回忆层；当前蜜蚁框架由其他包承载"
+      ],
+      "keywords": [
+        "上蜂往事",
+        "上蜂人工湖往事",
+        "死结往事",
+        "MENTAL-PAST",
+        "MENTAL-PAST-01"
+      ],
+      "entryNode": "MENTAL-PAST-01",
+      "nodeIds": [
+        "MENTAL-PAST-01",
+        "MENTAL-PAST-02",
+        "MENTAL-PAST-03",
+        "MENTAL-PAST-04",
+        "MENTAL-PAST-05",
+        "MENTAL-PAST-06",
+        "MENTAL-PAST-07"
+      ],
+      "nodeCount": 7,
+      "coverage": "partial",
+      "adaptationScope": "上蜂相识、求援哨子、死结追击和救援后无法记住食蜂的独立过去链；人工湖保留可选候选场景",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P08",
+          "nodeIds": [
+            "MENTAL-PAST-01",
+            "MENTAL-PAST-02",
+            "MENTAL-PAST-04",
+            "MENTAL-PAST-05",
+            "MENTAL-PAST-06",
+            "MENTAL-PAST-07"
+          ],
+          "basis": "社区NT11回忆年表支持相对链与默认记忆后果，原文章页未逐段取证"
+        },
+        {
+          "evidenceId": "P08",
+          "nodeIds": [
+            "MENTAL-PAST-03"
+          ],
+          "basis": "人工湖仅图排候选；湖畔玩家行动是项目串场，不支持落水、告白等原作断言"
+        }
+      ],
+      "remainingEvidence": [
+        "人工湖的原文位置、具体经过与各八月日期未核",
+        "相遇、死结与救援后果仍需NT11原文章页细化；不自造医学机制或额外失忆原因",
+        "与MENTAL-STINGER当前框架只共享历史事实，不能将过去追击在Y年再发生一次"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·生物黑客.txt",
+      "packageId": "BIOHACKER",
+      "title": "生物黑客篇",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "官方明示前一年、上条初三夏天；7月31日至八月初仅图排",
+      "evidenceIds": [
+        "P07"
+      ],
+      "volumes": [
+        "某科学的一方通行BD/DVD特典生物黑客篇",
+        "外典书库3再收录"
+      ],
+      "keywords": [
+        "生物黑客篇",
+        "生物黑客的巨龙",
+        "BIOHACKER",
+        "BIOHACKER-01"
+      ],
+      "entryNode": "BIOHACKER-01",
+      "nodeIds": [
+        "BIOHACKER-01",
+        "BIOHACKER-02",
+        "BIOHACKER-03",
+        "BIOHACKER-04",
+        "BIOHACKER-05",
+        "BIOHACKER-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "partial",
+      "adaptationScope": "官介支持三人相关相遇和巨物威胁；调查、保护选择、脱离与局部照护为项目改编，不代填小说终局",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P07",
+          "nodeIds": [
+            "BIOHACKER-01",
+            "BIOHACKER-02"
+          ],
+          "basis": "原载及外典3官介支持初三夏天、蜜蚁／云川和生物黑客造巨龙的开端"
+        }
+      ],
+      "remainingEvidence": [
+        "生物黑客制造者的完整身份、追击全因、终盘对决与原作结局未取章页",
+        "7月31日和八月初范围仅图排，不写成已证确日",
+        "BIOHACKER-03至BIOHACKER-06的局部调查与救援不视为未核原作后半的替代证据"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第一卷.txt",
+      "packageId": "ITEM-01",
+      "title": "ITEM第一卷·组队与委托疑云",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "七月候选，具体日未定；小说与漫画、动画改编的日期和细节不互相套用",
+      "evidenceIds": [
+        "P06"
+      ],
+      "volumes": [
+        "某暗部的少女共栖小说1",
+        "动画导入仅辅助核对华野超美身份，不替代小说章页"
+      ],
+      "keywords": [
+        "ITEM第一卷",
+        "少女共栖第一卷",
+        "ITEM组队委托",
+        "ITEM-01",
+        "ITEM-01-01"
+      ],
+      "entryNode": "ITEM-01-01",
+      "nodeIds": [
+        "ITEM-01-01",
+        "ITEM-01-02",
+        "ITEM-01-03",
+        "ITEM-01-04",
+        "ITEM-01-05",
+        "ITEM-01-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "partial",
+      "adaptationScope": "四人分工与相遇主题有官证；本包调查、埋伏、委托利用反转、拆局与四人汇报是项目改编的局部链",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P06",
+          "nodeIds": [
+            "ITEM-01-01"
+          ],
+          "basis": "小说官介支持四人分工与相遇主题；华野导入来自动画介绍，不能推全卷情节"
+        }
+      ],
+      "remainingEvidence": [
+        "七月逐日、组队的详细先后及华野超美小说全链未核",
+        "竞技场、敌对基地、女贞木小路、葬礼与汇报的章页及死亡对象未核",
+        "ITEM-01-02至ITEM-01-06是明示项目局部改编，不承诺小说全卷的调查与终局已经复刻"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第二卷.txt",
+      "packageId": "ITEM-02",
+      "title": "ITEM第二卷·蜂蜜女王",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "八月候选；图8月3–9及社区8月4–7的行动定位不等于全卷确切起讫",
+      "evidenceIds": [
+        "P09"
+      ],
+      "volumes": [
+        "某暗部的少女共栖小说2；不是独立心理掌握漫画"
+      ],
+      "keywords": [
+        "ITEM第二卷",
+        "蜂蜜女王事件",
+        "ハニークイーン",
+        "ITEM-02",
+        "ITEM-02-01"
+      ],
+      "entryNode": "ITEM-02-01",
+      "nodeIds": [
+        "ITEM-02-01",
+        "ITEM-02-02",
+        "ITEM-02-03",
+        "ITEM-02-04",
+        "ITEM-02-05",
+        "ITEM-02-06",
+        "ITEM-02-07"
+      ],
+      "nodeCount": 7,
+      "coverage": "partial",
+      "adaptationScope": "官介开端加社区中后段相对链；默认原主任死亡、蜂蜜女王瓦解，玩家可改写，未取得逐章完整证据",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P09",
+          "nodeIds": [
+            "ITEM-02-01",
+            "ITEM-02-02"
+          ],
+          "basis": "官介支持婚姻诈骗目标、能力开发人员受损、基地遇袭与原主任出现"
+        },
+        {
+          "evidenceId": "P09",
+          "nodeIds": [
+            "ITEM-02-03",
+            "ITEM-02-04",
+            "ITEM-02-05",
+            "ITEM-02-06",
+            "ITEM-02-07"
+          ],
+          "basis": "社区条目支持赌场→研究所→舍弃同伴→麦野反击→组织瓦解；不是一手章页"
+        }
+      ],
+      "remainingEvidence": [
+        "赌场与研究所之间的完整调查、战斗章页及整卷边界未核",
+        "Angelica研究全貌和DNA资料用途仅保留已证名称，不补造计划成效",
+        "原主任最终受反击前的预料外变故细节未核；泷壶介入协力能力者战与最终反击分开，不混写为同一场",
+        "鮎魚女キャロライン、太刀魚メアリー采用已见原文名，未自行确定中文译名"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第三卷.txt",
+      "packageId": "ITEM-03",
+      "title": "ITEM第三卷·夏末的竞争者",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "夏末有官介；8月29–31仅图排候选",
+      "evidenceIds": [
+        "P10"
+      ],
+      "volumes": [
+        "某暗部的少女共栖小说3"
+      ],
+      "keywords": [
+        "ITEM第三卷",
+        "夏末据点爆破事件",
+        "ITEM-03",
+        "ITEM-03-01"
+      ],
+      "entryNode": "ITEM-03-01",
+      "nodeIds": [
+        "ITEM-03-01",
+        "ITEM-03-02",
+        "ITEM-03-03",
+        "ITEM-03-04",
+        "ITEM-03-05",
+        "ITEM-03-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "partial",
+      "adaptationScope": "据点爆破、竞争者抢功与学校友人来讯有官介；具体对峙、分流保护和暂住安置为项目改编的局部收束",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P10",
+          "nodeIds": [
+            "ITEM-03-01",
+            "ITEM-03-02",
+            "ITEM-03-04"
+          ],
+          "basis": "官介支持夏末、据点受损、正义伙伴竞争者与表面学校友人联络"
+        }
+      ],
+      "remainingEvidence": [
+        "竞争者完整身份、爆破与抢功的全因果、交战顺序及小说结局未核",
+        "学校友人的姓名、处境及与家族情节的对应未核",
+        "ITEM-03-03及ITEM-03-05至ITEM-03-06为项目串场，暂住处落实不表示原作卷末已核"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第四卷.txt",
+      "packageId": "ITEM-04",
+      "title": "ITEM第四卷·新宿站的追责",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "秋初新学期有官介；9月1–2仅图排候选",
+      "evidenceIds": [
+        "P11"
+      ],
+      "volumes": [
+        "某暗部的少女共栖小说4"
+      ],
+      "keywords": [
+        "ITEM第四卷",
+        "新宿站芙兰达追责事件",
+        "ITEM-04",
+        "ITEM-04-01"
+      ],
+      "entryNode": "ITEM-04-01",
+      "nodeIds": [
+        "ITEM-04-01",
+        "ITEM-04-02",
+        "ITEM-04-03",
+        "ITEM-04-04",
+        "ITEM-04-05",
+        "ITEM-04-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "partial",
+      "adaptationScope": "新宿站失物与越墙处罚有官介；行程核验、暂缓处置与临时保护为项目局部改编",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P11",
+          "nodeIds": [
+            "ITEM-04-01",
+            "ITEM-04-03"
+          ],
+          "basis": "官介支持芙兰达在新宿站醒来、武器失踪和ITEM成为处罚威胁"
+        }
+      ],
+      "remainingEvidence": [
+        "麦野本家、亲属身份及全卷家族情节的映射未核，未编入默认真相",
+        "芙兰达出城原因、失物去向、幕后与原作处罚结局未核",
+        "ITEM-04-02、ITEM-04-04至ITEM-04-06为项目调查及短期安全收束，不替代小说后半"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第五卷.txt",
+      "packageId": "ITEM-05",
+      "title": "ITEM第五卷·大霸星祭药检疑案",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1",
+      "window": "大霸星祭有官介；9月17–21仅图排，不并入Y年旧约9–10祭典",
+      "evidenceIds": [
+        "P12"
+      ],
+      "volumes": [
+        "某暗部的少女共栖小说5"
+      ],
+      "keywords": [
+        "ITEM第五卷",
+        "前史大霸星祭药检疑案",
+        "ITEM-05",
+        "ITEM-05-01"
+      ],
+      "entryNode": "ITEM-05-01",
+      "nodeIds": [
+        "ITEM-05-01",
+        "ITEM-05-02",
+        "ITEM-05-03",
+        "ITEM-05-04",
+        "ITEM-05-05",
+        "ITEM-05-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "partial",
+      "adaptationScope": "异常自杀调查、芙兰达看妹妹比赛的愿望与泷壶干劲有官介；资料核验、保护和交接为项目局部链",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P12",
+          "nodeIds": [
+            "ITEM-05-01",
+            "ITEM-05-04"
+          ],
+          "basis": "官介支持药检负责人异常自杀、大霸星祭牵挂与泷壶反常积极"
+        }
+      ],
+      "remainingEvidence": [
+        "D子身份、与本卷及既有角色的映射未核，不能当成已登场凶手或已确认关系人",
+        "死亡原因、泷壶积极的完整理由、调查转折与原作卷末未核",
+        "ITEM-05-02至ITEM-05-03及ITEM-05-05至ITEM-05-06的资料保全与未解交接是项目改编，不宣称案件已按原作侦破"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第六卷.txt",
+      "packageId": "ITEM-06",
+      "title": "ITEM第六卷·秋日银行劫案",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "Y−1（图排与社区定位）",
+      "window": "官介仅秋日休息日；十月暂定，具体日未定",
+      "evidenceIds": [
+        "P14"
+      ],
+      "volumes": [
+        "某暗部的少女共栖小说6"
+      ],
+      "keywords": [
+        "ITEM第六卷",
+        "秋日银行劫案",
+        "ITEM-06",
+        "ITEM-06-01"
+      ],
+      "entryNode": "ITEM-06-01",
+      "nodeIds": [
+        "ITEM-06-01",
+        "ITEM-06-02",
+        "ITEM-06-03",
+        "ITEM-06-04",
+        "ITEM-06-05",
+        "ITEM-06-06"
+      ],
+      "nodeCount": 6,
+      "coverage": "partial",
+      "adaptationScope": "银行抢劫、受胁迫的一般人、绢旗带少女逃离有官介；传证、护送与临时安全为项目改编",
+      "evidenceNodeRanges": [
+        {
+          "evidenceId": "P14",
+          "nodeIds": [
+            "ITEM-06-01",
+            "ITEM-06-02",
+            "ITEM-06-03"
+          ],
+          "basis": "官介支持秋日银行开端及逃离转折；不证明十月或后半结局"
+        }
+      ],
+      "remainingEvidence": [
+        "十月只有暂定图排与社区定位，官介不确认月份或具体日",
+        "胁迫者、威胁手段、后续对决及原作队内处罚结果未核",
+        "ITEM-06-04至ITEM-06-06为明示项目改编的局部救援，不承诺全卷链或麦野最终谅解已核"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt",
+      "packageId": null,
+      "title": "前史与SS2节点索引",
+      "action": "add",
+      "stage": 0,
+      "yearLayer": "更早背景 / Y−1 / Y / 未定",
+      "window": "仅按已证时层和候选相对顺序检索；图排月日不触发事件，未定小节不凑日历",
+      "evidenceIds": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P11",
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "X01"
+      ],
+      "volumes": [
+        "禁书SS2逐小节题材索引",
+        "超炮一年级及学校前奏资料",
+        "ITEM1–6、生物黑客、NT11回忆的去向",
+        "超炮SS2俄罗斯旅行仅作品消歧",
+        "较早黄金旧史仅背景路由"
+      ],
+      "keywords": [
+        "前史与SS2节点索引",
+        "禁书SS2散点资料索引",
+        "黄金旧史背景索引"
+      ],
+      "entryNode": null,
+      "nodeIds": [],
+      "nodeCount": 0,
+      "coverage": "reference-only",
+      "adaptationScope": "不写状态、不抢主线；X01较早黄金只做背景，不新增早于才人工房的完整可玩篇；X02–06不在本组实施",
+      "referenceSections": [
+        {
+          "evidenceId": "P01",
+          "titles": [
+            "入学前·才人工房"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P02",
+          "titles": [
+            "入学与一年级生活"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P03",
+          "titles": [
+            "五月·生日礼物与指导"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P04",
+          "titles": [
+            "六月·派阀斗争未遂"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P05",
+          "titles": [
+            "暗黑五月计划背景"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P06",
+          "titles": [
+            "七月候选·ITEM第一卷"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P07",
+          "titles": [
+            "初三夏天·生物黑客"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P08",
+          "titles": [
+            "八月候选·上蜂往事"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P09",
+          "titles": [
+            "八月候选·ITEM第二卷蜂蜜女王"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P10",
+          "titles": [
+            "夏末·ITEM第三卷"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P11",
+          "titles": [
+            "秋初新学期·ITEM第四卷"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P12",
+          "titles": [
+            "前史大霸星祭·ITEM第五卷"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P13",
+          "titles": [
+            "十月候选·建派阀与旧案"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P14",
+          "titles": [
+            "秋日·ITEM第六卷"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "P15",
+          "titles": [
+            "冬季候选·绝对等速"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S01",
+          "titles": [
+            "一月候选·Skill-Out短篇"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S02",
+          "titles": [
+            "二月候选·神裂与牛仔裤切裂魔"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S03",
+          "titles": [
+            "二月候选·上条刀夜与魔草卖家"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S04",
+          "titles": [
+            "三月候选·第七位短篇"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S05",
+          "titles": [
+            "四月起·新学年续段"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S06",
+          "titles": [
+            "四月下旬候选·栅川学校前奏"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S07",
+          "titles": [
+            "四月候选·御坂旅挂与决意杀人的少女",
+            "四月候选·黑子与偷懒美容师",
+            "五月候选·没能成为魔神的温柔男子",
+            "五月候选·郭与半藏",
+            "六月候选·挑战初春的黑客少年"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S08",
+          "titles": [
+            "五月候选·生日与黑子入住",
+            "五月候选·妹妹9982诞生"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S09",
+          "titles": [
+            "六月候选·上条与美琴初遇"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S10",
+          "titles": [
+            "七月初候选·俄罗斯能力实演旅行"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "S11",
+          "titles": [
+            "七月候选·父亲们",
+            "七月候选·云川小节",
+            "七月候选·狙击手小节"
+          ],
+          "nodeIds": []
+        },
+        {
+          "evidenceId": "X01",
+          "titles": [
+            "黄金相关旧史",
+            "妹妹们的血型占卜",
+            "雪莉的新兴趣",
+            "滨面与绢旗的电影约会",
+            "未列明的SS2小节"
+          ],
+          "nodeIds": []
+        }
+      ],
+      "remainingEvidence": [
+        "禁书SS2各小节正式章名、页码、月日与Y年定位未逐节取原文；S01、S11父亲们及云川尤其只有图排标签",
+        "S07五小节分别有题材支持但日序仍为候选；血型占卜、雪莉与电影约会保留未定时层，不凑日期",
+        "学校前奏S06、S08及151–169细节仍未核；P13、P15仅线索，不计完整可玩覆盖",
+        "S10超炮SS2俄罗斯旅行仅消歧，完整包与X02–06交由科学外传组；1–3日整段起讫未逐章核",
+        "X01按本轮责任六列表补较早黄金reference-only背景；证据表旧X01还含其余散点，编号口径差异在清单说明而不改共享方案"
+      ]
+    }
+  ],
+  "coveragePolicy": {
+    "playable-chain": "指定局部范围有完整可玩链；项目原创链不计原作卷章覆盖，日期或精确页码缺口仍在remainingEvidence保留",
+    "partial": "有可玩节点，但原作链、身份或终局证据不全；不能将项目局部收束宣传成原作全卷复刻",
+    "reference-only": "只作资料与去向；nodeIds为空，不写状态、不抢主线、不计完整可玩事件",
+    "evidenceNodeRanges": "只列该证据实际支持的节点及限定；没有被映射的项目串场不视为已有原作证据；空数组用于明确排除错误对应",
+    "X01": "按用户最新六列表责任加入较早黄金reference-only背景；现证据表X01标题为其余SS2／SP／特典散点，本索引同时保留未定SS2题材，未改共享表且未实施X02–06",
+    "delivery": "14个世界书文件、13事件包、88主要节点；仅源码交接，注册、欢迎页、打包与宿主验收由统一集成处理"
+  },
+  "evidenceSources": [
+    {
+      "evidenceIds": [
+        "P01",
+        "P08"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-railgun-dolly-episode.txt",
+        ".agent-artifacts/magic-apr-jan-20260908/science/community-chronology-blog.txt"
+      ],
+      "supports": "官动简介支持幼年相识；社区年表支持夺取相对位置与NT11回忆链，不是精确日的一手证据"
+    },
+    {
+      "evidenceIds": [
+        "P02",
+        "P03",
+        "P04",
+        "P13",
+        "P15",
+        "S05",
+        "S06",
+        "S08",
+        "S09"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/railgun-wiki-live.txt"
+      ],
+      "supports": "社区条目只核一年级篇及人物学年背景；未取得151–169、剧院、武林或绝对等速逐话证据；日期来自证据表图读"
+    },
+    {
+      "evidenceIds": [
+        "P05"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-darkmatter.txt"
+      ],
+      "supports": "暗黑五月计划的背景身份，不证明6月30日，也不把当前营救重演到前史"
+    },
+    {
+      "evidenceIds": [
+        "P06"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item01.txt",
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item-anime.txt"
+      ],
+      "url": "https://dengekibunko.jp/product/index/322211000055.html",
+      "supports": "小说官介34–37行只证四人分工及相遇主题；华野来自动画导入，后半完整小说链未证"
+    },
+    {
+      "evidenceIds": [
+        "P07"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-accelerator-bd.txt",
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-archives03.txt"
+      ],
+      "supports": "原载与外典3官介支持前一年初三夏天、蜜蚁／云川及巨大生物威胁，不支持7月31日确日或全卷终局"
+    },
+    {
+      "evidenceIds": [
+        "P09"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item02.txt",
+        ".agent-artifacts/magic-apr-jan-20260908/science/community-honeyqueen-library.txt"
+      ],
+      "url": "https://dengekibunko.jp/product/index/322302001122.html",
+      "supports": "官介34–37行证任务开端；社区39–61行支持赌场、研究所、舍弃同伴、原主任死亡及组织瓦解的相对链；终战变故细节仍未核"
+    },
+    {
+      "evidenceIds": [
+        "P10"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item03.txt"
+      ],
+      "url": "https://dengekibunko.jp/product/index/322401000381.html",
+      "supports": "官介34行证夏末、据点爆破、正义伙伴竞争与表面学校友人联络；不证明完整敌人身份和卷末"
+    },
+    {
+      "evidenceIds": [
+        "P11"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item04.txt"
+      ],
+      "url": "https://dengekibunko.jp/product/index/322410000817.html",
+      "supports": "官介34–36行证秋初新宿站、武器失踪及ITEM处罚威胁；不证明麦野本家全链"
+    },
+    {
+      "evidenceIds": [
+        "P12"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item05.txt"
+      ],
+      "url": "https://dengekibunko.jp/product/index/322504000330.html",
+      "supports": "官介34–36行证祭典药检负责人异常自杀、芙兰达牵挂妹妹与泷壶积极；不证明D子身份和死因真相"
+    },
+    {
+      "evidenceIds": [
+        "P14"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/science/official-item06.txt",
+        ".agent-artifacts/magic-apr-jan-20260908/science/community-index-calendar.txt"
+      ],
+      "url": "https://dengekibunko.jp/product/index/322509000822.html",
+      "supports": "官介34–36行只证秋日银行、受胁迫一般人及绢旗带少女离开；前一年十月仍属图排／社区候选"
+    },
+    {
+      "evidenceIds": [
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S07",
+        "S11",
+        "X01"
+      ],
+      "cachePaths": [
+        ".agent-artifacts/magic-apr-jan-20260908/ss2-official.txt"
+      ],
+      "supports": "官介65行支持所列题材，不给图中日期、完整章序或更早黄金背景的细节证据；S01及S11部分小节仅图排"
+    },
+    {
+      "evidenceIds": [
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "P10",
+        "P11",
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "S01",
+        "S02",
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10",
+        "S11",
+        "X01"
+      ],
+      "cachePaths": [
+        "docs/魔禁剧情修改方案-四月至次年一月.md",
+        "docs/魔禁四月至次年一月-事件证据表.md",
+        ".planning/magic-apr-jan-20260908/research-science.md"
+      ],
+      "supports": "实施范围、图排候选与责任编号；不把方案或图表当作原文章页证明，X01更早历史只作背景"
+    }
+  ],
+  "crossReferences": [
+    {
+      "kind": "registration-handoff",
+      "packageIds": [
+        "TALENT-WORKSHOP",
+        "MENTAL-PAST",
+        "BIOHACKER",
+        "ITEM-01",
+        "ITEM-02",
+        "ITEM-03",
+        "ITEM-04",
+        "ITEM-05",
+        "ITEM-06"
+      ],
+      "entryNodes": [
+        "TALENT-WORKSHOP-01",
+        "MENTAL-PAST-01",
+        "BIOHACKER-01",
+        "ITEM-01-01",
+        "ITEM-02-01",
+        "ITEM-03-01",
+        "ITEM-04-01",
+        "ITEM-05-01",
+        "ITEM-06-01"
+      ],
+      "instruction": "主代理按files逐项增量注册和设置专属关键词；本组未改index、导航或锚点总览。九个新包阶段均0，不新增负数阶段或6.5。"
+    },
+    {
+      "kind": "dedicated-alias",
+      "targetPackageId": "TALENT-WORKSHOP",
+      "entryNode": "TALENT-WORKSHOP-01",
+      "aliases": [
+        "食蜂夺取人才工坊",
+        "食蜂夺取才人工房"
+      ],
+      "instruction": "两种自然输入只指向才人工房包；正文使用正名。不要用泛食蜂、才人工房或人物名同时触发其他前史包。"
+    },
+    {
+      "kind": "year-layer-deduplication",
+      "packageIds": [
+        "FIRST-YEAR",
+        "MIKOTO-PAST"
+      ],
+      "prehistoryNodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06"
+      ],
+      "handoffNodeIds": [
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "detailEntryNode": "MIKOTO-PAST-01",
+      "instruction": "FIRST-YEAR以Y−1为主体，后两节点只作Y年交接；MIKOTO-PAST承载Y年四月起未知长度续段。详细续段须明确换篇，不重复入学、生日、同室变化或雪紫离校，也不自动将另一包全部标完成。151–169仍partial。"
+    },
+    {
+      "kind": "past-current-split",
+      "sourcePackageId": "MENTAL-PAST",
+      "currentPackageId": "MENTAL-STINGER",
+      "relatedEvidenceIds": [
+        "P08",
+        "N10"
+      ],
+      "instruction": "过去八月候选与NT11当前蜜蚁框架分开；当前篇可按已知信息引用过去事实，不重演人工湖／死结或覆盖当前锚点。本组未改MENTAL-STINGER。"
+    },
+    {
+      "kind": "optional-successors",
+      "entryNodes": [
+        "ITEM-01-01",
+        "ITEM-02-01",
+        "ITEM-03-01",
+        "ITEM-04-01",
+        "ITEM-05-01",
+        "ITEM-06-01"
+      ],
+      "instruction": "ITEM1→2→3→4→5→6为候选相对阅读／亲历顺序；换卷须明确选择，不同轮连推，不把图排日窗变成自动时钟。第六卷之后同年冬季只走参考索引，进入Y年前奏须明确跨年。"
+    },
+    {
+      "kind": "work-identity",
+      "sourcePackageId": "ITEM-02",
+      "relatedEvidenceIds": [
+        "P09"
+      ],
+      "instruction": "蜂蜜女王只归ITEM2，既不是独立心理掌握漫画，也不是食蜂称号；独立心理掌握入口由科学外传组集成。"
+    },
+    {
+      "kind": "reference-only-registration",
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt",
+      "packageId": null,
+      "nodeIds": [],
+      "instruction": "只以专属索引关键词供查询，不把索引内所有包名批量展开或改写候选数组。P05、P13、P15及未核SS2小节保持参考边界；S07五小节、S08两题材、S11三小节分别保留。"
+    },
+    {
+      "kind": "earlier-history-background",
+      "relatedEvidenceIds": [
+        "X01"
+      ],
+      "instruction": "较早黄金等历史仅在前史与SS2索引做reference-only背景路由，供当前相关篇章按已知信息回顾，不新增比才人工房更早的完整可玩起点。X02–06不由本组修改。"
+    },
+    {
+      "kind": "science-owner-route",
+      "relatedEvidenceIds": [
+        "P05",
+        "S10"
+      ],
+      "targetTitles": [
+        "未元物质的当前年营救／争夺",
+        "超炮SS2俄罗斯能力实演旅行"
+      ],
+      "instruction": "仅保留过去背景／作品消歧去向，实际包ID和注册由科学外传组清单解析；本组没有修改其文件，也不计其完整可玩覆盖。"
+    },
+    {
+      "kind": "project-adaptation-not-canon-coverage",
+      "packageIds": [
+        "GEMSTONE",
+        "LEARNING-DEVICE"
+      ],
+      "entryNodes": [
+        "GEMSTONE-01",
+        "LEARNING-DEVICE-01"
+      ],
+      "instruction": "两旧包保留原ID及八节点分支，但作为Y年阶段0项目改编。不要拿它们填满SS2散点、原作学习技术或克隆前史的覆盖统计。"
+    },
+    {
+      "kind": "delivery-boundary",
+      "instruction": "欢迎页与HTML、PNG、dist、schema、MVU和脚本未纳入本组写集；不构建、导入、提交或推送。本清单只报告内容源码和有限静态检查，不能宣称宿主实机通过。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "receipt-schema",
+      "status": "passed",
+      "detail": "14个内容行均保留明确文件、覆盖级别、证据ID与节点范围。"
+    },
+    {
+      "name": "static-source-review",
+      "status": "passed",
+      "detail": "已核对声明文件、节点ID、注册目标与证据映射；宿主导入和运行验收不在本静态回执范围。"
+    }
+  ]
+}

@@ -1,0 +1,6513 @@
+{
+  "version": 1,
+  "generatedOn": "2026-09-08",
+  "sourceFiles": [
+    {
+      "path": "docs/魔禁四月至次年一月-事件证据表.md",
+      "sha256": "4f10131fa5cf3976dad1059177e3571887dc0d421e5ecc7a4453f72007eb6a90"
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/自定义开局/欢迎页.txt",
+      "sha256": "98a55cb3cd90d1e4a253aa8a9e627e60d086981441122834662b24da4eb29389"
+    },
+    {
+      "path": ".planning/magic-worldbook-implementation-20260908/evidence-mapping.json",
+      "sha256": "eb5e79dcbbe35c4f41792d489d48788af3071eae135ec27e8e514ddba115a063"
+    }
+  ],
+  "summary": {
+    "evidenceRows": 106,
+    "welcomeGroups": 39,
+    "welcomeScenes": 87,
+    "packages": 82,
+    "workerPackages": 78,
+    "legacyPackages": 4,
+    "nodes": 554,
+    "directMappedEvidence": 90,
+    "referenceOnlyEvidence": 16,
+    "evidenceWithCurrentWelcome": 58,
+    "evidenceWithoutCurrentWelcome": 48,
+    "semanticCorrections": 10
+  },
+  "semanticCorrections": [
+    {
+      "evidenceId": "S08",
+      "eventTitle": "美琴生日／黑子入住、9982诞生",
+      "oldPackageIds": [
+        "LEARNING-DEVICE"
+      ],
+      "correctedPackageIds": [
+        "ABSOLUTE-EVOLVE",
+        "FIRST-YEAR"
+      ]
+    },
+    {
+      "evidenceId": "S09",
+      "eventTitle": "上条与美琴初遇",
+      "oldPackageIds": [],
+      "correctedPackageIds": [
+        "FANTASY-HAND"
+      ]
+    },
+    {
+      "evidenceId": "S11",
+      "eventTitle": "SS2夏季散点",
+      "oldPackageIds": [
+        "GEMSTONE"
+      ],
+      "correctedPackageIds": []
+    },
+    {
+      "evidenceId": "O12",
+      "eventTitle": "新学期、风斩冰华与雪莉入侵",
+      "oldPackageIds": [
+        "ST0930"
+      ],
+      "correctedPackageIds": [
+        "KAZAKIRI"
+      ]
+    },
+    {
+      "evidenceId": "O17",
+      "eventTitle": "必要之恶教会特别编入考试",
+      "oldPackageIds": [
+        "BOOK-OF-LAW"
+      ],
+      "correctedPackageIds": [
+        "NECESSARIUS-EXAM"
+      ]
+    },
+    {
+      "evidenceId": "O28",
+      "eventTitle": "0930／前方之风、风斩与学园都市入侵",
+      "oldPackageIds": [
+        "SKILL-OUT"
+      ],
+      "correctedPackageIds": [
+        "ST0930"
+      ]
+    },
+    {
+      "evidenceId": "O32",
+      "eventTitle": "暗部大战 Battle Royale",
+      "oldPackageIds": [
+        "DRAGON"
+      ],
+      "correctedPackageIds": [
+        "DARK-BATTLE"
+      ]
+    },
+    {
+      "evidenceId": "O34",
+      "eventTitle": "后方之水",
+      "oldPackageIds": [
+        "BRITISH-ROYAL"
+      ],
+      "correctedPackageIds": [
+        "ACQUA"
+      ]
+    },
+    {
+      "evidenceId": "O35",
+      "eventTitle": "英国王室／不列颠万圣节",
+      "oldPackageIds": [
+        "WW3"
+      ],
+      "correctedPackageIds": [
+        "BRITISH-ROYAL"
+      ]
+    },
+    {
+      "evidenceId": "O37",
+      "eventTitle": "第三次世界大战",
+      "oldPackageIds": [
+        "DRAGON"
+      ],
+      "correctedPackageIds": [
+        "WW3"
+      ]
+    }
+  ],
+  "evidenceMappings": [
+    {
+      "evidenceId": "P01",
+      "eventTitle": "食蜂夺取才人工房（人才工坊）",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "顶部四月1–5合并格，与蜂琴入学同格",
+      "sourceWork": "超炮大霸星祭回忆；社区定位漫画9卷，精确话页未取",
+      "onlineSource": "[T第10话][dolly]官介；[食蜂人生表][misaki-life]社文",
+      "directPackageIds": [
+        "TALENT-WORKSHOP"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·才人工房.txt"
+      ],
+      "nodeIds": [
+        "TALENT-WORKSHOP-01",
+        "TALENT-WORKSHOP-02",
+        "TALENT-WORKSHOP-03",
+        "TALENT-WORKSHOP-04",
+        "TALENT-WORKSHOP-05",
+        "TALENT-WORKSHOP-06"
+      ],
+      "currentWorldbookWelcomeNote": "MIKOTO-PAST／FIRST-YEAR不是这件事已完整收录的证明；拟独立前史子链",
+      "conflictRuling": "**只采用“常盘台入学前的才人工房往事”**。四月是图排；社文列小学阶段。括号“大霸星祭”是回忆所在篇章，不是往事发生于九月；不写4/1–5连续夺取。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P02",
+      "eventTitle": "蜂琴入学与美琴一年级生活",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "顶部四月起",
+      "sourceWork": "超炮一年级篇，漫画17卷起；图封顶20卷／169话",
+      "onlineSource": "[超炮条目][railgun]社文；原图图例",
+      "directPackageIds": [
+        "FIRST-YEAR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+      ],
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR；W“美琴过去／一年级”入口；旧表E01–02",
+      "conflictRuling": "保留前一年学年层；撤销未经核实的“17–21卷完整终章”。不把入学、回忆触发与能力名号起点压成同一天。",
+      "currentWelcomeGroups": [
+        "3. 美琴一年级篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·5月",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·次期新学期",
+          "tag": "美琴一年级篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "P03",
+      "eventTitle": "雪紫生日礼物／支仓冷理指导",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 5/2；5/24–28合并格",
+      "sourceWork": "超炮一年级篇，节点话页待核",
+      "onlineSource": "[超炮条目][railgun]仅证篇章；日期与节点标签为图读",
+      "directPackageIds": [
+        "FIRST-YEAR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+      ],
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR拟补或重整子节点",
+      "conflictRuling": "可列过去篇目标；5/24–28不表示五天连续授课。现包节点先与漫画核对，不以图格补造对话与结局。",
+      "currentWelcomeGroups": [
+        "3. 美琴一年级篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·5月",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·次期新学期",
+          "tag": "美琴一年级篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "P04",
+      "eventTitle": "常盘台派阀斗争未遂",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 六月块",
+      "sourceWork": "超炮一年级篇；逐话待核",
+      "onlineSource": "[超炮条目][railgun]社文＋图读",
+      "directPackageIds": [
+        "FIRST-YEAR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+      ],
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR拟核节点",
+      "conflictRuling": "保留前史人际／派阀因果，未取正文前不锁具体日、不把当前年选举移入此处。",
+      "currentWelcomeGroups": [
+        "3. 美琴一年级篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·5月",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·次期新学期",
+          "tag": "美琴一年级篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "P05",
+      "eventTitle": "暗黑五月计划背景",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 6/30图格",
+      "sourceWork": "未元物质及相关人物前史；当前故事与实验回忆分开",
+      "onlineSource": "[未元物质官介][darkmatter]证计划与林檎身份",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "现暗部／角色设定有相关背景，完整事件链未证",
+      "conflictRuling": "“五月”是计划名，不是可以推导事件月的依据；6/30暂为图排。与O15的当前年营救／争夺不同层。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "P06",
+      "eventTitle": "ITEM组建、华野超美与委托阴谋",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 七月；图另列调查、竞技场、敌对基地、女贞木小路、葬礼及汇报",
+      "sourceWork": "ITEM小说1；动画改编另列",
+      "onlineSource": "[ITEM1][item1]官介；[ITEM官网][item-anime]证华野身份",
+      "directPackageIds": [
+        "ITEM-01"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第一卷.txt"
+      ],
+      "nodeIds": [
+        "ITEM-01-01",
+        "ITEM-01-02",
+        "ITEM-01-03",
+        "ITEM-01-04",
+        "ITEM-01-05",
+        "ITEM-01-06"
+      ],
+      "currentWorldbookWelcomeNote": "当前ITEM设定、DARK-BATTLE不等于前史小说全链；拟新增前史ITEM链",
+      "conflictRuling": "纳入从组队到委托反转、收束的目标；七月各日和华野全链尚未章页核验，不能把葬礼标签当死亡事实的全部证据。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P07",
+      "eventTitle": "生物黑客／上条、蜜蚁、云川的相遇",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 7/31至八月初",
+      "sourceWork": "《生物黑客篇》；科方BD/DVD特典；再收录外典书库3",
+      "onlineSource": "[外典3][bio]官介明确“一年前、上条初三的夏天”；[原载][bio-original]",
+      "directPackageIds": [
+        "BIOHACKER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·生物黑客.txt"
+      ],
+      "nodeIds": [
+        "BIOHACKER-01",
+        "BIOHACKER-02",
+        "BIOHACKER-03",
+        "BIOHACKER-04",
+        "BIOHACKER-05",
+        "BIOHACKER-06"
+      ],
+      "currentWorldbookWelcomeNote": "与NT11有关但不被MENTAL-STINGER自动覆盖；拟前史独立链",
+      "conflictRuling": "**前一年夏天已获官方支持**；7/31等日仍图排。按事件发生时点建入口，不并入当前年八月。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P08",
+      "eventTitle": "上蜂相遇、相处与死结往事",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 8/2初遇、8/10人工湖、8/13–15相处、8/20死结",
+      "sourceWork": "新约11的回忆层",
+      "onlineSource": "[NT11]官介；[食蜂人生表][misaki-life]社文",
+      "directPackageIds": [
+        "MENTAL-PAST"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·上蜂往事.txt"
+      ],
+      "nodeIds": [
+        "MENTAL-PAST-01",
+        "MENTAL-PAST-02",
+        "MENTAL-PAST-03",
+        "MENTAL-PAST-04",
+        "MENTAL-PAST-05",
+        "MENTAL-PAST-06",
+        "MENTAL-PAST-07"
+      ],
+      "currentWorldbookWelcomeNote": "MENTAL-STINGER需拆当前框架／往事层",
+      "conflictRuling": "过去链与N10共用事实，不重复发生；这些具体日是图排，不能因NT11当前入口在十一月就把回忆也挪到十一月。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P09",
+      "eventTitle": "蜂蜜女王",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 8/3–9图块",
+      "sourceWork": "**ITEM小说2**",
+      "onlineSource": "[ITEM2][item2]官介；[蜂蜜女王条目][honey]社文有8/4–7子节点",
+      "directPackageIds": [
+        "ITEM-02"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第二卷.txt"
+      ],
+      "nodeIds": [
+        "ITEM-02-01",
+        "ITEM-02-02",
+        "ITEM-02-03",
+        "ITEM-02-04",
+        "ITEM-02-05",
+        "ITEM-02-06",
+        "ITEM-02-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟接P06的ITEM前史链",
+      "conflictRuling": "**作品归属已核实，不是心理掌握漫画。** 社区子节点不能证明整卷只有4–7日，也不能反向坐实图块两端。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P10",
+      "eventTitle": "正义伙伴竞争者／正义篇",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 8/29–31",
+      "sourceWork": "ITEM小说3",
+      "onlineSource": "[ITEM3][item3]官介明确夏末、基地受袭及正义伙伴竞争者",
+      "directPackageIds": [
+        "ITEM-03"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第三卷.txt"
+      ],
+      "nodeIds": [
+        "ITEM-03-01",
+        "ITEM-03-02",
+        "ITEM-03-03",
+        "ITEM-03-04",
+        "ITEM-03-05",
+        "ITEM-03-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟补ITEM3任务链",
+      "conflictRuling": "夏末与题材可采用；29–31日逐章对应未证，不把整段改写成当前年暗部大战。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P11",
+      "eventTitle": "麦野本家／越墙与新宿事件候选",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 9/1–2图标签",
+      "sourceWork": "ITEM小说4候选映射；家族标签的章页待核",
+      "onlineSource": "[ITEM4][item4]官介证秋初新学期、新宿、无许可越墙",
+      "directPackageIds": [
+        "ITEM-04"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第四卷.txt"
+      ],
+      "nodeIds": [
+        "ITEM-04-01",
+        "ITEM-04-02",
+        "ITEM-04-03",
+        "ITEM-04-04",
+        "ITEM-04-05",
+        "ITEM-04-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟补ITEM4；不借旧约15顶替",
+      "conflictRuling": "正式方案保留卷4链；“麦野本家=全卷”和1–2日仍需原文，不能只凭书介补家族情节。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P12",
+      "eventTitle": "D子／前一年大霸星祭调查",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 九月中下旬，约17–21附近图块",
+      "sourceWork": "ITEM小说5候选映射",
+      "onlineSource": "[ITEM5][item5]官介证大霸星祭及药检负责人异常自杀调查",
+      "directPackageIds": [
+        "ITEM-05"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第五卷.txt"
+      ],
+      "nodeIds": [
+        "ITEM-05-01",
+        "ITEM-05-02",
+        "ITEM-05-03",
+        "ITEM-05-04",
+        "ITEM-05-05",
+        "ITEM-05-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟补ITEM5；与当前DAIHASEISAI分年",
+      "conflictRuling": "同为祭典但不是Y年旧约9–10。D子代号和细分日期未取原文；先用已证调查题材，不编造该代号身份。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P13",
+      "eventTitle": "食蜂建派阀、剧院失火、武林夜宫调查",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 十月上旬",
+      "sourceWork": "超炮一年级相关图块；各载体／话页待核；心理掌握3特装小说另立身份核查",
+      "onlineSource": "[超炮条目][railgun]、[心理掌握3特装版][mental-special]只证作品／附册，不证此全链日期",
+      "directPackageIds": [
+        "FIRST-YEAR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+      ],
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR等拟去重；不要重建第二个完全同名事件",
+      "conflictRuling": "图上“决定建派阀”、后续扩展及当前选举应区分；不能看到特装小说名称就认定剧院失火已逐节核验。",
+      "currentWelcomeGroups": [
+        "3. 美琴一年级篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·5月",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·次期新学期",
+          "tag": "美琴一年级篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "P14",
+      "eventTitle": "ITEM6秋日银行劫案",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 十月，**图自注暂定**",
+      "sourceWork": "ITEM小说6",
+      "onlineSource": "[ITEM6][item6]官介证秋日、绢旗与银行劫案；[社区进度表][calendar]写前一年十月",
+      "directPackageIds": [
+        "ITEM-06"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·ITEM第六卷.txt"
+      ],
+      "nodeIds": [
+        "ITEM-06-01",
+        "ITEM-06-02",
+        "ITEM-06-03",
+        "ITEM-06-04",
+        "ITEM-06-05",
+        "ITEM-06-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟补ITEM6独立任务段",
+      "conflictRuling": "纳入剧情目标；只锁前史秋季／十月候选，保留暂定。图与社区一致不等于拿到原文具体日。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "P15",
+      "eventTitle": "绝对等速事件",
+      "timeLayer": "Y−1及更早前史",
+      "originalImageDate": "Y−1 12/8–10图格",
+      "sourceWork": "超炮过去篇关联，精确话页／完整因果待核",
+      "onlineSource": "图读；[超炮条目][railgun]仅证一年级篇存在",
+      "directPackageIds": [
+        "FIRST-YEAR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+      ],
+      "nodeIds": [
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR拟核；不宣称已有完整链",
+      "conflictRuling": "留作前史待定位节点，先核事件身份再扩写；不按能力名自行创作一个“原著完整篇”。",
+      "currentWelcomeGroups": [
+        "3. 美琴一年级篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·5月",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·次期新学期",
+          "tag": "美琴一年级篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S01",
+      "eventTitle": "SS2的Skill-Out短篇",
+      "timeLayer": "Y年",
+      "originalImageDate": "中间一月1/19",
+      "sourceWork": "旧约SS2对应短篇，章节页待核",
+      "onlineSource": "[SS2官介][OTSS2]证分散短篇；具体日为图排",
+      "directPackageIds": [
+        "GEMSTONE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+      ],
+      "nodeIds": [
+        "GEMSTONE-01",
+        "GEMSTONE-02",
+        "GEMSTONE-03",
+        "GEMSTONE-04",
+        "GEMSTONE-05",
+        "GEMSTONE-06",
+        "GEMSTONE-07",
+        "GEMSTONE-08"
+      ],
+      "currentWorldbookWelcomeNote": "GEMSTONE／SS索引需逐节映射",
+      "conflictRuling": "与O29的旧约SS、10/3驹场利德事件不是同一篇。不能用现GEMSTONE的1/18替代此格。",
+      "currentWelcomeGroups": [
+        "1. 前史·原石拯救篇"
+      ],
+      "currentWelcomeSceneCount": 10,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "1月18日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "2月1日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "2月22日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "3月15日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "4月5日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "4月26日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "5月10日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "5月17日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "7月5日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "7月12日",
+          "tag": "前史·原石拯救篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S02",
+      "eventTitle": "牛仔裤短篇",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 2/2",
+      "sourceWork": "旧约SS2，神裂相关短篇",
+      "onlineSource": "[SS2官介][OTSS2]明确牛仔裤题材",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟补SS2短篇索引／可选节点",
+      "conflictRuling": "内容身份可采用；2/2仅图排，不把SS2出版日或星期校算当精确原文。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "S03",
+      "eventTitle": "上条刀夜短篇",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 2/23",
+      "sourceWork": "旧约SS2",
+      "onlineSource": "[SS2官介][OTSS2]证刀夜等角色",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟补SS2分散索引",
+      "conflictRuling": "保留独立小事件，不并成从一月持续到七月的单一原石战。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "S04",
+      "eventTitle": "削板军霸短篇／毕业过渡",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 3/15；三月毕业背景",
+      "sourceWork": "旧约SS2；毕业背景另分角色",
+      "onlineSource": "[SS2官介][OTSS2]；原图星期冲突注",
+      "directPackageIds": [
+        "GEMSTONE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+      ],
+      "nodeIds": [
+        "GEMSTONE-01",
+        "GEMSTONE-02",
+        "GEMSTONE-03",
+        "GEMSTONE-04",
+        "GEMSTONE-05",
+        "GEMSTONE-06",
+        "GEMSTONE-07",
+        "GEMSTONE-08"
+      ],
+      "currentWorldbookWelcomeNote": "GEMSTONE／过去篇入口待分拆",
+      "conflictRuling": "3/15的星期冲突可见保留；不据此强设2024公历年，也不把所有人的毕业写在同日。",
+      "currentWelcomeGroups": [
+        "1. 前史·原石拯救篇"
+      ],
+      "currentWelcomeSceneCount": 10,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "1月18日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "2月1日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "2月22日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "3月15日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "4月5日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "4月26日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "5月10日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "5月17日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "7月5日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "7月12日",
+          "tag": "前史·原石拯救篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S05",
+      "eventTitle": "美琴过去篇后半、雪紫离校",
+      "timeLayer": "Y年",
+      "originalImageDate": "第二个四月某日起，**持续时间未知**",
+      "sourceWork": "图标超炮151–169话；单行本与连载分别封顶",
+      "onlineSource": "[超炮条目][railgun]证一年级篇；精确范围来自图例",
+      "directPackageIds": [
+        "MIKOTO-PAST"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴过去.txt"
+      ],
+      "nodeIds": [
+        "MIKOTO-PAST-01",
+        "MIKOTO-PAST-02",
+        "MIKOTO-PAST-03",
+        "MIKOTO-PAST-04",
+        "MIKOTO-PAST-05",
+        "MIKOTO-PAST-06",
+        "MIKOTO-PAST-07",
+        "MIKOTO-PAST-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR／MIKOTO-PAST重整，欢迎页去重",
+      "conflictRuling": "采用进入新学年的前后关系，不给169话硬造某日；与黑子日记月份冲突并列记录，不能自称已裁尽原作。",
+      "currentWelcomeGroups": [
+        "2. 美琴过去篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 2,
+          "groupName": "美琴过去篇",
+          "date": "4月某日",
+          "tag": "美琴过去篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S06",
+      "eventTitle": "初春与佐天交友、栅川定向越野",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 四月下旬",
+      "sourceWork": "超炮相关学校前奏；具体话页待核",
+      "onlineSource": "图读；[超炮条目][railgun]只支持系列背景",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟补学校日常／人物关系前置，不强制另包",
+      "conflictRuling": "可作为待核前奏；不得以日期窗替代逐话证据，原创补场景须显式标记。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "S07",
+      "eventTitle": "SS2春季散点",
+      "timeLayer": "Y年",
+      "originalImageDate": "4/5御坂旅挂、4/26白井、5/10欧雷尔斯、5/24小郭、6/14初春",
+      "sourceWork": "旧约SS2各自短篇，不是单一连续篇",
+      "onlineSource": "[SS2官介][OTSS2]证人物与短篇集合",
+      "directPackageIds": [
+        "GEMSTONE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·原石拯救.txt"
+      ],
+      "nodeIds": [
+        "GEMSTONE-01",
+        "GEMSTONE-02",
+        "GEMSTONE-03",
+        "GEMSTONE-04",
+        "GEMSTONE-05",
+        "GEMSTONE-06",
+        "GEMSTONE-07",
+        "GEMSTONE-08"
+      ],
+      "currentWorldbookWelcomeNote": "GEMSTONE及SS索引逐节复核",
+      "conflictRuling": "为每个短篇建索引；月日为图排，不能凭同在SS2就归入原石包并称完整改编。",
+      "currentWelcomeGroups": [
+        "1. 前史·原石拯救篇"
+      ],
+      "currentWelcomeSceneCount": 10,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "1月18日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "2月1日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "2月22日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "3月15日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "4月5日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "4月26日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "5月10日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "5月17日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "7月5日",
+          "tag": "前史·原石拯救篇"
+        },
+        {
+          "groupIndex": 1,
+          "groupName": "前史·原石拯救篇",
+          "date": "7月12日",
+          "tag": "前史·原石拯救篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S08",
+      "eventTitle": "美琴生日／黑子入住、9982诞生",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 5/2、5/11",
+      "sourceWork": "超炮回忆与妹妹前史；逐节点话页待核",
+      "onlineSource": "图读；[超炮条目][railgun]与[官动][chronicle]提供篇章背景，不证明本行各日",
+      "directPackageIds": [
+        "FIRST-YEAR",
+        "ABSOLUTE-EVOLVE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·绝对能力者进化.txt",
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·美琴一年级篇.txt"
+      ],
+      "nodeIds": [
+        "ABSOLUTE-EVOLVE-01",
+        "ABSOLUTE-EVOLVE-02",
+        "ABSOLUTE-EVOLVE-03",
+        "ABSOLUTE-EVOLVE-04",
+        "ABSOLUTE-EVOLVE-05",
+        "ABSOLUTE-EVOLVE-06",
+        "ABSOLUTE-EVOLVE-07",
+        "ABSOLUTE-EVOLVE-08",
+        "FIRST-YEAR-01",
+        "FIRST-YEAR-02",
+        "FIRST-YEAR-03",
+        "FIRST-YEAR-04",
+        "FIRST-YEAR-05",
+        "FIRST-YEAR-06",
+        "FIRST-YEAR-07",
+        "FIRST-YEAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "FIRST-YEAR、ABSOLUTE-EVOLVE及W克隆前史",
+      "conflictRuling": "把生日／入住与实验背景分节点，避免前一年生日、当前生日重复串年；克隆诞生不等于当日已开始旧约3决战。",
+      "currentWelcomeGroups": [
+        "3. 美琴一年级篇",
+        "4. 妹妹们篇（克隆前史）",
+        "9. 妹妹篇·绝对能力进化"
+      ],
+      "currentWelcomeSceneCount": 8,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·5月",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 3,
+          "groupName": "美琴一年级篇",
+          "date": "一年级·次期新学期",
+          "tag": "美琴一年级篇"
+        },
+        {
+          "groupIndex": 4,
+          "groupName": "妹妹们篇（克隆前史）",
+          "date": "5月11日",
+          "tag": "妹妹们篇（克隆前史）"
+        },
+        {
+          "groupIndex": 4,
+          "groupName": "妹妹们篇（克隆前史）",
+          "date": "8月10日",
+          "tag": "妹妹们篇（克隆前史）"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月1日",
+          "tag": "妹妹篇·绝对能力进化"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月8日",
+          "tag": "妹妹篇·绝对能力进化"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月15日",
+          "tag": "妹妹篇·绝对能力进化"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月21日",
+          "tag": "妹妹篇·绝对能力进化"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S09",
+      "eventTitle": "上条与美琴初遇",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 6/17",
+      "sourceWork": "超炮／禁书关联前奏；具体媒介日证见旧表E04",
+      "onlineSource": "[官动][chronicle]；[超炮条目][railgun]",
+      "directPackageIds": [
+        "FANTASY-HAND"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·幻想御手.txt"
+      ],
+      "nodeIds": [
+        "FANTASY-HAND-01",
+        "FANTASY-HAND-02",
+        "FANTASY-HAND-03",
+        "FANTASY-HAND-04",
+        "FANTASY-HAND-05",
+        "FANTASY-HAND-06",
+        "FANTASY-HAND-07",
+        "FANTASY-HAND-08"
+      ],
+      "currentWorldbookWelcomeNote": "FANTASY-HAND欢迎页6/17入口",
+      "conflictRuling": "可以作为前奏入口；**不能以此把幻想御手主体定为5–6月或6/17开始全篇**。",
+      "currentWelcomeGroups": [
+        "5. 幻想御手篇"
+      ],
+      "currentWelcomeSceneCount": 6,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "6月17日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月10日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月11日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月16日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月17日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月18日",
+          "tag": "幻想御手篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S10",
+      "eventTitle": "俄罗斯能力实演旅行",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 7/1–3图块",
+      "sourceWork": "**超炮SS2**，再收录外典书库2",
+      "onlineSource": "[外典2][archives2]官介证篇名；[超炮条目][railgun]社文证7/1开端",
+      "directPackageIds": [
+        "RUSSIA-DEMONSTRATION"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·俄罗斯能力实演.txt"
+      ],
+      "nodeIds": [
+        "RUSSIA-DEMONSTRATION-01",
+        "RUSSIA-DEMONSTRATION-02",
+        "RUSSIA-DEMONSTRATION-03",
+        "RUSSIA-DEMONSTRATION-04",
+        "RUSSIA-DEMONSTRATION-05",
+        "RUSSIA-DEMONSTRATION-06",
+        "RUSSIA-DEMONSTRATION-07",
+        "RUSSIA-DEMONSTRATION-08"
+      ],
+      "currentWorldbookWelcomeNote": "拟补超炮外传链；不被GEMSTONE自动覆盖",
+      "conflictRuling": "与“禁书SS2”明确区分；7/1有社区正文支持，整段1–3日起讫未取得逐章原文。",
+      "currentWelcomeGroups": [
+        "6. 能力实演篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 6,
+          "groupName": "能力实演篇",
+          "date": "7月1日",
+          "tag": "能力实演篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "S11",
+      "eventTitle": "SS2夏季散点",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 7/5父亲们、7/12云川芹亚、7/26狙击手",
+      "sourceWork": "旧约SS2各短篇",
+      "onlineSource": "[SS2官介][OTSS2]；图读日期",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟补SS2索引，适合轻量可选事件",
+      "conflictRuling": "保持各自事件ID与触发条件，不让原石包名义上吞并所有短篇；后续散点见X01。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "O01",
+      "eventTitle": "幻想御手",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 七月中下旬",
+      "sourceWork": "超炮漫画1–3卷；动画一期1–12集含前奏",
+      "onlineSource": "[官动][chronicle]；[超炮条目][railgun]",
+      "directPackageIds": [
+        "FANTASY-HAND"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·幻想御手.txt"
+      ],
+      "nodeIds": [
+        "FANTASY-HAND-01",
+        "FANTASY-HAND-02",
+        "FANTASY-HAND-03",
+        "FANTASY-HAND-04",
+        "FANTASY-HAND-05",
+        "FANTASY-HAND-06",
+        "FANTASY-HAND-07",
+        "FANTASY-HAND-08"
+      ],
+      "currentWorldbookWelcomeNote": "FANTASY-HAND现写5–6月；W 6/17–7/18；旧表E04",
+      "conflictRuling": "**主体改回七月**；六月份相遇只能是前奏，不能把七月下旬行动从欢迎页范围截掉。",
+      "currentWelcomeGroups": [
+        "5. 幻想御手篇"
+      ],
+      "currentWelcomeSceneCount": 6,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "6月17日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月10日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月11日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月16日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月17日",
+          "tag": "幻想御手篇"
+        },
+        {
+          "groupIndex": 5,
+          "groupName": "幻想御手篇",
+          "date": "7月18日",
+          "tag": "幻想御手篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O02",
+      "eventTitle": "茵蒂克丝初遇、记忆危机",
+      "timeLayer": "Y年",
+      "originalImageDate": "7/19前奏、7/20初遇、七月末收束",
+      "sourceWork": "旧约1；禁书I 1–6集",
+      "onlineSource": "[OT01]官介；[官动][chronicle]给7/19–29",
+      "directPackageIds": [
+        "INDEX-FALL"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·禁书降临.txt"
+      ],
+      "nodeIds": [
+        "INDEX-FALL-01",
+        "INDEX-FALL-02",
+        "INDEX-FALL-03",
+        "INDEX-FALL-04",
+        "INDEX-FALL-05",
+        "INDEX-FALL-06",
+        "INDEX-FALL-07",
+        "INDEX-FALL-08"
+      ],
+      "currentWorldbookWelcomeNote": "INDEX-FALL现7/20–28；W 7/19–28；E05",
+      "conflictRuling": "初遇是7/20，不是9/1；前奏、救援与后日谈分开。7/28核心结束不等于所有后日谈结束。",
+      "currentWelcomeGroups": [
+        "7. 禁书降临篇"
+      ],
+      "currentWelcomeSceneCount": 5,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 7,
+          "groupName": "禁书降临篇",
+          "date": "7月19日",
+          "tag": "禁书降临篇"
+        },
+        {
+          "groupIndex": 7,
+          "groupName": "禁书降临篇",
+          "date": "7月20日",
+          "tag": "禁书降临篇"
+        },
+        {
+          "groupIndex": 7,
+          "groupName": "禁书降临篇",
+          "date": "7月21日",
+          "tag": "禁书降临篇"
+        },
+        {
+          "groupIndex": 7,
+          "groupName": "禁书降临篇",
+          "date": "7月24日",
+          "tag": "禁书降临篇"
+        },
+        {
+          "groupIndex": 7,
+          "groupName": "禁书降临篇",
+          "date": "7月28日",
+          "tag": "禁书降临篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O03",
+      "eventTitle": "大蜘蛛、OVA及动画日常散点",
+      "timeLayer": "Y年",
+      "originalImageDate": "原图夏季散点；本轮未逐项定日",
+      "sourceWork": "超炮动画原创／OVA／特典，须按媒介分索引",
+      "onlineSource": "[官动][chronicle]、[超炮条目][railgun]；逐集证据待补",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟作为动画可选支线；不是新小说主卷",
+      "conflictRuling": "保留原计划的动画原创目标，不能因漫画没有而删除；未审每集不声明“全部动画日常已对齐”。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "O04",
+      "eventTitle": "初春SP事件",
+      "timeLayer": "Y年",
+      "originalImageDate": "8/1",
+      "sourceWork": "SP初春篇，遥控车辆恐袭事件",
+      "onlineSource": "[超炮条目][railgun]社文明确8/1",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟补SP外传节点／索引",
+      "conflictRuling": "可采用社区支持的8/1并注明来源；不误归《超炮SS2》俄罗斯旅行。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "O05",
+      "eventTitle": "盛夏祭／白鳄部队",
+      "timeLayer": "Y年",
+      "originalImageDate": "8/2；8/3–5图块",
+      "sourceWork": "超炮PSP游戏相应剧情，路线／节点仍需细核",
+      "onlineSource": "[PSP官方商品][railgun-psp]只证媒介；日期及标签为图读",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟游戏分支入口；不强制进小说正史",
+      "conflictRuling": "分开日常与白鳄行动；不能用商品发售日证明故事日。精确路线未核前只建标记明确的候选索引。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "O06",
+      "eventTitle": "吸血杀手／三泽塾",
+      "timeLayer": "Y年",
+      "originalImageDate": "八月上旬",
+      "sourceWork": "旧约2；禁书I 7–9集",
+      "onlineSource": "[OT02]；[官动][chronicle]给8/8–9",
+      "directPackageIds": [
+        "DEEP-BLOOD"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·吸血杀手.txt"
+      ],
+      "nodeIds": [
+        "DEEP-BLOOD-01",
+        "DEEP-BLOOD-02",
+        "DEEP-BLOOD-03",
+        "DEEP-BLOOD-04",
+        "DEEP-BLOOD-05",
+        "DEEP-BLOOD-06",
+        "DEEP-BLOOD-07"
+      ],
+      "currentWorldbookWelcomeNote": "INDEX-FALL合并声明不能证明完整链；无同名独立包；E07",
+      "conflictRuling": "补三泽塾、姬神、奥雷欧斯等独立卷级链；先核现节点再决定拆包，不能把旧约2全塞在七月禁书篇日期内。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O07",
+      "eventTitle": "乱杂开放",
+      "timeLayer": "Y年",
+      "originalImageDate": "八月上旬，图／项目有8/10收束说法",
+      "sourceWork": "超炮一期动画原创后半",
+      "onlineSource": "[官动][chronicle]；E08",
+      "directPackageIds": [
+        "POLTERGEIST"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·乱雑開放.txt"
+      ],
+      "nodeIds": [
+        "POLTERGEIST-01",
+        "POLTERGEIST-02",
+        "POLTERGEIST-03",
+        "POLTERGEIST-04",
+        "POLTERGEIST-05",
+        "POLTERGEIST-06",
+        "POLTERGEIST-07",
+        "POLTERGEIST-08"
+      ],
+      "currentWorldbookWelcomeNote": "POLTERGEIST／W 8/2–10",
+      "conflictRuling": "保留动画分支；8/10不作为全媒介原作已证终点，主体与后日谈分别核日。",
+      "currentWelcomeGroups": [
+        "8. 乱雑開放篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 8,
+          "groupName": "乱雑開放篇",
+          "date": "8月2日",
+          "tag": "乱雑開放篇"
+        },
+        {
+          "groupIndex": 8,
+          "groupName": "乱雑開放篇",
+          "date": "8月6日",
+          "tag": "乱雑開放篇"
+        },
+        {
+          "groupIndex": 8,
+          "groupName": "乱雑開放篇",
+          "date": "8月10日",
+          "tag": "乱雑開放篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O08",
+      "eventTitle": "妹妹调查／绝对能力者进化",
+      "timeLayer": "Y年",
+      "originalImageDate": "八月中下旬，8/21决战",
+      "sourceWork": "旧约3；超炮4–7卷，S 1–16集",
+      "onlineSource": "[OT03]；[官动][chronicle]；[超炮条目][railgun]",
+      "directPackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·绝对能力者进化.txt"
+      ],
+      "nodeIds": [
+        "ABSOLUTE-EVOLVE-01",
+        "ABSOLUTE-EVOLVE-02",
+        "ABSOLUTE-EVOLVE-03",
+        "ABSOLUTE-EVOLVE-04",
+        "ABSOLUTE-EVOLVE-05",
+        "ABSOLUTE-EVOLVE-06",
+        "ABSOLUTE-EVOLVE-07",
+        "ABSOLUTE-EVOLVE-08"
+      ],
+      "currentWorldbookWelcomeNote": "ABSOLUTE-EVOLVE现延至31日；W 8/1–21；E09",
+      "conflictRuling": "拆克隆前史、超炮调查、上条对一方、8/22中止通知；不把8/31最后之作当实验主战仍在继续。",
+      "currentWelcomeGroups": [
+        "4. 妹妹们篇（克隆前史）",
+        "9. 妹妹篇·绝对能力进化"
+      ],
+      "currentWelcomeSceneCount": 6,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 4,
+          "groupName": "妹妹们篇（克隆前史）",
+          "date": "5月11日",
+          "tag": "妹妹们篇（克隆前史）"
+        },
+        {
+          "groupIndex": 4,
+          "groupName": "妹妹们篇（克隆前史）",
+          "date": "8月10日",
+          "tag": "妹妹们篇（克隆前史）"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月1日",
+          "tag": "妹妹篇·绝对能力进化"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月8日",
+          "tag": "妹妹篇·绝对能力进化"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月15日",
+          "tag": "妹妹篇·绝对能力进化"
+        },
+        {
+          "groupIndex": 9,
+          "groupName": "妹妹篇·绝对能力进化",
+          "date": "8月21日",
+          "tag": "妹妹篇·绝对能力进化"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O09",
+      "eventTitle": "静默派对",
+      "timeLayer": "Y年",
+      "originalImageDate": "图排8/22–27",
+      "sourceWork": "超炮S动画原创后半",
+      "onlineSource": "[官动][chronicle]写**八月下旬至九月上旬**",
+      "directPackageIds": [
+        "SILENT-PARTY"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·静默派对.txt"
+      ],
+      "nodeIds": [
+        "SILENT-PARTY-01",
+        "SILENT-PARTY-02",
+        "SILENT-PARTY-03",
+        "SILENT-PARTY-04",
+        "SILENT-PARTY-05",
+        "SILENT-PARTY-06",
+        "SILENT-PARTY-07",
+        "SILENT-PARTY-08"
+      ],
+      "currentWorldbookWelcomeNote": "SILENT-PARTY／W采用图窗；E10",
+      "conflictRuling": "**跨媒介／整合冲突保留**；可选动画分支，不宣称8/27是所有版本的正史终点。",
+      "currentWelcomeGroups": [
+        "10. 静默派对篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 10,
+          "groupName": "静默派对篇",
+          "date": "8月22日",
+          "tag": "静默派对篇"
+        },
+        {
+          "groupIndex": 10,
+          "groupName": "静默派对篇",
+          "date": "8月24日",
+          "tag": "静默派对篇"
+        },
+        {
+          "groupIndex": 10,
+          "groupName": "静默派对篇",
+          "date": "8月27日",
+          "tag": "静默派对篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O10",
+      "eventTitle": "天使坠落",
+      "timeLayer": "Y年",
+      "originalImageDate": "8/27前奏、8/28–30事态与后日谈",
+      "sourceWork": "旧约4；禁书I 15–17集",
+      "onlineSource": "[OT04]；[官动][chronicle]",
+      "directPackageIds": [
+        "ANGEL-FALL"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·天使坠落.txt"
+      ],
+      "nodeIds": [
+        "ANGEL-FALL-01",
+        "ANGEL-FALL-02",
+        "ANGEL-FALL-03",
+        "ANGEL-FALL-04",
+        "ANGEL-FALL-05",
+        "ANGEL-FALL-06",
+        "ANGEL-FALL-07",
+        "ANGEL-FALL-08"
+      ],
+      "currentWorldbookWelcomeNote": "ANGEL-FALL核心28–29；W把28–31合组；E11",
+      "conflictRuling": "全篇与核心分层；8/31另归O11。科方故事是在之后衔接，不嵌套进海边事件。",
+      "currentWelcomeGroups": [
+        "11. 天使坠落·最后之作篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 11,
+          "groupName": "天使坠落·最后之作篇",
+          "date": "8月28日",
+          "tag": "天使坠落篇"
+        },
+        {
+          "groupIndex": 11,
+          "groupName": "天使坠落·最后之作篇",
+          "date": "8月31日",
+          "tag": "天使坠落·最后之作篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O11",
+      "eventTitle": "最后之作／天井亚雄、艾扎力、闇咲逢魔三线",
+      "timeLayer": "Y年",
+      "originalImageDate": "8/31独立块；最后之作前奏可接8/30深夜",
+      "sourceWork": "旧约5；禁书I 18–20集及II 1集",
+      "onlineSource": "[OT05]；[官动][chronicle]",
+      "directPackageIds": [
+        "AUGUST-31"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·八月三十一日.txt"
+      ],
+      "nodeIds": [
+        "AUGUST-31-01",
+        "AUGUST-31-02",
+        "AUGUST-31-03",
+        "AUGUST-31-04",
+        "AUGUST-31-05",
+        "AUGUST-31-06",
+        "AUGUST-31-07",
+        "AUGUST-31-08",
+        "AUGUST-31-09"
+      ],
+      "currentWorldbookWelcomeNote": "无同名独立包；W有8/31最后之作入口；E12",
+      "conflictRuling": "**优先补成清楚的三视角链**，不是只有最后之作一条；与天使坠落、使徒十字均分开。",
+      "currentWelcomeGroups": [
+        "11. 天使坠落·最后之作篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 11,
+          "groupName": "天使坠落·最后之作篇",
+          "date": "8月28日",
+          "tag": "天使坠落篇"
+        },
+        {
+          "groupIndex": 11,
+          "groupName": "天使坠落·最后之作篇",
+          "date": "8月31日",
+          "tag": "天使坠落·最后之作篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O12",
+      "eventTitle": "新学期、风斩冰华与雪莉入侵",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/1",
+      "sourceWork": "旧约6；禁书I 21–24集",
+      "onlineSource": "[OT06]；[官动][chronicle]",
+      "directPackageIds": [
+        "KAZAKIRI"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·风斩冰华.txt"
+      ],
+      "nodeIds": [
+        "KAZAKIRI-01",
+        "KAZAKIRI-02",
+        "KAZAKIRI-03",
+        "KAZAKIRI-04",
+        "KAZAKIRI-05",
+        "KAZAKIRI-06",
+        "KAZAKIRI-07"
+      ],
+      "currentWorldbookWelcomeNote": "W有雪莉入口；ANGEL-FALL的合并说明不等于完整覆盖；E13",
+      "conflictRuling": "单列旧约6；“9/1开学”不再写成茵蒂克丝初遇。",
+      "currentWelcomeGroups": [
+        "13. 雪莉袭击篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 13,
+          "groupName": "雪莉袭击篇",
+          "date": "9月1日",
+          "tag": "雪莉袭击篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O13",
+      "eventTitle": "学艺都市",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/3–6图块",
+      "sourceWork": "超炮SS；再收录外典书库2",
+      "onlineSource": "[外典2][archives2]官介；[超炮条目][railgun]社文证9/3开端",
+      "directPackageIds": [
+        "LIBERAL-ARTS-CITY"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·学艺都市.txt"
+      ],
+      "nodeIds": [
+        "LIBERAL-ARTS-CITY-01",
+        "LIBERAL-ARTS-CITY-02",
+        "LIBERAL-ARTS-CITY-03",
+        "LIBERAL-ARTS-CITY-04",
+        "LIBERAL-ARTS-CITY-05",
+        "LIBERAL-ARTS-CITY-06",
+        "LIBERAL-ARTS-CITY-07",
+        "LIBERAL-ARTS-CITY-08"
+      ],
+      "currentWorldbookWelcomeNote": "拟补海外外传链",
+      "conflictRuling": "与俄罗斯实演分篇；3–6日全程仍为社区／图整合，不以一条开端日证明所有边界。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O14",
+      "eventTitle": "死灵术师",
+      "timeLayer": "Y年",
+      "originalImageDate": "图排约9/6–9",
+      "sourceWork": "科方漫画1–7卷交界；动画覆盖前弧",
+      "onlineSource": "[科方条目][accelerator]社文；[官动][chronicle]仅证九月上旬",
+      "directPackageIds": [
+        "NECROMANCER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·死灵术师.txt"
+      ],
+      "nodeIds": [
+        "NECROMANCER-01",
+        "NECROMANCER-02",
+        "NECROMANCER-03",
+        "NECROMANCER-04",
+        "NECROMANCER-05",
+        "NECROMANCER-06",
+        "NECROMANCER-07",
+        "NECROMANCER-08"
+      ],
+      "currentWorldbookWelcomeNote": "NECROMANCER／W现9/1–8；E14",
+      "conflictRuling": "内容保留并核节点；先采用九月上旬，图窗另列。不能把“上旬”直接变成确证9/6或9/9。",
+      "currentWelcomeGroups": [
+        "12. 死灵术师篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 12,
+          "groupName": "死灵术师篇",
+          "date": "9月1日",
+          "tag": "死灵术师篇"
+        },
+        {
+          "groupIndex": 12,
+          "groupName": "死灵术师篇",
+          "date": "9月4日",
+          "tag": "死灵术师篇"
+        },
+        {
+          "groupIndex": 12,
+          "groupName": "死灵术师篇",
+          "date": "9月8日",
+          "tag": "死灵术师篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O15",
+      "eventTitle": "未元物质／杠林檎",
+      "timeLayer": "Y年",
+      "originalImageDate": "图排9/7–9",
+      "sourceWork": "独立漫画1卷4话",
+      "onlineSource": "[未元物质官介][darkmatter]；[社区进度表][calendar]第4话为**约9/8**",
+      "directPackageIds": [
+        "DARK-MATTER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·未元物质.txt"
+      ],
+      "nodeIds": [
+        "DARK-MATTER-01",
+        "DARK-MATTER-02",
+        "DARK-MATTER-03",
+        "DARK-MATTER-04",
+        "DARK-MATTER-05",
+        "DARK-MATTER-06"
+      ],
+      "currentWorldbookWelcomeNote": "DARK-BATTLE及垣根设定不能代替整篇；拟独立外传链",
+      "conflictRuling": "补垣根、林檎、演算模式数据与追逐者链；社区进度日不是全篇唯一日，计划名“五月”不是发生月。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O16",
+      "eventTitle": "法之书／奥索拉",
+      "timeLayer": "Y年",
+      "originalImageDate": "图排9/8–9附近",
+      "sourceWork": "旧约7；禁书II 2–5集",
+      "onlineSource": "[OT07]；[官动][chronicle]",
+      "directPackageIds": [
+        "BOOK-OF-LAW"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·法之书.txt"
+      ],
+      "nodeIds": [
+        "BOOK-OF-LAW-01",
+        "BOOK-OF-LAW-02",
+        "BOOK-OF-LAW-03",
+        "BOOK-OF-LAW-04",
+        "BOOK-OF-LAW-05",
+        "BOOK-OF-LAW-06",
+        "BOOK-OF-LAW-07"
+      ],
+      "currentWorldbookWelcomeNote": "W有9/8入口；无独立同名包；E15",
+      "conflictRuling": "补清奥索拉、天草式、雅妮丝部队的因果与收束；与9/19祭典不能只靠同一阶段合并。",
+      "currentWelcomeGroups": [
+        "14. 法之书篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 14,
+          "groupName": "法之书篇",
+          "date": "9月8日",
+          "tag": "法之书篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O17",
+      "eventTitle": "必要之恶教会特别编入考试",
+      "timeLayer": "Y年",
+      "originalImageDate": "图排9/11–12",
+      "sourceWork": "特别编入考试篇；外典书库1",
+      "onlineSource": "[官方全文第一回][necessarius]正文写**“九月上旬”**、法之书事件刚发生；[官方目录][archives1]",
+      "directPackageIds": [
+        "NECESSARIUS-EXAM"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·特别编入考试.txt"
+      ],
+      "nodeIds": [
+        "NECESSARIUS-EXAM-01",
+        "NECESSARIUS-EXAM-02",
+        "NECESSARIUS-EXAM-03",
+        "NECESSARIUS-EXAM-04",
+        "NECESSARIUS-EXAM-05",
+        "NECESSARIUS-EXAM-06",
+        "NECESSARIUS-EXAM-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟接O16的外传链",
+      "conflictRuling": "**新增明确冲突**：先采用“法之书后、九月上旬”的原文关系；保留图11–12日但不硬锁。也不为了符合上旬擅改成9/10。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O18",
+      "eventTitle": "Road to Endymion／群奏活剧相关路线",
+      "timeLayer": "Y年",
+      "originalImageDate": "图有9/10–14相关块",
+      "sourceWork": "剧场版前传小说；游戏魔术表路线与其他路线分别登记",
+      "onlineSource": "[外典1目录][archives1]证前传在祭典前；[剧场版条目][endymion-wiki]证对应魔术表路线",
+      "directPackageIds": [],
+      "relatedPackageIds": [
+        "ENDEYMION"
+      ],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "ENDEYMION前传9/10–12、W群奏9/12；E16",
+      "conflictRuling": "作品关系已收敛，但不能用一篇小说代替游戏全部路线；各路线日期仍不统一硬裁。",
+      "currentWelcomeGroups": [
+        "15. 群奏活剧篇",
+        "17. 恩底弥翁篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 15,
+          "groupName": "群奏活剧篇",
+          "date": "9月12日",
+          "tag": "群奏活剧篇"
+        },
+        {
+          "groupIndex": 17,
+          "groupName": "恩底弥翁篇",
+          "date": "9月18日",
+          "tag": "恩底弥翁篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "O19",
+      "eventTitle": "神之饮物 Nectar",
+      "timeLayer": "Y年",
+      "originalImageDate": "图排约9/13–14",
+      "sourceWork": "科方漫画7–12卷，卷7有交界；动画未覆盖后弧",
+      "onlineSource": "[科方条目][accelerator]证前弧解决后",
+      "directPackageIds": [
+        "NECTAR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·神之饮物.txt"
+      ],
+      "nodeIds": [
+        "NECTAR-01",
+        "NECTAR-02",
+        "NECTAR-03",
+        "NECTAR-04",
+        "NECTAR-05",
+        "NECTAR-06",
+        "NECTAR-07",
+        "NECTAR-08"
+      ],
+      "currentWorldbookWelcomeNote": "**NECTAR包已存在**，现9/9–14；W无独立组；E17",
+      "conflictRuling": "保留现包而非重建“缺失后半”；补核心链与前后衔接，精确日待核，末话残骸桥另记。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O20",
+      "eventTitle": "树状图设计者残骸",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/14附近",
+      "sourceWork": "旧约8；禁书II 6–7集；科方末段为关联视角",
+      "onlineSource": "[OT08]；[官动][chronicle]",
+      "directPackageIds": [
+        "TREE-DIAGRAM-REMNANT"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·树状图残骸.txt"
+      ],
+      "nodeIds": [
+        "TREE-DIAGRAM-REMNANT-01",
+        "TREE-DIAGRAM-REMNANT-02",
+        "TREE-DIAGRAM-REMNANT-03",
+        "TREE-DIAGRAM-REMNANT-04",
+        "TREE-DIAGRAM-REMNANT-05",
+        "TREE-DIAGRAM-REMNANT-06",
+        "TREE-DIAGRAM-REMNANT-07"
+      ],
+      "currentWorldbookWelcomeNote": "W有9/14入口；旧账本错误吞入祭典包；E18",
+      "conflictRuling": "建独立卷级节点，黑子、结标与残骸争夺在祭典之前；不把科方末话转场写成另一次同名事件。",
+      "currentWelcomeGroups": [
+        "16. 树状图残骸篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 16,
+          "groupName": "树状图残骸篇",
+          "date": "9月14日",
+          "tag": "树状图残骸篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O21",
+      "eventTitle": "恩底弥翁剧场版本篇",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/15–18",
+      "sourceWork": "《恩底弥翁的奇迹》",
+      "onlineSource": "[官动][chronicle]直接支持本篇窗",
+      "directPackageIds": [
+        "ENDEYMION"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·恩底弥翁.txt"
+      ],
+      "nodeIds": [
+        "ENDEYMION-01",
+        "ENDEYMION-02",
+        "ENDEYMION-03",
+        "ENDEYMION-04",
+        "ENDEYMION-05",
+        "ENDEYMION-06",
+        "ENDEYMION-07",
+        "ENDEYMION-08"
+      ],
+      "currentWorldbookWelcomeNote": "ENDEYMION本篇已正确；W 9/18精选入口；E19",
+      "conflictRuling": "保留已正确本篇；9/18是精选节点，不是全片唯一日。前传的证据不足不连带否定本篇日期。",
+      "currentWelcomeGroups": [
+        "15. 群奏活剧篇",
+        "17. 恩底弥翁篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 15,
+          "groupName": "群奏活剧篇",
+          "date": "9月12日",
+          "tag": "群奏活剧篇"
+        },
+        {
+          "groupIndex": 17,
+          "groupName": "恩底弥翁篇",
+          "date": "9月18日",
+          "tag": "恩底弥翁篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O22",
+      "eventTitle": "大霸星祭七日背景",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/19–25",
+      "sourceWork": "旧约9–10与超炮7–10卷共享背景",
+      "onlineSource": "[祭典官网][festival]；[官动][chronicle]",
+      "directPackageIds": [
+        "DAIHASEISAI"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大霸星祭.txt"
+      ],
+      "nodeIds": [
+        "DAIHASEISAI-01",
+        "DAIHASEISAI-02",
+        "DAIHASEISAI-03",
+        "DAIHASEISAI-04",
+        "DAIHASEISAI-05",
+        "DAIHASEISAI-06",
+        "DAIHASEISAI-07",
+        "DAIHASEISAI-08",
+        "DAIHASEISAI-09",
+        "DAIHASEISAI-10",
+        "DAIHASEISAI-11"
+      ],
+      "currentWorldbookWelcomeNote": "DAIHASEISAI、祭典支线；W 19–20精选；E20",
+      "conflictRuling": "保留七日校园活动；不把每场阴谋都拉长七日。欢迎页可以只选两日，但要标“精选入口”。",
+      "currentWelcomeGroups": [
+        "18. 大霸星祭篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 18,
+          "groupName": "大霸星祭篇",
+          "date": "9月19日",
+          "tag": "大霸星祭篇"
+        },
+        {
+          "groupIndex": 18,
+          "groupName": "大霸星祭篇",
+          "date": "9月20日",
+          "tag": "大霸星祭篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O23",
+      "eventTitle": "使徒十字",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/19–20相关格",
+      "sourceWork": "旧约9–10；禁书II 8–13集",
+      "onlineSource": "[OT09]、[OT10]；[官动][chronicle]证19夜失败、20未明后续",
+      "directPackageIds": [
+        "ST-CROSS"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·使徒十字.txt"
+      ],
+      "nodeIds": [
+        "ST-CROSS-01",
+        "ST-CROSS-02",
+        "ST-CROSS-03",
+        "ST-CROSS-04",
+        "ST-CROSS-05",
+        "ST-CROSS-06",
+        "ST-CROSS-07",
+        "ST-CROSS-08"
+      ],
+      "currentWorldbookWelcomeNote": "ST-CROSS及导航／总览仍有9/25闭幕夜；E21",
+      "conflictRuling": "**改成9/19主体、9/20凌晨余波**。烟花遮星不是9/25闭幕；保留丽多薇雅、欧莉安娜身份纠错。",
+      "currentWelcomeGroups": [
+        "18. 大霸星祭篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 18,
+          "groupName": "大霸星祭篇",
+          "date": "9月19日",
+          "tag": "大霸星祭篇"
+        },
+        {
+          "groupIndex": 18,
+          "groupName": "大霸星祭篇",
+          "date": "9月20日",
+          "tag": "大霸星祭篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O24",
+      "eventTitle": "超炮大霸星祭／警策、木原幻生与美琴异变",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/19开幕及翌日后续；背景至25日",
+      "sourceWork": "超炮漫画7–10卷；T 1–15集",
+      "onlineSource": "[超炮条目][railgun]；[官动][chronicle]",
+      "directPackageIds": [
+        "DAIHASEISAI"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大霸星祭.txt"
+      ],
+      "nodeIds": [
+        "DAIHASEISAI-01",
+        "DAIHASEISAI-02",
+        "DAIHASEISAI-03",
+        "DAIHASEISAI-04",
+        "DAIHASEISAI-05",
+        "DAIHASEISAI-06",
+        "DAIHASEISAI-07",
+        "DAIHASEISAI-08",
+        "DAIHASEISAI-09",
+        "DAIHASEISAI-10",
+        "DAIHASEISAI-11"
+      ],
+      "currentWorldbookWelcomeNote": "DAIHASEISAI多线包；W 19–20；E22",
+      "conflictRuling": "与O23、祭典日常共用日历但分目标、参与者和结局；食蜂的过去回忆链接P01，不能重复发生夺取工房。",
+      "currentWelcomeGroups": [
+        "18. 大霸星祭篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 18,
+          "groupName": "大霸星祭篇",
+          "date": "9月19日",
+          "tag": "大霸星祭篇"
+        },
+        {
+          "groupIndex": 18,
+          "groupName": "大霸星祭篇",
+          "date": "9月20日",
+          "tag": "大霸星祭篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O25",
+      "eventTitle": "亚得里亚海女王",
+      "timeLayer": "Y年",
+      "originalImageDate": "九月下旬，27日前后行动",
+      "sourceWork": "旧约11；禁书II 14–16集",
+      "onlineSource": "[OT11]；[官动][chronicle]证9/25中奖、27行动",
+      "directPackageIds": [
+        "ADRIA"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·亚得里亚海女王.txt"
+      ],
+      "nodeIds": [
+        "ADRIA-01",
+        "ADRIA-02",
+        "ADRIA-03",
+        "ADRIA-04",
+        "ADRIA-05"
+      ],
+      "currentWorldbookWelcomeNote": "ADRIA包已存在；E23",
+      "conflictRuling": "细化中奖、赴意大利、船队事态及收束；撤销“旧约11零覆盖”，也不把25日祭典闭幕当海战日。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O26",
+      "eventTitle": "天赋梦路／芙兰达与猎虎桥",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/26起跨十月；猎虎死亡约10/6为图排",
+      "sourceWork": "超炮漫画11–13卷；T 16–25集",
+      "onlineSource": "[超炮条目][railgun]；旧表E24",
+      "directPackageIds": [
+        "DREAM-RANKER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·天赋梦路.txt"
+      ],
+      "nodeIds": [
+        "DREAM-RANKER-01",
+        "DREAM-RANKER-02",
+        "DREAM-RANKER-03",
+        "DREAM-RANKER-04",
+        "DREAM-RANKER-05",
+        "DREAM-RANKER-06",
+        "DREAM-RANKER-07",
+        "DREAM-RANKER-08",
+        "DREAM-RANKER-09"
+      ],
+      "currentWorldbookWelcomeNote": "DREAM-RANKER有DR-07b；W 9/22入口",
+      "conflictRuling": "保留跨月修复；9/22只能是预热／项目窗。桥段与10/9暗部大战不能同日化，10/6不冒称原文明示。",
+      "currentWelcomeGroups": [
+        "19. 天赋梦路篇"
+      ],
+      "currentWelcomeSceneCount": 4,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 19,
+          "groupName": "天赋梦路篇",
+          "date": "9月22日",
+          "tag": "天赋梦路篇"
+        },
+        {
+          "groupIndex": 19,
+          "groupName": "天赋梦路篇",
+          "date": "9月26日",
+          "tag": "天赋梦路篇"
+        },
+        {
+          "groupIndex": 19,
+          "groupName": "天赋梦路篇",
+          "date": "9月28日",
+          "tag": "天赋梦路篇"
+        },
+        {
+          "groupIndex": 19,
+          "groupName": "天赋梦路篇",
+          "date": "10月上旬",
+          "tag": "天赋梦路篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O27",
+      "eventTitle": "幽幻姐妹 Astral Buddy",
+      "timeLayer": "Y年",
+      "originalImageDate": "图有九月下旬至十月上旬块；旧窗9/22–10/6未全证",
+      "sourceWork": "独立漫画4卷30话；社区文章只研究到约28话",
+      "onlineSource": "[时序考察][astral]推9/26至10/6，含9/30–10/4范围推断",
+      "directPackageIds": [
+        "ASTRAL-BUDDY"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/支线事件·幽幻姐妹.txt"
+      ],
+      "nodeIds": [
+        "ASTRAL-BUDDY-01",
+        "ASTRAL-BUDDY-02",
+        "ASTRAL-BUDDY-03",
+        "ASTRAL-BUDDY-04",
+        "ASTRAL-BUDDY-05",
+        "ASTRAL-BUDDY-06"
+      ],
+      "currentWorldbookWelcomeNote": "支线幽幻姐妹／W现9/22–10/6；E25",
+      "conflictRuling": "可收敛为“九月下旬至十月上旬、与天赋梦路部分并行”；不以未完结时期考察宣布30话日历全核。",
+      "currentWelcomeGroups": [
+        "27. 幽幻姐妹支线"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 27,
+          "groupName": "幽幻姐妹支线",
+          "date": "9月22日",
+          "tag": "幽幻姐妹支线"
+        },
+        {
+          "groupIndex": 27,
+          "groupName": "幽幻姐妹支线",
+          "date": "10月3日",
+          "tag": "幽幻姐妹支线"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O28",
+      "eventTitle": "0930／前方之风、风斩与学园都市入侵",
+      "timeLayer": "Y年",
+      "originalImageDate": "9/30",
+      "sourceWork": "旧约12–13；禁书II 17–22集",
+      "onlineSource": "[OT12]、[OT13]；[官动][chronicle]",
+      "directPackageIds": [
+        "ST0930"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·0930事件.txt"
+      ],
+      "nodeIds": [
+        "ST0930-01",
+        "ST0930-02",
+        "ST0930-03",
+        "ST0930-04",
+        "ST0930-05",
+        "ST0930-06",
+        "ST0930-07"
+      ],
+      "currentWorldbookWelcomeNote": "ST0930已存在，含一周余波；E26",
+      "conflictRuling": "主体9/30保留；余波标续玩窗口。“前方之风”不与“后方之水”混名，也不塞进祭典主事件。",
+      "currentWelcomeGroups": [
+        "20. 0930篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 20,
+          "groupName": "0930篇",
+          "date": "9月30日",
+          "tag": "0930篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O29",
+      "eventTitle": "Skill-Out／驹场利德、滨面",
+      "timeLayer": "Y年",
+      "originalImageDate": "十月上旬，暗部大战前",
+      "sourceWork": "旧约SS；禁书II 23–24集",
+      "onlineSource": "[OTSS]；[官动][chronicle]证10/3",
+      "directPackageIds": [
+        "SKILL-OUT"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·Skill-Out.txt"
+      ],
+      "nodeIds": [
+        "SKILL-OUT-01",
+        "SKILL-OUT-02",
+        "SKILL-OUT-03",
+        "SKILL-OUT-04",
+        "SKILL-OUT-05",
+        "SKILL-OUT-06",
+        "SKILL-OUT-07",
+        "SKILL-OUT-08"
+      ],
+      "currentWorldbookWelcomeNote": "SKILL-OUT已存在；E27",
+      "conflictRuling": "可细化动画锚点10/3；与S01的SS2一月短篇分开，其他SS片段不自动同日。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O30",
+      "eventTitle": "独立心理掌握：选举、帆风疑云、遗产与幕后势力",
+      "timeLayer": "Y年",
+      "originalImageDate": "图有独立黄色块；未逐格证全篇起讫",
+      "sourceWork": "心理掌握漫画1–4卷；图连载封顶34.5话，不能假定全收在4卷",
+      "onlineSource": "[卷1][mental1]、[卷2][mental2]、[卷3][mental3]、[卷4][mental4]官介；[社区进度表][calendar]第34话当前时间为十月",
+      "directPackageIds": [
+        "MENTAL-OUT"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·心理掌握漫画.txt"
+      ],
+      "nodeIds": [
+        "MENTAL-OUT-01",
+        "MENTAL-OUT-02",
+        "MENTAL-OUT-03",
+        "MENTAL-OUT-04",
+        "MENTAL-OUT-05",
+        "MENTAL-OUT-06",
+        "MENTAL-OUT-07"
+      ],
+      "currentWorldbookWelcomeNote": "MENTAL-STINGER是NT11，不覆盖此漫画；拟独立科学侧链",
+      "conflictRuling": "**内容可纳入，十月只为社区级候选落点**；不是全部34.5话同日，不是蜂蜜女王，不是前一年建派阀回放。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "O31",
+      "eventTitle": "C文书",
+      "timeLayer": "Y年",
+      "originalImageDate": "图十月上旬，行动段7–8日",
+      "sourceWork": "旧约14；禁书III 1–3集",
+      "onlineSource": "[OT14]；[官动][chronicle]",
+      "directPackageIds": [
+        "CDOC"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·C文书.txt"
+      ],
+      "nodeIds": [
+        "CDOC-01",
+        "CDOC-02",
+        "CDOC-03",
+        "CDOC-04",
+        "CDOC-05"
+      ],
+      "currentWorldbookWelcomeNote": "CDOC／W现10/1–8；E28",
+      "conflictRuling": "行动主体7–8日；1日起只能为调查前奏。现包保留，不按旧账本重新造“缺失卷14”。",
+      "currentWelcomeGroups": [
+        "21. C文书篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 21,
+          "groupName": "C文书篇",
+          "date": "10月1日",
+          "tag": "C文书篇"
+        },
+        {
+          "groupIndex": 21,
+          "groupName": "C文书篇",
+          "date": "10月8日",
+          "tag": "C文书篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O32",
+      "eventTitle": "暗部大战 Battle Royale",
+      "timeLayer": "Y年",
+      "originalImageDate": "10/9主事态",
+      "sourceWork": "旧约15；禁书III 4–6集",
+      "onlineSource": "[OT15]；[官动][chronicle]",
+      "directPackageIds": [
+        "DARK-BATTLE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·暗部大战.txt"
+      ],
+      "nodeIds": [
+        "DARK-BATTLE-01",
+        "DARK-BATTLE-02",
+        "DARK-BATTLE-03",
+        "DARK-BATTLE-04",
+        "DARK-BATTLE-05",
+        "DARK-BATTLE-06",
+        "DARK-BATTLE-07",
+        "DARK-BATTLE-08"
+      ],
+      "currentWorldbookWelcomeNote": "DARK-BATTLE含9–12日余波；W两组同名；E29",
+      "conflictRuling": "9日主战与余波分开；检查两组场景身份再去重／改名，不盲删不同视角。前史ITEM不是这次大战重复发生。",
+      "currentWelcomeGroups": [
+        "22. 暗部大战篇",
+        "25. 暗部大战篇"
+      ],
+      "currentWelcomeSceneCount": 4,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 22,
+          "groupName": "暗部大战篇",
+          "date": "10月9日",
+          "tag": "暗部大战篇"
+        },
+        {
+          "groupIndex": 25,
+          "groupName": "暗部大战篇",
+          "date": "10月9日",
+          "tag": "暗部大战篇"
+        },
+        {
+          "groupIndex": 25,
+          "groupName": "暗部大战篇",
+          "date": "10月10日",
+          "tag": "暗部大战篇"
+        },
+        {
+          "groupIndex": 25,
+          "groupName": "暗部大战篇",
+          "date": "10月12日",
+          "tag": "暗部大战篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O33",
+      "eventTitle": "越狱",
+      "timeLayer": "Y年",
+      "originalImageDate": "十月中旬及约20日后续图块",
+      "sourceWork": "**超炮漫画14–16卷**",
+      "onlineSource": "[超炮条目][railgun]",
+      "directPackageIds": [
+        "JAILBREAK"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·越狱篇.txt"
+      ],
+      "nodeIds": [
+        "JAILBREAK-01",
+        "JAILBREAK-02",
+        "JAILBREAK-03",
+        "JAILBREAK-04",
+        "JAILBREAK-05",
+        "JAILBREAK-06"
+      ],
+      "currentWorldbookWelcomeNote": "JAILBREAK／W现10/10–15；旧账本误归SS2；E30",
+      "conflictRuling": "作品归属立即修正；精确两端仍待话页。现窗若保留，应是精选／项目窗而不是已核完整原作日历。",
+      "currentWelcomeGroups": [
+        "26. 越狱篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 26,
+          "groupName": "越狱篇",
+          "date": "10月10日",
+          "tag": "越狱篇"
+        },
+        {
+          "groupIndex": 26,
+          "groupName": "越狱篇",
+          "date": "10月12日",
+          "tag": "越狱篇"
+        },
+        {
+          "groupIndex": 26,
+          "groupName": "越狱篇",
+          "date": "10月14日",
+          "tag": "越狱篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O34",
+      "eventTitle": "后方之水",
+      "timeLayer": "Y年",
+      "originalImageDate": "十月中旬",
+      "sourceWork": "旧约16；禁书III 7–9集",
+      "onlineSource": "[OT16]；[官动][chronicle]仅证中旬",
+      "directPackageIds": [
+        "ACQUA"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·圣人袭来.txt"
+      ],
+      "nodeIds": [
+        "ACQUA-01",
+        "ACQUA-02",
+        "ACQUA-03",
+        "ACQUA-04",
+        "ACQUA-05"
+      ],
+      "currentWorldbookWelcomeNote": "ACQUA／W现10/11–17；E31",
+      "conflictRuling": "保留包、核战斗与救援链；11–17日不能仅靠“中旬”升格为精确七日。",
+      "currentWelcomeGroups": [
+        "23. 暗部脱逃·后方之水篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 23,
+          "groupName": "暗部脱逃·后方之水篇",
+          "date": "10月11日",
+          "tag": "暗部脱逃·后方之水篇"
+        },
+        {
+          "groupIndex": 23,
+          "groupName": "暗部脱逃·后方之水篇",
+          "date": "10月13日",
+          "tag": "暗部脱逃·后方之水篇"
+        },
+        {
+          "groupIndex": 23,
+          "groupName": "暗部脱逃·后方之水篇",
+          "date": "10月17日",
+          "tag": "暗部脱逃·后方之水篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O35",
+      "eventTitle": "英国王室／不列颠万圣节",
+      "timeLayer": "Y年",
+      "originalImageDate": "十月中旬后段、18日前后结局",
+      "sourceWork": "旧约17–18；禁书III 10–14集",
+      "onlineSource": "[OT17]、[OT18]；[官动][chronicle]给10/16–18",
+      "directPackageIds": [
+        "BRITISH-ROYAL"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·英国王室.txt"
+      ],
+      "nodeIds": [
+        "BRITISH-ROYAL-01",
+        "BRITISH-ROYAL-02",
+        "BRITISH-ROYAL-03",
+        "BRITISH-ROYAL-04",
+        "BRITISH-ROYAL-05",
+        "BRITISH-ROYAL-06",
+        "BRITISH-ROYAL-07",
+        "BRITISH-ROYAL-08"
+      ],
+      "currentWorldbookWelcomeNote": "WW3合并声明、W 10/18入口；E32",
+      "conflictRuling": "独立英国政变子链，不能把17–22六卷全部叫俄罗斯战争；18日可以只是精选入口。",
+      "currentWelcomeGroups": [
+        "24. 不列颠万圣节篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 24,
+          "groupName": "不列颠万圣节篇",
+          "date": "10月18日",
+          "tag": "不列颠万圣节篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "O36",
+      "eventTitle": "DRAGON／学园都市暗线",
+      "timeLayer": "Y年",
+      "originalImageDate": "战争交接段",
+      "sourceWork": "旧约19；禁书III 15–17集",
+      "onlineSource": "[OT19]；[官动][chronicle]给10/17–18",
+      "directPackageIds": [
+        "DRAGON"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·DRAGON.txt"
+      ],
+      "nodeIds": [
+        "DRAGON-01",
+        "DRAGON-02",
+        "DRAGON-03",
+        "DRAGON-04",
+        "DRAGON-05",
+        "DRAGON-06",
+        "DRAGON-07",
+        "DRAGON-08",
+        "DRAGON-09"
+      ],
+      "currentWorldbookWelcomeNote": "WW3合并声明，独立链未证；E33",
+      "conflictRuling": "与英国／俄罗斯并行但有自己的目标与收束；旧约19与新约19不要混成同一事件。",
+      "currentWelcomeGroups": [
+        "23. 暗部脱逃·后方之水篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 23,
+          "groupName": "暗部脱逃·后方之水篇",
+          "date": "10月11日",
+          "tag": "暗部脱逃·后方之水篇"
+        },
+        {
+          "groupIndex": 23,
+          "groupName": "暗部脱逃·后方之水篇",
+          "date": "10月13日",
+          "tag": "暗部脱逃·后方之水篇"
+        },
+        {
+          "groupIndex": 23,
+          "groupName": "暗部脱逃·后方之水篇",
+          "date": "10月17日",
+          "tag": "暗部脱逃·后方之水篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "O37",
+      "eventTitle": "第三次世界大战",
+      "timeLayer": "Y年",
+      "originalImageDate": "图19日起战事块，至10/30",
+      "sourceWork": "**旧约20–22**；禁书III 18–26集",
+      "onlineSource": "[OT20]官介明确10/18宣战；[OT21]明确10/30；[OT22]；[官动][chronicle]",
+      "directPackageIds": [
+        "WW3"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·第三次世界大战.txt"
+      ],
+      "nodeIds": [
+        "WW3-01",
+        "WW3-02",
+        "WW3-03",
+        "WW3-04",
+        "WW3-05",
+        "WW3-06",
+        "WW3-07",
+        "WW3-08"
+      ],
+      "currentWorldbookWelcomeNote": "WW3现10–11月；W误名“新约开始·WWIII”；E34",
+      "conflictRuling": "**三战是旧约结尾**。区分18日宣战、图19日起战事、30日终战；十一月为战后新约，不写战争还在持续。",
+      "currentWelcomeGroups": [
+        "28. 新约开始·WWIII"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 28,
+          "groupName": "新约开始·WWIII",
+          "date": "10月19日",
+          "tag": "新约开始·WWIII"
+        },
+        {
+          "groupIndex": 28,
+          "groupName": "新约开始·WWIII",
+          "date": "10月30日",
+          "tag": "新约开始·WWIII"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N01",
+      "eventTitle": "新入生／黑夜海鸟、芙蕾梅亚",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/5",
+      "sourceWork": "新约1",
+      "onlineSource": "[NT01]官介；日为图排",
+      "directPackageIds": [
+        "NT-FRESHMEN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新入生与归还.txt"
+      ],
+      "nodeIds": [
+        "NT-FRESHMEN-01",
+        "NT-FRESHMEN-02",
+        "NT-FRESHMEN-03",
+        "NT-FRESHMEN-04",
+        "NT-FRESHMEN-05",
+        "NT-FRESHMEN-06",
+        "NT-FRESHMEN-07",
+        "NT-FRESHMEN-08",
+        "NT-FRESHMEN-09"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN合并包；W新入生11/5；E35",
+      "conflictRuling": "补科学侧开篇链，不用“格雷姆林”标题冒充已有完整覆盖。",
+      "currentWelcomeGroups": [
+        "29. 新入生篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 29,
+          "groupName": "新入生篇",
+          "date": "11月5日",
+          "tag": "新入生篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "N02",
+      "eventTitle": "战后三人交汇与魔法说明",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/5",
+      "sourceWork": "新约2",
+      "onlineSource": "[NT02]官介**明确11/5**",
+      "directPackageIds": [
+        "NT-FRESHMEN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新入生与归还.txt"
+      ],
+      "nodeIds": [
+        "NT-FRESHMEN-01",
+        "NT-FRESHMEN-02",
+        "NT-FRESHMEN-03",
+        "NT-FRESHMEN-04",
+        "NT-FRESHMEN-05",
+        "NT-FRESHMEN-06",
+        "NT-FRESHMEN-07",
+        "NT-FRESHMEN-08",
+        "NT-FRESHMEN-09"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN；E36",
+      "conflictRuling": "可以与NT1同日，不为一卷一个格子人为腾一天；补卷间交接。",
+      "currentWelcomeGroups": [
+        "29. 新入生篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 29,
+          "groupName": "新入生篇",
+          "date": "11月5日",
+          "tag": "新入生篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "N03",
+      "eventTitle": "夏威夷",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/10",
+      "sourceWork": "新约3",
+      "onlineSource": "[NT03]官介；日为图排",
+      "directPackageIds": [
+        "NT-HAWAII"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·夏威夷入侵.txt"
+      ],
+      "nodeIds": [
+        "NT-HAWAII-01",
+        "NT-HAWAII-02",
+        "NT-HAWAII-03",
+        "NT-HAWAII-04",
+        "NT-HAWAII-05",
+        "NT-HAWAII-06"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN；W夏威夷；E37",
+      "conflictRuling": "补海外任务链、角色到达与离开条件，不只保留一个地点入口。",
+      "currentWelcomeGroups": [
+        "30. 夏威夷篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 30,
+          "groupName": "夏威夷篇",
+          "date": "11月10日",
+          "tag": "夏威夷篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing"
+      ]
+    },
+    {
+      "evidenceId": "N04",
+      "eventTitle": "巴格吉城／自然选择者",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/13",
+      "sourceWork": "新约4",
+      "onlineSource": "[NT04]官介；日为图排",
+      "directPackageIds": [
+        "NT-NATURAL-SELECTOR"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·自然选择者.txt"
+      ],
+      "nodeIds": [
+        "NT-NATURAL-SELECTOR-01",
+        "NT-NATURAL-SELECTOR-02",
+        "NT-NATURAL-SELECTOR-03",
+        "NT-NATURAL-SELECTOR-04",
+        "NT-NATURAL-SELECTOR-05",
+        "NT-NATURAL-SELECTOR-06"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN；W“天择者混战”现11/13–18；E38",
+      "conflictRuling": "与NT5–6分开；不把NT4主事态拉到18日。",
+      "currentWelcomeGroups": [
+        "31. 天择者混战篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月13日",
+          "tag": "天择者混战篇"
+        },
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月14日",
+          "tag": "天择者混战篇"
+        },
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月18日",
+          "tag": "天择者混战篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "N05",
+      "eventTitle": "一端览祭／芙蕾梅亚争夺",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/14–15",
+      "sourceWork": "新约5–6",
+      "onlineSource": "[NT05]、[NT06]官介",
+      "directPackageIds": [
+        "NT-ICHIHANARAN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·一端览祭.txt"
+      ],
+      "nodeIds": [
+        "NT-ICHIHANARAN-01",
+        "NT-ICHIHANARAN-02",
+        "NT-ICHIHANARAN-03",
+        "NT-ICHIHANARAN-04",
+        "NT-ICHIHANARAN-05",
+        "NT-ICHIHANARAN-06",
+        "NT-ICHIHANARAN-07",
+        "NT-ICHIHANARAN-08",
+        "NT-ICHIHANARAN-09"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN，独立节点完整性待核；E39",
+      "conflictRuling": "可共一个多段包，但应有5→6卷的前后阶段与收束，不用NT4入口代替。",
+      "currentWelcomeGroups": [
+        "31. 天择者混战篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月13日",
+          "tag": "天择者混战篇"
+        },
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月14日",
+          "tag": "天择者混战篇"
+        },
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月18日",
+          "tag": "天择者混战篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "N06",
+      "eventTitle": "人力资源／药味久子",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/21–22",
+      "sourceWork": "新约7",
+      "onlineSource": "[NT07]官介",
+      "directPackageIds": [
+        "NT-AGITATE-HALATION"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·人力资源计划.txt"
+      ],
+      "nodeIds": [
+        "NT-AGITATE-HALATION-01",
+        "NT-AGITATE-HALATION-02",
+        "NT-AGITATE-HALATION-03",
+        "NT-AGITATE-HALATION-04",
+        "NT-AGITATE-HALATION-05",
+        "NT-AGITATE-HALATION-06",
+        "NT-AGITATE-HALATION-07"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN，独立链待核；E40",
+      "conflictRuling": "补药味久子计划及角色行动；不是科方漫画后半，更不是GT3手铐行动。",
+      "currentWelcomeGroups": [
+        "31. 天择者混战篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月13日",
+          "tag": "天择者混战篇"
+        },
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月14日",
+          "tag": "天择者混战篇"
+        },
+        {
+          "groupIndex": 31,
+          "groupName": "天择者混战篇",
+          "date": "11月18日",
+          "tag": "天择者混战篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup"
+      ]
+    },
+    {
+      "evidenceId": "N07",
+      "eventTitle": "格雷姆林决战前段",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/23–24附近",
+      "sourceWork": "新约8",
+      "onlineSource": "[NT08]官介；日为图排",
+      "directPackageIds": [
+        "GREMLIN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt"
+      ],
+      "nodeIds": [
+        "GREMLIN-01",
+        "GREMLIN-02",
+        "GREMLIN-03",
+        "GREMLIN-04",
+        "GREMLIN-05",
+        "GREMLIN-06",
+        "GREMLIN-07",
+        "GREMLIN-08"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN；E41",
+      "conflictRuling": "与NT9的世界变化、NT10追逐分子阶段，不以一个大战摘要覆盖三卷。",
+      "currentWelcomeGroups": [
+        "32. 魔神欧提努斯篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 32,
+          "groupName": "魔神欧提努斯篇",
+          "date": "11月下旬",
+          "tag": "魔神欧提努斯篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N08",
+      "eventTitle": "欧提努斯／世界重置与上条的选择",
+      "timeLayer": "Y年",
+      "originalImageDate": "同上现实时间邻近；不能用主观经历计天",
+      "sourceWork": "新约9",
+      "onlineSource": "[NT09]官介",
+      "directPackageIds": [
+        "GREMLIN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt"
+      ],
+      "nodeIds": [
+        "GREMLIN-01",
+        "GREMLIN-02",
+        "GREMLIN-03",
+        "GREMLIN-04",
+        "GREMLIN-05",
+        "GREMLIN-06",
+        "GREMLIN-07",
+        "GREMLIN-08"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN；E41",
+      "conflictRuling": "拆现实日期与主观经历，剧情改写不得把无限／多重世界经历换算成日历经过很多年。",
+      "currentWelcomeGroups": [
+        "32. 魔神欧提努斯篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 32,
+          "groupName": "魔神欧提努斯篇",
+          "date": "11月下旬",
+          "tag": "魔神欧提努斯篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N09",
+      "eventTitle": "欧提努斯救援与追逐",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/24附近图排",
+      "sourceWork": "新约10",
+      "onlineSource": "[NT10]官介",
+      "directPackageIds": [
+        "GREMLIN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt"
+      ],
+      "nodeIds": [
+        "GREMLIN-01",
+        "GREMLIN-02",
+        "GREMLIN-03",
+        "GREMLIN-04",
+        "GREMLIN-05",
+        "GREMLIN-06",
+        "GREMLIN-07",
+        "GREMLIN-08"
+      ],
+      "currentWorldbookWelcomeNote": "GREMLIN；W欧提努斯十一月下旬；E41",
+      "conflictRuling": "补追逐、对立与收束阶段；不自动使NT11的过去层在此再发生一次。",
+      "currentWelcomeGroups": [
+        "32. 魔神欧提努斯篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 32,
+          "groupName": "魔神欧提努斯篇",
+          "date": "11月下旬",
+          "tag": "魔神欧提努斯篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N10",
+      "eventTitle": "心理掌握／蜜蚁爱愉：当前框架",
+      "timeLayer": "Y年",
+      "originalImageDate": "11/24–25附近，回忆另属Y−1",
+      "sourceWork": "新约11",
+      "onlineSource": "[NT11]官介证上条与食蜂往事，不证当前框架精确日",
+      "directPackageIds": [
+        "MENTAL-STINGER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·蜜蚁爱愉篇.txt"
+      ],
+      "nodeIds": [
+        "MENTAL-STINGER-01",
+        "MENTAL-STINGER-02",
+        "MENTAL-STINGER-03",
+        "MENTAL-STINGER-04",
+        "MENTAL-STINGER-05",
+        "MENTAL-STINGER-06"
+      ],
+      "currentWorldbookWelcomeNote": "MENTAL-STINGER、总览、W现**12/1–7**；E42",
+      "conflictRuling": "**撤销12/1–7的确定性**；用十一月下旬当前框架，P08为前一年往事。与O30独立漫画分开。",
+      "currentWelcomeGroups": [
+        "33. 蜜蚁爱愉篇"
+      ],
+      "currentWelcomeSceneCount": 3,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 33,
+          "groupName": "蜜蚁爱愉篇",
+          "date": "12月1日",
+          "tag": "蜜蚁爱愉篇"
+        },
+        {
+          "groupIndex": 33,
+          "groupName": "蜜蚁爱愉篇",
+          "date": "12月3日",
+          "tag": "蜜蚁爱愉篇"
+        },
+        {
+          "groupIndex": 33,
+          "groupName": "蜜蚁爱愉篇",
+          "date": "12月5日",
+          "tag": "蜜蚁爱愉篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N11",
+      "eventTitle": "回生者／幻想收束原创、大乱斗",
+      "timeLayer": "Y年",
+      "originalImageDate": "图十一月下旬红色分支块",
+      "sourceWork": "游戏原创／联动；原载与路线逐项待核",
+      "onlineSource": "图读；本轮未取得各路线完整正文",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟游戏索引／可选分支，不接管小说卷序",
+      "conflictRuling": "保留目标但单独标游戏来源；不能把这些图块说成新约11后的小说必经篇。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "N12",
+      "eventTitle": "圣日耳曼／钻石大楼",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/1",
+      "sourceWork": "新约12",
+      "onlineSource": "[NT12]官介；日为图排",
+      "directPackageIds": [
+        "NT-SAINT-GERMAIN"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·圣日耳曼.txt"
+      ],
+      "nodeIds": [
+        "NT-SAINT-GERMAIN-01",
+        "NT-SAINT-GERMAIN-02",
+        "NT-SAINT-GERMAIN-03",
+        "NT-SAINT-GERMAIN-04",
+        "NT-SAINT-GERMAIN-05",
+        "NT-SAINT-GERMAIN-06"
+      ],
+      "currentWorldbookWelcomeNote": "W有12/1入口，无同名完整包证明；E43",
+      "conflictRuling": "补独立冲突链和从NT11后的转场，不声称“完全零内容”。",
+      "currentWelcomeGroups": [
+        "34. 圣日耳曼篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 34,
+          "groupName": "圣日耳曼篇",
+          "date": "12月1日",
+          "tag": "圣日耳曼篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N13",
+      "eventTitle": "僧正／真格雷姆林",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/3附近",
+      "sourceWork": "新约13",
+      "onlineSource": "[NT13]官介",
+      "directPackageIds": [
+        "NT-HIGH-PRIEST"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·僧正追击.txt"
+      ],
+      "nodeIds": [
+        "NT-HIGH-PRIEST-01",
+        "NT-HIGH-PRIEST-02",
+        "NT-HIGH-PRIEST-03",
+        "NT-HIGH-PRIEST-04",
+        "NT-HIGH-PRIEST-05",
+        "NT-HIGH-PRIEST-06"
+      ],
+      "currentWorldbookWelcomeNote": "W有僧正入口；E44",
+      "conflictRuling": "独立于NT8–10；补追击与上里登场前后关系。",
+      "currentWelcomeGroups": [
+        "35. 魔神僧正篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 35,
+          "groupName": "魔神僧正篇",
+          "date": "12月3日",
+          "tag": "魔神僧正篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N14",
+      "eventTitle": "理想送行／上里登场",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/3附近",
+      "sourceWork": "新约14",
+      "onlineSource": "[NT14]官介",
+      "directPackageIds": [
+        "NT-WORLD-REJECTER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·理想送行.txt"
+      ],
+      "nodeIds": [
+        "NT-WORLD-REJECTER-01",
+        "NT-WORLD-REJECTER-02",
+        "NT-WORLD-REJECTER-03",
+        "NT-WORLD-REJECTER-04",
+        "NT-WORLD-REJECTER-05",
+        "NT-WORLD-REJECTER-06"
+      ],
+      "currentWorldbookWelcomeNote": "W去鸣12/5不能代替整卷；E45",
+      "conflictRuling": "先核NT14→15因果，人物入口日与全卷日期分开。",
+      "currentWelcomeGroups": [
+        "36. 去鸣篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 36,
+          "groupName": "去鸣篇",
+          "date": "12月5日",
+          "tag": "去鸣篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N15",
+      "eventTitle": "木原唯一／上里阵营",
+      "timeLayer": "Y年",
+      "originalImageDate": "十二月上旬；图并列NT15／17冲突排期",
+      "sourceWork": "新约15",
+      "onlineSource": "[NT15]官介；未取足以排除另一日历的原文",
+      "directPackageIds": [
+        "NT-SALOME"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·上里阵营与去鸣.txt"
+      ],
+      "nodeIds": [
+        "NT-SALOME-01",
+        "NT-SALOME-02",
+        "NT-SALOME-03",
+        "NT-SALOME-04",
+        "NT-SALOME-05",
+        "NT-SALOME-06"
+      ],
+      "currentWorldbookWelcomeNote": "当前独立链未证；E46",
+      "conflictRuling": "锁先后与事件身份，不强行选一个连续日窗。",
+      "currentWelcomeGroups": [
+        "36. 去鸣篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 36,
+          "groupName": "去鸣篇",
+          "date": "12月5日",
+          "tag": "去鸣篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N16",
+      "eventTitle": "大热浪／元素",
+      "timeLayer": "Y年",
+      "originalImageDate": "十二月上旬，介于15与17的因果链",
+      "sourceWork": "新约16",
+      "onlineSource": "[NT16]官介",
+      "directPackageIds": [
+        "NT-HEAT-WAVE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大热浪与元素.txt"
+      ],
+      "nodeIds": [
+        "NT-HEAT-WAVE-01",
+        "NT-HEAT-WAVE-02",
+        "NT-HEAT-WAVE-03",
+        "NT-HEAT-WAVE-04",
+        "NT-HEAT-WAVE-05",
+        "NT-HEAT-WAVE-06",
+        "NT-HEAT-WAVE-07"
+      ],
+      "currentWorldbookWelcomeNote": "W“元素·上里归还”现12/9–10合组；E47",
+      "conflictRuling": "分开热浪／元素危机和夺回上里；12/9–10暂是项目窗。",
+      "currentWelcomeGroups": [
+        "37. 元素篇·上里归还篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 37,
+          "groupName": "元素篇·上里归还篇",
+          "date": "12月9日",
+          "tag": "元素篇·上里归还篇"
+        },
+        {
+          "groupIndex": 37,
+          "groupName": "元素篇·上里归还篇",
+          "date": "12月10日",
+          "tag": "元素篇·上里归还篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N17",
+      "eventTitle": "夺回上里",
+      "timeLayer": "Y年",
+      "originalImageDate": "十二月上旬，卷15／17日历冲突仍在",
+      "sourceWork": "新约17",
+      "onlineSource": "[NT17]官介",
+      "directPackageIds": [
+        "NT-KAMISATO-RESCUE"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·夺回上里.txt"
+      ],
+      "nodeIds": [
+        "NT-KAMISATO-RESCUE-01",
+        "NT-KAMISATO-RESCUE-02",
+        "NT-KAMISATO-RESCUE-03",
+        "NT-KAMISATO-RESCUE-04",
+        "NT-KAMISATO-RESCUE-05",
+        "NT-KAMISATO-RESCUE-06",
+        "NT-KAMISATO-RESCUE-07"
+      ],
+      "currentWorldbookWelcomeNote": "与NT16共入口；E48",
+      "conflictRuling": "按15→16→17推进，不用填满空白日历“修复”原作矛盾。",
+      "currentWelcomeGroups": [
+        "37. 元素篇·上里归还篇"
+      ],
+      "currentWelcomeSceneCount": 2,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 37,
+          "groupName": "元素篇·上里归还篇",
+          "date": "12月9日",
+          "tag": "元素篇·上里归还篇"
+        },
+        {
+          "groupIndex": 37,
+          "groupName": "元素篇·上里归还篇",
+          "date": "12月10日",
+          "tag": "元素篇·上里归还篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "regroup",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N18",
+      "eventTitle": "亚雷斯塔",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/11",
+      "sourceWork": "新约18",
+      "onlineSource": "[NT18]官介",
+      "directPackageIds": [
+        "NT-ALEISTER"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·亚雷斯塔攻楼.txt"
+      ],
+      "nodeIds": [
+        "NT-ALEISTER-01",
+        "NT-ALEISTER-02",
+        "NT-ALEISTER-03",
+        "NT-ALEISTER-04",
+        "NT-ALEISTER-05",
+        "NT-ALEISTER-06"
+      ],
+      "currentWorldbookWelcomeNote": "W有12/11入口；E49",
+      "conflictRuling": "补冲突、反转及NT19转场，不能提前叫科隆尊终战。",
+      "currentWelcomeGroups": [
+        "38. 亚雷斯塔篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 38,
+          "groupName": "亚雷斯塔篇",
+          "date": "12月11日",
+          "tag": "亚雷斯塔篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N19",
+      "eventTitle": "演算战斗服／学园都市后续",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/11–12",
+      "sourceWork": "新约19",
+      "onlineSource": "[NT19]官介",
+      "directPackageIds": [
+        "NT-PROCESSOR-SUIT"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·演算战斗服.txt"
+      ],
+      "nodeIds": [
+        "NT-PROCESSOR-SUIT-01",
+        "NT-PROCESSOR-SUIT-02",
+        "NT-PROCESSOR-SUIT-03",
+        "NT-PROCESSOR-SUIT-04",
+        "NT-PROCESSOR-SUIT-05",
+        "NT-PROCESSOR-SUIT-06"
+      ],
+      "currentWorldbookWelcomeNote": "独立入口／链条未证；E50",
+      "conflictRuling": "补NT18与赴英行动之间的桥，不与旧约19 DRAGON混卷。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "N20",
+      "eventTitle": "科隆尊主线前段／赴英与冲突升级",
+      "timeLayer": "Y年",
+      "originalImageDate": "十二月中旬，前奏在终战前",
+      "sourceWork": "新约20",
+      "onlineSource": "[NT20]官介",
+      "directPackageIds": [
+        "CORONZON"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt"
+      ],
+      "nodeIds": [
+        "CORONZON-01",
+        "CORONZON-02",
+        "CORONZON-03",
+        "CORONZON-04",
+        "CORONZON-05",
+        "CORONZON-06",
+        "CORONZON-07",
+        "CORONZON-08"
+      ],
+      "currentWorldbookWelcomeNote": "CORONZON粗包；W 12/12入口；E51",
+      "conflictRuling": "12/12可作前奏，不等于三卷终战都发生在这天；分地点与阶段。",
+      "currentWelcomeGroups": [
+        "39. 科隆尊篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 39,
+          "groupName": "科隆尊篇",
+          "date": "12月12日",
+          "tag": "科隆尊篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N21",
+      "eventTitle": "科隆尊主线中段",
+      "timeLayer": "Y年",
+      "originalImageDate": "十二月中旬至20日前后范围内",
+      "sourceWork": "新约21",
+      "onlineSource": "[NT21]官介",
+      "directPackageIds": [
+        "CORONZON"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt"
+      ],
+      "nodeIds": [
+        "CORONZON-01",
+        "CORONZON-02",
+        "CORONZON-03",
+        "CORONZON-04",
+        "CORONZON-05",
+        "CORONZON-06",
+        "CORONZON-07",
+        "CORONZON-08"
+      ],
+      "currentWorldbookWelcomeNote": "CORONZON；E51",
+      "conflictRuling": "补卷级任务、阵营与角色状态，不猜一个官网没写的独占日。",
+      "currentWelcomeGroups": [
+        "39. 科隆尊篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 39,
+          "groupName": "科隆尊篇",
+          "date": "12月12日",
+          "tag": "科隆尊篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N22",
+      "eventTitle": "科隆尊决战／新约正卷收束",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/20前后图排",
+      "sourceWork": "新约22",
+      "onlineSource": "[NT22]官介",
+      "directPackageIds": [
+        "CORONZON"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt"
+      ],
+      "nodeIds": [
+        "CORONZON-01",
+        "CORONZON-02",
+        "CORONZON-03",
+        "CORONZON-04",
+        "CORONZON-05",
+        "CORONZON-06",
+        "CORONZON-07",
+        "CORONZON-08"
+      ],
+      "currentWorldbookWelcomeNote": "CORONZON；E51",
+      "conflictRuling": "和NT20–21串成有因果的决战链，精确边界仍带图排标记。",
+      "currentWelcomeGroups": [
+        "39. 科隆尊篇"
+      ],
+      "currentWelcomeSceneCount": 1,
+      "currentWelcomeScenes": [
+        {
+          "groupIndex": 39,
+          "groupName": "科隆尊篇",
+          "date": "12月12日",
+          "tag": "科隆尊篇"
+        }
+      ],
+      "handlingFlags": [
+        "existing",
+        "rewrite-text"
+      ]
+    },
+    {
+      "evidenceId": "N23",
+      "eventTitle": "22 Reverse／上条身份冲突与后续",
+      "timeLayer": "Y年",
+      "originalImageDate": "12/21",
+      "sourceWork": "**新约22 Reverse**",
+      "onlineSource": "[NT22R]官介／正式书名",
+      "directPackageIds": [
+        "NT-22R"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "partial",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新约22R温莎收尾.txt"
+      ],
+      "nodeIds": [
+        "NT-22R-01",
+        "NT-22R-02",
+        "NT-22R-03",
+        "NT-22R-04",
+        "NT-22R-05",
+        "NT-22R-06"
+      ],
+      "currentWorldbookWelcomeNote": "CORONZON声称合并，独立收尾链待核；E52",
+      "conflictRuling": "新约为1–22＋22R，**不是“23卷再加Reverse”**；补独立收尾与创约前过渡，不吞进GT1。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G01",
+      "eventTitle": "创约开幕／平安夜",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 12/24",
+      "sourceWork": "创约1",
+      "onlineSource": "[GT01]官介明确平安夜",
+      "directPackageIds": [
+        "GENESIS-01"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第一卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-01-01",
+        "GENESIS-01-02",
+        "GENESIS-01-03",
+        "GENESIS-01-04",
+        "GENESIS-01-05",
+        "GENESIS-01-06"
+      ],
+      "currentWorldbookWelcomeNote": "无独立GT包；CORONZON的“创约”关键词是错误归并，W“创约帷幕”不是本卷入口",
+      "conflictRuling": "**新增创约第一段**，从新约22R之后另起；平安夜日常、卷内冲突与安娜相关后续按节点核写，不能只加一行新标题。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G02",
+      "eventTitle": "圣诞日、安娜与住院上条／蜂琴共斗",
+      "timeLayer": "Y年",
+      "originalImageDate": "图12/24–25相邻块",
+      "sourceWork": "创约2",
+      "onlineSource": "[GT02]官页标题明说25日；[译文1章][gt2c1]明确12/25",
+      "directPackageIds": [
+        "GENESIS-02"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第二卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-02-01",
+        "GENESIS-02-02",
+        "GENESIS-02-03",
+        "GENESIS-02-04",
+        "GENESIS-02-05",
+        "GENESIS-02-06"
+      ],
+      "currentWorldbookWelcomeNote": "无独立GT包；拟接G01",
+      "conflictRuling": "**主日采用12/25，与GT3同日并行**；12/24为前情回顾，不能把回顾算成本卷新发生一天。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G03",
+      "eventTitle": "手铐行动 Operation Handcuffs",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 12/25",
+      "sourceWork": "创约3",
+      "onlineSource": "[GT03]官介；[译文序章][gt3pro]明确12/25 15点",
+      "directPackageIds": [
+        "GENESIS-03"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第三卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-03-01",
+        "GENESIS-03-02",
+        "GENESIS-03-03",
+        "GENESIS-03-04",
+        "GENESIS-03-05",
+        "GENESIS-03-06",
+        "GENESIS-03-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟新增创约暗部任务链；旧交接误归新约",
+      "conflictRuling": "**不属新约格雷姆林、不属科方后半**。与GT2同日，序章15点不自动等于行动启动时刻；安排追捕／逃亡双视角。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G04",
+      "eventTitle": "洛杉矶全人口消失／R&C Occultics",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 12/26–27",
+      "sourceWork": "创约4",
+      "onlineSource": "[GT04]官介；[译文1章][gt4c1]给当地26日凌晨抵达安排及日期线说明",
+      "directPackageIds": [
+        "GENESIS-04"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第四卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-04-01",
+        "GENESIS-04-02",
+        "GENESIS-04-03",
+        "GENESIS-04-04",
+        "GENESIS-04-05",
+        "GENESIS-04-06",
+        "GENESIS-04-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟创约海外链",
+      "conflictRuling": "补母女调查／解救与回程；采用当地12/26线索，27日全篇终点仍只图排。**海外当地时与学园都市时不直接等同**。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G05",
+      "eventTitle": "暗部残党、装甲列车与爱丽丝介入",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 12/29附近",
+      "sourceWork": "创约5",
+      "onlineSource": "[GT05]官介；[译文序章][gt5pro]明确12/29",
+      "directPackageIds": [
+        "GENESIS-05"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第五卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-05-01",
+        "GENESIS-05-02",
+        "GENESIS-05-03",
+        "GENESIS-05-04",
+        "GENESIS-05-05",
+        "GENESIS-05-06",
+        "GENESIS-05-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟接手铐余波的独立链",
+      "conflictRuling": "日期可收敛为12/29并标译文来源；这是GT3之后的新冲突，不是手铐行动重跑。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G06",
+      "eventTitle": "涩谷／阿拉迪娅",
+      "timeLayer": "Y年",
+      "originalImageDate": "Y 12/31",
+      "sourceWork": "创约6",
+      "onlineSource": "[GT06]官介**明确12/31**、涩谷与阿拉迪娅",
+      "directPackageIds": [
+        "GENESIS-06"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第六卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-06-01",
+        "GENESIS-06-02",
+        "GENESIS-06-03",
+        "GENESIS-06-04",
+        "GENESIS-06-05",
+        "GENESIS-06-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟新增跨年前入口",
+      "conflictRuling": "补打工导入、追杀／救援、超绝者关联；与次年领事馆分开，不再笼统写“一月创约开始”。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G07",
+      "eventTitle": "元旦／领事馆与桥架结社",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "Y＋1 1/1–3图块",
+      "sourceWork": "创约7",
+      "onlineSource": "[GT07]官介明写1/1；[译文2章][gt7c2]明写1/2、[3章][gt7c3]明写1/3",
+      "directPackageIds": [
+        "GENESIS-07"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第七卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-07-01",
+        "GENESIS-07-02",
+        "GENESIS-07-03",
+        "GENESIS-07-04",
+        "GENESIS-07-05",
+        "GENESIS-07-06",
+        "GENESIS-07-07",
+        "GENESIS-07-08"
+      ],
+      "currentWorldbookWelcomeNote": "无次年一月入口；拟创约跨年链",
+      "conflictRuling": "**起日有官方支持，跨日至3日有社区译文支持**；与GT8同在1/3衔接，不人为隔开一天。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G08",
+      "eventTitle": "保护安娜／多方追击",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "1/3–4图块",
+      "sourceWork": "创约8",
+      "onlineSource": "[GT08]官介；[译文序章][gt8pro]1/3、[尾声][gt8epi]1/4深夜",
+      "directPackageIds": [
+        "GENESIS-08"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第八卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-08-01",
+        "GENESIS-08-02",
+        "GENESIS-08-03",
+        "GENESIS-08-04",
+        "GENESIS-08-05",
+        "GENESIS-08-06",
+        "GENESIS-08-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟独立安娜逃亡阶段",
+      "conflictRuling": "补穆特忒贝、学园都市、亚雷斯塔／金斯福德三方威胁与桥架结社目的；日期可采用但标非官方译文证据。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G09",
+      "eventTitle": "CRC攻城、医院保卫战",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "1/5图格",
+      "sourceWork": "创约9",
+      "onlineSource": "[GT09]官介；[译文1章][gt9c1]直接说1/5",
+      "directPackageIds": [
+        "GENESIS-09"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第九卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-09-01",
+        "GENESIS-09-02",
+        "GENESIS-09-03",
+        "GENESIS-09-04",
+        "GENESIS-09-05",
+        "GENESIS-09-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟CRC阶段",
+      "conflictRuling": "不把前卷末CRC复活／爱丽丝被杀的回顾全当作本卷首次发生；按导火索→医院保卫→结局拆节点。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G10",
+      "eventTitle": "爱丽丝复活／茵蒂克丝危机与救援",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "1/6图格",
+      "sourceWork": "创约10",
+      "onlineSource": "[GT10]官介；[译文1章][gt10c1]1/6及22点；[GT11序章译文][gt11pro]回接死亡时刻",
+      "directPackageIds": [
+        "GENESIS-10"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-10-01",
+        "GENESIS-10-02",
+        "GENESIS-10-03",
+        "GENESIS-10-04",
+        "GENESIS-10-05",
+        "GENESIS-10-06",
+        "GENESIS-10-07"
+      ],
+      "currentWorldbookWelcomeNote": "拟爱丽丝阶段",
+      "conflictRuling": "1/6主事件有译文支持；死亡确认线索是**1/6 23:58**，不挪到图下一格1/7才死亡。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G11",
+      "eventTitle": "死后／伪地狱与金斯福德",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "图将主段排1/7",
+      "sourceWork": "创约11",
+      "onlineSource": "[GT11]官介；[译文序章][gt11pro]1/6 23:58；[GT12社文][gt12review]；[卷11后记译文][gt11after]证CRC构造的伪地狱",
+      "directPackageIds": [
+        "GENESIS-11"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十一卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-11-01",
+        "GENESIS-11-02",
+        "GENESIS-11-03",
+        "GENESIS-11-04",
+        "GENESIS-11-05",
+        "GENESIS-11-06"
+      ],
+      "currentWorldbookWelcomeNote": "拟死后阶段，现实侧并行另记",
+      "conflictRuling": "接1/6死亡、图排1/7主段；**伪地狱主观时长与现实日历未建立换算，不另行加日**。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G12",
+      "eventTitle": "葬礼、复活及复活后事态",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "图排1/8",
+      "sourceWork": "创约12",
+      "onlineSource": "[GT12]官介证告别式；[逐卷社文][gt12review]明确1/8葬礼",
+      "directPackageIds": [
+        "GENESIS-12"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十二卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-12-01",
+        "GENESIS-12-02",
+        "GENESIS-12-03",
+        "GENESIS-12-04",
+        "GENESIS-12-05",
+        "GENESIS-12-06",
+        "GENESIS-12-07",
+        "GENESIS-12-08"
+      ],
+      "currentWorldbookWelcomeNote": "拟现实侧葬礼／复活链",
+      "conflictRuling": "官介也写“寒假最后一天”，不能机械把它当葬礼当天。区分背景回顾、原定开学典礼、葬礼和后续；1/8属于社区级支持。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G13",
+      "eventTitle": "阿蒂迦利迦／红雪与再战科隆尊",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "图1/8起、斜界接1/9",
+      "sourceWork": "创约13",
+      "onlineSource": "[GT13]官介明确アディカリカ；[逐卷社文][gt13review]列1/8下午至午夜前",
+      "directPackageIds": [
+        "GENESIS-13"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十三卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-13-01",
+        "GENESIS-13-02",
+        "GENESIS-13-03",
+        "GENESIS-13-04",
+        "GENESIS-13-05",
+        "GENESIS-13-06",
+        "GENESIS-13-07",
+        "GENESIS-13-08"
+      ],
+      "currentWorldbookWelcomeNote": "拟科隆尊再战前段",
+      "conflictRuling": "**不是NT20–22重复改名**。分现实日、破坏魔术时限和跨午夜，图斜界不能被读成有完整1/9白天剧情。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "G14",
+      "eventTitle": "科隆尊逃亡／追击与尾声",
+      "timeLayer": "Y＋1年",
+      "originalImageDate": "图排1/9",
+      "sourceWork": "创约14",
+      "onlineSource": "[GT14]官介；[社文][gt14review]列1/9；[译文1章][gt14c1]午夜、[4章][gt14c4]过4点、[尾声][gt14epi]08:30及昨日葬礼",
+      "directPackageIds": [
+        "GENESIS-14"
+      ],
+      "relatedPackageIds": [],
+      "coverage": "playable-chain",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十四卷.txt"
+      ],
+      "nodeIds": [
+        "GENESIS-14-01",
+        "GENESIS-14-02",
+        "GENESIS-14-03",
+        "GENESIS-14-04",
+        "GENESIS-14-05",
+        "GENESIS-14-06",
+        "GENESIS-14-07",
+        "GENESIS-14-08",
+        "GENESIS-14-09"
+      ],
+      "currentWorldbookWelcomeNote": "拟本轮终点包／终点入口；目前卡内未有",
+      "conflictRuling": "覆盖1/8深夜→1/9凌晨追击→清晨尾声；不能截在4点就称整卷完成。数字归日仍属社区／译文互证；**不造1/10–31后续**。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "add-opening"
+      ]
+    },
+    {
+      "evidenceId": "X01",
+      "eventTitle": "其余SS2／SP／特典散点",
+      "timeLayer": "未定日／相对顺序",
+      "originalImageDate": "原图还有分散小格；本轮未逐格转录全部",
+      "sourceWork": "SS2各短篇、SP及相关原载",
+      "onlineSource": "[SS2官介][OTSS2]只证明短篇集合；各条章页需补",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/前史与SS2节点索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "GEMSTONE、欢迎页散点与C档索引逐项匹配",
+      "conflictRuling": "收入“未映射清单”，再分轻量可玩节点／背景索引；不以“SS2全覆盖”替代证据，也不硬填月份。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "X02",
+      "eventTitle": "原石拯救／学习装置现有原创疑点",
+      "timeLayer": "未定日／相对顺序",
+      "originalImageDate": "未核出与现包全链相同的独立图弧",
+      "sourceWork": "同名原作设定不能证明现包情节来自某原篇",
+      "onlineSource": "[SS2官介][OTSS2]；旧表E03／E06",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "GEMSTONE现1/18；LEARNING-DEVICE现七月末八月初",
+      "conflictRuling": "匹配到原作的节点保留；匹配不到的标**基于设定的原创可玩事件**，日期为项目窗，不删除玩法也不冒称原作。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "X03",
+      "eventTitle": "神裂SS、SP马克／火星、Cold Game",
+      "timeLayer": "未定日／相对顺序",
+      "originalImageDate": "图例列为未定日／未排入日历的材料",
+      "sourceWork": "各原载与外典收录分开；图注神裂SS1–6",
+      "onlineSource": "[外典1目录][archives1]证神裂篇；[外典2][archives2]证Cold Game；SP具体篇章待核",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "既定C档目标，当前完整索引未证",
+      "conflictRuling": "优先补原载→收录→事件索引；有内容无日期可以用相对触发，不能冒造某日主线。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "X04",
+      "eventTitle": "超炮SS3、雅妮丝SS、蜂琴外传与特典",
+      "timeLayer": "未定日／相对顺序",
+      "originalImageDate": "图例未定日；雅妮丝SS注明NT22前",
+      "sourceWork": "独立外传／短篇／特装附册，不能互替",
+      "onlineSource": "图例；[超炮条目][railgun]及[心理掌握3特装版][mental-special]只证部分作品身份",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "拟外传索引／候选小链",
+      "conflictRuling": "日期与卷话未核的保留证据门；“NT22前”是相对上界，不是某月某日。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "X05",
+      "eventTitle": "黄金SS等更早历史",
+      "timeLayer": "未定日／相对顺序",
+      "originalImageDate": "图例：十九世纪后半，早于本轮起点",
+      "sourceWork": "黄金相关过去篇",
+      "onlineSource": "图例；本轮未新读其全文",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "只作世界设定／回忆背景候选",
+      "conflictRuling": "不强塞进Y−1四月至Y＋1一月主日历；不是漏掉一段本篇月份。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    },
+    {
+      "evidenceId": "X06",
+      "eventTitle": "超出图版的卷话／新目录项",
+      "timeLayer": "未定日／相对顺序",
+      "originalImageDate": "原图截止GT14、ITEM小说6、超炮169话、心理掌握34.5话等",
+      "sourceWork": "GT15、心理掌握5卷／更后连载等不自动纳入",
+      "onlineSource": "[官方目录][catalog]、[心理掌握连载目录][mental-serial]；仅确认已出现的新目录",
+      "directPackageIds": [],
+      "relatedPackageIds": [],
+      "coverage": "reference-only",
+      "worldbookFiles": [
+        "src/魔法禁书目录模拟器/世界书/剧情事件/支线/动画游戏与未定日外传索引.txt"
+      ],
+      "nodeIds": [],
+      "currentWorldbookWelcomeNote": "不扩大本轮终点；“2022超感谢”等年份标签也不是故事公历年",
+      "conflictRuling": "本轮以明确封顶交付方案；不根据网站新目录虚构剧情日期或声称已读新卷，不自动覆盖一月空白。",
+      "currentWelcomeGroups": [],
+      "currentWelcomeSceneCount": 0,
+      "currentWelcomeScenes": [],
+      "handlingFlags": [
+        "reference-only"
+      ]
+    }
+  ],
+  "currentGroups": [
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "sceneCount": 10,
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ]
+    },
+    {
+      "groupIndex": 2,
+      "groupName": "美琴过去篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "MIKOTO-PAST"
+      ],
+      "candidateEvidenceIds": [
+        "S05"
+      ]
+    },
+    {
+      "groupIndex": 3,
+      "groupName": "美琴一年级篇",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "FIRST-YEAR"
+      ],
+      "candidateEvidenceIds": [
+        "P02",
+        "P03",
+        "P04",
+        "P13",
+        "P15",
+        "S08"
+      ]
+    },
+    {
+      "groupIndex": 4,
+      "groupName": "妹妹们篇（克隆前史）",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "O08",
+        "S08"
+      ]
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "sceneCount": 6,
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "O01",
+        "S09"
+      ]
+    },
+    {
+      "groupIndex": 6,
+      "groupName": "能力实演篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "RUSSIA-DEMONSTRATION"
+      ],
+      "candidateEvidenceIds": [
+        "S10"
+      ]
+    },
+    {
+      "groupIndex": 7,
+      "groupName": "禁书降临篇",
+      "sceneCount": 5,
+      "candidatePackageIds": [
+        "INDEX-FALL"
+      ],
+      "candidateEvidenceIds": [
+        "O02"
+      ]
+    },
+    {
+      "groupIndex": 8,
+      "groupName": "乱雑開放篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "POLTERGEIST"
+      ],
+      "candidateEvidenceIds": [
+        "O07"
+      ]
+    },
+    {
+      "groupIndex": 9,
+      "groupName": "妹妹篇·绝对能力进化",
+      "sceneCount": 4,
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "O08",
+        "S08"
+      ]
+    },
+    {
+      "groupIndex": 10,
+      "groupName": "静默派对篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "SILENT-PARTY"
+      ],
+      "candidateEvidenceIds": [
+        "O09"
+      ]
+    },
+    {
+      "groupIndex": 11,
+      "groupName": "天使坠落·最后之作篇",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "ANGEL-FALL",
+        "AUGUST-31"
+      ],
+      "candidateEvidenceIds": [
+        "O10",
+        "O11"
+      ]
+    },
+    {
+      "groupIndex": 12,
+      "groupName": "死灵术师篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "NECROMANCER"
+      ],
+      "candidateEvidenceIds": [
+        "O14"
+      ]
+    },
+    {
+      "groupIndex": 13,
+      "groupName": "雪莉袭击篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "KAZAKIRI"
+      ],
+      "candidateEvidenceIds": [
+        "O12"
+      ]
+    },
+    {
+      "groupIndex": 14,
+      "groupName": "法之书篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "BOOK-OF-LAW"
+      ],
+      "candidateEvidenceIds": [
+        "O16"
+      ]
+    },
+    {
+      "groupIndex": 15,
+      "groupName": "群奏活剧篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "ENDEYMION"
+      ],
+      "candidateEvidenceIds": [
+        "O18",
+        "O21"
+      ]
+    },
+    {
+      "groupIndex": 16,
+      "groupName": "树状图残骸篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "TREE-DIAGRAM-REMNANT"
+      ],
+      "candidateEvidenceIds": [
+        "O20"
+      ]
+    },
+    {
+      "groupIndex": 17,
+      "groupName": "恩底弥翁篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "ENDEYMION"
+      ],
+      "candidateEvidenceIds": [
+        "O18",
+        "O21"
+      ]
+    },
+    {
+      "groupIndex": 18,
+      "groupName": "大霸星祭篇",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "DAIHASEISAI",
+        "FESTIVAL",
+        "ST-CROSS"
+      ],
+      "candidateEvidenceIds": [
+        "O22",
+        "O23",
+        "O24"
+      ]
+    },
+    {
+      "groupIndex": 19,
+      "groupName": "天赋梦路篇",
+      "sceneCount": 4,
+      "candidatePackageIds": [
+        "DREAM-RANKER"
+      ],
+      "candidateEvidenceIds": [
+        "O26"
+      ]
+    },
+    {
+      "groupIndex": 20,
+      "groupName": "0930篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "ST0930"
+      ],
+      "candidateEvidenceIds": [
+        "O28"
+      ]
+    },
+    {
+      "groupIndex": 21,
+      "groupName": "C文书篇",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "CDOC"
+      ],
+      "candidateEvidenceIds": [
+        "O31"
+      ]
+    },
+    {
+      "groupIndex": 22,
+      "groupName": "暗部大战篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "DARK-BATTLE"
+      ],
+      "candidateEvidenceIds": [
+        "O32"
+      ]
+    },
+    {
+      "groupIndex": 23,
+      "groupName": "暗部脱逃·后方之水篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "ACQUA",
+        "DRAGON"
+      ],
+      "candidateEvidenceIds": [
+        "O34",
+        "O36"
+      ]
+    },
+    {
+      "groupIndex": 24,
+      "groupName": "不列颠万圣节篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "BRITISH-ROYAL"
+      ],
+      "candidateEvidenceIds": [
+        "O35"
+      ]
+    },
+    {
+      "groupIndex": 25,
+      "groupName": "暗部大战篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "DARK-BATTLE"
+      ],
+      "candidateEvidenceIds": [
+        "O32"
+      ]
+    },
+    {
+      "groupIndex": 26,
+      "groupName": "越狱篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "JAILBREAK"
+      ],
+      "candidateEvidenceIds": [
+        "O33"
+      ]
+    },
+    {
+      "groupIndex": 27,
+      "groupName": "幽幻姐妹支线",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "ASTRAL-BUDDY"
+      ],
+      "candidateEvidenceIds": [
+        "O27"
+      ]
+    },
+    {
+      "groupIndex": 28,
+      "groupName": "新约开始·WWIII",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "WW3"
+      ],
+      "candidateEvidenceIds": [
+        "O37"
+      ]
+    },
+    {
+      "groupIndex": 29,
+      "groupName": "新入生篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "NT-FRESHMEN"
+      ],
+      "candidateEvidenceIds": [
+        "N01",
+        "N02"
+      ]
+    },
+    {
+      "groupIndex": 30,
+      "groupName": "夏威夷篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "NT-HAWAII"
+      ],
+      "candidateEvidenceIds": [
+        "N03"
+      ]
+    },
+    {
+      "groupIndex": 31,
+      "groupName": "天择者混战篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "NT-AGITATE-HALATION",
+        "NT-ICHIHANARAN",
+        "NT-NATURAL-SELECTOR"
+      ],
+      "candidateEvidenceIds": [
+        "N04",
+        "N05",
+        "N06"
+      ]
+    },
+    {
+      "groupIndex": 32,
+      "groupName": "魔神欧提努斯篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "GREMLIN"
+      ],
+      "candidateEvidenceIds": [
+        "N07",
+        "N08",
+        "N09"
+      ]
+    },
+    {
+      "groupIndex": 33,
+      "groupName": "蜜蚁爱愉篇",
+      "sceneCount": 3,
+      "candidatePackageIds": [
+        "MENTAL-STINGER"
+      ],
+      "candidateEvidenceIds": [
+        "N10"
+      ]
+    },
+    {
+      "groupIndex": 34,
+      "groupName": "圣日耳曼篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "NT-SAINT-GERMAIN"
+      ],
+      "candidateEvidenceIds": [
+        "N12"
+      ]
+    },
+    {
+      "groupIndex": 35,
+      "groupName": "魔神僧正篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "NT-HIGH-PRIEST"
+      ],
+      "candidateEvidenceIds": [
+        "N13"
+      ]
+    },
+    {
+      "groupIndex": 36,
+      "groupName": "去鸣篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "NT-SALOME",
+        "NT-WORLD-REJECTER"
+      ],
+      "candidateEvidenceIds": [
+        "N14",
+        "N15"
+      ]
+    },
+    {
+      "groupIndex": 37,
+      "groupName": "元素篇·上里归还篇",
+      "sceneCount": 2,
+      "candidatePackageIds": [
+        "NT-HEAT-WAVE",
+        "NT-KAMISATO-RESCUE"
+      ],
+      "candidateEvidenceIds": [
+        "N16",
+        "N17"
+      ]
+    },
+    {
+      "groupIndex": 38,
+      "groupName": "亚雷斯塔篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "NT-ALEISTER"
+      ],
+      "candidateEvidenceIds": [
+        "N18"
+      ]
+    },
+    {
+      "groupIndex": 39,
+      "groupName": "科隆尊篇",
+      "sceneCount": 1,
+      "candidatePackageIds": [
+        "CORONZON"
+      ],
+      "candidateEvidenceIds": [
+        "N20",
+        "N21",
+        "N22"
+      ]
+    }
+  ],
+  "currentOpenings": [
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "1月18日",
+      "tag": "前史·原石拯救篇",
+      "description": "Skill-Out的三名头目驹场利德、滨面仕上、服部半藏连夜出逃，却在半路被黄泉川爱穗截获。针对无能力者的抓捕正在全城升温。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "2月1日",
+      "tag": "前史·原石拯救篇",
+      "description": "伦敦一家牛仔裤店里，神裂火织撞上了专剪牛仔裤的怪人；同一时刻，黑妻绵流重获自由，暗部的棋盘悄然挪动了一格。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "2月22日",
+      "tag": "前史·原石拯救篇",
+      "description": "上条刀夜在意大利街头结识芭比娜与丽多薇雅。一箱出于母爱塞来的魔法纪念品，日后竟成了\"天使坠落\"的遥远引信。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "3月15日",
+      "tag": "前史·原石拯救篇",
+      "description": "削板军霸撂倒横须贺、救下原谷矢文。这块号称\"原石\"的硬骨头，正以蛮力在学园都市砸出自己的名字。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "4月5日",
+      "tag": "前史·原石拯救篇",
+      "description": "远在巴西的伊妮丝放下了复仇的念头，靠回收家电白手起家——这个被世界眷顾的\"偶然\"，就此翻身。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "4月26日",
+      "tag": "前史·原石拯救篇",
+      "description": "学舍之园的理发店里，白井黑子与老板闲聊起\"原石\"话题。平静日常之下，某种力量正在慢慢聚拢。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "5月10日",
+      "tag": "前史·原石拯救篇",
+      "description": "米兰街头，欧雷尔斯从人口贩子手中救下上百名孩童。这位不愿卷入纷争的最强之一，又一次按自己的规矩出手。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "5月17日",
+      "tag": "前史·原石拯救篇",
+      "description": "小郭寻人途中撞见滨面仕上，一句\"你是忍者后裔吧\"的玩笑，离真相近得吓人。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "7月5日",
+      "tag": "前史·原石拯救篇",
+      "description": "被追捕的原石少女慌不择路，撞上了刀夜一行；为了掩护她，两人导演了一场塞斯纳坠机的假死戏码。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 1,
+      "groupName": "前史·原石拯救篇",
+      "date": "7月12日",
+      "tag": "前史·原石拯救篇",
+      "description": "云川芹亚密会统括理事贝积继敏，议题直指\"原石\"与名为幻想杀手的异存在；同一天，湿透的当麻邂逅了一位神秘少女。",
+      "candidatePackageIds": [
+        "GEMSTONE"
+      ],
+      "candidateEvidenceIds": [
+        "S01",
+        "S04",
+        "S07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 2,
+      "groupName": "美琴过去篇",
+      "date": "4月某日",
+      "tag": "美琴过去篇",
+      "description": "白井黑子踏入常盘台，与高傲的王牌御坂美琴初会；同一时间，小郭顶着假身份潜入学园都市，开始了漫长的潜伏。",
+      "candidatePackageIds": [
+        "MIKOTO-PAST"
+      ],
+      "candidateEvidenceIds": [
+        "S05"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 3,
+      "groupName": "美琴一年级篇",
+      "date": "一年级·5月",
+      "tag": "美琴一年级篇",
+      "description": "入学一个月的美琴被魔之自贩机吞掉一万日元；太妹装扮的琉璃学姐传授'自贩机踢'，初代室友洁斋雪紫开始说教——而常盘台三大派阀正为'永代姬君'之位暗流涌动。",
+      "candidatePackageIds": [
+        "FIRST-YEAR"
+      ],
+      "candidateEvidenceIds": [
+        "P02",
+        "P03",
+        "P04",
+        "P13",
+        "P15",
+        "S08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 3,
+      "groupName": "美琴一年级篇",
+      "date": "一年级·次期新学期",
+      "tag": "美琴一年级篇",
+      "description": "白井黑子等新生入学之际，'能力再现'连环事件震撼常盘台——保健室的女帝沙淡扇就任永代姬君，为亡姐复仇的常盘台歼灭计划浮出水面。",
+      "candidatePackageIds": [
+        "FIRST-YEAR"
+      ],
+      "candidateEvidenceIds": [
+        "P02",
+        "P03",
+        "P04",
+        "P13",
+        "P15",
+        "S08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 4,
+      "groupName": "妹妹们篇（克隆前史）",
+      "date": "5月11日",
+      "tag": "妹妹们篇（克隆前史）",
+      "description": "实验舱内，御坂9982号睁开双眼。她还不知道等待自己的命运，只是按指令行事——其中一项竟是处理\"姐妹们\"的遗体。",
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "S08",
+        "O08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 4,
+      "groupName": "妹妹们篇（克隆前史）",
+      "date": "8月10日",
+      "tag": "妹妹们篇（克隆前史）",
+      "description": "御坂美琴循着\"现金卡\"的都市传说，傍晚撞见了布束砥信，一个被废弃的克隆人计划从阴影里浮出水面。她还不知道，自己将为此赌上全部。",
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "S08",
+        "O08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "date": "6月17日",
+      "tag": "幻想御手篇",
+      "description": "自动贩卖机前的口角让当麻惹怒了美琴，蓝白色电弧瞬间劈满小巷——唯独当麻站着没倒。两人的孽缘自此开始。",
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "S09",
+        "O01"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "date": "7月10日",
+      "tag": "幻想御手篇",
+      "description": "钏路帷子毫无征兆地昏睡过去。普通学生毫无察觉，暗部的名册上却悄悄多了一笔记录。",
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "S09",
+        "O01"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "date": "7月11日",
+      "tag": "幻想御手篇",
+      "description": "第一次虚空爆破撕裂了学园都市的一角。没有犯人宣言，没有动机，只有安全警报等级无声上调。",
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "S09",
+        "O01"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "date": "7月16日",
+      "tag": "幻想御手篇",
+      "description": "一起Level 3发火能力者的抢劫案，让黑子、初春与美琴罕见地并肩出动。和平依旧需要有人买单。",
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "S09",
+        "O01"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "date": "7月17日",
+      "tag": "幻想御手篇",
+      "description": "美琴被错认成新任风纪委员帮忙寻包；当晚河堤之约让她追着当麻跑了一整夜，固法美伟则在超市遭重力炸弹重伤。",
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "S09",
+        "O01"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 5,
+      "groupName": "幻想御手篇",
+      "date": "7月18日",
+      "tag": "幻想御手篇",
+      "description": "钏路帷子卷入风纪委员疑云，第七学区拉响警报；第二次虚空爆破中当麻救下美琴与初春，功劳却记到了\"超电磁炮\"头上。",
+      "candidatePackageIds": [
+        "FANTASY-HAND"
+      ],
+      "candidateEvidenceIds": [
+        "S09",
+        "O01"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 6,
+      "groupName": "能力实演篇",
+      "date": "7月1日",
+      "tag": "能力实演篇",
+      "description": "美琴远赴俄罗斯参加能力实演。这场科学秀的背后，魔法结社预备军\"新生之光\"的影子若隐若现。",
+      "candidatePackageIds": [
+        "RUSSIA-DEMONSTRATION"
+      ],
+      "candidateEvidenceIds": [
+        "S10"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 7,
+      "groupName": "禁书降临篇",
+      "date": "7月19日",
+      "tag": "禁书降临篇",
+      "description": "快餐店里，当麻无意搅黄了美琴的计划，铁桥两端剑拔弩张；同一夜，茵蒂克丝踏入了学园都市。",
+      "candidatePackageIds": [
+        "INDEX-FALL"
+      ],
+      "candidateEvidenceIds": [
+        "O02"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 7,
+      "groupName": "禁书降临篇",
+      "date": "7月20日",
+      "tag": "禁书降临篇",
+      "description": "暑假第一天，受伤修女的传闻在暗处流转，幻想御手的谣言也开始在学生间发酵。",
+      "candidatePackageIds": [
+        "INDEX-FALL"
+      ],
+      "candidateEvidenceIds": [
+        "O02"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 7,
+      "groupName": "禁书降临篇",
+      "date": "7月21日",
+      "tag": "禁书降临篇",
+      "description": "佐天泪子为保护钢盾掬彦，和兜售幻想御手的小混混扭打在一起。用它的人越来越多，城市的空气越来越沉。",
+      "candidatePackageIds": [
+        "INDEX-FALL"
+      ],
+      "candidateEvidenceIds": [
+        "O02"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 7,
+      "groupName": "禁书降临篇",
+      "date": "7月24日",
+      "tag": "禁书降临篇",
+      "description": "同一天里，当麻对上神裂火织，美琴逼问木山春生，幻想猛兽在街头肆虐——你在窗边眺望着远处冲天的火光。",
+      "candidatePackageIds": [
+        "INDEX-FALL"
+      ],
+      "candidateEvidenceIds": [
+        "O02"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 7,
+      "groupName": "禁书降临篇",
+      "date": "7月28日",
+      "tag": "禁书降临篇",
+      "description": "凌晨0点22分，树状图设计者轰然倒塌。全城计算网络瘫痪，你从睡梦中惊醒，皮肤上爬满异常的静电感。",
+      "candidatePackageIds": [
+        "INDEX-FALL"
+      ],
+      "candidateEvidenceIds": [
+        "O02"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 8,
+      "groupName": "乱雑開放篇",
+      "date": "8月2日",
+      "tag": "乱雑開放篇",
+      "description": "暑假的街头接连出现能力失控的目击报告——不使用能力却引发现象的",
+      "candidatePackageIds": [
+        "POLTERGEIST"
+      ],
+      "candidateEvidenceIds": [
+        "O07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 8,
+      "groupName": "乱雑開放篇",
+      "date": "8月6日",
+      "tag": "乱雑開放篇",
+      "description": "初春饰利的新室友春上衿衣在公园里寻找儿时的同伴，你注意到她身边的幼童身上，有与暴走现场相同的装置残片。",
+      "candidatePackageIds": [
+        "POLTERGEIST"
+      ],
+      "candidateEvidenceIds": [
+        "O07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 8,
+      "groupName": "乱雑開放篇",
+      "date": "8月10日",
+      "tag": "乱雑開放篇",
+      "description": "全城能力抑制装置启动的传闻四起，地下的阴谋浮出水面。传说这一夜，灵现象将达到顶点。",
+      "candidatePackageIds": [
+        "POLTERGEIST"
+      ],
+      "candidateEvidenceIds": [
+        "O07"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 9,
+      "groupName": "妹妹篇·绝对能力进化",
+      "date": "8月1日",
+      "tag": "妹妹篇·绝对能力进化",
+      "description": "第三学区遇袭：装载危险燃料的卫星引导车直冲会场，警备员与风纪委员全员出动，而你恰好在封锁线之内。",
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "S08",
+        "O08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 9,
+      "groupName": "妹妹篇·绝对能力进化",
+      "date": "8月8日",
+      "tag": "妹妹篇·绝对能力进化",
+      "description": "三泽塾的大门向当麻与史提尔敞开，楼内是与奥雷欧斯的死斗。科学侧的你，第一次嗅到魔法战争的硝烟。",
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "S08",
+        "O08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 9,
+      "groupName": "妹妹篇·绝对能力进化",
+      "date": "8月15日",
+      "tag": "妹妹篇·绝对能力进化",
+      "description": "美琴亲眼看着9982号在一方通行手下凋零，情绪决堤。笼罩学园都市的黑暗实验，终于露出一角。",
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "S08",
+        "O08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 9,
+      "groupName": "妹妹篇·绝对能力进化",
+      "date": "8月21日",
+      "tag": "妹妹篇·绝对能力进化",
+      "description": "废弃工厂的决战落下帷幕，绝对能力者进化计划被迫中止。但你知道，这座城市的黑夜才刚刚开始。",
+      "candidatePackageIds": [
+        "ABSOLUTE-EVOLVE"
+      ],
+      "candidateEvidenceIds": [
+        "S08",
+        "O08"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 10,
+      "groupName": "静默派对篇",
+      "date": "8月22日",
+      "tag": "静默派对篇",
+      "description": "水上乐园的爆炸骚动里，无人兵器在众目睽睽之下启动——暑假最后的狂欢，你却嗅到了铁锈味。",
+      "candidatePackageIds": [
+        "SILENT-PARTY"
+      ],
+      "candidateEvidenceIds": [
+        "O09"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 10,
+      "groupName": "静默派对篇",
+      "date": "8月24日",
+      "tag": "静默派对篇",
+      "description": "一个绿发少女闯入你的视线，她说自己只剩72小时。她的名字叫菲布莉——一个",
+      "candidatePackageIds": [
+        "SILENT-PARTY"
+      ],
+      "candidateEvidenceIds": [
+        "O09"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 10,
+      "groupName": "静默派对篇",
+      "date": "8月27日",
+      "tag": "静默派对篇",
+      "description": "学究会开幕。两万驱动铠在各会场同时立起，一场名为",
+      "candidatePackageIds": [
+        "SILENT-PARTY"
+      ],
+      "candidateEvidenceIds": [
+        "O09"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 11,
+      "groupName": "天使坠落·最后之作篇",
+      "date": "8月28日",
+      "tag": "天使坠落篇",
+      "description": "天使坠落，全世界身份互换。当你发现镜中的自己也在悄然改变时，追查真相已经无法回头。",
+      "candidatePackageIds": [
+        "ANGEL-FALL",
+        "AUGUST-31"
+      ],
+      "candidateEvidenceIds": [
+        "O10",
+        "O11"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 11,
+      "groupName": "天使坠落·最后之作篇",
+      "date": "8月31日",
+      "tag": "天使坠落·最后之作篇",
+      "description": "艾扎力与当麻兵刃相向，一方通行遇见了最后之作，天井亚雄的手伸向病毒开关——这一夜的命运天平摇个不停。",
+      "candidatePackageIds": [
+        "ANGEL-FALL",
+        "AUGUST-31"
+      ],
+      "candidateEvidenceIds": [
+        "O10",
+        "O11"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 12,
+      "groupName": "死灵术师篇",
+      "date": "9月1日",
+      "tag": "死灵术师篇",
+      "description": "医院走廊里，一个金发少女对病床上的白发少年脱口而出",
+      "candidatePackageIds": [
+        "NECROMANCER"
+      ],
+      "candidateEvidenceIds": [
+        "O14"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 12,
+      "groupName": "死灵术师篇",
+      "date": "9月4日",
+      "tag": "死灵术师篇",
+      "description": "披着警备员外皮的",
+      "candidatePackageIds": [
+        "NECROMANCER"
+      ],
+      "candidateEvidenceIds": [
+        "O14"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 12,
+      "groupName": "死灵术师篇",
+      "date": "9月8日",
+      "tag": "死灵术师篇",
+      "description": "罗森塔尔家400年的执念在棺中苏醒。善意的背叛走到了终点——这一次，谁能把",
+      "candidatePackageIds": [
+        "NECROMANCER"
+      ],
+      "candidateEvidenceIds": [
+        "O14"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 13,
+      "groupName": "雪莉袭击篇",
+      "date": "9月1日",
+      "tag": "雪莉袭击篇",
+      "description": "新学期伊始，雪莉·克伦威尔携石像闯入校园，少女风斩冰华的名字开始在你耳边出现。",
+      "candidatePackageIds": [
+        "KAZAKIRI"
+      ],
+      "candidateEvidenceIds": [
+        "O12"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 14,
+      "groupName": "法之书篇",
+      "date": "9月8日",
+      "tag": "法之书篇",
+      "description": "为了救出奥索拉，当麻联手天草式与雅妮丝部队血战护卫军。魔法侧的博弈第一次摆上台面。",
+      "candidatePackageIds": [
+        "BOOK-OF-LAW"
+      ],
+      "candidateEvidenceIds": [
+        "O16"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 15,
+      "groupName": "群奏活剧篇",
+      "date": "9月12日",
+      "tag": "群奏活剧篇",
+      "description": "恩底弥翁塔成为风暴中心，当麻与乌雷亚帕蒂正面交锋。巨大危机之下，你发现自己的选择重逾千钧。",
+      "candidatePackageIds": [
+        "ENDEYMION"
+      ],
+      "candidateEvidenceIds": [
+        "O18",
+        "O21"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 16,
+      "groupName": "树状图残骸篇",
+      "date": "9月14日",
+      "tag": "树状图残骸篇",
+      "description": "结标淡希盗走树状图残骸，白井黑子身负重伤。暗部的动作越来越不加掩饰，旁观还是介入？",
+      "candidatePackageIds": [
+        "TREE-DIAGRAM-REMNANT"
+      ],
+      "candidateEvidenceIds": [
+        "O20"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 17,
+      "groupName": "恩底弥翁篇",
+      "date": "9月18日",
+      "tag": "恩底弥翁篇",
+      "description": "塔顶决战落幕，歌声响彻夜空，艾丽莎的真实身份揭晓——奇迹与科学的合奏迎来终章。",
+      "candidatePackageIds": [
+        "ENDEYMION"
+      ],
+      "candidateEvidenceIds": [
+        "O18",
+        "O21"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 18,
+      "groupName": "大霸星祭篇",
+      "date": "9月19日",
+      "tag": "大霸星祭篇",
+      "description": "大霸星祭开幕！使徒十字的阴谋同步启动，当麻与土御门全力拦截丽多薇雅与欧莉安娜。欢呼声中暗流汹涌。",
+      "candidatePackageIds": [
+        "DAIHASEISAI",
+        "FESTIVAL",
+        "ST-CROSS"
+      ],
+      "candidateEvidenceIds": [
+        "O22",
+        "O23",
+        "O24"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 18,
+      "groupName": "大霸星祭篇",
+      "date": "9月20日",
+      "tag": "大霸星祭篇",
+      "description": "祭典第二日，食蜂操祈与木原幻生正面碰撞，当麻携手削板军霸救出美琴。七名Level 5的战争悄然打响。",
+      "candidatePackageIds": [
+        "DAIHASEISAI",
+        "FESTIVAL",
+        "ST-CROSS"
+      ],
+      "candidateEvidenceIds": [
+        "O22",
+        "O23",
+        "O24"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 19,
+      "groupName": "天赋梦路篇",
+      "date": "9月22日",
+      "tag": "天赋梦路篇",
+      "description": "祭典的余热未散，一种名为",
+      "candidatePackageIds": [
+        "DREAM-RANKER"
+      ],
+      "candidateEvidenceIds": [
+        "O26"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 19,
+      "groupName": "天赋梦路篇",
+      "date": "9月26日",
+      "tag": "天赋梦路篇",
+      "description": "S级卡",
+      "candidatePackageIds": [
+        "DREAM-RANKER"
+      ],
+      "candidateEvidenceIds": [
+        "O26"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 19,
+      "groupName": "天赋梦路篇",
+      "date": "9月28日",
+      "tag": "天赋梦路篇",
+      "description": "大规模联机做梦的火种已被点燃，梦境与现实的边界开始渗漏。梦的尽头，是",
+      "candidatePackageIds": [
+        "DREAM-RANKER"
+      ],
+      "candidateEvidenceIds": [
+        "O26"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 19,
+      "groupName": "天赋梦路篇",
+      "date": "10月上旬",
+      "tag": "天赋梦路篇",
+      "description": "梦游症的余波就没停过：FRAGILE 的",
+      "candidatePackageIds": [
+        "DREAM-RANKER"
+      ],
+      "candidateEvidenceIds": [
+        "O26"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 20,
+      "groupName": "0930篇",
+      "date": "9月30日",
+      "tag": "0930篇",
+      "description": "前方之风兵临城下，一方通行展开黑翼斩落木原数多。学园都市与罗马正教的战火只差一粒火星。",
+      "candidatePackageIds": [
+        "ST0930"
+      ],
+      "candidateEvidenceIds": [
+        "O28"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 21,
+      "groupName": "C文书篇",
+      "date": "10月1日",
+      "tag": "C文书篇",
+      "description": "罗马正教大主教口语密令'C文书'落到一课郎手中，追杀令同步下达——笔记本流转到谁手里，谁就卷进法国广场的密谋。",
+      "candidatePackageIds": [
+        "CDOC"
+      ],
+      "candidateEvidenceIds": [
+        "O31"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 21,
+      "groupName": "C文书篇",
+      "date": "10月8日",
+      "tag": "C文书篇",
+      "description": "法国·阿维尼翁攻防战到达顶点，C文书的矛头终于露到了纸面之外——联合会议场上的暗杀与火器，是魔法侧洗地的号角。",
+      "candidatePackageIds": [
+        "CDOC"
+      ],
+      "candidateEvidenceIds": [
+        "O31"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 22,
+      "groupName": "暗部大战篇",
+      "date": "10月9日",
+      "tag": "暗部大战篇",
+      "description": "五大暗部组织全面开战，一方通行与垣根帝督的对决撕裂夜空。黑暗无处可藏，你必须选边站。",
+      "candidatePackageIds": [
+        "DARK-BATTLE"
+      ],
+      "candidateEvidenceIds": [
+        "O32"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 23,
+      "groupName": "暗部脱逃·后方之水篇",
+      "date": "10月11日",
+      "tag": "暗部脱逃·后方之水篇",
+      "description": "英国清教收到后方之水的战书，随信附上左方之地的半具遗体。梵蒂冈的阴影跨过海峡，当麻的命运再次被卷入西洋彼岸的棋局。",
+      "candidatePackageIds": [
+        "ACQUA",
+        "DRAGON"
+      ],
+      "candidateEvidenceIds": [
+        "O34",
+        "O36"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 23,
+      "groupName": "暗部脱逃·后方之水篇",
+      "date": "10月13日",
+      "tag": "暗部脱逃·后方之水篇",
+      "description": "后方之水踏浪而来，第二十二学区化为战场，当麻重伤濒死。电视里滚动播放着最后的通牒。",
+      "candidatePackageIds": [
+        "ACQUA",
+        "DRAGON"
+      ],
+      "candidateEvidenceIds": [
+        "O34",
+        "O36"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 23,
+      "groupName": "暗部脱逃·后方之水篇",
+      "date": "10月17日",
+      "tag": "暗部脱逃·后方之水篇",
+      "description": "不列颠万圣节与暗部脱逃篇同时开始。后方之水获屠龙刀阿斯卡隆，英国清教向当麻发出禁书目录召集令；暗部GROUP追查\"龙(DRAGON)\"真身，一方通行即将北上俄罗斯。",
+      "candidatePackageIds": [
+        "ACQUA",
+        "DRAGON"
+      ],
+      "candidateEvidenceIds": [
+        "O34",
+        "O36"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 24,
+      "groupName": "不列颠万圣节篇",
+      "date": "10月18日",
+      "tag": "不列颠万圣节篇",
+      "description": "英国午夜政变：第二王女凯莉莎劫持禁书目录，骑士派倾巢而出。后方之水救下第三王女薇莉安，当麻借英国女王\"联合的意义\"之力破坏卡提纳一世，一举击溃凯莉莎。",
+      "candidatePackageIds": [
+        "BRITISH-ROYAL"
+      ],
+      "candidateEvidenceIds": [
+        "O35"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 25,
+      "groupName": "暗部大战篇",
+      "date": "10月9日",
+      "tag": "暗部大战篇",
+      "description": "独立纪念日。一纸",
+      "candidatePackageIds": [
+        "DARK-BATTLE"
+      ],
+      "candidateEvidenceIds": [
+        "O32"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 25,
+      "groupName": "暗部大战篇",
+      "date": "10月10日",
+      "tag": "暗部大战篇",
+      "description": "卫星失明，佣兵叩城，",
+      "candidatePackageIds": [
+        "DARK-BATTLE"
+      ],
+      "candidateEvidenceIds": [
+        "O32"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 25,
+      "groupName": "暗部大战篇",
+      "date": "10月12日",
+      "tag": "暗部大战篇",
+      "description": "硝烟散去，四大组织的名字成了历史。幸存者拒绝再做任何人的棋子——而你的名字，被他们记住了。",
+      "candidatePackageIds": [
+        "DARK-BATTLE"
+      ],
+      "candidateEvidenceIds": [
+        "O32"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 26,
+      "groupName": "越狱篇",
+      "date": "10月10日",
+      "tag": "越狱篇",
+      "description": "第二少年院开幕，'脱狱试用赛'悬赏十亿日元。AIM干扰器、最新锐防卫系统——以及一场把整个比赛变成圈套的真脱狱。",
+      "candidatePackageIds": [
+        "JAILBREAK"
+      ],
+      "candidateEvidenceIds": [
+        "O33"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 26,
+      "groupName": "越狱篇",
+      "date": "10月12日",
+      "tag": "越狱篇",
+      "description": "宿着'龙王之颚'天使型龙的Level 0女囚春暖嬉美，挟持初春饰利，要把学园都市最高机密'能力开发技术'公开给全世界。佐天泪子挺身挡下了龙之翼。",
+      "candidatePackageIds": [
+        "JAILBREAK"
+      ],
+      "candidateEvidenceIds": [
+        "O33"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 26,
+      "groupName": "越狱篇",
+      "date": "10月14日",
+      "tag": "越狱篇",
+      "description": "绝境中，初春饰利掌握了AIM干扰器，把自身的AIM扩散力场握在手中——平凡的黑客少女，现场编出了'打消龙之力'的能力。",
+      "candidatePackageIds": [
+        "JAILBREAK"
+      ],
+      "candidateEvidenceIds": [
+        "O33"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 27,
+      "groupName": "幽幻姐妹支线",
+      "date": "9月22日",
+      "tag": "幽幻姐妹支线",
+      "description": "常盘台中学'幽灵骚动'：食蜂派阀No.2帆风润子被一位失忆的幽灵少女缠上了。追查的尽头，是才人工房第三研究室'内部进化'的旧伤。",
+      "candidatePackageIds": [
+        "ASTRAL-BUDDY"
+      ],
+      "candidateEvidenceIds": [
+        "O27"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 27,
+      "groupName": "幽幻姐妹支线",
+      "date": "10月3日",
+      "tag": "幽幻姐妹支线",
+      "description": "第七位·削板军霸乱入挑战，真黑幕蜜蚁爱愉的'重做实验救回孩子们'浮出水面。幽灵少女悠里千夜与研究员远峰叶理的'最后的约定'，等待一个应答。",
+      "candidatePackageIds": [
+        "ASTRAL-BUDDY"
+      ],
+      "candidateEvidenceIds": [
+        "O27"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 28,
+      "groupName": "新约开始·WWIII",
+      "date": "10月19日",
+      "tag": "新约开始·WWIII",
+      "description": "俄罗斯向学园都市宣战，第三次世界大战爆发。当麻、一方通行、滨面仕上三位主角同时踏上前往战场的道路——新约的帷幕正式拉开。",
+      "candidatePackageIds": [
+        "WW3"
+      ],
+      "candidateEvidenceIds": [
+        "O37"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 28,
+      "groupName": "新约开始·WWIII",
+      "date": "10月30日",
+      "tag": "新约开始·WWIII",
+      "description": "伯利恒之星升上苍穹，旧约终战迎来终章。当麻打倒右方之火，一方通行展开纯白之翼挡下大陆级一击——三战落幕，当麻坠入北冰洋。",
+      "candidatePackageIds": [
+        "WW3"
+      ],
+      "candidateEvidenceIds": [
+        "O37"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 29,
+      "groupName": "新入生篇",
+      "date": "11月5日",
+      "tag": "新入生篇",
+      "description": "芙蕾梅亚危在旦夕之际，当麻归来。格雷姆林的威胁公之于众，昨日的敌人罕见地坐上了同一张谈判桌。",
+      "candidatePackageIds": [
+        "NT-FRESHMEN"
+      ],
+      "candidateEvidenceIds": [
+        "N01",
+        "N02"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 30,
+      "groupName": "夏威夷篇",
+      "date": "11月10日",
+      "tag": "夏威夷篇",
+      "description": "夏威夷群岛沦为三方角力场：黎明晨光、美国总统卡崔、魔法结社格雷姆林在此交锋。当麻等人拨乱反正，但二十七机关从此对学园都市起疑，各自独立成联盟。",
+      "candidatePackageIds": [
+        "NT-HAWAII"
+      ],
+      "candidateEvidenceIds": [
+        "N03"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 31,
+      "groupName": "天择者混战篇",
+      "date": "11月13日",
+      "tag": "天择者混战篇",
+      "description": "巴格吉城传来噩耗：魔神欧提努斯捏碎了上条当麻的右手。学园都市出兵镇压二十七机关，魔神的阴影笼罩全城。",
+      "candidatePackageIds": [
+        "NT-AGITATE-HALATION",
+        "NT-ICHIHANARAN",
+        "NT-NATURAL-SELECTOR"
+      ],
+      "candidateEvidenceIds": [
+        "N04",
+        "N05",
+        "N06"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 31,
+      "groupName": "天择者混战篇",
+      "date": "11月14日",
+      "tag": "天择者混战篇",
+      "description": "一端览祭在人潮中开幕，全城一级警戒。喧嚣的表象下，没有窗户的大楼正被贪婪的目光锁定。",
+      "candidatePackageIds": [
+        "NT-AGITATE-HALATION",
+        "NT-ICHIHANARAN",
+        "NT-NATURAL-SELECTOR"
+      ],
+      "candidateEvidenceIds": [
+        "N04",
+        "N05",
+        "N06"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 31,
+      "groupName": "天择者混战篇",
+      "date": "11月18日",
+      "tag": "天择者混战篇",
+      "description": "人力资源计划启动，量产能力者恋查扑向芙蕾梅亚。七名超能力者倾巢而出，警笛声彻夜不息。",
+      "candidatePackageIds": [
+        "NT-AGITATE-HALATION",
+        "NT-ICHIHANARAN",
+        "NT-NATURAL-SELECTOR"
+      ],
+      "candidateEvidenceIds": [
+        "N04",
+        "N05",
+        "N06"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 32,
+      "groupName": "魔神欧提努斯篇",
+      "date": "11月下旬",
+      "tag": "魔神欧提努斯篇",
+      "description": "欧提努斯完成主神之枪，整个世界被擦除，只留当麻一人。被连续击杀一万次后当麻与她达成相互理解——她放弃神枪化为15cm少女，当麻为一个少女的笑容对抗六十亿人类。",
+      "candidatePackageIds": [
+        "GREMLIN"
+      ],
+      "candidateEvidenceIds": [
+        "N07",
+        "N08",
+        "N09"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 33,
+      "groupName": "蜜蚁爱愉篇",
+      "date": "12月1日",
+      "tag": "蜜蚁爱愉篇",
+      "description": "食蜂操祈的记忆出现异变，派阀内流言四起。被《资质排行》砍掉的'另一名女王候补'蜜蚁爱愉，带着Five_Over OS回来了。",
+      "candidatePackageIds": [
+        "MENTAL-STINGER"
+      ],
+      "candidateEvidenceIds": [
+        "N10"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 33,
+      "groupName": "蜜蚁爱愉篇",
+      "date": "12月3日",
+      "tag": "蜜蚁爱愉篇",
+      "description": "三秒。精神系最强的'心理掌握'被同源的'心理穿孔'击沉。女王坠入'我的记忆是否为伪造'的地狱——而真相，是一段三天之差的残酷错过。",
+      "candidatePackageIds": [
+        "MENTAL-STINGER"
+      ],
+      "candidateEvidenceIds": [
+        "N10"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 33,
+      "groupName": "蜜蚁爱愉篇",
+      "date": "12月5日",
+      "tag": "蜜蚁爱愉篇",
+      "description": "幻想杀手照亮对峙的终点。'我不是来救食蜂的，我是来救你的。'——被系统判定为'多余'的少女，等待一个迟到了太久的回答。",
+      "candidatePackageIds": [
+        "MENTAL-STINGER"
+      ],
+      "candidateEvidenceIds": [
+        "N10"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 34,
+      "groupName": "圣日耳曼篇",
+      "date": "12月1日",
+      "tag": "圣日耳曼篇",
+      "description": "第六位蓝花悦在全城散发学生证，类钻百货被圣日耳曼封锁。茵蒂克丝识破诡计，加纳神华击败圣日耳曼——三大魔神随之现世。",
+      "candidatePackageIds": [
+        "NT-SAINT-GERMAIN"
+      ],
+      "candidateEvidenceIds": [
+        "N12"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 35,
+      "groupName": "魔神僧正篇",
+      "date": "12月3日",
+      "tag": "魔神僧正篇",
+      "description": "当麻在学校天台对峙魔神僧正，拒绝成为魔神仲裁者。御坂美琴以质量加速器将僧正送入高空撞上彗星，木原脑干A.A.A.补刀——上里翔流与\"理想放逐\"就此登场。",
+      "candidatePackageIds": [
+        "NT-HIGH-PRIEST"
+      ],
+      "candidateEvidenceIds": [
+        "N13"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 36,
+      "groupName": "去鸣篇",
+      "date": "12月5日",
+      "tag": "去鸣篇",
+      "description": "木原唯一伪装成化生院明日香，潜伏在上里翔流身边伺机复仇，去鸣篇的暗流悄然涌动。",
+      "candidatePackageIds": [
+        "NT-SALOME",
+        "NT-WORLD-REJECTER"
+      ],
+      "candidateEvidenceIds": [
+        "N14",
+        "N15"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 37,
+      "groupName": "元素篇·上里归还篇",
+      "date": "12月9日",
+      "tag": "元素篇·上里归还篇",
+      "description": "没有窗户的大楼底部喷出烈焰，整栋建筑拔地升空。上里翔流被放逐至异界，百名洗脑少女开始搜寻上条当麻。",
+      "candidatePackageIds": [
+        "NT-HEAT-WAVE",
+        "NT-KAMISATO-RESCUE"
+      ],
+      "candidateEvidenceIds": [
+        "N16",
+        "N17"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 37,
+      "groupName": "元素篇·上里归还篇",
+      "date": "12月10日",
+      "tag": "元素篇·上里归还篇",
+      "description": "乌丸府兰的间谍与魔法师身份暴露，营巢部队延迟爆炸接触A.A.A.核心。府兰与丰山琉华联手救出上里翔流，理想放逐重归其手，木原唯一生死不明。",
+      "candidatePackageIds": [
+        "NT-HEAT-WAVE",
+        "NT-KAMISATO-RESCUE"
+      ],
+      "candidateEvidenceIds": [
+        "N16",
+        "N17"
+      ],
+      "mappingLevel": "group-level-ambiguous",
+      "needsPhase2Refinement": true
+    },
+    {
+      "groupIndex": 38,
+      "groupName": "亚雷斯塔篇",
+      "date": "12月11日",
+      "tag": "亚雷斯塔篇",
+      "description": "营巢部队宣布学园都市48小时恢复秩序。亚雷斯塔亲自出动捕捉乌丸府兰，却被土御门元春连开数枪击倒——幕后之王首次站上台前，土御门与府兰结盟寻当麻。",
+      "candidatePackageIds": [
+        "NT-ALEISTER"
+      ],
+      "candidateEvidenceIds": [
+        "N18"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": false
+    },
+    {
+      "groupIndex": 39,
+      "groupName": "科隆尊篇",
+      "date": "12月12日",
+      "tag": "科隆尊篇",
+      "description": "亚雷斯塔以学园都市完全停摆为代价，制造驱魔印记\"西旗\"，将大恶魔科隆尊封印于学园都市，随即渡海赴英寻找其弱点——旧时代落幕，创约的帷幕由此拉开。",
+      "candidatePackageIds": [
+        "CORONZON"
+      ],
+      "candidateEvidenceIds": [
+        "N20",
+        "N21",
+        "N22"
+      ],
+      "mappingLevel": "group-level",
+      "needsPhase2Refinement": true
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "evidenceCount": 106,
+    "welcomeGroupCount": 39,
+    "welcomeSceneCount": 87,
+    "allEvidenceIdsUnique": true,
+    "allWelcomeGroupsMapped": true,
+    "allDirectPackagesExist": true,
+    "allWorldbookFilesExist": true,
+    "allNodeReferencesExist": true
+  }
+}

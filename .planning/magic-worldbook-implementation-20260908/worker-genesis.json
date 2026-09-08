@@ -1,0 +1,700 @@
+{
+  "files": [
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第八卷.txt",
+      "packageId": "GENESIS-08",
+      "title": "创约第八卷·安娜保护与复活仪式",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "本篇Y＋1年1月3日至1月4日深夜，据社区译文序章与尾声。承接前卷同日逃亡；尾声仪式灾变不是次卷才首次发生。",
+      "evidenceIds": [
+        "G08"
+      ],
+      "volumes": [
+        "GT8"
+      ],
+      "keywords": [
+        "创约第八卷",
+        "创约第八卷安娜保护线",
+        "GENESIS-08"
+      ],
+      "entryNode": "GENESIS-08-01",
+      "nodeIds": [
+        "GENESIS-08-01",
+        "GENESIS-08-02",
+        "GENESIS-08-03",
+        "GENESIS-08-04",
+        "GENESIS-08-05",
+        "GENESIS-08-06",
+        "GENESIS-08-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月3日至4日深夜的数字日期依据非官方译文，非官方简介直接给出的完整区间。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第二卷.txt",
+      "packageId": "GENESIS-02",
+      "title": "创约第二卷·圣诞日安娜迎击",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月25日；官方卷页确认圣诞日，前日投药是12月24日前情。与手铐行动同日并行，不按卷号另加一天。",
+      "evidenceIds": [
+        "G02"
+      ],
+      "volumes": [
+        "GT2"
+      ],
+      "keywords": [
+        "创约第二卷",
+        "创约第二卷圣诞日迎击",
+        "GENESIS-02"
+      ],
+      "entryNode": "GENESIS-02-01",
+      "nodeIds": [
+        "GENESIS-02-01",
+        "GENESIS-02-02",
+        "GENESIS-02-03",
+        "GENESIS-02-04",
+        "GENESIS-02-05",
+        "GENESIS-02-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": []
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第九卷.txt",
+      "packageId": "GENESIS-09",
+      "title": "创约第九卷·CRC医院防卫战",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "本篇Y＋1年1月5日，数字日期依社区译文第一章。前卷4日深夜的仪式与爱丽丝遭杀害是前情，不在本卷重新发生；尾声病房已接近午夜。",
+      "evidenceIds": [
+        "G09"
+      ],
+      "volumes": [
+        "GT9"
+      ],
+      "keywords": [
+        "创约第九卷",
+        "创约第九卷医院防卫战",
+        "GENESIS-09"
+      ],
+      "entryNode": "GENESIS-09-01",
+      "nodeIds": [
+        "GENESIS-09-01",
+        "GENESIS-09-02",
+        "GENESIS-09-03",
+        "GENESIS-09-04",
+        "GENESIS-09-05",
+        "GENESIS-09-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月5日依据非官方译文第一章；未做日文原版逐段日期核验。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第六卷.txt",
+      "packageId": "GENESIS-06",
+      "title": "创约第六卷·涩谷跨年追杀",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月31日，官方卷简介直接给出日期。元旦参拜与领事馆调查属于下一卷，不把本卷误归次年一月或新约。",
+      "evidenceIds": [
+        "G06"
+      ],
+      "volumes": [
+        "GT6"
+      ],
+      "keywords": [
+        "创约第六卷",
+        "创约第六卷涩谷追杀",
+        "GENESIS-06"
+      ],
+      "entryNode": "GENESIS-06-01",
+      "nodeIds": [
+        "GENESIS-06-01",
+        "GENESIS-06-02",
+        "GENESIS-06-03",
+        "GENESIS-06-04",
+        "GENESIS-06-05",
+        "GENESIS-06-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": []
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第七卷.txt",
+      "packageId": "GENESIS-07",
+      "title": "创约第七卷·跨年领事馆",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "本篇Y＋1年1月1日→1月2日→1月3日。1月1日有官方卷简介支持，2日与3日依社区译文章节明确日期；不能把三日压成一个元旦日，也不因异常空间体验额外加日。",
+      "evidenceIds": [
+        "G07"
+      ],
+      "volumes": [
+        "GT7"
+      ],
+      "keywords": [
+        "创约第七卷",
+        "创约第七卷跨年领事馆",
+        "GENESIS-07"
+      ],
+      "entryNode": "GENESIS-07-01",
+      "nodeIds": [
+        "GENESIS-07-01",
+        "GENESIS-07-02",
+        "GENESIS-07-03",
+        "GENESIS-07-04",
+        "GENESIS-07-05",
+        "GENESIS-07-06",
+        "GENESIS-07-07",
+        "GENESIS-07-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月2日、3日依据非官方译文；未获得日文原版数字日的独立核验，不宣称全部官方直证。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第三卷.txt",
+      "packageId": "GENESIS-03",
+      "title": "创约第三卷·手铐行动",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月25日，与创约第二卷并行。社区译文序章的15:00是场景时间，不等于已证的行动正式启动时刻；尾声另有下一晨背景，不据此迁移行动主日。",
+      "evidenceIds": [
+        "G03"
+      ],
+      "volumes": [
+        "GT3"
+      ],
+      "keywords": [
+        "创约第三卷",
+        "创约第三卷手铐行动",
+        "GENESIS-03"
+      ],
+      "entryNode": "GENESIS-03-01",
+      "nodeIds": [
+        "GENESIS-03-01",
+        "GENESIS-03-02",
+        "GENESIS-03-03",
+        "GENESIS-03-04",
+        "GENESIS-03-05",
+        "GENESIS-03-06",
+        "GENESIS-03-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "12月25日15:00只直证序章时点，手铐行动精确启动钟点未直证，不将二者等同。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十二卷.txt",
+      "packageId": "GENESIS-12",
+      "title": "创约第十二卷·葬礼后的生者证明",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "Y＋1年1月8日，葬礼与原定开学日的对应主要依据社区梗概及后卷回述。准备场景可承接前一日悲痛，不另造小时表；复活后的追捕与新危机仍属本卷，不能只播放葬礼就结束。",
+      "evidenceIds": [
+        "G12"
+      ],
+      "volumes": [
+        "GT12"
+      ],
+      "keywords": [
+        "创约第十二卷",
+        "创约第十二卷葬礼复活",
+        "GENESIS-12"
+      ],
+      "entryNode": "GENESIS-12-01",
+      "nodeIds": [
+        "GENESIS-12-01",
+        "GENESIS-12-02",
+        "GENESIS-12-03",
+        "GENESIS-12-04",
+        "GENESIS-12-05",
+        "GENESIS-12-06",
+        "GENESIS-12-07",
+        "GENESIS-12-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月8日葬礼与复活归日由社区梗概及后卷昨日回述互证，不能把官方寒假最后一天机械等同于葬礼日期。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十卷.txt",
+      "packageId": "GENESIS-10",
+      "title": "创约第十卷·爱丽丝的归来与告别",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "本篇Y＋1年1月6日，社区译文第一章明确当日及22:00节点。原作死亡确认时刻为1月6日23:58，由创约第十一卷序章回接确认，不挪到7日。",
+      "evidenceIds": [
+        "G10"
+      ],
+      "volumes": [
+        "GT10"
+      ],
+      "keywords": [
+        "创约第十卷",
+        "创约第十卷爱丽丝归来",
+        "GENESIS-10"
+      ],
+      "entryNode": "GENESIS-10-01",
+      "nodeIds": [
+        "GENESIS-10-01",
+        "GENESIS-10-02",
+        "GENESIS-10-03",
+        "GENESIS-10-04",
+        "GENESIS-10-05",
+        "GENESIS-10-06",
+        "GENESIS-10-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月6日与22:00、23:58采用非官方译文互证；23:58在下一卷序章回接，未做日文原版逐段日期核验。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十三卷.txt",
+      "packageId": "GENESIS-13",
+      "title": "创约第十三卷·红雪与阿蒂迦利迦",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "Y＋1年1月8日下午至午夜前后。15点后复苏、16点撤离、17点领事馆会议与夜间行动的分段依据社区梗概和译文章节，不冒称官方简介逐项证实；午夜后的追击由创约第十四卷承接。",
+      "evidenceIds": [
+        "G13"
+      ],
+      "volumes": [
+        "GT13"
+      ],
+      "keywords": [
+        "创约第十三卷",
+        "创约第十三卷红雪术式",
+        "GENESIS-13"
+      ],
+      "entryNode": "GENESIS-13-01",
+      "nodeIds": [
+        "GENESIS-13-01",
+        "GENESIS-13-02",
+        "GENESIS-13-03",
+        "GENESIS-13-04",
+        "GENESIS-13-05",
+        "GENESIS-13-06",
+        "GENESIS-13-07",
+        "GENESIS-13-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月8日下午至午夜的分时主要依据社区梗概与译文；未取得官方日文正文逐项钟点核验。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十四卷.txt",
+      "packageId": "GENESIS-14",
+      "title": "创约第十四卷·午夜追猎与清晨归校",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "序章承接Y＋1年1月8日午夜前，主体跨入1月9日凌晨。分学区追击的0点、1点、2点归属依据社区梗概和译文；第四章写已过04:00，尾声明确08:30并回述“昨日”的葬礼与开学。04:00不是全卷终点，08:30也不替所有附尾镜头赋予精确时刻。",
+      "evidenceIds": [
+        "G14"
+      ],
+      "volumes": [
+        "GT14"
+      ],
+      "keywords": [
+        "创约第十四卷",
+        "创约第十四卷午夜追猎",
+        "GENESIS-14"
+      ],
+      "entryNode": "GENESIS-14-01",
+      "nodeIds": [
+        "GENESIS-14-01",
+        "GENESIS-14-02",
+        "GENESIS-14-03",
+        "GENESIS-14-04",
+        "GENESIS-14-05",
+        "GENESIS-14-06",
+        "GENESIS-14-07",
+        "GENESIS-14-08",
+        "GENESIS-14-09"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "1月9日与各小时节点依据社区梗概、译文及昨日葬礼互证；08:30不替未定时附尾赋予精确钟点。",
+        "亚雷斯塔被送回后的现实身体与落点、浜面接触Aneri后的行动在本卷所读范围中未确定，只保留本卷已示状态，不向后续卷或1月10日至31日外推。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第十一卷.txt",
+      "packageId": "GENESIS-11",
+      "title": "创约第十一卷·伪地狱与回生阶梯",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y＋1",
+      "window": "序章回接Y＋1年1月6日23:58的死亡确认；死后主段按社区时间线归于1月7日。官方简介使用“寒假最后一天”等相对时间，不能据此把死亡改成7日。伪地狱的主观旅程不换算成现实世界多天。",
+      "evidenceIds": [
+        "G11"
+      ],
+      "volumes": [
+        "GT11"
+      ],
+      "keywords": [
+        "创约第十一卷",
+        "创约第十一卷伪地狱阶梯",
+        "GENESIS-11"
+      ],
+      "entryNode": "GENESIS-11-01",
+      "nodeIds": [
+        "GENESIS-11-01",
+        "GENESIS-11-02",
+        "GENESIS-11-03",
+        "GENESIS-11-04",
+        "GENESIS-11-05",
+        "GENESIS-11-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "现实主段1月7日为社区时间线归属；未建立伪地狱主观旅程与现实天数的换算，因此不添加现实日。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第四卷.txt",
+      "packageId": "GENESIS-04",
+      "title": "创约第四卷·洛杉矶空城",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y",
+      "window": "本篇Y年，洛杉矶当地12月26日起。社区译文给出当地26日03:00的计划抵达安排及跨国际日期线说明，不把计划当实测到达；图排至27日的全卷终点未获直接日期证实，回程不硬填时刻。",
+      "evidenceIds": [
+        "G04"
+      ],
+      "volumes": [
+        "GT4"
+      ],
+      "keywords": [
+        "创约第四卷",
+        "创约第四卷洛杉矶空城",
+        "GENESIS-04"
+      ],
+      "entryNode": "GENESIS-04-01",
+      "nodeIds": [
+        "GENESIS-04-01",
+        "GENESIS-04-02",
+        "GENESIS-04-03",
+        "GENESIS-04-04",
+        "GENESIS-04-05",
+        "GENESIS-04-06",
+        "GENESIS-04-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "图排12月27日全卷终点尚无正文直接证明；本包只采用当地12月26日起，03:00保留为计划抵达时刻。"
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第五卷.txt",
+      "packageId": "GENESIS-05",
+      "title": "创约第五卷·装甲列车与不思议之国",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月29日，数字日期据社区译文序章。爱丽丝改写的体验不另算现实过去数日。",
+      "evidenceIds": [
+        "G05"
+      ],
+      "volumes": [
+        "GT5"
+      ],
+      "keywords": [
+        "创约第五卷",
+        "创约第五卷装甲列车",
+        "GENESIS-05"
+      ],
+      "entryNode": "GENESIS-05-01",
+      "nodeIds": [
+        "GENESIS-05-01",
+        "GENESIS-05-02",
+        "GENESIS-05-03",
+        "GENESIS-05-04",
+        "GENESIS-05-05",
+        "GENESIS-05-06",
+        "GENESIS-05-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": []
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·创约第一卷.txt",
+      "packageId": "GENESIS-01",
+      "title": "创约第一卷·平安夜袭击",
+      "action": "added",
+      "stage": 8,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月24日。平安夜有官方卷简介支持；具体行动依卷内因果推进。",
+      "evidenceIds": [
+        "G01"
+      ],
+      "volumes": [
+        "GT1"
+      ],
+      "keywords": [
+        "创约第一卷",
+        "创约第一卷平安夜袭击",
+        "GENESIS-01"
+      ],
+      "entryNode": "GENESIS-01-01",
+      "nodeIds": [
+        "GENESIS-01-01",
+        "GENESIS-01-02",
+        "GENESIS-01-03",
+        "GENESIS-01-04",
+        "GENESIS-01-05",
+        "GENESIS-01-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": []
+    }
+  ],
+  "crossReferences": [
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-08-07",
+      "to": "GENESIS-09-01",
+      "condition": "本包收束；进入1月5日医院危机时接GENESIS-09-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-04-07",
+      "to": "GENESIS-05-01",
+      "condition": "本包收束；回到学园都市并到达12月29日时可接GENESIS-05-01。"
+    },
+    {
+      "type": "revival-scene-reference-not-skip",
+      "from": "GENESIS-11-06",
+      "to": "GENESIS-12-03",
+      "condition": "本包收束；现实归来接GENESIS-12-01，具体回生发生于GENESIS-12-03。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-11-06",
+      "to": "GENESIS-12-01",
+      "condition": "本包收束；现实归来接GENESIS-12-01，具体回生发生于GENESIS-12-03。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-13-08",
+      "to": "GENESIS-14-01",
+      "condition": "本包收束；夺体尝试与午夜后的追击接GENESIS-14-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-10-07",
+      "to": "GENESIS-11-01",
+      "condition": "本包收束；默认死亡线接GENESIS-11-01；若存活，留在实际善后或按玩家明确选择更换锚点。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-12-08",
+      "to": "GENESIS-13-01",
+      "condition": "本包收束；默认新危机接GENESIS-13-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-05-07",
+      "to": "GENESIS-06-01",
+      "condition": "本包收束；12月31日可接GENESIS-06-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-03-07",
+      "to": "GENESIS-05-01",
+      "condition": "本包收束；同日另一视角可回接GENESIS-02-01，海外事件可接GENESIS-04-01，12月29日余波可接GENESIS-05-01。"
+    },
+    {
+      "type": "same-day-parallel",
+      "from": "GENESIS-03-07",
+      "to": "GENESIS-02-01",
+      "condition": "本包收束；同日另一视角可回接GENESIS-02-01，海外事件可接GENESIS-04-01，12月29日余波可接GENESIS-05-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-07-08",
+      "to": "GENESIS-08-01",
+      "condition": "本包收束；1月3日接GENESIS-08-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-06-06",
+      "to": "GENESIS-07-01",
+      "condition": "本包收束；跨入次年1月1日可接GENESIS-07-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-09-06",
+      "to": "GENESIS-10-01",
+      "condition": "本包收束；1月6日接GENESIS-10-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-02-06",
+      "to": "GENESIS-04-01",
+      "condition": "本包收束；明确转同日暗部视角可接GENESIS-03-01；进入洛杉矶后续须满足出行与当地日期条件，再接GENESIS-04-01。"
+    },
+    {
+      "type": "same-day-parallel",
+      "from": "GENESIS-02-06",
+      "to": "GENESIS-03-01",
+      "condition": "本包收束；明确转同日暗部视角可接GENESIS-03-01；进入洛杉矶后续须满足出行与当地日期条件，再接GENESIS-04-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-03-07",
+      "to": "GENESIS-04-01",
+      "condition": "本包收束；同日另一视角可回接GENESIS-02-01，海外事件可接GENESIS-04-01，12月29日余波可接GENESIS-05-01。"
+    },
+    {
+      "type": "conditional-handoff",
+      "from": "GENESIS-01-06",
+      "to": "GENESIS-02-01",
+      "condition": "本包收束；实际发生中招或同类危机且选择续接时进入GENESIS-02-01，否则保留改写后的平安夜后续。"
+    },
+    {
+      "type": "integration-handoff",
+      "fromWork": "新约第二十二卷R收束",
+      "to": "GENESIS-01-01",
+      "condition": "承接已有世界线；外部包ID和节点由集成代理确定，本worker不改别组或导航文件。"
+    },
+    {
+      "type": "scope-end",
+      "from": "GENESIS-14-09",
+      "condition": "终点为本卷清晨与未定时附尾，不注册下一卷或虚构1月10日至31日事件。"
+    }
+  ],
+  "checks": [
+    {
+      "name": "scope",
+      "status": "pass",
+      "writtenTextFiles": 14,
+      "manifestFiles": 1,
+      "detail": "只新增独占写集14个创约正文及本清单。未改index.yaml、导航、总览、正式方案、既有源码、欢迎页、内嵌HTML、PNG、dist、schema、MVU、依赖或脚本；未构建、导入、安装、启动watch、commit/push或派子代理。其他代理修改不归因于本worker。"
+    },
+    {
+      "name": "library-route",
+      "status": "acknowledged",
+      "primarySkill": "tavern-card-builder",
+      "consultSkill": "consult-tavernweave-library",
+      "receiptPath": ".planning/magic-worldbook-implementation-20260908/task_plan.md",
+      "snapshot": "2026-08-18",
+      "loadedGuides": [
+        "A0",
+        "ST-A3",
+        "lorebook-and-prompts",
+        "material-provenance"
+      ],
+      "detail": "沿用本轮已记录的A0/ST-A3路由与既有MVU同轮更新契约，不修改共享路由收据，不引入新运行API。"
+    },
+    {
+      "name": "text-static-validation",
+      "status": "pass",
+      "textFiles": 14,
+      "packageIds": 14,
+      "nodeDefinitions": 98,
+      "explicitNextNodeTargets": 105,
+      "detail": "14正文严格UTF-8解码通过；节点定义唯一；每节点六字段各一次；九段齐全；下一节点中所有完整GENESIS节点目标存在。"
+    },
+    {
+      "name": "final-manifest-validation",
+      "status": "pending",
+      "detail": "待完成来源账本后进行清单与实际文件一一对应、nodeIds及入口可达性复核。"
+    },
+    {
+      "name": "routing-keywords",
+      "status": "pass",
+      "detail": "关键词保留零填充GENESIS包ID、完整中文卷名与专属篇章词，不使用GT数字缩写或泛创约作为新匹配词。未增加匹配机制；旧入口与最终注册的冲突检查由集成代理处理。"
+    },
+    {
+      "name": "date-and-year-layer",
+      "status": "pass",
+      "detail": "所有包阶段为整数8。第一至六卷yearLayer为Y，第七至十四卷为Y＋1。第二与第三卷12/25并行；第四卷保留当地日期线与27日终点未证；第七卷分1/1、1/2、1/3；死亡为1/6 23:58；第十四卷覆盖过04:00、08:30与昨日葬礼，不扩写一月剩余日期。"
+    },
+    {
+      "name": "mvu-and-branch-contract",
+      "status": "pass",
+      "detail": "只沿用主线进度、正史锚点.玩家偏移、任务追踪、NPC关系、在场人物、势力关系和世界线记录等既有契约；数组去重后整体replace。玩家偏离持续有效，不补做未亲历节点，不强制正史回正，不新增字段或惩罚机制。"
+    },
+    {
+      "name": "acceptance-boundary",
+      "status": "not-run",
+      "detail": "交付仅为世界书源码链及静态节点证据。未注册新包，未进行真实酒馆运行验收，未宣称UI、欢迎页入口或PNG实装；未构建或打包。coverage表示剧情可玩链覆盖，不表示宿主运行通过。"
+    },
+    {
+      "name": "source-ledger",
+      "status": "recorded",
+      "authority": [
+        "docs/魔禁剧情修改方案-四月至次年一月.md",
+        "docs/魔禁四月至次年一月-事件证据表.md#G01-G14",
+        ".planning/magic-apr-jan-20260908/research-genesis.md"
+      ],
+      "cacheRoot": ".agent-artifacts/magic-apr-jan-20260908/genesis/",
+      "olderCache": ".agent-artifacts/timeline-review-20260907/web/GT01.txt 至 GT07.txt（官介缓存，非逐卷小说梗概全文）",
+      "readBoundary": "每卷采用可读卷简介加民译关键章或可信内容梗概，记录实际阅读范围，不自称已逐句读完全部日文原版。缓存按BOM优先、严格UTF-8、失败再GB18030处理；本次正文与证据未发生解码回退。网页导航、搜索摘要与评论中的未来预测不作剧情证据。",
+      "packages": [
+        "GENESIS-01",
+        "GENESIS-02",
+        "GENESIS-03",
+        "GENESIS-04",
+        "GENESIS-05",
+        "GENESIS-06",
+        "GENESIS-07",
+        "GENESIS-08",
+        "GENESIS-09",
+        "GENESIS-10",
+        "GENESIS-11",
+        "GENESIS-12",
+        "GENESIS-13",
+        "GENESIS-14"
+      ]
+    },
+    {
+      "name": "unavailable-or-excluded-evidence",
+      "status": "recorded",
+      "items": [
+        {
+          "source": "Fandom GT1 Summary",
+          "observed": "HTTP 403",
+          "usage": "未读全文，不作剧情事实证据。"
+        },
+        {
+          "source": "https://toaru.lanovelibrary.com/soyaku-1-review",
+          "observed": "HTTP 404",
+          "usage": "未读梗概，不作剧情事实证据。"
+        },
+        {
+          "source": "WordPress API search 創約5巻",
+          "observed": "查询未找到匹配记录",
+          "usage": "未当作内容证据，改读Baka-Tsuki第五卷关键章。"
+        },
+        {
+          "source": "官方试读入口、搜索摘要与导航中后续卷名",
+          "observed": "不等同已读正文",
+          "usage": "未将试读链接或搜索摘要记为全文；不读取或推演本任务范围之外的小说内容。"
+        }
+      ]
+    }
+  ]
+}

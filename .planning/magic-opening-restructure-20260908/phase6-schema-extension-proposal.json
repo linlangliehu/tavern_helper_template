@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "generatedOn": "2026-09-08T09:56:36.898Z",
+  "status": "proposal-only-not-applied",
+  "reason": "Phase 6 只生成初始化规划产物；不修改 initvar、schema、MVU、loader、欢迎页源码或 PNG。",
+  "fields": [
+    {
+      "path": "时间层ID",
+      "type": "string",
+      "source": "phase2 taxonomy"
+    },
+    {
+      "path": "时间层名称",
+      "type": "string",
+      "source": "phase2 taxonomy"
+    },
+    {
+      "path": "当前日期",
+      "type": "string",
+      "source": "phase5 displayDate"
+    },
+    {
+      "path": "日期精度",
+      "type": "string",
+      "enum": [
+        "exact",
+        "approximate",
+        "range",
+        "relative",
+        "undated"
+      ]
+    },
+    {
+      "path": "时间段",
+      "type": "string",
+      "fallback": "未定"
+    },
+    {
+      "path": "作品线ID",
+      "type": "string",
+      "source": "phase2 taxonomy"
+    },
+    {
+      "path": "作品线名称",
+      "type": "string",
+      "source": "phase2 taxonomy"
+    },
+    {
+      "path": "剧情阶段ID",
+      "type": "string",
+      "source": "phase2 taxonomy"
+    },
+    {
+      "path": "篇章ID",
+      "type": "string",
+      "source": "phase2 taxonomy"
+    },
+    {
+      "path": "OpeningID",
+      "type": "string",
+      "source": "phase2 target opening"
+    },
+    {
+      "path": "事件包ID",
+      "type": [
+        "string",
+        "null"
+      ],
+      "source": "worldbook manifest"
+    },
+    {
+      "path": "世界书起始节点ID",
+      "type": [
+        "string",
+        "null"
+      ],
+      "source": "worldbook manifest"
+    },
+    {
+      "path": "尚未发生节点",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "path": "关联作品线",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    {
+      "path": "referenceOnly状态",
+      "type": "string"
+    },
+    {
+      "path": "槽位标签",
+      "type": "string"
+    }
+  ],
+  "compatibilityBoundary": {
+    "supportedNow": [
+      "原著阶段",
+      "剧情锚点",
+      "所在位置",
+      "剧情阶段",
+      "主线进度.当前阶段",
+      "主线进度.阶段序号",
+      "主线进度.阶段状态",
+      "主线进度.当前节点",
+      "主线进度.已完成节点",
+      "主线进度.可触发节点",
+      "主线进度.正史锚点.当前锚点",
+      "主线进度.正史锚点.默认走向",
+      "主线进度.正史锚点.玩家偏移",
+      "主线进度.下一步推进提示"
+    ],
+    "notClaimedAsRuntimeSupported": "extensionProposal.fields"
+  }
+}

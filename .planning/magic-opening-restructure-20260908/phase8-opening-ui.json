@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "generatedOn": "2026-09-08T10:24:51.787Z",
+  "status": "passed-source-static-only",
+  "checks": [
+    "Phase 6 and Phase 7 gates are passed-static-only",
+    "4 time layers generated",
+    "106 work-line/chapter groups generated",
+    "114 unique openings generated",
+    "Every opening has compatibility and metadata payloads",
+    "Undated openings keep the literal 未定日 label",
+    "Genesis 15 is absent",
+    "Custom opening controls remain intact"
+  ],
+  "counts": {
+    "layers": 4,
+    "groups": 106,
+    "openings": 114,
+    "uniqueOpeningIds": 114
+  },
+  "hashes": {
+    "welcomeBefore": "af11cc32daeb88605d7993a51b47f9778a15968905d686f825bbe613952bc8a3",
+    "welcomeAfter": "c2d7fa91511ddecefe80e5e0097809f2a54ed60905cd09331b9c5f720bd1e9a7"
+  }
+}

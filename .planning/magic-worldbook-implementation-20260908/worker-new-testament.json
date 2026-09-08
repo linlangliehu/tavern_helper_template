@@ -1,0 +1,1080 @@
+{
+  "files": [
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新入生与归还.txt",
+      "packageId": "NT-FRESHMEN",
+      "title": "新入生与归还篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年11月5日；NT1按图排，NT2官介明示同日",
+      "evidenceIds": [
+        "N01",
+        "N02"
+      ],
+      "volumes": [
+        "NT1",
+        "NT2"
+      ],
+      "keywords": [
+        "新入生与归还篇",
+        "新入生袭击事件",
+        "战后三人归还",
+        "NT-FRESHMEN"
+      ],
+      "entryNode": "NT-FRESHMEN-01",
+      "nodeIds": [
+        "NT-FRESHMEN-01",
+        "NT-FRESHMEN-02",
+        "NT-FRESHMEN-03",
+        "NT-FRESHMEN-04",
+        "NT-FRESHMEN-05",
+        "NT-FRESHMEN-06",
+        "NT-FRESHMEN-07",
+        "NT-FRESHMEN-08",
+        "NT-FRESHMEN-09"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "NT1的11月5日沿用图排；NT2同日有官介支持，未补造每场行动的时刻。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N01",
+          "volumes": [
+            "NT1"
+          ],
+          "nodeIds": [
+            "NT-FRESHMEN-01",
+            "NT-FRESHMEN-02",
+            "NT-FRESHMEN-03",
+            "NT-FRESHMEN-04",
+            "NT-FRESHMEN-05"
+          ],
+          "sourceIds": [
+            "OFF-NT01",
+            "W-FRESHMEN",
+            "W-KUROYORU",
+            "W-SILVERCROSS"
+          ]
+        },
+        {
+          "evidenceId": "N02",
+          "volumes": [
+            "NT2"
+          ],
+          "nodeIds": [
+            "NT-FRESHMEN-06",
+            "NT-FRESHMEN-07",
+            "NT-FRESHMEN-08",
+            "NT-FRESHMEN-09"
+          ],
+          "sourceIds": [
+            "OFF-NT02",
+            "W-HOMECOMING",
+            "W-TOUMA-NT",
+            "W-RADIOSONDE"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·夏威夷入侵.txt",
+      "packageId": "NT-HAWAII",
+      "title": "夏威夷入侵篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年11月10日前后；日为图排，入境与返程按实际行动记时",
+      "evidenceIds": [
+        "N03"
+      ],
+      "volumes": [
+        "NT3"
+      ],
+      "keywords": [
+        "夏威夷入侵篇",
+        "基拉韦厄火山计划",
+        "夏威夷格雷姆林行动",
+        "NT-HAWAII"
+      ],
+      "entryNode": "NT-HAWAII-01",
+      "nodeIds": [
+        "NT-HAWAII-01",
+        "NT-HAWAII-02",
+        "NT-HAWAII-03",
+        "NT-HAWAII-04",
+        "NT-HAWAII-05",
+        "NT-HAWAII-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "11月10日前后为图排；官方卷介不提供完整入境至返程逐日边界。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N03",
+          "volumes": [
+            "NT3"
+          ],
+          "nodeIds": [
+            "NT-HAWAII-01",
+            "NT-HAWAII-02",
+            "NT-HAWAII-03",
+            "NT-HAWAII-04",
+            "NT-HAWAII-05",
+            "NT-HAWAII-06"
+          ],
+          "sourceIds": [
+            "OFF-NT03",
+            "W-HAWAII"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·自然选择者.txt",
+      "packageId": "NT-NATURAL-SELECTOR",
+      "title": "自然选择者篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年11月13日大会开幕；不把全部冲突拖排至11月18日",
+      "evidenceIds": [
+        "N04"
+      ],
+      "volumes": [
+        "NT4"
+      ],
+      "keywords": [
+        "自然选择者篇",
+        "巴格吉城大会",
+        "天择者混战",
+        "NT-NATURAL-SELECTOR"
+      ],
+      "entryNode": "NT-NATURAL-SELECTOR-01",
+      "nodeIds": [
+        "NT-NATURAL-SELECTOR-01",
+        "NT-NATURAL-SELECTOR-02",
+        "NT-NATURAL-SELECTOR-03",
+        "NT-NATURAL-SELECTOR-04",
+        "NT-NATURAL-SELECTOR-05",
+        "NT-NATURAL-SELECTOR-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "官方卷介明确11月13日开幕；闭幕、城市救援和返程的精确时刻仍未取得同等证据。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N04",
+          "volumes": [
+            "NT4"
+          ],
+          "nodeIds": [
+            "NT-NATURAL-SELECTOR-01",
+            "NT-NATURAL-SELECTOR-02",
+            "NT-NATURAL-SELECTOR-03",
+            "NT-NATURAL-SELECTOR-04",
+            "NT-NATURAL-SELECTOR-05",
+            "NT-NATURAL-SELECTOR-06"
+          ],
+          "sourceIds": [
+            "OFF-NT04",
+            "W-BAGGAGE",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·一端览祭.txt",
+      "packageId": "NT-ICHIHANARAN",
+      "title": "一端览祭篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年11月14日至15日前后；按图排区分前夜与祭典当日，不强行分配所有战斗时刻",
+      "evidenceIds": [
+        "N05"
+      ],
+      "volumes": [
+        "NT5",
+        "NT6"
+      ],
+      "keywords": [
+        "一端览祭篇",
+        "芙罗兰克洛杜尼争夺",
+        "不死少女解放",
+        "NT-ICHIHANARAN"
+      ],
+      "entryNode": "NT-ICHIHANARAN-01",
+      "nodeIds": [
+        "NT-ICHIHANARAN-01",
+        "NT-ICHIHANARAN-02",
+        "NT-ICHIHANARAN-03",
+        "NT-ICHIHANARAN-04",
+        "NT-ICHIHANARAN-05",
+        "NT-ICHIHANARAN-06",
+        "NT-ICHIHANARAN-07",
+        "NT-ICHIHANARAN-08",
+        "NT-ICHIHANARAN-09"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "11月14日前夜与15日祭典按图排；不将各并行战斗强行绑定未经核实的时刻。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N05",
+          "volumes": [
+            "NT5"
+          ],
+          "nodeIds": [
+            "NT-ICHIHANARAN-01",
+            "NT-ICHIHANARAN-02",
+            "NT-ICHIHANARAN-03",
+            "NT-ICHIHANARAN-04"
+          ],
+          "sourceIds": [
+            "OFF-NT05",
+            "W-ICHIHANARAN",
+            "W-TOUMA-NT"
+          ]
+        },
+        {
+          "evidenceId": "N05",
+          "volumes": [
+            "NT6"
+          ],
+          "nodeIds": [
+            "NT-ICHIHANARAN-05",
+            "NT-ICHIHANARAN-06",
+            "NT-ICHIHANARAN-07",
+            "NT-ICHIHANARAN-08",
+            "NT-ICHIHANARAN-09"
+          ],
+          "sourceIds": [
+            "OFF-NT06",
+            "W-ICHIHANARAN",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·人力资源计划.txt",
+      "packageId": "NT-AGITATE-HALATION",
+      "title": "人力资源计划篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年11月21日至22日前后；日为图排",
+      "evidenceIds": [
+        "N06"
+      ],
+      "volumes": [
+        "NT7"
+      ],
+      "keywords": [
+        "人力资源计划篇",
+        "Agitate Halation",
+        "药味久子计划",
+        "NT-AGITATE-HALATION"
+      ],
+      "entryNode": "NT-AGITATE-HALATION-01",
+      "nodeIds": [
+        "NT-AGITATE-HALATION-01",
+        "NT-AGITATE-HALATION-02",
+        "NT-AGITATE-HALATION-03",
+        "NT-AGITATE-HALATION-04",
+        "NT-AGITATE-HALATION-05",
+        "NT-AGITATE-HALATION-06",
+        "NT-AGITATE-HALATION-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "11月21日至22日采用图排窗口，精确跨日边界未由官介确定。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N06",
+          "volumes": [
+            "NT7"
+          ],
+          "nodeIds": [
+            "NT-AGITATE-HALATION-01",
+            "NT-AGITATE-HALATION-02",
+            "NT-AGITATE-HALATION-03",
+            "NT-AGITATE-HALATION-04",
+            "NT-AGITATE-HALATION-05",
+            "NT-AGITATE-HALATION-06",
+            "NT-AGITATE-HALATION-07"
+          ],
+          "sourceIds": [
+            "OFF-NT07",
+            "W-AGITATE",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·格雷姆林魔神.txt",
+      "packageId": "GREMLIN",
+      "title": "格雷姆林魔神篇",
+      "action": "modified",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年11月23日至24日前后；日为图排，NT9主观世界经历不换算成现实日历",
+      "evidenceIds": [
+        "N07",
+        "N08",
+        "N09"
+      ],
+      "volumes": [
+        "NT8",
+        "NT9",
+        "NT10"
+      ],
+      "keywords": [
+        "格雷姆林魔神篇",
+        "神枪制造决战",
+        "欧提努斯救援追逐",
+        "GREMLIN"
+      ],
+      "entryNode": "GREMLIN-01",
+      "nodeIds": [
+        "GREMLIN-01",
+        "GREMLIN-02",
+        "GREMLIN-03",
+        "GREMLIN-04",
+        "GREMLIN-05",
+        "GREMLIN-06",
+        "GREMLIN-07",
+        "GREMLIN-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "11月23日至24日为图排；NT9主观世界经历不换算现实天数，NT10追捕中各战斗时刻不强填。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N07",
+          "volumes": [
+            "NT8"
+          ],
+          "nodeIds": [
+            "GREMLIN-01",
+            "GREMLIN-02",
+            "GREMLIN-03"
+          ],
+          "sourceIds": [
+            "OFF-NT08",
+            "W-OTHINUS",
+            "W-TOUMA-NT"
+          ]
+        },
+        {
+          "evidenceId": "N08",
+          "volumes": [
+            "NT9"
+          ],
+          "nodeIds": [
+            "GREMLIN-04",
+            "GREMLIN-05"
+          ],
+          "sourceIds": [
+            "OFF-NT09",
+            "W-OTHINUS",
+            "W-TOUMA-NT"
+          ]
+        },
+        {
+          "evidenceId": "N09",
+          "volumes": [
+            "NT10"
+          ],
+          "nodeIds": [
+            "GREMLIN-06",
+            "GREMLIN-07",
+            "GREMLIN-08"
+          ],
+          "sourceIds": [
+            "OFF-NT10",
+            "W-OTHINUS",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·蜜蚁爱愉篇.txt",
+      "packageId": "MENTAL-STINGER",
+      "title": "蜜蚁爱愉篇",
+      "action": "modified",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年十一月下旬；11月24—25日附近为图排，当前框架精确日待核",
+      "evidenceIds": [
+        "N10"
+      ],
+      "volumes": [
+        "NT11"
+      ],
+      "keywords": [
+        "蜜蚁爱愉篇",
+        "蜂与蚁的记忆争夺",
+        "MENTAL-STINGER"
+      ],
+      "entryNode": "MENTAL-STINGER-01",
+      "nodeIds": [
+        "MENTAL-STINGER-01",
+        "MENTAL-STINGER-02",
+        "MENTAL-STINGER-03",
+        "MENTAL-STINGER-04",
+        "MENTAL-STINGER-05",
+        "MENTAL-STINGER-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "当前框架只锁十一月下旬；11月24日至25日附近仍是图排。前一年细节交MENTAL-PAST，不在本包重复实施。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N10",
+          "volumes": [
+            "NT11"
+          ],
+          "nodeIds": [
+            "MENTAL-STINGER-01",
+            "MENTAL-STINGER-02",
+            "MENTAL-STINGER-03",
+            "MENTAL-STINGER-04",
+            "MENTAL-STINGER-05",
+            "MENTAL-STINGER-06"
+          ],
+          "sourceIds": [
+            "OFF-NT11",
+            "W-MENTAL-ARC",
+            "W-AYU",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·圣日耳曼.txt",
+      "packageId": "NT-SAINT-GERMAIN",
+      "title": "圣日耳曼篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月1日前后；项目日历按图排",
+      "evidenceIds": [
+        "N12"
+      ],
+      "volumes": [
+        "NT12"
+      ],
+      "keywords": [
+        "圣日耳曼篇",
+        "钻石大楼封锁事件",
+        "Dianoid封锁",
+        "NT-SAINT-GERMAIN"
+      ],
+      "entryNode": "NT-SAINT-GERMAIN-01",
+      "nodeIds": [
+        "NT-SAINT-GERMAIN-01",
+        "NT-SAINT-GERMAIN-02",
+        "NT-SAINT-GERMAIN-03",
+        "NT-SAINT-GERMAIN-04",
+        "NT-SAINT-GERMAIN-05",
+        "NT-SAINT-GERMAIN-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "12月1日前后为项目图排，不把官方出版日期当故事日期。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N12",
+          "volumes": [
+            "NT12"
+          ],
+          "nodeIds": [
+            "NT-SAINT-GERMAIN-01",
+            "NT-SAINT-GERMAIN-02",
+            "NT-SAINT-GERMAIN-03",
+            "NT-SAINT-GERMAIN-04",
+            "NT-SAINT-GERMAIN-05",
+            "NT-SAINT-GERMAIN-06"
+          ],
+          "sourceIds": [
+            "OFF-NT12",
+            "W-SAINT-GERMAIN",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·僧正追击.txt",
+      "packageId": "NT-HIGH-PRIEST",
+      "title": "僧正追击篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月3日前后；承接钻石大楼之后",
+      "evidenceIds": [
+        "N13"
+      ],
+      "volumes": [
+        "NT13"
+      ],
+      "keywords": [
+        "僧正追击篇",
+        "魔神评分者邀约",
+        "箭头彗星危机",
+        "NT-HIGH-PRIEST"
+      ],
+      "entryNode": "NT-HIGH-PRIEST-01",
+      "nodeIds": [
+        "NT-HIGH-PRIEST-01",
+        "NT-HIGH-PRIEST-02",
+        "NT-HIGH-PRIEST-03",
+        "NT-HIGH-PRIEST-04",
+        "NT-HIGH-PRIEST-05",
+        "NT-HIGH-PRIEST-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "12月3日前后的边界采用既定图排，与NT14依事件先后衔接，不推定全部行动的钟点。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N13",
+          "volumes": [
+            "NT13"
+          ],
+          "nodeIds": [
+            "NT-HIGH-PRIEST-01",
+            "NT-HIGH-PRIEST-02",
+            "NT-HIGH-PRIEST-03",
+            "NT-HIGH-PRIEST-04",
+            "NT-HIGH-PRIEST-05",
+            "NT-HIGH-PRIEST-06"
+          ],
+          "sourceIds": [
+            "OFF-NT13",
+            "W-HIGH-PRIEST",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·理想送行.txt",
+      "packageId": "NT-WORLD-REJECTER",
+      "title": "理想送行篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年12月3日前后，接僧正追击之后；不另造精确跨日时刻",
+      "evidenceIds": [
+        "N14"
+      ],
+      "volumes": [
+        "NT14"
+      ],
+      "keywords": [
+        "理想送行篇",
+        "柏德蔚姐妹救援",
+        "两只右手的初战",
+        "NT-WORLD-REJECTER"
+      ],
+      "entryNode": "NT-WORLD-REJECTER-01",
+      "nodeIds": [
+        "NT-WORLD-REJECTER-01",
+        "NT-WORLD-REJECTER-02",
+        "NT-WORLD-REJECTER-03",
+        "NT-WORLD-REJECTER-04",
+        "NT-WORLD-REJECTER-05",
+        "NT-WORLD-REJECTER-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "承接NT13的12月3日前后窗口；未以去鸣的后续登场日代替本卷日期。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N14",
+          "volumes": [
+            "NT14"
+          ],
+          "nodeIds": [
+            "NT-WORLD-REJECTER-01",
+            "NT-WORLD-REJECTER-02",
+            "NT-WORLD-REJECTER-03",
+            "NT-WORLD-REJECTER-04",
+            "NT-WORLD-REJECTER-05",
+            "NT-WORLD-REJECTER-06"
+          ],
+          "sourceIds": [
+            "OFF-NT14",
+            "W-KAMISATO",
+            "W-TOUMA-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·上里阵营与去鸣.txt",
+      "packageId": "NT-SALOME",
+      "title": "上里阵营与去鸣篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月上旬；NT14之后、NT16之前，NT15—17日期冲突保留相对顺序",
+      "evidenceIds": [
+        "N15"
+      ],
+      "volumes": [
+        "NT15"
+      ],
+      "keywords": [
+        "上里阵营与去鸣篇",
+        "去鸣袭来",
+        "理想送行夺手事件",
+        "NT-SALOME"
+      ],
+      "entryNode": "NT-SALOME-01",
+      "nodeIds": [
+        "NT-SALOME-01",
+        "NT-SALOME-02",
+        "NT-SALOME-03",
+        "NT-SALOME-04",
+        "NT-SALOME-05",
+        "NT-SALOME-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "NT15与NT17的日历冲突尚无足以裁定的原文证据，保留十二月上旬相对顺序；本卷是夺手，不是放逐上里。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N15",
+          "volumes": [
+            "NT15"
+          ],
+          "nodeIds": [
+            "NT-SALOME-01",
+            "NT-SALOME-02",
+            "NT-SALOME-03",
+            "NT-SALOME-04",
+            "NT-SALOME-05",
+            "NT-SALOME-06"
+          ],
+          "sourceIds": [
+            "OFF-NT15",
+            "W-SALOME",
+            "W-YUIITSU",
+            "W-KAMISATO-FACTION",
+            "W-AAA"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·大热浪与元素.txt",
+      "packageId": "NT-HEAT-WAVE",
+      "title": "大热浪与元素篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月上旬，介于NT15与NT17；保留冲突排期，不把项目12月9—10日窗当定论",
+      "evidenceIds": [
+        "N16"
+      ],
+      "volumes": [
+        "NT16"
+      ],
+      "keywords": [
+        "大热浪与元素篇",
+        "元素侵袭危机",
+        "常盘台水晶塔远征",
+        "NT-HEAT-WAVE"
+      ],
+      "entryNode": "NT-HEAT-WAVE-01",
+      "nodeIds": [
+        "NT-HEAT-WAVE-01",
+        "NT-HEAT-WAVE-02",
+        "NT-HEAT-WAVE-03",
+        "NT-HEAT-WAVE-04",
+        "NT-HEAT-WAVE-05",
+        "NT-HEAT-WAVE-06",
+        "NT-HEAT-WAVE-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "沿NT15之后、NT17之前的顺序；旧项目12月9日至10日组合窗不足以判定三卷精确日界。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N16",
+          "volumes": [
+            "NT16"
+          ],
+          "nodeIds": [
+            "NT-HEAT-WAVE-01",
+            "NT-HEAT-WAVE-02",
+            "NT-HEAT-WAVE-03",
+            "NT-HEAT-WAVE-04",
+            "NT-HEAT-WAVE-05",
+            "NT-HEAT-WAVE-06",
+            "NT-HEAT-WAVE-07"
+          ],
+          "sourceIds": [
+            "OFF-NT16",
+            "W-YUIITSU",
+            "W-KAMISATO-FACTION",
+            "W-MIKOTO-NT",
+            "W-ALEISTER-NT"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·夺回上里.txt",
+      "packageId": "NT-KAMISATO-RESCUE",
+      "title": "夺回上里篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月上旬，接NT16放逐之后、NT18之前；保留NT15—17排期冲突",
+      "evidenceIds": [
+        "N17"
+      ],
+      "volumes": [
+        "NT17"
+      ],
+      "keywords": [
+        "夺回上里篇",
+        "新天地归还作战",
+        "理想送行救回行动",
+        "NT-KAMISATO-RESCUE"
+      ],
+      "entryNode": "NT-KAMISATO-RESCUE-01",
+      "nodeIds": [
+        "NT-KAMISATO-RESCUE-01",
+        "NT-KAMISATO-RESCUE-02",
+        "NT-KAMISATO-RESCUE-03",
+        "NT-KAMISATO-RESCUE-04",
+        "NT-KAMISATO-RESCUE-05",
+        "NT-KAMISATO-RESCUE-06",
+        "NT-KAMISATO-RESCUE-07"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "NT15至17日历冲突仍保留；所谓秩序恢复四十八小时仅作原作恢复行动背景，不转成玩家失败倒计时。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N17",
+          "volumes": [
+            "NT17"
+          ],
+          "nodeIds": [
+            "NT-KAMISATO-RESCUE-01",
+            "NT-KAMISATO-RESCUE-02",
+            "NT-KAMISATO-RESCUE-03",
+            "NT-KAMISATO-RESCUE-04",
+            "NT-KAMISATO-RESCUE-05",
+            "NT-KAMISATO-RESCUE-06",
+            "NT-KAMISATO-RESCUE-07"
+          ],
+          "sourceIds": [
+            "OFF-NT17",
+            "W-RESCUE",
+            "W-LUCA",
+            "W-MIKOTO-NT",
+            "W-YUIITSU"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·亚雷斯塔攻楼.txt",
+      "packageId": "NT-ALEISTER",
+      "title": "亚雷斯塔攻楼篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月十一日前后图排，接NT17、先于NT19；楼内经历不另换算日期",
+      "evidenceIds": [
+        "N18"
+      ],
+      "volumes": [
+        "NT18"
+      ],
+      "keywords": [
+        "亚雷斯塔攻楼篇",
+        "无窗大楼攻入",
+        "读取托特78引路",
+        "NT-ALEISTER"
+      ],
+      "entryNode": "NT-ALEISTER-01",
+      "nodeIds": [
+        "NT-ALEISTER-01",
+        "NT-ALEISTER-02",
+        "NT-ALEISTER-03",
+        "NT-ALEISTER-04",
+        "NT-ALEISTER-05",
+        "NT-ALEISTER-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "12月11日前后按图排；楼内回忆和非欧几里得攀登不生成额外确定日期。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N18",
+          "volumes": [
+            "NT18"
+          ],
+          "nodeIds": [
+            "NT-ALEISTER-01",
+            "NT-ALEISTER-02",
+            "NT-ALEISTER-03",
+            "NT-ALEISTER-04",
+            "NT-ALEISTER-05",
+            "NT-ALEISTER-06"
+          ],
+          "sourceIds": [
+            "OFF-NT18",
+            "W-TOUMA-NT",
+            "W-ALEISTER-NT",
+            "W-MINA"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·演算战斗服.txt",
+      "packageId": "NT-PROCESSOR-SUIT",
+      "title": "演算战斗服篇",
+      "action": "added",
+      "stage": 6,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月十一日至十二日前后图排，紧接NT18，先于赴英行动",
+      "evidenceIds": [
+        "N19"
+      ],
+      "volumes": [
+        "NT19"
+      ],
+      "keywords": [
+        "演算战斗服篇",
+        "A.O.弗兰西斯卡事件",
+        "莉莉丝护送",
+        "NT-PROCESSOR-SUIT"
+      ],
+      "entryNode": "NT-PROCESSOR-SUIT-01",
+      "nodeIds": [
+        "NT-PROCESSOR-SUIT-01",
+        "NT-PROCESSOR-SUIT-02",
+        "NT-PROCESSOR-SUIT-03",
+        "NT-PROCESSOR-SUIT-04",
+        "NT-PROCESSOR-SUIT-05",
+        "NT-PROCESSOR-SUIT-06"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "12月11日至12日前后按图排及卷间顺序；没有补写未读到的浜面向亚雷斯塔提出的逐字条件。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N19",
+          "volumes": [
+            "NT19"
+          ],
+          "nodeIds": [
+            "NT-PROCESSOR-SUIT-01",
+            "NT-PROCESSOR-SUIT-02",
+            "NT-PROCESSOR-SUIT-03",
+            "NT-PROCESSOR-SUIT-04",
+            "NT-PROCESSOR-SUIT-05",
+            "NT-PROCESSOR-SUIT-06"
+          ],
+          "sourceIds": [
+            "OFF-NT19",
+            "W-TOUMA-NT",
+            "W-MINA",
+            "W-LILITH",
+            "W-AIWASS",
+            "W-ACCELERATOR-NT",
+            "W-CORONZON"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·科隆尊.txt",
+      "packageId": "CORONZON",
+      "title": "科隆尊英国决战篇",
+      "action": "modified",
+      "stage": 7,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月中旬至二十日前后图排；十二日可作赴英前奏，不代表三卷终战同日",
+      "evidenceIds": [
+        "N20",
+        "N21",
+        "N22"
+      ],
+      "volumes": [
+        "NT20",
+        "NT21",
+        "NT22"
+      ],
+      "keywords": [
+        "科隆尊英国决战篇",
+        "黄金再现追击",
+        "不列颠女王号决战",
+        "CORONZON"
+      ],
+      "entryNode": "CORONZON-01",
+      "nodeIds": [
+        "CORONZON-01",
+        "CORONZON-02",
+        "CORONZON-03",
+        "CORONZON-04",
+        "CORONZON-05",
+        "CORONZON-06",
+        "CORONZON-07",
+        "CORONZON-08"
+      ],
+      "coverage": "playable-chain",
+      "remainingEvidence": [
+        "12月12日只作赴英前奏候选，NT22约12月20日仍为图排；不能把三卷压到同一天。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N20",
+          "volumes": [
+            "NT20"
+          ],
+          "nodeIds": [
+            "CORONZON-01",
+            "CORONZON-02"
+          ],
+          "sourceIds": [
+            "OFF-NT20",
+            "W-ORSOLA",
+            "W-ACCELERATOR-NT",
+            "W-QLIPHAH",
+            "W-HAMAZURA-NT"
+          ]
+        },
+        {
+          "evidenceId": "N21",
+          "volumes": [
+            "NT21"
+          ],
+          "nodeIds": [
+            "CORONZON-03",
+            "CORONZON-04"
+          ],
+          "sourceIds": [
+            "OFF-NT21",
+            "W-DION",
+            "W-CORONZON",
+            "W-ACCELERATOR-NT",
+            "W-ORSOLA"
+          ]
+        },
+        {
+          "evidenceId": "N22",
+          "volumes": [
+            "NT22"
+          ],
+          "nodeIds": [
+            "CORONZON-05",
+            "CORONZON-06",
+            "CORONZON-07",
+            "CORONZON-08"
+          ],
+          "sourceIds": [
+            "OFF-NT22",
+            "W-BRITANNIA",
+            "W-DION",
+            "W-AIWASS",
+            "W-CORONZON"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "src/魔法禁书目录模拟器/世界书/剧情事件/主线/主线事件·新约22R温莎收尾.txt",
+      "packageId": "NT-22R",
+      "title": "新约22R温莎收尾篇",
+      "action": "added",
+      "stage": 7,
+      "yearLayer": "Y",
+      "window": "本篇Y年十二月二十一日图排，接NT22余波；以温莎庆功宴与返城的相对顺序为准",
+      "evidenceIds": [
+        "N23"
+      ],
+      "volumes": [
+        "NT22R"
+      ],
+      "keywords": [
+        "新约22R温莎收尾篇",
+        "温莎身份冲突",
+        "新约22Reverse收尾",
+        "NT-22R"
+      ],
+      "entryNode": "NT-22R-01",
+      "nodeIds": [
+        "NT-22R-01",
+        "NT-22R-02",
+        "NT-22R-03",
+        "NT-22R-04",
+        "NT-22R-05",
+        "NT-22R-06"
+      ],
+      "coverage": "partial",
+      "remainingEvidence": [
+        "12月21日采用图排，官方简介本身未给逐场时刻。",
+        "食蜂在宴会内的心理转折、各受控者的具体控制链、两名上条最终近战与重新融合的连续细节尚未获得足量可读梗概或原文证据；当前只落实已证实的身份争夺、救援支援与归程，保留partial。"
+      ],
+      "nodeEvidence": [
+        {
+          "evidenceId": "N23",
+          "volumes": [
+            "NT22R"
+          ],
+          "nodeIds": [
+            "NT-22R-01",
+            "NT-22R-02",
+            "NT-22R-03",
+            "NT-22R-04",
+            "NT-22R-05",
+            "NT-22R-06"
+          ],
+          "sourceIds": [
+            "OFF-NT22R",
+            "W-EMANATION",
+            "W-MENTAL-OUT",
+            "W-RIMEA",
+            "W-WINDSOR",
+            "W-HAMAZURA-NT",
+            "W-ACCELERATOR-NT",
+            "W-DION"
+          ]
+        }
+      ]
+    }
+  ],
+  "crossReferences": [],
+  "checks": []
+}

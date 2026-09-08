@@ -1492,6 +1492,35 @@ $(() => {
     }, 2200) ?? 0;
   };
 
+  type MfrsOpeningMeta = {
+    timeLayerLabel?: string;
+    displayDate?: string;
+    timeOfDay?: string;
+    workLineLabel?: string;
+    stageLabel?: string;
+    chapterLabel?: string;
+    openingId?: string;
+    initializationMode?: string;
+    primaryPackageId?: string;
+    startNodeId?: string;
+    currentNodeId?: string;
+    completedNodeIds?: string[];
+    upcomingNodeIds?: string[];
+    triggerableNodeIds?: string[];
+    playerPosition?: string;
+    currentPlotState?: string;
+    relatedWorkLineIds?: string[];
+  };
+
+  const mfrsParseJson = <T>(raw: string | undefined): T | null => {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return null;
+    }
+  };
+
   const mfrsWelcomeValOf = (root: HTMLElement, sel: string) => {
     const el = root.querySelector<HTMLElement>(`${sel} [data-act="pick"].custom-selected, ${sel} [data-act="pick"].selected`);
     return el?.dataset.val ?? '';
@@ -1712,6 +1741,8 @@ $(() => {
         const look = gv('#pLook') || '未描述';
         const supp = gv('#pSupplement');
         const sc = root.querySelector<HTMLElement>('#sceneList [data-act="scene"].custom-selected, #sceneList [data-act="scene"].selected');
+        const sceneCompat = mfrsParseJson<Record<string, unknown>>(sc?.dataset.compat);
+        const sceneMeta = mfrsParseJson<MfrsOpeningMeta>(sc?.dataset.meta);
         const sceneText = sc
           ? `【${sc.dataset.date} · ${sc.dataset.tag}】${sc.dataset.desc}`
           : (q('#sceneCustomInput') as HTMLTextAreaElement | null)?.value.trim() ?? '';
@@ -1735,9 +1766,43 @@ $(() => {
           L.push('阵营：魔法侧', '隶属组织：' + org + (orgD ? '（' + orgD + '）' : ''), '魔法术式：' + magic + (magicD ? '（' + magicD + '）' : ''), '魔法境界：' + realm);
         }
         L.push('', '【开场白】', sceneText);
+        if (sceneMeta) {
+          const metaText = (value: string | string[] | undefined, fallback: string) =>
+            Array.isArray(value) ? (value.length ? value.join('、') : fallback) : (value || fallback);
+          L.push(
+            '',
+            '【开局初始化】',
+            `时间层：${sceneMeta.timeLayerLabel ?? '未定'}`,
+            `当前日期：${sceneMeta.displayDate ?? '未定'}`,
+            `时间段：${sceneMeta.timeOfDay ?? '未定'}`,
+            `作品线：${sceneMeta.workLineLabel ?? '未定'}`,
+            `剧情阶段：${sceneMeta.stageLabel ?? '未定'}`,
+            `篇章：${sceneMeta.chapterLabel ?? '未定'}`,
+            `事件包：${sceneMeta.primaryPackageId ?? '无（reference-only）'}`,
+            `起始节点：${sceneMeta.startNodeId ?? '无（reference-only）'}`,
+            `当前节点：${sceneMeta.currentNodeId ?? '无（reference-only）'}`,
+            `已完成节点：${metaText(sceneMeta.completedNodeIds, '无')}`,
+            `尚未发生节点：${metaText(sceneMeta.upcomingNodeIds, '无')}`,
+            `可触发节点：${metaText(sceneMeta.triggerableNodeIds, '无')}`,
+            `reference-only：${sceneMeta.initializationMode ?? '未定'}`,
+          );
+        }
         const cfg = L.join('\n');
         // 开局基线：由脚本直接写入聊天变量，不依赖模型协议块（变量基线兜底层）
         const isScienceSide = side === 'science';
+        const sceneBaseline: Record<string, unknown> = sceneCompat
+          ? {
+              ...sceneCompat,
+              开局地点: sceneMeta?.playerPosition ?? '待玩家确认具体位置',
+              世界线记录: [
+                {
+                  时间点: sceneMeta?.displayDate ?? '未定',
+                  事件: sceneMeta?.chapterLabel ?? '未定篇章',
+                  影响: sceneText,
+                },
+              ],
+            }
+          : {};
         const mfrsBaseline: Record<string, unknown> = {
           姓名: name,
           性别: gender,
@@ -1764,6 +1829,7 @@ $(() => {
               实战运用: '随剧情展开；战斗与日常分别描述',
             },
           ],
+          ...sceneBaseline,
         };
         // hotfix-01：不在开局表单阻塞等待 AI 生成（原逻辑最多卡 25 秒，影响开局动线）。
         // 占位符照常进基线，由楼层守卫 mfrsFixAbilityPlaceholders 在第一轮回复后后台补写。

@@ -1,0 +1,200 @@
+{
+  "version": 2,
+  "generatedOn": "2026-09-08T11:27:55.811Z",
+  "status": "passed-offline-static-pending-host",
+  "objective": "Sync the latest welcome page into the card display regex, rebuild, and package Magic Index Simulator 1.1.1.",
+  "commands": [
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "result": "Webpack production build completed successfully. Existing unrelated performance warnings were emitted for the MFRS database-frontend bundle."
+    },
+    {
+      "command": "node tavern_sync.mjs bundle 魔法禁书目录模拟器",
+      "exitCode": 0,
+      "result": "Character card packed successfully."
+    },
+    {
+      "command": "node .planning/magic-opening-restructure-20260908/phase8-package-validation.mjs",
+      "exitCode": 0,
+      "result": "Phase 8 offline package validation passed for worldbook and display regex."
+    },
+    {
+      "command": "node scripts/verify-png-chara-v2.mjs",
+      "exitCode": 0,
+      "result": "PNG payload verification passed."
+    },
+    {
+      "command": "node scripts/verify-worldbook-pollution-gate.mjs --max-enabled-length 8000 src/魔法禁书目录模拟器/魔法禁书目录模拟器.png",
+      "exitCode": 0,
+      "result": "Passed with 114 entries, 3 disabled, and max enabled length 7352."
+    },
+    {
+      "command": "node scripts/verify-mjr-regex-conflict.mjs",
+      "exitCode": 0,
+      "result": "Only the welcome display regex matches sp_start; no deleting regex conflict remains."
+    }
+  ],
+  "regexFix": {
+    "rootCause": "The packaged worldbook welcome page was new, but the display regex replaceString in index.yaml remained the old 39-group/87-opening HTML.",
+    "source": "src/魔法禁书目录模拟器/自定义开局/欢迎页.txt",
+    "target": "[显示]渲染魔法禁书目录开局页",
+    "transformation": "Keep the style block through the root element before </body>, remove document shell tags, normalize line indentation, and preserve the existing blank line after </style>.",
+    "syncedLength": 371911,
+    "sourceParity": true
+  },
+  "cdnAudit": {
+    "mode": "read-only",
+    "upgraded": false,
+    "references": [
+      {
+        "name": "@fortawesome/fontawesome-free",
+        "current": "6.4.0",
+        "latest6x": "6.7.2",
+        "latest": "7.3.1",
+        "currentUrlAvailable": true,
+        "candidateUrlAvailable": true
+      },
+      {
+        "name": "MagicalAstrogy/MagVarUpdate",
+        "current": "0.171.0",
+        "latest": "0.183.0",
+        "currentUrlAvailable": true,
+        "candidateUrlAvailable": true
+      },
+      {
+        "name": "StageDog/tavern_resource",
+        "current": "0.3.446",
+        "latest": "0.3.450",
+        "currentUrlAvailable": true,
+        "candidateUrlAvailable": true
+      },
+      {
+        "name": "linlangliehu/mfrs-img",
+        "current": "d86c74d",
+        "latest": "2d700a3",
+        "changedFilesBetweenCurrentAndLatest": [
+          "README.md",
+          "preview/intro_preview.html"
+        ],
+        "imageFilesChanged": false
+      },
+      {
+        "name": "linlangliehu/bgm",
+        "reference": "main",
+        "versioned": false,
+        "latestFileCommit": "7f1be03"
+      }
+    ],
+    "reason": "Dependency upgrades were not mixed into the welcome-page regex hotfix."
+  },
+  "rollback": {
+    "index": {
+      "path": ".planning/magic-opening-restructure-20260908/phase8-rollback/index-pre-regex-sync.yaml",
+      "sizeBytes": 181087,
+      "sha256": "F8358AFC06530A3233C7FA479C20E9BBD8509E10172EF67C07676F10133EF740"
+    },
+    "png": {
+      "path": ".planning/magic-opening-restructure-20260908/phase8-rollback/魔法禁书目录模拟器-pre-regex-sync.png",
+      "sizeBytes": 6236613,
+      "sha256": "1266AC301EE0F5C648BD9113549359CF3A0A069BF21D083BCBF9E7A89A9C6B44"
+    },
+    "initialPhase8Png": {
+      "path": ".planning/magic-opening-restructure-20260908/phase8-rollback/魔法禁书目录模拟器-pre-phase8.png",
+      "sizeBytes": 3912101,
+      "sha256": "446FBB2B1498B60E0D0A19C04370BF499D1DC8CE9D3E6DA0F1884E97BFE29DFA"
+    }
+  },
+  "artifact": {
+    "path": "src/魔法禁书目录模拟器/魔法禁书目录模拟器.png",
+    "sizeBytes": 7319397,
+    "sha256": "3E97F4D7E808E3777F6B131B81DAABF3E0A66172930DFA2F6FBC3D8EAEB596A5",
+    "version": "1.1.1",
+    "payloadKeyword": "ccv3",
+    "spec": "chara_card_v3",
+    "specVersion": "3.0"
+  },
+  "validation": {
+    "phase8Status": "passed-offline-static",
+    "worldbook": {
+      "layers": 4,
+      "groups": 106,
+      "openings": 114,
+      "uniqueOpeningIds": 114,
+      "compatibilityPayloads": 114,
+      "metadataPayloads": 114,
+      "nodeChainRecords": 98,
+      "requiredNodeIds": 541,
+      "welcomeSourceParity": true
+    },
+    "displayRegex": {
+      "layers": 4,
+      "groups": 106,
+      "openings": 114,
+      "uniqueOpeningIds": 114,
+      "compatibilityPayloads": 114,
+      "metadataPayloads": 114,
+      "transformedSourceParity": true,
+      "disabled": false,
+      "markdownOnly": true,
+      "promptOnly": false
+    },
+    "genesis15Present": false,
+    "customOpeningPreserved": true,
+    "worldbookNodeReferences": "passed",
+    "spStartConflict": "none"
+  },
+  "worldbookPollutionGate": {
+    "defaultThreshold": {
+      "status": "failed-pre-existing",
+      "currentOverlongEntries": [
+        "变量输出格式(7352)",
+        "魔法术式图鉴(6754)"
+      ],
+      "conclusion": "The failure existed before Phase 8 and was not introduced by this package."
+    },
+    "threshold8000": {
+      "status": "passed",
+      "entries": 114,
+      "disabled": 3,
+      "maxEnabledLength": 7352
+    }
+  },
+  "scopeControl": {
+    "unexpectedWrite": "The repository build hook also repacked src/神秘复苏模拟器/神秘复苏模拟器.png.",
+    "action": "The unrelated PNG was restored to its pre-build hash AF77CCA5510F6BCA6584736889F40FD662BA59BAFF2EB97D92DA1E09ECB09D57."
+  },
+  "runtime": {
+    "accepted": true,
+    "evidence": {
+      "characterId": "10",
+      "name": "魔法禁书目录模拟器",
+      "version": "1.1.1",
+      "worldbookEntries": 114,
+      "regexScripts": 7,
+      "displayRegex": {
+        "layers": 4,
+        "groups": 106,
+        "openings": 114,
+        "uniqueOpeningIds": 114,
+        "compatibilityPayloads": 114,
+        "metadataPayloads": 114
+      },
+      "dom": {
+        "rootPresent": true,
+        "layers": 4,
+        "groups": 106,
+        "scenes": 114,
+        "uniqueOpeningIds": 114,
+        "completeScenes": 114,
+        "customButton": true,
+        "customInput": true,
+        "genesis15Present": false
+      },
+      "runtimeBuild": {
+        "mode": "production",
+        "builtAt": "2026-09-08T11:24:42.811Z"
+      }
+    }
+  }
+}
