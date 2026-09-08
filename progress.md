@@ -1,5 +1,38 @@
 # 进度日志
 
+## 2026-09-08 仓库级清理：开发模式残留与生产构建门禁（完成）
+
+### 根因
+- `scripts/toggle-dev-mode.mjs` 的 `--disable` 在“已经是生产模式”时会直接返回，导致 `# DEV_MODE_ORIGINAL_CDN_REF` 残留标记无法被清理。
+- `src/魔法禁书目录模拟器/index.yaml` 因此保留了 `# DEV_MODE_ORIGINAL_CDN_REF: unknown`，虽然实际 URL 已是 CDN，但会污染后续开发/发布判断。
+
+### 修复
+- `scripts/toggle-dev-mode.mjs`
+  - `enableDevMode()` 改为全量校验后一次性写入，能修复旧标记并重新记录有效 CDN ref
+  - `disableDevMode()` 不再因“已是生产模式”提前返回，会清理残留标记；本地 URL 存在但 ref 无效时直接失败
+- 新增 `scripts/verify-production-mode.mjs`
+  - 校验《神秘复苏模拟器》和《魔法禁书目录模拟器》两份 `index.yaml`
+  - 禁止 `# DEV_MODE_ORIGINAL_CDN_REF`、`http://127.0.0.1:5510/`
+  - 要求存在锁定 commit SHA 的 jsDelivr CDN 引用
+- `package.json`
+  - `build` 前置执行 `verify-production-mode`
+  - 新增 `verify:workspace` / `verify:production-mode`
+- 清理 `src/魔法禁书目录模拟器/index.yaml` 的残留标记
+
+### 验证
+- `node --check` × 2
+- Prettier check × 3
+- ESLint（仅 Node 内建模块 warning，无 error）
+- `pnpm build`
+- 开发模式启用 → 门禁失败 → 还原生产 → 门禁通过 回归
+- `git diff --check`
+- 提交：`35222081 chore: 清理开发模式残留并加固生产构建门禁`
+
+### 影响与边界
+- 本轮未改角色卡内容、版本号或打包产物；魔禁 `1.1.2` 保持不变
+- `docs/archive/2026时间线基准-原稿-20260907.md` 已入库作为历史证据
+- `src/神秘复苏模拟器/schema.json` 的 `anyOf` 为 Zod 4.5.4 稳定输出，保留
+
 ## 2026-08-21 修复：沉浸模式 ST 抽屉被 HUD 遮挡（完成 · 待发布 v8.15.38）
 
 ### 根因
