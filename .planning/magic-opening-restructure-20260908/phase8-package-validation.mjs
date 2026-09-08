@@ -73,8 +73,8 @@ if (phase6.validation?.status !== 'passed-static-only') throw new Error('Phase 6
 
 const { character, payloadKeyword, chunkCount } = extractPngCharacter(pngPath);
 const characterData = character.data ?? character;
-if (characterData.character_version !== '1.1.1') {
-  throw new Error(`Expected card version 1.1.1, got ${characterData.character_version}`);
+if (characterData.character_version !== '1.1.2') {
+  throw new Error(`Expected card version 1.1.2, got ${characterData.character_version}`);
 }
 
 const entries = Object.values(characterData.character_book?.entries ?? {});
@@ -186,8 +186,10 @@ if (!distScript.includes('dataset.compat') || !distScript.includes('dataset.meta
   throw new Error('Development dist script does not contain Phase 8 initialization logic');
 }
 const extensionText = JSON.stringify(characterData.extensions ?? {});
-if (!extensionText.includes('http://127.0.0.1:5510/dist/魔法禁书目录模拟器/脚本/界面美化/index.js')) {
-  throw new Error('Card does not reference the Phase 8 development interface script');
+const interfaceScriptReferenced = extensionText.includes('http://127.0.0.1:5510/dist/魔法禁书目录模拟器/脚本/界面美化/index.js')
+  || extensionText.includes('https://testingcf.jsdelivr.net/gh/linlangliehu/tavern_helper_template@ba1ff77c9abbf140ff622bab41721b6dcc6d7365/dist/魔法禁书目录模拟器/脚本/界面美化/index.js');
+if (!interfaceScriptReferenced) {
+  throw new Error('Card does not reference the Phase 8 interface script');
 }
 
 const pngBuffer = readFileSync(pngPath);
@@ -213,7 +215,7 @@ const report = {
   checks: [
     'PNG signature and text chunks parse successfully',
     'chara/ccv3 payload decodes to valid JSON',
-    'Card version is 1.1.1',
+    'Card version is 1.1.2',
     'Packaged welcome exactly matches source welcome',
     'Packaged display regex exactly matches transformed source welcome',
     '114 unique openings are embedded',

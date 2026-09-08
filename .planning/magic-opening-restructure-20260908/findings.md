@@ -318,3 +318,13 @@
 - 自定义开场控件保留，页面文本无 `创约15`。
 - 运行时生产构建标记显示 `界面美化` built at `2026-09-08T11:24:42.811Z`。
 - 结论：**Phase 8 的欢迎页正则同步、世界书数据、初始化载荷和自定义开场功能均已成功生效**。
+
+### `1.1.2` CDN 分发验收结论
+
+- 固定 CDN 提交：`ba1ff77c9abbf140ff622bab41721b6dcc6d7365`。
+- 最终 PNG：7,320,821 bytes，SHA256 `708204B857813F7F26FC4194434999FFA320D93C2DB06E5C1FBE0D818FAD07AC`。
+- `chara` / `ccv3` 双 payload 均为版本 `1.1.2`，本地 `5510` 残留为 0，固定 CDN 引用为 6。
+- 真机资源记录显示 6 个固定 CDN 脚本全部 HTTP `200`。
+- 实际 DOM 使用 `data-time-layer` / `data-event` / `data-opening-id` 表达层级与分组：4 / 106 / 114，兼容与元数据载荷各 114。
+- `Mvu` 全局存在，包含 `getMvuData`、`replaceMvuData`、`parseMessage`、`getCurrentMvuData` 等运行时方法。
+- 全局 TavernSync websocket 重连错误来自宿主扩展，不属于魔禁卡脚本；不阻塞 `1.1.2` 分发。

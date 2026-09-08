@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "generatedOn": "2026-09-08T11:27:55.811Z",
-  "status": "passed-offline-static-pending-host",
-  "objective": "Sync the latest welcome page into the card display regex, rebuild, and package Magic Index Simulator 1.1.1.",
+  "generatedOn": "2026-09-08T13:55:01.400Z",
+  "status": "passed-offline-static-and-user-runtime",
+  "objective": "Finalize Magic Index Simulator 1.1.2 as a CDN-distributed card after the welcome regex fix.",
   "commands": [
     {
       "command": "pnpm build",
@@ -42,6 +42,14 @@
     "transformation": "Keep the style block through the root element before </body>, remove document shell tags, normalize line indentation, and preserve the existing blank line after </style>.",
     "syncedLength": 371911,
     "sourceParity": true
+  },
+  "cdnDistribution": {
+    "pinnedRef": "ba1ff77c9abbf140ff622bab41721b6dcc6d7365",
+    "scriptCount": 6,
+    "localDevelopmentUrlCount": 0,
+    "runtimeHttpStatus": 200,
+    "runtimeBuildSourceCommit": "62255fd",
+    "runtimeBuildAt": "2026-09-08T12:03:01.341Z"
   },
   "cdnAudit": {
     "mode": "read-only",
@@ -107,9 +115,9 @@
   },
   "artifact": {
     "path": "src/魔法禁书目录模拟器/魔法禁书目录模拟器.png",
-    "sizeBytes": 7319397,
-    "sha256": "3E97F4D7E808E3777F6B131B81DAABF3E0A66172930DFA2F6FBC3D8EAEB596A5",
-    "version": "1.1.1",
+    "sizeBytes": 7320821,
+    "sha256": "708204B857813F7F26FC4194434999FFA320D93C2DB06E5C1FBE0D818FAD07AC",
+    "version": "1.1.2",
     "payloadKeyword": "ccv3",
     "spec": "chara_card_v3",
     "specVersion": "3.0"
@@ -169,7 +177,7 @@
     "evidence": {
       "characterId": "10",
       "name": "魔法禁书目录模拟器",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "worldbookEntries": 114,
       "regexScripts": 7,
       "displayRegex": {
@@ -193,7 +201,18 @@
       },
       "runtimeBuild": {
         "mode": "production",
-        "builtAt": "2026-09-08T11:24:42.811Z"
+        "sourceCommit": "62255fd",
+        "builtAt": "2026-09-08T12:03:01.341Z"
+      },
+      "environment": {
+        "sillyTavern": "1.18.0",
+        "tavernHelper": "4.9.3"
+      },
+      "cdn": {
+        "pinnedRef": "ba1ff77c9abbf140ff622bab41721b6dcc6d7365",
+        "loadedScripts": 6,
+        "httpStatus": 200,
+        "localDevelopmentRequests": 0
       }
     }
   }
