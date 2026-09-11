@@ -14,6 +14,7 @@
     "stop-dev": "node scripts/stop-dev-environment.mjs",
     "verify:workspace": "node scripts/verify-production-mode.mjs",
     "verify:production-mode": "node scripts/verify-production-mode.mjs",
+    "verify:mjr-insert-idempotency": "node scripts/verify-mjr-insert-idempotency.mjs",
     "verify:mfrs-frontend": "node scripts/verify-mfrs-database-frontend-p3.mjs",
     "verify:mfrs-mvu-hotfix": "node scripts/verify-mfrs-mvu-hotfix-regressions.mjs",
     "verify:mfrs-falsely-applied": "node scripts/verify-mfrs-falsely-applied-regressions.mjs",

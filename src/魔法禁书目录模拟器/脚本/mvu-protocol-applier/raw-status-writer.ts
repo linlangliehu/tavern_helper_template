@@ -35,6 +35,40 @@ function isContainer(value: unknown): value is Record<string, unknown> | unknown
   return value !== null && typeof value === 'object';
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function deepEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((item, index) => deepEqual(item, right[index]));
+  }
+  if (!isPlainObject(left) || !isPlainObject(right)) return false;
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+  return leftKeys.every(
+    field => Object.prototype.hasOwnProperty.call(right, field) && deepEqual(left[field], right[field]),
+  );
+}
+
+const INSERT_DEDUP_KEYS: Readonly<Record<string, readonly string[]>> = {
+  '/任务追踪': ['任务名称'],
+  '/NPC关系': ['角色名', '姓名'],
+  '/物品/持有物': ['名称'],
+  '/能力档案': ['能力名称'],
+};
+
+function readInsertKey(value: Record<string, unknown>, fields: readonly string[]): string {
+  for (const field of fields) {
+    const candidate = value[field];
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return '';
+}
+
 function getParent(root: unknown, parts: string[], create = false) {
   if (parts.length < 1) return null;
   let current = root;
@@ -86,18 +120,22 @@ function applyPatch(root: MvuData, patch: Patch): boolean {
     if (!Array.isArray(parent)) return false;
     const index = key === '-' ? parent.length : parseIndex(key, parent.length, true);
     if (index === null) return false;
-    // 幂等化（2026-08-29 实机翻倍教训）：重放路径（写后延迟复核/CHAT_CHANGED 恢复扫描/
-    // 写回重试）可能对同一协议应用多次。若插入对象带 角色名 且数组中已存在同名元素，
-    // 改为合并字段而非 splice 追加，避免「两个御坂美琴」式重复。
+    // 同一协议可能被写后复核、恢复扫描和写回重试重复应用。对象数组在共同写入边界幂等化；
+    // 标量与数组值仍保持原 insert 语义。
     const value = patch.value;
-    const dupKey =
-      value && typeof value === 'object' && !Array.isArray(value) ? String((value as any)['角色名'] ?? '') : '';
-    if (dupKey) {
-      const existing = (parent as any[]).find(
-        (el) => el && typeof el === 'object' && String((el as any)['角色名'] ?? '') === dupKey,
-      );
-      if (existing) {
-        Object.assign(existing as Record<string, unknown>, clone(value) as Record<string, unknown>);
+    if (isPlainObject(value)) {
+      const arrayPath = `/${pathParts.slice(0, -1).join('/')}`;
+      const keyFields = INSERT_DEDUP_KEYS[arrayPath];
+      const insertKey = keyFields ? readInsertKey(value, keyFields) : '';
+      if (insertKey && keyFields) {
+        const existing = parent.find(
+          element => isPlainObject(element) && readInsertKey(element, keyFields) === insertKey,
+        );
+        if (existing) {
+          Object.assign(existing, clone(value));
+          return true;
+        }
+      } else if (parent.some(element => isPlainObject(element) && deepEqual(element, value))) {
         return true;
       }
     }
