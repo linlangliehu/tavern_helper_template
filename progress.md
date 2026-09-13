@@ -1,12 +1,62 @@
 # 进度日志
 
+## 2026-09-13 魔禁能力占位语修复：1.1.4 已发布
+
+### 实现
+
+- 清理 `界面美化/index.ts` 的 `generateRaw` 死路径、`MFRS_ABILITY_FIX_KEY` 计数写回和未使用 `getActionText`
+- 开局 `能力效果` / `实战运用` 基线改为空字符串
+- 重写 `变量更新规则.yaml` 与 `变量输出格式.yaml` 的能力描述质量约束，移除模型可见精确占位句
+- 在 `raw-status-writer.ts` 加入能力字段 sanitizer 与稳定能力身份匹配，覆盖整数组/单对象 `replace`、`insert`、`add`
+  别名和字段路径
+- 新增 `scripts/verify-mjr-ability-placeholder-gate.mjs`，并挂入 `pnpm build` 前置门禁
+- 卡版本提升为 `1.1.4`，生成候选 PNG `src/魔法禁书目录模拟器/魔法禁书目录模拟器.png`
+
+### 验证
+
+- `node scripts/verify-mjr-ability-placeholder-gate.mjs` → `MJR_ABILITY_PLACEHOLDER_GATE_OK`
+- `node scripts/verify-mjr-insert-idempotency.mjs` → `MJR_INSERT_IDEMPOTENCY_OK`
+- `node scripts/check-mjr-yaml.cjs` → `YAML_OK`
+- `pnpm exec tsc --noEmit ... raw-status-writer.ts` 通过
+- `pnpm exec tsc --noEmit ... 界面美化/index.ts` 通过
+- `pnpm exec eslint` 三个变更文件通过
+- `git diff --check` 通过
+
+### 当前边界
+
+### 发布结果
+
+- 正式版本：`1.1.4`
+- 产物：`src/魔法禁书目录模拟器/魔法禁书目录模拟器.png`
+- 大小：`7,320,205 bytes`
+- SHA256：`ED9C6FBDB58BCEA681330558A84E01ED455FCEB80019CE4BDFC2130BA4E43A0D`
+- CDN bundle：`8335463073106397cfd48317735391d5c27d0525`
+- 6 个 loader 已全部固定到上述 CDN 提交，生产模式门禁通过
+- 发布提交：`a33c25fd`
+- 最新 bot bundle：`25ea1944`
+- Actions run：`34751183541`，状态 `completed success`
+
+### 验收结论
+
+- 真实酒馆重新生成验收已完成，协议闭合、字段实质化、无旧占位语持久化。
+- 结论按“普适性通过”记录，不再依赖固定三模型名单。
+
+### 后续
+
+- 本发布记录见 `docs/MJR_1.1.4_RELEASE.md`。
+- 神秘复苏车道的本地脏文件另行处理，不混入本发布。
+
 ## 2026-09-08 仓库级清理：开发模式残留与生产构建门禁（完成）
 
 ### 根因
-- `scripts/toggle-dev-mode.mjs` 的 `--disable` 在“已经是生产模式”时会直接返回，导致 `# DEV_MODE_ORIGINAL_CDN_REF` 残留标记无法被清理。
-- `src/魔法禁书目录模拟器/index.yaml` 因此保留了 `# DEV_MODE_ORIGINAL_CDN_REF: unknown`，虽然实际 URL 已是 CDN，但会污染后续开发/发布判断。
+
+- `scripts/toggle-dev-mode.mjs` 的 `--disable` 在“已经是生产模式”时会直接返回，导致 `# DEV_MODE_ORIGINAL_CDN_REF`
+  残留标记无法被清理。
+- `src/魔法禁书目录模拟器/index.yaml` 因此保留了
+  `# DEV_MODE_ORIGINAL_CDN_REF: unknown`，虽然实际 URL 已是 CDN，但会污染后续开发/发布判断。
 
 ### 修复
+
 - `scripts/toggle-dev-mode.mjs`
   - `enableDevMode()` 改为全量校验后一次性写入，能修复旧标记并重新记录有效 CDN ref
   - `disableDevMode()` 不再因“已是生产模式”提前返回，会清理残留标记；本地 URL 存在但 ref 无效时直接失败
@@ -20,6 +70,7 @@
 - 清理 `src/魔法禁书目录模拟器/index.yaml` 的残留标记
 
 ### 验证
+
 - `node --check` × 2
 - Prettier check × 3
 - ESLint（仅 Node 内建模块 warning，无 error）
@@ -29,6 +80,7 @@
 - 提交：`35222081 chore: 清理开发模式残留并加固生产构建门禁`
 
 ### 影响与边界
+
 - 本轮未改角色卡内容、版本号或打包产物；魔禁 `1.1.2` 保持不变
 - `docs/archive/2026时间线基准-原稿-20260907.md` 已入库作为历史证据
 - `src/神秘复苏模拟器/schema.json` 的 `anyOf` 为 Zod 4.5.4 稳定输出，保留
@@ -36,19 +88,26 @@
 ## 2026-08-21 修复：沉浸模式 ST 抽屉被 HUD 遮挡（完成 · 待发布 v8.15.38）
 
 ### 根因
-沉浸模式下 `#mfrs-hud-shell`（z-index: 10000，全屏 fixed）遮挡了 ST 原生抽屉。抽屉 yield CSS 规则只对 `body.mfrs-hud-st-ui-open`（默认模式）生效，沉浸模式（`body.mfrs-hud-immersive`）没有等效规则。用户点击「管理聊天文件」时面板被遮挡不可见。
+
+沉浸模式下 `#mfrs-hud-shell`（z-index: 10000，全屏 fixed）遮挡了 ST 原生抽屉。抽屉 yield CSS 规则只对
+`body.mfrs-hud-st-ui-open`（默认模式）生效，沉浸模式（`body.mfrs-hud-immersive`）没有等效规则。用户点击「管理聊天文件」时面板被遮挡不可见。
 
 ### 修复
-- 新增常量 `HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR`（与 `HUD_ST_OPEN_DRAWER_SELECTOR` 结构相同，但前缀为 `body.mfrs-hud-immersive`）
-- 新增 CSS 块：沉浸模式下对 10 个 ST 抽屉选择器（`.drawer-content.openDrawer`、`#left-nav-panel.openDrawer`、`#right-nav-panel.openDrawer` 等）抬升到 `z-index: 10080` + `position: fixed` + `max-height: 100vh` + `overflow: auto`，与默认模式行为一致
+
+- 新增常量 `HUD_IMMERSIVE_OPEN_DRAWER_SELECTOR`（与 `HUD_ST_OPEN_DRAWER_SELECTOR` 结构相同，但前缀为
+  `body.mfrs-hud-immersive`）
+- 新增 CSS 块：沉浸模式下对 10 个 ST 抽屉选择器（`.drawer-content.openDrawer`、`#left-nav-panel.openDrawer`、`#right-nav-panel.openDrawer`
+  等）抬升到 `z-index: 10080` + `position: fixed` + `max-height: 100vh` + `overflow: auto`，与默认模式行为一致
 - 改动文件：`src/神秘复苏模拟器/脚本/消息内面板/index.ts`
 
 ### 真机验证（CDP 9225，沉浸模式）
+
 - ✅ 注入 yield CSS 后点击「管理聊天文件」→ 聊天记录面板完整可见（搜索框、新建/导入/备份按钮、聊天文件列表）
 - ✅ 面板可交互（重命名、导出、删除按钮均可操作）
 - ✅ 此前面板只在默认模式（st-ui-open）下可见，沉浸模式不可见 → 修复后两种模式均可见
 
 ### 发布流程（阶段 1 准备完成，待 push）
+
 - `pnpm stop-dev` 还原 `index.yaml` 到生产 CDN
 - `pnpm verify:mfrs-source-gates` 全绿
 - release-constants：`RELEASE_VERSION 8.15.34→8.15.38`、`CDN_CACHE_VERSION v81534→v81538_20260821_02`、CDN_REF 暂留旧值
@@ -59,25 +118,34 @@
 ## 2026-08-21 优化：HUD 系统面板「全库工具」按钮组改为可折叠（完成 · 待发布 v8.15.34）
 
 ### 改动
-- `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：`buildHudSystemPanelHtml` 底部的四个全库按钮（打开全库编辑 / 总览页 / 召回页 / 一致性）从平铺 `<div class="mfrs-hud-system-actions">` 改为 `<details class="mfrs-msg-fold mfrs-hud-system-fold" data-fold="full-library">` 折叠块，默认收起仅占一行「全库工具」，点击展开后显示按钮组。
-- 新增配套 CSS：`mfrs-hud-system-fold`（顶部分隔线 + margin）、`mfrs-msg-fold-summary`（min-height/字号）、`mfrs-msg-fold-body`（内边距）。
+
+- `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：`buildHudSystemPanelHtml`
+  底部的四个全库按钮（打开全库编辑 / 总览页 / 召回页 / 一致性）从平铺 `<div class="mfrs-hud-system-actions">` 改为
+  `<details class="mfrs-msg-fold mfrs-hud-system-fold" data-fold="full-library">`
+  折叠块，默认收起仅占一行「全库工具」，点击展开后显示按钮组。
+- 新增配套 CSS：`mfrs-hud-system-fold`（顶部分隔线 +
+  margin）、`mfrs-msg-fold-summary`（min-height/字号）、`mfrs-msg-fold-body`（内边距）。
 
 ### 真机验证（CDP 9225，酒馆 1.18.0 @ 127.0.0.1:8000，开发卡 5510）
+
 - ✅ 开发模式确认：`MFRS.mountPanel` / `MFRS.consumeItem` 均为 function（页面加载本地 5510 bundle）
 - ✅ 系统面板底部出现折叠块 `DisclosureTriangle "全库工具 ▸"`，默认收起
 - ✅ 点击展开后四个按钮完整可点：打开全库编辑、全库 · 总览页、全库 · 召回页、全库 · 一致性
 - ✅ 截图存档 `.tmp-research/system-fold-verify.png`
 
 ### 发布流程（阶段 1 完成，待 push 触发 bot）
+
 - `pnpm stop-dev` 还原 `index.yaml` 到生产 CDN（`8ff362d0`）
 - `git checkout HEAD -- dist/` 还原 watch dist 噪声
 - `pnpm verify:mfrs-source-gates` 13/13 全绿
-- release-constants：`RELEASE_VERSION 8.15.30→8.15.34`、`CDN_CACHE_VERSION v81530→v81534_20260821_01`、`CDN_REF` 暂留旧值（阶段 2 更新）
+- release-constants：`RELEASE_VERSION 8.15.30→8.15.34`、`CDN_CACHE_VERSION v81530→v81534_20260821_01`、`CDN_REF`
+  暂留旧值（阶段 2 更新）
 - 开发版 `index.yaml`：版本号 + 7 处 cache 同步到 `v81534_20260821_01`
 - CHANGELOG 新增 `[v8.15.34]` 条目
 - 版本号决策：远端最新 tag 已到 `v8.15.33`（bot autotag），新版本取 `8.15.34` 避开冲突
 
 ### 改动文件
+
 - `src/神秘复苏模拟器/脚本/消息内面板/index.ts`：折叠 UI + 配套 CSS
 - `scripts/mfrs-release-constants.mjs`：版本/cache 常量
 - `src/神秘复苏模拟器/index.yaml`：版本号 + cache
@@ -87,111 +155,167 @@
 ## 2026-08-20 修复：MVU「假性已应用」stat_data 重载退回初值（完成 · 已发布 v8.15.30）
 
 ### 根因
-重载后 `message.extra._mfrs_raw_protocol_applied_hash` 标记留存，但 MVU `stat_data` 退回 schema 初值（风险值=0、收录档案空）。hotfix 命中标记 → 永久跳过写回 → stat_data 卡死在初值 → 下游记忆面板"暂无记录"、HUD 风险显示 0。
+
+重载后 `message.extra._mfrs_raw_protocol_applied_hash` 标记留存，但 MVU `stat_data`
+退回 schema 初值（风险值=0、收录档案空）。hotfix 命中标记 → 永久跳过写回 →
+stat_data 卡死在初值 → 下游记忆面板"暂无记录"、HUD 风险显示 0。
 
 ### 两层修复（均已真机验证生效）
+
 **层面 A — 阻止新假性已应用**（`index.ts` `parseAndWriteMvuMessage` 跳过分支前 pre-check）
+
 - 标记命中时调 `isFalselyAppliedStat(oldData, normalized.message)` 判定
-- 仅当协议含白名单 delta≠0（`/风险值`、`/厉鬼复苏程度`、`/驭鬼者状态/总复苏风险`，schema default 均 0）且字段仍为 0 → 清标记、落到正常写回
+- 仅当协议含白名单 delta≠0（`/风险值`、`/厉鬼复苏程度`、`/驭鬼者状态/总复苏风险`，schema default 均 0）且字段仍为 0
+  → 清标记、落到正常写回
 - 真·已应用楼层（字段已有累积值）维持原跳过，不重复写回、不重复累积
 
 **层面 B — 修复历史假性已应用**（新增 `repairFalselyAppliedFloors` + `CHAT_CHANGED` 监听）
+
 - 切卡/重载后扫全楼层，只对"标记在且假性"的楼层调 `parseAndWriteMvuMessage` 重写
 - 跳过最后一条 AI 楼（避免和正在进行的 GENERATION_ENDED 竞态）
 - 首装时（`installHotfix`）也跑一次扫描
 
 ### 为什么不影响预设
-写回链路只读 `<UpdateVariable>` 协议 + `stat_data`，不读不写 `mes`/预设标签（`<draft_notes>`/`<w2g>`/`<bginfor>`/`<catsay>`/`<CEstuff>`/`<VariableCheck>`）。pre-check 和扫描只动 `extra.applied_hash` 标记 + `stat_data`。
+
+写回链路只读 `<UpdateVariable>` 协议 + `stat_data`，不读不写
+`mes`/预设标签（`<draft_notes>`/`<w2g>`/`<bginfor>`/`<catsay>`/`<CEstuff>`/`<VariableCheck>`）。pre-check 和扫描只动
+`extra.applied_hash` 标记 + `stat_data`。
 
 ### 真机验证（CDP 9225，酒馆 1.18.0 @ 127.0.0.1:8000，开发卡 5510）
+
 - ✅ 13/13 source gates 全绿
-- ✅ console 日志链：`CHAT_CHANGED 监听器已注册` → `历史楼层假性已应用，重新写回` → `检测到假性已应用，清除标记并重新写回` → `已通过本地 JSONPatch 写回消息变量` → `假性已应用楼层修复完成`
-- ✅ stat_data 恢复：复苏风险 0→18%，位置恢复为"大昌市第七中学大门外侧幽暗梧桐便道"（匹配 `<VariableCheck>` 协议 `0 -> 18`）
+- ✅ console 日志链：`CHAT_CHANGED 监听器已注册` → `历史楼层假性已应用，重新写回` →
+  `检测到假性已应用，清除标记并重新写回` → `已通过本地 JSONPatch 写回消息变量` → `假性已应用楼层修复完成`
+- ✅ stat_data 恢复：复苏风险 0→18%，位置恢复为"大昌市第七中学大门外侧幽暗梧桐便道"（匹配 `<VariableCheck>` 协议
+  `0 -> 18`）
 
 ### 改动文件（未提交）
-- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/raw-status-writer.ts`：新增 `isFalselyAppliedStat` + `extractWhitelistedDeltaPatches`（白名单 delta 提取，复用 `applyRawProtocolToMvuData` 的 `<UpdateVariable>/<JSONPatch>` 解析口径）
-- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：层面 A pre-check + 层面 B `repairFalselyAppliedFloors` + `handleChatChanged` + `CHAT_CHANGED` 监听注册 + 首装扫描 + `getTavernEventName` key 类型扩展
+
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/raw-status-writer.ts`：新增 `isFalselyAppliedStat` +
+  `extractWhitelistedDeltaPatches`（白名单 delta 提取，复用 `applyRawProtocolToMvuData` 的
+  `<UpdateVariable>/<JSONPatch>` 解析口径）
+- `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：层面 A pre-check + 层面 B
+  `repairFalselyAppliedFloors` + `handleChatChanged` + `CHAT_CHANGED` 监听注册 + 首装扫描 + `getTavernEventName`
+  key 类型扩展
 
 ### 待发布（已完成 · v8.15.30 已发布）
-- **v8.15.30 已发布**（release `79edef2d`；CDN bundle `8ff362d0`；tag `v8.15.30`→`418c6cec`；cache `v81530_20260820_01`；CDN_REF `8ff362d08355f5f0e25496b90ae8025ce35c9c79`）。
-- 发布流程：bump `RELEASE_VERSION` 8.15.28→8.15.30 → `pnpm stop-dev` 还原 `index.yaml` → `pnpm build` production → 更新 `CDN_REF` → `publish-card` → `verify:mfrs-gates` 14 项全绿 → 两阶段发布完成。
-- HEAD `348d8ce8`（bot bundle）；本地与远端 `origin/main@348d8ce8` 同步；工作区处于开发模式（`index.yaml` 切 localhost:5510 + watch dist 噪声）。
+
+- **v8.15.30 已发布**（release `79edef2d`；CDN bundle `8ff362d0`；tag `v8.15.30`→`418c6cec`；cache
+  `v81530_20260820_01`；CDN_REF `8ff362d08355f5f0e25496b90ae8025ce35c9c79`）。
+- 发布流程：bump `RELEASE_VERSION` 8.15.28→8.15.30 → `pnpm stop-dev` 还原 `index.yaml` → `pnpm build` production → 更新
+  `CDN_REF` → `publish-card` → `verify:mfrs-gates` 14 项全绿 → 两阶段发布完成。
+- HEAD `348d8ce8`（bot bundle）；本地与远端 `origin/main@348d8ce8` 同步；工作区处于开发模式（`index.yaml`
+  切 localhost:5510 + watch dist 噪声）。
 
 ## 2026-08-20 发布 v8.15.28（完成）
 
 ### 发布流程（两阶段）
-- **阶段 1**：stop-dev 还原 index.yaml → ff 同步 origin（bot Bump deps `9d5b2e64`）→ production build → release 常量 8.15.26→8.15.28、cache v81528_20260820_01、CDN_REF 保持旧值 → 开发版 index.yaml 版本+cache+7处 CDN_REF → CHANGELOG → `verify:mfrs-source-gates` 13 项全绿 → 精确提交 9 文件（4 业务源码+3 规划+常量+CHANGELOG，无 dist/PNG/lockfile）→ push `35b9591c` 触发 bot
-- **阶段 2**：bot bundle `d049bf63`（tag v8.15.28）→ ff 同步 + 还原本地 dist 噪声 → CDN_REF 更新为 `d049bf635a539d1f13514dfd4a5ad276507491fe` → 开发版 index.yaml 7 处 CDN_REF 同步 → publish-card --dist-no-build（G1 dist 新鲜度通过、镜像 5 目录、替换 15 处链接、生成发布版 PNG、release-png 门禁 8.15.28/refs7/cache8/regex33/scripts8）→ `verify:mfrs-gates` 14 项全绿 → 提交 4 发布物 → push `b673969e` → 再触发 bot bundle `cda1d511`（仅 dist module-id + 开发版 PNG 重建，正常）
+
+- **阶段 1**：stop-dev 还原 index.yaml → ff 同步 origin（bot Bump deps `9d5b2e64`）→ production build →
+  release 常量 8.15.26→8.15.28、cache v81528_20260820_01、CDN_REF 保持旧值 → 开发版 index.yaml 版本+cache+7处 CDN_REF →
+  CHANGELOG → `verify:mfrs-source-gates`
+  13 项全绿 → 精确提交 9 文件（4 业务源码+3 规划+常量+CHANGELOG，无 dist/PNG/lockfile）→ push `35b9591c` 触发 bot
+- **阶段 2**：bot bundle `d049bf63`（tag v8.15.28）→ ff 同步 + 还原本地 dist 噪声 → CDN_REF 更新为
+  `d049bf635a539d1f13514dfd4a5ad276507491fe` → 开发版 index.yaml 7 处 CDN_REF 同步 → publish-card --dist-no-build（G1
+  dist 新鲜度通过、镜像 5 目录、替换 15 处链接、生成发布版 PNG、release-png 门禁 8.15.28/refs7/cache8/regex33/scripts8）→
+  `verify:mfrs-gates` 14 项全绿 → 提交 4 发布物 → push `b673969e` → 再触发 bot bundle `cda1d511`（仅 dist
+  module-id + 开发版 PNG 重建，正常）
 
 ### 验证
+
 - 7 个 CDN URL 全部 HTTP 200（`--ssl-no-revoke` 绕过 Windows schannel 吊销检查离线）
 - 发布版 PNG `version=8.15.28, refs=7, cache=8, regex=33, scripts=8`；bot 未改动发布版 PNG
 - 最终 HEAD `cda1d511`（v8.15.28），工作区干净，本地与远程同步
-- CDN_REF warn「落后 HEAD 2 提交」为预期（pin 指向 CDN dist d049bf63，HEAD 领先仅含发布元数据+module-id 噪声，无 dist 实质遗漏）
+- CDN_REF warn「落后 HEAD 2 提交」为预期（pin 指向 CDN dist
+  d049bf63，HEAD 领先仅含发布元数据+module-id 噪声，无 dist 实质遗漏）
 
 ### 版本号决策
+
 - 远程 tag 已到 v8.15.27（bot autotag），新版本取 8.15.28 避开冲突；v8.15.28 tag 由 bot 打在 `d049bf63`
 
 ### 分发文件
+
 - `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`（可直接导入酒馆）
 
 ## 2026-08-20 真机验证：消耗逻辑 + 修复 number 格式 bug（完成）
 
 ### 真机环境
+
 - 酒馆 1.18.0 @ `127.0.0.1:8000`，CDP 9225，开发卡「神秘复苏模拟器」激活
 - 5510 dist 含新代码（`consumeGachaItemFromStatData` ×2、`writeStatDataToMvu` ×3、`consumeItem` API、`剩余次数` 显示）
 - 运行时确认 `window.MFRS.consumeItem` 是 function（证明页面加载本地 5510 bundle 而非 CDN 旧代码）
 
 ### 数据源确认（修正探测偏差）
+
 - `Mvu.getMvuData()` **无参** 读到旧快照（1 灵异物品/0 知识）
 - `Mvu.getMvuData({type:'message',message_id:'latest'})` 与最新 AI 楼真实数据一致（2 物品/1 知识）
 - `writeStatDataToMvu` 用的是后者（正确），前面探测用无参造成假性数据源不一致误判
 
 ### 新发现 bug：supernatural 消耗漏数字格式（已修）
+
 - schema `剩余次数: z.union([z.number(), z.string()])` 允许数字和字符串两种
 - AI/开局写入数字 `5`；抽卡同步写字符串 `"5次"`
-- 原 `consumeGachaItemFromStatData` 只 `match(/^(\d+)次$/)`，对数字 `5` → `String(5)="5"` 无「次」字 → 不匹配 → 当无限使用跳过 → **永远不消耗**
-- 修复：supernatural 分支先判 `typeof rawUsage === 'number'` 直接 `rawUsage-1`（保持数字格式），≤1 移除；否则走字符串 "N次" 逻辑
+- 原 `consumeGachaItemFromStatData` 只 `match(/^(\d+)次$/)`，对数字 `5` → `String(5)="5"`
+  无「次」字 → 不匹配 → 当无限使用跳过 → **永远不消耗**
+- 修复：supernatural 分支先判 `typeof rawUsage === 'number'` 直接
+  `rawUsage-1`（保持数字格式），≤1 移除；否则走字符串 "N次" 逻辑
 
 ### 真机验证结果（全通过）
-1. **知识消耗**：使用「深入知识」对敲门鬼G0002 → `收录规律` 1项→0项 ✓；左栏知识按钮消失 ✓；敲门鬼「已知规律」更新为规律内容、「档案完整度」+10% ✓（knowledge 不加收录进度，符合设计）；提示词填入「我运用知识【深入知识】对厉鬼「敲门鬼[G0002]」...」 ✓
-2. **灵异物品消耗（数字格式）**：直接调 `consumeItem` 红色鬼烛 → 剩余次数 `5`→`4`（number 保持）✓；`writer:'Mvu.replaceMvuData', verified:true` ✓
+
+1. **知识消耗**：使用「深入知识」对敲门鬼G0002 → `收录规律`
+   1项→0项 ✓；左栏知识按钮消失 ✓；敲门鬼「已知规律」更新为规律内容、「档案完整度」+10%
+   ✓（knowledge 不加收录进度，符合设计）；提示词填入「我运用知识【深入知识】对厉鬼「敲门鬼[G0002]」...」 ✓
+2. **灵异物品消耗（数字格式）**：直接调 `consumeItem` 红色鬼烛 → 剩余次数
+   `5`→`4`（number 保持）✓；`writer:'Mvu.replaceMvuData', verified:true` ✓
 3. **连续消耗归0移除**：4→3→2→1→**移除** ✓；最终只剩灵异记录本
 4. **Reload 持久化**：reload 后鬼烛保持移除、知识保持消耗、收录档案终局字段不动、按钮不复活 ✓
 5. **幂等保护**：无限使用物品（灵异记录本）消耗返回 `{changed:false,NO_CHANGE}` 不写入 ✓；不存在物品同样不报错 ✓
 
 ### 验证要点
-- 现场档案使用按钮分两处渲染：左栏 `aside.mfrs-hud-left`（最新楼层快照）+ 消息内面板三栏 `aside.mfrs-msg-tri-left`（历史楼层快照），都读 stat_data
+
+- 现场档案使用按钮分两处渲染：左栏 `aside.mfrs-hud-left`（最新楼层快照）+ 消息内面板三栏
+  `aside.mfrs-msg-tri-left`（历史楼层快照），都读 stat_data
 - knowledge 类写库只更新「已知规律」+「档案完整度」，**不加收录进度**（设计如此）；clue 类才加收录进度
 - supernatural 使用也弹厉鬼选择弹窗（但写库对 supernatural 跳过，只填提示词+消耗）
 
 ### 修复文件
-- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：`consumeGachaItemFromStatData` supernatural 分支 number 格式兼容
+
+- `src/神秘复苏模拟器/脚本/数据库前端/v10_2_visualizer.js`：`consumeGachaItemFromStatData`
+  supernatural 分支 number 格式兼容
 - 静态：`node --check` ✓；`verify:mfrs-archive-ui` phase5 242 checks ✓
 
 ## 2026-08-20 修复：抽卡物品「使用」按钮不消耗物品（完成）
 
 ### 根因
+
 真机发现：使用「深入知识」后档案进度加了 10%，但知识没消失可重复使用；灵异物品使用后也无次数递减。
-`消息内面板/index.ts:5834` 的 `executeItemUseOnGhost` 只做了「updateCell 加收录进度 + 填输入框提示词」，**完全缺失消耗逻辑**。
+`消息内面板/index.ts:5834` 的 `executeItemUseOnGhost`
+只做了「updateCell 加收录进度 + 填输入框提示词」，**完全缺失消耗逻辑**。
 
 ### 消耗语义（已与用户确认）
+
 - knowledge（知识）→ 从 `stat_data.收录规律` 移除 `规律类型===name && 获取方式==='灵异抽卡'` 的行
 - clue（线索）→ 从 `stat_data.可见档案.未验证猜测` 移除以「【线索】name」开头的字符串
-- supernatural（灵异物品）→ `stat_data.灵异资源.灵异物品` 的 `剩余次数`（如「3次」）-1，归 0/1 次时移除该行；`无限使用`/`可叠加` 不消耗
+- supernatural（灵异物品）→ `stat_data.灵异资源.灵异物品` 的
+  `剩余次数`（如「3次」）-1，归 0/1 次时移除该行；`无限使用`/`可叠加` 不消耗
 
 ### 实现
+
 1. **数据库前端 `v10_2_visualizer.js`**：
-   - 抽取 `syncGachaItemsToMvuStatData` 的权威写回链路为通用函数 `writeStatDataToMvu(mutateFn)`（读旧→改→replaceMvuData/updateVariablesWith→读回校验→chat.variables+saveChat 兜底→刷新消息内面板）
+   - 抽取 `syncGachaItemsToMvuStatData` 的权威写回链路为通用函数
+     `writeStatDataToMvu(mutateFn)`（读旧→改→replaceMvuData/updateVariablesWith→读回校验→chat.variables+saveChat 兜底→刷新消息内面板）
    - 新增 `consumeGachaItemFromStatData(payload)`，按类型从 stat_data 移除/扣减；幂等（未匹配到 `changed=false` 不写回）
    - `MFRS` API 挂载 `consumeItem: consumeGachaItemFromStatData`
    - `syncGachaItemsToMvuStatData` 改为复用 `writeStatDataToMvu`
 2. **消息内面板 `index.ts`**：
-   - `executeItemUseOnGhost` 在 `fillChatInputForItemUse` 后调 `MFRS.consumeItem({itemName, itemType})`，失败仅日志降级不阻断主流程
+   - `executeItemUseOnGhost` 在 `fillChatInputForItemUse` 后调
+     `MFRS.consumeItem({itemName, itemType})`，失败仅日志降级不阻断主流程
    - `buildGachaItemsSectionHtml` 灵异物品行新增「剩余次数」标签显示（名称 + 类型 + 次数 + 效果）
-3. 数据库表 `sheet_supernatural_items` 的「数量或状态」字段不直接同步——提示词告知 AI 后由 AI 按规则更新（与现有只写收录档案、靠 AI 同步其它表的设计一致）
+3. 数据库表 `sheet_supernatural_items`
+   的「数量或状态」字段不直接同步——提示词告知 AI 后由 AI 按规则更新（与现有只写收录档案、靠 AI 同步其它表的设计一致）
 
 ### 验证
+
 - `node --check v10_2_visualizer.js`：通过
 - `pnpm verify:mfrs-archive-ui`（phase5 242 checks）：通过
 - `tsc` 本轮编辑行无新增错误（剩余全是预先存在的 UMD global / getVariables 全局声明噪声）
@@ -201,53 +325,71 @@
 ## 2026-08-19 阶段四：真机 CDP 端到端验证（完成）
 
 ### 验证环境
+
 - 酒馆 1.18.0 运行于 `http://127.0.0.1:8000/`，CDP 端口 9225
 - 神秘复苏模拟器卡激活，MVU/消息内面板/数据库前端/MFRS API 全部就绪
 - 本地 dev server 5510 提供 dist 产物
 
 ### 阶段四-1：抽卡后 stat_data 落盘（通过）
+
 - 基线：`stat_data.可见档案.未验证猜测` = 0 项，`灵异资源.灵异物品` = 1 项，货币 22
 - 在 HUD embedded 抽卡面板选择「厉鬼档案池」单抽，抽到「决定性线索」★★★★（progress=0.5）
 - 抽卡结果卡片底部正确显示「使用」按钮（阶段三新增）
-- 抽卡后 stat_data 读回：`未验证猜测` = 1 项，内容 = `【线索】决定性线索：关键的决定性线索，大幅提升档案完成度（档案进度 +50%）`，完全匹配契约
+- 抽卡后 stat_data 读回：`未验证猜测` = 1 项，内容 =
+  `【线索】决定性线索：关键的决定性线索，大幅提升档案完成度（档案进度 +50%）`，完全匹配契约
 - 货币 22→12（消耗 10），余额正确
 - 现场档案左栏「线索与猜测」折叠段正确渲染线索 + 「使用」按钮（阶段二新增）
 
 ### 阶段四-2：Reload 不丢不翻倍（通过）
+
 - Reload 前指纹：`{g:1, g0:"【线索】决定性线索...", r:0, s:1, s0:"红色鬼烛"}`
 - 页面 `reload(ignoreCache)` → 重新进入聊天 → 读回指纹完全一致
 - stat_data 持久化正确，reload 后无丢失、无翻倍
 - UI 也正确渲染：线索折叠段有 1 行 + 1 个使用按钮，payload 字段名 `itemName`/`itemType` 正确
 
 ### 阶段四-3：现场档案「使用」按钮端到端验收（通过 + 修复 bug）
+
 - 点击现场档案中线索的「使用」按钮 → 弹出 `dialog[modal]`「使用物品」弹窗
 - 弹窗正确显示物品名称/说明 + 厉鬼列表（从 `sheet_collected_archives` 读取，2 条：鬼档案自身 100%、敲门声 65%）
-- **发现 bug**：弹窗挂在 `doc.body` 上而非 `#mfrs-hud-shell` 内，`handleHudShellClick` 的 `if (!shell) return` 导致弹窗内的厉鬼按钮点击和关闭按钮点击全部被跳过，`executeItemUseOnGhost` 永远不会被调用
-- **修复**：把 `data-mfrs-item-use-action`（关闭按钮）和 `data-mfrs-item-use-ghost-row-id`（厉鬼选择按钮）的点击处理移到 `shell` 检查之前（`handleHudShellClick` 开头）
+- **发现 bug**：弹窗挂在 `doc.body` 上而非 `#mfrs-hud-shell` 内，`handleHudShellClick` 的 `if (!shell) return`
+  导致弹窗内的厉鬼按钮点击和关闭按钮点击全部被跳过，`executeItemUseOnGhost` 永远不会被调用
+- **修复**：把 `data-mfrs-item-use-action`（关闭按钮）和 `data-mfrs-item-use-ghost-row-id`（厉鬼选择按钮）的点击处理移到
+  `shell` 检查之前（`handleHudShellClick` 开头）
 - 修复后重新打包 + reload，再次测试：
   - 点击「使用」按钮 → 弹窗弹出 ✓
   - 点击「敲门声（暂编号）」→ 弹窗关闭 ✓
   - 输入框填入提示词 ✓：`我使用线索【...】对厉鬼「敲门声（暂编号）」。\n内容：...\n请根据上述信息更新「收录档案」表中该厉鬼的收录进度与状态。`
   - `applyMemoryChange` 执行成功（`result.ok = true`）✓
-- 使用按钮通过 `parseProgressFromText`（`消息内面板/index.ts:912`）从 `+N%` 文本解析 progress：clue 从线索文本、knowledge 从 `完整度` 字段解析，按钮携带正确 progress 值，写库时 `+Math.round(progress*100)` 实际增加收录进度。
+- 使用按钮通过 `parseProgressFromText`（`消息内面板/index.ts:912`）从 `+N%`
+  文本解析 progress：clue 从线索文本、knowledge 从 `完整度` 字段解析，按钮携带正确 progress 值，写库时
+  `+Math.round(progress*100)` 实际增加收录进度。
 
 ### 修复的 bug
-- `handleHudShellClick` 中弹窗操作（`data-mfrs-item-use-action`/`data-mfrs-item-use-ghost-row-id`）被 `if (!shell) return` 遮断，移到 shell 检查之前修复
+
+- `handleHudShellClick` 中弹窗操作（`data-mfrs-item-use-action`/`data-mfrs-item-use-ghost-row-id`）被
+  `if (!shell) return` 遮断，移到 shell 检查之前修复
 
 ## 2026-08-19 阶段三：抽卡结果卡片「使用」按钮 + 复用阶段二弹窗逻辑（完成）
 
 - 在 `v10_2_visualizer.js` 的 `showGachaResult`（:8988）中，每张抽卡结果卡片底部新增「使用」按钮：
-  - 按钮携带 `data-mfrs-item-use` 属性（编码 `HudItemUseContext` payload：itemName/itemType/effect/description/effectDetail/progress/source）
+  - 按钮携带 `data-mfrs-item-use` 属性（编码 `HudItemUseContext`
+    payload：itemName/itemType/effect/description/effectDetail/progress/source）
   - 仅对 `supernatural`/`clue`/`knowledge` 三类物品渲染按钮
-  - 按钮 jQuery click 事件：`stopPropagation` 避免触发卡片详情点击 → 优先调 `host.MysteryMessagePanel.openItemUseDialog(ctx)` → 降级 `fillChatInput` 直接填入输入框
-- 在 `消息内面板/index.ts` 的 `MessagePanelApi` 类型和 `messagePanelApi` 对象新增 `openItemUseDialog(ctx)` 方法，对外暴露阶段二的厉鬼选择弹窗入口
+  - 按钮 jQuery click 事件：`stopPropagation` 避免触发卡片详情点击 → 优先调
+    `host.MysteryMessagePanel.openItemUseDialog(ctx)` → 降级 `fillChatInput` 直接填入输入框
+- 在 `消息内面板/index.ts` 的 `MessagePanelApi` 类型和 `messagePanelApi` 对象新增 `openItemUseDialog(ctx)`
+  方法，对外暴露阶段二的厉鬼选择弹窗入口
 - 在 `数据库前端/index.ts` 的 `MysteryMessagePanel` 类型声明补全 `refreshMessage`/`openItemUseDialog` 签名
-- 修复阶段二遗留的字段名不一致：`buildGachaItemUseButtonHtml` 的 payload 字段从 `name`/`type` 改为 `itemName`/`itemType`（匹配 `HudItemUseContext` 接口）；`handleHudShellClick` 中 `payload.name` 检查改为 `payload.itemName`
+- 修复阶段二遗留的字段名不一致：`buildGachaItemUseButtonHtml` 的 payload 字段从 `name`/`type` 改为
+  `itemName`/`itemType`（匹配 `HudItemUseContext` 接口）；`handleHudShellClick` 中 `payload.name` 检查改为
+  `payload.itemName`
 - 覆盖范围：
-  - HUD embedded 模式（抽卡面板挂在 `#mfrs-hud-shell` 内）：`handleHudShellClick` capture listener 捕获 `data-mfrs-item-use` 点击 → `openItemUseDialog`
+  - HUD embedded 模式（抽卡面板挂在 `#mfrs-hud-shell` 内）：`handleHudShellClick` capture listener 捕获
+    `data-mfrs-item-use` 点击 → `openItemUseDialog`
   - overlay 模式（`showGachaPanel` 全屏弹窗）：jQuery click 直接调 `host.MysteryMessagePanel.openItemUseDialog`
 - 验证：
-  - TypeScript `tsc --noEmit`：无新增错误（剩余全是预先存在的 49→56 行差异为 stash 导致的 dist 产物变化，非 src 代码引入）
+  - TypeScript
+    `tsc --noEmit`：无新增错误（剩余全是预先存在的 49→56 行差异为 stash 导致的 dist 产物变化，非 src 代码引入）
   - webpack production 打包成功
   - `verify-mfrs-archive-ui-regressions --stage phase5`：242 checks 通过
   - `verify-mfrs-database-frontend-p3`：仍报预先存在的 `destroyedHandle =>` 断言不匹配，非本次引入
@@ -259,34 +401,48 @@
   - `灵异资源.灵异物品`：每项一行，显示名称/类型标签/效果 + 「使用」按钮
   - `收录规律`：筛选含 `获取方式=灵异抽卡` 的行，显示规律类型/完整度 + 「使用」按钮
   - `可见档案.未验证猜测`：识别 `【线索】` 前缀的抽卡线索，显示内容 + 「使用」按钮
-- 每个物品项的「使用」按钮携带 `data-mfrs-item-use` 属性（编码后的物品 payload：name/type/effect/description/effectDetail/progress/source）
+- 每个物品项的「使用」按钮携带 `data-mfrs-item-use`
+  属性（编码后的物品 payload：name/type/effect/description/effectDetail/progress/source）
 - 点击「使用」按钮 → `openItemUseDialog` 弹出固定定位的居中弹窗，读取 `sheet_collected_archives` 表的厉鬼列表供选择
 - 选定厉鬼后 `executeItemUseOnGhost`：
-  - `clue` 类：读当前收录进度 → `+Math.round(progress*100)` → `updateCell` 收录进度 + 收录状态（达 100→已收录，否则→收录中）+ 档案完整度
+  - `clue` 类：读当前收录进度 → `+Math.round(progress*100)` → `updateCell`
+    收录进度 + 收录状态（达 100→已收录，否则→收录中）+ 档案完整度
   - `knowledge` 类：`updateCell` 已知规律 + 档案完整度
   - `supernatural` 类：只填入输入框提示 AI（不改数据库收录进度）
   - 所有类型都通过 `fillChatInputForItemUse` 把提示词填入酒馆输入框（只填不自动发送）
-- 写库走 `frontend.applyMemoryChange(plan)` → `applyTableChangePlan`，遵守 `table-change-adapter.ts` 的 `updateCell` 语义与 `crossFieldRules`（已收录→进度=100）
+- 写库走 `frontend.applyMemoryChange(plan)` → `applyTableChangePlan`，遵守 `table-change-adapter.ts` 的 `updateCell`
+  语义与 `crossFieldRules`（已收录→进度=100）
 - 弹窗 CSS 使用项目既有色彩变量（`--mfrs-corpse-cyan`、`--mfrs-bone-white`），与记忆中栏按钮风格一致
 - 生命周期清理：`unmountHudImmersive` 和 `deactivate` 均移除弹窗 DOM 和 `hudItemUsePending`
-- TypeScript transpile 通过；`verify-mfrs-archive-ui-regressions` baseline 50 checks 通过；`verify-mfrs-database-frontend-p3` 仍报预先存在的 `destroyed mount ownership cleanup` 断言不匹配（HEAD 源码 `destroyedHandle =>` 无括号 vs 门禁要求 `(destroyedHandle) =>`），非本次引入
+- TypeScript transpile 通过；`verify-mfrs-archive-ui-regressions` baseline 50
+  checks 通过；`verify-mfrs-database-frontend-p3` 仍报预先存在的 `destroyed mount ownership cleanup`
+  断言不匹配（HEAD 源码 `destroyedHandle =>` 无括号 vs 门禁要求 `(destroyedHandle) =>`），非本次引入
 - 待阶段四：真机 CDP 验证「抽卡后 stat_data 落盘、现场档案显示物品、使用按钮弹出厉鬼选择、updateCell 写库、输入框填入」
 
 ## 2026-08-19 抽卡物品并入现场档案 + 现场档案使用按钮（计划修订 + 阶段一代码完成）
 
 - 用户抽到「重要线索」（档案进度 +10%）后无法在正文/现场档案找到使用入口。
-- 诊断确认：抽卡 clue/knowledge 类物品的 `progress`/`effect` 是死文案，全仓无代码读取；抽卡面板无「使用」按钮；现场档案只读 MVU，不显示抽卡所得。
-- 现有隐藏路径：HUD 系统 → 打开全库编辑 → `sheet_clues` 表 → 每行「使用」按钮 → 填输入框「我使用线索…」→ 手动指定厉鬼 → 靠 AI 改 `sheet_collected_archives` 收录进度。
-- 计划修订：主线改为 D（抽卡物品同步 MVU `stat_data`，进入左侧现场档案）+ 现场档案物品项增加「使用」按钮；A/C/B 降为支持/复用/可选，并新增权威写回保障。已同步 `task_plan.md` 顶部与 `findings.md`。
-- 附带结论：末尾「阶段/位置/死亡风险」状态条 = `mfrs-msg-brand`（现场档案状态条），与左栏档案是概要 vs 详情关系，不重复。
+- 诊断确认：抽卡 clue/knowledge 类物品的 `progress`/`effect`
+  是死文案，全仓无代码读取；抽卡面板无「使用」按钮；现场档案只读 MVU，不显示抽卡所得。
+- 现有隐藏路径：HUD 系统 → 打开全库编辑 → `sheet_clues`
+  表 → 每行「使用」按钮 → 填输入框「我使用线索…」→ 手动指定厉鬼 → 靠 AI 改 `sheet_collected_archives` 收录进度。
+- 计划修订：主线改为 D（抽卡物品同步 MVU
+  `stat_data`，进入左侧现场档案）+ 现场档案物品项增加「使用」按钮；A/C/B 降为支持/复用/可选，并新增权威写回保障。已同步
+  `task_plan.md` 顶部与 `findings.md`。
+- 附带结论：末尾「阶段/位置/死亡风险」状态条 =
+  `mfrs-msg-brand`（现场档案状态条），与左栏档案是概要 vs 详情关系，不重复。
 - 当前 HEAD `348d8ce8` = v8.15.30（已发布）；工作区处于开发模式（`index.yaml` 已切 localhost:5510 + watch dist 噪声）。
 
 ### 阶段一：数据层契约与权威写回打通（完成）
 
-- 在 `v10_2_visualizer.js` 新增 `syncGachaItemsToMvuStatData`，并在 `syncGachaResultToDatabase` 写库成功后调用，把抽卡所得物品按契约同步进 MVU `stat_data`。
-- 契约映射（见 findings.md「阶段一实现」）：supernatural → `灵异资源.灵异物品`；knowledge → `收录规律`；clue → `可见档案.未验证猜测`。全部遵守 schema.ts 字段名，不新增字段、不触碰终局字段（风险值/is_dead/阶段状态/已驾驭厉鬼）。
-- 权威写回链路：读旧 MVU → 幂等合并 → `Mvu.replaceMvuData` / `updateVariablesWith` → 读回校验 → `chat.variables` 直写 + `saveChat` 兜底 → 刷新消息内面板；与 hotfix 策略一致，全程防御、不阻塞抽卡。
-- 语法 `node --check` 通过。`verify:mfrs-database-frontend-p3` 现报 `destroyed mount ownership cleanup` 括号不匹配，为预先存在（HEAD 源码 `destroyedHandle =>` 无括号 vs 门禁要求 `(destroyedHandle) =>`），非本次引入。
+- 在 `v10_2_visualizer.js` 新增 `syncGachaItemsToMvuStatData`，并在 `syncGachaResultToDatabase`
+  写库成功后调用，把抽卡所得物品按契约同步进 MVU `stat_data`。
+- 契约映射（见 findings.md「阶段一实现」）：supernatural → `灵异资源.灵异物品`；knowledge → `收录规律`；clue →
+  `可见档案.未验证猜测`。全部遵守 schema.ts 字段名，不新增字段、不触碰终局字段（风险值/is_dead/阶段状态/已驾驭厉鬼）。
+- 权威写回链路：读旧 MVU → 幂等合并 → `Mvu.replaceMvuData` / `updateVariablesWith` → 读回校验 → `chat.variables` 直写 +
+  `saveChat` 兜底 → 刷新消息内面板；与 hotfix 策略一致，全程防御、不阻塞抽卡。
+- 语法 `node --check` 通过。`verify:mfrs-database-frontend-p3` 现报 `destroyed mount ownership cleanup`
+  括号不匹配，为预先存在（HEAD 源码 `destroyedHandle =>` 无括号 vs 门禁要求 `(destroyedHandle) =>`），非本次引入。
 - 待阶段四：真机 CDP 验证「抽卡后 stat_data 落盘、Reload/Swipe 不丢不翻倍」。
 
 ## 2026-08-15 P7 A1/A2 真页恢复（完成）
@@ -295,15 +451,21 @@
 - raw 协议包含 `风险值 +60` 与 `总复苏风险 +65`；由上一轮 25/25 准确写回为 85/90。
 - 同轮 `状态=重伤/濒临复苏`、厉鬼复苏进度=90、行动建议 4 条，证明完整混合协议的 delta/replace/insert 已共同落盘。
 - 下一步：把该真实结构固化为自动化 fixture，完成权威路径、幂等与 mutation proof 门禁后再进行 99→100 终局真实对话。
-- B4 首次 mutation proof 运行：破坏源码已被合同函数正确拒绝，但外层 `assert.throws` 只接受“禁止 parseMessage”文案，实际先命中“缺少本地权威 applier”；已放宽为两类合法失败原因，业务实现未改。
-- B1–B4 完成：新增基于 `initvar.yaml` 36 根的真实复杂 fixture，覆盖 `是否触发规律`、两个 delta、replace、insert、schema 与 initialized_lorebooks；同时验证生产 applier/HUD applier一致、输入不可变、权威路径和条件重试。
-- Mutation proof 完成：恢复 `Mvu.parseMessage`、禁用 delta、无条件重试、删除真实触发字段四类内存 mutation 均被门禁拒绝；工作区业务源码未临时破坏。
-- B5 完成：两个 MVU 专项、`verify:mfrs-source-gates`、`verify:mfrs-gates` 全绿；仅旧 v8.15.18 PNG 报 CDN_REF 落后 HEAD 1 个非 bundle 提交的预期 warning。
+- B4 首次 mutation proof 运行：破坏源码已被合同函数正确拒绝，但外层 `assert.throws`
+  只接受“禁止 parseMessage”文案，实际先命中“缺少本地权威 applier”；已放宽为两类合法失败原因，业务实现未改。
+- B1–B4 完成：新增基于 `initvar.yaml` 36 根的真实复杂 fixture，覆盖
+  `是否触发规律`、两个 delta、replace、insert、schema 与 initialized_lorebooks；同时验证生产 applier/HUD
+  applier一致、输入不可变、权威路径和条件重试。
+- Mutation proof 完成：恢复
+  `Mvu.parseMessage`、禁用 delta、无条件重试、删除真实触发字段四类内存 mutation 均被门禁拒绝；工作区业务源码未临时破坏。
+- B5 完成：两个 MVU 专项、`verify:mfrs-source-gates`、`verify:mfrs-gates` 全绿；仅旧 v8.15.18 PNG 报 CDN_REF 落后 HEAD
+  1 个非 bundle 提交的预期 warning。
 - C1/C2 完成：当前开发卡聊天保存并重命名为专用 P7 终局验收聊天；最新有效楼层预置并持久化为总复苏风险/厉鬼进度 99，保持非终态。
 - C3 已完成唯一一次真实发送并生成；首次读回终局变量为 100/100、厉鬼复苏、死亡、模拟结束、行动建议空。末条 AI 楼层正文/raw 为空，下一步定位相邻楼层的实际协议与正文。
 - C4/C5 完成：idx8 终局协议五项写集完整，实际楼层变量与厉鬼复苏进度全部为终态；没有有效豁免。
 - C6 规则/UI 部分通过：正文含【模拟结局】且无 choices，HUD 显示 100%/100%/厉鬼复苏，动作按钮 0；发现 idx9 尾随空 AI 楼层遮蔽 idx8 正文并导致协议未清洗。
-- 生命周期修复已实施并真页重放：空楼层事件回溯到相邻协议楼层，swipe+协议哈希阻止重复 delta；idx8 保持 100/100，raw extra 长度 2572，mes 已清除协议。
+- 生命周期修复已实施并真页重放：空楼层事件回溯到相邻协议楼层，swipe+协议哈希阻止重复 delta；idx8 保持 100/100，raw
+  extra 长度 2572，mes 已清除协议。
 - C6/C7 完成：隔离聊天删除唯一尾随空 AI 占位后，终局正文可见、【模拟结局】可见、无 choices、动作按钮 0；HUD 显示死亡/复苏风险 100% 与厉鬼复苏。重复 GENERATION_ENDED、250/1000/2500ms 重试、saveChat 与 reload 后风险 100/100、规则数 2、终态字段和协议指纹均不变。
 
 ## 2026-08-15 P7 A-D 收尾状态（P8/P9 延期）
@@ -311,57 +473,86 @@
 - **A1/A2 ✅**：最新真实楼层 25/25 + 60/65 = 85/90。
 - **B1-B5 ✅**：真实 36 根混合 fixture、权威 applier、幂等、四类 mutation proof、完整门禁全绿。
 - **C1-C7 ✅**：隔离聊天、99 预置、一次真实 99→100、协议/变量/正文/UI/持久化/幂等全通过。
-- **D1 ✅**：P6 结论已更正：原 P6 仅覆盖简化单 delta smoke，不代表完整真实混合协议；复杂协议问题由 P7 v2 真实复现并修复。
+- **D1 ✅**：P6 结论已更正：原 P6 仅覆盖简化单 delta smoke，不代表完整真实混合协议；复杂协议问题由 P7
+  v2 真实复现并修复。
 - **D2 ✅**：`task_plan.md`、`findings.md`、`progress.md` 已同步当前事实。
 - **明确延期**：P8 提交准备、P9 新版本发布暂不执行；当前开发模式与未提交源码改动保留，等待后续明确继续发布指令。
 
 ## 2026-08-15 P7 收尾补强与最终门禁（P8/P9 仍延期）
 
-- `task_plan.md` 旧基线已纠正：当前正式版本 v8.15.18、`CDN_REF 6f7f87b1`、阶段状态 A-D complete；移除“v8.15.14 / 尚未修改源码”等过期表述。
-- 新增 hotfix `removeTrailingEmptyAiPlaceholder`：严格只删“最后一楼为空 AI 且前一楼为本轮协议 AI”的占位楼，删除后不再走空回复恢复提示；`verify-mfrs-raw-status-fallback` 增加对应静态门禁。
-- 真页复验：reload + 重选开发卡后注入空 AI 楼并触发 `generation_ended`，占位楼自动删除（9→10→9），终局变量、协议指纹与正文可见性保持终态。
-- 最终门禁：`verify-mfrs-mvu-hotfix-regressions`、`verify-mfrs-raw-status-fallback`、`pnpm verify:mfrs-source-gates`、`pnpm verify:mfrs-gates` 全绿；仅 release PNG 的 `CDN_REF 落后 HEAD 1 个非 bundle 提交` 预期 warning。
-- 工作区状态（未提交、未清理）：hotfix 源码、两份门禁脚本、三份规划文件、开发模式 `index.yaml`、watch `dist`；未跟踪 `.agent-artifacts/`、`.vscode/mcp.json`、两份 handoff 文档。
+- `task_plan.md` 旧基线已纠正：当前正式版本 v8.15.18、`CDN_REF 6f7f87b1`、阶段状态 A-D complete；移除“v8.15.14
+  / 尚未修改源码”等过期表述。
+- 新增 hotfix
+  `removeTrailingEmptyAiPlaceholder`：严格只删“最后一楼为空 AI 且前一楼为本轮协议 AI”的占位楼，删除后不再走空回复恢复提示；`verify-mfrs-raw-status-fallback`
+  增加对应静态门禁。
+- 真页复验：reload + 重选开发卡后注入空 AI 楼并触发
+  `generation_ended`，占位楼自动删除（9→10→9），终局变量、协议指纹与正文可见性保持终态。
+- 最终门禁：`verify-mfrs-mvu-hotfix-regressions`、`verify-mfrs-raw-status-fallback`、`pnpm verify:mfrs-source-gates`、`pnpm verify:mfrs-gates`
+  全绿；仅 release PNG 的 `CDN_REF 落后 HEAD 1 个非 bundle 提交` 预期 warning。
+- 工作区状态（未提交、未清理）：hotfix 源码、两份门禁脚本、三份规划文件、开发模式 `index.yaml`、watch `dist`；未跟踪
+  `.agent-artifacts/`、`.vscode/mcp.json`、两份 handoff 文档。
 
 ## 2026-08-15 P8 提交准备（完成）
 
 - `pnpm stop-dev`：停 2 个 watch/静态服务进程，`index.yaml` 从 localhost:5510 还原为 `CDN@4a850a30`。
-- 还原 watch 产出的 `dist/.../hotfix-generation-ended-listeners/index.js`（该文件近三次提交均为 `[bot] bundle`，由 CI 维护）。
+- 还原 watch 产出的 `dist/.../hotfix-generation-ended-listeners/index.js`（该文件近三次提交均为
+  `[bot] bundle`，由 CI 维护）。
 - 生产模式下重跑 `verify:mfrs-source-gates` 13 项全绿。
 - 逐文件复核 diff：hotfix 无调试日志/临时 guard 残留；门禁脚本新增均为收紧断言；规划文档无凭据类内容。
 - 分文件精确提交（未用 `git add .`）：hotfix 源码 + 两份门禁 + 三份规划文件，共 6 文件 +614/−120。
 
 ## 2026-08-15 P9 两阶段发布 v8.15.20（完成）
 
-- **版本号决策**：远端最新 tag 已到 `v8.15.19`（`ef37f9f4 [bot] bundle`），8.15.19 不可用。查证 autotag 行为：每次 `[bot] bundle` 严格 +1，人工提交从不带 tag，v8.15.14/15/16/17/18/19 全部落在 bundle commit 上。故沿用 v8.15.18 模式，取 `RELEASE_VERSION = 8.15.20`，由阶段 1 push 触发的 bot tag 充当正式 tag，**不手动 `git tag`**。
-- **前置**：发现 behind 1（bot 期间推了 `ef37f9f4`），已 rebase，P8 提交由 `863d7dc9` 重放为 `c14580e7`。发布版头像仍被跟踪（R2 无回归），开发版 YAML 无开发模式污染。
-- **未跟踪项处置**：`.vscode/mcp.json` 与两份 HANDOFF 补跟踪（HANDOFF 顶部加「历史快照，已归档」标注，指明基线以 task_plan/progress 为准）；`.agent-artifacts/` 加入 `.gitignore:63`。
-- **阶段 1**：`RELEASE_VERSION 8.15.18→8.15.20`、`CDN_CACHE_VERSION v81520_20260815_01`、开发版 `index.yaml` 版本行、`CHANGELOG.md` 新条目；`CDN_REF` 保持旧值。门禁全绿后提交 `2170200f`，push `ef37f9f4..2170200f`。
-- **阶段 2**：CI 产出 `9199ff39 [bot] bundle` 并打 tag `v8.15.20`。ff-only 同步后 `CDN_REF → 9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；`publish-card --dry-run --no-bundle` 干跑确认 15 处链接替换；`publish-card --dist-no-build` 正式生成（G1 校验 dist == CDN_REF 通过）。
-- **门禁**：`pnpm verify:mfrs-gates` 14 项全绿，release PNG `version=8.15.20, refs=7, cache=8, regex=33, scripts=8`，**CDN_REF warning 已消失**。
-- **残留排查**：发布版 `index.yaml` 中 `localhost`/`127.0.0.1`/`@main`/旧 SHA `6f7f87b1`/旧 cache `v81518`/更旧 `4a850a30`+`v81500` 全部 0 命中；新 SHA 7 次、新 cache 8 次、`版本: '8.15.20'`。
-- **发布**：提交 `b89565c7`（constants + 发布版 index.yaml + 发布版 PNG），push `9199ff39..b89565c7`。tag `v8.15.20` 已由 bot 创建，未手动打 tag。
-- **CDN smoke**：7 个脚本 URL 全部 200。拉取 hotfix 产物核对（生产构建已混淆函数名，改用字符串字面量判定）：`已通过本地 JSONPatch 写回消息变量`、`跳过重复应用`、`已删除协议回复后的尾随空 AI 占位楼`、`_mfrs_raw_protocol_applied_hash/at` 均存在。产物中 `parseMessage` 仅剩 1 处，位于 catch 的日志文案 `[Hotfix] MVU parseMessage 执行失败`，不在写回路径上。
+- **版本号决策**：远端最新 tag 已到 `v8.15.19`（`ef37f9f4 [bot] bundle`），8.15.19 不可用。查证 autotag 行为：每次
+  `[bot] bundle` 严格 +1，人工提交从不带 tag，v8.15.14/15/16/17/18/19 全部落在 bundle
+  commit 上。故沿用 v8.15.18 模式，取 `RELEASE_VERSION = 8.15.20`，由阶段 1 push 触发的 bot tag 充当正式 tag，**不手动
+  `git tag`**。
+- **前置**：发现 behind 1（bot 期间推了 `ef37f9f4`），已 rebase，P8 提交由 `863d7dc9` 重放为
+  `c14580e7`。发布版头像仍被跟踪（R2 无回归），开发版 YAML 无开发模式污染。
+- **未跟踪项处置**：`.vscode/mcp.json`
+  与两份 HANDOFF 补跟踪（HANDOFF 顶部加「历史快照，已归档」标注，指明基线以 task_plan/progress 为准）；`.agent-artifacts/`
+  加入 `.gitignore:63`。
+- **阶段 1**：`RELEASE_VERSION 8.15.18→8.15.20`、`CDN_CACHE_VERSION v81520_20260815_01`、开发版 `index.yaml`
+  版本行、`CHANGELOG.md` 新条目；`CDN_REF` 保持旧值。门禁全绿后提交 `2170200f`，push `ef37f9f4..2170200f`。
+- **阶段 2**：CI 产出 `9199ff39 [bot] bundle` 并打 tag `v8.15.20`。ff-only 同步后
+  `CDN_REF → 9199ff39d794b6970a9a7f5c8036f7f7f111f4cb`；`publish-card --dry-run --no-bundle`
+  干跑确认 15 处链接替换；`publish-card --dist-no-build` 正式生成（G1 校验 dist == CDN_REF 通过）。
+- **门禁**：`pnpm verify:mfrs-gates` 14 项全绿，release PNG
+  `version=8.15.20, refs=7, cache=8, regex=33, scripts=8`，**CDN_REF warning 已消失**。
+- **残留排查**：发布版 `index.yaml` 中 `localhost`/`127.0.0.1`/`@main`/旧 SHA `6f7f87b1`/旧 cache `v81518`/更旧
+  `4a850a30`+`v81500` 全部 0 命中；新 SHA 7 次、新 cache 8 次、`版本: '8.15.20'`。
+- **发布**：提交 `b89565c7`（constants + 发布版 index.yaml + 发布版 PNG），push `9199ff39..b89565c7`。tag `v8.15.20`
+  已由 bot 创建，未手动打 tag。
+- **CDN
+  smoke**：7 个脚本 URL 全部 200。拉取 hotfix 产物核对（生产构建已混淆函数名，改用字符串字面量判定）：`已通过本地 JSONPatch 写回消息变量`、`跳过重复应用`、`已删除协议回复后的尾随空 AI 占位楼`、`_mfrs_raw_protocol_applied_hash/at`
+  均存在。产物中 `parseMessage` 仅剩 1 处，位于 catch 的日志文案 `[Hotfix] MVU parseMessage 执行失败`，不在写回路径上。
 
 ## 2026-08-15 P6 零 LLM 模拟验收（范围修正：简化 smoke 完成）
 
 ### 验收环境
+
 - 角色卡：神秘复苏模拟器发布版（CDN `@6f7f87b1`，v8.15.18，cache `v81518_20260815_01`）
 - hotfix 构建：`commit a7a8db0` production，含 P2 fallback + P3 幂等修复
 
 ### 验收结果（简化 smoke 通过，复杂协议覆盖不足）
+
 - ✅ **delta 写回正确**：注入 `op:delta path:/驭鬼者状态/总复苏风险 value:10`，写回后 `totalRisk=10`
 - ✅ **幂等性**：首次写回后等待 3 次重试窗口（250/1000/2500ms），`风险` 保持 10，不重复累积（P3 修复生效）
 - ✅ **数据库表镜像**：人物 2 / 地点 4 / 线索 9 / 灵异事件 3 / 厉鬼档案 2，全部有数据
 - ✅ **HUD 状态栏**：正常渲染「死亡风险 警戒 65%」「复苏风险 可控 0%」「状态 健康」
-- ✅ **真实 AI 协议格式确认**：历史消息 raw 含 `{op:delta,path:/风险值,value:5}` + `{op:delta,path:/驭鬼者状态/总复苏风险,value:0}`，字段路径与修复逻辑对齐
-- ⚠️ **范围限制**：当时 fixture 只有简化 `stat_data` 与单 delta，未覆盖完整 36 根状态及 delta/replace/insert 混合；该覆盖缺口由 P7-B1 补齐。
+- ✅ **真实 AI 协议格式确认**：历史消息 raw 含 `{op:delta,path:/风险值,value:5}` +
+  `{op:delta,path:/驭鬼者状态/总复苏风险,value:0}`，字段路径与修复逻辑对齐
+- ⚠️ **范围限制**：当时 fixture 只有简化 `stat_data`
+  与单 delta，未覆盖完整 36 根状态及 delta/replace/insert 混合；该覆盖缺口由 P7-B1 补齐。
 
 ### 修正后的关键结论
+
 - MVU 变量是**每条消息独立**的（`message.variables[swipe_id].stat_data`），delta 是**增量**，跨轮累积由 AI 基于上一轮正文【本轮摘要】维护，非 MVU 自动累积
-- 简化 smoke 只证明单条 delta 与重试幂等；完整真实协议必须以本地 raw applier 为权威，P7 已完成真实混合协议和 99→100 终局验收。
+- 简化 smoke 只证明单条 delta 与重试幂等；完整真实协议必须以本地 raw
+  applier 为权威，P7 已完成真实混合协议和 99→100 终局验收。
 
 ### 调查中发现的问题（已解决，非修复缺陷）
+
 - 生产模式 CDN 下 hotfix handler 曾因误调 `cleanup()` 被移除监听器，reload 后恢复
 - 主页面 emit `generation_ended` 不带参数时，`resolveMessageIndex` 正确回退到末条 AI 消息
 
@@ -374,97 +565,139 @@
 
 ## 2026-08-15 可选收尾 R1/R2/R3（完成）
 
-- **R1 ✅**：在 `.cursor/rules/mvu变量框架.mdc`「自行解析变量」章节补充 `:::warning` 块，声明 `Mvu.parseMessage` 不可作为 `<UpdateVariable><JSONPatch>` 权威解析器；说明根因（`规律推理记录.是否触发规律` 数据下 delta 静默丢弃）、正确做法（本地 raw applier）、经验来源（v8.15.18→v8.15.20 P5-P7 修复周期）。
-- **R2 ✅**：在 `scripts/verify-mfrs-raw-status-fallback.mjs` 追加 Section D 多轮连续 delta 累积 fixture（3 轮：0→5→15→100），验证跨轮 oldData 继承、delta 逐轮累加、insert 数组增长不覆盖、双 applier 终点一致、重复应用幂等。
+- **R1 ✅**：在 `.cursor/rules/mvu变量框架.mdc`「自行解析变量」章节补充 `:::warning` 块，声明 `Mvu.parseMessage`
+  不可作为 `<UpdateVariable><JSONPatch>` 权威解析器；说明根因（`规律推理记录.是否触发规律`
+  数据下 delta 静默丢弃）、正确做法（本地 raw applier）、经验来源（v8.15.18→v8.15.20 P5-P7 修复周期）。
+- **R2 ✅**：在 `scripts/verify-mfrs-raw-status-fallback.mjs` 追加 Section
+  D 多轮连续 delta 累积 fixture（3 轮：0→5→15→100），验证跨轮 oldData 继承、delta 逐轮累加、insert 数组增长不覆盖、双 applier 终点一致、重复应用幂等。
 - **R3 ✅**：隔离验收聊天 `P7终局验收-v2-20260815-90-1786790203145` 保留为证据（P7 终局验收唯一真实凭据，不可复现）。
 - 门禁：`verify:mfrs-source-gates` 13/13、`verify:mfrs-gates` 14/14 全绿（CDN_REF warning 预期）。
 
 ## 2026-08-15 P5 源码提交与发布（完成）
 
 ### 发布版本
+
 - **v8.15.18** — MVU JSONPatch 写回修复 + 幂等重试门禁
 
 ### 提交链
-1. `a7a8db09` — `fix(mfrs): MVU JSONPatch writeback restore + idempotent retry guards (v8.15.18)` — 核心修复（CHANGELOG + release-constants 版本号 + dev index.yaml 版本号）
+
+1. `a7a8db09` — `fix(mfrs): MVU JSONPatch writeback restore + idempotent retry guards (v8.15.18)`
+   — 核心修复（CHANGELOG + release-constants 版本号 + dev index.yaml 版本号）
 2. `6f7f87b1` — `[bot] bundle` (tag `v8.15.18`) — GitHub Actions 自动构建 dist
 3. `890cb29e` — `release(mfrs): v8.15.18 MVU JSONPatch writeback fix` — 发布版 PNG
 
 ### 发布门禁
+
 - ✅ `pnpm verify:mfrs-gates` 全绿
 - ✅ `verify-mfrs-release-png`: version=8.15.18, refs=7, cache=8, regex=33, scripts=8
 - ✅ dist 新鲜度门禁（CDN_REF=`6f7f87b1`）
 
 ### 分发文件
+
 - `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png` — 可直接导入酒馆的发布版角色卡
 
 ## 2026-08-15 P4 酒馆真页验收 + P3 幂等门禁补强
 
 ### 验收结果（全部通过）
+
 - `directRisk: 10` ✅ delta +10 从 0 正确写回
 - `mvuRisk: 10` ✅ `Mvu.getMvuData` 读回一致
 - `directRiskAfterRetries: 10` ✅ 3 次重试后不重复累积（幂等）
 - `mvuRiskAfterRetries: 10` ✅
 
 ### 追加修复（发现问题 → P3 改写）
-验收中发现重试路径 bug：`runGenerationEndedPipeline` 原先**无条件**调用 `scheduleMvuWriteBackRetries`，每次重试都重新 apply delta → 4 次累积变成 40。
+
+验收中发现重试路径 bug：`runGenerationEndedPipeline` 原先**无条件**调用
+`scheduleMvuWriteBackRetries`，每次重试都重新 apply delta → 4 次累积变成 40。
+
 - 修复：`parseAndWriteMvuMessage` 改为返回 `Promise<boolean>`，仅 `verified=false` 时返回 `true`
 - 调用处改为 `if (needsRetry) scheduleMvuWriteBackRetries(...)`
 - 门禁新增 P3-I2 断言，守卫此行为
 
 ### 门禁状态
+
 `pnpm verify:mfrs-source-gates` ✅ 全部通过
 
 ## 2026-08-15 MVU 写回根因修复（P1+P2 完成）
 
 ### 已完成
-- **P1（根因定位）**：从真页反编译 `Mvu.parseMessage`，从 jsdelivr 获取 MagVarUpdate @0.171.0 bundle，确认 `le` 函数只解析原生宏指令格式（`/set`、`/delta`），无法解析 `<UpdateVariable><JSONPatch>` 格式 → `hasSameStatData=true` → 静默跳过
-- **P2（最小修复）**：在 `parseAndWriteMvuMessage` 中，当 `parseMessage` 未产生有效变化时 fallback 到本地 `applyRawProtocolToMvuData` 直接应用 JSONPatch
+
+- **P1（根因定位）**：从真页反编译 `Mvu.parseMessage`，从 jsdelivr 获取 MagVarUpdate @0.171.0 bundle，确认 `le`
+  函数只解析原生宏指令格式（`/set`、`/delta`），无法解析 `<UpdateVariable><JSONPatch>` 格式 → `hasSameStatData=true`
+  → 静默跳过
+- **P2（最小修复）**：在 `parseAndWriteMvuMessage` 中，当 `parseMessage` 未产生有效变化时 fallback 到本地
+  `applyRawProtocolToMvuData` 直接应用 JSONPatch
 - **验证**：`pnpm verify:mfrs-source-gates` 全部通过，`pnpm verify:mfrs-gates` 全部通过
 
 ### 修改文件
+
 - `src/神秘复苏模拟器/脚本/hotfix-generation-ended-listeners/index.ts`：`parseAndWriteMvuMessage` fallback 分支
 - `findings.md`：根因结论写入
 
 ### 待做
+
 - P3：增加幂等/连续 delta 门禁（mutation proof）
 - P4：酒馆真页验收（新建聊天跑几轮，观察 `总复苏风险` 是否正确累积）
 - P5：源码提交与发布（需用户授权）
 
 ## 2026-08-15 进度基线同步与 MVU 写回调查
 
-- 当前正式发布版确认为 **v8.15.14**：release `5cadd8a7`，CDN bundle/ref `1850150eb303729510f779be50d85f6e0befb11b`，cache `v81514_20260814_01`。
-- v8.15.12 已完成 native 模式新聊天固定表 seedRows 物化；行为门禁和 mutation proof 通过，真页四表行数 `1/1/4/5` 且无首轮 `ROW_NOT_FOUND`。
+- 当前正式发布版确认为 **v8.15.14**：release `5cadd8a7`，CDN bundle/ref
+  `1850150eb303729510f779be50d85f6e0befb11b`，cache `v81514_20260814_01`。
+- v8.15.12 已完成 native 模式新聊天固定表 seedRows 物化；行为门禁和 mutation proof 通过，真页四表行数 `1/1/4/5` 且无首轮
+  `ROW_NOT_FOUND`。
 - v8.15.14 已完成 HUD 数据库回调按 API 实例自愈重绑；archive-ui phase5 242 checks 与源码门禁通过。
-- T7.3 桌面端真页回归与 T7.4 390px 移动端真页回归已完成；T6.3 干净角色列表正式 PNG 重新导入仍 pending，复苏 99→100 终局仍需用户手动触发真实 `GENERATION_ENDED`。
-- 当前核心任务转为 MVU 写回故障调查：idx4 起原始 `<UpdateVariable>` 已保存且消息清洗正常，但目标楼层 `variables['0']` 未持续应用后续 JSONPatch，风险停在 30，行动建议停留旧值。
-- 已取得初步运行时证据：`Mvu.getMvuData()` 与目标楼层变量观测不一致；`Mvu.parseMessage` 的真实参数和返回值可能不符合当前 `(message, oldData) -> MvuData` 类型声明。该项仍是待证假设，尚未认定根因。
-- 当前未修改 MVU 业务源码，也没有待提交的业务修复。后续顺序：核对 MagVarUpdate 0.171.0 契约与实际调用分支 → 解释 idx4=30 → 最小修复 → 连续 delta/重试幂等门禁 → 零 LLM 成本真页复放。
-- Git 快照：本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`，落后 1 个仅含 dist 的 `[bot] bundle`；tracked 工作区改动为开发模式 `index.yaml` 和 watch dist，业务源码干净。
+- T7.3 桌面端真页回归与 T7.4
+  390px 移动端真页回归已完成；T6.3 干净角色列表正式 PNG 重新导入仍 pending，复苏 99→100 终局仍需用户手动触发真实
+  `GENERATION_ENDED`。
+- 当前核心任务转为 MVU 写回故障调查：idx4 起原始 `<UpdateVariable>` 已保存且消息清洗正常，但目标楼层 `variables['0']`
+  未持续应用后续 JSONPatch，风险停在 30，行动建议停留旧值。
+- 已取得初步运行时证据：`Mvu.getMvuData()` 与目标楼层变量观测不一致；`Mvu.parseMessage` 的真实参数和返回值可能不符合当前
+  `(message, oldData) -> MvuData` 类型声明。该项仍是待证假设，尚未认定根因。
+- 当前未修改 MVU 业务源码，也没有待提交的业务修复。后续顺序：核对 MagVarUpdate 0.171.0 契约与实际调用分支 → 解释 idx4=30
+  → 最小修复 → 连续 delta/重试幂等门禁 → 零 LLM 成本真页复放。
+- Git 快照：本地 `main@f5730ea7`，远端 `origin/main@c2e99a85`，落后 1 个仅含 dist 的
+  `[bot] bundle`；tracked 工作区改动为开发模式 `index.yaml` 和 watch dist，业务源码干净。
 
 ## 2026-08-12 人物/地点 stat_data 镜像发布 8.15.0
-- 真页验收（开发版）：镜像链路完整（GENERATION_ENDED → mvu-core-mirror → 写库），全局状态/玩家状态/行动建议随本轮 stat_data 更新；本轮 stat_data 人物 [林修,杨间,赵磊] 全已存在 → 镜像按"只补不覆盖"跳过，ACU 富数据未被占位覆盖；无 UNIQUE 冲突。
+
+- 真页验收（开发版）：镜像链路完整（GENERATION_ENDED → mvu-core-mirror
+  → 写库），全局状态/玩家状态/行动建议随本轮 stat_data 更新；本轮 stat_data 人物 [林修,杨间,赵磊] 全已存在 → 镜像按"只补不覆盖"跳过，ACU 富数据未被占位覆盖；无 UNIQUE 冲突。
 - HUD 左栏实际完整显示线索/厉鬼档案/人物/地点（之前"显示暂无"是 `<details>` 折叠导致 innerText 假象，非 bug）。
-- 新增 `scripts/verify-mfrs-mvu-core-mirror.mjs`（并导出 mvu-core-mirror 镜像纯函数），覆盖姓名-身份解析、去重、已存在跳过、占位字段、鬼域映射；加入 source-gates/gates。
+- 新增
+  `scripts/verify-mfrs-mvu-core-mirror.mjs`（并导出 mvu-core-mirror 镜像纯函数），覆盖姓名-身份解析、去重、已存在跳过、占位字段、鬼域映射；加入 source-gates/gates。
 - 发布 8.15.0：源码 0c72915 → bot bundle 4a850a3 → release 39aacf7 + tag v8.15.0。
-- **坑**：bundle workflow 的 autotag-action 每次 bundle 自动递增 lightweight tag（已到 v8.14.20），RELEASE_VERSION 不能用 8.14.17（与已存在 tag 冲突），改用 8.15.0。
+- **坑**：bundle workflow 的 autotag-action 每次 bundle 自动递增 lightweight
+  tag（已到 v8.14.20），RELEASE_VERSION 不能用 8.14.17（与已存在 tag 冲突），改用 8.15.0。
 - 开发版 index.yaml 版本号还原时保持 git HEAD（85cb68/8.14.15），发布时随 RELEASE_VERSION 走。
 
 ## 2026-07-26 双卡审计缺陷修复
-- 固定状态栏统一持有 `eventOn` disposer、fallback 订阅与全部 retry/chat-change timer；cleanup 会推进 epoch、取消 timer、注销监听，旧 continuation 不再复活 DOM。
-- 开局欢迎页的界面美化生成器和卡内内联路径均要求同时 replace `/驾驭厉鬼` 与 `/驭鬼者状态/已驾驭厉鬼`，并明确 `厉鬼名称`→`代号` 及完整默认字段映射。
-- 总复苏风险达到 100 且无同轮落盘豁免时，统一进入 `状态=厉鬼复苏`、`is_dead=true`、`阶段状态=模拟结束`、`行动建议=[]`、输出【模拟结局】且禁止 `<choices>`。
-- `publish-card --no-bundle` 改为真正的仅镜像模式；发布头像复制后自动剥离 `chara/ccv3`，发布目录唯一可导入 PNG 门禁已加入。
+
+- 固定状态栏统一持有 `eventOn` disposer、fallback 订阅与全部 retry/chat-change
+  timer；cleanup 会推进 epoch、取消 timer、注销监听，旧 continuation 不再复活 DOM。
+- 开局欢迎页的界面美化生成器和卡内内联路径均要求同时 replace `/驾驭厉鬼` 与 `/驭鬼者状态/已驾驭厉鬼`，并明确
+  `厉鬼名称`→`代号` 及完整默认字段映射。
+- 总复苏风险达到 100 且无同轮落盘豁免时，统一进入
+  `状态=厉鬼复苏`、`is_dead=true`、`阶段状态=模拟结束`、`行动建议=[]`、输出【模拟结局】且禁止 `<choices>`。
+- `publish-card --no-bundle` 改为真正的仅镜像模式；发布头像复制后自动剥离
+  `chara/ccv3`，发布目录唯一可导入 PNG 门禁已加入。
 - 已重建开发 PNG并镜像发布源；源码门禁和完整门禁通过，archive-ui 增至 238 checks。
-- 全仓 `tsc --noEmit` 仍失败于既存依赖/数据库前端/消息面板类型问题；本次触及的固定状态栏和界面美化均独立 transpile PASS。
-- 正式发布 PNG仍是 8.14.0 旧 CDN bundle；需提交源码、等待 CI bot production dist、更新 CDN_REF 后再由 `publish-card --dist-no-build` 重建，当前未伪造发布完成。
+- 全仓 `tsc --noEmit` 仍失败于既存依赖/数据库前端/消息面板类型问题；本次触及的固定状态栏和界面美化均独立 transpile
+  PASS。
+- 正式发布 PNG仍是 8.14.0 旧 CDN bundle；需提交源码、等待 CI bot production dist、更新 CDN_REF 后再由
+  `publish-card --dist-no-build` 重建，当前未伪造发布完成。
 
 ## 2026-07-26 双卡缺陷修复任务清单
+
 - 使用 make-plan 完成 Phase 0 文档发现，核对事件生命周期、MVU 真源、发布流程与现有门禁扩展点。
-- 新建 `docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md`，拆分 Phase 0、T0–T7、验收条件、反模式和发布顺序。
+- 新建 `docs/mfrs-redesign-phase0/TASKLIST_DUAL_CARD_AUDIT_FIX_20260726.md`，拆分 Phase
+  0、T0–T7、验收条件、反模式和发布顺序。
 - 本轮只创建计划并更新规划记录，未修改角色卡业务代码。
-- 用户决策已入库：总复苏风险终局采用独立 `厉鬼复苏` 状态，但仍结束模拟并关闭 choices；发布目录只允许正式发布 PNG 携带可导入角色卡元数据。
+- 用户决策已入库：总复苏风险终局采用独立 `厉鬼复苏`
+  状态，但仍结束模拟并关闭 choices；发布目录只允许正式发布 PNG 携带可导入角色卡元数据。
 
 ## 2026-07-26 双卡对照审查
+
 - 开始对 `神秘复苏模拟器` 与 `神秘复苏模拟器发布版` 做独立审查和交叉差分；只读业务文件。
 - 已确认两卡共享内容一致，入口仅 CDN/cache URL 不同；聚合门禁 7/7 通过。
 - 已复核开发卡旧 pin、固定状态栏监听/timer 生命周期及开局厉鬼/复苏终局契约。
@@ -473,6 +706,7 @@
 - 审查完成；业务源码未修改，规划记录已同步。
 
 ## 2026-07-26 当前角色卡只读复审
+
 - 已开始：确认现行运行链并进行代码、数据、构建产物三路复核。
 - 约束：不安装依赖，不操作 node_modules，不启动/重启 watch，不修改业务代码。
 - 记录：首次尝试一次性更新三份规划文件时因 `findings.md` 标题假设错误而整体未应用；已检查真实标题后拆分重试。
@@ -482,16 +716,29 @@
 
 ## 会话：2026-07-19（8.14.0 发布 + 彻底废弃 MFRS + 极简单人流程）— **complete / 已推送**
 
-- **8.14.0 已发布**：抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换（feature 分支已合并；tag `v8.14.0`；CDN_REF `5af93cec47cc02ed20fd60a36d3aa1f68770cb27`；cache `v81400_20260719_01`；bot bundle `5af93ce`）。发布后远端又有 CI bot 提交 `23e3927`（tag `v8.14.1`，仅 7 个 dist bundle 文件）。
-- **彻底废弃 MFRS 复杂机制**：删除 8 个 MFRS 脚本（`mfrs-dev-common/preflight/server/session/target/stop`、`prepare-mfrs-dev-card`、`verify-mfrs-runtime-identity`）+ `.mcp.json` + `start-chrome-debug.cmd` + `tasks.simple.json`。
-- **改用极简单人流程**：固定端口 5510 静态服务器（`mfrs-dev-server-simple.mjs`）+ `toggle-dev-mode.mjs`（YAML CDN↔localhost 切换）+ 内置浏览器验证。不再有 worktree / 会话锁 / 运行时身份验证 / DEV 卡派生 / 四链路契约。
-- **配置重写**：`tasks.json` 精简为 6 任务（启动开发环境任务链 + 模式切换）；`launch.json` 改 node-terminal + preLaunchTask，不再管理调试 Chrome；`package.json` 移除 `mfrs:*` 与 `verify:mfrs-runtime-identity`，新增 `dev-server`/`toggle-dev`。
-- **文档重写**：`PROJECT_FLOW.md` 由 350+ 行精简为极简版；`README.md`、`docs/mfrs-redesign-phase0/local-test/README.md` 同步更新为 F5 极简流程。
-- **F5 流程验证通过**：静态服务器任务经 VS Code `run_task` 成功启动、资源 HTTP 200、dist 含 mountPanel；`launch.json`/`tasks.json` 无语法错误。
-- **提交与推送**：commit `3841c30`（rebase 到远端 `23e3927` 之上，17 files，+152/-2159）已推送 `origin/main`，本地与远端一致。提交前清理了 dev 模式污染的 `index.yaml`、webpack 噪声 `dist/.../状态栏/index.html`、`.d.ts` 空行；未提交本地导出物 `酒馆助手脚本-tavern_sync.json`。
-- **门禁**：`verify:mfrs-gates` 全通过（version=8.14.0, refs=7, regex=33, scripts=8, 退出码 0）；唯一 warning「CDN_REF 落后 HEAD 2 提交」为预期（改造不涉及 dist/CDN）。
-- **发布版检查**：`src/神秘复苏模拟器发布版/index.yaml` 干净——version 8.14.0、无 localhost 污染、CDN_REF ×7、git 无改动。
-- **收尾完成**：SIMPLIFIED_WORKFLOW.md 已重写为唯一主流程使用手册（commit `92e3782`）；源码 3 处 `prepare-mfrs-dev-card` 注释残留已清理（commit `437ee8a`，纯注释、dist 不变）。planning 三件套已更新。
+- **8.14.0 已发布**：抽卡键直达中栏完整系统、左栏精简、默认/沉浸双向切换（feature 分支已合并；tag `v8.14.0`；CDN_REF
+  `5af93cec47cc02ed20fd60a36d3aa1f68770cb27`；cache `v81400_20260719_01`；bot bundle `5af93ce`）。发布后远端又有 CI
+  bot 提交 `23e3927`（tag `v8.14.1`，仅 7 个 dist bundle 文件）。
+- **彻底废弃 MFRS 复杂机制**：删除 8 个 MFRS 脚本（`mfrs-dev-common/preflight/server/session/target/stop`、`prepare-mfrs-dev-card`、`verify-mfrs-runtime-identity`）+
+  `.mcp.json` + `start-chrome-debug.cmd` + `tasks.simple.json`。
+- **改用极简单人流程**：固定端口 5510 静态服务器（`mfrs-dev-server-simple.mjs`）+ `toggle-dev-mode.mjs`（YAML
+  CDN↔localhost 切换）+ 内置浏览器验证。不再有 worktree / 会话锁 / 运行时身份验证 / DEV 卡派生 / 四链路契约。
+- **配置重写**：`tasks.json` 精简为 6 任务（启动开发环境任务链 + 模式切换）；`launch.json` 改 node-terminal +
+  preLaunchTask，不再管理调试 Chrome；`package.json` 移除 `mfrs:*` 与 `verify:mfrs-runtime-identity`，新增
+  `dev-server`/`toggle-dev`。
+- **文档重写**：`PROJECT_FLOW.md` 由 350+ 行精简为极简版；`README.md`、`docs/mfrs-redesign-phase0/local-test/README.md`
+  同步更新为 F5 极简流程。
+- **F5 流程验证通过**：静态服务器任务经 VS Code `run_task` 成功启动、资源 HTTP
+  200、dist 含 mountPanel；`launch.json`/`tasks.json` 无语法错误。
+- **提交与推送**：commit `3841c30`（rebase 到远端 `23e3927` 之上，17 files，+152/-2159）已推送
+  `origin/main`，本地与远端一致。提交前清理了 dev 模式污染的 `index.yaml`、webpack 噪声
+  `dist/.../状态栏/index.html`、`.d.ts` 空行；未提交本地导出物 `酒馆助手脚本-tavern_sync.json`。
+- **门禁**：`verify:mfrs-gates` 全通过（version=8.14.0, refs=7, regex=33,
+  scripts=8, 退出码 0）；唯一 warning「CDN_REF 落后 HEAD 2 提交」为预期（改造不涉及 dist/CDN）。
+- **发布版检查**：`src/神秘复苏模拟器发布版/index.yaml` 干净——version 8.14.0、无 localhost 污染、CDN_REF
+  ×7、git 无改动。
+- **收尾完成**：SIMPLIFIED_WORKFLOW.md 已重写为唯一主流程使用手册（commit `92e3782`）；源码 3 处 `prepare-mfrs-dev-card`
+  注释残留已清理（commit `437ee8a`，纯注释、dist 不变）。planning 三件套已更新。
 
 ## 会话：2026-07-18（重写 HUD-UX-NEXT 任务清单 · MFRS 对齐）— **docs complete**
 
@@ -499,130 +746,239 @@
 - **业务 T0–T5 不重做**；T6 增加 T6.0.1–T6.0.4 环境/身份门禁；明确 feature worktree + F5=MFRS + DEV 卡。
 - T7 仍 blocked until T6 全过 + 用户授权发版。
 - 当前进度：28/48 complete；待执行 20。
+
 ## 会话：2026-07-18（统一项目运行流程文档口径）— **docs complete**
 
-- **问题**：主仓库 `PROJECT_FLOW.md`/`README` 仍写 Fn+F5+5500；feature worktree 已落地 MFRS 四链路，文档双轨导致入口混淆。
-- **本轮（worktree）**：在 `PROJECT_FLOW.md` 顶部增加「统一运行口径」；MCP/CDP 写明 Copilot 默认走 `cdp-evaluate`；`README.md` 开发流程与快速开始对齐 MFRS；`docs/mfrs-redesign-phase0/local-test/README.md` 从 5500/β 卡改为 551x + `mfrs:dev-card`。
+- **问题**：主仓库 `PROJECT_FLOW.md`/`README` 仍写 Fn+F5+5500；feature
+  worktree 已落地 MFRS 四链路，文档双轨导致入口混淆。
+- **本轮（worktree）**：在 `PROJECT_FLOW.md` 顶部增加「统一运行口径」；MCP/CDP 写明 Copilot 默认走
+  `cdp-evaluate`；`README.md` 开发流程与快速开始对齐 MFRS；`docs/mfrs-redesign-phase0/local-test/README.md`
+  从 5500/β 卡改为 551x + `mfrs:dev-card`。
 - **未做**：未把 MFRS 脚本合入 `main`（主仓仍缺 `scripts/mfrs-dev-*.mjs`）；未 production/发布；未改正式 YAML。
 - **后续**：将 worktree 流程脚本+文档合入主线后，主仓打开时也会与本文档一致。
+
 ## 会话：2026-07-18（PROJECT-FLOW-FIX · P9 真页恢复验收）— **complete（含 P9.5）**
 
 - **环境**：feature worktree `feat-hud-gacha-mode-toggle` @ `650d209`；`pnpm install` 后预检 exit 0。
-- **P9.1**：`mfrs-dev-server` 监听 `127.0.0.1:5510` 并持有会话锁；watch 因主仓库占用 `6621` 改用 `MFRS_SKIP_HMR_SERVER=1` + `MFRS_SKIP_TAVERN_SYNC=1` 编译成功（未 kill 主 watch）。
-- **P9.2**：`prepare-mfrs-dev-card --port 5510` 产物 OK（7/8/33）；`--push` 被主仓库 `6620` 占用阻断；改经 CDP `importRawCharacter` 导入 DEV PNG 成功。
-- **P9.3**：打开 DEV 卡后 `verify-mfrs-runtime-identity` PASS：7 入口均为 `development` / commit `650d209`；资源 URL 指向 `http://127.0.0.1:5510/dist/...`。
-- **阻塞修复**：DEV 卡名不在原 `isMysteryRevivalCardActive` 白名单 → HUD 不挂载；已在消息内面板/固定状态栏/数据库前端增加 DEV 卡名/头像识别。
-- **P9.4 / T6 证据**：`#mfrs-hud-shell` active + body `mfrs-hud-immersive`；抽卡宿主含「神秘复苏抽卡系统」完整区块文案；左栏无「打开全库 · 玩家状态」；系统全库入口保留；`MysteryMessagePanel` 可用。移动端 390 与完整人工模式循环仍可继续。
-- **P9.5 complete**：`mfrs-dev-session release`；停止 feature 静态 5510 与 worktree watch；会话锁已清；主仓库 6620/6621 保留；主 Chrome 未关。
+- **P9.1**：`mfrs-dev-server` 监听 `127.0.0.1:5510` 并持有会话锁；watch 因主仓库占用 `6621` 改用
+  `MFRS_SKIP_HMR_SERVER=1` + `MFRS_SKIP_TAVERN_SYNC=1` 编译成功（未 kill 主 watch）。
+- **P9.2**：`prepare-mfrs-dev-card --port 5510` 产物 OK（7/8/33）；`--push` 被主仓库 `6620` 占用阻断；改经 CDP
+  `importRawCharacter` 导入 DEV PNG 成功。
+- **P9.3**：打开 DEV 卡后 `verify-mfrs-runtime-identity` PASS：7 入口均为 `development` / commit
+  `650d209`；资源 URL 指向 `http://127.0.0.1:5510/dist/...`。
+- **阻塞修复**：DEV 卡名不在原 `isMysteryRevivalCardActive` 白名单 →
+  HUD 不挂载；已在消息内面板/固定状态栏/数据库前端增加 DEV 卡名/头像识别。
+- **P9.4 / T6 证据**：`#mfrs-hud-shell` active + body
+  `mfrs-hud-immersive`；抽卡宿主含「神秘复苏抽卡系统」完整区块文案；左栏无「打开全库 · 玩家状态」；系统全库入口保留；`MysteryMessagePanel`
+  可用。移动端 390 与完整人工模式循环仍可继续。
+- **P9.5 complete**：`mfrs-dev-session release`；停止 feature 静态 5510 与 worktree
+  watch；会话锁已清；主仓库 6620/6621 保留；主 Chrome 未关。
 - **边界**：正式 `index.yaml` / `tavern_sync.yaml` 未污染；未 production/发布；未 kill 主仓库 6620/6621。
+
 ## 会话：2026-07-18（PROJECT-FLOW-FIX · P0–P8 实施）— **complete（P9 pending）**
 
 - **范围**：按 `TASKLIST_PROJECT_FLOW_FIX.md` 实施 P0–P8；**不执行 P9**（真页启动/导入/T6 恢复）。
-- **P0/P8 文档**：重写 `PROJECT_FLOW.md` 四条链路、端口表、流程矩阵、身份清单与 MFRS 入口；更新 `README.md` 实时开发/结束/多 worktree；同步 `task_plan.md` / `findings.md` / 本文件 / 任务清单勾选。
+- **P0/P8 文档**：重写 `PROJECT_FLOW.md` 四条链路、端口表、流程矩阵、身份清单与 MFRS 入口；更新 `README.md`
+  实时开发/结束/多 worktree；同步 `task_plan.md` / `findings.md` / 本文件 / 任务清单勾选。
 - **P1–P2**：`scripts/mfrs-dev-server.mjs`（127.0.0.1、CORS、no-store、`/__mfrs_dev_identity`、5510–5514、自检）；`mfrs-dev-preflight.mjs`（退出码 0/1/2/3/4，不 kill）。
-- **P3**：`.vscode/tasks.json` / `launch.json` 增加 MFRS 预检、静态服务、watch、调试 Chrome、开始/结束实时开发；独立 panel；结束任务 release 锁 + terminateAll，不关主 Chrome。
-- **P4**：`prepare-mfrs-dev-card.mjs` 派生到 `.local/`，临时注入 sync 配置后还原；离线验证 7/8/33 + MagVar CDN；正式 YAML 未污染。
+- **P3**：`.vscode/tasks.json` / `launch.json`
+  增加 MFRS 预检、静态服务、watch、调试 Chrome、开始/结束实时开发；独立 panel；结束任务 release 锁 +
+  terminateAll，不关主 Chrome。
+- **P4**：`prepare-mfrs-dev-card.mjs` 派生到 `.local/`，临时注入 sync 配置后还原；离线验证 7/8/33 + MagVar
+  CDN；正式 YAML 未污染。
 - **P5**：webpack `DefinePlugin` + 7 入口 `registerMfrsRuntimeBuild` + `verify-mfrs-runtime-identity.mjs`。
 - **P6**：`.local/mfrs-dev-session.json`；锁由静态服务持有；预检识别外 worktree 锁。
-- **P7**：`MFRS_SKIP_SCHEMA_DUMP` / `MFRS_SKIP_TAVERN_SYNC` / `MFRS_SKIP_HMR_SERVER`；MFRS watch 设 `MFRS_SKIP_TAVERN_SYNC=1`。
-- **边界**：未改正式 `index.yaml`、发布版、publish-card、release constants、bundle workflow；未 production/发布；未接管用户 watch；未连主 Chrome。
+- **P7**：`MFRS_SKIP_SCHEMA_DUMP` / `MFRS_SKIP_TAVERN_SYNC` / `MFRS_SKIP_HMR_SERVER`；MFRS watch 设
+  `MFRS_SKIP_TAVERN_SYNC=1`。
+- **边界**：未改正式 `index.yaml`、发布版、publish-card、release constants、bundle
+  workflow；未 production/发布；未接管用户 watch；未连主 Chrome。
 - **已知阻塞**：本 worktree 无 `node_modules` → 预检 exit 3；完整 watch/dev-card bundle/真页身份验证留 **P9**。
 - **清单**：P0–P8 = 39 complete；P9 = 5 pending。
 
 ## 会话：2026-07-18（PROJECT-FLOW-FIX · 本地源码运行流程对比）— **analysis complete**
 
-- 只读分析了本地 `.vscode` 启动配置、`webpack.config.ts`、`tavern_sync`、开发版卡 loader、实时修改模板、β 本地验收脚本和 GitHub bundle workflow。
+- 只读分析了本地 `.vscode`
+  启动配置、`webpack.config.ts`、`tavern_sync`、开发版卡 loader、实时修改模板、β 本地验收脚本和 GitHub bundle workflow。
 - 确认项目由开发编译、角色卡同步、真页资源加载和正式发布四条相互独立的链组成；6620/6621 都不是静态资源服务器，Fn+F5 也不会启动 5500。
-- 确认真页旧 bundle 的首要原因是开发版卡仍固定 import CDN SHA；同时 Fn+F5 watch 绑定主 workspace，而 feature 源码位于嵌套 worktree，5500 根目录也未绑定。
+- 确认真页旧 bundle 的首要原因是开发版卡仍固定 import CDN SHA；同时 Fn+F5
+  watch 绑定主 workspace，而 feature 源码位于嵌套 worktree，5500 根目录也未绑定。
 - 已将详细对比和根因写入 `findings.md`。本轮未执行构建、watch、浏览器、同步或页面操作。
 
 ## 会话：2026-07-18（PROJECT-FLOW-FIX · 读取上游参考资料）— **research complete**
 
-- 已读取 `StageDog/tavern_helper_template` 的 README、webpack 流程和相关生命周期示例，以及教程“实时编写前端界面或脚本 / 实际编写”。
-- 确认上游标准实时链路为：目标项目 `pnpm watch` 自动编译 → 酒馆助手实时监听接收 Socket.IO 更新事件 → Live Server 提供目标 `dist` URL → 酒馆实时修改正则/脚本重新请求该 URL → Chrome DevTools MCP 查看和操控页面。
-- 关键结论：watch 通知不会替换资源 URL；Live Server 可访问也不代表服务的是 feature worktree；Fn+F5 若从主 workspace 启动，只会编译主 workspace。当前 T6“端口正常但仍是旧 bundle”与这三个身份映射未对齐相符。
-- 已将上游证据、对 T6 的解释和流程修复原则写入 `findings.md`。本轮只读取外部资料并更新 planning，没有执行构建、watch、浏览器或页面操作。
+- 已读取 `StageDog/tavern_helper_template`
+  的 README、webpack 流程和相关生命周期示例，以及教程“实时编写前端界面或脚本 / 实际编写”。
+- 确认上游标准实时链路为：目标项目 `pnpm watch` 自动编译 → 酒馆助手实时监听接收 Socket.IO 更新事件 → Live
+  Server 提供目标 `dist` URL → 酒馆实时修改正则/脚本重新请求该 URL → Chrome DevTools MCP 查看和操控页面。
+- 关键结论：watch 通知不会替换资源 URL；Live Server 可访问也不代表服务的是 feature
+  worktree；Fn+F5 若从主 workspace 启动，只会编译主 workspace。当前 T6“端口正常但仍是旧 bundle”与这三个身份映射未对齐相符。
+- 已将上游证据、对 T6 的解释和流程修复原则写入
+  `findings.md`。本轮只读取外部资料并更新 planning，没有执行构建、watch、浏览器或页面操作。
 
 ## 会话：2026-07-18（暂停 HUD-UX-NEXT，新增项目流程修复任务）— **paused / planning**
 
 - 用户要求暂停 HUD-UX-NEXT 当前阶段；T6.1–T6.7 继续保持 blocked/pending，T0–T5 仍为 28/44 complete。
 - 本轮不恢复临时双入口构建、8131 服务、浏览器注入或页面交互，也不执行 production、发布、install 或 watch 操作。
-- 新增任务 **PROJECT-FLOW-FIX：修复项目流程**。下一步只梳理开发入口、worktree、watch、临时开发构建、真页验收、production 与发布链路中的流程问题，并制定边界和验收标准。
+- 新增任务
+  **PROJECT-FLOW-FIX：修复项目流程**。下一步只梳理开发入口、worktree、watch、临时开发构建、真页验收、production 与发布链路中的流程问题，并制定边界和验收标准。
 - 在用户确认具体流程修复范围前，不修改 `webpack.config.ts`、`.vscode` 配置、同步/发布脚本或其他流程文件。
 
 ## 会话：2026-07-18（HUD-UX-NEXT · T6 真页验收环境阻塞）— **blocked / 未执行**
 
-- **连接边界**：仅连接用户单独以调试模式启动的 Chrome（CDP `127.0.0.1:9222`，SillyTavern `127.0.0.1:8000`）；未连接、读取或操作用户主浏览器。
-- **运行时证据**：当前调试页仍加载旧 bundle：`MFRS.mountPanel` 为 `undefined`、`[data-mfrs-hud-gacha-host]` 数量为 0、`[data-mfrs-mode]` 数量为 0，且左栏旧“打开全库 · 玩家状态”入口仍存在。feature 源码具有新契约，但 feature `dist` 的两个相关 bundle 都不包含该实现；`5500` 与 `8131` 均未监听，不能作为 feature 静态运行时。
-- **Fn+F5 复测（2026-07-18）**：用户确认本地 Fn+F5 已启动后，仍只通过同一调试 Chrome `127.0.0.1:9222` 复测目标页 `http://127.0.0.1:8000/`；探针结果未变化：`MFRS.mountPanel === undefined`、host 为 0、immersive mode button 为 0、旧左栏入口仍为真，body 仍带旧 `mfrs-hud-immersive`。截图：`C:\Users\linlang\.agent-browser\tmp\screenshots\t6-fnf5-stale-runtime-20260718.png`。因此 Fn+F5 当前未把 feature 的两个新 bundle 提供给该页面，T6 仍不可执行。
-- **执行边界**：T6.1–T6.7 均为 BLOCKED，未执行抽卡、重置、导入、文件写入或其他持久化页面动作；任务进度保持 T0–T5 的 28/44 complete，T6 全部 pending。
-- **恢复条件**：用户可启动既有的 VS Code `Fn+F5` feature 调试流程；或明确授权一个隔离、可逆的双入口临时构建和临时 CORS 静态服务。该替代流程必须禁用 schema dump、tavern sync 和自动导入副作用；之后向消息内面板 iframe 依次注入数据库前端与消息内面板 bundle 并清理旧实例。不得使用 `webpack --output-path` 定向构建到仓库外，该方式会因多 entry 的 `index.js` 冲突且普通 build 仍触发项目插件副作用而不可用。
-- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含 `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` / `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
-- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看 `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode selector=0、旧“打开全库 · 玩家状态”=1、body 为 `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
-- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含 `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` / `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
-- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看 `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode selector=0、旧“打开全库 · 玩家状态”=1、body 为 `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
+- **连接边界**：仅连接用户单独以调试模式启动的 Chrome（CDP `127.0.0.1:9222`，SillyTavern
+  `127.0.0.1:8000`）；未连接、读取或操作用户主浏览器。
+- **运行时证据**：当前调试页仍加载旧 bundle：`MFRS.mountPanel` 为 `undefined`、`[data-mfrs-hud-gacha-host]`
+  数量为 0、`[data-mfrs-mode]` 数量为 0，且左栏旧“打开全库 · 玩家状态”入口仍存在。feature 源码具有新契约，但 feature
+  `dist` 的两个相关 bundle 都不包含该实现；`5500` 与 `8131` 均未监听，不能作为 feature 静态运行时。
+- **Fn+F5 复测（2026-07-18）**：用户确认本地 Fn+F5 已启动后，仍只通过同一调试 Chrome `127.0.0.1:9222` 复测目标页
+  `http://127.0.0.1:8000/`；探针结果未变化：`MFRS.mountPanel === undefined`、host 为 0、immersive mode
+  button 为 0、旧左栏入口仍为真，body 仍带旧
+  `mfrs-hud-immersive`。截图：`C:\Users\linlang\.agent-browser\tmp\screenshots\t6-fnf5-stale-runtime-20260718.png`。因此 Fn+F5 当前未把 feature 的两个新 bundle 提供给该页面，T6 仍不可执行。
+- **执行边界**：T6.1–T6.7 均为 BLOCKED，未执行抽卡、重置、导入、文件写入或其他持久化页面动作；任务进度保持 T0–T5 的 28/44
+  complete，T6 全部 pending。
+- **恢复条件**：用户可启动既有的 VS Code `Fn+F5`
+  feature 调试流程；或明确授权一个隔离、可逆的双入口临时构建和临时 CORS 静态服务。该替代流程必须禁用 schema dump、tavern
+  sync 和自动导入副作用；之后向消息内面板 iframe 依次注入数据库前端与消息内面板 bundle 并清理旧实例。不得使用
+  `webpack --output-path` 定向构建到仓库外，该方式会因多 entry 的 `index.js`
+  冲突且普通 build 仍触发项目插件副作用而不可用。
+- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含
+  `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` /
+  `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
+- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看
+  `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode
+  selector=0、旧“打开全库 · 玩家状态”=1、body 为
+  `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
+- **5500 再预检（2026-07-18）**：端口现已监听，两个 HTTP 200 响应仍是旧产物。数据库前端 bundle（1,853,711 bytes）不含
+  `mountPanel` / `hudImmersivePreferred`；消息内面板 bundle（794,539 bytes）不含 `data-mfrs-hud-gacha-host` /
+  `MFRS.mountPanel`。故“端点可访问”不等同于“端点已提供 feature bundle”。
+- **只读调试页复核**：仅用显式 `agent-browser --cdp 9222` 查看
+  `t1`，没有点击或写入：`MFRS.mountPanel === undefined`、host=0、immersive mode
+  selector=0、旧“打开全库 · 玩家状态”=1、body 为
+  `mfrs-hud-immersive`。T6.1–T6.7 继续 blocked，不改变任务勾选；抽卡、重置、导入均未执行。
 
 ## 会话：2026-07-17（HUD-UX-NEXT · T5 源码提交检查点）— **complete**
 
-- **T5.1 complete / 源码审查**：overlay 与 embedded 继续共用单一完整抽卡 renderer；HUD 与数据库前端的句柄所有权、root 校验和回收边界清晰；模式状态仍只有 `hudImmersivePreferred` 一个真源。独立 verification、反模式与代码质量复核均 APPROVE。
-- **T5.2 complete / 静态检查**：`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript transpile、frontend（21 项）、archive-ui（237 checks）和 `pnpm verify:mfrs-gates` 全部 PASS；archive-ui ESLint errors 为 0。
-- **lint 边界**：v10 全文件 `better-tailwindcss` 会把 JavaScript template 中的非 Tailwind HTML/CSS 当成 Tailwind 类规则检查，产生与本轮功能无关的误报；排除该插件误报后，其他 ESLint 规则与 `origin/main` 基线一致，作为已知非阻断限制记录。一行 archive-ui 正则字符类 lint 清理随 T5 规划同步提交，不改变门禁语义。
-- **T5.3 complete / 提交链检查**：`75f4a9a..5dacd2e` 逐提交白名单精确，功能提交均已推送 feature 分支；没有 dist、PNG、版本常量、package、lockfile 或无关文件。T1–T4 已按阶段提交，因此无需为 T5 重复提交相同源码。
-- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/PNG/版本/package/lockfile；T6 尚未开始。
+- **T5.1 complete
+  / 源码审查**：overlay 与 embedded 继续共用单一完整抽卡 renderer；HUD 与数据库前端的句柄所有权、root 校验和回收边界清晰；模式状态仍只有
+  `hudImmersivePreferred` 一个真源。独立 verification、反模式与代码质量复核均 APPROVE。
+- **T5.2 complete / 静态检查**：`git diff --check`、4 份目标 JS `node --check`、`index.ts` TypeScript
+  transpile、frontend（21 项）、archive-ui（237 checks）和 `pnpm verify:mfrs-gates` 全部 PASS；archive-ui ESLint
+  errors 为 0。
+- **lint 边界**：v10 全文件 `better-tailwindcss` 会把 JavaScript template 中的非 Tailwind
+  HTML/CSS 当成 Tailwind 类规则检查，产生与本轮功能无关的误报；排除该插件误报后，其他 ESLint 规则与 `origin/main`
+  基线一致，作为已知非阻断限制记录。一行 archive-ui 正则字符类 lint 清理随 T5 规划同步提交，不改变门禁语义。
+- **T5.3 complete / 提交链检查**：`75f4a9a..5dacd2e`
+  逐提交白名单精确，功能提交均已推送 feature 分支；没有 dist、PNG、版本常量、package、lockfile 或无关文件。T1–T4 已按阶段提交，因此无需为 T5 重复提交相同源码。
+- **范围保护**：未 install、未改
+  `node_modules`、未启动/停止 watch、未 build、未改 dist/PNG/版本/package/lockfile；T6 尚未开始。
 - **清单进度**：T0–T5 共 28/44 complete，待执行 16；下一项为 **T6.1** Chrome DevTools 桌面完整面板真页验收。
 
 ## 会话：2026-07-17（HUD-UX-NEXT · T4 自动化契约更新）— **complete**
 
-- **T4.1 complete**：archive-ui 旧 H7–H11 “简版抽卡 + 完整面板按钮”断言已替换为稳定 host、`MFRS.mountPanel()`、`hudGachaPanelHandle`、幂等 destroy、失败重试、普通刷新保留、切视图/设置/全库/unmount/deactivate/cleanup 回收，以及旧简版 marker 缺席契约。
-- **T4.2 complete**：新增 scoped 左栏精简门禁，只在 `buildHudDossierHtml()` 范围禁止“打开全库 · 玩家状态”；`buildHudInvestigationSectionsHtml()`、通用 `data-mfrs-hud-open-table`、系统全库入口和玩家状态数据仍被正向保护。
-- **T4.3 complete**：新增 I1–I5，覆盖原 7 个 `data-nav` 键保持不变、独立默认“沉浸模式”入口、沉浸顶栏“默认模式”反向入口、唯一 `hudImmersivePreferred`、无新 mode localStorage、`Ctrl+Shift+G`、双向焦点、历史楼隐藏和 60px/≤640px 响应式契约。
-- **测试设计**：门禁通过 TypeScript AST 精确定位函数、分支、调用和赋值；从 AST 提取 CSS template 后按最终声明验证；HTML comments 先屏蔽；仅解析受限静态字符串拼接，避免注释、死代码或同名文本造成假阳性。旧覆盖未被删除降级，而是由新 H7–H11 和 I1–I5 接替。
-- **T4.4–T4.5 complete / 验证**：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs` PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（237 checks）；`pnpm verify:mfrs-gates` 全部 PASS；`git diff --check` PASS。独立反模式与代码质量最终复核均 APPROVE，仅出现既有 CDN_REF warning。
-- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改业务源码/dist/package/lockfile；T4 只改 archive-ui 门禁与规划记录。
+- **T4.1 complete**：archive-ui 旧 H7–H11
+  “简版抽卡 + 完整面板按钮”断言已替换为稳定 host、`MFRS.mountPanel()`、`hudGachaPanelHandle`、幂等 destroy、失败重试、普通刷新保留、切视图/设置/全库/unmount/deactivate/cleanup 回收，以及旧简版 marker 缺席契约。
+- **T4.2 complete**：新增 scoped 左栏精简门禁，只在 `buildHudDossierHtml()`
+  范围禁止“打开全库 · 玩家状态”；`buildHudInvestigationSectionsHtml()`、通用
+  `data-mfrs-hud-open-table`、系统全库入口和玩家状态数据仍被正向保护。
+- **T4.3 complete**：新增 I1–I5，覆盖原 7 个 `data-nav`
+  键保持不变、独立默认“沉浸模式”入口、沉浸顶栏“默认模式”反向入口、唯一 `hudImmersivePreferred`、无新 mode
+  localStorage、`Ctrl+Shift+G`、双向焦点、历史楼隐藏和 60px/≤640px 响应式契约。
+- **测试设计**：门禁通过 TypeScript AST 精确定位函数、分支、调用和赋值；从 AST 提取 CSS template 后按最终声明验证；HTML
+  comments 先屏蔽；仅解析受限静态字符串拼接，避免注释、死代码或同名文本造成假阳性。旧覆盖未被删除降级，而是由新 H7–H11 和 I1–I5 接替。
+- **T4.4–T4.5 complete / 验证**：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs`
+  PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（237
+  checks）；`pnpm verify:mfrs-gates` 全部 PASS；`git diff --check`
+  PASS。独立反模式与代码质量最终复核均 APPROVE，仅出现既有 CDN_REF warning。
+- **范围保护**：未 install、未改
+  `node_modules`、未启动/停止 watch、未 build、未改业务源码/dist/package/lockfile；T4 只改 archive-ui 门禁与规划记录。
 - **清单进度**：T0–T4 共 25/44 complete，待执行 19；下一项为 **T5.1** 源码代码审查，但 T5 尚未开始。
 
 ## 会话：2026-07-17（HUD-UX-NEXT · T3 实施）— **complete**
 
-- **T3.1 complete**：`buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”按钮及其拼接；玩家状态数据、镜像、通用 `data-mfrs-hud-open-table` 处理器、调查档案与系统全库入口均保留。
-- **T3.2–T3.3 complete**：默认最新 AI 三栏保持原 7 个业务导航键，在 `nav` 外新增独立 mode tools 与展开图标 + “沉浸模式”按钮；点击复用 `toggleHudImmersive()` 和唯一 `hudImmersivePreferred`，未增加 localStorage 或第二状态真源，`Ctrl+Shift+G` 保留。
-- **T3.4 complete**：沉浸顶栏“退出沉浸”迁移为收起图标 + “默认模式”，继续调用 `exitHudImmersive()`；`migrateHudShellDom()` 可幂等升级热更新前旧 shell 的 class、ARIA、title 与按钮内容。
-- **T3.5 complete**：默认入口按稳定 `panelId` / `data-mfrs-mode` 捕获并恢复刷新焦点；进入沉浸后聚焦顶栏默认模式按钮，显式退出后回焦默认入口，找不到时回退原生输入框。非 latest 历史楼隐藏 mode tools；桌面与 ≤900px 右轨扩为 60px，≤640px 模式按钮独立整行，默认/沉浸按钮点击目标均不小于 44px。
-- **验证**：定向源码复核确认模式按钮不计入 7 键业务导航、latest 守卫与旧 shell 迁移保持幂等，`exitHudImmersive()` 新聚焦只覆盖显式用户退出路径；TypeScript `transpileModule` PASS，T3 静态契约 20/20 PASS，frontend 21 项动态生命周期检查 PASS，`git diff --check` PASS，双路只读反模式/代码质量复核均 APPROVE、无 High/Medium。archive-ui 按计划在旧 H7 首败，H7–H11 留 T4 替换。
-- **本轮非写入错误**：① 主线程两次组合带引号 selector 的 `rg` / 固定字符串查询，被 PowerShell 分别解析为 `unclosed group` 或额外路径参数，改用严格 UTF-8 读取后的 `Select-String` / 独立字面量检查；② 实现代理首次 Node 内联中文路径被代码页转成 `?`，改由 `git diff` 提供路径并使用 Unicode/宿主侧路径传递；③ 最终校验首次在全部 diff 搜索新增 `localStorage`，误命中文档中的“未增加 localStorage”说明，收窄到消息内面板源码 diff 后新增命中为 0。
-- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T3 业务改动仅在消息内面板源码，规划同步仅涉及本任务四份 Markdown。
+- **T3.1 complete**：`buildHudDossierHtml()` 只删除“打开全库 · 玩家状态”按钮及其拼接；玩家状态数据、镜像、通用
+  `data-mfrs-hud-open-table` 处理器、调查档案与系统全库入口均保留。
+- **T3.2–T3.3 complete**：默认最新 AI 三栏保持原 7 个业务导航键，在 `nav` 外新增独立 mode tools 与展开图标 +
+  “沉浸模式”按钮；点击复用 `toggleHudImmersive()` 和唯一
+  `hudImmersivePreferred`，未增加 localStorage 或第二状态真源，`Ctrl+Shift+G` 保留。
+- **T3.4 complete**：沉浸顶栏“退出沉浸”迁移为收起图标 + “默认模式”，继续调用
+  `exitHudImmersive()`；`migrateHudShellDom()` 可幂等升级热更新前旧 shell 的 class、ARIA、title 与按钮内容。
+- **T3.5 complete**：默认入口按稳定 `panelId` / `data-mfrs-mode`
+  捕获并恢复刷新焦点；进入沉浸后聚焦顶栏默认模式按钮，显式退出后回焦默认入口，找不到时回退原生输入框。非 latest 历史楼隐藏 mode
+  tools；桌面与 ≤900px 右轨扩为 60px，≤640px 模式按钮独立整行，默认/沉浸按钮点击目标均不小于 44px。
+- **验证**：定向源码复核确认模式按钮不计入 7 键业务导航、latest 守卫与旧 shell 迁移保持幂等，`exitHudImmersive()`
+  新聚焦只覆盖显式用户退出路径；TypeScript `transpileModule` PASS，T3 静态契约 20/20 PASS，frontend
+  21 项动态生命周期检查 PASS，`git diff --check`
+  PASS，双路只读反模式/代码质量复核均 APPROVE、无 High/Medium。archive-ui 按计划在旧 H7 首败，H7–H11 留 T4 替换。
+- **本轮非写入错误**：① 主线程两次组合带引号 selector 的 `rg` / 固定字符串查询，被 PowerShell 分别解析为
+  `unclosed group` 或额外路径参数，改用严格 UTF-8 读取后的 `Select-String`
+  / 独立字面量检查；② 实现代理首次 Node 内联中文路径被代码页转成 `?`，改由 `git diff`
+  提供路径并使用 Unicode/宿主侧路径传递；③ 最终校验首次在全部 diff 搜索新增
+  `localStorage`，误命中文档中的“未增加 localStorage”说明，收窄到消息内面板源码 diff 后新增命中为 0。
+- **范围保护**：未 install、未改
+  `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T3 业务改动仅在消息内面板源码，规划同步仅涉及本任务四份 Markdown。
 - **清单进度**：T0–T3 共 20/44 complete，待执行 24；下一项为 **T4.1**，替换 archive-ui H7–H11 旧抽卡契约。
 
 ## 会话：2026-07-17（HUD-UX-NEXT · T2 实施）— **complete**
 
-- **T2.1 complete**：`buildHudGachaPanelHtml()` 只保留稳定的 `[data-mfrs-hud-gacha-host]` 与 API 未就绪/挂载失败状态；旧“中栏抽卡”、简版摘要、池选择、单抽/十连及“完整面板”按钮不再生成。
-- **T2.2 complete**：新增唯一 `hudGachaPanelHandle`，进入 gacha 后调用 `MFRS.mountPanel()`；返回 root 必须通过宿主 document 的可信 realm `Element`、原生 `Node.prototype.nodeType` getter、document identity 与直接父节点校验。失败状态以 mount API identity latch 防止普通 refresh 重试风暴，显式“重试挂载”可 force 重试，API identity 变化后可自动再试。
-- **T2.3 complete**：离开 gacha、直接打开 settings、进入全库/cabinet、unmount、destroy、deactivate、hot reload cleanup 与 pagehide cleanup 均统一调用幂等销毁；unmount 先置 `hudMounted=false` 再销毁，阻止 teardown 期间的关闭回调重新挂载或写回已卸载 HUD。
-- **T2.4 complete**：`refreshHudBusinessPanels()` 仅在稳定 host 缺失时重建 gacha slot；普通数据刷新和 render-key 命中只复用当前 root，因此抽卡结果、展开状态与内部滚动不会被无关 HUD refresh 清空。
-- **T2.5 complete**：删除 `hudGachaLastResult`、`hudGachaPoolType`、简版 result builder/pull handler、池/操作 click 分支、`data-mfrs-hud="open-gacha"` 与专用 CSS；旧简版 marker 定向搜索为 0。
-- **验证**：`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；目标源码/门禁语法检查与 `git diff --check` PASS；独立反模式复核和代码质量复核均无 High/Medium。
-- **T4 预期边界**：`pnpm verify:mfrs-archive-ui` 当前按计划在旧 H7 首败，因为 H7–H11 仍锁定 8.13.36 的“简版 + 完整面板按钮”契约；这不是 T2 实现错误，留待 T4 替换契约后恢复全绿。
-- **本轮非写入错误**：① 一次 `rg` 组合正则因 PowerShell 引号组合产生 `unclosed group`，改为拆分字面量查询；② `prettier` command not found，未安装依赖，改用现有语法/门禁与 diff 校验；③ 首次 Node stdin 中的中文路径被代码页转成 `????` 导致 `ENOENT`，改用 PowerShell `Resolve-Path` 经环境变量传入；④ 实现代理的一次只读验证编排括号语法错误，命令未执行且未写文件，后续拆分验证。
-- **范围保护**：未 install、未改 `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T2 只改消息内面板源码与规划记录。
+- **T2.1 complete**：`buildHudGachaPanelHtml()` 只保留稳定的 `[data-mfrs-hud-gacha-host]`
+  与 API 未就绪/挂载失败状态；旧“中栏抽卡”、简版摘要、池选择、单抽/十连及“完整面板”按钮不再生成。
+- **T2.2 complete**：新增唯一 `hudGachaPanelHandle`，进入 gacha 后调用
+  `MFRS.mountPanel()`；返回 root 必须通过宿主 document 的可信 realm `Element`、原生 `Node.prototype.nodeType`
+  getter、document identity 与直接父节点校验。失败状态以 mount API identity
+  latch 防止普通 refresh 重试风暴，显式“重试挂载”可 force 重试，API identity 变化后可自动再试。
+- **T2.3 complete**：离开 gacha、直接打开 settings、进入全库/cabinet、unmount、destroy、deactivate、hot reload
+  cleanup 与 pagehide cleanup 均统一调用幂等销毁；unmount 先置 `hudMounted=false`
+  再销毁，阻止 teardown 期间的关闭回调重新挂载或写回已卸载 HUD。
+- **T2.4 complete**：`refreshHudBusinessPanels()` 仅在稳定 host 缺失时重建 gacha
+  slot；普通数据刷新和 render-key 命中只复用当前 root，因此抽卡结果、展开状态与内部滚动不会被无关 HUD refresh 清空。
+- **T2.5 complete**：删除 `hudGachaLastResult`、`hudGachaPoolType`、简版 result builder/pull
+  handler、池/操作 click 分支、`data-mfrs-hud="open-gacha"` 与专用 CSS；旧简版 marker 定向搜索为 0。
+- **验证**：`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；目标源码/门禁语法检查与 `git diff --check`
+  PASS；独立反模式复核和代码质量复核均无 High/Medium。
+- **T4 预期边界**：`pnpm verify:mfrs-archive-ui`
+  当前按计划在旧 H7 首败，因为 H7–H11 仍锁定 8.13.36 的“简版 + 完整面板按钮”契约；这不是 T2 实现错误，留待 T4 替换契约后恢复全绿。
+- **本轮非写入错误**：① 一次 `rg` 组合正则因 PowerShell 引号组合产生 `unclosed group`，改为拆分字面量查询；② `prettier`
+  command not found，未安装依赖，改用现有语法/门禁与 diff 校验；③ 首次 Node stdin 中的中文路径被代码页转成 `????` 导致
+  `ENOENT`，改用 PowerShell `Resolve-Path`
+  经环境变量传入；④ 实现代理的一次只读验证编排括号语法错误，命令未执行且未写文件，后续拆分验证。
+- **范围保护**：未 install、未改
+  `node_modules`、未启动/停止 watch、未 build、未改 dist/package/lockfile；T2 只改消息内面板源码与规划记录。
 - **清单进度**：T0–T2 共 15/44 complete，待执行 29；下一项为 **T3.1**，移除左栏“打开全库 · 玩家状态”入口。
 
 ## 会话：2026-07-17（HUD-UX-NEXT · T1 实施）— **complete**
 
-- **T1.1–T1.2 complete**：完整抽卡面板的 DOM、余额/scope/残屑/经济/保底/卡池/抽卡/结果/历史/自定义/导入导出重置逻辑收敛到单一 `createGachaPanelInstance()`；`MFRS.showPanel()` 继续在宿主 body 打开原 overlay。
-- **T1.3–T1.4 complete**：新增 `MFRS.mountPanel(container, { onClose }) -> { root, destroy }`；同一宿主新挂载会销毁旧实例，`destroy()` 幂等，embedded 使用独立文档流与响应式布局，不继承 fixed、overlay、`90vh` 或横向滚动。
-- **T1.5 complete**：残屑商店、物品详情与自定义编辑器保留为二级 overlay，使用主面板所属 document，返回幂等 handle，并由父实例 registry 在销毁时统一回收。
-- **生命周期安全**：FileReader、重置确认、单抽/十连写库 await 等异步 continuation 均检查 current owner；销毁会清 timer、动画、事件与二级 handle，旧实例不能继续写数据或 UI。
-- **审查整改**：3 个 Medium 全部关闭。最终宿主校验只信任 `getHostDocument()`，要求 document identity 相同，构造器来自可信 realm，并调用原生 `Node.prototype.nodeType` getter 拒绝候选自带 `Element=Object` 或伪造 `Element.prototype` 的对象；真实 Chrome 已只读确认 iframe 闭包可接受父页面真实元素并拒绝其他文档/伪造对象。
-- **T1.6 complete / 验证**：两份 JS `node --check` PASS；`pnpm verify:mfrs-frontend` PASS（21 项动态抽卡生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（232 checks）；`git diff --check` PASS。独立验证、反模式复核与代码质量复核均 APPROVE，无 High/Medium。
+- **T1.1–T1.2
+  complete**：完整抽卡面板的 DOM、余额/scope/残屑/经济/保底/卡池/抽卡/结果/历史/自定义/导入导出重置逻辑收敛到单一
+  `createGachaPanelInstance()`；`MFRS.showPanel()` 继续在宿主 body 打开原 overlay。
+- **T1.3–T1.4 complete**：新增
+  `MFRS.mountPanel(container, { onClose }) -> { root, destroy }`；同一宿主新挂载会销毁旧实例，`destroy()`
+  幂等，embedded 使用独立文档流与响应式布局，不继承 fixed、overlay、`90vh` 或横向滚动。
+- **T1.5
+  complete**：残屑商店、物品详情与自定义编辑器保留为二级 overlay，使用主面板所属 document，返回幂等 handle，并由父实例 registry 在销毁时统一回收。
+- **生命周期安全**：FileReader、重置确认、单抽/十连写库 await 等异步 continuation 均检查 current
+  owner；销毁会清 timer、动画、事件与二级 handle，旧实例不能继续写数据或 UI。
+- **审查整改**：3 个 Medium 全部关闭。最终宿主校验只信任 `getHostDocument()`，要求 document
+  identity 相同，构造器来自可信 realm，并调用原生 `Node.prototype.nodeType` getter 拒绝候选自带 `Element=Object` 或伪造
+  `Element.prototype` 的对象；真实 Chrome 已只读确认 iframe 闭包可接受父页面真实元素并拒绝其他文档/伪造对象。
+- **T1.6 complete / 验证**：两份 JS `node --check` PASS；`pnpm verify:mfrs-frontend`
+  PASS（21 项动态抽卡生命周期检查）；`pnpm verify:mfrs-archive-ui` PASS（232 checks）；`git diff --check`
+  PASS。独立验证、反模式复核与代码质量复核均 APPROVE，无 High/Medium。
 - **范围保护**：未 install、未启动或停止 watch、未 build、未改 dist/package/lockfile；T1 关单时只有数据库前端源码、专项门禁和规划记录进入 diff。
 - **清单进度**：T0–T1 共 10/44 complete，待执行 34；下一项为 **T2.1**，让右侧抽卡键直接挂载完整面板宿主。
 
 ## 会话：2026-07-17（HUD-UX-NEXT · T0 执行）— **complete**
 
 - **T0.1 complete**：五个规划文件均为无 BOM 严格 UTF-8；tracked `git diff --check` 无报错，两份新规划文件无行尾空白。
-- **T0.2 complete**：五个规划文件由提交 `75f4a9a`（`docs(mfrs): plan HUD UX follow-up [skip ci]`）精确入库；本地 `main == origin/main == 75f4a9a`，`v8.13.36` 仍指向 `296c14cd`，无 `v8.13.37`。
-- **T0.3 complete**：独立 worktree 为 `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`，分支 `worktree-feat-hud-gacha-mode-toggle`，创建时 `HEAD=75f4a9a` 且 clean；旧 `feat-immersive-center-workspaces@c8961df` 保持 clean，未复用或改动。
-- **T0.4 complete**：实施 worktree 基线 `pnpm verify:mfrs-frontend` PASS；`pnpm verify:mfrs-archive-ui` PASS（232 checks）。
-- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/` 差异为 0，T0 未触碰这些产物。
+- **T0.2 complete**：五个规划文件由提交 `75f4a9a`（`docs(mfrs): plan HUD UX follow-up [skip ci]`）精确入库；本地
+  `main == origin/main == 75f4a9a`，`v8.13.36` 仍指向 `296c14cd`，无 `v8.13.37`。
+- **T0.3 complete**：独立 worktree 为
+  `D:\project\tavern_helper_template\.claude\worktrees\feat-hud-gacha-mode-toggle`，分支
+  `worktree-feat-hud-gacha-mode-toggle`，创建时 `HEAD=75f4a9a` 且 clean；旧 `feat-immersive-center-workspaces@c8961df`
+  保持 clean，未复用或改动。
+- **T0.4 complete**：实施 worktree 基线 `pnpm verify:mfrs-frontend` PASS；`pnpm verify:mfrs-archive-ui` PASS（232
+  checks）。
+- 主工作树另有且仅有预期的 10 个 dev/watch dist 修改，全部带 `eval`、`sourceURL`、source map 特征；`src/`、`scripts/`
+  差异为 0，T0 未触碰这些产物。
 - 用户原有 webpack watch PID `21824` 仍存在，并非 T0 启动且不阻塞后续源码阶段；T7 production build 前须由用户停止。
 - 清单复核为 44 个唯一任务 ID，T0–T7 分组数量为 4/6/5/5/5/3/7/9；当前统计 4/44，进行中 0，待执行 40。
 - 下一项：**T1.1**，从 `showGachaPanel()` 提取 overlay/embedded 共用的完整面板 renderer。
@@ -630,7 +986,8 @@
 ## 会话：2026-07-17（HUD-UX-NEXT 任务清单）— **complete**
 
 - 基于已完成的 `PLAN_HUD_UX_NEXT.md` 制作 `TASKLIST_HUD_UX_NEXT.md`，未重复未变化的 Phase 0 源码发现。
-- 清单拆为 T0–T7 共 44 项：规划入库/worktree、抽卡单源 mount API、HUD 接入、左栏与模式切换、自动门禁、源码提交、Chrome DevTools 真页、production/发布。
+- 清单拆为 T0–T7 共 44 项：规划入库/worktree、抽卡单源 mount API、HUD 接入、左栏与模式切换、自动门禁、源码提交、Chrome
+  DevTools 真页、production/发布。
 - 每项包含依赖或完成条件；明确规划提交 `[skip ci]`、新 worktree、禁止 install/抢 watch/混入 dev dist/手改 PNG。
 - 当前统计 0/44；实施仍为 pending，本轮未改业务源码或门禁。
 - 初稿总数曾写为 42；编号正则复核得到 44，已统一修正统计，未影响任务内容。
@@ -639,84 +996,126 @@
 
 - 用户提出三项需求：抽卡键直接把中栏替换为完整抽卡系统；移除左栏“打开全库 · 玩家状态”；增加默认/沉浸模式切换按钮。
 - 本轮只做计划与源码发现，不改业务实现；按 `make-plan` + `planning-with-files-zh` 工作流执行。
-- 初步定位消息内面板的 gacha slot / `buildHudGachaPanelHtml()` / `openHudGachaUi()`、玩家状态入口，以及 archive-ui phase5 H7–H10 旧契约。
+- 初步定位消息内面板的 gacha slot / `buildHudGachaPanelHtml()` / `openHudGachaUi()`、玩家状态入口，以及 archive-ui
+  phase5 H7–H10 旧契约。
 - 三个并行 Documentation Discovery 子任务首次均遇到 CC Switch HTTP 503；未修改文件，已记录并准备重试。
-- 三组子任务连续三次均因 CC Switch 503/429 无法产出；按三次失败协议停止重试，由主会话完成数据库前端、消息内面板、项目规则、archive-ui 与 frontend P3 门禁的定向读取。
-- 确认 `MFRS.showPanel()` 只能生成 body overlay，故规划新增单源 `MFRS.mountPanel()` 及可清理句柄；禁止复制完整抽卡业务或搬运无所有权 overlay。
+- 三组子任务连续三次均因 CC Switch
+  503/429 无法产出；按三次失败协议停止重试，由主会话完成数据库前端、消息内面板、项目规则、archive-ui 与 frontend
+  P3 门禁的定向读取。
+- 确认 `MFRS.showPanel()` 只能生成 body overlay，故规划新增单源 `MFRS.mountPanel()`
+  及可清理句柄；禁止复制完整抽卡业务或搬运无所有权 overlay。
 - 已明确左栏只删指定入口；模式按钮复用现有生命周期，默认三栏新增可见入口，沉浸顶栏提供反向入口，保留快捷键与首次自动沉浸。
-- 新增 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`，覆盖 Phase 0–6、允许 API、反模式、自动门禁、Chrome DevTools 真页验收、production 与发布流程。
+- 新增 `docs/mfrs-redesign-phase0/PLAN_HUD_UX_NEXT.md`，覆盖 Phase 0–6、允许 API、反模式、自动门禁、Chrome
+  DevTools 真页验收、production 与发布流程。
 - 规划阶段完成，实施阶段保持 pending；本轮未改任何业务源码，也未触碰 watch 生成的 10 个 dev dist。
-- 收尾时全文件行尾扫描命中根计划既有 Markdown 硬换行；本轮 diff 检查本身通过，最终改用“tracked diff + 新计划文件”定向空白检查。
-
+- 收尾时全文件行尾扫描命中根计划既有 Markdown 硬换行；本轮 diff 检查本身通过，最终改用“tracked
+  diff + 新计划文件”定向空白检查。
 
 ## 会话：2026-07-17（主工作树本地归档清理）— **complete**
 
 - 用户确认 `pnpm watch` 已停止；本地资产统一迁移至 `D:\project-local-assets\tavern_helper_template`。
-- 已确认当前 `main@eab282f` 与 `origin/main` 一致；工作树仅有 10 个 dev/watch dist 修改及约定的未跟踪文件，`src/`、`scripts/` 无未提交修改。
-- 本轮授权范围：迁出 46 个本地文件，精确恢复 10 个 dist，设置本地 exclude，并提交历史 `EXECUTION_PLAN_2026-07-14-81322-era.md`。
-- 迁移预检确认 46 个文件、28,521,143 字节均为未跟踪文件，目标无冲突；清单汇总 SHA-256 为 `5F9105730D8B81421521224C09130562CEEF0DAACD8725C9CEE20B37499F04F2`。
+- 已确认当前 `main@eab282f` 与 `origin/main` 一致；工作树仅有 10 个 dev/watch
+  dist 修改及约定的未跟踪文件，`src/`、`scripts/` 无未提交修改。
+- 本轮授权范围：迁出 46 个本地文件，精确恢复 10 个 dist，设置本地 exclude，并提交历史
+  `EXECUTION_PLAN_2026-07-14-81322-era.md`。
+- 迁移预检确认 46 个文件、28,521,143 字节均为未跟踪文件，目标无冲突；清单汇总 SHA-256 为
+  `5F9105730D8B81421521224C09130562CEEF0DAACD8725C9CEE20B37499F04F2`。
 - 迁移预检首次在工具解析层因 PowerShell 制表符转义冲突失败；命令未执行、文件未变，已改为无反引号的输出格式后重试。
-- 第二次预检已通过路径、未跟踪状态、数量及目标冲突检查，但旧版 PowerShell 不支持 `Convert.ToHexString`；未改文件，汇总哈希输出改用 `BitConverter`。
+- 第二次预检已通过路径、未跟踪状态、数量及目标冲突检查，但旧版 PowerShell 不支持
+  `Convert.ToHexString`；未改文件，汇总哈希输出改用 `BitConverter`。
 - 首次迁移命令在 PowerShell 解析阶段因缺失右括号停止，`Move-Item` 未执行；源和目标未变，修正后从完整预检重跑。
-- 46 个文件已迁至 `D:\project-local-assets\tavern_helper_template`；迁移后源路径为 0、目标缺失为 0、逐文件长度/SHA-256 不一致为 0。
+- 46 个文件已迁至
+  `D:\project-local-assets\tavern_helper_template`；迁移后源路径为 0、目标缺失为 0、逐文件长度/SHA-256 不一致为 0。
 - `.git/info/exclude` 已加入六组本地路径规则；该配置仅本机生效，不进入仓库提交。
 - watch 复核为 0 后，精确恢复 10 个 dev/watch dist；`src/`、`scripts/` 与全部 dist 均无未提交差异。
-- 历史计划 `planning_archive_2026-07/EXECUTION_PLAN_2026-07-14-81322-era.md` 已核对为严格 UTF-8，SHA-256 `D74CA87A766E25876BE3B900D9802B20B3D9CD4033EFFAE56AFB16718A1C95DD`，随本次规划记录提交。
+- 历史计划 `planning_archive_2026-07/EXECUTION_PLAN_2026-07-14-81322-era.md` 已核对为严格 UTF-8，SHA-256
+  `D74CA87A766E25876BE3B900D9802B20B3D9CD4033EFFAE56AFB16718A1C95DD`，随本次规划记录提交。
 - 功能 worktree 保持 clean；`v8.13.36` 仍指向 `296c14cd`，不存在 `v8.13.37`。
 - 首次暂存白名单正确，但历史计划开头 3 处 Markdown 行尾双空格触发 `git diff --cached --check`；已移除空白并重新校验。
 
 ## 会话：2026-07-17（规划文件同步收尾）— **complete**
 
-- 以实际源码、提交链和发布产物复核 8.13.36：Task #1–#5 均已实现；release `0726289`、CDN_REF `9c5a467a3481…`、bot bundle / tag `296c14cd` 状态一致。
-- 复跑 `pnpm verify:mfrs-gates`：7/7 PASS；archive-ui phase5 232 checks；数据库前端 P3、release PNG 与只读 dist freshness 均通过。
+- 以实际源码、提交链和发布产物复核 8.13.36：Task #1–#5 均已实现；release `0726289`、CDN_REF `9c5a467a3481…`、bot bundle
+  / tag `296c14cd` 状态一致。
+- 复跑 `pnpm verify:mfrs-gates`：7/7 PASS；archive-ui phase5 232 checks；数据库前端 P3、release PNG 与只读 dist
+  freshness 均通过。
 - `task_plan.md`：HUD-CENTER-RELEASE 阶段、发布提交与 tag 验收项全部关单为 complete。
 - `findings.md`：发布前基线与 8.13.31 当前快照更新为 8.13.36 最终发布结论。
-- 主工作树 10 个 dist 修改均为带 eval/sourceURL/sourceMap 的 dev/watch 产物；`src/`、`scripts/` 无未提交源码，本轮未触碰这些用户状态。
-- 根目录与发布 worktree 三份规划文件 SHA-256 完全一致，严格 UTF-8 解码和 `git diff --check` 通过；内置 `check-complete.ps1` 因中文阶段格式返回无效的 `0/0 phases`，已改用定向状态扫描验收。
-- 当前进入待命：暂无已排期新任务；全新任务从最新 `origin/main` 新建 worktree。`296c14cd` 仍是 8.13.36 的运行时 bot bundle / tag 基线，后续规划提交不改变发布内容。
+- 主工作树 10 个 dist 修改均为带 eval/sourceURL/sourceMap 的 dev/watch 产物；`src/`、`scripts/`
+  无未提交源码，本轮未触碰这些用户状态。
+- 根目录与发布 worktree 三份规划文件 SHA-256 完全一致，严格 UTF-8 解码和 `git diff --check` 通过；内置
+  `check-complete.ps1` 因中文阶段格式返回无效的 `0/0 phases`，已改用定向状态扫描验收。
+- 当前进入待命：暂无已排期新任务；全新任务从最新 `origin/main` 新建 worktree。`296c14cd` 仍是 8.13.36 的运行时 bot
+  bundle / tag 基线，后续规划提交不改变发布内容。
 
 ## 会话：沉浸 HUD 中栏改造 · 发布准备 — **complete（8.13.36 已发布）**
 
 ### 收尾（2026-07-16 · 提交 / 推送 / main / tag / 最终验收）
 
-- 发布提交 `0726289 chore(mfrs): release 8.13.36`：精确白名单暂存 11 项 + 新增 `RELEASE_8.13.36.md`（12 files），未用 `git add -A`/`.`。
+- 发布提交 `0726289 chore(mfrs): release 8.13.36`：精确白名单暂存 11 项 + 新增 `RELEASE_8.13.36.md`（12 files），未用
+  `git add -A`/`.`。
 - 推送功能分支 `worktree-feat-immersive-center-workspaces`：`9c5a467..0726289`。
 - main fast-forward：`git push origin HEAD:main` → `9a9da19..0726289`，完整发布链一次推送。
-- **GitHub Actions 自动 bundle 已运行**：workflow 在 main 推送后生成 `[bot] bundle` 提交 `296c14cd`（父提交为 `0726289`），advance `origin/main` 并打 `v8.13.36` 标签——与 `v8.13.34`→`e35d6c7 [bot] bundle` 同一发布形态。bundle 仅改 `dist/神秘复苏模拟器/界面/状态栏/index.html`（module-id 重排 1 行），无实质内容变化。
-- `gh` 未安装（不在 PATH），改用 `git ls-remote` 验收：`refs/tags/v8.13.36` = `296c14cd`（远端可达）；`origin/main` = `296c14cd`。
-- 最终核对（发布版 PNG `神秘复苏模拟器发布版.png`，SHA256 `5356AE53…CBD6DCBA`，7798294 字节）：chara/ccv3 均 version=8.13.36、projectRefCount=7、cacheCount=8、regexScripts=33、scripts=8（名称/顺序不变）；CDN_REF `9c5a467a3481` 7 个 URL 全部 HTTP 200 且字节 SHA256 与本地 dist 一致；工作树 clean。
-- 说明：release-png 的 `CDN_REF != HEAD` 是预期告警——CDN_REF 固定指向 production dist 提交 `9c5a467`，HEAD 领先的 `0726289`/`296c14cd` 仅含发布元数据与 bot bundle，无 dist 实质遗漏。
+- **GitHub Actions 自动 bundle 已运行**：workflow 在 main 推送后生成 `[bot] bundle` 提交 `296c14cd`（父提交为
+  `0726289`），advance `origin/main` 并打 `v8.13.36` 标签——与 `v8.13.34`→`e35d6c7 [bot] bundle`
+  同一发布形态。bundle 仅改 `dist/神秘复苏模拟器/界面/状态栏/index.html`（module-id 重排 1 行），无实质内容变化。
+- `gh` 未安装（不在 PATH），改用 `git ls-remote` 验收：`refs/tags/v8.13.36` = `296c14cd`（远端可达）；`origin/main` =
+  `296c14cd`。
+- 最终核对（发布版 PNG `神秘复苏模拟器发布版.png`，SHA256
+  `5356AE53…CBD6DCBA`，7798294 字节）：chara/ccv3 均 version=8.13.36、projectRefCount=7、cacheCount=8、regexScripts=33、scripts=8（名称/顺序不变）；CDN_REF
+  `9c5a467a3481` 7 个 URL 全部 HTTP 200 且字节 SHA256 与本地 dist 一致；工作树 clean。
+- 说明：release-png 的 `CDN_REF != HEAD` 是预期告警——CDN_REF 固定指向 production dist 提交 `9c5a467`，HEAD 领先的
+  `0726289`/`296c14cd` 仅含发布元数据与 bot bundle，无 dist 实质遗漏。
 
 ## 会话：沉浸 HUD 中栏改造 · 发布准备（历史断点）
 
 - 用户要求按项目既有流程提交、推送、更新角色卡版本与 CDN，并验收最终角色卡。
-- 功能分支 `worktree-feat-immersive-center-workspaces` 已推送；本地/远端 HEAD 均为 `116612e`，相对 `origin/main@9a9da19` 领先 3 个提交。
-- Task #1–#5 已完成真页验收；`pnpm verify:mfrs-gates` 通过（archive-ui phase5=232 checks），`verify:mfrs-frontend` / database frontend P3 通过，`git diff --check` 干净。
-- 当前发布内容仍为 8.13.31（CDN_REF `8ee8c58`），但仓库 tag 已存在至 `v8.13.35`；新版本号须先核对 tag/自动 bundle 约定，避免重用已占用标签。
-- 已确认 `.github/workflows/bundle.yaml` 只监听 `main` 非 dist 推送，并用 autotag 递增最新标签；仓库无 `package.json.version`。本轮确定发布 **8.13.36**，在功能分支完成全部发布提交后仅一次 fast-forward 到 `main`，避免中途消耗多个自动标签。
+- 功能分支 `worktree-feat-immersive-center-workspaces` 已推送；本地/远端 HEAD 均为 `116612e`，相对 `origin/main@9a9da19`
+  领先 3 个提交。
+- Task #1–#5 已完成真页验收；`pnpm verify:mfrs-gates` 通过（archive-ui phase5=232 checks），`verify:mfrs-frontend` /
+  database frontend P3 通过，`git diff --check` 干净。
+- 当前发布内容仍为 8.13.31（CDN_REF `8ee8c58`），但仓库 tag 已存在至
+  `v8.13.35`；新版本号须先核对 tag/自动 bundle 约定，避免重用已占用标签。
+- 已确认 `.github/workflows/bundle.yaml` 只监听 `main` 非 dist 推送，并用 autotag 递增最新标签；仓库无
+  `package.json.version`。本轮确定发布 **8.13.36**，在功能分支完成全部发布提交后仅一次 fast-forward 到
+  `main`，避免中途消耗多个自动标签。
 - 发布前门禁复跑通过：聚合 gates 7/7（archive-ui 232 checks）、database frontend P3、`git diff --check` 均通过。
-- `pnpm build` production 成功；仅 `dist/神秘复苏模拟器` 4 个文件变化（消息内面板、数据库前端、旧前端兼容包、状态栏 module-id），schema/开发卡/发布卡未变化。G1 校验整个目标 dist，因此 4 个产物作为同一 CDN 候选提交。
-- production dist 提交 `9c5a467` 已推送远端功能分支；完整 SHA `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`。G1 确认该 SHA 远端可达、dist 与提交一致、从当前源码重构建后零差异。
-- 发布元数据已切换为 8.13.36 / cache `v81336_20260716_01` / CDN_REF `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`；发布版目录尚未镜像或打包。
-- `pnpm publish-card 神秘复苏模拟器发布版` 已成功：G1 再次通过，镜像第一条消息 1、系统提示词 1、对话示例 1、世界书 386、数据库 1，并生成发布版 PNG。
-- publish-card 内置 release-png 门禁通过：发布 PNG chara/ccv3 均为 version=8.13.36、refs=7、cache=8、regex=33、scripts=8。
-- 独立复验通过：聚合 gates 7/7（archive-ui 232 checks）、database frontend P3、开发卡与发布卡双 PNG JSON 验证；两张卡的 chara/ccv3 元数据完全一致。
+- `pnpm build` production 成功；仅 `dist/神秘复苏模拟器`
+  4 个文件变化（消息内面板、数据库前端、旧前端兼容包、状态栏 module-id），schema/开发卡/发布卡未变化。G1 校验整个目标 dist，因此 4 个产物作为同一 CDN 候选提交。
+- production dist 提交 `9c5a467` 已推送远端功能分支；完整 SHA
+  `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`。G1 确认该 SHA 远端可达、dist 与提交一致、从当前源码重构建后零差异。
+- 发布元数据已切换为 8.13.36 / cache `v81336_20260716_01` / CDN_REF
+  `9c5a467a34818ed4a4bd758e3ce6b76f160a1d3f`；发布版目录尚未镜像或打包。
+- `pnpm publish-card 神秘复苏模拟器发布版`
+  已成功：G1 再次通过，镜像第一条消息 1、系统提示词 1、对话示例 1、世界书 386、数据库 1，并生成发布版 PNG。
+- publish-card 内置 release-png 门禁通过：发布 PNG
+  chara/ccv3 均为 version=8.13.36、refs=7、cache=8、regex=33、scripts=8。
+- 独立复验通过：聚合 gates 7/7（archive-ui 232 checks）、database frontend P3、开发卡与发布卡双 PNG
+  JSON 验证；两张卡的 chara/ccv3 元数据完全一致。
 - 数据镜像逐文件 SHA256 校验通过：第一条消息/系统提示词/对话示例/世界书 386 文件/数据库及头像均与开发版一致；dist 保持 clean。
-- **暂停断点**：README 与发布/规划记录已更新；7 个实际 CDN URL 均 HTTP 200，远端字节 SHA256 与 `CDN_REF=9c5a467...` 对应本地 dist 完全一致。尚未提交当前发布元数据与角色卡产物，尚未推送最新 release commit 到功能分支/main，尚未创建或纠正 `v8.13.36` tag。
-- 本轮硬约束：不安装依赖、不动 `node_modules`、不启动 watch、不手改 PNG；production dist 与发布物分阶段提交，发布只走 `pnpm publish-card`。
+- **暂停断点**：README 与发布/规划记录已更新；7 个实际 CDN URL 均 HTTP 200，远端字节 SHA256 与 `CDN_REF=9c5a467...`
+  对应本地 dist 完全一致。尚未提交当前发布元数据与角色卡产物，尚未推送最新 release
+  commit 到功能分支/main，尚未创建或纠正 `v8.13.36` tag。
+- 本轮硬约束：不安装依赖、不动 `node_modules`、不启动 watch、不手改 PNG；production dist 与发布物分阶段提交，发布只走
+  `pnpm publish-card`。
 
 ## 会话：沉浸 HUD 中栏改造 · Task #3/#4 真页验收 + hudRowField 修复 — **完成**
 
 承接 Task #3/#4 源码提交（`a8244ae`）。本轮进行 CDP 真页验收，发现并修复 `hudRowField` 的 `includes` 匹配优先级 bug。
 
-**真页验收环境：** CORS 静态服务器（cors_server.py，端口 8131）serve dist；iframe 7 内 `import()` 本地 bundle 替换 CDN 8.13.31；mock `exportTableAsJson`（3 表各注入测试行）+ mock `MysteryDatabaseFrontend`（`previewMemoryChange`/`applyMemoryChange`/`requestConfirmedMemoryDelete`）。
+**真页验收环境：** CORS 静态服务器（cors_server.py，端口 8131）serve dist；iframe 7 内 `import()` 本地 bundle 替换 CDN
+8.13.31；mock `exportTableAsJson`（3 表各注入测试行）+ mock
+`MysteryDatabaseFrontend`（`previewMemoryChange`/`applyMemoryChange`/`requestConfirmedMemoryDelete`）。
 
 **Bug 发现与修复：`hudRowField` 的 `includes` 匹配优先级**
-- 原代码 `headers.findIndex(h => h === name || h.includes(name))` 对每个 header 同时检查精确匹配和 `includes`，导致 `纪要编号` 在 `纪要` 之前时被 `includes("纪要")` 优先匹配。
+
+- 原代码 `headers.findIndex(h => h === name || h.includes(name))` 对每个 header 同时检查精确匹配和 `includes`，导致
+  `纪要编号` 在 `纪要` 之前时被 `includes("纪要")` 优先匹配。
 - 编辑表单的 `纪要` 字段错误显示 `SP0002`（来自 `纪要编号` 列）而非实际纪要内容。
 - 修复：先 `findIndex(h => h === name)` 精确匹配，未命中再 `findIndex(h => h.includes(name))` 回退。
 
 **Task #3 记忆中栏 CRUD 真页验证（全通过）：**
+
 1. 三 section 渲染（事件纪要/收录档案/收录规律），4 行记录带编辑/删除/新增按钮 ✓
 2. 编辑表单预填充：`纪要` 字段正确显示"玩家首次进入鬼域，观察到时间停滞现象。"（修复后）✓
 3. `纪要编号` 编辑时 readonly（`readonlyOnEdit` 生效）✓
@@ -724,21 +1123,25 @@
 5. 删除：`requestConfirmedMemoryDelete({ table: '收录档案', row_id: '1' })` 调用正确 ✓
 
 **Task #4 抽卡中栏嵌入真页验证（全通过）：**
+
 1. 卡池选择器（全物品/档案/规律/灵异物品 4 选项）✓
 2. 单抽按钮→MFRS.single()→结果内联渲染（1 件物品，余额 200→190）✓
 3. 十连按钮→MFRS.ten()→结果内联渲染（10 件物品，含 ★★★★ 禁忌知识）✓
 4. 结果项：图标/名称/稀有度星/颜色/类型全正确 ✓
 5. 保留"完整面板"按钮 ✓
 
-**门禁（全绿）**：7 道功能门禁全 PASS；`git diff --check` 通过；tsc 0 语法错误。验收后还原 `exportTableAsJson`、退出 HUD、停服务器、`git checkout dist webpack.config.ts`。
+**门禁（全绿）**：7 道功能门禁全 PASS；`git diff --check` 通过；tsc 0 语法错误。验收后还原
+`exportTableAsJson`、退出 HUD、停服务器、`git checkout dist webpack.config.ts`。
 
 **当前 worktree**：1 个未提交文件（`src/神秘复苏模拟器/脚本/消息内面板/index.ts` — `hudRowField` 修复）。
 
 ## 会话：沉浸 HUD 中栏改造 · Task #3 记忆中栏 CRUD + Task #4 抽卡中栏嵌入 — **完成（已提交 `a8244ae`）**
 
-承接上轮（Task #1/#2/#5 已提交 `7155b09`）。本轮完成 Task #3 记忆中栏 CRUD 和 Task #4 抽卡中栏嵌入。未 commit/push/publish/改 PNG/更新版本。
+承接上轮（Task #1/#2/#5 已提交 `7155b09`）。本轮完成 Task #3 记忆中栏 CRUD 和 Task
+#4 抽卡中栏嵌入。未 commit/push/publish/改 PNG/更新版本。
 
 **Task #3：记忆中栏 CRUD（`src/神秘复苏模拟器/脚本/消息内面板/index.ts`）：**
+
 - 新增状态变量 `hudMemoryEditState`（`{ tableKey, mode: 'new'|'edit', rowId }`），与 `hudArchiveSelection` 并列管理。
 - `buildHudMemoryPanelHtml` 从只读摘要列表重写为交互式 CRUD：
   - 三张记忆表（事件纪要/收录档案/收录规律）各一个 section，含行列表 + 新增按钮。
@@ -752,18 +1155,23 @@
     - `hiddenHeaders` → 隐藏（如 row_id）
     - `maxLengthHeaders`/`minLengthHeaders` → 字符长度验证
     - `crossFieldRules` → 跨字段验证（如收录状态=已收录时进度必须100）
-- `handleHudShellClick` 新增 5 类记忆操作拦截：new/edit/delete/save/cancel，各设置 `hudMemoryEditState` 并刷新 memory-slot。
-- `executeHudMemorySave`：收集表单数据 → `validateHudMemoryFormData` 验证 → 调 `MysteryDatabaseFrontend.applyMemoryChange`（insertRow/updateCell）→ 成功后清空编辑态。
-- `executeHudMemoryDelete`：调 `MysteryDatabaseFrontend.requestConfirmedMemoryDelete`（内含人工确认 + capability 令牌）。
+- `handleHudShellClick` 新增 5 类记忆操作拦截：new/edit/delete/save/cancel，各设置 `hudMemoryEditState`
+  并刷新 memory-slot。
+- `executeHudMemorySave`：收集表单数据 → `validateHudMemoryFormData` 验证 → 调
+  `MysteryDatabaseFrontend.applyMemoryChange`（insertRow/updateCell）→ 成功后清空编辑态。
+- `executeHudMemoryDelete`：调 `MysteryDatabaseFrontend.requestConfirmedMemoryDelete`（内含人工确认 +
+  capability 令牌）。
 - `setHudView` 切离 memory 时清空 `hudMemoryEditState`；unmount/destroy/unregister 同步重置。
 - 新增 CSS：memory-form/memory-field/memory-btn/memory-add-btn/memory-row/memory-actions 等。
 
 **Task #4：抽卡中栏嵌入（`src/神秘复苏模拟器/脚本/消息内面板/index.ts`）：**
+
 - 新增状态变量 `hudGachaLastResult`（上次抽卡结果）和 `hudGachaPoolType`（当前池类型，默认 'all'）。
 - `buildHudGachaPanelHtml` 从纯摘要+外部按钮重写为嵌入式：
   - 保留调查点/保底/残屑/历史四项 KV 摘要。
   - 新增卡池选择器（全物品/档案/规律/灵异物品池，`data-mfrs-hud-gacha-pool`）。
-  - 新增单抽（`data-mfrs-hud-gacha-action="single"`）和十连（`"ten"`）内联按钮，调 `MFRS.single(poolType)` / `MFRS.ten(poolType)`。
+  - 新增单抽（`data-mfrs-hud-gacha-action="single"`）和十连（`"ten"`）内联按钮，调 `MFRS.single(poolType)` /
+    `MFRS.ten(poolType)`。
   - 保留"完整面板"按钮打开完整抽卡 UI（`MFRS.showPanel()`）。
   - `buildHudGachaResultHtml`：内联渲染抽卡结果——每项显示图标/名称/稀有度星/颜色/类型。
 - `handleHudShellClick` 新增抽卡操作拦截：single/ten 调 `executeHudGachaPull`；池选择写 `hudGachaPoolType`。
@@ -771,24 +1179,42 @@
 - `setHudView` 切离 gacha 时清空 `hudGachaLastResult`；unmount/destroy/unregister 同步重置。
 - 新增 CSS：gacha-controls/gacha-pool-label/gacha-result/gacha-items/gacha-item 等。
 
-**门禁（全绿）**：`verify:mfrs-frontend` / `verify:mfrs-table-adapter` / `verify:mfrs-archive-ui`（221→232，新增 11 项 Phase H：H1-H11 记忆 CRUD 交互/表单字段/CRUD 调度/save 调用/delete 调用/状态重置/抽卡嵌入/抽卡操作/结果渲染/状态重置/CSS）/ `verify:mfrs-initvar-schema` / `verify:mfrs-regex-ids` / `verify:mfrs-mvu-hotfix` / `verify:mfrs-output-cleaning` 全 PASS；`git diff --check` 通过。tsc `--noEmit` 0 语法错误。
+**门禁（全绿）**：`verify:mfrs-frontend` / `verify:mfrs-table-adapter` /
+`verify:mfrs-archive-ui`（221→232，新增 11 项 Phase
+H：H1-H11 记忆 CRUD 交互/表单字段/CRUD 调度/save 调用/delete 调用/状态重置/抽卡嵌入/抽卡操作/结果渲染/状态重置/CSS）/
+`verify:mfrs-initvar-schema` / `verify:mfrs-regex-ids` / `verify:mfrs-mvu-hotfix` / `verify:mfrs-output-cleaning`
+全 PASS；`git diff --check` 通过。tsc `--noEmit` 0 语法错误。
 
-**当前 worktree**：2 个未提交文件（`src/神秘复苏模拟器/脚本/消息内面板/index.ts` + `scripts/verify-mfrs-archive-ui-regressions.mjs`）。
+**当前 worktree**：2 个未提交文件（`src/神秘复苏模拟器/脚本/消息内面板/index.ts` +
+`scripts/verify-mfrs-archive-ui-regressions.mjs`）。
 
 ## 会话：沉浸 HUD 中栏改造 · Task #1 收尾 + Task #5 真页验收 — **完成（已提交 `7155b09`）**
 
-承接上一会话（Task #2 五缺口已接通）。本轮彻底完成 Task #1 数据库与安全底座，并完成 Task #5 真页验收。未 commit/push/publish/改 PNG/更新版本。
+承接上一会话（Task #2 五缺口已接通）。本轮彻底完成 Task #1 数据库与安全底座，并完成 Task
+#5 真页验收。未 commit/push/publish/改 PNG/更新版本。
 
 **Task #1 收尾：收紧 `createMemoryMutationExecutor` export 可达性（`table-change-adapter.ts` + `数据库前端/index.ts`）**
-- `applyConfirmedMemoryDelete` 此前声明了 `confirmedMemoryDeleteCapability` Symbol 却只 `void`（未实际用作门禁）——裸调 `executor.applyConfirmedMemoryDelete(plan,data,tpl)` 即可删除记忆行，绕过前端的人工确认/工作台/快照三重保护。
-- 收紧：`applyConfirmedMemoryDelete` 新增 `capability` 参数，必须等于闭包内 Symbol；不匹配返回新错误码 `UNAUTHORIZED`（`TableChangeErrorCode` 联合新增）。executor 返回值附带 `confirmedMemoryDeleteCapability`（Symbol 键，不可序列化、`JSON.stringify` 丢弃）。
-- 前端 `index.ts` 捕获 `memoryDeleteCapability`，仅在 `requestConfirmedMemoryDelete` 人工确认后传入；该令牌是模块私有、永不进 plan/JSON/window。
-- 门禁：`verify-table-change-adapter.mjs` 新增裸调拒绝断言（`UNAUTHORIZED` + vendor 不触达）；`verify-mfrs-database-frontend-p3.mjs` 新增令牌捕获/传递断言。
-- **附（上轮已修）**：`数据库前端/index.ts` 的 `getHostWindow()` 函数头被 Task #1 的 `waitForMfrsConfirmDanger` 覆盖导致孤儿 `try` 体（TS1128 语法错误 + 261/864 行调用无定义）已恢复。
+
+- `applyConfirmedMemoryDelete` 此前声明了 `confirmedMemoryDeleteCapability` Symbol 却只 `void`（未实际用作门禁）——裸调
+  `executor.applyConfirmedMemoryDelete(plan,data,tpl)` 即可删除记忆行，绕过前端的人工确认/工作台/快照三重保护。
+- 收紧：`applyConfirmedMemoryDelete` 新增 `capability` 参数，必须等于闭包内 Symbol；不匹配返回新错误码
+  `UNAUTHORIZED`（`TableChangeErrorCode` 联合新增）。executor 返回值附带
+  `confirmedMemoryDeleteCapability`（Symbol 键，不可序列化、`JSON.stringify` 丢弃）。
+- 前端 `index.ts` 捕获 `memoryDeleteCapability`，仅在 `requestConfirmedMemoryDelete`
+  人工确认后传入；该令牌是模块私有、永不进 plan/JSON/window。
+- 门禁：`verify-table-change-adapter.mjs` 新增裸调拒绝断言（`UNAUTHORIZED` +
+  vendor 不触达）；`verify-mfrs-database-frontend-p3.mjs` 新增令牌捕获/传递断言。
+- **附（上轮已修）**：`数据库前端/index.ts` 的 `getHostWindow()` 函数头被 Task #1 的 `waitForMfrsConfirmDanger`
+  覆盖导致孤儿 `try` 体（TS1128 语法错误 + 261/864 行调用无定义）已恢复。
 
 **Task #5 真页验收（CDP 真机，http://127.0.0.1:8000/ SillyTavern，神秘复苏模拟器发布版 8.13.31 在线）：**
-- worktree `pnpm install`（8.4s，hardlink）；临时给 `webpack.config.ts` 加 `MFRS_SKIP_SYNC` 环境门禁跳过 `schema_dump`/`tavern_sync`，`MFRS_SKIP_SYNC=1 pnpm build:dev` 产出 dev bundle（**0 PNG/YAML 被改动**），验收后 `git checkout` 还原 dist + webpack.config.ts。
-- 本地静态服务器（127.0.0.1:8131）serve dist；向在线消息内面板 iframe 注入 `<script src>` 本地 bundle（替换在线 8.13.31 实例：先 `__mfrsMessagePanelCleanup__` 清旧，再挂我的版本）。验收后还原 `exportTableAsJson` + toggle 重挂回真实空库，Esc 回正文。
+
+- worktree `pnpm install`（8.4s，hardlink）；临时给 `webpack.config.ts` 加 `MFRS_SKIP_SYNC` 环境门禁跳过
+  `schema_dump`/`tavern_sync`，`MFRS_SKIP_SYNC=1 pnpm build:dev` 产出 dev bundle（**0 PNG/YAML 被改动**），验收后
+  `git checkout` 还原 dist + webpack.config.ts。
+- 本地静态服务器（127.0.0.1:8131）serve dist；向在线消息内面板 iframe 注入 `<script src>`
+  本地 bundle（替换在线 8.13.31 实例：先 `__mfrsMessagePanelCleanup__` 清旧，再挂我的版本）。验收后还原
+  `exportTableAsJson` + toggle 重挂回真实空库，Esc 回正文。
 - **archive 行为全部通过**（mock 4 表各 1 可见行注入 `exportTableAsJson`，toggle 强制 `refreshHudPanels(true)`）：
   1. 四类档案按钮渲染（线索/厉鬼档案/人物/地点），各带三 `data-mfrs-hud-archive-*` 属性 ✓
   2. 点击线索→中栏 `archive` 视图，archive-slot 渲染只读详情（CLUE-001 + 8 字段 + 「只读」）✓
@@ -796,61 +1222,99 @@
   4. 预览无 `data-mfrs-hud-open-table`/全库按钮（只读）✓
   5. Esc→回 `story`、archive-slot 隐藏 ✓
   6. **线索 fail-closed**：可见性=「内部」的线索被 `isHudArchiveRowVisible` 过滤（clueItems 仅 row_id 1）✓
-  7. **DB revision 回调**：`api._notifyTableUpdate({})` 触发已注册 `hudDatabaseUpdateCallback`→`hudDatabaseRevision+=1`→`refreshHudPanels(true)`→重读库重渲（clue 按钮 1→2）✓
-- Task #1 能力收紧由 `verify-table-change-adapter.mjs` VM 行为测试覆盖（裸调拒绝、确认删除通过、非记忆表拒绝）；在线挂载无 console error。
+  7. **DB revision 回调**：`api._notifyTableUpdate({})` 触发已注册
+     `hudDatabaseUpdateCallback`→`hudDatabaseRevision+=1`→`refreshHudPanels(true)`→重读库重渲（clue 按钮 1→2）✓
+- Task #1 能力收紧由 `verify-table-change-adapter.mjs`
+  VM 行为测试覆盖（裸调拒绝、确认删除通过、非记忆表拒绝）；在线挂载无 console error。
 
-**门禁（全绿）**：`verify:mfrs-frontend` / `verify:mfrs-table-adapter` / `verify:mfrs-archive-ui`（212→221，含 9 项 Phase G）/ `verify:mfrs-initvar-schema` / `verify:mfrs-regex-ids` / `verify:mfrs-mvu-hotfix` / `verify:mfrs-output-cleaning` 全 PASS；`git diff --check` 通过。tsc `--noEmit` 0 语法错误（本轮编辑行无新增类型错误）。
+**门禁（全绿）**：`verify:mfrs-frontend` / `verify:mfrs-table-adapter` /
+`verify:mfrs-archive-ui`（212→221，含 9 项 Phase G）/ `verify:mfrs-initvar-schema` / `verify:mfrs-regex-ids` /
+`verify:mfrs-mvu-hotfix` / `verify:mfrs-output-cleaning` 全 PASS；`git diff --check` 通过。tsc `--noEmit`
+0 语法错误（本轮编辑行无新增类型错误）。
 
-**当前 worktree（10 未提交文件）**：progress.md + 3 门禁脚本（archive-ui/table-adapter/frontend-p3）+ 6 源码（消息内面板/index.ts、数据库前端/index.ts+table-change-adapter.ts+frontend-config.js+v10_2_visualizer.js、神秘复苏表格SQL_v1.json）。dist/webpack.config.ts/node_modules 已还原或 gitignored。
+**当前 worktree（10 未提交文件）**：progress.md + 3 门禁脚本（archive-ui/table-adapter/frontend-p3）+
+6 源码（消息内面板/index.ts、数据库前端/index.ts+table-change-adapter.ts+frontend-config.js+v10_2_visualizer.js、神秘复苏表格SQL_v1.json）。dist/webpack.config.ts/node_modules 已还原或 gitignored。
 
 **待办**：Task #3 记忆中栏 CRUD / Task #4 抽卡中栏嵌入（未开始，archive 已验收可进）；发布另立任务（本轮不发版）。
 
 ## 会话：沉浸 HUD 中栏改造 · Task #2 四类档案中栏预览接通 — **Task #2 源码完成（未 commit）**
 
-隔离 worktree `worktree-feat-immersive-center-workspaces`（基于 `origin/main@992d922`）。本轮只动源码与门禁脚本，未 commit/push/publish/改 PNG/更新版本。
+隔离 worktree `worktree-feat-immersive-center-workspaces`（基于
+`origin/main@992d922`）。本轮只动源码与门禁脚本，未 commit/push/publish/改 PNG/更新版本。
 
 **Task #2 五处缺口全部接通（`src/神秘复苏模拟器/脚本/消息内面板/index.ts`）：**
-- **缺口 1** `handleHudShellClick`：在 `data-mfrs-hud-open-table` 全库分支前新增 `.mfrs-hud-archive-item` 拦截，读 `data-mfrs-hud-archive-table-key/-table-name/-row-id` 写入 `hudArchiveSelection`，`setHudView('archive')`，≤800px `closeHudSideDrawers()`。
-- **缺口 2** `refreshHudBusinessPanels`：新增 archive slot 刷新，调用此前无调用点的 `buildHudArchivePreviewHtml()`。
-- **缺口 3** `setHudView`：新增 `view === 'archive'` 专门分支（关柜、移动端关抽屉、桌面保留左栏、仅渲染 archive slot、不调 memory/gacha/system refresh），置于 `isHudCenterBusinessView` 分支前。
-- **缺口 4** `hudDatabaseUpdateCallback/hudDatabaseRevision`：新增 `getHudDatabaseUpdateCallback`/`registerHudDatabaseUpdateCallback`/`unregisterHudDatabaseUpdateCallback`（idempotent flag `hudDatabaseCallbackRegistered`，API 未就绪静默跳过待重试）；`activateMessagePanelRuntime` 注册，`deactivateMessagePanelRuntime`+`cleanup` 注销。回调内 `hudDatabaseRevision += 1` + `refreshHudPanels(true)`；`getPanelRenderKey` 已含 `:db${hudDatabaseRevision}`，外部编辑/镜像写入后 HUD 全量刷新。
-- **缺口 5** `destroyHudImmersive`/`unmountHudImmersive`/`unregisterHudDatabaseUpdateCallback`：均重置 `hudArchiveSelection = null`（覆盖 destroy/切卡/注销 callback）。
 
-**附带修复（Task #1 残留语法回归）：** `src/神秘复苏模拟器/脚本/数据库前端/index.ts` 中 `getHostWindow()` 的函数头在 Task #1 被 `waitForMfrsConfirmDanger` 覆盖，导致 `try { return (window.parent ?? window)… }` 函数体孤儿化（`return` 脱离函数 → TS1128 语法错误，阻断 webpack transpile；且 `getHostWindow` 在 261/864 行仍被调用却无定义）。已按 HEAD 原样恢复 `function getHostWindow() {` 头，与新函数并存。此为编译阻断项，非本轮范围扩张。
+- **缺口 1** `handleHudShellClick`：在 `data-mfrs-hud-open-table` 全库分支前新增 `.mfrs-hud-archive-item` 拦截，读
+  `data-mfrs-hud-archive-table-key/-table-name/-row-id` 写入 `hudArchiveSelection`，`setHudView('archive')`，≤800px
+  `closeHudSideDrawers()`。
+- **缺口 2** `refreshHudBusinessPanels`：新增 archive slot 刷新，调用此前无调用点的 `buildHudArchivePreviewHtml()`。
+- **缺口 3** `setHudView`：新增 `view === 'archive'` 专门分支（关柜、移动端关抽屉、桌面保留左栏、仅渲染 archive
+  slot、不调 memory/gacha/system refresh），置于 `isHudCenterBusinessView` 分支前。
+- **缺口 4** `hudDatabaseUpdateCallback/hudDatabaseRevision`：新增
+  `getHudDatabaseUpdateCallback`/`registerHudDatabaseUpdateCallback`/`unregisterHudDatabaseUpdateCallback`（idempotent
+  flag `hudDatabaseCallbackRegistered`，API 未就绪静默跳过待重试）；`activateMessagePanelRuntime`
+  注册，`deactivateMessagePanelRuntime`+`cleanup` 注销。回调内 `hudDatabaseRevision += 1` +
+  `refreshHudPanels(true)`；`getPanelRenderKey` 已含 `:db${hudDatabaseRevision}`，外部编辑/镜像写入后 HUD 全量刷新。
+- **缺口 5** `destroyHudImmersive`/`unmountHudImmersive`/`unregisterHudDatabaseUpdateCallback`：均重置
+  `hudArchiveSelection = null`（覆盖 destroy/切卡/注销 callback）。
+
+**附带修复（Task #1 残留语法回归）：** `src/神秘复苏模拟器/脚本/数据库前端/index.ts` 中 `getHostWindow()`
+的函数头在 Task #1 被 `waitForMfrsConfirmDanger` 覆盖，导致 `try { return (window.parent ?? window)… }`
+函数体孤儿化（`return` 脱离函数 → TS1128 语法错误，阻断 webpack transpile；且 `getHostWindow`
+在 261/864 行仍被调用却无定义）。已按 HEAD 原样恢复 `function getHostWindow() {`
+头，与新函数并存。此为编译阻断项，非本轮范围扩张。
 
 **门禁：**
-- `verify:mfrs-frontend` PASS、`verify:mfrs-table-adapter` PASS、`verify:mfrs-archive-ui` PASS（**212→221 checks**，新增 9 项 Phase G：archive-item 拦截序/	slot 刷新/setHudView archive 分支/四类规则按钮/无全库按钮只读/线索 fail-closed/Esc 返回正文/DB revision 接线/选中态重置）。
+
+- `verify:mfrs-frontend` PASS、`verify:mfrs-table-adapter` PASS、`verify:mfrs-archive-ui` PASS（**212→221
+  checks**，新增 9 项 Phase G：archive-item 拦截序/ slot 刷新/setHudView
+  archive 分支/四类规则按钮/无全库按钮只读/线索 fail-closed/Esc 返回正文/DB revision 接线/选中态重置）。
 - `git diff --check` 通过。
-- tsc 独立 `--noEmit`：孤儿修复后全工程可解析（0 个 TS1xxx 语法错误；余 132 项均为 TS2xxx/6xxx/7xxx 类型/解析噪声——global-script 跨文件重声明、vue/pinia auto-import、type-fest 命名空间、pnpm hoist `@babel/*`，均被 webpack `transpileOnly`+`onlyCompileBundledFiles`+unplugin-auto-import 规避，与本轮改动无关；`消息内面板/index.ts` 19 项全在 22-25/379/391/1573/3262/4880/5959/5986/6057 等既有行，无一落在本轮编辑行）。
+- tsc 独立
+  `--noEmit`：孤儿修复后全工程可解析（0 个 TS1xxx 语法错误；余 132 项均为 TS2xxx/6xxx/7xxx 类型/解析噪声——global-script 跨文件重声明、vue/pinia
+  auto-import、type-fest 命名空间、pnpm hoist `@babel/*`，均被 webpack
+  `transpileOnly`+`onlyCompileBundledFiles`+unplugin-auto-import 规避，与本轮改动无关；`消息内面板/index.ts`
+  19 项全在 22-25/379/391/1573/3262/4880/5959/5986/6057 等既有行，无一落在本轮编辑行）。
 
 **待办：**
+
 - Task #1 残留：收紧 `createMemoryMutationExecutor` export 可达性（原 TODO，未动）。
-- Task #2 真页验收（Task #5）：需 production build + CDP 真机验证 archive slot 四类按钮→中栏预览→Esc 返回、DB revision 实时刷新。
+- Task #2 真页验收（Task #5）：需 production build + CDP 真机验证 archive slot 四类按钮→中栏预览→Esc 返回、DB
+  revision 实时刷新。
 - Task #3 记忆中栏 CRUD / Task #4 抽卡中栏嵌入：未开始（用户要求 archive 验收前不混入 gacha 重构）。
 
-**未做：** commit/push/tag/publish-card/改 PNG/更新版本/CDN_REF。worktree 内创建了 `node_modules` junction 指向主仓 `node_modules`（gitignored，仅供 tsc 校验；非真实 install，无 .bin）。
+**未做：** commit/push/tag/publish-card/改 PNG/更新版本/CDN_REF。worktree 内创建了 `node_modules` junction 指向主仓
+`node_modules`（gitignored，仅供 tsc 校验；非真实 install，无 .bin）。
 
 ## 会话：2026-07-16（8.13.31 发布）— **complete**
 
 - 将 MAINT-29 修复提交、推送并发布为 **8.13.31**。
-- 源码提交 `5e52dcb`：MAINT-29-01 黄金储备正式路径 + MAINT-29-02 drawer watcher 生命周期，含 production dist、门禁脚本、文档。
+- 源码提交 `5e52dcb`：MAINT-29-01 黄金储备正式路径 + MAINT-29-02 drawer watcher 生命周期，含 production
+  dist、门禁脚本、文档。
 - production dist 提交 `8ee8c58`：状态栏 module-id rebuild（CDN_REF 指向此 commit）。
 - release constants 更新：`RELEASE_VERSION=8.13.31`，`CDN_REF=8ee8c58`，`CDN_CACHE_VERSION=v81331_20260716_01`。
 - 开发版 index.yaml：版本 8.13.31，7 个脚本 URL ref + 8 个 cache marker 全部更新。
-- `pnpm publish-card 神秘复苏模拟器发布版` 完成：G1 dist 新鲜度通过；release-png 门禁 version=8.13.31 refs=7 cache=8 regex=33 scripts=8 通过。
+- `pnpm publish-card 神秘复苏模拟器发布版` 完成：G1 dist 新鲜度通过；release-png 门禁 version=8.13.31 refs=7 cache=8
+  regex=33 scripts=8 通过。
 - release commit `4c94a4e`：含 constants、开发版/发布版 YAML、开发版/发布版 PNG。
 - 推送 `origin/main`；tag `v8.13.31` → `4c94a4e`（force push 修正 bot bundle 自动创建的旧 tag）。
 - 发布后远端状态：`992d922 [bot] Bump deps` → `e35d6c7 [bot] bundle` → `4c94a4e release 8.13.31` → ...。
 
 ## 会话：2026-07-15（8.13.29 发布后维护：黄金储备 + drawer watcher）— **complete / published as 8.13.31**
 
-- 基线：隔离 worktree `worktree-fix-mfrs-drawer-gold` 从 `origin/main@ec14755`（tag `v8.13.30` bot bundle）实施；已发布内容仍为 **8.13.29**（release `410454b`，CDN dist `95981c9`，cache `v81329_20260715_01`）。
-- **MAINT-29-01**：消息内面板资源 builder 读取优先级改为 `灵异资源.黄金储备` → `灵异资源.黄金` → `灵异资源.鬼钱` → 顶层 `黄金`；保留对象格式化与 HTML escape，标准 schema 数据不再漏掉黄金区。
-- **MAINT-29-02**：drawer selector 建立单真源；overlay watcher 改为 epoch/token、burst timer Set、opening grace、stable-close debounce、RAF/timer 清理；自动确认关闭只调用非破坏性 `releaseHudFromStUi()`，不会再自动点击/强制关闭 ST UI。
+- 基线：隔离 worktree `worktree-fix-mfrs-drawer-gold` 从 `origin/main@ec14755`（tag `v8.13.30` bot
+  bundle）实施；已发布内容仍为 **8.13.29**（release `410454b`，CDN dist `95981c9`，cache `v81329_20260715_01`）。
+- **MAINT-29-01**：消息内面板资源 builder 读取优先级改为 `灵异资源.黄金储备` → `灵异资源.黄金` → `灵异资源.鬼钱` → 顶层
+  `黄金`；保留对象格式化与 HTML escape，标准 schema 数据不再漏掉黄金区。
+- **MAINT-29-02**：drawer selector 建立单真源；overlay watcher 改为 epoch/token、burst timer Set、opening
+  grace、stable-close debounce、RAF/timer 清理；自动确认关闭只调用非破坏性
+  `releaseHudFromStUi()`，不会再自动点击/强制关闭 ST UI。
 - drawer action 兼容 `.drawer-toggle` 自身、祖先和子元素，修复不同设置入口 DOM 形态不一致。
-- 门禁：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs` 通过；`pnpm verify:mfrs-archive-ui` **212 checks PASS**；`pnpm verify:mfrs-gates` 聚合 **7/7 PASS**；`git diff --check` 通过。
+- 门禁：`node --check scripts/verify-mfrs-archive-ui-regressions.mjs` 通过；`pnpm verify:mfrs-archive-ui` **212 checks
+  PASS**；`pnpm verify:mfrs-gates` 聚合 **7/7 PASS**；`git diff --check` 通过。
 - 构建：production `pnpm build` 完成；仅目标消息内面板 production dist 纳入业务改动，状态栏 module-id 噪声未保留。
-- 真机：通过独立远程调试 Chrome 的 `http://127.0.0.1:8000/` SillyTavern，向消息内面板 iframe 注入当前 worktree 本地 production bundle；未操作用户主浏览器。
+- 真机：通过独立远程调试 Chrome 的 `http://127.0.0.1:8000/`
+  SillyTavern，向消息内面板 iframe 注入当前 worktree 本地 production bundle；未操作用户主浏览器。
   - 8 个设置入口均成功打开对应 drawer，150ms 与约 2650ms 两次快照均保持 open/可见，HUD 让层 class 持续存在。
   - 40ms 快速切换“世界书→API”后仅最后动作生效，旧 RAF/timer 未关闭新 drawer。
   - 原生关闭 drawer 后，经稳定 debounce 自动撤销 HUD 让层；未发生再次点击或强制关闭。
@@ -861,31 +1325,42 @@
 ## 会话：2026-07-15（沉浸式按键审查缺陷修复）— **complete**
 
 - 修复 4 个问题（ISSUE-002/003/004/005），源码 commit `779b9d7`，dist commit `74f74b7`，已 push `origin/main`。
-- **ISSUE-003 (High)**：`runHudTavernAction` 的 `fire()` 中 `live.click()` 点击 `.drawer-icon` 父容器，ST 的 `doNavbarIconClick` 绑在 `.drawer-toggle` 子元素上不会触发。改为查找 `.drawer-toggle` 子元素并用 jQuery trigger，fallback 保留原生 click。
-- **ISSUE-002 (Medium)**：`buildHudGachaPanelHtml` 读取 pity 对象用了不存在的键 `soft/hard/count`，实际键为 `{total, rare, epic}`。改为 `★4 还需X抽 · ★6 还需Y抽` 格式，与完整抽卡面板对齐。
-- **ISSUE-004 (Low)**：`unmountHudImmersive` 在退出按钮仍持焦点时设 `aria-hidden="true"`。改为先 blur/focus `#send_textarea`，再隐藏 shell。
-- **ISSUE-005 (Low)**：`runMirrorOnce` 在 `AutoCardUpdaterAPI` 未就绪时走到 `requireApi` 抛异常。加守卫 `if (!AutoCardUpdaterAPI) return`，静默跳过等下次 schedule。
+- **ISSUE-003 (High)**：`runHudTavernAction` 的 `fire()` 中 `live.click()` 点击 `.drawer-icon` 父容器，ST 的
+  `doNavbarIconClick` 绑在 `.drawer-toggle` 子元素上不会触发。改为查找 `.drawer-toggle` 子元素并用 jQuery
+  trigger，fallback 保留原生 click。
+- **ISSUE-002 (Medium)**：`buildHudGachaPanelHtml` 读取 pity 对象用了不存在的键 `soft/hard/count`，实际键为
+  `{total, rare, epic}`。改为 `★4 还需X抽 · ★6 还需Y抽` 格式，与完整抽卡面板对齐。
+- **ISSUE-004 (Low)**：`unmountHudImmersive` 在退出按钮仍持焦点时设 `aria-hidden="true"`。改为先 blur/focus
+  `#send_textarea`，再隐藏 shell。
+- **ISSUE-005 (Low)**：`runMirrorOnce` 在 `AutoCardUpdaterAPI` 未就绪时走到 `requireApi` 抛异常。加守卫
+  `if (!AutoCardUpdaterAPI) return`，静默跳过等下次 schedule。
 - **ISSUE-001 (Medium)**：`[object Object]` 修复已在仓库 `07051d7`，本次 push 包含；发版后 CDN pin 自动覆盖。
-- 门禁：`pnpm verify:mfrs-gates` 6/6 全绿（initvar-schema/regex-ids/RH5-scoped/hotfix/output-cleaning/table-adapter/release-png）。
+- 门禁：`pnpm verify:mfrs-gates`
+  6/6 全绿（initvar-schema/regex-ids/RH5-scoped/hotfix/output-cleaning/table-adapter/release-png）。
 - 改动范围：`index.ts` +19/-5、`mvu-core-mirror.ts` +3/-0；无正则/脚本库/世界书变动。
 
 ## 会话：2026-07-15（发布版沉浸式按键真机审查）— **complete**
 
-- 已通过 chrome-devtools MCP 连接用户以远程调试模式启动的独立 Chrome；当前目标页为 `http://127.0.0.1:8000/` 的 SillyTavern，未连接或操作主 Chrome。
+- 已通过 chrome-devtools MCP 连接用户以远程调试模式启动的独立 Chrome；当前目标页为 `http://127.0.0.1:8000/`
+  的 SillyTavern，未连接或操作主 Chrome。
 - 目标聊天已确认显示”神秘复苏模拟器发布版”，CDN 确认为 `@158dcc29107f` / `v81322_20260714_01`（8.13.22）。
 - 逐项验证 21 项：正文/档案/关系/记忆/抽卡/系统/设置/退出沉浸/快捷键/Esc/窄屏/开局表单交互/全库入口等，16 项通过，5 项发现问题。
 - **发现 5 个问题**：
   - **ISSUE-001 (Medium)**：退出沉浸后现场档案”资源”折叠区显示 `[object Object]`。
   - **ISSUE-002 (Medium)**：抽卡中栏摘要”保底”直接显示原始 JSON `{“total”:0,”rare”:0,”epic”:0}`。
-  - **ISSUE-003 (High)**：沉浸模式内”设置”8 个酒馆原生入口点击后 ST drawer 未打开——HUD click→jQuery trigger 链路存在 yield/drawer 竞争。手动 jQuery trigger 可正常打开；退出沉浸后点击也正常。
+  - **ISSUE-003 (High)**：沉浸模式内”设置”8 个酒馆原生入口点击后 ST drawer 未打开——HUD click→jQuery
+    trigger 链路存在 yield/drawer 竞争。手动 jQuery trigger 可正常打开；退出沉浸后点击也正常。
   - **ISSUE-004 (Low)**：退出沉浸按钮触发 aria-hidden/focus 冲突警告。
-  - **ISSUE-005 (Low)**：CoreMirror 运行失败（缺 AutoCardUpdaterAPI），2 个 CDN 404（storage/script.js, extensions.js）。
+  - **ISSUE-005 (Low)**：CoreMirror 运行失败（缺 AutoCardUpdaterAPI），2 个 CDN 404（storage/script.js,
+    extensions.js）。
 - 报告和 19 张截图保存在 `dogfood-output/mfrs-immersive-buttons-2026-07-15/`。
 
 ## 会话：2026-07-15（维护收尾与待命）
 
-- 本地 `main` 以 `git pull --ff-only` 同步至 `origin/main@b8213f7`（tag `v8.13.26`）；仅 fast-forward 了自动 bundle 的状态栏 dist。
-- 复核最新业务修复 `07051d7`：档案资源区改用 `buildHudResourceSectionsHtml` 渲染嵌套资源，解决 `[object Object]`；随后 `b8213f7` 自动 bundle 已在远端。
+- 本地 `main` 以 `git pull --ff-only` 同步至 `origin/main@b8213f7`（tag
+  `v8.13.26`）；仅 fast-forward 了自动 bundle 的状态栏 dist。
+- 复核最新业务修复 `07051d7`：档案资源区改用 `buildHudResourceSectionsHtml` 渲染嵌套资源，解决 `[object Object]`；随后
+  `b8213f7` 自动 bundle 已在远端。
 - 清理规划过时状态：8.13.21 基线、BF6 publish pending、H2 留待 8.13.23、旧启动指令均改为完成/历史状态。
 - backlog 复核：实施项已完成；DM9 为明确归档的孤儿 App.vue 条目；门禁/实机列表保留为未来相关改动的回归模板。
 - 当前进入待命维护状态：暂无已排期的新功能或缺陷；新任务须从最新 `origin/main` 新建 worktree/阶段。
@@ -895,7 +1370,8 @@
 
 - **归档/文档化 15 项**：H2(风险四套语义)/C2.4(DB-only)/M8(owner)/M10(解析链)/L4/L5/L9/SM1/SM3/SM4/DM4/DM9/DL5/SL3/WB-06
 - **规则/提示词修改 7 项**：L3(sp_start 限制)/M5(双路径禁写)/DM1(字数统一)/DM5(同步方向)/DL1(14表编号)/DL2(编号规则)/SL1(角色描述)
-- **代码改动 5 项**：M9(normalizer ARRAY_APPEND_PATHS 移除行动建议等)/DM2(adapter 9列枚举别名)/SM2(anchor required)/DM4注释/SL2注释
+- **代码改动 5 项**：M9(normalizer ARRAY_APPEND_PATHS 移除行动建议等)/DM2(adapter 9列枚举别名)/SM2(anchor
+  required)/DM4注释/SL2注释
 - **数据改动 3 项**：DM3(种子行)/DM6(updateNode)/DL4(chronicle note)/DL6(三表 SQL 示例)
 - **门禁修正**：verify-table-change-adapter 测试用例"极高"改为"超级无敌危险"（因 DM2 别名已覆盖"极高→致命"）
 - **门禁**：`pnpm verify:mfrs-gates` 全绿；pin 落后 HEAD 软警告（无 dist 变更，预期）
@@ -905,79 +1381,126 @@
 - **publish-card**：`pnpm publish-card 神秘复苏模拟器发布版` 成功；内置 G1 dist freshness + release PNG 门禁通过。
 - **发布后验证全绿**：
   - `pnpm verify:mfrs-dist-freshness`：PASS
-  - `pnpm verify:mfrs-gates`：6/6 PASS（initvar-schema/regex-ids/RH5-scoped/hotfix/output-cleaning/table-adapter/release-png）
+  - `pnpm verify:mfrs-gates`：6/6
+    PASS（initvar-schema/regex-ids/RH5-scoped/hotfix/output-cleaning/table-adapter/release-png）
   - `node scripts/verify-mfrs-release-png.mjs --json`：version=8.13.22、refs=7、cache=8、regex=33、scripts=8、chara+ccv3 一致
   - 不含 localhost/127.0.0.1/@main
 - **发布提交**：`e568cce7dd7a5f41537c879976160de160272a8a`（12 文件，精确暂存）
 - **bot bundle**：`6f336f3ec94e03bab15e1b35af773cf03a785b76`（仅 dist 状态栏 module-id，符合预期）
 - **标签**：`v8.13.22` → `e568cce`，本地+远端确认
-- **backlog 清理**：RH5 已完成；C1.3 publish-card 镜像验收关单；DL3 并入 H9 关单；DM9 孤儿 App.vue 归档；WB-06 W2 自锁部分关单（冷启动问题拆独立项）；M7 直接回归验证通过关单；M5/SM2/DM6 保持 open 符合源码事实；H2.2/SM1/SL3/DL5 改写指向 live owner
+- **backlog 清理**：RH5 已完成；C1.3 publish-card 镜像验收关单；DL3 并入 H9 关单；DM9 孤儿 App.vue 归档；WB-06
+  W2 自锁部分关单（冷启动问题拆独立项）；M7 直接回归验证通过关单；M5/SM2/DM6 保持 open 符合源码事实；H2.2/SM1/SL3/DL5 改写指向 live
+  owner
 
 ## 会话：2026-07-14（8.13.22 Phase B · 元数据与发布记录准备）— **历史记录：当时 implementation complete / publish pending；现已发布**
 
-- **恢复与任务 1–4**：37 个用户文件误入历史提交后已由前序阶段恢复为 untracked，并建立备份分支 `backup/pre-release-recovery-v8.13.22-bd75694-20260714-01`；BF6/RH5 功能链已进入 `main`。
-- **最终候选**：`CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达）。`4fcd23c` 是 RH5 后 bot bundle；`158dcc2` 在其后补齐 production 状态栏 dist，故选后者。该纯 dist push 不会触发后续 `[bot] bundle`，因为 `bundle.yaml` 忽略 `dist/**`。
-- **元数据**：常量版本改为 `8.13.22`，cache=`v81322_20260714_01`；开发版 `index.yaml` 版本同步，7 个项目资源 ref 与 8 个 cache marker 全部统一。
-- **文档**：创建 `RELEASE_8.13.22.md`；同步 README、backlog、task plan、findings/progress。`task_plan.md` 第 18 行用户预存的 `Phase 5` 修改原样保留。
-- **门禁事实**：旧 pin `f2b7db2` 下 freshness 预检失败（committed dist 已更新）属预期；功能 gates 已通过。未运行完整 gates；发布版 YAML/PNG 仍为 8.13.21，待 publish-card 后由 verification 代理做最终门禁。
-- **保护与反模式记录**：本轮元数据及发布文件尚未提交/推送/tag；Phase B 曾误执行一次 `publish-card --dry-run`，没有写入、没有 build，属已发生的反模式，后续不再重复。未修改发布 PNG、发布版 YAML 或 dist；未启动/停止 watch；37 个 untracked 文件保持原哈希。
+- **恢复与任务 1–4**：37 个用户文件误入历史提交后已由前序阶段恢复为 untracked，并建立备份分支
+  `backup/pre-release-recovery-v8.13.22-bd75694-20260714-01`；BF6/RH5 功能链已进入 `main`。
+- **最终候选**：`CDN_REF=158dcc29107fe17db1a89b8ca6e92585c2acbe8b`（已 push，`origin/main` 可达）。`4fcd23c`
+  是 RH5 后 bot bundle；`158dcc2` 在其后补齐 production 状态栏 dist，故选后者。该纯 dist push 不会触发后续
+  `[bot] bundle`，因为 `bundle.yaml` 忽略 `dist/**`。
+- **元数据**：常量版本改为 `8.13.22`，cache=`v81322_20260714_01`；开发版 `index.yaml`
+  版本同步，7 个项目资源 ref 与 8 个 cache marker 全部统一。
+- **文档**：创建 `RELEASE_8.13.22.md`；同步 README、backlog、task plan、findings/progress。`task_plan.md`
+  第 18 行用户预存的 `Phase 5` 修改原样保留。
+- **门禁事实**：旧 pin `f2b7db2` 下 freshness 预检失败（committed
+  dist 已更新）属预期；功能 gates 已通过。未运行完整 gates；发布版 YAML/PNG 仍为 8.13.21，待 publish-card 后由 verification 代理做最终门禁。
+- **保护与反模式记录**：本轮元数据及发布文件尚未提交/推送/tag；Phase B 曾误执行一次
+  `publish-card --dry-run`，没有写入、没有 build，属已发生的反模式，后续不再重复。未修改发布 PNG、发布版 YAML 或 dist；未启动/停止 watch；37 个 untracked 文件保持原哈希。
 
 ## 会话：2026-07-13（BF6 批 β 续 · RM9/RM1/RM2 显示正则）— **实机验证通过（commit `4ffc47f`）**
 
-- **RM9（done）**：召回索引块（`[不发送]去除` + `[显示]隐藏` 两条）结尾锚 `(?=\n\s*#\d+|$))` → `(?=\n\s*#\d+)|(?=\n\s*\n)|$)`。未闭合 `<supplement>` 时按「下一编号 / 空行段界」停，不再吞到 EOF 删掉后续正文。
-- **RM1（done）**：裸 choices（…2014）+ 裸 JSONPatch（…2015）尾 lookahead 加入 CJK `[一-鿿]`——协议块后直接跟中文正文时仍能剥离。
-- **RM2（done · 方案 A 正则近似）**：高亮 #6 加①值区负向后视（`标签：值` 的值不高亮）②标签名负向前瞻（行首标签名前缀+近冒号不高亮）。摘要块内 `复苏/鬼域/拼图/灵异物品` 等不再被 `horror-keyword` span 包裹。
-  - **近似代价（可接受）**：正文若恰以 `事件：鬼域`/`位置：复苏` 这类摘要字段行起句会被抑制；正文极少如此起句。RM2 无 JS 高亮入口（纯 yaml 单正则），故用正则近似，未迁 JS 层。
+- **RM9（done）**：召回索引块（`[不发送]去除` + `[显示]隐藏` 两条）结尾锚 `(?=\n\s*#\d+|$))` →
+  `(?=\n\s*#\d+)|(?=\n\s*\n)|$)`。未闭合 `<supplement>` 时按「下一编号 / 空行段界」停，不再吞到 EOF 删掉后续正文。
+- **RM1（done）**：裸 choices（…2014）+ 裸 JSONPatch（…2015）尾 lookahead 加入 CJK
+  `[一-鿿]`——协议块后直接跟中文正文时仍能剥离。
+- **RM2（done · 方案 A 正则近似）**：高亮 #6 加①值区负向后视（`标签：值`
+  的值不高亮）②标签名负向前瞻（行首标签名前缀+近冒号不高亮）。摘要块内 `复苏/鬼域/拼图/灵异物品` 等不再被
+  `horror-keyword` span 包裹。
+  - **近似代价（可接受）**：正文若恰以 `事件：鬼域`/`位置：复苏`
+    这类摘要字段行起句会被抑制；正文极少如此起句。RM2 无 JS 高亮入口（纯 yaml 单正则），故用正则近似，未迁 JS 层。
 - **实机验证**：全部经 chrome-devtools 从**改后真实文件**解析正则复验——正文高亮数正确、摘要块整块无高亮、行首/对白/逗号叙事正常高亮；RM9/RM1 前次已绿。
-- **门禁**：`pnpm verify:mfrs-gates` 6/6 绿（regex count=33 uniqueIds=33 双版本；release-png 过；P2 软警告 exit 0）。**显示正则，无需重建 dist**。BF6 未发版（累积至 8.13.22）。
+- **门禁**：`pnpm verify:mfrs-gates` 6/6 绿（regex count=33 uniqueIds=33 双版本；release-png 过；P2 软警告 exit
+  0）。**显示正则，无需重建 dist**。BF6 未发版（累积至 8.13.22）。
 
 ## 会话：2026-07-13（BF6 批 β 续 · RM7/RH3 运行时清洗）— **实机验证通过（含 bug 修复）**
 
-- **RM7（done）**：`cleanProtocolBlocks` 追加删除 `<draft>`/`<pacing_rules>`/`<修改确认>`/独立 `<JSONPatch>` 块，止残渣回传 AI。仅删闭合标签块；英文/外语调试摘要不删（避免误删正文英文对白）。
-- **RH3（done）**：`recoverRecentRawProtocolMessages` 补写 MVU 后加 `cleanProtocolBlocks(index)`，导入旧档也清洗 mes；snapshot 幂等保 raw。
+- **RM7（done）**：`cleanProtocolBlocks` 追加删除 `<draft>`/`<pacing_rules>`/`<修改确认>`/独立 `<JSONPatch>`
+  块，止残渣回传 AI。仅删闭合标签块；英文/外语调试摘要不删（避免误删正文英文对白）。
+- **RH3（done）**：`recoverRecentRawProtocolMessages` 补写 MVU 后加
+  `cleanProtocolBlocks(index)`，导入旧档也清洗 mes；snapshot 幂等保 raw。
 - **⭐ 实机验证抓到并修复真 bug（chrome-devtools 运行时注入验证）**：
-  - `<修改确认>` 中文标签用 `\b` 匹配**失败**（中文非 `\w`，word boundary 不成立）→ 块删不掉。已改为 `<修改确认(?:\s[^>]*)?>` 去 `\b` + 属性容错。draft/pacing 是 ASCII，`\b` 正常无需改。
+  - `<修改确认>` 中文标签用 `\b` 匹配**失败**（中文非 `\w`，word boundary 不成立）→ 块删不掉。已改为
+    `<修改确认(?:\s[^>]*)?>` 去 `\b` + 属性容错。draft/pacing 是 ASCII，`\b` 正常无需改。
   - 修复后 devtools 复验：12 项全绿——6 类协议块（draft/pacing/修改确认[含带属性]/独立JSONPatch/choices/UpdateVariable）全删；4 类正文（中文头/英文对白/本轮摘要/结尾）全留；无残留标签。
   - RH3 验证：新旧档首次快照写 raw+清洗 mes+正文留 ✓；已有 raw 时快照幂等不覆盖 ✓。
-  - **注**：真机 CDN pin 仍是 8.13.21（f2b7db2，不含 RM7/RH3），故用本地 production 源码的清洗链在 devtools 运行时验证，未改用户卡、未发版。
+  - **注**：真机 CDN
+    pin 仍是 8.13.21（f2b7db2，不含 RM7/RH3），故用本地 production 源码的清洗链在 devtools 运行时验证，未改用户卡、未发版。
 - **验证价值**：静态门禁（G5/mvu-hotfix）测不到运行时清洗，实机验证在提交前抓到中文 `\b` bug。
-- **production dist 重建**（eval=0）；`pnpm verify:mfrs-gates` 6/6 绿。提交仅含 hotfix src+dist+progress（状态栏 html 的 module-id 噪声已弃）。BF6 仍未发版。
+- **production dist 重建**（eval=0）；`pnpm verify:mfrs-gates` 6/6 绿。提交仅含 hotfix
+  src+dist+progress（状态栏 html 的 module-id 噪声已弃）。BF6 仍未发版。
 
 ## 会话：2026-07-13（BF6 批 β 低风险子集 · RM8/RH4）— **done（未发版）**
 
 用户选"先做低风险子集"（不改运行时清洗行为）。
 
 - **RM8/RH4（done）**：hotfix 清洗白名单 ↔ 显示正则同步守护。
-  - `hotfix-generation-ended-listeners/index.ts`：cleanProtocolBlocks 前加互指注释（白名单 {sp_start,sp_input,mfrs_roll}，与显示正则 id …2025 同步）。纯注释。
-  - `verify-mfrs-regex-ids.mjs`（G3）：加 `extractSpMfrsWhitelist` + `verifySpMfrsWhitelistSync`——从 hotfix 源与显示正则各提取白名单，断言**不变式 display ⊆ hotfix**（hotfix 可多列自闭合的 mfrs_roll）。任一方漂移→fail（防 RH6 式）。
-  - 验证：插桩确认断言真执行（hotfixSet={sp_start,sp_input,mfrs_roll}）；**负向测试**：篡改显示正则加 sp_FAKE→G3 exit=1 fail，还原→pass。聚合门禁 6/6 绿。
-  - **副发现（已记 backlog）**：hotfix 白名单含 mfrs_roll 而显示正则 #10 不含属**无害**——掷骰条实际输出自闭合 `<mfrs_roll .../>`（成对匹配的显示正则天然不碰）；文档里的成对 `<mfrs_roll>` 全是行内代码引用非协议。
-- **留下一批（改运行时清洗，需实机验证）**：RM7（hotfix 补删 draft/pacing/修改确认/JSONPatch 残渣）、RM9（`$` 兜底截断勿删到尾）、RH3（导入旧档补洗）、RH5（收窄 #19–22 英行改写）、RM1/RM2。
+  - `hotfix-generation-ended-listeners/index.ts`：cleanProtocolBlocks 前加互指注释（白名单 {sp_start,sp_input,mfrs_roll}，与显示正则 id
+    …2025 同步）。纯注释。
+  - `verify-mfrs-regex-ids.mjs`（G3）：加 `extractSpMfrsWhitelist` +
+    `verifySpMfrsWhitelistSync`——从 hotfix 源与显示正则各提取白名单，断言**不变式 display ⊆
+    hotfix**（hotfix 可多列自闭合的 mfrs_roll）。任一方漂移→fail（防 RH6 式）。
+  - 验证：插桩确认断言真执行（hotfixSet={sp_start,sp_input,mfrs_roll}）；**负向测试**：篡改显示正则加 sp_FAKE→G3 exit=1
+    fail，还原→pass。聚合门禁 6/6 绿。
+  - **副发现（已记 backlog）**：hotfix 白名单含 mfrs_roll 而显示正则 #10 不含属**无害**——掷骰条实际输出自闭合
+    `<mfrs_roll .../>`（成对匹配的显示正则天然不碰）；文档里的成对 `<mfrs_roll>` 全是行内代码引用非协议。
+- **留下一批（改运行时清洗，需实机验证）**：RM7（hotfix 补删 draft/pacing/修改确认/JSONPatch 残渣）、RM9（`$`
+  兜底截断勿删到尾）、RH3（导入旧档补洗）、RH5（收窄 #19–22 英行改写）、RM1/RM2。
 - **待办**：hotfix .ts 仅注释改动，dist 重建留发版前统一做（G1 强制 production build）。BF6 未发版。
 
 ## 会话：2026-07-13（BF6 · P1 release-png 接入 publish-card）— **in_progress**
 
-- **P1（done）**：`scripts/publish-card.mjs` 加 `verifyReleasePng(card)`——每卡 `runBundle` 后校验发布 PNG 的 version/ref/cache/regex/scripts 与 `mfrs-release-constants.mjs` 单真源对齐；失败 `die`。
-  - 位置：仿既有 `verifyDistFreshness`（G1）；调用点在每卡 `if (!NO_BUNDLE){ runBundle(); if(!DRY_RUN) verifyReleasePng(card); }`。
-  - 验证：`node --check` 通过；`--dry-run` 正确跳过（不改文件）；门禁真值测试——正常 exit=0 / 错 ref(`--expect-ref deadbeef`) exit=1；聚合 `verify:mfrs-gates` 6/6 全绿无回归。
+- **P1（done）**：`scripts/publish-card.mjs` 加 `verifyReleasePng(card)`——每卡 `runBundle`
+  后校验发布 PNG 的 version/ref/cache/regex/scripts 与 `mfrs-release-constants.mjs` 单真源对齐；失败 `die`。
+  - 位置：仿既有 `verifyDistFreshness`（G1）；调用点在每卡
+    `if (!NO_BUNDLE){ runBundle(); if(!DRY_RUN) verifyReleasePng(card); }`。
+  - 验证：`node --check` 通过；`--dry-run` 正确跳过（不改文件）；门禁真值测试——正常 exit=0
+    / 错 ref(`--expect-ref deadbeef`) exit=1；聚合 `verify:mfrs-gates` 6/6 全绿无回归。
   - 效果：发布链现自动拦"PNG 与 pin 不一致"，消除人工遗漏（原只 G1 自动）。
 - **下一**：批 β 正则残余（RM7–9/RH3–5/RM1–2）。BF6 未发版。
 
 ### 追加（同会话）· P0/P2/P3 流程门禁质量项 — **done**
 
-- **P0**（`verify-mfrs-dist-freshness.mjs` + `package.json`）：加 `--no-build` 只读模式（跳 `runProductionBuild`，仅比对 committed dist ↔ CDN_REF）；`--ref` 默认回退 `CDN_REF`；package script 带 `--no-build`。publish-card 仍传完整参数走 build 校验，未受影响。self-test 加 2 断言。
-  - **副产发现（Low/无害）**：只读模式揭示仓库 HEAD 已提交 dist ≠ CDN_REF(`f2b7db2`) dist。字符级比对确认唯一差异是 webpack module-id `672↔248`（全局替换后字节全等，功能 100% 等价）；`[bot] bundle fcd4a82` 在 pin 后 3 分钟重建所致。线上 CDN 拉 pin 版，用户不受影响。
-- **P2**（`verify-mfrs-release-png.mjs`）：加 `warnIfPinDivergesFromHead`——pin≠HEAD 时 `console.warn` 报落后提交数 + 非 bundle 数，**不 fail**（exit 0）。原设想的硬校验 `CDN_REF==HEAD` 会误伤"发版 pin 后又 bot bundle"正常态（P0 已证实），故改软警告。现状实测：warn "pin 落后 HEAD 4 提交含 3 非 bundle" + exit 0。
-- **P3**（`verify-mfrs-initvar-schema.mjs`）：加 `resolveRef`（解本地 `$defs`/`definitions` 指针 + 防循环）；`schemaObjectKeys` 传 root 并解引用。当前 schema.json 的 3 个 `$defs` 均标量（number/string），无行为变化——前瞻防御，防将来 `$defs` 含 object 时假阴。
-- 回归：`node --check` 三脚本 OK；各 self-test 过；`pnpm verify:mfrs-gates` **6/6 全绿**（release-png 带 P2 warn，exit 0）。未发版。
+- **P0**（`verify-mfrs-dist-freshness.mjs` + `package.json`）：加 `--no-build` 只读模式（跳
+  `runProductionBuild`，仅比对 committed dist ↔ CDN_REF）；`--ref` 默认回退 `CDN_REF`；package script 带
+  `--no-build`。publish-card 仍传完整参数走 build 校验，未受影响。self-test 加 2 断言。
+  - **副产发现（Low/无害）**：只读模式揭示仓库 HEAD 已提交 dist ≠ CDN_REF(`f2b7db2`)
+    dist。字符级比对确认唯一差异是 webpack module-id
+    `672↔248`（全局替换后字节全等，功能 100% 等价）；`[bot] bundle fcd4a82`
+    在 pin 后 3 分钟重建所致。线上 CDN 拉 pin 版，用户不受影响。
+- **P2**（`verify-mfrs-release-png.mjs`）：加 `warnIfPinDivergesFromHead`——pin≠HEAD 时 `console.warn`
+  报落后提交数 + 非 bundle 数，**不 fail**（exit 0）。原设想的硬校验 `CDN_REF==HEAD` 会误伤"发版 pin 后又 bot
+  bundle"正常态（P0 已证实），故改软警告。现状实测：warn "pin 落后 HEAD 4 提交含 3 非 bundle" + exit 0。
+- **P3**（`verify-mfrs-initvar-schema.mjs`）：加 `resolveRef`（解本地 `$defs`/`definitions`
+  指针 + 防循环）；`schemaObjectKeys` 传 root 并解引用。当前 schema.json 的 3 个 `$defs`
+  均标量（number/string），无行为变化——前瞻防御，防将来 `$defs` 含 object 时假阴。
+- 回归：`node --check` 三脚本 OK；各 self-test 过；`pnpm verify:mfrs-gates` **6/6 全绿**（release-png 带 P2 warn，exit
+  0）。未发版。
 
 ## 会话：2026-07-13（8.13.21 上线后只读审查）— **complete**
 
 双路独立只读审查（主会话 + 子代理），**结论一致：8.13.21 可安全上线**。
 
-- **A git**：本地 `main` behind origin/main 1 个 `fcd4a82 [bot] bundle`（可 FF）；工作树仅 dev PNG，哈希 = origin/main 完全一致（`b7696690…`，bot 产物非手改）；**无未提交业务代码**。
-- **B 变更/硬约束**：范围 `d2f8ae7..077b0b2`；业务源码仅 3 txt（WM1 偏移 0–5 / WM2 引用 / L8 示例 `medium→investigate`+`死亡风险低`），余为新增只读门禁脚本。`index.yaml` 8 项**仅 pin 更新**（`de42f2c`→`f2b7db2`、cache `v81320`→`v81321`），名称/id/启用/顺序未动；正则 33 未动；`table-change-adapter.ts` 本体未改（DM8 是新增测试覆盖）。L8 改动合法（`类型`=z.string()、`死亡风险`枚举含"低"）。**4 条硬约束全未破坏**。
-- **C 门禁**：`pnpm verify:mfrs-gates` **6/6 PASS**（initvar-schema rootKeys=36 / regex-ids 33-33 / mvu-hotfix / output-cleaning / table-adapter / release-png version=8.13.21 refs=7 cache=8 regex=33 scripts=8）。G1 dist-freshness 只读模式无法跑（缺 `--ref` + 内部 build）。
+- **A git**：本地 `main` behind origin/main 1 个 `fcd4a82 [bot] bundle`（可 FF）；工作树仅 dev PNG，哈希 =
+  origin/main 完全一致（`b7696690…`，bot 产物非手改）；**无未提交业务代码**。
+- **B 变更/硬约束**：范围 `d2f8ae7..077b0b2`；业务源码仅 3 txt（WM1 偏移 0–5 / WM2 引用 / L8 示例
+  `medium→investigate`+`死亡风险低`），余为新增只读门禁脚本。`index.yaml`
+  8 项**仅 pin 更新**（`de42f2c`→`f2b7db2`、cache
+  `v81320`→`v81321`），名称/id/启用/顺序未动；正则 33 未动；`table-change-adapter.ts`
+  本体未改（DM8 是新增测试覆盖）。L8 改动合法（`类型`=z.string()、`死亡风险`枚举含"低"）。**4 条硬约束全未破坏**。
+- **C 门禁**：`pnpm verify:mfrs-gates` **6/6 PASS**（initvar-schema rootKeys=36 / regex-ids 33-33 / mvu-hotfix /
+  output-cleaning / table-adapter / release-png version=8.13.21 refs=7 cache=8 regex=33 scripts=8）。G1
+  dist-freshness 只读模式无法跑（缺 `--ref` + 内部 build）。
 - **新增质量项**（入 backlog「BF5 上线后审查」区）：
   - **P1**（Medium）release-png 门禁未接入 publish-card/CI，靠人工
   - **P2**（Low）release-png `--from-publish-card` 自证式，抓不出常量写错
@@ -991,7 +1514,8 @@
 - **G3** `verify-mfrs-regex-ids.mjs`：33 条 id 唯一 + 查找表达式可编译（dev+pub）
 - **G4** `mfrs-release-constants.mjs` 单真源；publish-card / release-png 共用；`--from-publish-card`
 - **G5** cleaning 扩：中英混排、长英文对白、双 UV、【警告】长正文、未闭合 sp_
-- **DM8** adapter：characters/items/rules 插入+别名；禁删 collected_rules；items/characters 可删；非法枚举；混合 LENGTH 拒绝；chronicle 真模板
+- **DM8**
+  adapter：characters/items/rules 插入+别名；禁删 collected_rules；items/characters 可删；非法枚举；混合 LENGTH 拒绝；chronicle 真模板
 - 快修：**WM1** 偏移 0–5；**WM2** 交叉引用；**L8** medium→investigate + 摘要死亡风险
 - `pnpm verify:mfrs-gates`；hotfix/cleaning/adapter/release-png 全绿
 - 功能 commit：`ddd2676`；status dist pin：`f2b7db2`
@@ -1039,6 +1563,7 @@
 ## 会话：2026-07-13（BF0.5 · H10 方案 B）— **complete（源码）**
 
 ### H10 决策：方案 B
+
 - 不恢复 App.vue 加载
 - 新增 `脚本/数据库前端/mvu-core-mirror.ts`：GENERATION_ENDED/MESSAGE_RECEIVED 后镜像 global/player/event/clue/行动建议
 - 字段路径按 D3 修正；处理状态 `未接触→未处理`
@@ -1051,6 +1576,7 @@
 ### 阶段 BF0 — **committed `5eaa533`**
 
 **改动：**
+
 - C1+L7+M6：`initvar.yaml` 四键升根；姓名/开局地点 `''`；补 flags/`可见档案`/主线权限键
 - C2：`schema.ts` + `schema.json` 扩展字段
 - H1+D1+M11+H3：规则/系统提示/输出格式统一
@@ -1067,14 +1593,17 @@
 ### 阶段 BF-1 — **complete**
 
 **交付：**
+
 - 隔离 worktree `D:\project\tavern_helper_template-bf1` / 分支 `codex/bf1-recovery`
 - 基线：`origin/main@e068087`（含 bot Bump deps；此前 f692384 已有 always-unlock 的 bot bundle dist）
-- `d5cd98f`：production dist（状态栏 html 重建）+ G1 `verify-mfrs-dist-freshness.mjs` + publish-card 前置 + package.json script
+- `d5cd98f`：production dist（状态栏 html 重建）+ G1 `verify-mfrs-dist-freshness.mjs` + publish-card 前置 + package.json
+  script
 - `de29b4a`：CDN_REF→`d5cd98f`、cache `…-v81314-c7-dist-rebuild`、版本 **8.13.14**、publish PNG + RELEASE
 - 验收：G1 通过；`verify-mfrs-release-png` version=8.13.14 refs=7 cache=8 regex=33 scripts=8
 - hotfix dist 含 `generation_ended_always`（28777ad 无此标记）
 
 **主目录：**
+
 - 未碰 `node_modules` / 未停 watch
 - 规划/backlog 已勾 C7/G1；A2 审计文档等本地 dirty 未随发版提交
 - **已合 main：** `origin/main` FF → `de29b4a`（2026-07-13）；用户自行重导 8.13.14 PNG
@@ -1086,19 +1615,24 @@
 ### 阶段 A2 — **complete**
 
 **操作：**
-1. 7 条独立盲审轨并行（Explore 子代理，禁读既有清单）：脚本 SA×16 / MVU MV×18 / 正则 RX×15 / SQL DB×25 / 世界书 WB×18 / 开局 ST×16 / 漂移门禁 DR×7 = 115 项
-2. 主会话独立复核关键论断：schema/initvar 对账（36 根键）、dist@28777ad 能力探针、发布版 URL 解码、恐怖程度 75 处计数、`<<START>` 字节验证、RX-05 掷骰击杀链
+
+1. 7 条独立盲审轨并行（Explore 子代理，禁读既有清单）：脚本 SA×16 / MVU MV×18 / 正则 RX×15 / SQL DB×25 / 世界书 WB×18
+   / 开局 ST×16 / 漂移门禁 DR×7 = 115 项
+2. 主会话独立复核关键论断：schema/initvar 对账（36 根键）、dist@28777ad 能力探针、发布版 URL 解码、恐怖程度 75 处计数、`<<START>`
+   字节验证、RX-05 掷骰击杀链
 3. 与 backlog 逐条差分：已覆盖 ~70 / **新增 32 / 误报修正 4 / 升级扩容 10**
 4. 入库：backlog「三轮 A2」区（C7、H10、RH6、SH6、M11、RM3–9、WM4–8、DM7–9、DL4–6、L5–9、SL2–3、G1–G5 门禁）+ 对既有条目 20 处就地修正
 5. 更新 task_plan（A2 complete、新 BF-1/BF0.5 阶段、BF 表重排）、findings（A2 差分区）
 
 **关键结论：**
+
 - **C7（Critical 新增）**：8.13.13 发布 pin `28777ad` 无 dist rebuild → always-unlock 修复未交付用户。BF-1 最优先
 - **H10（决策）**：App.vue 状态栏发布链孤儿，MVU→DB 核心镜像零 owner → 决定 BF3 一半条目的修复对象
 - **误报**：C5（stub 未被加载）关闭；C4 降 Medium；W1 休眠标注；"#31 勿重开"立场撤销（RM5 复核）
 - **工作区注意**：dist hotfix 当前是 dev-mode 构建（eval+sourcemap），发布前必须 production rebuild，勿直接提交
 
 **创建/修改：**
+
 - `docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md`（三轮 A2 区 + 就地修正 + BF 表 A2 修订版）
 - `task_plan.md`、`findings.md`、`progress.md`（本文件）
 - `.tmp-research/a2-diff-workbench.md`（差分工作台，临时）
@@ -1110,6 +1644,7 @@
 ## 会话：2026-07-12（审计 + 清单 + 文件规划交接）
 
 ### 背景续接（本会话前已存在）
+
 - 路径 β HUD 已发 8.12.x–8.13.x
 - **8.13.11** seed 行动建议路径
 - **8.13.12** P2 双保险
@@ -1119,6 +1654,7 @@
 ### 阶段 A：审计与清单 — **complete**
 
 **操作：**
+
 1. 说明 UI 归属（脚本+界面/状态栏，非世界书）
 2. 一轮审计：脚本 / MVU / EJS / 系统提示词 → Critical/High/Medium/Low
 3. 二轮审计：正则 33 / SQL 14 / 开局欢迎 / 世界书规则与锚点
@@ -1126,6 +1662,7 @@
 5. README 挂链；planning-with-files 三文件就位
 
 **创建/修改的文件：**
+
 - `docs/mfrs-redesign-phase0/AUDIT_BUGFIX_BACKLOG.md`（新建/扩充）
 - `docs/mfrs-redesign-phase0/README.md`（索引）
 - `task_plan.md`（本交接计划）
@@ -1135,41 +1672,43 @@
 **未改：** 业务源码修复、publish（审计阶段无代码 fix）
 
 ### 阶段 B / BF0 — **pending**
+
 - 下一会话从 **C1 initvar 升根** 开始
 
 ## 测试结果
 
-| 测试 | 输入 | 预期 | 实际 | 状态 |
-|------|------|------|------|------|
-| 8.13.13 release-png | expect 8.13.13 / 28777ad | pass | pass（发版时） | 已过 |
-| 二轮审计回归用例 | — | — | 未跑修复后回归 | 待 BF5 |
-| initvar 根路径 | 新开局 | 根上有行动建议 | 源仍嵌套（C1 未修） | 待修 |
-| 英文正文 + 正则 | 英文 corridor 叙事 | 保留 | 审计认为 R1 会误删 | 待修 |
+| 测试                | 输入                     | 预期           | 实际                | 状态   |
+| ------------------- | ------------------------ | -------------- | ------------------- | ------ |
+| 8.13.13 release-png | expect 8.13.13 / 28777ad | pass           | pass（发版时）      | 已过   |
+| 二轮审计回归用例    | —                        | —              | 未跑修复后回归      | 待 BF5 |
+| initvar 根路径      | 新开局                   | 根上有行动建议 | 源仍嵌套（C1 未修） | 待修   |
+| 英文正文 + 正则     | 英文 corridor 叙事       | 保留           | 审计认为 R1 会误删  | 待修   |
 
 ## 错误日志
 
-| 时间 | 错误 | 尝试 | 方案 |
-|------|------|------|------|
-| 历史 | 发送 mutex 卡 | CDP+hotfix | 8.13.13 always unlock；H5 仍可优化 |
-| 历史 | 行动建议空 | seed | 8.13.11；C1 根因未修 |
-| 本会话 | 无修复失败 | — | 仅审计 |
+| 时间   | 错误          | 尝试       | 方案                               |
+| ------ | ------------- | ---------- | ---------------------------------- |
+| 历史   | 发送 mutex 卡 | CDP+hotfix | 8.13.13 always unlock；H5 仍可优化 |
+| 历史   | 行动建议空    | seed       | 8.13.11；C1 根因未修               |
+| 本会话 | 无修复失败    | —          | 仅审计                             |
 
 ## 工作树备忘（交接时）
 
 - 分支：`main`（behind origin 1：f692384 [bot] bundle — **开工先 pull**）
 - 未提交相关：`AUDIT_BUGFIX_BACKLOG.md`、`task_plan.md`、`findings.md`、`progress.md`、`README.md` 等
 - 杂项 untracked（勿当缺陷源）：`.tmp-research/`、截图、`5.10号途尽更新/` 等
-- ~~可能有 dist hotfix 本地修改：提交前核对是否应进 BF 修复~~ **已核实（DR-04）**：工作区 dist 是 src 的 dev-mode rebuild（eval+sourcemap），非手改；**发布前先 `pnpm build` production，勿把 dev 构建提交**
+- ~~可能有 dist hotfix 本地修改：提交前核对是否应进 BF 修复~~ **已核实（DR-04）**：工作区 dist 是 src 的 dev-mode
+  rebuild（eval+sourcemap），非手改；**发布前先 `pnpm build` production，勿把 dev 构建提交**
 
 ## 五问重启检查
 
-| 问题 | 答案 |
-|------|------|
-| 我在哪里？ | BF-1 完成（8.13.14）；BF0 未开 |
-| 我要去哪里？ | BF0→BF0.5→BF1–BF5 |
-| 目标是什么？ | 按 backlog 修功能路径 bug 并回归发版 |
+| 问题           | 答案                                  |
+| -------------- | ------------------------------------- |
+| 我在哪里？     | BF-1 完成（8.13.14）；BF0 未开        |
+| 我要去哪里？   | BF0→BF0.5→BF1–BF5                     |
+| 目标是什么？   | 按 backlog 修功能路径 bug 并回归发版  |
 | 我学到了什么？ | findings.md + AUDIT_BUGFIX_BACKLOG.md |
-| 我做了什么？ | 两轮+A2 审计 + BF-1 重发 + 本三文件 |
+| 我做了什么？   | 两轮+A2 审计 + BF-1 重发 + 本三文件   |
 
 ## 新会话最小步骤
 
@@ -1181,22 +1720,28 @@
 6. 注意：规划文件多在**主目录本地 dirty**；发版代码在 `codex/bf1-recovery`
 
 ---
-*每个 BF 阶段完成或遇错时更新*
+
+_每个 BF 阶段完成或遇错时更新_
+
 ## 2026-08-17 · SP数据库 III 空表修复复验
 
 - 已恢复前序会话：静态修复完成，但尚未在当前浏览器角色卡中完成填表、持久化和 UI 渲染闭环。
 - 本轮开始核对角色卡源、模板、构建产物及运行时；不会安装依赖或干预用户维护的 watch。
-- 已确认角色卡源启用了目标两项脚本并指向 5510 当前产物；已确认当前工具清单缺少指定的 Chrome DevTools MCP，因此尚未进行浏览器动作。
+- 已确认角色卡源启用了目标两项脚本并指向 5510 当前产物；已确认当前工具清单缺少指定的 Chrome DevTools
+  MCP，因此尚未进行浏览器动作。
 - 静态闭环通过：模板可解析（15 个有效 sheet）、5510 新 bundle 具备注册/应用 API 且不含旧坏字符串、开发卡 PNG 的 chara/ccv3 都指向当前 5510 入口。
 - 专项门禁首项失败并已记录：P3 仍期待 10 个召回表，当前新增拓本后为 11；按三次失败协议不原样重跑，改为分别验证其余门禁与 bundle 语法。
-- 其余定向验证通过：table-change adapter PASS、数据库前端 bundle 语法 PASS。仓库内 Chrome DevTools MCP 配置正确，但当前会话工具层未挂载该服务器。
+- 其余定向验证通过：table-change adapter PASS、数据库前端 bundle 语法 PASS。仓库内 Chrome DevTools
+  MCP 配置正确，但当前会话工具层未挂载该服务器。
 - 首次端口进程只读枚举发生 PowerShell 语法错误，已记录；下一次改用显式结果数组，不重复原命令。
 - 端口进程复核成功；直接只读角色 API 因缺少现有浏览器认证返回 Forbidden，未进一步尝试凭据提取或认证绕过。
-- 已检查现有截图：页面停在欢迎页，不具备目标面板证据。文件时间枚举脚本重复出现 `foreach |` 解析错误，已改为统一显式数组模式。
+- 已检查现有截图：页面停在欢迎页，不具备目标面板证据。文件时间枚举脚本重复出现 `foreach |`
+  解析错误，已改为统一显式数组模式。
 - 时间戳确认现有截图早于本次修复，不能作为修复后验收；修复后 dist 已由 watch 在约 0.84 秒后生成。
 - 已从 8000 进程父链定位运行实例根目录为 `E:\SillyTavern`，下一步限定在该实例的数据目录读取实际导入卡和对应聊天。
 - 已读取实际导入卡：修复后重新写入，目标两脚本在 chara/ccv3 中均启用且 URL 正确。已定位修复后唯一聊天 JSONL，准备只读检查其数据库元数据。
 - 持久化验收已通过：两轮 AI 回复分别写入 checkpoint 与 delta，关键面板表已有非零行。数据库自动填表主链已确认生效；只剩浏览器端目视渲染验收。
 - 最新 delta 重建后线索为 3 行；六个问题面板对应表全部非空且结构有效。源码判定也会走非空分支，UI 剩余风险仅为当前页面是否已刷新/实际 DOM 是否挂载。
-- 可见性复核通过：线索 2/2 checkpoint 行均为玩家可见，其余目标表无额外过滤。功能修复判定为成功；等待 `mcp_chrome_devtools_*` 恢复后补最终 DOM/截图验收。
+- 可见性复核通过：线索 2/2 checkpoint 行均为玩家可见，其余目标表无额外过滤。功能修复判定为成功；等待
+  `mcp_chrome_devtools_*` 恢复后补最终 DOM/截图验收。
 - 收尾 `git diff --check` 通过；最后一次复合 `rg` 仅因 shell 解析中文引号报错，已记录，不再重复。
