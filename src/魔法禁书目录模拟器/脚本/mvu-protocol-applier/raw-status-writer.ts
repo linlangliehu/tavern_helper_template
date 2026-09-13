@@ -61,12 +61,113 @@ const INSERT_DEDUP_KEYS: Readonly<Record<string, readonly string[]>> = {
   '/能力档案': ['能力名称'],
 };
 
+const ABILITY_TEXT_FIELDS = ['能力效果', '实战运用'] as const;
+
 function readInsertKey(value: Record<string, unknown>, fields: readonly string[]): string {
   for (const field of fields) {
     const candidate = value[field];
     if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
   }
   return '';
+}
+
+function isPlaceholderAbilityText(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  const text = value.trim();
+  if (!text) return false;
+  return (
+    text.includes('依设定与剧情判定') ||
+    text.includes('随剧情展开') ||
+    text.includes('待补全') ||
+    text.includes('待揭示') ||
+    text.includes('尚未展现') ||
+    text.includes('尚未运用') ||
+    text.includes('待玩家填写') ||
+    text.includes('待玩家确认') ||
+    text.includes('待剧情展开')
+  );
+}
+
+function isSubstantiveAbilityText(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && !isPlaceholderAbilityText(value);
+}
+
+function normalizeAbilityIdentity(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  return value.normalize('NFKC').replace(/\s+/g, '').toLowerCase();
+}
+
+function findExistingAbility(
+  roster: readonly Record<string, unknown>[],
+  incoming: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  const identity = normalizeAbilityIdentity(incoming['能力名称']);
+  if (!identity) return undefined;
+  const sameName = roster.filter(element => normalizeAbilityIdentity(element['能力名称']) === identity);
+  if (sameName.length === 1) return sameName[0];
+  const camp = String(incoming['阵营类型'] ?? '').trim();
+  if (!camp) return undefined;
+  const sameNameAndCamp = sameName.filter(element => String(element['阵营类型'] ?? '').trim() === camp);
+  return sameNameAndCamp.length === 1 ? sameNameAndCamp[0] : undefined;
+}
+
+function sanitizeAbilityRecord(
+  record: Record<string, unknown>,
+  roster: readonly Record<string, unknown>[],
+): Record<string, unknown> {
+  const next = clone(record);
+  const existing = findExistingAbility(roster, next);
+  for (const field of ABILITY_TEXT_FIELDS) {
+    const incoming = next[field];
+    const previous = existing?.[field];
+    if (isSubstantiveAbilityText(previous) && !isSubstantiveAbilityText(incoming)) {
+      next[field] = clone(previous);
+    } else if (!isSubstantiveAbilityText(incoming)) {
+      next[field] = '';
+    }
+  }
+  return next;
+}
+
+function sanitizeAbilityValue(value: unknown, roster: readonly Record<string, unknown>[]): unknown {
+  if (Array.isArray(value)) {
+    return value.map(element => (isPlainObject(element) ? sanitizeAbilityRecord(element, roster) : clone(element)));
+  }
+  return isPlainObject(value) ? sanitizeAbilityRecord(value, roster) : clone(value);
+}
+
+function sanitizeAbilityPatch(root: MvuData, patch: Patch, pathParts: readonly string[]): Patch {
+  const op = String(patch.op ?? '')
+    .trim()
+    .toLowerCase();
+  if (!['replace', 'insert', 'add'].includes(op) || pathParts[0] !== '能力档案') return patch;
+  const roster = Array.isArray(root.stat_data?.能力档案) ? (root.stat_data.能力档案 as Record<string, unknown>[]) : [];
+
+  if (pathParts.length === 1 && (op === 'replace' || op === 'add')) {
+    return { ...patch, value: sanitizeAbilityValue(patch.value, roster) };
+  }
+
+  if (pathParts.length === 2 && isPlainObject(patch.value)) {
+    return { ...patch, value: sanitizeAbilityRecord(patch.value, roster) };
+  }
+
+  if (pathParts.length === 3 && (op === 'replace' || op === 'add')) {
+    const field = pathParts[2];
+    if ((ABILITY_TEXT_FIELDS as readonly string[]).includes(field)) {
+      const index = parseIndex(pathParts[1], roster.length);
+      const target = index === null ? undefined : roster[index];
+      if (!isPlainObject(target) || !normalizeAbilityIdentity(target['能力名称'])) {
+        return { ...patch, value: '' };
+      }
+      const previous = target[field];
+      if (isSubstantiveAbilityText(previous) && !isSubstantiveAbilityText(patch.value)) {
+        return { ...patch, value: clone(previous) };
+      }
+      return { ...patch, value: isSubstantiveAbilityText(patch.value) ? patch.value : '' };
+    }
+  }
+
+  return patch;
 }
 
 function getParent(root: unknown, parts: string[], create = false) {
@@ -93,18 +194,22 @@ function parseIndex(value: string, length: number, allowEnd = false) {
 }
 
 function applyPatch(root: MvuData, patch: Patch): boolean {
-  const op = String(patch.op ?? '').trim().toLowerCase();
   // 防御性归一：模型偶发输出点号路径（/主线进度.当前阶段），统一转斜杠，
   // 避免值静默写进垃圾键（schema 键名不含点，归一安全）。
   const pathParts = decodePointer(String(patch.path ?? '').replace(/\./g, '/'));
   if (pathParts.length === 0) return false;
   const fullParts = ['stat_data', ...pathParts];
+  const key = fullParts[fullParts.length - 1];
+  const requestedOp = String(patch.op ?? '')
+    .trim()
+    .toLowerCase();
+  const op = requestedOp === 'add' && (key === '-' || /^\d+$/u.test(key)) ? 'insert' : requestedOp;
+  const safePatch = sanitizeAbilityPatch(root, patch, pathParts);
   const parent = getParent(root, fullParts, op === 'replace' || op === 'delta' || op === 'insert');
   if (!parent) return false;
-  const key = fullParts[fullParts.length - 1];
 
   if (op === 'replace') {
-    (parent as any)[key] = clone(patch.value);
+    (parent as any)[key] = clone(safePatch.value);
     return true;
   }
 
@@ -122,7 +227,7 @@ function applyPatch(root: MvuData, patch: Patch): boolean {
     if (index === null) return false;
     // 同一协议可能被写后复核、恢复扫描和写回重试重复应用。对象数组在共同写入边界幂等化；
     // 标量与数组值仍保持原 insert 语义。
-    const value = patch.value;
+    const value = safePatch.value;
     if (isPlainObject(value)) {
       const arrayPath = `/${pathParts.slice(0, -1).join('/')}`;
       const keyFields = INSERT_DEDUP_KEYS[arrayPath];
@@ -178,7 +283,8 @@ function applyPatch(root: MvuData, patch: Patch): boolean {
     if (!destinationParent) return false;
     const destinationKey = destinationParts[destinationParts.length - 1];
     if (Array.isArray(destinationParent)) {
-      const index = destinationKey === '-' ? destinationParent.length : parseIndex(destinationKey, destinationParent.length, true);
+      const index =
+        destinationKey === '-' ? destinationParent.length : parseIndex(destinationKey, destinationParent.length, true);
       if (index === null) return false;
       destinationParent.splice(index, 0, moved);
     } else {
@@ -233,7 +339,9 @@ function extractWhitelistedDeltaPatches(normalizedMessage: string): DeltaPatch[]
   const out: DeltaPatch[] = [];
   for (const block of blocks) {
     const match = block.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
-    const arrayText = match ? extractJsonArray(match[1]) : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
+    const arrayText = match
+      ? extractJsonArray(match[1])
+      : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
     if (!arrayText) continue;
     let patches: Patch[];
     try {
@@ -243,7 +351,9 @@ function extractWhitelistedDeltaPatches(normalizedMessage: string): DeltaPatch[]
     }
     if (!Array.isArray(patches)) continue;
     for (const patch of patches) {
-      const op = String(patch.op ?? '').trim().toLowerCase();
+      const op = String(patch.op ?? '')
+        .trim()
+        .toLowerCase();
       if (op !== 'delta') continue;
       const path = String(patch.path ?? '');
       if (!FALSAPPLY_DELTA_WHITELIST.has(path)) continue;
@@ -282,7 +392,9 @@ function extractReplacePaths(normalizedMessage: string): string[] {
   const out: string[] = [];
   for (const block of blocks) {
     const match = block.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
-    const arrayText = match ? extractJsonArray(match[1]) : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
+    const arrayText = match
+      ? extractJsonArray(match[1])
+      : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
     if (!arrayText) continue;
     let patches: Patch[];
     try {
@@ -292,7 +404,12 @@ function extractReplacePaths(normalizedMessage: string): string[] {
     }
     if (!Array.isArray(patches)) continue;
     for (const patch of patches) {
-      if (String(patch.op ?? '').trim().toLowerCase() !== 'replace') continue;
+      if (
+        String(patch.op ?? '')
+          .trim()
+          .toLowerCase() !== 'replace'
+      )
+        continue;
       const path = String(patch.path ?? '').replace(/\./g, '/');
       if (path) out.push(path);
     }
@@ -326,7 +443,8 @@ export function isFalselyAppliedStat(oldData: MvuData | undefined, normalizedMes
   // 判定 A：delta 白名单（神秘复苏路径；魔禁卡白名单为空，恒不命中）
   const deltaPaths = [...new Set(extractWhitelistedDeltaPatches(normalizedMessage).map(delta => delta.path))];
   if (deltaPaths.length > 0) {
-    const expectedStat = applyRawProtocolToMvuData(createFalseApplyDefaultData(), normalizedMessage).data.stat_data || {};
+    const expectedStat =
+      applyRawProtocolToMvuData(createFalseApplyDefaultData(), normalizedMessage).data.stat_data || {};
     const deltaHit = deltaPaths.some(path => {
       const current = readStatPointer(currentStat, path);
       const expected = readStatPointer(expectedStat, path);
@@ -338,7 +456,8 @@ export function isFalselyAppliedStat(oldData: MvuData | undefined, normalizedMes
   // 判定 B：replace 路径比对（魔禁卡模型输出以 replace 为主）
   const replacePaths = extractReplacePaths(normalizedMessage);
   if (replacePaths.length === 0) return false;
-  const replayedStat = applyRawProtocolToMvuData({ stat_data: clone(currentStat) }, normalizedMessage).data.stat_data || {};
+  const replayedStat =
+    applyRawProtocolToMvuData({ stat_data: clone(currentStat) }, normalizedMessage).data.stat_data || {};
   return replacePaths.some(path => {
     const current = readStatPointer(currentStat, path);
     const expected = readStatPointer(replayedStat, path);
@@ -354,7 +473,9 @@ export function applyRawProtocolToMvuData(oldData: MvuData, normalizedMessage: s
   const blocks = String(normalizedMessage).match(/<UpdateVariable\b[^>]*>[\s\S]*?<\/UpdateVariable>/gi) ?? [];
   for (const block of blocks) {
     const match = block.match(/<JSONPatch\b[^>]*>([\s\S]*?)<\/JSONPatch>/i);
-    const arrayText = match ? extractJsonArray(match[1]) : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
+    const arrayText = match
+      ? extractJsonArray(match[1])
+      : extractJsonArray(block.replace(/<\/?JSONPatch\b[^>]*>/gi, ''));
     if (!arrayText) {
       skipped += 1;
       continue;

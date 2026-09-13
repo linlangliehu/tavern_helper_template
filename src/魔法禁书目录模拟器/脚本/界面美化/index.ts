@@ -18,8 +18,6 @@ type MfrsTHLike = {
     options?: Record<string, unknown>,
   ) => Promise<unknown> | unknown;
   getChatMessages?: (id: number | string, options?: Record<string, unknown>) => Promise<unknown> | unknown;
-  // 直接调用模型生成独立文本（静默、不进聊天、不走角色预设），用于开局能力效果 AI 补全
-  generateRaw?: (config: Record<string, unknown>) => Promise<string>;
   // 执行 STScript（TH 官方 API，签名见 JS-Slash-Runner 文档）：选项按钮点击后 /send+|/trigger 发送并触发生成
   triggerSlash?: (command: string) => Promise<string>;
 };
@@ -36,9 +34,11 @@ const MFRS_RAW_PROTOCOL_KEY = '_mfrs_raw_protocol_message';
 /** 读宿主 ctx 中指定楼层被 mvu-protocol-applier 清洗前保存的协议快照（TH extra 拷贝不含该键）。 */
 function mfrsReadHostRawProtocolSnapshot(messageId: number): string {
   try {
-    const host = window.parent as (Window & {
-      SillyTavern?: { getContext?: () => { chat?: Array<{ extra?: Record<string, unknown> }> } };
-    }) | null;
+    const host = window.parent as
+      | (Window & {
+          SillyTavern?: { getContext?: () => { chat?: Array<{ extra?: Record<string, unknown> }> } };
+        })
+      | null;
     const chat = host?.SillyTavern?.getContext?.().chat;
     const msg = chat && messageId >= 0 ? chat[messageId] : undefined;
     const raw = msg?.extra?.[MFRS_RAW_PROTOCOL_KEY];
@@ -47,7 +47,6 @@ function mfrsReadHostRawProtocolSnapshot(messageId: number): string {
     return '';
   }
 }
-
 
 function mfrsGetTH(): MfrsTHLike | undefined {
   try {
@@ -87,75 +86,6 @@ async function mfrsGetLastChatMessage(): Promise<MfrsChatMessageLike | undefined
   return last as MfrsChatMessageLike | undefined;
 }
 
-/** 能力档案 AI 生成：调用 generateRaw 产出「能力效果 + 实战运用」实质内容。
- *  关键设计：不依赖主流程模型输出 <UpdateVariable>（实测为不可靠路径，首轮往往整块缺失），
- *  hotfix-01 起由楼层守卫 mfrsFixAbilityPlaceholders 在开局后的楼层事件中后台调用（时机二主路径）。
- */
-async function mfrsSynthAbilityByAi(input: {
-  side: string;
-  name: string;
-  gender: string;
-  age: string;
-  pers: string;
-  supp: string;
-  sceneText: string;
-  abilityName: string;
-  level: string;
-  orgLabel: string;
-}): Promise<{ 能力效果: string; 实战运用: string } | null> {
-  const th = mfrsGetTH();
-  const gen = th?.generateRaw?.bind(th);
-  if (!gen) return null;
-  const sideDesc =
-    input.side === 'science'
-      ? '「科学侧·超能力」：以 AIM 扩散力场与个人现实为根基'
-      : '「魔法侧·术式」：以魔力与偶像崇拜理论驱动';
-  const systemPrompt = [
-    '你是《魔法禁书目录》世界观的能力档案撰稿人。',
-    `体系：${sideDesc}。`,
-    '任务：根据玩家开局信息，为其能力撰写档案描述。',
-    '严格只输出一行 JSON 对象（不得输出任何其他字符、标签或解释）：',
-    '{"能力效果":"30~60 字：能力的原理与表现形式，要具体、有画面感","实战运用":"30~60 字：该能力在战斗与日常中的典型用法"}',
-    "要求：贴合能力名与等级；Level 5 可写出学园都市顶尖水准的表现力；严禁出现「依设定与剧情判定」「随剧情展开」等占位句。",
-  ].join('\n');
-  const userPrompt = [
-    `姓名：${input.name}（${input.gender}，${input.age}）`,
-    input.pers && input.pers !== '未设定' ? `性格：${input.pers}` : '',
-    input.supp ? `补充设定：${input.supp}` : '',
-    `能力：${input.abilityName}（${input.level}）`,
-    input.orgLabel ? `所属：${input.orgLabel}` : '',
-    input.sceneText ? `开场白：${input.sceneText}` : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
-  try {
-    const task = gen({
-      ordered_prompts: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      should_silence: true,
-      should_stream: false,
-      max_chat_history: 0,
-    }) as Promise<string>;
-    const result = await Promise.race([task, new Promise<null>(resolve => setTimeout(() => resolve(null), 25000))]);
-    if (typeof result !== 'string' || !result) return null;
-    const m = result.match(/\{[\s\S]*\}/);
-    if (!m) return null;
-    const parsed = JSON.parse(m[0]) as { 能力效果?: unknown; 实战运用?: unknown };
-    const effect = typeof parsed.能力效果 === 'string' ? parsed.能力效果.trim() : '';
-    const combat = typeof parsed.实战运用 === 'string' ? parsed.实战运用.trim() : '';
-    if (!effect || effect === '依设定与剧情判定') return null;
-    return {
-      能力效果: effect.slice(0, 200),
-      实战运用:
-        combat && combat !== '随剧情展开；战斗与日常分别描述' ? combat.slice(0, 200) : '随剧情展开；战斗与日常分别描述',
-    };
-  } catch {
-    return null;
-  }
-}
-
 // 字段级守卫：只填空字段，绝不覆盖模型已写入的非空值。
 async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
   const th = mfrsGetTH();
@@ -189,13 +119,8 @@ async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
   }
 }
 
-// —— hotfix-07：能力卡占位污染守卫（hotfix-01 升级版）——
-// 触发：楼层事件（渲染/更新/swipe/聊天切换）后错峰调用；幂等，已有实质内容绝不覆盖。
-// 分支：名称/等级被占位污染 → 从 chat 层开局基线确定性回填身份字段（不调 AI）；
-//       效果/运用占位 → generateRaw 合成，入参一律基线名称优先（修复“风刃”错位）。
-// 护栏：in-flight 去重；v2 计数与旧 key 隔离（成功清零、失败计数，上限 3）；写回前二次校验；MVU 所有权边界。
-const MFRS_ABILITY_FIX_KEY = '__mfrs_ability_fix_v2_attempts'; // hotfix-07 v2：旧 key __mfrs_ability_fix_attempts 已废弃不读
-const MFRS_ABILITY_FIX_MAX = 3;
+// —— 能力卡兼容守卫：仅从可信开局基线恢复身份或实质描述，不发起额外模型请求 ——
+// 触发：楼层事件后错峰调用；写回前重新读取当前楼层，已有实质内容绝不覆盖。
 let mfrsAbilityFixInFlight = false;
 let mfrsAbilityFixNoBaselineWarned = false; // 无基线跳过提示每次页面加载最多一次，防楼层事件刷屏
 
@@ -230,7 +155,7 @@ function mfrsIsPlaceholderIdentityText(value: unknown): boolean {
 
 async function mfrsFixAbilityPlaceholders(): Promise<void> {
   const th = mfrsGetTH();
-  if (!th?.getVariables || !th?.updateVariablesWith || !th?.insertOrAssignVariables) return;
+  if (!th?.getVariables || !th?.updateVariablesWith) return;
   if (mfrsAbilityFixInFlight) return;
   try {
     const last = await mfrsGetLastChatMessage();
@@ -248,9 +173,6 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
     const combatStale = mfrsIsPlaceholderAbilityText(entry['实战运用']);
     if (!nameStale && !levelStale && !effectStale && !combatStale) return;
     const chatVars = await th.getVariables({ type: 'chat' });
-    const attempts =
-      typeof chatVars?.[MFRS_ABILITY_FIX_KEY] === 'number' ? (chatVars[MFRS_ABILITY_FIX_KEY] as number) : 0;
-    if (attempts >= MFRS_ABILITY_FIX_MAX) return; // 失败上限：停手，卡片保持现状等待手填
     const baseline = chatVars?.[MFRS_BASELINE_KEY] as Record<string, unknown> | undefined;
     const baseInfo = (baseline ?? {}) as Record<string, unknown>;
     const baseRoster = Array.isArray(baseInfo['能力档案'])
@@ -262,15 +184,15 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
       if (!mfrsAbilityFixNoBaselineWarned) {
         mfrsAbilityFixNoBaselineWarned = true;
         const hostWin =
-          (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ?? window;
+          (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ??
+          window;
         hostWin.toastr?.warning?.('能力名称/等级出现占位文本且无开局基线可恢复，请在能力卡中手动填写', '魔法禁书目录');
       }
       return;
     }
     const identityBackfill = (nameStale || levelStale) && baseRoster.length > 0;
-    // hotfix-11 进阶版：删 generateRaw 死合成路径（kK 在此环境永不 resolve，自 hotfix-01 起从未成功）；
-    // nameStale 触发时 effect/combat 从基线回填（基线非占位才写），否则靠 C 模型自纠。
-    mfrsAbilityFixInFlight = true; // hotfix-11：临界区缩短——只覆盖 recheck+write（无 25s 合成 await）
+    // 身份字段受污染时从可信开局基线回填；描述字段仅恢复基线中的实质内容。
+    mfrsAbilityFixInFlight = true;
     try {
       // 写回前二次校验：重读当层，确认占位符仍在（防 swipe/编辑期间被其他写手处理）
       const recheck = await th.getVariables({ type: 'message', message_id: messageId });
@@ -303,20 +225,19 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
         current => {
           const nextStat = { ...((current?.stat_data as Record<string, unknown> | undefined) ?? {}) };
           const nextRoster = Array.isArray(nextStat.能力档案)
-            ? (nextStat.能力档案 as Array<Record<string, unknown>>).map(row => ({ ...(row as Record<string, unknown>) }))
+            ? (nextStat.能力档案 as Array<Record<string, unknown>>).map(row => ({
+                ...(row as Record<string, unknown>),
+              }))
             : [];
           if (nextRoster.length === 0) return current ?? {}; // 档案被清空 → 放弃，不重建
           const target = nextRoster[0];
           // MVU 所有权边界：只替换仍为占位符的字段，其余字段（含模型已写值）一律不动
           if (identityBackfill) {
-            if (stillNameStale && baseName && mfrsIsPlaceholderIdentityText(target['能力名称'])) target['能力名称'] = baseName;
+            if (stillNameStale && baseName && mfrsIsPlaceholderIdentityText(target['能力名称']))
+              target['能力名称'] = baseName;
             if (stillLevelStale && baseLevel && mfrsIsPlaceholderIdentityText(target['等级或位阶']))
               target['等级或位阶'] = baseLevel;
-            if (
-              stillCampInvalid &&
-              campValid &&
-              !['超能力', '术式', '灵装'].includes(String(target['阵营类型'] ?? ''))
-            )
+            if (stillCampInvalid && campValid && !['超能力', '术式', '灵装'].includes(String(target['阵营类型'] ?? '')))
               target['阵营类型'] = baseCamp;
           }
           // hotfix-11 进阶版：namePollutionActive 时效果/运用从基线回填（名称污染→整条不可信）
@@ -330,11 +251,11 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
         },
         { type: 'message', message_id: messageId },
       );
-      // hotfix-11：无合成失败计数——成功总是清零（守卫永不因死合成停手）
-      await th.insertOrAssignVariables({ [MFRS_ABILITY_FIX_KEY]: 0 }, { type: 'chat' });
       const hostWin =
-        (window.parent as (Window & { toastr?: { success?: (message: string, title?: string) => void } }) | null) ?? window;
-      if (patchIdentity && patchEffect) hostWin.toastr?.success?.('能力档案已从开局基线恢复并补全效果 ✓', '魔法禁书目录');
+        (window.parent as (Window & { toastr?: { success?: (message: string, title?: string) => void } }) | null) ??
+        window;
+      if (patchIdentity && patchEffect)
+        hostWin.toastr?.success?.('能力档案已从开局基线恢复并补全效果 ✓', '魔法禁书目录');
       else if (patchIdentity) hostWin.toastr?.success?.('能力档案已从开局基线恢复 ✓', '魔法禁书目录');
       else hostWin.toastr?.success?.('能力效果已从开局基线恢复 ✓', '魔法禁书目录');
     } finally {
@@ -349,9 +270,13 @@ async function mfrsFixAbilityPlaceholders(): Promise<void> {
 // hotfix-01：另挂占位符补写守卫（800ms 首试；失败等下一次楼层事件再试，in-flight 去重）。
 function mfrsEnsureWithRetry(): void {
   [400, 1600, 3600].forEach(delay => {
-    window.setTimeout(() => { void mfrsEnsureLatestFloorBaseline(); }, delay);
+    window.setTimeout(() => {
+      void mfrsEnsureLatestFloorBaseline();
+    }, delay);
   });
-  window.setTimeout(() => { void mfrsFixAbilityPlaceholders(); }, 800); // hotfix-01 时机二首试；失败等下一次楼层事件再试
+  window.setTimeout(() => {
+    void mfrsFixAbilityPlaceholders();
+  }, 800); // hotfix-01 时机二首试；失败等下一次楼层事件再试
 }
 
 async function mfrsWarnIfProtocolMissing(): Promise<void> {
@@ -369,7 +294,9 @@ async function mfrsWarnIfProtocolMissing(): Promise<void> {
     const chatVars = await th.getVariables({ type: 'chat' });
     if (chatVars?.[MFRS_WARN_KEY]) return; // 每聊天只提示一次
     await th.insertOrAssignVariables({ [MFRS_WARN_KEY]: true }, { type: 'chat' });
-    const hostWin = (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ?? window;
+    const hostWin =
+      (window.parent as (Window & { toastr?: { warning?: (message: string, title?: string) => void } }) | null) ??
+      window;
     hostWin.toastr?.warning?.(
       '当前预设/模型未输出变量协议块：动态数据（好感度/任务/认知）可能冻结；能力卡片已由开局基线兜底。建议检查预设或重开聊天后使用开局表单。',
       '魔法禁书目录',
@@ -400,7 +327,9 @@ function mfrsInstallBaselineHooks(): void {
   });
   if (typeof tavern_events.GENERATION_ENDED === 'string') {
     try {
-      eventOn(tavern_events.GENERATION_ENDED, () => { void mfrsWarnIfProtocolMissing(); });
+      eventOn(tavern_events.GENERATION_ENDED, () => {
+        void mfrsWarnIfProtocolMissing();
+      });
     } catch {
       /* noop */
     }
@@ -417,7 +346,6 @@ function getHostDocument() {
   }
 }
 
-
 type HostWindowWithThemeCleanup = Window & {
   __mfrsMjrThemeCleanup__?: () => void;
   __mfrsDatabaseFrontend?: {
@@ -425,6 +353,7 @@ type HostWindowWithThemeCleanup = Window & {
   };
   toastr?: {
     info?: (message: string) => void;
+    warning?: (message: string, title?: string) => void;
   };
 };
 
@@ -441,13 +370,6 @@ function setTextareaValue(input: HTMLTextAreaElement, value: string) {
   input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }));
   input.dispatchEvent(new Event('change', { bubbles: true }));
   input.focus();
-}
-
-function getActionText(rawText: string) {
-  const text = rawText.replace(/^[ABCD][.、：:]\s*/, '').trim();
-  return text === '自定义行动'
-    ? text
-    : text.replace(/[。；;]?\s*(?:<risk)[\s\S]*$/i, '').trim();
 }
 
 $(() => {
@@ -1027,8 +949,6 @@ $(() => {
   const observer = new HostMutationObserver(ensureStyleMounted);
   observer.observe(hostDocument.head, { childList: true });
 
-
-
   const MFRS_INLINE_PROTOCOL_TAG_PATTERN =
     /<\/?\s*(?:choices|sp_[a-z_]+|mfrs_[a-z_]+|UpdateVariable|JSONPatch|Analysis)\b/i;
 
@@ -1044,7 +964,6 @@ $(() => {
       paragraph.style.display = 'none';
     });
   };
-
 
   const fillWelcomeStart = (root: HTMLElement) => {
     // 魔法禁书目录模拟器·开局设定生成（对齐 schema.ts 字段与 JSONPatch 合法路径）
@@ -1093,7 +1012,8 @@ $(() => {
       abilityDesc = getValue('#mfrs-ability-desc-magic');
       campDetail = org ? `所属组织：${org}` : '';
     }
-    const anchor = getValue('#mfrs-anchor-value') ||
+    const anchor =
+      getValue('#mfrs-anchor-value') ||
       '未选择节点|由当前剧情节点决定||自定义阶段|由玩家背景决定事件强度|玩家只能获得所在地点、身份权限和已掌握情报允许的信息|按背景和已知信息限制剧透|';
     const anchorParts = anchor.split('|');
     const anchorName = anchorParts[0] || '未选择节点';
@@ -1142,7 +1062,6 @@ $(() => {
     hostWindow?.toastr?.info?.('已填入魔法禁书目录开局设定');
   };
 
-
   const welcomeRootSelector = '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root';
   const inWelcomeRoots = (childSelector: string) =>
     welcomeRootSelector
@@ -1150,9 +1069,7 @@ $(() => {
       .map(selector => `${selector.trim()} ${childSelector}`)
       .join(', ');
   const isHostSelectElement = (element: Element | null): element is HTMLSelectElement => {
-    if (!element || element.tagName !== 'SELECT') return false;
-    const HostHTMLSelectElement = hostWindow?.HTMLSelectElement;
-    return !HostHTMLSelectElement || element instanceof HostHTMLSelectElement || 'options' in element;
+    return !!element && element.tagName === 'SELECT' && 'options' in element;
   };
 
   const setWelcomeAccordionOpen = (node: Element, titleSelector: string, open: boolean) => {
@@ -1386,8 +1303,6 @@ $(() => {
     });
   };
 
-
-
   // ===== 魔法禁书目录·开局页 data-act 交互（方案B：迁自 inline onclick，绕过 DOMPurify sanitize）=====
   // 背景：SillyTavern messageFormatting 用 DOMPurify MESSAGE_SANITIZE 模式处理消息 HTML，
   // 会移除 inline onclick 且给所有 class 加 custom- 前缀。原 inline onclick 方案因此全部失效。
@@ -1397,32 +1312,32 @@ $(() => {
   // 才能与 DOMPurify 前缀化后的 CSS 选择器一致。
 
   const MFRS_WELCOME_DATA_ABILITY_DESC: Record<string, string> = {
-    '幻想杀手':
+    幻想杀手:
       '右手触碰即消除一切异能（超能力+魔法+神迹），与生俱来非开发所得，无法被检测故测为Level 0；副作用是无意识消除好运，导致不幸缠身。魔法与科学两侧共同的钥匙。',
-    '矢量操作':
+    矢量操作:
       '控制一切矢量（力、速度、动能等有方向的量）。接触身体的矢量自动反射，只接收生存所需最低限度；可重力反转飞行、制造风暴、压缩空气成等离子体球、夺取地球自转能量发射。Level 5 第1位。',
-    '未元物质':
+    未元物质:
       '创造世界上从一开始就不存在的物质，更改已存在物质的法则。背展六片白翼可飞行/防御/打击，反弹原子崩坏与超电磁炮；可无限增殖人体细胞量产未元物质。Level 5 第2位。',
-    '超电磁炮':
+    超电磁炮:
       '发电系能力最高者。游戏币经电磁力以3倍音速射出贯穿楼房；雷击之枪最大10亿伏特；可召唤落雷、操纵地下铁沙成剑、移动含铁物质组盾、操纵电子仪器。Level 5 第3位。',
-    '原子崩坏':
+    原子崩坏:
       '强制操纵介于波与粒子之间暧昧状况的电子，发射电子射线连同遮蔽物一起贯穿；暧昧电子撞击物体滞留形成拟似障壁护盾。单论破坏力在第三位之上，但难控准星故排第四。Level 5 第4位。',
-    '心理掌握':
+    心理掌握:
       '精神操控系最强，以液体/体液为切入点操控大脑。九大表现：行为控制、人格操作、记忆篡改、强制读心/自白、认知操作等；精密操纵十几人，赋予指令可操控三位数人。Level 5 第5位。',
-    '念动炮弹':
+    念动炮弹:
       '世界最大原石（Gemstone，天生超能力者），能力正体不明连学园都市科学家都解释不了。不可视之力将10米外对手殴飞（自称强拳），可二倍音速移动、弹开子弹、随手拍落雷击。Level 5 第7位。',
   };
 
   const MFRS_WELCOME_DATA_MAGIC_DESC: Record<string, string> = {
-    '符文魔法':
+    符文魔法:
       '刻/贴在周围的带有力量的文字，写火焰符文即冒火；符文消失则魔法消失，施术者被打倒魔法亦消失。可召唤猎杀魔女之王（3000℃火焰巨人，符文内无限复活）、炎剑、闲人驱散。史提尔的招牌体系。',
-    '蕾丝编织术式':
+    蕾丝编织术式:
       '以钢丝勾勒魔法阵，发动切割与封印术式。招牌七闪操纵七条钢丝看不见的速度撕裂对手，一瞬间杀人七次故称瞬杀；唯闪用七天七刀在不同宗教术式间互补弱点，连天使也能切断。神裂火织的体系。',
-    '灵装操作':
+    灵装操作:
       '使用传导与增幅魔力的灵装（器具/装备）发动术式。灵装如阿斯卡隆圣剑（理论可斩50英尺恶龙）、伊西丝-德墨忒尔（操纵巨大植物藤蔓控制伦敦地下）。魔法师标配，损坏会失效。',
-    '天使术式':
+    天使术式:
       '神之右席四人继承十字教四大天使性质，能用不完全威力的天使术式。如天罚术式（不限距离剥夺对己有敌意者的意识）、神圣之右（粉碎行星级力量）、光之处刑（改变事物优先顺序）。代价是无法使用普通魔法。',
-    '魔道书解读':
+    魔道书解读:
       '解读记载术式与魔法知识的魔道书。奥索拉擅长魔法暗号解读；但《法之书》解读法实为陷阱，只会把解读者引入歧途。魔道书普通人阅读会精神崩溃，Index脑中存有103000册是各方争夺核心。',
   };
 
@@ -1484,12 +1399,13 @@ $(() => {
       toast.classList.add('custom-warn', 'warn');
     }
     toast.classList.add('custom-show', 'show');
-    const w = hostWindow as (typeof window) | undefined;
+    const w = hostWindow as typeof window | undefined;
     const prev = (root as HTMLElement & { _mfrsToastTimer?: number })._mfrsToastTimer;
     if (prev) w?.clearTimeout?.(prev);
-    (root as HTMLElement & { _mfrsToastTimer?: number })._mfrsToastTimer = w?.setTimeout?.(() => {
-      toast.classList.remove('custom-show', 'show');
-    }, 2200) ?? 0;
+    (root as HTMLElement & { _mfrsToastTimer?: number })._mfrsToastTimer =
+      w?.setTimeout?.(() => {
+        toast.classList.remove('custom-show', 'show');
+      }, 2200) ?? 0;
   };
 
   type MfrsOpeningMeta = {
@@ -1522,7 +1438,9 @@ $(() => {
   };
 
   const mfrsWelcomeValOf = (root: HTMLElement, sel: string) => {
-    const el = root.querySelector<HTMLElement>(`${sel} [data-act="pick"].custom-selected, ${sel} [data-act="pick"].selected`);
+    const el = root.querySelector<HTMLElement>(
+      `${sel} [data-act="pick"].custom-selected, ${sel} [data-act="pick"].selected`,
+    );
     return el?.dataset.val ?? '';
   };
 
@@ -1533,7 +1451,9 @@ $(() => {
       const i = q(`#${inputId}`) as HTMLInputElement | null;
       return i?.value.trim() ?? '';
     }
-    const p = root.querySelector<HTMLElement>(`${sel} [data-act="pick"].custom-selected, ${sel} [data-act="pick"].selected`);
+    const p = root.querySelector<HTMLElement>(
+      `${sel} [data-act="pick"].custom-selected, ${sel} [data-act="pick"].selected`,
+    );
     return p?.dataset.val ?? '';
   };
 
@@ -1548,7 +1468,9 @@ $(() => {
       root.dataset.side === 'science'
         ? mfrsWelcomeValOrCustom(root, '#optSchool', 'schoolCustomBtn', 'schoolCustomInput') &&
           mfrsWelcomeValOrCustom(root, '#optAbility', 'abilityCustomBtn', 'abilityCustomInput') &&
-          !!root.querySelector<HTMLElement>('#optLevel [data-act="pick"].custom-selected, #optLevel [data-act="pick"].selected')
+          !!root.querySelector<HTMLElement>(
+            '#optLevel [data-act="pick"].custom-selected, #optLevel [data-act="pick"].selected',
+          )
         : mfrsWelcomeValOrCustom(root, '#optOrg', 'orgCustomBtn', 'orgCustomInput') &&
           mfrsWelcomeValOrCustom(root, '#optMagic', 'magicCustomBtn', 'magicCustomInput') &&
           !!mfrsWelcomeValOf(root, '#optRealm');
@@ -1560,9 +1482,12 @@ $(() => {
         so.style.display = 'none';
       }
     }
-    const sc = root.querySelector<HTMLElement>('#sceneList [data-act="scene"].custom-selected, #sceneList [data-act="scene"].selected');
+    const sc = root.querySelector<HTMLElement>(
+      '#sceneList [data-act="scene"].custom-selected, #sceneList [data-act="scene"].selected',
+    );
     const customSel = q('#sceneCustomBtn');
-    const customOn = customSel && (customSel.classList.contains('custom-selected') || customSel.classList.contains('selected'));
+    const customOn =
+      customSel && (customSel.classList.contains('custom-selected') || customSel.classList.contains('selected'));
     const cu = customOn && (q('#sceneCustomInput') as HTMLInputElement | null)?.value.trim();
     const btn = q('#btnGenerate') as HTMLButtonElement | null;
     if (btn) btn.disabled = !(sc || cu);
@@ -1581,7 +1506,9 @@ $(() => {
           p.classList.remove('custom-active', 'active');
         });
         const pg = q('#page-' + D.page);
-        if (pg) { pg.classList.add('custom-active', 'active'); }
+        if (pg) {
+          pg.classList.add('custom-active', 'active');
+        }
         qa('[data-act="tab"]').forEach(b => {
           b.classList.toggle('custom-active', b === target);
           b.classList.toggle('active', b === target);
@@ -1629,7 +1556,9 @@ $(() => {
         const cb = grp.parentElement?.querySelector<HTMLElement>('.custom-mw-custom-box, .mw-custom-box');
         if (cb) cb.style.display = 'none';
         const cbBtn = grp.querySelector<HTMLElement>('[data-act="custom"]');
-        if (cbBtn) { cbBtn.classList.remove('custom-selected', 'selected'); }
+        if (cbBtn) {
+          cbBtn.classList.remove('custom-selected', 'selected');
+        }
         let dp: HTMLElement | null = null;
         if (grp.id === 'optAbility') dp = q('#abilityDescPanel');
         else if (grp.id === 'optMagic') dp = q('#magicDescPanel');
@@ -1679,7 +1608,10 @@ $(() => {
             let cdp: HTMLElement | null = null;
             if (cgrp.id === 'optAbility') cdp = q('#abilityDescPanel');
             else if (cgrp.id === 'optMagic') cdp = q('#magicDescPanel');
-            if (cdp) { cdp.classList.remove('custom-show', 'show'); cdp.innerHTML = ''; }
+            if (cdp) {
+              cdp.classList.remove('custom-show', 'show');
+              cdp.innerHTML = '';
+            }
           }
         }
         mfrsWelcomeRefresh(root);
@@ -1706,7 +1638,9 @@ $(() => {
       case 'scene': {
         mfrsWelcomeOnly(root, '#sceneList [data-act="scene"]', target);
         const btn = q('#sceneCustomBtn');
-        if (btn) { btn.classList.remove('custom-selected', 'selected'); }
+        if (btn) {
+          btn.classList.remove('custom-selected', 'selected');
+        }
         const cbox = q('#sceneCustomBox');
         if (cbox) cbox.style.display = 'none';
         mfrsWelcomeRefresh(root);
@@ -1733,23 +1667,35 @@ $(() => {
           return e ? e.value.trim() : '';
         };
         const side = root.dataset.side;
-        if (!side) { mfrsWelcomeToast(root, '请先选择阵营（科学侧或魔法侧）', 1); break; }
+        if (!side) {
+          mfrsWelcomeToast(root, '请先选择阵营（科学侧或魔法侧）', 1);
+          break;
+        }
         const name = gv('#pName') || '未命名';
         const gender = ((q('#pGender') as HTMLInputElement | null)?.value ?? '').trim() || '未设定';
         const age = gv('#pAge') || '未知';
         const pers = gv('#pPersonality') || '未设定';
         const look = gv('#pLook') || '未描述';
         const supp = gv('#pSupplement');
-        const sc = root.querySelector<HTMLElement>('#sceneList [data-act="scene"].custom-selected, #sceneList [data-act="scene"].selected');
+        const sc = root.querySelector<HTMLElement>(
+          '#sceneList [data-act="scene"].custom-selected, #sceneList [data-act="scene"].selected',
+        );
         const sceneCompat = mfrsParseJson<Record<string, unknown>>(sc?.dataset.compat);
         const sceneMeta = mfrsParseJson<MfrsOpeningMeta>(sc?.dataset.meta);
         const sceneText = sc
           ? `【${sc.dataset.date} · ${sc.dataset.tag}】${sc.dataset.desc}`
-          : (q('#sceneCustomInput') as HTMLTextAreaElement | null)?.value.trim() ?? '';
-        if (!sceneText) { mfrsWelcomeToast(root, '请先选择一个开场白', 1); break; }
-        const school = mfrsWelcomeValOrCustom(root, '#optSchool', 'schoolCustomBtn', 'schoolCustomInput') || '未选择学校';
-        const ability = mfrsWelcomeValOrCustom(root, '#optAbility', 'abilityCustomBtn', 'abilityCustomInput') || '未选择能力';
-        const levelEl = root.querySelector<HTMLElement>('#optLevel [data-act="pick"].custom-selected, #optLevel [data-act="pick"].selected');
+          : ((q('#sceneCustomInput') as HTMLTextAreaElement | null)?.value.trim() ?? '');
+        if (!sceneText) {
+          mfrsWelcomeToast(root, '请先选择一个开场白', 1);
+          break;
+        }
+        const school =
+          mfrsWelcomeValOrCustom(root, '#optSchool', 'schoolCustomBtn', 'schoolCustomInput') || '未选择学校';
+        const ability =
+          mfrsWelcomeValOrCustom(root, '#optAbility', 'abilityCustomBtn', 'abilityCustomInput') || '未选择能力';
+        const levelEl = root.querySelector<HTMLElement>(
+          '#optLevel [data-act="pick"].custom-selected, #optLevel [data-act="pick"].selected',
+        );
         const level = levelEl?.dataset.val ?? '未选择等级';
         const org = mfrsWelcomeValOrCustom(root, '#optOrg', 'orgCustomBtn', 'orgCustomInput') || '未选择组织';
         const magic = mfrsWelcomeValOrCustom(root, '#optMagic', 'magicCustomBtn', 'magicCustomInput') || '未选择魔法';
@@ -1758,17 +1704,34 @@ $(() => {
         const abilityD = mfrsWelcomeCustomDesc(root, 'abilityDescInput');
         const orgD = mfrsWelcomeCustomDesc(root, 'orgDescInput');
         const magicD = mfrsWelcomeCustomDesc(root, 'magicDescInput');
-        const L = ['【玩家信息】', '姓名：' + name, '性别：' + gender, '年龄：' + age + '岁', '性格：' + pers, '外貌：' + look];
+        const L = [
+          '【玩家信息】',
+          '姓名：' + name,
+          '性别：' + gender,
+          '年龄：' + age + '岁',
+          '性格：' + pers,
+          '外貌：' + look,
+        ];
         if (supp) L.push('补充设定：' + supp);
         if (side === 'science') {
-          L.push('阵营：科学侧（学园都市）', '就读学校：' + school + (schoolD ? '（' + schoolD + '）' : ''), '超能力：' + ability + (abilityD ? '（' + abilityD + '）' : ''), '能力等级：' + level);
+          L.push(
+            '阵营：科学侧（学园都市）',
+            '就读学校：' + school + (schoolD ? '（' + schoolD + '）' : ''),
+            '超能力：' + ability + (abilityD ? '（' + abilityD + '）' : ''),
+            '能力等级：' + level,
+          );
         } else {
-          L.push('阵营：魔法侧', '隶属组织：' + org + (orgD ? '（' + orgD + '）' : ''), '魔法术式：' + magic + (magicD ? '（' + magicD + '）' : ''), '魔法境界：' + realm);
+          L.push(
+            '阵营：魔法侧',
+            '隶属组织：' + org + (orgD ? '（' + orgD + '）' : ''),
+            '魔法术式：' + magic + (magicD ? '（' + magicD + '）' : ''),
+            '魔法境界：' + realm,
+          );
         }
         L.push('', '【开场白】', sceneText);
         if (sceneMeta) {
           const metaText = (value: string | string[] | undefined, fallback: string) =>
-            Array.isArray(value) ? (value.length ? value.join('、') : fallback) : (value || fallback);
+            Array.isArray(value) ? (value.length ? value.join('、') : fallback) : value || fallback;
           L.push(
             '',
             '【开局初始化】',
@@ -1824,24 +1787,13 @@ $(() => {
               能力名称: (isScienceSide ? ability : magic) || '未觉醒',
               阵营类型: isScienceSide ? '超能力' : '术式',
               等级或位阶: (isScienceSide ? level : realm) || '未指定',
-              能力效果: (isScienceSide ? abilityD : magicD) || '依设定与剧情判定',
+              能力效果: (isScienceSide ? abilityD : magicD) || '',
               是否稳定: true,
-              实战运用: '随剧情展开；战斗与日常分别描述',
+              实战运用: '',
             },
           ],
           ...sceneBaseline,
         };
-        // hotfix-01：不在开局表单阻塞等待 AI 生成（原逻辑最多卡 25 秒，影响开局动线）。
-        // 占位符照常进基线，由楼层守卫 mfrsFixAbilityPlaceholders 在第一轮回复后后台补写。
-        {
-          const userEffect = ((isScienceSide ? abilityD : magicD) || '').trim();
-          if (!userEffect) {
-            const thProbe = mfrsGetTH();
-            if (!thProbe?.generateRaw) {
-              mfrsWelcomeToast(root, '当前环境不支持 AI 生成，建议手填能力描述', 2);
-            }
-          }
-        }
         (root as HTMLElement & { _pendingCfg?: string; _pendingBaseline?: Record<string, unknown> })._pendingBaseline =
           mfrsBaseline;
         (root as HTMLElement & { _pendingCfg?: string })._pendingCfg = cfg;
@@ -1859,12 +1811,15 @@ $(() => {
           const input = getSendTextarea(hostDocument);
           if (!input) throw new Error('no textarea');
           setTextareaValue(input, cfg2);
-          const pendingBaseline = (root as HTMLElement & { _pendingBaseline?: Record<string, unknown> })._pendingBaseline;
+          const pendingBaseline = (root as HTMLElement & { _pendingBaseline?: Record<string, unknown> })
+            ._pendingBaseline;
           if (pendingBaseline) {
             const stored = mfrsSetChatBaseline(pendingBaseline);
             mfrsWelcomeToast(
               root,
-              stored ? '开局配置已填入发送框，基线已落盘，点击发送开始冒险！' : '开局配置已填入发送框，点击发送开始冒险！（基线落盘失败，将依赖模型协议初始化）',
+              stored
+                ? '开局配置已填入发送框，基线已落盘，点击发送开始冒险！'
+                : '开局配置已填入发送框，点击发送开始冒险！（基线落盘失败，将依赖模型协议初始化）',
               stored ? 2 : 1,
             );
           } else {
@@ -1882,7 +1837,12 @@ $(() => {
         if (ta) {
           ta.focus();
           ta.select();
-          try { hostDocument.execCommand('copy'); mfrsWelcomeToast(root, '已复制到剪贴板', 2); } catch { /* noop */ }
+          try {
+            hostDocument.execCommand('copy');
+            mfrsWelcomeToast(root, '已复制到剪贴板', 2);
+          } catch {
+            /* noop */
+          }
         }
         break;
       }
@@ -1911,8 +1871,10 @@ $(() => {
             mFace.textContent = fb;
           }
         }
-        const mName = q('#mName'); if (mName) mName.textContent = D.name ?? '';
-        const mTag = q('#mTag'); if (mTag) mTag.textContent = D.tag ?? '';
+        const mName = q('#mName');
+        if (mName) mName.textContent = D.name ?? '';
+        const mTag = q('#mTag');
+        if (mTag) mTag.textContent = D.tag ?? '';
         const mRows = q('#mRows');
         if (mRows) {
           // ST 渲染管线会把「」转换为 <q> 标签；属性值里的转换产物按字面剥离
@@ -1941,19 +1903,24 @@ $(() => {
             mRows.appendChild(row);
           }
         }
-        const modal = q('#charModal'); if (modal) modal.classList.add('custom-open', 'open');
+        const modal = q('#charModal');
+        if (modal) modal.classList.add('custom-open', 'open');
         break;
       }
       case 'modalclose': {
-        const modal = q('#charModal'); if (modal) modal.classList.remove('custom-open', 'open');
-        const mask = q('#copyMask'); if (mask) mask.classList.remove('custom-open', 'open');
+        const modal = q('#charModal');
+        if (modal) modal.classList.remove('custom-open', 'open');
+        const mask = q('#copyMask');
+        if (mask) mask.classList.remove('custom-open', 'open');
         break;
       }
       case 'music': {
         const a = q('#bgm') as HTMLAudioElement | null;
         if (!a) break;
         if (a.paused) {
-          a.play().then(() => target.classList.add('custom-playing', 'playing')).catch(() => mfrsWelcomeToast(root, '音频加载失败，请稍后重试', 1));
+          a.play()
+            .then(() => target.classList.add('custom-playing', 'playing'))
+            .catch(() => mfrsWelcomeToast(root, '音频加载失败，请稍后重试', 1));
         } else {
           a.pause();
           target.classList.remove('custom-playing', 'playing');
@@ -1979,7 +1946,9 @@ $(() => {
     // 魔禁开局页 data-act 事件委托（方案B）
     const dataActTarget = target?.closest<HTMLElement>('[data-act]');
     if (dataActTarget) {
-      const root = dataActTarget.closest<HTMLElement>('#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root');
+      const root = dataActTarget.closest<HTMLElement>(
+        '#mfrs-welcome-root, .mfrs-welcome-root, .custom-mfrs-welcome-root',
+      );
       if (root) {
         handleMfrsWelcomeDataAct(root, dataActTarget, event);
         return;
@@ -1995,8 +1964,6 @@ $(() => {
     event.stopImmediatePropagation();
     fillWelcomeStart(root);
   };
-
-
 
   // 魔禁卡无数据库面板，此处保留为 no-op（避免调用不存在的面板对象）
   const openDashboardForWelcome = () => {};
@@ -2057,7 +2024,9 @@ $(() => {
   hostDocument.addEventListener('error', handleMfrsImgError, true);
   const sweepMfrsImages = () => {
     hostDocument
-      .querySelectorAll<HTMLImageElement>('#mfrs-welcome-root img, .mfrs-welcome-root img, .custom-mfrs-welcome-root img')
+      .querySelectorAll<HTMLImageElement>(
+        '#mfrs-welcome-root img, .mfrs-welcome-root img, .custom-mfrs-welcome-root img',
+      )
       .forEach(img => {
         if (img.style.display !== 'none' && img.complete && img.naturalWidth === 0 && img.getAttribute('src')) {
           mfrsImgFallback(img);
