@@ -229,8 +229,8 @@ assert.doesNotMatch(uiSource, /generateRaw/, 'dead generateRaw path must stay re
 assert.doesNotMatch(uiSource, /MFRS_ABILITY_FIX_KEY/, 'old attempt counter must stay removed');
 assert.match(
   uiSource,
-  /能力效果: \(isScienceSide \? abilityD : magicD\) \|\| ''/,
-  'opening ability baseline must use an empty string',
+  /createMfrsOpeningAbilityRoster\([\s\S]*isScienceSide \? abilityD : magicD/,
+  'opening ability baseline must use the conditional roster builder',
 );
 
 for (const yamlName of ['变量更新规则.yaml', '变量输出格式.yaml']) {
@@ -244,11 +244,19 @@ for (const yamlName of ['变量更新规则.yaml', '变量输出格式.yaml']) {
 }
 
 const packageSource = readFileSync(join(repoRoot, 'package.json'), 'utf8');
-assert.match(
-  packageSource,
-  /"build": "node scripts\/verify-mjr-ability-placeholder-gate\.mjs && node scripts\/verify-production-mode\.mjs && webpack --mode production"/,
-  'ability placeholder gate must run before production build',
-);
+const buildSteps = JSON.parse(packageSource).scripts.build.split('&&').map(step => step.trim());
+let lastGateIndex = -1;
+for (const step of [
+  'node scripts/verify-mjr-ability-placeholder-gate.mjs',
+  'node scripts/verify-mjr-opening-ability-contract.mjs',
+  'node scripts/verify-mjr-message-panel-mount.mjs',
+  'node scripts/verify-production-mode.mjs',
+  'webpack --mode production',
+]) {
+  const index = buildSteps.indexOf(step);
+  assert.ok(index > lastGateIndex, `required production gate missing or out of order: ${step}`);
+  lastGateIndex = index;
+}
 
 const indexPath = join(cardRoot, 'index.yaml');
 const indexSource = readFileSync(indexPath, 'utf8');

@@ -466,6 +466,7 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             <button type="button" class="mw-opt" data-act="pick" data-val="原子崩坏">原子崩坏</button>
             <button type="button" class="mw-opt" data-act="pick" data-val="心理掌握">心理掌握</button>
             <button type="button" class="mw-opt" data-act="pick" data-val="念动炮弹">念动炮弹</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="无能力者（Level 0）">无能力者<small>明确选择无能力</small></button>
         <button type="button" class="mw-opt" data-act="custom" data-target="#abilityCustomBox" id="abilityCustomBtn">自定义能力</button>
       </div>
       <div class="mw-custom-box" id="abilityCustomBox">
@@ -509,6 +510,7 @@ body::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; 
             <button type="button" class="mw-opt" data-act="pick" data-val="灵装操作">灵装操作</button>
             <button type="button" class="mw-opt" data-act="pick" data-val="天使术式">天使术式</button>
             <button type="button" class="mw-opt" data-act="pick" data-val="魔道书解读">魔道书解读</button>
+            <button type="button" class="mw-opt" data-act="pick" data-val="无术式">暂未掌握术式</button>
         <button type="button" class="mw-opt" data-act="custom" data-target="#magicCustomBox" id="magicCustomBtn">自定义输入</button>
       </div>
       <div class="mw-custom-box" id="magicCustomBox">

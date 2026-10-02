@@ -6,7 +6,7 @@ update_output_contract:
     Keep the patch block SMALL: output a JSONPatch entry ONLY for a field that actually changed this turn. Do NOT re-output unchanged fields (e.g. once 姓名/性别/年龄/阵营 are set they rarely change — skip them unless they actually changed). A typical turn produces 1-5 patches, not a full re-print of stat_data. Smaller blocks survive truncation and parse correctly.
     The payload inside <UpdateVariable> must be a <JSONPatch> block containing one valid JSON array. Do not include an analysis tag, prose, code fences, comments, standalone English/foreign-language draft, <draft>, <pacing_rules>, <修改确认>, standalone patch block, or debug note.
 
-    First-reply initialization: in the first AI reply after receiving the 【玩家信息】 opening config, you MUST initialize /能力档案 (all six fields 能力名称/阵营类型/等级或位阶/能力效果/是否稳定/实战运用 filled truthfully from the config — never empty or 未知) and /阵营 via op:"replace". Also align mainline tracking with the chosen opening: if the config specifies 原著阶段/剧情锚点, op:"replace" /主线进度/当前阶段, /主线进度/正史锚点.当前锚点 and /主线进度/当前节点 consistently (当前节点 = the first node ID of that chapter's event package per its 节点推进表; use 未进入事件包 only when no event package applies, e.g. fully custom openings with no canon anchor).
+    First-reply initialization: in the first AI reply after receiving the 【玩家信息】 opening config, you MUST initialize /能力档案 and /阵营 via op:"replace". If the player declared a concrete ability/spell/equipment, initialize only that object with all six fields; if no concrete ability was declared or the player chose no ability/no spell, set /能力档案 to []. An empty roster is valid and MUST NOT be filled with a "未觉醒" or "无能力" pseudo-entry. When a concrete ability was declared but its effect/usage is blank, complete that existing entry from its name, rank and faction. Level 0 alone does not erase a separately named ability (e.g. 幻想杀手). Also align mainline tracking with the chosen opening: if the config specifies 原著阶段/剧情锚点, op:"replace" /主线进度/当前阶段, /主线进度/正史锚点.当前锚点 and /主线进度/当前节点 consistently (当前节点 = the first node ID of that chapter's event package per its 节点推进表; use 未进入事件包 only when no event package applies, e.g. fully custom openings with no canon anchor).
     Mainline locator semantics: /主线进度/当前锚点 names the active chapter (event package); /主线进度/当前节点 names its active node ID. Update 当前节点 with op:"replace" only when the story actually advances one node with real causality (max one major node per turn). Replace /主线进度/已完成节点 and /主线进度/可触发节点 as WHOLE arrays (idempotent), never insert individual entries. Chapter switching (当前锚点 change) requires an explicit fact: chapter reached its ending node, player explicitly skips/leaves, player explicitly picks a new anchor, explicit time-skip past the chapter window, or the event legitimately ends through player action. Record the old chapter's outcome (已完成/已跳过/已延后/已改写) and the switch reason in 正史锚点.玩家偏移. 支线 must never overwrite 当前锚点/当前节点.
     <UpdateVariable>
     <JSONPatch>
@@ -39,13 +39,14 @@ update_output_contract:
     - Each 能力档案 entry's 能力效果 must describe the ability's target, mechanism and level/phase boundary from the
       player's own perspective; the player always knows their own ability, so NO story revelation is required.
       Urban-legend rumors / official-record vagueness are NPC-perception material (认知 field) and must NOT be written
-      into the player's own ability file. If the opening form leaves these descriptions empty, design a concrete effect
+      into the player's own ability file. If an existing ability entry leaves these descriptions empty, design a concrete effect
       from 能力名称 + 等级或位阶 + 阵营类型 and the canon setting, then write it in the same UpdateVariable output.
+      An empty roster is a valid no-ability/unset state and must stay empty unless the player explicitly gains or declares an ability.
       实战运用 is an anticipatory usage guide and must include at least one combat use and one daily-life use. Both
       fields must contain concrete executable text, never placeholder, meta-text, or deferred-to-story wording. NEVER
       write penalty mechanics such as 反噬 (backlash) or 失控 (loss of control) into ANY 能力档案 field (both 能力效果
-      and 实战运用) — this card has no backlash system and ability costs are not modeled; the limitations clause may
-      only describe the ability's own operational boundaries (range/duration/trigger conditions), never punitive
+      and 实战运用); ability use has no mandatory penalty/cost, and the limitations clause may only describe
+      established operational boundaries (range/duration/trigger conditions), never added punitive
       consequences. Existing values containing 反噬/失控 wording must be replaced with compliant descriptions in the
       next UpdateVariable.
     - /任务追踪 is an object array; append new tasks with op:"insert" at /任务追踪/-. When a task's fields change,
@@ -58,5 +59,4 @@ update_output_contract:
     - Fill each NPC's 能力名称/能力效果 ONLY with what the player has witnessed or learned in plot; leave them empty
       when unknown (panel hides empty). When the plot reveals more of an NPC's ability, replace that NPC's 能力字段. One
       short sentence max for 能力效果.
-    - When ability use, magic casting, cross-faction conflict, item cost, or faction intervention occurs, update the
-      matching ability/relation/worldline fields.
+    - When an ability is explicitly gained/changed, an item is actually consumed/transferred/damaged, or a faction intervention changes state, update the matching fields. Using a player ability or a reusable item does not by itself incur a mandatory cost or require an inventory patch. Only update item count/effect when a consumable is explicitly identified and a real change occurred; unknown quantities must not be guessed.

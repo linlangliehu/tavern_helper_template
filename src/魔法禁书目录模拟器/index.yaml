@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 魔法禁书目录模拟器.png
-版本: '1.1.4'
+版本: '1.1.5'
 作者: 琳琅
 备注: ''
 
@@ -10,7 +10,7 @@
 角色描述: |-
   【魔法禁书目录模拟器】
   这是一个基于《魔法禁书目录》世界观的学园都市与魔法侧热血搞笑推演系统。
-  核心设定：科学与魔法是两套互不相容的体系（AIM扩散力场与魔力对立），但玩家享有主角光环豁免，可自由混用，代价以搞笑受挫呈现。
+  核心设定：玩家可自由混用科学与魔法，不强制失败、反噬、透支或数值惩罚；喜剧事件仅按剧情自然发生。未声明具体能力时能力档案为空数组，Level 0 具名能力仍保留。
   运行边界：世界观、规则、变量、原著锚点和正文 UI 均由世界书、系统提示词、MVU 与正则脚本承载；主体字段只保留入口定位。
   交互目标：引导{{user}}自定义开局，并在每轮输出剧情、本轮摘要和变量更新；具体交互由开局表单和消息内折叠面板承接。
   选项由预设或前端负责显示和交互；MVU 变量更新仍由 <UpdateVariable> 承载。
@@ -2501,6 +2501,7 @@
         <button type="button" class="mw-opt" data-act="pick" data-val="原子崩坏">原子崩坏</button>
         <button type="button" class="mw-opt" data-act="pick" data-val="心理掌握">心理掌握</button>
         <button type="button" class="mw-opt" data-act="pick" data-val="念动炮弹">念动炮弹</button>
+        <button type="button" class="mw-opt" data-act="pick" data-val="无能力者（Level 0）">无能力者<small>明确选择无能力</small></button>
         <button type="button" class="mw-opt" data-act="custom" data-target="#abilityCustomBox" id="abilityCustomBtn">自定义能力</button>
         </div>
         <div class="mw-custom-box" id="abilityCustomBox">
@@ -2544,6 +2545,7 @@
         <button type="button" class="mw-opt" data-act="pick" data-val="灵装操作">灵装操作</button>
         <button type="button" class="mw-opt" data-act="pick" data-val="天使术式">天使术式</button>
         <button type="button" class="mw-opt" data-act="pick" data-val="魔道书解读">魔道书解读</button>
+        <button type="button" class="mw-opt" data-act="pick" data-val="无术式">暂未掌握术式</button>
         <button type="button" class="mw-opt" data-act="custom" data-target="#magicCustomBox" id="magicCustomBtn">自定义输入</button>
         </div>
         <div class="mw-custom-box" id="magicCustomBox">

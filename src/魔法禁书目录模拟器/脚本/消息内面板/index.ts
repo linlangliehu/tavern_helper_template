@@ -6,7 +6,6 @@ import { applyUpdateProtocolToStatData } from './raw-status-data';
 
 registerMfrsRuntimeBuild('消息内面板');
 
-/* eslint-disable */
 // 酒馆助手运行时注入的全局 API（无 d.ts，按参考卡用法直接使用）
 declare const getVariables: (opts: { type: string; message_id: number }) => Record<string, any> | undefined;
 declare const getChatMessages: (id?: number) => any[] | undefined;
@@ -65,9 +64,7 @@ function isMagicIndexCardActive(): boolean {
   const characterId = context?.characterId;
   if (characterId === undefined || characterId === null) return false;
   const characters = context?.characters;
-  const character = Array.isArray(characters)
-    ? characters[Number(characterId)]
-    : characters?.[String(characterId)];
+  const character = Array.isArray(characters) ? characters[Number(characterId)] : characters?.[String(characterId)];
   return Boolean(character && isMagicIndexCardIdentity(character.name, character.avatar));
 }
 
@@ -175,9 +172,7 @@ function getLatestAiMessageRawText(): string {
   try {
     const chat = getSillyTavernContext()?.chat;
     if (Array.isArray(chat) && chat.length > 0) {
-      const hit = !Number.isNaN(messageId)
-        ? chat[messageId]
-        : [...chat].reverse().find(message => !message?.is_user);
+      const hit = !Number.isNaN(messageId) ? chat[messageId] : [...chat].reverse().find(message => !message?.is_user);
       const raw = readMessageProtocolText(hit);
       if (raw) return raw;
     }
@@ -421,10 +416,17 @@ function buildCardByName(data: StatusData, name: string): string {
 
 const PLACEHOLDER_RE = /\[\[MFrsStatus\]\](玩家|能力|任务|关系)\[\[\/MFrsStatus\]\]/g;
 
+function getMessageBodyElement(mesElement: Element): Element | null {
+  const mesText = mesElement.querySelector('.mes_text');
+  const isDisplayed = (element: Element) => doc.defaultView?.getComputedStyle(element).display !== 'none';
+  if (mesText && isDisplayed(mesText)) return mesText;
+  return Array.from(mesElement.querySelectorAll('.TH-streaming, .mes_streaming')).find(isDisplayed) ?? mesText;
+}
+
 /** 把 .mes_text 里的 [[MFrsStatus]] 占位符替换为折叠卡片 */
 function renderPlaceholders(mesElement: Element, data: StatusData): void {
   const mesText = mesElement.querySelector('.mes_text');
-  if (!mesText) return;
+  if (!mesText || getMessageBodyElement(mesElement) !== mesText) return;
   // 只处理文本节点和占位符，避免破坏已有 DOM
   const html = mesText.innerHTML;
   if (!/\[\[MFrsStatus\]\]/.test(html)) return;
@@ -443,19 +445,38 @@ function renderPlaceholders(mesElement: Element, data: StatusData): void {
 
 /** 若消息里没有占位符（旧消息/未透出），在末尾挂一个默认全卡片堆栈 */
 function renderDefaultStack(mesElement: Element, data: StatusData): void {
-  const mesText = mesElement.querySelector('.mes_text');
-  if (!mesText) return;
+  const messageBody = getMessageBodyElement(mesElement);
+  const panelHost = mesElement.querySelector('.mes_block') ?? messageBody?.parentElement;
+  if (!messageBody || !panelHost) return;
   // 卡片存在性检查只保护「[[MFrsStatus]] 占位符渲染」的卡片——它们由 renderPlaceholders 单独管理，
   // 不能在这里被 renderDefaultStack 覆盖。「本函数自己挂过的默认堆栈」绝不能用这个理由短路：
   // renderKey 变了就必须重染，否则守卫晚写的数据会被永久冻结（开局第一轮卡片不更新的根因）。
-  const existing = mesElement.querySelector(`.mfrs-mp-stack`);
-  if (!existing && mesText.querySelector('.mfrs-mp-card')) return;
+  const stacks = Array.from(mesElement.querySelectorAll('.mfrs-mp-stack'));
+  const existing = stacks.shift();
+  stacks.forEach(stack => stack.remove());
+  if (messageBody.querySelector('.mfrs-mp-card') && !messageBody.querySelector('.mfrs-mp-stack')) {
+    existing?.remove();
+    return;
+  }
   const renderKey = getPanelRenderKey(data);
-  // 已渲染过相同 key 则跳过
-  if (existing && existing.getAttribute('data-mfrs-render-key') === renderKey) return;
+  // 独立于正文/流式容器，避免正文隐藏或重建时连带隐藏、销毁面板。
+  const positionStack = (stack: Element) => {
+    if (messageBody.parentElement === panelHost) {
+      if (stack.parentElement !== panelHost || stack.previousElementSibling !== messageBody) {
+        messageBody.insertAdjacentElement('afterend', stack);
+      }
+    } else if (stack.parentElement !== panelHost) {
+      panelHost.appendChild(stack);
+    }
+  };
+  if (existing && existing.getAttribute('data-mfrs-render-key') === renderKey) {
+    positionStack(existing);
+    return;
+  }
   existing?.remove();
   const stack = doc.createElement('div');
   stack.className = 'mfrs-mp-stack';
+  stack.setAttribute('data-mfrs-message-id', mesElement.getAttribute('mesid') || '');
   stack.setAttribute('data-mfrs-render-key', renderKey);
   stack.innerHTML = [
     buildPlayerCardHtml(data),
@@ -463,7 +484,7 @@ function renderDefaultStack(mesElement: Element, data: StatusData): void {
     buildTaskCardHtml(data),
     buildRelationCardHtml(data),
   ].join('');
-  mesText.appendChild(stack);
+  positionStack(stack);
 }
 
 /* ---------- 单条消息处理 ---------- */
@@ -515,6 +536,9 @@ function scheduleLateBursts(): void {
   );
 }
 function mutationTouchesChatMessage(mutation: MutationRecord): boolean {
+  if (mutation.type === 'attributes') {
+    return isElementNode(mutation.target) && mutation.target.matches('.mes_text, .TH-streaming, .mes_streaming');
+  }
   return mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0;
 }
 
@@ -556,6 +580,7 @@ style.textContent = `
   cursor: pointer;
   padding: 10px 14px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   font-size: 14px;
@@ -571,6 +596,8 @@ style.textContent = `
 }
 .mfrs-mp-card[open] > summary::before, .mfrs-mp-subcard[open] > summary::before { transform: rotate(90deg); }
 .mfrs-mp-card .mfrs-mp-summary-name, .mfrs-mp-subcard .mfrs-mp-summary-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin-left: auto;
   font-size: 12px;
   color: rgba(102, 204, 255, 0.6);
@@ -595,7 +622,7 @@ style.textContent = `
   line-height: 1.6;
 }
 .mfrs-mp-k { flex: 0 0 88px; color: rgba(180, 220, 255, 0.55); font-size: 12px; }
-.mfrs-mp-v { flex: 1; color: #d4eaff; word-break: break-word; }
+.mfrs-mp-v { flex: 1; min-width: 0; color: #d4eaff; word-break: break-word; }
 .mfrs-mp-empty { padding: 10px 14px; color: rgba(180, 220, 255, 0.4); font-size: 13px; }
 .mfrs-mp-risk[data-risk] { color: #00ffaa; }
 .mfrs-mp-risk[data-risk]:is([data-risk="0"], [data-risk="1"], [data-risk="2"], [data-risk="3"], [data-risk="4"]) { color: #00ffaa; }
@@ -626,7 +653,12 @@ function activateRuntime(): void {
       if (mutations.some(mutationTouchesChatMessage)) scheduleIdleRefresh();
     });
   }
-  observer.observe(observedChat, { childList: true, subtree: true });
+  observer.observe(observedChat, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'style'],
+  });
   processAllMessages();
   runtimeActive = true;
   // 治愈历史楼层面板陈旧（如基线守卫晚于面板渲染导致的默认外观）：激活后错峰重读一次数据

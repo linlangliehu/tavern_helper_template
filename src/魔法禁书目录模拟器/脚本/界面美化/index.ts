@@ -1,4 +1,5 @@
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+import { createMfrsOpeningAbilityRoster, isMfrsNoAbilityLabel } from './opening-ability';
 
 registerMfrsRuntimeBuild('界面美化');
 
@@ -1023,9 +1024,10 @@ $(() => {
     const eventPressure = anchorParts[4] || '请根据身份与剧情节点判断接入边界';
     const visibleIntel = anchorParts[5] || '仅依据当前选择与背景设定';
     const spoilerBoundary = anchorParts[6] || '不得直接揭露后期角色身份与重大真相';
-    const abilityLine = abilityName
-      ? `   - 能力名称：${abilityName}（${levelOrRank || '未指定等级/位阶'}）\n   - 能力效果：${abilityDesc || '由AI依据设定与现场判定'}`
-      : `   - 能力名称：未觉醒/未指定（${levelOrRank || '未指定等级/位阶'}）`;
+    const abilityDeclared = !!abilityName && !isMfrsNoAbilityLabel(abilityName);
+    const abilityLine = abilityDeclared
+      ? `   - 已声明能力：${abilityName}（${levelOrRank || '未指定等级/位阶'}）\n   - 能力效果：${abilityDesc || '请在首轮结合能力名称、等级/位阶与阵营类型补全具体效果和实战运用'}`
+      : `   - 未声明具体能力/术式：能力档案保持空数组 []；${levelOrRank ? `所选等级/位阶仅作开局背景（${levelOrRank}），不据此合成能力。` : '按普通凡人或未觉醒状态演绎，不推定额外能力。'}`;
     const message =
       `【魔法禁书目录·开局设定】\n\n` +
       `1. 基本信息\n` +
@@ -1054,7 +1056,7 @@ $(() => {
       `   - JSONPatch 目标（合法路径）：/姓名、/性别、/年龄、/性格、/外貌、/开局地点、/所在位置、/原著阶段、/剧情锚点、/角色背景、/身份、/阵营、/能力档案、/剧情阶段、/势力关系/所属阵营、/势力关系/所属组织。勿发明 schema 不存在路径；节点时间只可写入叙事文本。\n` +
       `   - 建议初值：姓名=${name}；性别=${gender}；年龄=${age}；身份=${identity || '未指定'}；阵营=${camp}；开局地点/所在位置=${storyLocation || '由剧情节点决定'}；原著阶段=${storyPhase}；剧情锚点=${anchorName}；角色背景=表单背景或未指定；剧情阶段=序章。\n` +
       `   - 调查起点：从当前剧情节点的「序章/遭遇」切入，不直接跳到后期主线高潮或最终真相。\n` +
-      `   - 能力判定：能力档案为玩家独有设定，对玩家自身按声明效果生效；若声明为 Level 6 绝对能力者、圣人、神之右席或魔神等高位阶，AI 可适度提高其强度但不自动无敌；原著中科学与魔法互斥，但玩家享有「主角光环豁免」可兼用两体系，科学与魔法自由混用、不设反噬与限制，偶尔的麻烦以搞笑受挫/出糗/体力透支呈现，不判死亡、不设数值惩罚。\n` +
+      `   - 能力判定：能力档案为玩家独有设定；只初始化已明确声明的具体能力/术式，未声明或明确无能力时保持 []。已声明具体能力即使等级为 Level 0 也照常建档（如幻想杀手）；具体效果、持续时间、触发条件和适用范围按声明或设定，不附加惩罚。玩家可自由混用科学与魔法，不强制失败、反噬、透支、失灵或数值惩罚；搞笑事件仅在符合剧情时自愿发生。NPC 仍按原著规则演绎。若声明为 Level 6 绝对能力者、圣人、神之右席或魔神等高位阶，AI 可适度提高其强度但不自动无敌。\n` +
       `   - 隐藏边界：后期角色真实身份、核心真相、幕后动机、终局走向只随剧情推进逐步揭示，不进入正文、状态栏或开局选项。`;
     const input = getSendTextarea(hostDocument);
     if (!input) return;
@@ -1467,13 +1469,16 @@ $(() => {
     const ok =
       root.dataset.side === 'science'
         ? mfrsWelcomeValOrCustom(root, '#optSchool', 'schoolCustomBtn', 'schoolCustomInput') &&
-          mfrsWelcomeValOrCustom(root, '#optAbility', 'abilityCustomBtn', 'abilityCustomInput') &&
           !!root.querySelector<HTMLElement>(
             '#optLevel [data-act="pick"].custom-selected, #optLevel [data-act="pick"].selected',
           )
-        : mfrsWelcomeValOrCustom(root, '#optOrg', 'orgCustomBtn', 'orgCustomInput') &&
-          mfrsWelcomeValOrCustom(root, '#optMagic', 'magicCustomBtn', 'magicCustomInput') &&
-          !!mfrsWelcomeValOf(root, '#optRealm');
+        : (() => {
+            const magic = mfrsWelcomeValOrCustom(root, '#optMagic', 'magicCustomBtn', 'magicCustomInput');
+            return (
+              mfrsWelcomeValOrCustom(root, '#optOrg', 'orgCustomBtn', 'orgCustomInput') &&
+              (!magic || isMfrsNoAbilityLabel(magic) || !!mfrsWelcomeValOf(root, '#optRealm'))
+            );
+          })();
     const so = q('#secOpening');
     if (so) {
       if (ok) {
@@ -1550,6 +1555,7 @@ $(() => {
         break;
       }
       case 'pick': {
+        if (target.classList.contains('custom-locked') || target.classList.contains('locked')) break;
         const grp = target.closest<HTMLElement>('.custom-mw-opts, .mw-opts');
         if (!grp) break;
         mfrsWelcomeOnly(root, `#${grp.id} [data-act="pick"]`, target);
@@ -1574,7 +1580,7 @@ $(() => {
           }
         }
         if (grp.id === 'optAbility') {
-          if (D.val === '幻想杀手') {
+          if (D.val === '幻想杀手' || isMfrsNoAbilityLabel(D.val ?? '')) {
             let lv0 = root.querySelector<HTMLElement>('#optLevel [data-act="pick"]');
             while (lv0 && !lv0.dataset.val?.startsWith('Level 0')) lv0 = lv0.nextElementSibling as HTMLElement | null;
             if (lv0) mfrsWelcomeOnly(root, '#optLevel [data-act="pick"]', lv0);
@@ -1582,7 +1588,10 @@ $(() => {
               x.classList.toggle('custom-locked', x !== lv0);
               x.classList.toggle('locked', x !== lv0);
             });
-            mfrsWelcomeToast(root, '幻想杀手：能力等级锁定 Level 0');
+            mfrsWelcomeToast(
+              root,
+              D.val === '幻想杀手' ? '幻想杀手：能力等级锁定 Level 0' : '无能力开局：能力等级锁定 Level 0',
+            );
           } else {
             qa('#optLevel [data-act="pick"]').forEach(x => {
               x.classList.remove('custom-locked', 'locked');
@@ -1700,6 +1709,10 @@ $(() => {
         const org = mfrsWelcomeValOrCustom(root, '#optOrg', 'orgCustomBtn', 'orgCustomInput') || '未选择组织';
         const magic = mfrsWelcomeValOrCustom(root, '#optMagic', 'magicCustomBtn', 'magicCustomInput') || '未选择魔法';
         const realm = mfrsWelcomeValOf(root, '#optRealm') || '未选择境界';
+        const selectedAbilityName = side === 'science' ? ability : magic;
+        const noAbility = isMfrsNoAbilityLabel(selectedAbilityName);
+        const declaredAbility =
+          !noAbility && selectedAbilityName !== '未选择能力' && selectedAbilityName !== '未选择魔法';
         const schoolD = mfrsWelcomeCustomDesc(root, 'schoolDescInput');
         const abilityD = mfrsWelcomeCustomDesc(root, 'abilityDescInput');
         const orgD = mfrsWelcomeCustomDesc(root, 'orgDescInput');
@@ -1717,15 +1730,17 @@ $(() => {
           L.push(
             '阵营：科学侧（学园都市）',
             '就读学校：' + school + (schoolD ? '（' + schoolD + '）' : ''),
-            '超能力：' + ability + (abilityD ? '（' + abilityD + '）' : ''),
-            '能力等级：' + level,
+            '超能力：' +
+              (declaredAbility ? ability + (abilityD ? '（' + abilityD + '）' : '') : '未声明具体能力；能力档案初始化为 []'),
+            '能力等级：' + level + (noAbility ? '（无能力开局，不据此生成能力）' : ''),
           );
         } else {
           L.push(
             '阵营：魔法侧',
             '隶属组织：' + org + (orgD ? '（' + orgD + '）' : ''),
-            '魔法术式：' + magic + (magicD ? '（' + magicD + '）' : ''),
-            '魔法境界：' + realm,
+            '魔法术式：' +
+              (declaredAbility ? magic + (magicD ? '（' + magicD + '）' : '') : '未声明具体术式；能力档案初始化为 []'),
+            '魔法境界：' + realm + (noAbility ? '（无术式开局，不据此生成能力）' : ''),
           );
         }
         L.push('', '【开场白】', sceneText);
@@ -1782,17 +1797,17 @@ $(() => {
               : org && org !== '未选择组织'
                 ? org + '成员'
                 : ''),
-          能力档案: [
-            {
-              能力名称: (isScienceSide ? ability : magic) || '未觉醒',
-              阵营类型: isScienceSide ? '超能力' : '术式',
-              等级或位阶: (isScienceSide ? level : realm) || '未指定',
-              能力效果: (isScienceSide ? abilityD : magicD) || '',
-              是否稳定: true,
-              实战运用: '',
-            },
-          ],
           ...sceneBaseline,
+          能力档案: createMfrsOpeningAbilityRoster(
+            isScienceSide ? ability : magic,
+            isScienceSide ? '超能力' : '术式',
+            noAbility
+              ? `${isScienceSide ? level : realm === '未选择境界' ? '未指定' : realm}（无具体能力）`
+              : isScienceSide
+                ? level
+                : realm,
+            isScienceSide ? abilityD : magicD,
+          ),
         };
         (root as HTMLElement & { _pendingCfg?: string; _pendingBaseline?: Record<string, unknown> })._pendingBaseline =
           mfrsBaseline;
