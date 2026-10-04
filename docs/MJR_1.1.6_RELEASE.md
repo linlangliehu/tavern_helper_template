@@ -28,6 +28,7 @@
 - `YAML_OK`
 - `check-mjr-yaml.cjs`：114 条目、7 条正则
 - 定向 ESLint：无错误（新增脚本仅有 Node.js 内置模块规则警告）
+- 干净提交隔离构建：`pnpm build` 通过；webpack production 编译成功
 
 ## 发布边界
 
