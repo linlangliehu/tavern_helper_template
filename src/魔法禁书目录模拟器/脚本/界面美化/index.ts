@@ -1,5 +1,7 @@
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 import { createMfrsOpeningAbilityRoster, isMfrsNoAbilityLabel } from './opening-ability';
+import { mergeMfrsOpeningBaseline } from './opening-baseline';
+import { routeMfrsEventPackageBudget, type MfrsEventBudgetEntry } from './event-budget';
 
 registerMfrsRuntimeBuild('界面美化');
 
@@ -18,6 +20,12 @@ type MfrsTHLike = {
     patch: Record<string, unknown>,
     options?: Record<string, unknown>,
   ) => Promise<unknown> | unknown;
+  getCharWorldbookNames?: (scope: string) => Promise<{ primary?: string | null }> | { primary?: string | null };
+  updateWorldbookWith?: (
+    name: string,
+    updater: (entries: MfrsEventBudgetEntry[]) => MfrsEventBudgetEntry[],
+    options?: { render?: 'debounced' | 'immediate' | 'none' },
+  ) => Promise<unknown> | unknown;
   getChatMessages?: (id: number | string, options?: Record<string, unknown>) => Promise<unknown> | unknown;
   // 执行 STScript（TH 官方 API，签名见 JS-Slash-Runner 文档）：选项按钮点击后 /send+|/trigger 发送并触发生成
   triggerSlash?: (command: string) => Promise<string>;
@@ -28,8 +36,6 @@ declare const tavern_events: undefined | Record<string, string>;
 
 const MFRS_BASELINE_KEY = '__mfrs_baseline';
 const MFRS_WARN_KEY = '__mfrs_uv_warned';
-// initvar.yaml 的非空默认值：MVU 每层初始化会先填入，字段守卫必须把它们视为「空」否则开局表单值永远填不进去
-const MFRS_INITVAR_DEFAULTS: Record<string, unknown> = { 性别: '男', 年龄: '18岁' };
 const MFRS_RAW_PROTOCOL_KEY = '_mfrs_raw_protocol_message';
 
 /** 读宿主 ctx 中指定楼层被 mvu-protocol-applier 清洗前保存的协议快照（TH extra 拷贝不含该键）。 */
@@ -72,6 +78,21 @@ function mfrsSetChatBaseline(baseline: Record<string, unknown>): boolean {
   }
 }
 
+async function mfrsRouteSelectedEventBudget(packageId?: string | null): Promise<void> {
+  const th = mfrsGetTH();
+  if (!th?.getCharWorldbookNames || !th.updateWorldbookWith) return;
+  try {
+    const bindings = await th.getCharWorldbookNames('current');
+    const worldbookName = bindings?.primary;
+    if (!worldbookName) return;
+    await th.updateWorldbookWith(worldbookName, entries => routeMfrsEventPackageBudget(entries, packageId), {
+      render: 'immediate',
+    });
+  } catch (error) {
+    console.warn('[MagicIndex] event package budget routing skipped', error);
+  }
+}
+
 interface MfrsChatMessageLike {
   is_user?: boolean;
   message_id?: number;
@@ -87,7 +108,6 @@ async function mfrsGetLastChatMessage(): Promise<MfrsChatMessageLike | undefined
   return last as MfrsChatMessageLike | undefined;
 }
 
-// 字段级守卫：只填空字段，绝不覆盖模型已写入的非空值。
 async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
   const th = mfrsGetTH();
   if (!th?.getVariables || !th?.updateVariablesWith) return;
@@ -96,22 +116,13 @@ async function mfrsEnsureLatestFloorBaseline(): Promise<void> {
     if (!last || last.is_user || typeof last.message_id !== 'number') return;
     const floorVars = await th.getVariables({ type: 'message', message_id: last.message_id });
     const statData = ((floorVars?.stat_data as Record<string, unknown> | undefined) ?? {}) as Record<string, unknown>;
-    const roster = Array.isArray(statData.能力档案) ? (statData.能力档案 as unknown[]) : [];
-    if (roster.length > 0) return; // 已有档案（模型写入或此前已兜底）→ 不动
     const chatVars = await th.getVariables({ type: 'chat' });
     const baseline = chatVars?.[MFRS_BASELINE_KEY] as Record<string, unknown> | undefined;
     if (!baseline) return; // 旧聊天/未经开局表单 → 降级空转
     await th.updateVariablesWith(
       current => {
-        const next = { ...((current?.stat_data as Record<string, unknown> | undefined) ?? {}) };
-        for (const [key, value] of Object.entries(baseline)) {
-          if (key === '能力档案') continue;
-          const existing = next[key];
-          const isDefault = existing !== undefined && existing === MFRS_INITVAR_DEFAULTS[key];
-          if (existing === undefined || existing === null || existing === '' || isDefault) next[key] = value;
-        }
-        next.能力档案 = baseline.能力档案; // 仅当档案为空时才会走到这里（整组写入）
-        return { ...(current ?? {}), stat_data: next };
+        const latestStatData = (current?.stat_data as Record<string, unknown> | undefined) ?? {};
+        return { ...(current ?? {}), stat_data: mergeMfrsOpeningBaseline(latestStatData, baseline) };
       },
       { type: 'message', message_id: last.message_id },
     );
@@ -1411,15 +1422,27 @@ $(() => {
   };
 
   type MfrsOpeningMeta = {
+    timeLayerId?: string;
     timeLayerLabel?: string;
     displayDate?: string;
+    datePrecision?: string;
     timeOfDay?: string;
+    workLineId?: string;
     workLineLabel?: string;
+    stageId?: string;
     stageLabel?: string;
+    chapterId?: string;
     chapterLabel?: string;
     openingId?: string;
+    clusterId?: string;
+    clusterLabel?: string;
+    media?: string;
+    viewpoint?: string;
+    entryType?: string;
+    relation?: string;
+    coverage?: string;
     initializationMode?: string;
-    primaryPackageId?: string;
+    primaryPackageId?: string | null;
     startNodeId?: string;
     currentNodeId?: string;
     completedNodeIds?: string[];
@@ -1652,6 +1675,8 @@ $(() => {
         }
         const cbox = q('#sceneCustomBox');
         if (cbox) cbox.style.display = 'none';
+        const sceneMeta = mfrsParseJson<MfrsOpeningMeta>(target.dataset.meta);
+        await mfrsRouteSelectedEventBudget(sceneMeta?.primaryPackageId);
         mfrsWelcomeRefresh(root);
         break;
       }
@@ -1666,6 +1691,7 @@ $(() => {
         }
         const cbox = q('#sceneCustomBox');
         if (cbox) cbox.style.display = on ? 'block' : 'none';
+        await mfrsRouteSelectedEventBudget(null);
         if (on) hostWindow?.setTimeout?.(() => (q('#sceneCustomInput') as HTMLInputElement | null)?.focus(), 60);
         mfrsWelcomeRefresh(root);
         break;
@@ -1691,6 +1717,7 @@ $(() => {
         );
         const sceneCompat = mfrsParseJson<Record<string, unknown>>(sc?.dataset.compat);
         const sceneMeta = mfrsParseJson<MfrsOpeningMeta>(sc?.dataset.meta);
+        await mfrsRouteSelectedEventBudget(sceneMeta?.primaryPackageId);
         const sceneText = sc
           ? `【${sc.dataset.date} · ${sc.dataset.tag}】${sc.dataset.desc}`
           : ((q('#sceneCustomInput') as HTMLTextAreaElement | null)?.value.trim() ?? '');
@@ -1731,7 +1758,9 @@ $(() => {
             '阵营：科学侧（学园都市）',
             '就读学校：' + school + (schoolD ? '（' + schoolD + '）' : ''),
             '超能力：' +
-              (declaredAbility ? ability + (abilityD ? '（' + abilityD + '）' : '') : '未声明具体能力；能力档案初始化为 []'),
+              (declaredAbility
+                ? ability + (abilityD ? '（' + abilityD + '）' : '')
+                : '未声明具体能力；能力档案初始化为 []'),
             '能力等级：' + level + (noAbility ? '（无能力开局，不据此生成能力）' : ''),
           );
         } else {
@@ -1750,12 +1779,24 @@ $(() => {
           L.push(
             '',
             '【开局初始化】',
+            `开场入口ID：${sceneMeta.openingId ?? '未定'}`,
+            `时间层ID：${sceneMeta.timeLayerId ?? '未定'}`,
             `时间层：${sceneMeta.timeLayerLabel ?? '未定'}`,
             `当前日期：${sceneMeta.displayDate ?? '未定'}`,
+            `日期精度：${sceneMeta.datePrecision ?? '未定'}`,
             `时间段：${sceneMeta.timeOfDay ?? '未定'}`,
+            `作品线ID：${sceneMeta.workLineId ?? '未定'}`,
             `作品线：${sceneMeta.workLineLabel ?? '未定'}`,
+            `剧情阶段ID：${sceneMeta.stageId ?? '未定'}`,
             `剧情阶段：${sceneMeta.stageLabel ?? '未定'}`,
+            `篇章ID：${sceneMeta.chapterId ?? '未定'}`,
             `篇章：${sceneMeta.chapterLabel ?? '未定'}`,
+            `事件簇：${sceneMeta.clusterLabel ?? '未定'}（${sceneMeta.clusterId ?? '未定'}）`,
+            `媒介路线：${sceneMeta.media ?? '未定'}`,
+            `叙事视角：${sceneMeta.viewpoint ?? '未定'}`,
+            `入口类型：${sceneMeta.entryType ?? '未定'}`,
+            `事件关系：${sceneMeta.relation ?? '未定'}`,
+            `覆盖等级：${sceneMeta.coverage ?? '未定'}`,
             `事件包：${sceneMeta.primaryPackageId ?? '无（reference-only）'}`,
             `起始节点：${sceneMeta.startNodeId ?? '无（reference-only）'}`,
             `当前节点：${sceneMeta.currentNodeId ?? '无（reference-only）'}`,
@@ -1811,7 +1852,12 @@ $(() => {
         };
         (root as HTMLElement & { _pendingCfg?: string; _pendingBaseline?: Record<string, unknown> })._pendingBaseline =
           mfrsBaseline;
-        (root as HTMLElement & { _pendingCfg?: string })._pendingCfg = cfg;
+        const pendingRoot = root as HTMLElement & {
+          _pendingCfg?: string;
+          _pendingEventPackageId?: string | null;
+        };
+        pendingRoot._pendingCfg = cfg;
+        pendingRoot._pendingEventPackageId = sceneMeta?.primaryPackageId ?? null;
         const cfgOut = q('#cfgOut') as HTMLTextAreaElement | null;
         if (cfgOut) cfgOut.value = cfg;
         const mask = q('#copyMask');
@@ -1820,9 +1866,14 @@ $(() => {
         break;
       }
       case 'confirmcfg': {
-        const cfg2 = (root as HTMLElement & { _pendingCfg?: string })._pendingCfg;
+        const pendingRoot = root as HTMLElement & {
+          _pendingCfg?: string;
+          _pendingEventPackageId?: string | null;
+        };
+        const cfg2 = pendingRoot._pendingCfg;
         if (!cfg2) break;
         try {
+          await mfrsRouteSelectedEventBudget(pendingRoot._pendingEventPackageId);
           const input = getSendTextarea(hostDocument);
           if (!input) throw new Error('no textarea');
           setTextareaValue(input, cfg2);

@@ -82,9 +82,17 @@ for (const [label, fragment] of [
 }
 
 const uiSource = readFileSync(uiPath, 'utf8');
-assert.match(uiSource, /createMfrsOpeningAbilityRoster\(/, 'welcome baseline must use the conditional ability roster builder');
-assert.match(uiSource, /if \(roster\.length > 0\) return/, 'floor fallback must preserve model-created abilities');
-assert.match(uiSource, /next\.能力档案 = baseline\.能力档案/, 'empty roster fallback must write the empty baseline as-is');
+assert.match(
+  uiSource,
+  /createMfrsOpeningAbilityRoster\(/,
+  'welcome baseline must use the conditional ability roster builder',
+);
+assert.match(
+  uiSource,
+  /mergeMfrsOpeningBaseline\(latestStatData, baseline\)/,
+  'floor fallback must merge the trusted opening baseline',
+);
+assert.match(uiSource, /if \(roster\.length === 0\) return/, 'placeholder repair must preserve an empty roster');
 
 const systemPrompt = readFileSync(join(cardRoot, '系统提示词', '0.txt'), 'utf8');
 const outputRules = readFileSync(join(cardRoot, '世界书', '变量', '变量输出格式.yaml'), 'utf8');
@@ -98,13 +106,28 @@ for (const [label, source] of [
   ['output rules', outputRules],
   ['update rules', updateRules],
 ]) {
-  assert.match(source, /能力档案.{0,100}(?:\[\]|空数组)|(?:\[\]|空数组).{0,100}能力档案/s, `${label} must explicitly preserve an empty roster`);
+  assert.match(
+    source,
+    /能力档案.{0,100}(?:\[\]|空数组)|(?:\[\]|空数组).{0,100}能力档案/s,
+    `${label} must explicitly preserve an empty roster`,
+  );
 }
 assert.match(activeContract, /Level 0.{0,80}幻想杀手/s, 'Level 0 named-ability exception must be explicit');
 assert.match(activeContract, /不强制失败.{0,80}(?:反噬|透支|失灵)/s, 'player ability use must not impose a penalty');
-assert.match(activeContract, /可重复使用.{0,100}(?:不|不得).{0,60}(?:扣减|扣库存|库存)/s, 'reusable equipment must not be automatically consumed');
-assert.match(activeContract, /未知数量.{0,40}不得.{0,20}猜测|数量为「未知」.{0,30}不得.{0,20}臆测/s, 'unknown item counts must not be guessed');
+assert.match(
+  activeContract,
+  /可重复使用.{0,100}(?:不|不得).{0,60}(?:扣减|扣库存|库存)/s,
+  'reusable equipment must not be automatically consumed',
+);
+assert.match(
+  activeContract,
+  /未知数量.{0,40}不得.{0,20}猜测|数量为「未知」.{0,30}不得.{0,20}臆测/s,
+  'unknown item counts must not be guessed',
+);
 assert.match(updateRules, /本轮叙事确实发生消耗/, 'item count changes must require an actual consumption event');
-assert.match(outputRules, /Only update item count\/effect when a consumable is explicitly identified and a real change occurred/);
+assert.match(
+  outputRules,
+  /Only update item count\/effect when a consumable is explicitly identified and a real change occurred/,
+);
 
 console.log('MJR_OPENING_ABILITY_CONTRACT_OK');
