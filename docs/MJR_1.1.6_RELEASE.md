@@ -30,6 +30,21 @@
 - 定向 ESLint：无错误（新增脚本仅有 Node.js 内置模块规则警告）
 - 干净提交隔离构建：`pnpm build` 通过；webpack production 编译成功
 
+## 最终产物
+
+- 生产 `dist` 提交：`bc5b8c20eb349948bdebf1e513deefe014810cc9`
+- PNG 大小：`7,662,741` bytes
+- PNG SHA-256：`6A05DE1C12339E71C424BDB3E44CD1B40B13298B45D1455383365B135D95E93E`
+- 6 个魔禁 loader 均已锁定到上述生产 `dist` 提交。
+- `testingcf.jsdelivr.net`：6/6 HTTP 200，6/6 与本地生产文件 SHA-256 一致。
+- `cdn.jsdelivr.net`：6/6 HTTP 200，6/6 与本地生产文件 SHA-256 一致。
+- 两个 CDN 节点检查文件：MVU、变量结构、mvu-protocol-applier、界面美化、固定状态栏、消息内面板。
+
+## 构建备注
+
+- GitHub Actions `bundle` 运行 `37205671486`、`37207094319` 均在 `pnpm install && pnpm build` 步骤退出；公开检查页仅返回退出码，未提供内部日志。
+- 依据同一发布提交的干净隔离工作树复现，`pnpm build` 和 webpack production 均通过，因此本次 `dist` 使用已核验的本地生产构建提交，并单独完成 CDN 字节级校验。
+
 ## 发布边界
 
 - 只提交魔禁角色卡、P1 维护源、公开事件簇矩阵、门禁和本发布记录。
