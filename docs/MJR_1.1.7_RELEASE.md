@@ -36,7 +36,14 @@
 
 ## 最终产物
 
-阶段 2 补充：生产 `dist` 提交、PNG 大小与 SHA-256、6 个 loader 锁定结果、两个 CDN 节点的 HTTP 与字节级校验。
+- 生产 `dist` 提交：`3218e2178cb10fc1703ddb3c2d19aa0286b1d8fc`（第一阶段 `78592fb2` 触发的 CI run `40666300878` 生成，bot tag `v8.15.186`）。
+- PNG 大小：`7,663,829` bytes
+- PNG SHA-256：`7AC16DD7692CB775EE9171667B6250927066E615AB4BB00CFCA56A009A95BE17`
+- PNG 内 `chara`/`ccv3`：版本 `1.1.7`，世界书 114 条，6 个 loader 均锁定到上述生产 `dist` 提交。
+- 生产 `dist` 已包含修复：`mvu-protocol-applier`、`变量结构` 产物中含主线节点数组归一逻辑；`27d847f5` 是该提交的祖先。
+- `testingcf.jsdelivr.net`（卡内 loader 实际使用的节点）：6/6 HTTP 200，6/6 与生产 `dist` 文件 SHA-256 一致。
+- `fastly.jsdelivr.net`：6/6 HTTP 200，6/6 SHA-256 一致。
+- `cdn.jsdelivr.net`：本机网络连接被重置（旧提交 `bc5b8c20` 同样无法访问），属本地网络问题，未能校验；以 `fastly` 节点替代。
 
 ## 发布边界
 
