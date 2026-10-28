@@ -16,10 +16,10 @@ jobs:
     if: github.repository != 'StageDog/tavern_helper_template'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-      - uses: AndreasAugustin/actions-template-sync@v2
+      - uses: AndreasAugustin/actions-template-sync@v2.6.0
         with:
           source_repo_path: StageDog/tavern_helper_template
           pr_title: '[bot] 同步模板仓库的更新'
