@@ -244,13 +244,9 @@
               },
               "数量": {
                 "default": "未知",
-                "anyOf": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
+                "type": [
+                  "number",
+                  "string"
                 ]
               },
               "效果": {
