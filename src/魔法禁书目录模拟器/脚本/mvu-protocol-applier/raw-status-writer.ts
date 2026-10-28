@@ -193,10 +193,19 @@ function parseIndex(value: string, length: number, allowEnd = false) {
   return index;
 }
 
+// 模型偶发使用 schema 外的同义顶层键（实机：换篇时写 /当前位置）。值写进未知键会被 schema 丢弃，
+// 所以只对顶层做精确别名映射，不做模糊匹配。
+const TOP_LEVEL_PATH_ALIASES: Readonly<Record<string, string>> = { 当前位置: '所在位置' };
+
+function canonicalizeStatPath(parts: string[]): string[] {
+  const alias = parts.length > 0 ? TOP_LEVEL_PATH_ALIASES[parts[0]] : undefined;
+  return alias ? [alias, ...parts.slice(1)] : parts;
+}
+
 function applyPatch(root: MvuData, patch: Patch): boolean {
   // 防御性归一：模型偶发输出点号路径（/主线进度.当前阶段），统一转斜杠，
   // 避免值静默写进垃圾键（schema 键名不含点，归一安全）。
-  const pathParts = decodePointer(String(patch.path ?? '').replace(/\./g, '/'));
+  const pathParts = canonicalizeStatPath(decodePointer(String(patch.path ?? '').replace(/\./g, '/')));
   if (pathParts.length === 0) return false;
   const fullParts = ['stat_data', ...pathParts];
   const key = fullParts[fullParts.length - 1];
@@ -506,6 +515,12 @@ export function applyRawProtocolToMvuData(oldData: MvuData, normalizedMessage: s
 function normalizeMainlineNodeArrays(stat: Record<string, unknown>): void {
   const progress = stat['主线进度'];
   if (!isPlainObject(progress)) return;
+  // 实机：换篇时模型把 /主线进度/正史锚点/玩家偏移 写成字符串；schema 要求字符串数组，这里包成数组
+  const anchor = progress['正史锚点'];
+  if (isPlainObject(anchor) && typeof anchor['玩家偏移'] === 'string') {
+    const text = anchor['玩家偏移'].trim();
+    anchor['玩家偏移'] = text ? [text] : [];
+  }
   const current = typeof progress['当前节点'] === 'string' ? progress['当前节点'].trim() : '';
   const uniqueIds = (value: unknown) =>
     Array.isArray(value)

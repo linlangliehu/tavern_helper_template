@@ -199,4 +199,42 @@ assert.throws(
   );
 }
 
+// 换篇协议容错（2026-10-28 实机：模型写 /当前位置、把玩家偏移写成字符串）
+{
+  const plain = value => JSON.parse(JSON.stringify(value));
+  const base = {
+    stat_data: {
+      所在位置: '第七学区',
+      主线进度: { 当前节点: 'NECROMANCER-02', 已完成节点: [], 可触发节点: [], 正史锚点: { 玩家偏移: [] } },
+    },
+  };
+  const switched = production.applyRawProtocolToMvuData(
+    base,
+    protocol([
+      { op: 'replace', path: '/当前位置', value: '第二学区' },
+      { op: 'replace', path: '/主线进度/正史锚点/玩家偏移', value: '  玩家跳过死灵术师篇  ' },
+    ]),
+  ).data.stat_data;
+  assert.equal(switched.所在位置, '第二学区', '/当前位置 must be written to /所在位置');
+  assert.equal(Object.hasOwn(switched, '当前位置'), false, 'alias key must not be created');
+  assert.deepEqual(plain(switched.主线进度.正史锚点.玩家偏移), ['玩家跳过死灵术师篇'], 'string offset must be wrapped');
+
+  const emptied = production.applyRawProtocolToMvuData(
+    base,
+    protocol([{ op: 'replace', path: '/主线进度/正史锚点/玩家偏移', value: '   ' }]),
+  ).data.stat_data;
+  assert.deepEqual(plain(emptied.主线进度.正史锚点.玩家偏移), [], 'blank string offset must become empty array');
+
+  const noAlias = loadStandaloneTsSource(
+    source.replace("{ 当前位置: '所在位置' }", '{}'),
+    `${rawWriterPath}.no-alias.ts`,
+  );
+  assert.notEqual(
+    noAlias.applyRawProtocolToMvuData(base, protocol([{ op: 'replace', path: '/当前位置', value: '第二学区' }])).data
+      .stat_data.所在位置,
+    '第二学区',
+    'gate must kill a regression that drops the location alias',
+  );
+}
+
 console.log('MJR_INSERT_IDEMPOTENCY_OK');

@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://testingcf.jsdelivr.net/gh/StageDog/tavern_sync/dist/schema/character.zh.json
 头像: 魔法禁书目录模拟器.png
-版本: '1.1.7'
+版本: '1.1.8'
 作者: 琳琅
 备注: ''
 
@@ -4679,7 +4679,7 @@
         </div>
 
         <!-- 背景音乐 -->
-        <audio id="bgm" loop preload="none" src="https://raw.githubusercontent.com/linlangliehu/bgm/main/only-my-railgun.mp3"></audio>
+        <audio id="bgm" loop preload="none" src="https://raw.githubusercontent.com/linlangliehu/bgm/7f1be030f9f59d8c6d2dbc3333ffa77dff8b9a26/only-my-railgun.mp3"></audio>
         <button type="button" class="mw-music" data-act="music" title="背景音乐" aria-label="背景音乐"><i class="fa-solid fa-music"></i></button>
 
         <!-- 提示条 -->
