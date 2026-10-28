@@ -496,5 +496,26 @@ export function applyRawProtocolToMvuData(oldData: MvuData, normalizedMessage: s
       else skipped += 1;
     }
   }
+  if (applied > 0) normalizeMainlineNodeArrays(next.stat_data);
   return { data: next, applied, skipped };
+}
+
+// 本地 JSONPatch 写回经 Mvu.replaceMvuData，不经过 mvu_zod 的 schema 解析，
+// 因此在这里同步执行与 schema.ts 主线进度 transform 相同的节点数组归一：
+// 当前节点是正在推进的焦点，不能同时出现在已完成节点或可触发节点中。
+function normalizeMainlineNodeArrays(stat: Record<string, unknown>): void {
+  const progress = stat['主线进度'];
+  if (!isPlainObject(progress)) return;
+  const current = typeof progress['当前节点'] === 'string' ? progress['当前节点'].trim() : '';
+  const uniqueIds = (value: unknown) =>
+    Array.isArray(value)
+      ? [...new Set(value.filter((id): id is string => typeof id === 'string').map(id => id.trim()))].filter(Boolean)
+      : null;
+  const completed = uniqueIds(progress['已完成节点']);
+  if (completed) progress['已完成节点'] = completed.filter(id => id !== current);
+  const triggerable = uniqueIds(progress['可触发节点']);
+  if (triggerable) {
+    const done = new Set((progress['已完成节点'] as string[] | undefined) ?? []);
+    progress['可触发节点'] = triggerable.filter(id => id !== current && !done.has(id));
+  }
 }

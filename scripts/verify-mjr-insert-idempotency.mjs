@@ -147,4 +147,56 @@ assert.throws(
   'gate must kill a regression that restores the old role-name-only behavior',
 );
 
+// 主线节点数组归一：当前节点不得残留在已完成/可触发数组中（2026-10-28 实机复现：推进到 NECROMANCER-02 后可触发仍含 02）
+{
+  // 沙箱 realm 的数组原型不同，统一转成本 realm 普通值再比较
+  const plain = value => JSON.parse(JSON.stringify(value));
+  const base = {
+    stat_data: {
+      主线进度: { 当前节点: 'NECROMANCER-01', 已完成节点: [], 可触发节点: ['NECROMANCER-01', 'NECROMANCER-02'] },
+    },
+  };
+  const advanced = production.applyRawProtocolToMvuData(
+    base,
+    protocol([
+      { op: 'replace', path: '/主线进度/当前节点', value: 'NECROMANCER-02' },
+      { op: 'replace', path: '/主线进度/已完成节点', value: ['NECROMANCER-01', 'NECROMANCER-01', ' '] },
+      { op: 'replace', path: '/主线进度/可触发节点', value: ['NECROMANCER-02', 'NECROMANCER-03', 'NECROMANCER-01'] },
+    ]),
+  ).data.stat_data.主线进度;
+  assert.deepEqual(plain(advanced.已完成节点), ['NECROMANCER-01'], 'completed nodes must be deduplicated and trimmed');
+  assert.deepEqual(
+    plain(advanced.可触发节点),
+    ['NECROMANCER-03'],
+    'triggerable nodes must exclude current and completed nodes',
+  );
+
+  const unrelated = production.applyRawProtocolToMvuData(
+    base,
+    protocol([{ op: 'replace', path: '/所在位置', value: 'x' }]),
+  );
+  assert.deepEqual(
+    plain(unrelated.data.stat_data.主线进度.可触发节点),
+    ['NECROMANCER-02'],
+    'any applied patch must also clean a stale current node from triggerable nodes',
+  );
+
+  const untouched = production.applyRawProtocolToMvuData(base, 'no protocol');
+  assert.equal(untouched.applied, 0);
+  assert.deepEqual(plain(untouched.data.stat_data.主线进度.可触发节点), ['NECROMANCER-01', 'NECROMANCER-02']);
+
+  const noNormalize = loadStandaloneTsSource(
+    source.replace('if (applied > 0) normalizeMainlineNodeArrays(next.stat_data);', ''),
+    `${rawWriterPath}.no-normalize.ts`,
+  );
+  assert.notDeepEqual(
+    plain(
+      noNormalize.applyRawProtocolToMvuData(base, protocol([{ op: 'replace', path: '/所在位置', value: 'x' }])).data
+        .stat_data.主线进度.可触发节点,
+    ),
+    ['NECROMANCER-02'],
+    'gate must kill a regression that drops mainline node normalization',
+  );
+}
+
 console.log('MJR_INSERT_IDEMPOTENCY_OK');
