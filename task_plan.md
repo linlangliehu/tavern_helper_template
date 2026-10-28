@@ -224,17 +224,17 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 **阶段 MFRS-GACHA-ITEM-USE：抽卡物品并入现场档案 + 现场档案使用按钮 + 消耗逻辑 — complete（2026-08-20；已发布 v8.15.28）**
 **阶段 MFRS-FALSELY-APPLIED-FIX：MVU 假性已应用 stat_data 重载退回初值修复 — complete（2026-08-20；已发布 v8.15.30）**
 **阶段 MFRS-SYSTEM-FOLD：HUD 系统面板「全库工具」按钮组可折叠 — complete（2026-08-21；已发布 v8.15.34）**
-**阶段 MFRS-IMMERSIVE-DRAWER-YIELD：沉浸模式 ST 抽屉 yield 修复 — complete（2026-08-21；待发布 v8.15.38）**
+**阶段 MFRS-IMMERSIVE-DRAWER-YIELD：沉浸模式 ST 抽屉 yield 修复 — complete（2026-08-21；已随 v8.15.40 发布）**
 
 ## 五问重启（新对话先读）
 
 | 问题 | 答案 |
 |------|------|
-| 我在哪里？ | 当前 HEAD `348d8ce8` = v8.15.30（已发布）；工作区有 v8.15.34 发布阶段 1 的未提交改动（折叠 UI 源码 + 版本常量 + CHANGELOG + 规划文件）。`index.yaml` 已切回生产模式。 |
-| 我要去哪里？ | 提交 v8.15.34 阶段 1 源码 → push → 等 bot bundle → 阶段 2 更新 CDN_REF → publish-card → 完整门禁 → 提交发布物。 |
+| 我在哪里？ | 最后正式发布 **v8.15.40**（2026-08-21，发布提交 `691f1133`）。本文件写于 v8.15.30 时期，五问重启与当前基线两节已过时，以 `项目进度.md` 第 3 节为准。 |
+| 我要去哪里？ | 维护期，暂无进行中任务；有任务时先读 `项目进度.md`。 |
 | 目标是什么？ | 单人开发闭环：`toggle-dev` 切 localhost:5510 → `pnpm watch` → 静态服务器 → 内置浏览器验证 → `pnpm stop-dev` 停服务并回生产 → 两阶段发布 |
 | 我学到了什么？ | ① 简化单 delta smoke 不足以覆盖生产数据；`Mvu.parseMessage` 可部分成功并静默丢 delta，协议必须由本地 applier 权威应用。② 抽卡物品 `progress`/`effect` 原为纯文案，已通过 `parseProgressFromText` 解析 progress + `syncGachaItemsToMvuStatData` 同步 MVU。③ `剩余次数: z.union([z.number(), z.string()])` 双格式需分别处理，否则数字格式永不消耗。④ MVU「假性已应用」标记留存但 stat_data 退回初值时，hotfix 永久跳过写回，需两层修复（pre-check + 历史扫描）。⑤ bot autotag 每次 `[bot] bundle` 自动 +1，版本号需查最新 tag 避开冲突。 |
-| 我做了什么？ | 完成 v8.15.24 拓本图录+鬼档案+移除 choices，v8.15.26 HUD 弹窗修复，v8.15.28 抽卡物品消耗+使用按钮四阶段，v8.15.30 MVU 假性已应用两层修复。当前 v8.15.34 HUD 系统面板折叠 UI 已真机验证通过，阶段 1 准备完成待 push。 |
+| 我做了什么？ | v8.15.24 ~ v8.15.40 已全部发布（详见 `progress.md` 与 `CHANGELOG.md`）。 |
 
 ## 硬约束（勿破）
 
@@ -251,12 +251,12 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 | 项 | 值 |
 |----|-----|
-| 发布内容版本 | **8.15.30**（已发布；HEAD `348d8ce8`；release `79edef2d`；bundle `8ff362d0`；tag `v8.15.30`→`418c6cec`；cache `v81530_20260820_01`；CDN_REF `8ff362d08355f5f0e25496b90ae8025ce35c9c79`）。**v8.15.34 阶段 1 待 push**：release-constants 已改为 8.15.34/cache `v81534_20260821_01`，CDN_REF 暂留旧值。 |
-| 仓库运行时基线 | 本地 `main@348d8ce8`；远端 `origin/main@348d8ce8` 同步；工作区有 v8.15.34 阶段 1 改动（源码 1 + 常量 1 + yaml 1 + CHANGELOG 1 + 规划 2），`index.yaml` 已切回生产模式，dist 已还原。 |
+| 发布内容版本 | **8.15.40**（已发布 2026-08-21；发布提交 `691f1133`；CDN_REF `adbbce8dfc07dfd30161d942dba870fa7a5f1af2`）。历史：8.15.30（HEAD `348d8ce8`）。 |
+| 仓库运行时基线 | 以 `项目进度.md` 第 0 节为准（本文件此节为 v8.15.30 时期快照）。 |
 | 开发流程 | F5：toggle-dev → pnpm watch（仅编译）→ 固定 5510 静态服务 → VS Code 调试 Chrome（CDP 9225）真页验收；结束用 `pnpm stop-dev` |
 | 发布流程 | 阶段 1：改开发版版本 + release/cache → `verify:mfrs-source-gates` → 推源码；阶段 2：bot bundle → 更新 CDN_REF → `publish-card --dist-no-build` → `verify:mfrs-gates` → 发布物/tag |
 | 端口职责 | 8000 SillyTavern 真页 · 5510 静态服务器（固定）· 6620 tavern_sync · 6621 webpack HMR · 9225 调试 Chrome（CDP/MCP） |
-| 下一阶段 | v8.15.34 阶段 1 待 push；阶段 2 等 bot bundle 后更新 CDN_REF 并 publish-card。 |
+| 下一阶段 | 无；维护期。 |
 
 ## 各阶段
 
@@ -503,7 +503,7 @@ BF0–BF6、Phase 5、8.13.29、8.13.31、8.13.36 与 **8.14.0** 发布均已完
 
 ## 当前任务状态
 
-1. **v8.15.34 待发布**：HUD 系统面板「全库工具」按钮组改为可折叠 `<details>`（默认收起一行，展开后显示四个全库按钮）。真机验证通过，源码门禁 13/13 全绿，阶段 1 准备完成，待 push 触发 bot bundle 后走阶段 2。
+1. **v8.15.34 已发布**（HUD 系统面板折叠）；后续 8.15.38、8.15.40 也已发布。本文件不再维护「待发布」状态，以 `项目进度.md` 为准。
 2. **8.15.30 已发布**：MVU 假性已应用 stat_data 重载退回初值修复（两层：pre-check + 历史扫描）+ 专项回归门禁。
 2. **8.15.28 已发布**：抽卡物品「使用」按钮消耗逻辑 + 数字格式剩余次数兼容 + 现场档案使用按钮 UI + 抽卡结果卡片使用按钮。
 3. **8.15.26 已发布**：HUD 沉浸模式提示词编辑弹窗遮挡修复。
