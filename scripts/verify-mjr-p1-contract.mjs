@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { load as parseYaml } from 'js-yaml';
+import { parse as parseYaml } from 'yaml';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cardRoot = join(root, 'src', '魔法禁书目录模拟器');
