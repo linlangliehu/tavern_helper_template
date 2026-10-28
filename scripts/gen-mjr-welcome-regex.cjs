@@ -37,8 +37,8 @@ const replacement = styleBlock + '\n' + bodyContent;
 //    最安全：给每行加 8 空格缩进（比"替换为: |-"多 6 空格）
 const indent = '        '; // 8 空格（YAML |- 块内容缩进）
 const escapedReplacement = replacement.split(/\r?\n/).map(line => {
-  // 空行只保留缩进空格（YAML 块内空行可为空或缩进）
-  if (line.trim() === '') return indent;
+  // YAML 块内空行保持为空，避免生成尾随空白。
+  if (line.trim() === '') return '';
   // 去掉行首空格后统一加 8 空格缩进，保证 YAML 块不提前结束
   return indent + line.replace(/^[ \t]*/, '');
 }).join('\n');
