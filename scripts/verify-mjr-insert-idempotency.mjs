@@ -76,29 +76,29 @@ function assertContract(apply, label = 'production') {
   assert.equal(result.stat_data.任务追踪[0].未知字段, '保留', `${label}: task update must preserve unknown fields`);
   assert.equal(result.stat_data.任务追踪[0].任务名称, firstTask.任务名称, `${label}: task position must remain stable`);
 
-  result = applyMany(apply, base, [
-    { op: 'insert', path: '/NPC关系/-', value: { 角色名: '御坂美琴', 好感度: 10 } },
-  ], 3);
+  result = applyMany(apply, base, [{ op: 'insert', path: '/NPC关系/-', value: { 角色名: '御坂美琴', 好感度: 10 } }], 3);
   assert.equal(result.stat_data.NPC关系.length, 1, `${label}: NPC role-name replay must be idempotent`);
 
-  result = applyMany(apply, base, [
-    { op: 'insert', path: '/NPC关系/-', value: { 角色名: '   ', 姓名: '白井黑子', 好感度: 5 } },
-  ], 3);
+  result = applyMany(
+    apply,
+    base,
+    [{ op: 'insert', path: '/NPC关系/-', value: { 角色名: '   ', 姓名: '白井黑子', 好感度: 5 } }],
+    3,
+  );
   assert.equal(result.stat_data.NPC关系.length, 1, `${label}: NPC must fall back to 姓名 for blank 角色名`);
 
-  result = applyMany(apply, base, [
-    { op: 'insert', path: '/物品/持有物/-', value: { 名称: '学生证', 数量: 1 } },
-  ], 3);
+  result = applyMany(apply, base, [{ op: 'insert', path: '/物品/持有物/-', value: { 名称: '学生证', 数量: 1 } }], 3);
   assert.equal(result.stat_data.物品.持有物.length, 1, `${label}: item replay must be idempotent`);
-  result = applyMany(apply, result, [
-    { op: 'insert', path: '/物品/持有物/0', value: { 名称: '学生证', 数量: 2 } },
-  ]);
+  result = applyMany(apply, result, [{ op: 'insert', path: '/物品/持有物/0', value: { 名称: '学生证', 数量: 2 } }]);
   assert.equal(result.stat_data.物品.持有物.length, 1, `${label}: item update must not append`);
   assert.equal(result.stat_data.物品.持有物[0].数量, 2, `${label}: item update must merge`);
 
-  result = applyMany(apply, base, [
-    { op: 'insert', path: '/能力档案/-', value: { 能力名称: '电击使', 能力效果: '操纵电力' } },
-  ], 3);
+  result = applyMany(
+    apply,
+    base,
+    [{ op: 'insert', path: '/能力档案/-', value: { 能力名称: '电击使', 能力效果: '操纵电力' } }],
+    3,
+  );
   assert.equal(result.stat_data.能力档案.length, 1, `${label}: ability replay must be idempotent`);
 
   const timeline = { 时间点: '4月某日', 事件: '抵达学园都市', 详情: { 地点: '第七学区' }, 标签: ['开场', '日常'] };
