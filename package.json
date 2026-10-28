@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build:dev": "webpack --mode development",
-    "build": "node scripts/verify-mjr-ability-placeholder-gate.mjs && node scripts/verify-mjr-opening-ability-contract.mjs && node scripts/verify-mjr-opening-baseline.mjs && node scripts/verify-mjr-message-panel-mount.mjs && node scripts/verify-mjr-event-budget-routing.mjs && node scripts/verify-mjr-p1-contract.mjs && node scripts/verify-production-mode.mjs && webpack --mode production",
+    "build": "node scripts/verify-script-deps.mjs && node scripts/verify-mjr-ability-placeholder-gate.mjs && node scripts/verify-mjr-opening-ability-contract.mjs && node scripts/verify-mjr-opening-baseline.mjs && node scripts/verify-mjr-message-panel-mount.mjs && node scripts/verify-mjr-event-budget-routing.mjs && node scripts/verify-mjr-p1-contract.mjs && node scripts/verify-production-mode.mjs && webpack --mode production",
     "watch": "webpack --mode development --watch --progress",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,scss,html,vue}\" --no-error-on-unmatched-pattern",
     "lint": "eslint",
