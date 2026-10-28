@@ -50,27 +50,37 @@ const MagicItemSchema = z.object({
   效果: z.string().default(''),
 });
 
-const MainlineProgressSchema = z.object({
-  当前阶段: z.string().default('开局接入'),
-  阶段序号: NonNegativeNumberSchema.default(0),
-  阶段状态: z.string().default('未启动'),
-  当前节点: z.string().default('未进入事件包'),
-  已完成节点: z.array(z.string()).default([]),
-  可触发节点: z.array(z.string()).default([]),
-  偏移等级: NonNegativeNumberSchema.default(0),
-  正史锚点: z
-    .object({
-      当前锚点: z.string().default('自定义开局'),
-      默认走向: z.string().default('等待玩家开局地点与身份确定'),
-      玩家偏移: z.array(z.string()).default([]),
-    })
-    .default({
-      当前锚点: '自定义开局',
-      默认走向: '等待玩家开局地点与身份确定',
-      玩家偏移: [],
-    }),
-  下一步推进提示: z.string().default('等待玩家确认开局地点、阵营与身份'),
-});
+const uniqueNodeIds = (ids: string[]) => _.uniq(ids.map(id => id.trim()).filter(Boolean));
+
+const MainlineProgressSchema = z
+  .object({
+    当前阶段: z.string().default('开局接入'),
+    阶段序号: NonNegativeNumberSchema.default(0),
+    阶段状态: z.string().default('未启动'),
+    当前节点: z.string().default('未进入事件包'),
+    已完成节点: z.array(z.string()).default([]),
+    可触发节点: z.array(z.string()).default([]),
+    偏移等级: NonNegativeNumberSchema.default(0),
+    正史锚点: z
+      .object({
+        当前锚点: z.string().default('自定义开局'),
+        默认走向: z.string().default('等待玩家开局地点与身份确定'),
+        玩家偏移: z.array(z.string()).default([]),
+      })
+      .default({
+        当前锚点: '自定义开局',
+        默认走向: '等待玩家开局地点与身份确定',
+        玩家偏移: [],
+      }),
+    下一步推进提示: z.string().default('等待玩家确认开局地点、阵营与身份'),
+  })
+  .transform(progress => {
+    // 当前节点是正在推进的焦点，不能同时是“已完成”或“下一可触发”候选
+    const current = progress.当前节点.trim();
+    const 已完成节点 = uniqueNodeIds(progress.已完成节点).filter(id => id !== current);
+    const 可触发节点 = uniqueNodeIds(progress.可触发节点).filter(id => id !== current && !已完成节点.includes(id));
+    return { ...progress, 已完成节点, 可触发节点 };
+  });
 
 export const Schema = z.object({
   姓名: z.string().default(''),
@@ -84,14 +94,11 @@ export const Schema = z.object({
   角色背景: z.string().default(''),
   身份: z.string().default(''),
   阵营: z.enum(['科学侧', '魔法侧', '']).default(''),
-  能力档案: z.preprocess(
-    val => {
-      if (Array.isArray(val)) return val;
-      if (typeof val === 'string' && val && val !== '无') return [{ 能力名称: val }];
-      return [];
-    },
-    z.array(AbilitySchema).default([]),
-  ),
+  能力档案: z.preprocess(val => {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string' && val && val !== '无') return [{ 能力名称: val }];
+    return [];
+  }, z.array(AbilitySchema).default([])),
   状态: z.string().default('健康'),
   身体: z.string().default('良好'),
   情绪: z.string().default('平静'),
