@@ -43,6 +43,15 @@ CJK ≈ 1 tok/字，英文 ≈ 4 字/tok 的粗略估算（离线、非 tokenize
 
 结论：事件包预算路由已生效，蓝灯常驻是大头但合理（< 50k）；真正的大头是绿灯事件包。是否要按文件夹进一步细分预算、或对常驻蓝灯做瘦身，留待 P2 后续单独评估。
 
+## 最终产物
+
+- 第一阶段提交 `release(mjr): prepare 1.1.8 protocol resilience + P3 bgm pin`（`81fae8e9`）。
+- 第一阶段触发的 CI bundle 运行 `40691912151` 成功；`[bot] bundle` 生成生产 `dist` 提交 `77d318a6`（bot tag `v8.15.188`）。
+- 第二阶段把 6 个 loader 从 `3218e217` 改到 `77d318a6` 并重新打包 PNG。
+- PNG `src/魔法禁书目录模拟器/魔法禁书目录模拟器.png`：7,666,077 bytes；`chara`/`ccv3` 均为版本 1.1.8、世界书 114 条、loader SHA `[77d318a6]`、`bgm/7f1be030` 已固定且无 `bgm/main/` 残留。
+- CDN：`testingcf.jsdelivr.net` 6 个文件 HTTP 200 且 SHA-256 与本地一致；`fastly.jsdelivr.net` 6 个文件 HTTP 200 且 SHA-256 与本地一致（其中 `mvu-protocol-applier` 前几次 403，第 6 次重试成功，是 CDN 缓存刷新延迟）。`cdn.jsdelivr.net` 本机连接被重置，未能校验（同 1.1.7）。
+- 实机验证按用户决定跳过，玩家游玩时留意「可触发节点不含当前节点」「换篇后所在位置更新」「玩家偏移保持数组」即可。
+
 ## 发布边界
 
 - loader SHA 仍为 1.1.7 的 `3218e217`（本版本不改动 6 个脚本源码，只改 `raw-status-writer` 与世界书文本，这些内容由第二阶段 `[bot] bundle` 用新 SHA 重新发布）。
