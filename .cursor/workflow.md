@@ -4,9 +4,9 @@
 
 当前唯一流程真源：
 
-- `PROJECT_FLOW.md`：开发、验证、发布、端口职责及 Git 同步规则
+- `docs/神秘复苏/PROJECT_FLOW.md`：开发、验证、发布、端口职责及 Git 同步规则
 - `docs/SIMPLIFIED_WORKFLOW.md`：面向使用者的日常操作手册
-- `task_plan.md`：当前任务状态与下一步
+- `项目进度.md`：当前任务状态与下一步（神秘复苏细节见 `docs/神秘复苏/task_plan.md`）
 
 当前日常入口是：F5 → 切换开发模式 → `pnpm watch` → 固定 5510 静态服务 → 在 8000 真页验收 → 切回生产模式。
 

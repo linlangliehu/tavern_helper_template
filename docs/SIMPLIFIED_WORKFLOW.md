@@ -5,8 +5,8 @@
 > 历史上的 MFRS 多 worktree / 动态端口 / 身份验证 / DEV 卡派生 / 会话锁机制已于 2026-07-19 **彻底废弃**，本文档描述的就是当前**唯一**的开发流程。
 
 - 本文档：面向使用者的**操作手册**（怎么按键、跑什么任务、遇到问题怎么办）。
-- 契约与边界真源：`PROJECT_FLOW.md`（端口职责、发布流程、CDN ref 规则、硬约束）。
-- 当前进度：`task_plan.md` 顶部；会话流水：`progress.md`；可复用结论：`findings.md`。
+- 契约与边界真源：`docs/神秘复苏/PROJECT_FLOW.md`（端口职责、发布流程、CDN ref 规则、硬约束）。
+- 当前进度：根目录 `项目进度.md`；神秘复苏任务：`docs/神秘复苏/task_plan.md`；可复用结论：`角色卡制作经验.md`、`docs/神秘复苏/findings.md`；历史会话流水：`docs/archive/progress.md`。
 
 ---
 
@@ -114,7 +114,7 @@ pnpm stop-dev                                # 停止 watch/5510 并恢复生产
 
 ## 发布流程（简版索引）
 
-完整步骤、CDN ref 规则、发布验证最低线见 **`PROJECT_FLOW.md`**。要点：
+完整步骤、CDN ref 规则、发布验证最低线见 **`docs/神秘复苏/PROJECT_FLOW.md`**。要点：
 
 1. 确认 YAML 已切回生产模式（`--status` 显示"生产模式"）
 2. 只升级开发版 `src/神秘复苏模拟器/index.yaml` 的版本；发布版由阶段 2 的 `publish-card` 镜像生成
@@ -198,7 +198,7 @@ git add src/神秘复苏模拟器/index.yaml && git commit --amend --no-edit
 
 ---
 
-## 硬约束（勿破，详见 PROJECT_FLOW.md）
+## 硬约束（勿破，详见 docs/神秘复苏/PROJECT_FLOW.md）
 
 - 脚本库 **8 项** 名称/顺序/启用不改
 - 正则数量门禁约 **33**；改 id/启用需同步 `verify-mfrs-release-png`

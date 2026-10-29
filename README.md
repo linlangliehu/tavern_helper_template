@@ -35,7 +35,7 @@ cd tavern_helper_template
 pnpm install
 ```
 
-> **统一口径**：本项目为单人开发，采用极简流程。日常开发以 `PROJECT_FLOW.md` 为准：固定端口 5510 静态服务 + 直接切换 YAML 开发/生产模式 + VS Code 调试 Chrome（CDP 9225）验收。
+> **统一口径**：本项目为单人开发，采用极简流程。日常开发以 `docs/神秘复苏/PROJECT_FLOW.md` 为准（通用部分见 `角色卡机制知识要点.md` 第十节）：固定端口 5510 静态服务 + 直接切换 YAML 开发/生产模式 + VS Code 调试 Chrome（CDP 9225）验收。
 
 ##### 启动开发环境（推荐）
 
@@ -176,12 +176,12 @@ tavern_helper_template/
 │   ├── bundle.yaml                  # 自动打包
 │   ├── bump_deps.yaml               # 依赖更新
 │   └── sync_template.yaml           # 模板同步
-└── PROJECT_FLOW.md                  # 开发流程文档
+└── docs/神秘复苏/PROJECT_FLOW.md     # 开发流程文档（神秘复苏）
 ```
 
 ### 开发流程
 
-> 📖 面向使用者的完整操作手册见 **[docs/SIMPLIFIED_WORKFLOW.md](docs/SIMPLIFIED_WORKFLOW.md)**（怎么按键、跑什么任务、遇到问题怎么办）；流程契约与边界真源见 `PROJECT_FLOW.md`。
+> 📖 面向使用者的完整操作手册见 **[docs/SIMPLIFIED_WORKFLOW.md](docs/SIMPLIFIED_WORKFLOW.md)**（怎么按键、跑什么任务、遇到问题怎么办）；流程契约与边界真源见 `docs/神秘复苏/PROJECT_FLOW.md`。
 
 #### 1. 修改开发版
 ```bash
@@ -364,7 +364,7 @@ A: 使用 `node -e "require('https').get(encodeURI('<url>'), r => console.log(r.
 A: 运行 `node scripts/verify-worldbook-pollution-gate.mjs --expect-mfrs-runtime "<png-path>"`，检查是否有旧 CDN ref、localhost 或错误的 marker/cache 残留。
 
 ### Q: 数据库表初始化失败？
-A: 已知 bug（灵异物品、收录规律表头截断），不影响核心功能。长期修复计划见 `task_plan.md` 任务 E。
+A: 已知 bug（灵异物品、收录规律表头截断），不影响核心功能。长期修复计划见 `docs/神秘复苏/task_plan.md` 任务 E。
 
 ## 许可证
 
