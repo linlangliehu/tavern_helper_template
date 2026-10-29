@@ -1,14 +1,15 @@
 const fs = require('fs');
 const p = require('path');
 const ROOT = p.resolve(__dirname, '..');
-const y = require(p.join(ROOT, 'node_modules', 'js-yaml'));
+// 用项目直接依赖 `yaml`（package.json 已声明）；`js-yaml` 只是间接依赖，pnpm 不会放到 node_modules 根目录。
+const YAML = require('yaml');
 
 const CARD = p.join(ROOT, 'src', '魔法禁书目录模拟器', 'index.yaml');
 let failed = false;
 const fail = msg => { console.log('FAIL:', msg); failed = true; };
 
 try {
-  const d = y.load(fs.readFileSync(CARD, 'utf8'));
+  const d = YAML.parse(fs.readFileSync(CARD, 'utf8'));
   console.log('YAML_OK');
 
   // 顶层结构完整性
