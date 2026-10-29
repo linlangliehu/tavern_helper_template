@@ -16,7 +16,7 @@ const BASELINE = `${ARTIFACTS}/baseline.json`;
 const PROTECTION = `${ARTIFACTS}/protection-snapshot.json`;
 const EVIDENCE = 'docs/魔禁四月至次年一月-事件证据表.md';
 const REQUIRED_FIELDS = ['进入条件', '场景目标', '可见角色', '玩家行动', '结果', '下一节点'];
-const APPROVED_DOCS = new Set([EVIDENCE, 'docs/魔禁剧情修改方案-四月至次年一月.md', '魔禁开发交接文档.md']);
+const APPROVED_DOCS = new Set([EVIDENCE, 'docs/魔禁剧情修改方案-四月至次年一月.md', 'docs/魔禁/魔禁开发交接文档.md']);
 const TEXT_EXTENSION = /\.(?:txt|md|mdc|ya?ml|json|[cm]?[jt]sx?|html?|css|scss|vue|toml|svg|csv|lock)$/i;
 const hash = value => createHash('sha256').update(value).digest('hex');
 const sorted = value => Array.isArray(value) ? value.map(sorted) : value && typeof value === 'object'
