@@ -1,24 +1,30 @@
-# 神秘复苏模拟器
+# 酒馆助手角色卡工程（tavern_helper_template）
 
-基于 SillyTavern 的《神秘复苏》世界观角色扮演模拟器，包含完整的数据库系统、实时状态追踪和自动化规则引擎。
+基于 SillyTavern + 酒馆助手（Tavern Helper）的角色卡工程，目前维护两张卡：《神秘复苏》和《魔法禁书目录》。
 
-## 项目简介
+## 卡片清单
 
-本项目是一个完整的 SillyTavern 角色卡工程，包含：
-- **角色卡本体**：系统提示词、世界书、对话示例、开局表单
-- **前端界面**：状态栏、专用面板、选项系统、数据库展示
-- **脚本系统**：MVU 变量框架、数据库前端、自动更新、界面美化
-- **数据库引擎**：14 张表的自动填表系统（基于 shujuku-sp-fork）
-- **自动化工作流**：自动打包、版本管理、CDN 发布
+| 卡片 | 源码目录 | 说明 | 详细资料 |
+|---|---|---|---|
+| 魔法禁书目录模拟器（MJR） | `src/魔法禁书目录模拟器/` | MVU 变量卡，开局表单 + 事件包剧情 | `docs/魔禁/` |
+| 神秘复苏模拟器（MFRS，开发版） | `src/神秘复苏模拟器/` | MVU + 14 表数据库（基于 shujuku-sp-fork） | `docs/神秘复苏/` |
+| 神秘复苏模拟器发布版 | `src/神秘复苏模拟器发布版/` | 只能由 `publish-card` 从开发版生成 | 同上 |
+
+当前版本与下一步以根目录 `项目进度.md` 为准。
+
+## 文档布局
+
+- **根目录通用文档**：`项目进度.md`（各卡进度，开工先读）、`角色卡制作经验.md`（问题与解决方案）、`角色卡机制知识要点.md`（机制参考，第十节为通用开发与发布流程）。
+- **卡片专属资料**：`docs/<卡名>/`（`docs/魔禁/`、`docs/神秘复苏/`）。
+- **历史归档**：`docs/archive/`、`archive/`、`.planning/`、`planning_archive_2026-06/`、`-07/`（2026-05 归档在 `docs/archive/`）。历史文档中的路径以 2026-10-29 搬迁前为准。
 
 ## 快速开始
 
 ### 玩家使用
 
-1. 下载最新已发布角色卡：[神秘复苏模拟器发布版.png](src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png)（8.14.0）
-2. 在 SillyTavern 中导入角色卡
-3. 选择支持的 AI 模型（推荐 Claude Opus/Sonnet）
-4. 开始游玩
+1. 导入对应的角色卡 PNG：魔禁 `src/魔法禁书目录模拟器/魔法禁书目录模拟器.png`；神秘复苏 `src/神秘复苏模拟器发布版/神秘复苏模拟器发布版.png`
+2. 在 SillyTavern 中导入角色卡（需安装酒馆助手；魔禁还需 ST-Prompt-Template 扩展）
+3. 选择 AI 模型后开始游玩
 
 ### 开发者使用
 
@@ -153,35 +159,26 @@ pnpm install
 ```
 tavern_helper_template/
 ├── src/
-│   ├── 神秘复苏模拟器/              # 开发版角色卡（主工作目录）
-│   │   ├── 系统提示词/
-│   │   ├── 世界书/
-│   │   ├── 对话示例/
-│   │   ├── 第一条消息/
-│   │   ├── 脚本/                    # 前端脚本
-│   │   │   ├── 数据库前端/          # 数据库展示和操作
-│   │   │   ├── 固定状态栏/          # 状态栏组件
-│   │   │   ├── 界面美化/            # 样式和布局
-│   │   │   └── hotfix-generation-ended-listeners/  # 监听器补丁
-│   │   └── index.yaml               # 角色卡配置
+│   ├── 魔法禁书目录模拟器/          # 魔禁卡（index.yaml、schema.ts、世界书、脚本、自定义开局）
+│   ├── 神秘复苏模拟器/              # 神秘复苏开发版（主工作目录，含界面/数据库/数据）
 │   └── 神秘复苏模拟器发布版/         # 发布版（由 publish-card 自动同步）
-├── vendor/
-│   └── shujuku-sp-fork/             # 数据库引擎 fork
-├── scripts/
-│   ├── publish-card.mjs             # 发布脚本
-│   ├── verify-*.mjs                 # 回归测试
-│   └── cdp-evaluate.mjs             # Chrome DevTools Protocol 工具
+├── util/                            # 公共工具代码
+├── vendor/shujuku-sp-fork/          # 数据库引擎 fork（神秘复苏）
+├── scripts/                         # 发布、门禁（verify-*）、CDP 调试等脚本
 ├── dist/                            # 构建产物（bot 自动生成）
-├── .github/workflows/               # CI/CD 工作流
-│   ├── bundle.yaml                  # 自动打包
-│   ├── bump_deps.yaml               # 依赖更新
-│   └── sync_template.yaml           # 模板同步
-└── docs/神秘复苏/PROJECT_FLOW.md     # 开发流程文档（神秘复苏）
+├── .github/workflows/               # CI：bundle / bump_deps / sync_template
+├── docs/
+│   ├── 魔禁/                        # 魔禁交接文档、作品资料、参考开局面板、2026.jpg
+│   ├── 神秘复苏/                    # PROJECT_FLOW、task_plan、findings 等
+│   └── archive/                     # 历史混合日志
+├── 项目进度.md                      # 各卡进度（开工先读）
+├── 角色卡制作经验.md                # 问题与解决方案
+└── 角色卡机制知识要点.md            # 机制参考 + 通用开发与发布流程（第十节）
 ```
 
 ### 开发流程
 
-> 📖 面向使用者的完整操作手册见 **[docs/SIMPLIFIED_WORKFLOW.md](docs/SIMPLIFIED_WORKFLOW.md)**（怎么按键、跑什么任务、遇到问题怎么办）；流程契约与边界真源见 `docs/神秘复苏/PROJECT_FLOW.md`。
+> 📖 面向使用者的完整操作手册见 **[docs/SIMPLIFIED_WORKFLOW.md](docs/SIMPLIFIED_WORKFLOW.md)**（怎么按键、跑什么任务、遇到问题怎么办）；通用开发与发布流程见 `角色卡机制知识要点.md` 第十节；神秘复苏专属的流程契约与边界见 `docs/神秘复苏/PROJECT_FLOW.md`。
 
 #### 1. 修改开发版
 ```bash
