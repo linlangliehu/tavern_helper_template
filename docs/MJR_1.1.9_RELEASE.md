@@ -32,5 +32,9 @@
 
 ## 最终产物
 
-- 第一阶段：（待填）
-- 第二阶段：（待填）
+- 第一阶段提交 `release(mjr): prepare 1.1.9 P2 token optimization (split 4 always-on codices)`（`13f8b9b3`）。
+- CI `[bot] bundle` 生成生产 `dist` 提交 `16af5df5`（bot tag `v8.15.204`）。脚本源码未改，`dist` 相对 `77d318a6` 只有构建噪音级差异。
+- 第二阶段把 6 个 loader 从 `77d318a6` 改到 `16af5df5` 并重新打包 PNG。
+- PNG `src/魔法禁书目录模拟器/魔法禁书目录模拟器.png`：7,700,941 bytes；`chara`/`ccv3` 均为版本 1.1.9、世界书 118 条、loader SHA `16af5df5` ×6、无旧 SHA、无 `@main`。
+- 门禁 9 项全过；`check-mjr-yaml` 通过；`git diff --check` 通过。
+- CDN：`testingcf.jsdelivr.net` 与 `fastly.jsdelivr.net` 6 个文件均 HTTP 200 且 SHA-256 与本地一致（首次请求有短暂 403，约 1 分钟后缓存就绪）。
