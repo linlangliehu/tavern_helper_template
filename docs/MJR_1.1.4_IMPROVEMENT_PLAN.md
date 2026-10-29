@@ -123,5 +123,5 @@
 - 当前产物与已运行检查：`docs/MJR_1.1.4_RELEASE.md` 及本文“当前基线”。
 - 规则和入口差异：`src/魔法禁书目录模拟器/系统提示词/0.txt`、`src/魔法禁书目录模拟器/世界书/变量/变量更新规则.yaml`、`src/魔法禁书目录模拟器/世界书/变量/变量输出格式.yaml`、`src/魔法禁书目录模拟器/index.yaml`、`src/魔法禁书目录模拟器/自定义开局/欢迎页.txt`。
 - 剧情覆盖证据：`docs/魔禁四月至次年一月-事件证据表.md`、`docs/魔禁剧情修改方案-四月至次年一月.md`、`.planning/magic-opening-restructure-20260908/phase6-initialization.json`。
-- 项目交接入口：`魔禁开发交接文档.md` 第 23 节。
+- 项目交接入口：`docs/魔禁/魔禁开发交接文档.md` 第 23 节。
 - TavernWeave 路由：`tavern-card-builder`；读取 ST-A0、ST-A2、ST-A3、ST-A4、ST-A6、ST-B1、ST-C10（snapshot `2026-08-18`）。本计划未选择或采用任何设计目录候选；宿主行为仍以实际运行验收为准。
