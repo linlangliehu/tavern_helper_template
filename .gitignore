@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 .vscode/chrome-debug-profile/
 
@@ -79,3 +80,5 @@ current-vscode-browser.png
 
 # 根目录一次性截图（卡片 PNG 都在 src/ 下，不受影响）
 /*.png
+=======
+>>>>>>> 2a6d5c0d5200986ce6636a49ac7890ffa01c801a
