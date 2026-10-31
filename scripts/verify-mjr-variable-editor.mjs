@@ -75,10 +75,51 @@ assert.equal(core.validateDraft(schema, { 姓名: 'x', 偏移等级: 1 }).ok, tr
 const invalid = core.validateDraft(schema, { 姓名: 'x', 偏移等级: '很高' });
 assert.equal(invalid.ok, false);
 assert.equal(invalid.issues[0].path, '偏移等级');
+assert.deepEqual(invalid.issues[0].parts, ['偏移等级']);
+
+// 6b. 只拦截改动字段上的校验问题；AI 写回的旧值不合规时不阻止写入（补丁式，借鉴参考卡）
+const issues = [
+  { path: '阵营', parts: ['阵营'], message: 'bad enum' },
+  { path: '能力档案[0].是否稳定', parts: ['能力档案', 0, '是否稳定'], message: 'bad bool' },
+];
+assert.deepEqual(core.issuesForChanges(issues, [{ path: ['姓名'], before: 'a', after: 'b' }]), []);
+assert.equal(core.issuesForChanges(issues, [{ path: ['阵营'], before: 'x', after: 'y' }]).length, 1);
+assert.equal(
+  core.issuesForChanges(issues, [{ path: ['能力档案'], before: [], after: [] }]).length,
+  1,
+  'array-level change must include nested issues',
+);
+const patchedBase = { 姓名: '旧', 阵营: '科学侧（学园都市）', 列表: [1, 2] };
+const patched = core.applyChanges(patchedBase, [{ path: ['姓名'], before: '旧', after: '新' }]);
+assert.deepEqual(patched, { 姓名: '新', 阵营: '科学侧（学园都市）', 列表: [1, 2] }, 'untouched fields stay as-is');
+assert.equal(patchedBase.姓名, '旧', 'applyChanges must not mutate the base');
 
 // 7. 面板位置限制在屏幕内
 const clamped = core.clampLayout({ x: 5000, y: -50, width: 9000, height: 50 }, { width: 800, height: 600 });
 assert.deepEqual(clamped, { x: 752, y: 0, width: 800, height: 160 });
+
+// 7b. 分类：与消息末尾面板对应，字段都必须真实存在于 schema.ts，枚举选项与 schema 一致
+assert.deepEqual(
+  core.SECTIONS.map(section => section.id),
+  ['玩家', '能力', '任务', '地点', '关系'],
+);
+const schemaSource = readFileSync(join(cardRoot, 'schema.ts'), 'utf8');
+for (const section of core.SECTIONS) {
+  for (const field of section.fields) {
+    assert.ok(
+      new RegExp(`^  ${field}: `, 'm').test(schemaSource),
+      `section ${section.id}: field ${field} missing in schema.ts`,
+    );
+  }
+}
+for (const [field, options] of Object.entries(core.ENUM_OPTIONS)) {
+  const enumText = `${field}: z.enum([${options.map(option => `'${option}'`).join(', ')}])`;
+  assert.ok(schemaSource.includes(enumText), `ENUM_OPTIONS.${field} must match schema.ts`);
+}
+assert.equal(core.itemLabel({ 能力名称: '幻想杀手' }, 0), '1. 幻想杀手');
+assert.equal(core.itemLabel({ 角色名: '茵蒂克丝' }, 2), '3. 茵蒂克丝');
+assert.equal(core.itemLabel('白井黑子', 1), '2. 白井黑子');
+assert.equal(core.itemLabel({}, 4), '5.');
 
 // 8. 接入：入口存在、使用卡片 Schema 校验、不用 innerHTML/eval；加载器包含该模块
 const entrySource = readFileSync(join(cardRoot, '脚本', '变量编辑器', 'index.ts'), 'utf8');

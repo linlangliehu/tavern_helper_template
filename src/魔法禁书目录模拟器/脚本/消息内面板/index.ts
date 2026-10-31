@@ -23,7 +23,14 @@ type MessagePanelHostWindow = Window & {
     getContext?: () => {
       characterId?: string | number;
       characters?: Array<{ name?: string; avatar?: string }> | Record<string, { name?: string; avatar?: string }>;
-      chat?: Array<{ is_user?: boolean; mes?: string; message?: string; extra?: Record<string, unknown> }>;
+      chat?: Array<{
+        is_user?: boolean;
+        mes?: string;
+        message?: string;
+        extra?: Record<string, unknown>;
+        message_id?: number;
+        swipe_id?: number;
+      }>;
     };
   };
 };
@@ -112,7 +119,9 @@ function readStatusForMessage(mesElement: Element): StatusData {
     if (isNaN(messageId)) return {};
     let data = _.get(getVariables({ type: 'message', message_id: messageId }), 'stat_data', {}) ?? {};
     if (!data || typeof data !== 'object' || Array.isArray(data)) data = {};
-    // 协议兜底：把消息正文里的 JSONPatch 应用到 stat_data
+    // 协议兜底：把消息正文里的 JSONPatch 应用到 stat_data。
+    // 变量编辑器手动改过的楼层跳过兜底，否则旧协议里的值（如 好感度 20）会盖掉玩家刚写入的值。
+    if (hasManualVariableEdit(messageId)) return data;
     try {
       const raw = getMessageProtocolTextForElement(mesElement);
       if (raw && /<UpdateVariable|<JSONPatch/i.test(raw)) {
@@ -129,6 +138,20 @@ function readStatusForMessage(mesElement: Element): StatusData {
 
 const RAW_PROTOCOL_EXTRA_KEY = '_mfrs_raw_protocol_message';
 
+/** 变量编辑器写入时在楼层 extra 上打的标记（见 脚本/变量编辑器/index.ts）。 */
+const MANUAL_EDIT_EXTRA_KEY = '_mjr_variable_editor_swipe';
+
+function hasManualVariableEdit(messageId: number): boolean {
+  try {
+    const chat = getSillyTavernContext()?.chat;
+    if (!Array.isArray(chat)) return false;
+    const hit = chat.find(message => Number(message?.message_id) === messageId) ?? chat[messageId];
+    // 标记值是写入时的 swipe_id；换 swipe（重新生成）后不再命中
+    return hit?.extra?.[MANUAL_EDIT_EXTRA_KEY] === (hit?.swipe_id ?? 0);
+  } catch {
+    return false;
+  }
+}
 function readMessageProtocolText(msg: any): string {
   const rawExtra = msg?.extra?.[RAW_PROTOCOL_EXTRA_KEY];
   if (typeof rawExtra === 'string' && rawExtra.trim()) {

@@ -1,6 +1,7 @@
 // 悬浮变量编辑器 - 魔法禁书目录模拟器
 // 右下角可拖动的悬浮按钮，打开后可查看并修改最新 AI 楼层的 stat_data。
-// 设计借鉴参考卡的悬浮变量编辑器（树形 / JSON 两种视图、暂存后统一应用），按本卡结构重写：
+// 设计借鉴参考卡的悬浮变量编辑器（分类编辑 / JSON 视图、暂存后统一应用），按本卡结构重写：
+// - 分类与消息末尾面板对应：玩家 / 能力 / 任务 / 地点 / 关系，另有「全部 JSON」高级视图；
 // - 只改值、只删数组项，不新增字段（变量结构固定，新增字段会被 Schema 丢弃）；
 // - 应用前用 schema.ts 的 Schema 校验，不通过不写入；AI 生成中禁止应用，避免和 mvu-protocol-applier 同时写入；
 // - 所有用户可见文本用 textContent 输出，不拼接 HTML、不 eval。
@@ -15,6 +16,12 @@ import {
   formatPath,
   getAtPath,
   isPlainObject,
+  issuesForChanges,
+  applyChanges,
+  itemLabel,
+  ENUM_OPTIONS,
+  SECTIONS,
+  type SectionId,
   type Layout,
   parseJsonDraft,
   type PathPart,
@@ -27,7 +34,7 @@ registerMfrsRuntimeBuild('变量编辑器');
 
 type MvuData = Record<string, unknown> & { stat_data?: Record<string, unknown> };
 type MessageOption = { type: 'message'; message_id: number };
-type ChatMessage = { is_user?: boolean; message_id?: number };
+type ChatMessage = { is_user?: boolean; message_id?: number; swipe_id?: number; extra?: Record<string, unknown> };
 
 type HostWindow = Window & {
   __mjrVariableEditorCleanup__?: () => void;
@@ -152,30 +159,58 @@ function readStatData(messageId: number): Record<string, unknown> {
   return isPlainObject(raw) ? cloneJson(raw) : {};
 }
 
+/**
+ * 消息内面板会把楼层原始协议（AI 输出的 JSONPatch）再套一遍到 stat_data 上作兜底；
+ * 编辑器写入后在楼层 extra 上打标记，面板见到标记就跳过兜底，否则旧协议值会盖掉手动改的值。
+ */
+const MANUAL_EDIT_EXTRA_KEY = '_mjr_variable_editor_swipe';
+
+async function markManualEdit(messageId: number): Promise<void> {
+  const context = getContext() as (ReturnType<typeof getContext> & { saveChat?: () => unknown }) | null;
+  const chat = context?.chat;
+  if (!Array.isArray(chat)) return;
+  const message = chat.find(item => item?.message_id === messageId) ?? chat[messageId];
+  if (!message) return;
+  // 值记为当前 swipe_id：重新生成（换 swipe）后标记自动失效，面板恢复协议兜底
+  message.extra = { ...(message.extra ?? {}), [MANUAL_EDIT_EXTRA_KEY]: message.swipe_id ?? 0 };
+  await safeRead(() => context?.saveChat?.());
+}
+
 async function writeStatData(messageId: number, statData: Record<string, unknown>): Promise<void> {
   const option: MessageOption = { type: 'message', message_id: messageId };
   const mvu = getMvu();
   if (mvu?.getMvuData && mvu.replaceMvuData) {
     const current = mvu.getMvuData(option) ?? {};
     await mvu.replaceMvuData({ ...current, stat_data: statData }, option);
-    return;
+  } else {
+    const update = getRuntime('updateVariablesWith');
+    if (!update) throw new Error('找不到 MVU 或酒馆助手的变量写入接口');
+    await update(variables => ({ ...variables, stat_data: statData }), option);
   }
-  const update = getRuntime('updateVariablesWith');
-  if (!update) throw new Error('找不到 MVU 或酒馆助手的变量写入接口');
-  await update(variables => ({ ...variables, stat_data: statData }), option);
+  await markManualEdit(messageId);
 }
 
 /* ---------- 状态 ---------- */
 
 let root: HTMLDivElement | null = null;
 let panelOpen = false;
-let generating = false;
-let mode: 'tree' | 'json' = 'tree';
+/**
+ * 以酒馆「停止生成」按钮是否可见为准判断 AI 是否在生成（与 mvu-protocol-applier 同一判据）。
+ * 不用 GENERATION_STARTED/ENDED 维护标志：dry run（如切换聊天时的 token 统计）只发 STARTED 不发 ENDED，
+ * 会让标志永久卡在「生成中」。
+ */
+function isGenerating(): boolean {
+  const stop = safeRead(() => doc.querySelector('#mes_stop') as HTMLElement | null);
+  if (!stop) return false;
+  return safeRead(() => (hostWindow.getComputedStyle ?? getComputedStyle)(stop).display !== 'none') ?? false;
+}
+let mode: SectionId | 'json' = '玩家';
 let messageId: number | null = null;
 let original: Record<string, unknown> = {};
 let draft: Record<string, unknown> = {};
 let jsonText: string | null = null;
-const expanded = new Set<string>(['']);
+const expanded = new Set<string>();
+const collapsed = new Set<string>();
 const layout = loadLayout();
 const disposers: Array<() => void> = [];
 
@@ -246,6 +281,7 @@ function ensureStyle() {
 #${ROOT_ID} .mjr-ve-btn.active{background:#3d6b66}
 #${ROOT_ID} .mjr-ve-btn.danger{border-color:rgba(160,60,55,.6);color:#e3a49e}
 #${ROOT_ID} .mjr-ve-body{flex:1;overflow:auto;padding:6px 8px}
+#${ROOT_ID} .mjr-ve-tabs{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px 0}
 #${ROOT_ID} .mjr-ve-row{display:flex;align-items:center;gap:6px;padding:2px 0}
 #${ROOT_ID} .mjr-ve-key{flex:0 0 auto;max-width:45%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#9fc3bd}
 #${ROOT_ID} .mjr-ve-toggle{cursor:pointer;user-select:none}
@@ -348,9 +384,7 @@ function renderPanel(): HTMLElement {
 
   const head = el('div', 'mjr-ve-head');
   head.append(
-    el('span', 'mjr-ve-title', messageId === null ? '变量编辑器' : `变量编辑器 · #${messageId} 楼`),
-    button('树形', mode === 'tree' ? 'active' : '', () => switchMode('tree')),
-    button('JSON', mode === 'json' ? 'active' : '', () => switchMode('json')),
+    el('span', 'mjr-ve-title', '变量编辑器 · 当前变量'),
     button('刷新', '', () => reload(true), '重新读取最新楼层的变量（会丢弃未应用的改动）'),
     button('✕', '', () => togglePanel(false), '关闭'),
   );
@@ -365,32 +399,53 @@ function renderPanel(): HTMLElement {
   panel.addEventListener('pointerup', () => persistPanel(panel));
 
   const body = el('div', 'mjr-ve-body');
+  const tabs = el('div', 'mjr-ve-tabs');
+  for (const section of SECTIONS) {
+    tabs.appendChild(button(section.id, mode === section.id ? 'active' : '', () => switchMode(section.id)));
+  }
+  tabs.appendChild(
+    button('全部 JSON', mode === 'json' ? 'active' : '', () => switchMode('json'), '高级：直接编辑完整 stat_data'),
+  );
+
   if (messageId === null) body.appendChild(el('div', '', '当前聊天还没有 AI 楼层，暂无变量可编辑。'));
-  else if (mode === 'tree') body.appendChild(renderNode('stat_data', draft, []));
-  else body.appendChild(renderJsonEditor());
+  else if (mode === 'json') body.appendChild(renderJsonEditor());
+  else {
+    const section = SECTIONS.find(item => item.id === mode)!;
+    section.fields.forEach(field => body.appendChild(renderNode(field, draft[field], [field])));
+  }
 
   const errors = el('div', 'mjr-ve-errors');
   errors.id = 'mjr-ve-errors';
 
-  const changes = diffValues(original, draft);
   const foot = el('div', 'mjr-ve-foot');
-  const status = el(
-    'span',
-    'mjr-ve-status',
-    generating ? 'AI 生成中，暂时不能应用' : changes.length ? `${changes.length} 处未应用的改动` : '没有改动',
-  );
+  const status = el('span', 'mjr-ve-status');
+  status.id = 'mjr-ve-foot-status';
   const apply = button('应用', '', () => void applyDraft(), '校验通过后写入最新楼层');
-  apply.disabled = generating || messageId === null || (mode === 'tree' && changes.length === 0);
+  apply.id = 'mjr-ve-apply';
   const discard = button('放弃改动', '', () => {
     draft = cloneJson(original);
     jsonText = null;
     render();
   });
-  discard.disabled = changes.length === 0;
+  discard.id = 'mjr-ve-discard';
   foot.append(status, discard, apply);
+  updateFooter(status, apply, discard);
 
-  panel.append(head, body, errors, foot);
+  panel.append(head, tabs, body, errors, foot);
   return panel;
+}
+
+/** 只刷新底栏，不重绘整个面板：输入过程中重绘会让输入框失焦、丢失尚未提交的内容。 */
+function updateFooter(
+  status = doc.getElementById('mjr-ve-foot-status'),
+  apply = doc.getElementById('mjr-ve-apply') as HTMLButtonElement | null,
+  discard = doc.getElementById('mjr-ve-discard') as HTMLButtonElement | null,
+) {
+  const count = diffValues(original, draft).length;
+  const busy = isGenerating();
+  if (status) status.textContent = busy ? 'AI 生成中，暂时不能应用' : count ? `${count} 处未应用的改动` : '没有改动';
+  if (apply) apply.disabled = busy || messageId === null || (mode !== 'json' && count === 0);
+  if (discard) discard.disabled = count === 0;
 }
 
 function persistPanel(panel: HTMLElement) {
@@ -409,12 +464,15 @@ function renderNode(label: string, value: unknown, path: PathPart[]): HTMLElemen
   keyNode.title = formatPath(path);
 
   if (Array.isArray(value) || isPlainObject(value)) {
-    const open = expanded.has(key) || path.length === 0;
+    // 分类页的顶层字段（如 能力档案 / 任务追踪）默认展开；用 collapsed 记录用户手动收起
+    const open = path.length <= 1 ? !collapsed.has(key) : expanded.has(key);
     const count = Array.isArray(value) ? `[${value.length}]` : `{${Object.keys(value).length}}`;
     const toggle = el('span', 'mjr-ve-toggle', `${open ? '▾' : '▸'} `);
     row.addEventListener('click', () => {
-      if (open) expanded.delete(key);
-      else expanded.add(key);
+      const store = path.length <= 1 ? collapsed : expanded;
+      // 顶层：collapsed 里有 = 收起；深层：expanded 里有 = 展开
+      if (path.length <= 1 ? open : !open) store.add(key);
+      else store.delete(key);
       render();
     });
     row.append(toggle, keyNode, el('span', 'mjr-ve-status', count));
@@ -423,7 +481,7 @@ function renderNode(label: string, value: unknown, path: PathPart[]): HTMLElemen
     if (open) {
       const children = el('div', 'mjr-ve-children');
       const entries: Array<[string, unknown, PathPart]> = Array.isArray(value)
-        ? value.map((item, index) => [`[${index}]`, item, index])
+        ? value.map((item, index) => [itemLabel(item, index), item, index])
         : Object.entries(value).map(([k, v]) => [k, v, k]);
       if (entries.length === 0) children.appendChild(el('div', 'mjr-ve-status', '（空）'));
       entries.forEach(([childLabel, child, part]) =>
@@ -452,6 +510,19 @@ function renderLeafInput(value: unknown, path: PathPart[], changed: boolean): HT
   }
   if (value === null || value === undefined) {
     return el('span', 'mjr-ve-status', String(value));
+  }
+  const enumKey = path[path.length - 1];
+  const options = typeof enumKey === 'string' ? ENUM_OPTIONS[enumKey] : undefined;
+  if (options && typeof value === 'string') {
+    const select = el('select', `mjr-ve-input${changed ? ' changed' : ''}`);
+    for (const option of options.includes(value) ? options : [value, ...options]) {
+      const item = el('option', '', option === '' ? '（未定）' : option);
+      item.value = option;
+      select.appendChild(item);
+    }
+    select.value = value;
+    select.addEventListener('change', () => commitLeaf(path, value, select.value));
+    return select;
   }
   const input = el('input', `mjr-ve-input${changed ? ' changed' : ''}`);
   input.type = typeof value === 'number' ? 'number' : 'text';
@@ -516,7 +587,7 @@ function showErrors(lines: string[]) {
   if (box) box.textContent = lines.join('\n');
 }
 
-function switchMode(next: 'tree' | 'json') {
+function switchMode(next: SectionId | 'json') {
   if (mode === next) return;
   if (mode === 'json' && !syncJsonToDraft()) return;
   mode = next;
@@ -543,7 +614,7 @@ function togglePanel(force?: boolean) {
 }
 
 async function applyDraft() {
-  if (generating) {
+  if (isGenerating()) {
     toast('warning', 'AI 生成中，等生成结束后再应用');
     return;
   }
@@ -553,19 +624,30 @@ async function applyDraft() {
     showErrors(['最新楼层已经变化，请先点「刷新」重新读取，再修改。']);
     return;
   }
+  const changes = diffValues(original, draft);
+  if (changes.length === 0) {
+    toast('warning', '没有需要应用的改动');
+    return;
+  }
+  // 只拦截落在本次改动上的校验问题；AI 写回的旧值即使不完全符合 Schema 也不阻止写入（参考卡同样只提交补丁）
   const result = validateDraft(Schema, draft);
-  if (!result.ok) {
-    showErrors(['变量结构校验未通过，未写入：', ...result.issues.map(issue => `· ${issue.path}：${issue.message}`)]);
+  const blocking = result.ok ? [] : issuesForChanges(result.issues, changes);
+  if (blocking.length > 0) {
+    showErrors([
+      '改动的字段未通过变量结构校验，未写入：',
+      ...blocking.map(issue => `· ${issue.path}：${issue.message}`),
+    ]);
     return;
   }
   try {
-    await writeStatData(messageId, result.data as Record<string, unknown>);
+    // 补丁式写入：把改动套到最新读取的变量上，玩家没碰过的字段原样保留
+    await writeStatData(messageId, applyChanges(readStatData(messageId), changes));
   } catch (error) {
     showErrors([`写入失败：${(error as Error).message}`]);
     toast('error', '写入失败，详见面板');
     return;
   }
-  const count = diffValues(original, result.data).length;
+  const count = changes.length;
   original = readStatData(messageId);
   draft = cloneJson(original);
   jsonText = null;
@@ -613,12 +695,13 @@ function onChatChanged() {
 }
 
 function onGenerationState(active: boolean) {
-  generating = active;
-  if (!active && panelOpen) {
+  if (!panelOpen) return;
+  if (active) {
+    // 停止按钮在 GENERATION_STARTED 后才显示，稍等再重绘以刷新「生成中」状态
+    hostWindow.setTimeout(() => panelOpen && render(), 300);
+  } else {
     // 生成结束后变量可能被 applier 改写；没有未应用改动时自动跟上最新楼层
     hostWindow.setTimeout(() => reload(false), 600);
-  } else if (panelOpen) {
-    render();
   }
 }
 

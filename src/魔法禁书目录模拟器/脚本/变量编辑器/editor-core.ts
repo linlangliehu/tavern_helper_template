@@ -10,7 +10,7 @@ export type PathPart = string | number;
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export type ValueChange = { path: PathPart[]; before: unknown; after: unknown };
-export type ValidationIssue = { path: string; message: string };
+export type ValidationIssue = { path: string; parts: PathPart[]; message: string };
 export type ValidationResult = { ok: true; data: unknown } | { ok: false; issues: ValidationIssue[] };
 
 type SafeParseSchema = {
@@ -126,11 +126,31 @@ export function validateDraft(schema: SafeParseSchema, draft: unknown): Validati
   if (result.success) return { ok: true, data: result.data };
   return {
     ok: false,
-    issues: result.error.issues.map(issue => ({
-      path: formatPath(issue.path.map(part => (typeof part === 'number' ? part : String(part)))),
-      message: issue.message,
-    })),
+    issues: result.error.issues.map(issue => {
+      const parts = issue.path.map(part => (typeof part === 'number' ? part : String(part)));
+      return { path: formatPath(parts), parts, message: issue.message };
+    }),
   };
+}
+
+function isPrefix(prefix: PathPart[], path: PathPart[]): boolean {
+  return prefix.length <= path.length && prefix.every((part, index) => part === path[index]);
+}
+
+/**
+ * 只保留落在「本次改动」路径上的校验问题。
+ * AI 写回的旧值可能本来就不完全符合 Schema（如 阵营 写成「科学侧（学园都市）」），
+ * 参考卡的做法是只提交改动的补丁、不重校验整份变量；这里同理，玩家没碰过的字段不阻止写入。
+ */
+export function issuesForChanges(issues: ValidationIssue[], changes: ValueChange[]): ValidationIssue[] {
+  return issues.filter(issue =>
+    changes.some(change => isPrefix(change.path, issue.parts) || isPrefix(issue.parts, change.path)),
+  );
+}
+
+/** 把改动逐条套到最新读取的变量上（补丁式写入），未改动的字段保持原样。 */
+export function applyChanges<T>(base: T, changes: ValueChange[]): T {
+  return changes.reduce((acc, change) => setAtPath(acc, change.path, cloneJson(change.after)), base);
 }
 
 export type Layout = { x: number; y: number; width: number; height: number };
@@ -145,4 +165,35 @@ export function clampLayout(layout: Layout, viewport: { width: number; height: n
     x: Math.max(0, Math.min(layout.x, viewport.width - Math.min(width, 48))),
     y: Math.max(0, Math.min(layout.y, viewport.height - Math.min(height, 48))),
   };
+}
+
+/* ---------- 分类：与消息末尾面板（玩家 / 能力 / 任务 / 关系）一一对应，另加「地点」 ---------- */
+
+export type SectionId = '玩家' | '能力' | '任务' | '地点' | '关系';
+
+export const SECTIONS: ReadonlyArray<{ id: SectionId; fields: readonly string[] }> = [
+  { id: '玩家', fields: ['姓名', '性别', '年龄', '性格', '外貌', '身份', '阵营', '状态', '身体', '情绪', '剧情阶段'] },
+  { id: '能力', fields: ['能力档案'] },
+  { id: '任务', fields: ['任务追踪'] },
+  { id: '地点', fields: ['所在位置', '在场人物'] },
+  { id: '关系', fields: ['NPC关系'] },
+];
+
+/** schema.ts 中的枚举字段（按字段名），编辑时用下拉框，避免填出校验不通过的值。 */
+export const ENUM_OPTIONS: Readonly<Record<string, readonly string[]>> = {
+  阵营: ['科学侧', '魔法侧', ''],
+  剧情阶段: ['序章', '遭遇', '发展', '高潮', '终局'],
+  阵营类型: ['超能力', '术式', '灵装', '无能力'],
+};
+
+/** 数组项的显示名：优先用能力名 / 任务名 / 角色名，便于和面板对照。 */
+export function itemLabel(item: unknown, index: number): string {
+  if (isPlainObject(item)) {
+    for (const key of ['能力名称', '任务名称', '角色名', '名称']) {
+      const value = item[key];
+      if (typeof value === 'string' && value.trim()) return `${index + 1}. ${value.trim()}`;
+    }
+  }
+  if (typeof item === 'string' && item.trim()) return `${index + 1}. ${item.trim()}`;
+  return `${index + 1}.`;
 }
