@@ -282,7 +282,13 @@ assert.ok(Array.isArray(loaderScripts), 'candidate card must embed Tavern Helper
 assert.equal(loaderScripts.length, 1, 'candidate card must embed exactly one script loader');
 const loaderContent = String(loaderScripts[0]?.content ?? '');
 const loaderUrls = [...loaderContent.matchAll(/https?:\/\/[^\s'")]+/g)].map(match => match[0]);
-assert.equal(loaderUrls.length, 6, 'script loader must reference all six production modules');
+// 核心 6 模块必须都在；之后新增的可选模块（如 1.2.0 的「变量编辑器」）只要求地址合规，
+// 这样源码先加模块、PNG 留到发版时再重打包，CI 的 build 不会因为 PNG 尚未重打包而失败。
+const loadedModules = [...loaderContent.matchAll(/loadModule\('([^']+)'/g)].map(match => match[1]);
+for (const name of ['MVU', '变量结构', 'mvu协议应用', '界面美化', '固定状态栏', '消息内面板']) {
+  assert.ok(loadedModules.includes(name), `script loader must load core module: ${name}`);
+}
+assert.equal(loaderUrls.length, loadedModules.length, 'every loadModule call must have exactly one URL');
 for (const url of loaderUrls) {
   assert.match(
     url,
