@@ -11,6 +11,7 @@ pnpm-debug.log*
 
 auto-imports.d.ts
 components.d.ts
+<<<<<<< HEAD
 
 .vscode/chrome-debug-profile/
 
@@ -82,3 +83,5 @@ current-vscode-browser.png
 
 # 外部参考角色卡（只读借鉴，不提交；见 角色卡制作经验.md「外部参考卡素材不可复用」）
 /参考角色卡/
+=======
+>>>>>>> dcd1be6dad2ada50ec1b3a20571c6428a8e828a4
