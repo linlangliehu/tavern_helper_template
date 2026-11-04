@@ -202,7 +202,11 @@ export function mountStreamingMessages(
     },
     true,
   );
+<<<<<<< HEAD
   [tavern_events.MESSAGE_EDITED, tavern_events.MESSAGE_DELETED].forEach(event =>
+=======
+  [tavern_events.MESSAGE_EDITED, tavern_events.MESSAGE_SWIPED, tavern_events.MESSAGE_DELETED].forEach(event =>
+>>>>>>> b29875444d854f6c190ef102d8ecf361ae020f06
     scopedEventOn(event, message_id => {
       destroyAllInvalid();
       states.get(message_id)?.destroy();
