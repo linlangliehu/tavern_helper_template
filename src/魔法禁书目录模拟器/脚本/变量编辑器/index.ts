@@ -6,12 +6,15 @@
 // - 应用前用 schema.ts 的 Schema 校验，不通过不写入；AI 生成中禁止应用，避免和 mvu-protocol-applier 同时写入；
 // - 所有用户可见文本用 textContent 输出，不拼接 HTML、不 eval。
 import { Schema } from '../../schema';
+import schemaDefinition from '../../schema.json';
+import { beginManualVariableEdit, manualEditProtocolKey } from '../_manual_variable_edit';
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 import {
   canRemoveAtPath,
   clampLayout,
   cloneJson,
   coerceInput,
+  fieldInputSpec,
   diffValues,
   formatPath,
   getAtPath,
@@ -19,7 +22,8 @@ import {
   issuesForChanges,
   applyChanges,
   itemLabel,
-  ENUM_OPTIONS,
+  ITEM_LABEL_KEYS,
+  RELATION_LABEL_KEYS,
   SECTIONS,
   type SectionId,
   type Layout,
@@ -34,7 +38,13 @@ registerMfrsRuntimeBuild('变量编辑器');
 
 type MvuData = Record<string, unknown> & { stat_data?: Record<string, unknown> };
 type MessageOption = { type: 'message'; message_id: number };
-type ChatMessage = { is_user?: boolean; message_id?: number; swipe_id?: number; extra?: Record<string, unknown> };
+type ChatMessage = {
+  mes?: string;
+  is_user?: boolean;
+  message_id?: number;
+  swipe_id?: number;
+  extra?: Record<string, unknown>;
+};
 
 type HostWindow = Window & {
   __mjrVariableEditorCleanup__?: () => void;
@@ -159,35 +169,37 @@ function readStatData(messageId: number): Record<string, unknown> {
   return isPlainObject(raw) ? cloneJson(raw) : {};
 }
 
-/**
- * 消息内面板会把楼层原始协议（AI 输出的 JSONPatch）再套一遍到 stat_data 上作兜底；
- * 编辑器写入后在楼层 extra 上打标记，面板见到标记就跳过兜底，否则旧协议值会盖掉手动改的值。
- */
-const MANUAL_EDIT_EXTRA_KEY = '_mjr_variable_editor_swipe';
-
-async function markManualEdit(messageId: number): Promise<void> {
-  const context = getContext() as (ReturnType<typeof getContext> & { saveChat?: () => unknown }) | null;
-  const chat = context?.chat;
-  if (!Array.isArray(chat)) return;
-  const message = chat.find(item => item?.message_id === messageId) ?? chat[messageId];
-  if (!message) return;
-  // 值记为当前 swipe_id：重新生成（换 swipe）后标记自动失效，面板恢复协议兜底
-  message.extra = { ...(message.extra ?? {}), [MANUAL_EDIT_EXTRA_KEY]: message.swipe_id ?? 0 };
-  await safeRead(() => context?.saveChat?.());
+function getMessage(messageId: number): ChatMessage | undefined {
+  const chat = getContext()?.chat;
+  return chat?.find(item => item?.message_id === messageId) ?? chat?.[messageId];
 }
 
 async function writeStatData(messageId: number, statData: Record<string, unknown>): Promise<void> {
+  const message = getMessage(messageId);
+  if (!message) throw new Error('楼层不存在，请刷新后再修改');
   const option: MessageOption = { type: 'message', message_id: messageId };
-  const mvu = getMvu();
-  if (mvu?.getMvuData && mvu.replaceMvuData) {
-    const current = mvu.getMvuData(option) ?? {};
-    await mvu.replaceMvuData({ ...current, stat_data: statData }, option);
-  } else {
-    const update = getRuntime('updateVariablesWith');
-    if (!update) throw new Error('找不到 MVU 或酒馆助手的变量写入接口');
-    await update(variables => ({ ...variables, stat_data: statData }), option);
+  const protocolKey = manualEditProtocolKey(message);
+  const rollbackMark = beginManualVariableEdit(message);
+  try {
+    const mvu = getMvu();
+    if (mvu?.getMvuData && mvu.replaceMvuData) {
+      const current = mvu.getMvuData(option) ?? {};
+      await mvu.replaceMvuData({ ...current, stat_data: statData }, option);
+    } else {
+      const update = getRuntime('updateVariablesWith');
+      if (!update) throw new Error('找不到 MVU 或酒馆助手的变量写入接口');
+      await update(variables => ({ ...variables, stat_data: statData }), option);
+    }
+  } catch (error) {
+    rollbackMark();
+    throw error;
   }
-  await markManualEdit(messageId);
+  if (getMessage(messageId) !== message || manualEditProtocolKey(message) !== protocolKey) {
+    throw new Error('聊天或回复已切换，请刷新后检查保存结果');
+  }
+  // The variables and the guard must be persisted together, including after reload.
+  const context = getContext() as ReturnType<typeof getContext> & { saveChat?: () => Promise<void> };
+  await context?.saveChat?.();
 }
 
 /* ---------- 状态 ---------- */
@@ -209,6 +221,10 @@ let messageId: number | null = null;
 let original: Record<string, unknown> = {};
 let draft: Record<string, unknown> = {};
 let jsonText: string | null = null;
+let applying = false;
+let sourceMessage: ChatMessage | undefined;
+let sourceProtocolKey = '';
+const invalidInputs = new Set<string>();
 const expanded = new Set<string>();
 const collapsed = new Set<string>();
 const layout = loadLayout();
@@ -425,6 +441,7 @@ function renderPanel(): HTMLElement {
   const discard = button('放弃改动', '', () => {
     draft = cloneJson(original);
     jsonText = null;
+    invalidInputs.clear();
     render();
   });
   discard.id = 'mjr-ve-discard';
@@ -443,9 +460,29 @@ function updateFooter(
 ) {
   const count = diffValues(original, draft).length;
   const busy = isGenerating();
-  if (status) status.textContent = busy ? 'AI 生成中，暂时不能应用' : count ? `${count} 处未应用的改动` : '没有改动';
-  if (apply) apply.disabled = busy || messageId === null || (mode !== 'json' && count === 0);
-  if (discard) discard.disabled = count === 0;
+  const jsonDirty = jsonText !== null;
+  if (status)
+    status.textContent = applying
+      ? '正在保存…'
+      : busy
+        ? 'AI 生成中，暂时不能应用'
+        : invalidInputs.size
+          ? '请先修正无效输入'
+          : jsonDirty
+            ? 'JSON 改动待应用'
+            : count
+              ? `${count} 处未应用的改动`
+              : '没有改动';
+  if (apply)
+    apply.disabled = applying || busy || messageId === null || invalidInputs.size > 0 || (!jsonDirty && count === 0);
+  if (discard) discard.disabled = applying || (count === 0 && !jsonDirty && invalidInputs.size === 0);
+  root
+    ?.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
+      '.mjr-ve-body input, .mjr-ve-body select, .mjr-ve-body textarea, .mjr-ve-tabs button',
+    )
+    .forEach(input => {
+      input.disabled = applying;
+    });
 }
 
 function persistPanel(panel: HTMLElement) {
@@ -456,6 +493,8 @@ function persistPanel(panel: HTMLElement) {
 
 function renderNode(label: string, value: unknown, path: PathPart[]): HTMLElement {
   const key = JSON.stringify(path);
+  // 顶层字段决定数组项的显示名优先级（关系用角色名，能力用能力名称…）
+  const labelKeys = path[0] === 'NPC关系' ? RELATION_LABEL_KEYS : ITEM_LABEL_KEYS;
   const originalValue = getAtPath(original, path);
   const changed = JSON.stringify(originalValue) !== JSON.stringify(value);
   const wrap = el('div');
@@ -481,7 +520,7 @@ function renderNode(label: string, value: unknown, path: PathPart[]): HTMLElemen
     if (open) {
       const children = el('div', 'mjr-ve-children');
       const entries: Array<[string, unknown, PathPart]> = Array.isArray(value)
-        ? value.map((item, index) => [itemLabel(item, index), item, index])
+        ? value.map((item, index) => [itemLabel(item, index, labelKeys), item, index])
         : Object.entries(value).map(([k, v]) => [k, v, k]);
       if (entries.length === 0) children.appendChild(el('div', 'mjr-ve-status', '（空）'));
       entries.forEach(([childLabel, child, part]) =>
@@ -500,34 +539,47 @@ function renderNode(label: string, value: unknown, path: PathPart[]): HTMLElemen
 }
 
 function renderLeafInput(value: unknown, path: PathPart[], changed: boolean): HTMLElement {
-  if (typeof value === 'boolean') {
-    const input = el('input', `mjr-ve-input${changed ? ' changed' : ''}`);
+  const { kind, options } = fieldInputSpec(schemaDefinition, path, value);
+  const label = formatPath(path);
+  const style = changed ? 'mjr-ve-input changed' : 'mjr-ve-input';
+  if (kind === 'boolean' && typeof value === 'boolean') {
+    const input = el('input', style);
     input.type = 'checkbox';
     input.checked = value;
+    input.setAttribute('aria-label', label);
     input.style.flex = '0 0 auto';
-    input.addEventListener('change', () => commitLeaf(path, value, input.checked));
+    input.addEventListener('change', () => commitLeaf(path, value, input.checked, kind, input));
     return input;
   }
-  if (value === null || value === undefined) {
-    return el('span', 'mjr-ve-status', String(value));
-  }
-  const enumKey = path[path.length - 1];
-  const options = typeof enumKey === 'string' ? ENUM_OPTIONS[enumKey] : undefined;
-  if (options && typeof value === 'string') {
-    const select = el('select', `mjr-ve-input${changed ? ' changed' : ''}`);
-    for (const option of options.includes(value) ? options : [value, ...options]) {
-      const item = el('option', '', option === '' ? '（未定）' : option);
+  if (options || kind === 'boolean') {
+    const select = el('select', style);
+    select.setAttribute('aria-label', label);
+    const choices = options ?? ['true', 'false'];
+    // Invalid values remain visible until the player explicitly chooses a correction.
+    const current = options && typeof value === 'string' && choices.includes(value) ? value : '__invalid__';
+    if (current === '__invalid__') {
+      const item = el('option', '', `原值：${String(value)}（请选择修正值）`);
+      item.value = '__invalid__';
+      item.disabled = true;
+      select.appendChild(item);
+    }
+    for (const option of choices) {
+      const text = kind === 'boolean' ? (option === 'true' ? '是（true）' : '否（false）') : option || '（未定）';
+      const item = el('option', '', text);
       item.value = option;
       select.appendChild(item);
     }
-    select.value = value;
-    select.addEventListener('change', () => commitLeaf(path, value, select.value));
+    select.value = current;
+    select.addEventListener('change', () => commitLeaf(path, value, select.value, kind, select));
     return select;
   }
-  const input = el('input', `mjr-ve-input${changed ? ' changed' : ''}`);
-  input.type = typeof value === 'number' ? 'number' : 'text';
-  input.value = String(value);
-  input.addEventListener('change', () => commitLeaf(path, value, input.value));
+  if (value === undefined) return el('span', 'mjr-ve-status', '字段缺失，请先初始化变量');
+  const input = el('input', style);
+  input.type = kind === 'number' ? 'number' : 'text';
+  input.setAttribute('aria-label', label);
+  input.value = value === null ? '' : String(value);
+  if (typeof value !== kind) input.placeholder = `原值：${String(value)}`;
+  input.addEventListener('input', () => commitLeaf(path, value, input.value, kind, input));
   input.addEventListener('keydown', event => {
     if (event.key === 'Enter') input.blur();
   });
@@ -546,15 +598,32 @@ function removeButton(path: PathPart[]) {
   );
 }
 
-function commitLeaf(path: PathPart[], originalValue: unknown, raw: string | boolean) {
-  const coerced = coerceInput(originalValue, raw);
+function commitLeaf(
+  path: PathPart[],
+  originalValue: unknown,
+  raw: string | boolean,
+  kind: 'string' | 'number' | 'boolean',
+  input: HTMLInputElement | HTMLSelectElement,
+) {
+  const key = formatPath(path);
+  const coerced = coerceInput(originalValue, raw, kind);
   if (!coerced.ok) {
-    toast('warning', `${formatPath(path)} 需要填写${typeof originalValue === 'number' ? '数字' : '有效值'}`);
-    render();
+    invalidInputs.add(key);
+    input.setCustomValidity(`${key} 需要填写有效${kind === 'number' ? '数字' : '值'}`);
+    input.setAttribute('aria-invalid', 'true');
+    updateFooter();
     return;
   }
+  invalidInputs.delete(key);
+  input.setCustomValidity('');
+  input.removeAttribute('aria-invalid');
   draft = setAtPath(draft, path, coerced.value);
-  render();
+  const changed = JSON.stringify(getAtPath(original, path)) !== JSON.stringify(coerced.value);
+  input.classList.toggle('changed', changed);
+  input.closest('.mjr-ve-row')?.querySelector('.mjr-ve-key')?.classList.toggle('changed', changed);
+  showErrors([]);
+  // Keep the active input and Apply button mounted while typing or blurring.
+  updateFooter();
 }
 
 function renderJsonEditor(): HTMLElement {
@@ -565,6 +634,7 @@ function renderJsonEditor(): HTMLElement {
   area.value = jsonText ?? JSON.stringify(draft, null, 2);
   area.addEventListener('input', () => {
     jsonText = area.value;
+    updateFooter();
   });
   return area;
 }
@@ -588,7 +658,11 @@ function showErrors(lines: string[]) {
 }
 
 function switchMode(next: SectionId | 'json') {
-  if (mode === next) return;
+  if (mode === next || applying) return;
+  if (invalidInputs.size) {
+    showErrors(['请先修正无效输入，或放弃改动。']);
+    return;
+  }
   if (mode === 'json' && !syncJsonToDraft()) return;
   mode = next;
   render();
@@ -598,9 +672,12 @@ function switchMode(next: SectionId | 'json') {
 
 function reload(discardChanges: boolean) {
   const latest = findLatestAiMessageId();
-  const dirty = diffValues(original, draft).length > 0;
+  const dirty = diffValues(original, draft).length > 0 || jsonText !== null || invalidInputs.size > 0;
   if (!discardChanges && dirty && latest === messageId) return;
   messageId = latest;
+  sourceMessage = latest === null ? undefined : getMessage(latest);
+  sourceProtocolKey = sourceMessage ? manualEditProtocolKey(sourceMessage) : '';
+  invalidInputs.clear();
   original = latest === null ? {} : readStatData(latest);
   draft = cloneJson(original);
   jsonText = null;
@@ -614,14 +691,20 @@ function togglePanel(force?: boolean) {
 }
 
 async function applyDraft() {
+  if (applying || invalidInputs.size) return;
   if (isGenerating()) {
     toast('warning', 'AI 生成中，等生成结束后再应用');
     return;
   }
   if (messageId === null) return;
   if (mode === 'json' && !syncJsonToDraft()) return;
-  if (findLatestAiMessageId() !== messageId) {
-    showErrors(['最新楼层已经变化，请先点「刷新」重新读取，再修改。']);
+  if (
+    findLatestAiMessageId() !== messageId ||
+    getMessage(messageId) !== sourceMessage ||
+    !sourceMessage ||
+    manualEditProtocolKey(sourceMessage) !== sourceProtocolKey
+  ) {
+    showErrors(['聊天、楼层或回复已经变化，请先点「刷新」重新读取，再修改。']);
     return;
   }
   const changes = diffValues(original, draft);
@@ -629,7 +712,7 @@ async function applyDraft() {
     toast('warning', '没有需要应用的改动');
     return;
   }
-  // 只拦截落在本次改动上的校验问题；AI 写回的旧值即使不完全符合 Schema 也不阻止写入（参考卡同样只提交补丁）
+  // 只拦截落在本次改动上的校验问题；AI 写回的旧值即使不完全符合 Schema 也不阻止写入
   const result = validateDraft(Schema, draft);
   const blocking = result.ok ? [] : issuesForChanges(result.issues, changes);
   if (blocking.length > 0) {
@@ -639,16 +722,24 @@ async function applyDraft() {
     ]);
     return;
   }
+  const targetId = messageId;
+  const targetMessage = sourceMessage;
+  applying = true;
+  updateFooter();
   try {
     // 补丁式写入：把改动套到最新读取的变量上，玩家没碰过的字段原样保留
-    await writeStatData(messageId, applyChanges(readStatData(messageId), changes));
+    await writeStatData(targetId, applyChanges(readStatData(targetId), changes));
   } catch (error) {
     showErrors([`写入失败：${(error as Error).message}`]);
     toast('error', '写入失败，详见面板');
     return;
+  } finally {
+    applying = false;
+    updateFooter();
   }
+  if (getMessage(targetId) !== targetMessage) return;
   const count = changes.length;
-  original = readStatData(messageId);
+  original = readStatData(targetId);
   draft = cloneJson(original);
   jsonText = null;
   safeRead(() => hostWindow.MagicIndexMessagePanel?.refreshAll?.());

@@ -8,6 +8,7 @@ import {
 } from './falsely-applied-controller';
 import { applyRawProtocolToMvuData, isFalselyAppliedStat } from './raw-status-writer';
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
+import { hasManualVariableEdit, readVariableProtocol } from '../_manual_variable_edit';
 
 registerMfrsRuntimeBuild('mvu-protocol-applier');
 
@@ -409,17 +410,15 @@ function hasSameStatData(actual: MvuData | undefined, expected: MvuData | undefi
 }
 
 function readMessageTextForMvu(message: { mes?: string; extra?: Record<string, unknown> } | undefined) {
-  const rawProtocolMessage = message?.extra?.[RAW_PROTOCOL_EXTRA_KEY];
-  if (typeof rawProtocolMessage === 'string' && hasInternalProtocol(rawProtocolMessage)) {
-    return rawProtocolMessage;
-  }
-  return typeof message?.mes === 'string' ? message.mes : '';
+  return message ? readVariableProtocol(message) : '';
 }
 
 function snapshotRawProtocolMessage(message: { mes?: string; extra?: Record<string, unknown> }) {
   if (!message.mes || !hasInternalProtocol(message.mes)) return false;
   message.extra = message.extra || {};
-  if (typeof message.extra[RAW_PROTOCOL_EXTRA_KEY] !== 'string') {
+  const saved = message.extra[RAW_PROTOCOL_EXTRA_KEY];
+  // A same-swipe edit/regeneration can carry a new protocol. Keep that snapshot after cleaning.
+  if (typeof saved !== 'string' || (/<UpdateVariable\b/i.test(message.mes) && saved !== message.mes)) {
     message.extra[RAW_PROTOCOL_EXTRA_KEY] = message.mes;
     return true;
   }
@@ -582,6 +581,7 @@ async function parseAndWriteMvuMessage(
   if (!chat || messageIndex < 0 || messageIndex >= chat.length) return false;
 
   const message = chat[messageIndex];
+  if (hasManualVariableEdit(message)) return false;
   const rawMessage = readMessageTextForMvu(message);
   if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) {
     console.debug('[Hotfix] 最新 AI 消息无可解析协议块，跳过 MVU 解析', { messageIndex, eventMessageId });
@@ -598,7 +598,7 @@ async function parseAndWriteMvuMessage(
     const transactionEpoch = entryEpoch;
     const expectedSwipeId = getMessageSwipeId(message);
     const isCurrentProtocol = () => {
-      if (transactionEpoch !== hotfixEpoch) return false;
+      if (transactionEpoch !== hotfixEpoch || hasManualVariableEdit(message)) return false;
       const latestContext = getSillyTavernContext(hostWindow);
       const latestMessage = latestContext?.chat?.[messageIndex];
       if (latestContext?.chat !== chat || latestMessage !== message || getMessageSwipeId(message) !== expectedSwipeId) {
@@ -836,7 +836,7 @@ async function repairFalselyAppliedFloors() {
   for (const index of selectFalselyAppliedRepairIndexes(chat, activeGenerationMessageIndex)) {
     if (repairEpoch !== hotfixEpoch || getSillyTavernContext(hostWindow)?.chat !== chat) return;
     const message = chat[index];
-    if (!message?.extra) continue;
+    if (!message?.extra || hasManualVariableEdit(message)) continue;
 
     const rawMessage = readMessageTextForMvu(message);
     if (!rawMessage.trim() || !hasInternalProtocol(rawMessage)) continue;

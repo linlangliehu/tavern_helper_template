@@ -80,13 +80,17 @@ export function removeArrayItem<T>(root: T, path: PathPart[]): T {
  * 把输入框里的文本按原值类型转换。返回 { ok:false } 表示输入非法（如数字框填了字母），
  * 调用方应提示并保留原值，而不是悄悄写入 NaN 或字符串。
  */
-export function coerceInput(original: unknown, raw: string | boolean): { ok: true; value: unknown } | { ok: false } {
-  if (typeof original === 'boolean') {
+export function coerceInput(
+  original: unknown,
+  raw: string | boolean,
+  kind = typeof original,
+): { ok: true; value: unknown } | { ok: false } {
+  if (kind === 'boolean') {
     if (typeof raw === 'boolean') return { ok: true, value: raw };
     if (raw === 'true' || raw === 'false') return { ok: true, value: raw === 'true' };
     return { ok: false };
   }
-  if (typeof original === 'number') {
+  if (kind === 'number') {
     const text = String(raw).trim();
     if (text === '') return { ok: false };
     const value = Number(text);
@@ -185,15 +189,68 @@ export const ENUM_OPTIONS: Readonly<Record<string, readonly string[]>> = {
   剧情阶段: ['序章', '遭遇', '发展', '高潮', '终局'],
   阵营类型: ['超能力', '术式', '灵装', '无能力'],
 };
+/** 数组项显示名的默认优先级（能力档案 / 任务追踪 等）。 */
+export const ITEM_LABEL_KEYS: readonly string[] = ['能力名称', '任务名称', '角色名', '名称'];
 
-/** 数组项的显示名：优先用能力名 / 任务名 / 角色名，便于和面板对照。 */
-export function itemLabel(item: unknown, index: number): string {
+/** NPC关系 专用：面板显示角色名，能力名称只作为副信息。 */
+export const RELATION_LABEL_KEYS: readonly string[] = ['角色名', '姓名', '能力名称', '名称'];
+/**
+ * 数组项的显示名：优先用面板上显示的名字，方便对照。
+ * labelKeys 按字段给不同优先级：
+ * - NPC关系：面板显示角色名（该数组同时带「能力名称」，若按能力名排会与面板对不上）；
+ * - 能力档案：面板显示能力名称；
+ * - 任务追踪：面板显示任务名称。
+ */
+export function itemLabel(item: unknown, index: number, labelKeys: readonly string[] = ITEM_LABEL_KEYS): string {
   if (isPlainObject(item)) {
-    for (const key of ['能力名称', '任务名称', '角色名', '名称']) {
+    for (const key of labelKeys) {
       const value = item[key];
       if (typeof value === 'string' && value.trim()) return `${index + 1}. ${value.trim()}`;
     }
   }
   if (typeof item === 'string' && item.trim()) return `${index + 1}. ${item.trim()}`;
   return `${index + 1}.`;
+}
+
+/** Read the generated schema instead of inferring field types from malformed AI values. */
+export function fieldInputSpec(
+  schema: unknown,
+  path: PathPart[],
+  value: unknown,
+): {
+  kind: 'string' | 'number' | 'boolean';
+  options?: string[];
+} {
+  const resolve = (node: unknown): Record<string, unknown> => {
+    for (let depth = 0; depth < 8 && isPlainObject(node); depth++) {
+      if (typeof node.$ref !== 'string' || !node.$ref.startsWith('#/')) return node;
+      node = getAtPath(
+        schema,
+        node.$ref
+          .slice(2)
+          .split('/')
+          .map(key => key.replace(/~1/g, '/').replace(/~0/g, '~')),
+      );
+    }
+    return {};
+  };
+  let node = resolve(schema);
+  for (const part of path) {
+    node = resolve(typeof part === 'number' ? node.items : getAtPath(node, ['properties', part]));
+  }
+  const kind =
+    node.type === 'number' || node.type === 'integer'
+      ? 'number'
+      : node.type === 'boolean'
+        ? 'boolean'
+        : node.type === 'string'
+          ? 'string'
+          : typeof value === 'number'
+            ? 'number'
+            : typeof value === 'boolean'
+              ? 'boolean'
+              : 'string';
+  const options =
+    Array.isArray(node.enum) && node.enum.every(item => typeof item === 'string') ? (node.enum as string[]) : undefined;
+  return { kind, options };
 }

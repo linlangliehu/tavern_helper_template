@@ -138,4 +138,123 @@ assert.match(
   'script loader must load the variable editor',
 );
 
+// Real generated field definitions must recover malformed AI scalar types.
+const schemaJson = JSON.parse(readFileSync(join(cardRoot, 'schema.json'), 'utf8'));
+for (const [path, oldValue, raw, expected] of [
+  [['能力档案', 0, '是否稳定'], '是', 'true', true],
+  [['能力档案', 0, '是否稳定'], '否', 'false', false],
+  [['NPC关系', 0, '好感度'], '20', '37', 37],
+  [['主线进度', '阶段序号'], '5', '6', 6],
+  [['年龄'], 18, '20岁', '20岁'],
+]) {
+  const spec = core.fieldInputSpec(schemaJson, path, oldValue);
+  assert.deepEqual(core.coerceInput(oldValue, raw, spec.kind), { ok: true, value: expected });
+}
+assert.equal(core.coerceInput('20', '', 'number').ok, false);
+assert.deepEqual(core.fieldInputSpec(schemaJson, ['阵营'], null).options, ['科学侧', '魔法侧', '']);
+
+// Execute the actual recovery entry point with a message store and controlled timers.
+// No browser process, network, source rewrite or build output is involved.
+const scheduled = [];
+const chat = [];
+let writes = 0;
+const host = {
+  setTimeout: callback => {
+    scheduled.push(callback);
+    return scheduled.length;
+  },
+  clearTimeout() {},
+  document: { querySelector: () => null },
+  SillyTavern: { getContext: () => ({ chat, saveChat: async () => {} }) },
+  Mvu: {
+    getMvuData: ({ message_id }) => structuredClone(chat[message_id].variables[chat[message_id].swipe_id ?? 0]),
+    replaceMvuData: async (data, { message_id }) => {
+      writes++;
+      chat[message_id].variables[chat[message_id].swipe_id ?? 0] = structuredClone(data);
+    },
+  },
+};
+host.parent = host;
+const context = vm.createContext({ window: host, console: { info() {}, debug() {}, warn() {}, error() {} } });
+const cache = new Map();
+function loadRuntime(filename) {
+  if (cache.has(filename)) return cache.get(filename);
+  let source = readFileSync(filename, 'utf8');
+  if (filename.replaceAll('\\', '/').endsWith('mvu-protocol-applier/index.ts')) {
+    source =
+      source.replace(/^installHotfix\(\);\s*$/m, '') +
+      '\nexport const testRecovery = { parseAndWriteMvuMessage, repairFalselyAppliedFloors, cleanProtocolBlocks };';
+  }
+  const output = transpileModule(source, {
+    compilerOptions: { module: ModuleKind.CommonJS, target: ScriptTarget.ES2022 },
+    fileName: filename,
+  }).outputText;
+  const loaded = { exports: {} };
+  cache.set(filename, loaded.exports);
+  vm.runInContext(`(function(module,exports,require){${output}\n})`, context, { filename })(
+    loaded,
+    loaded.exports,
+    specifier => {
+      if (specifier === '../_runtime_identity') return { registerMfrsRuntimeBuild() {} };
+      const target = join(dirname(filename), specifier.endsWith('.js') ? specifier : `${specifier}.ts`);
+      return loadRuntime(target);
+    },
+  );
+  return loaded.exports;
+}
+const guard = loadRuntime(join(cardRoot, '脚本', '_manual_variable_edit.ts'));
+const recovery = loadRuntime(join(cardRoot, '脚本', 'mvu-protocol-applier', 'index.ts')).testRecovery;
+const protocol = value =>
+  `<UpdateVariable><JSONPatch>${JSON.stringify([{ op: 'replace', path: '/所在位置', value }])}</JSONPatch></UpdateVariable>`;
+const message = { mes: protocol('AI地点'), swipe_id: 0, extra: {}, variables: [{ stat_data: { 所在位置: '初始' } }] };
+chat.push(message);
+await recovery.parseAndWriteMvuMessage(0);
+assert.equal(message.variables[0].stat_data.所在位置, 'AI地点', 'normal AI updates still execute');
+const writesBeforeManual = writes;
+guard.beginManualVariableEdit(message);
+message.variables[0].stat_data.所在位置 = '手动地点';
+assert.equal(guard.hasManualVariableEdit(message), true);
+await recovery.parseAndWriteMvuMessage(0);
+await recovery.repairFalselyAppliedFloors();
+for (const callback of scheduled.splice(0)) callback();
+await new Promise(resolve => setImmediate(resolve));
+assert.equal(writes, writesBeforeManual, 'queued retries and repair must not write over a manual edit');
+assert.equal(message.variables[0].stat_data.所在位置, '手动地点');
+assert.equal(
+  guard.hasManualVariableEdit(JSON.parse(JSON.stringify(message))),
+  true,
+  'guard persists through serialization',
+);
+// New protocol on the same swipe invalidates only the old guard.
+message.mes = protocol('新协议地点');
+assert.equal(guard.hasManualVariableEdit(message), false);
+await recovery.parseAndWriteMvuMessage(0);
+assert.equal(message.variables[0].stat_data.所在位置, '新协议地点');
+message.extra._mfrs_raw_protocol_message = protocol('AI地点');
+await recovery.cleanProtocolBlocks(0);
+await recovery.parseAndWriteMvuMessage(0);
+assert.equal(message.variables[0].stat_data.所在位置, '新协议地点', 'cleaning retains the new same-swipe protocol');
+// New swipe must not inherit the previous swipe guard.
+guard.beginManualVariableEdit(message);
+message.swipe_id = 1;
+message.variables[1] = { stat_data: { 所在位置: '新分支初值' } };
+assert.equal(guard.hasManualVariableEdit(message), false);
+await recovery.parseAndWriteMvuMessage(0);
+assert.equal(message.variables[1].stat_data.所在位置, '新协议地点');
+// A queued recovery must re-check the guard immediately before its write.
+message.mes = protocol('排队中的旧协议');
+const writesBeforeQueued = writes;
+const queued = recovery.parseAndWriteMvuMessage(0);
+const undoQueuedGuard = guard.beginManualVariableEdit(message);
+await queued;
+assert.equal(writes, writesBeforeQueued, 'a manual edit cancels recovery queued before it');
+undoQueuedGuard();
+const rollback = guard.beginManualVariableEdit(message);
+rollback();
+assert.equal(guard.hasManualVariableEdit(message), false, 'failed write rolls back the provisional guard');
+const legacy = { swipe_id: 0, extra: { _mjr_variable_editor_swipe: 0 } };
+assert.equal(guard.hasManualVariableEdit(legacy), true);
+legacy.swipe_id = 1;
+assert.equal(guard.hasManualVariableEdit(legacy), false);
+
 console.log('MJR_VARIABLE_EDITOR_GATE_OK');

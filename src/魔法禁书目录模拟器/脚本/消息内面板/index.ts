@@ -3,6 +3,7 @@
 // 去数据库依赖；[[MFrsStatus]] 标记渲染为对应折叠卡片。
 import { registerMfrsRuntimeBuild } from '../_runtime_identity';
 import { applyUpdateProtocolToStatData } from './raw-status-data';
+import { hasManualVariableEdit as isManuallyEdited } from '../_manual_variable_edit';
 
 registerMfrsRuntimeBuild('消息内面板');
 
@@ -138,16 +139,13 @@ function readStatusForMessage(mesElement: Element): StatusData {
 
 const RAW_PROTOCOL_EXTRA_KEY = '_mfrs_raw_protocol_message';
 
-/** 变量编辑器写入时在楼层 extra 上打的标记（见 脚本/变量编辑器/index.ts）。 */
-const MANUAL_EDIT_EXTRA_KEY = '_mjr_variable_editor_swipe';
-
 function hasManualVariableEdit(messageId: number): boolean {
   try {
     const chat = getSillyTavernContext()?.chat;
     if (!Array.isArray(chat)) return false;
     const hit = chat.find(message => Number(message?.message_id) === messageId) ?? chat[messageId];
     // 标记值是写入时的 swipe_id；换 swipe（重新生成）后不再命中
-    return hit?.extra?.[MANUAL_EDIT_EXTRA_KEY] === (hit?.swipe_id ?? 0);
+    return isManuallyEdited(hit);
   } catch {
     return false;
   }
